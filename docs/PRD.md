@@ -3,7 +3,7 @@
 A native Android client for a self-hosted Tokkl server. It does the daily work of Tokkl's web app and adds what a PWA cannot: the running timer in a notification, a home screen widget, a Quick Settings tile, and starting and stopping timers with no connection to the server. A later version talks to Toggl Track through the same API.
 
 - Owner: Tokkl contributors
-- Status: requirements gathered in an interview on 2026-10-17 (appendix). No code yet. Priorities and anything marked "proposed" came from the interviewer and have not been reviewed one by one.
+- Status: requirements gathered in an interview on 2026-10-17 (appendix). No code yet. Anything marked "proposed" came from the interviewer and has not been reviewed.
 - Last updated: 2026-10-17
 
 ## 1. Why this exists
@@ -79,102 +79,102 @@ Decisions:
 
 ## 5. Functional requirements
 
-Priority follows MoSCoW. Every row is Planned.
+The first release is feature complete: it ships every requirement below, so they carry no priority. Every row is Planned.
 
 ### 5.1 Server and sign-in
 
-| ID | Requirement | Priority |
-|---|---|---|
-| S1 | Sign in with a server URL and the API token (default), or email and password. The URL may carry a path, such as `https://example.com/tokkl`. | MUST |
-| S2 | Accept HTTPS with a publicly trusted certificate or with a CA the user installed in Android. | MUST |
-| S3 | Accept HTTPS with a self-signed certificate after the user reads a disclaimer and trusts it. The app shows the certificate's SHA-256 fingerprint, trusts that certificate only, and asks again when it changes. It never accepts any certificate without a check. | MUST |
-| S4 | Accept plain `http://` after a warning, stronger than the one in S3, that the token travels unencrypted unless the network encrypts it (Tailscale does). | MUST |
-| S5 | Keep the token or password encrypted with a key in the Android Keystore. | MUST |
-| S6 | One server and one account at a time. Signing out warns when unsent changes would be lost, then clears the cache and the queue. | MUST |
-| S7 | Read the timezone, first day of the week and `time_resolution_minutes` from `GET /api/v9/me`, and use the account timezone everywhere. | MUST |
+| ID | Requirement |
+|---|---|
+| S1 | Sign in with a server URL and the API token (default), or email and password. The URL may carry a path, such as `https://example.com/tokkl`. |
+| S2 | Accept HTTPS with a publicly trusted certificate or with a CA the user installed in Android. |
+| S3 | Accept HTTPS with a self-signed certificate after the user reads a disclaimer and trusts it. The app shows the certificate's SHA-256 fingerprint, trusts that certificate only, and asks again when it changes. It never accepts any certificate without a check. |
+| S4 | Accept plain `http://` after a warning, stronger than the one in S3, that the token travels unencrypted unless the network encrypts it (Tailscale does). |
+| S5 | Keep the token or password encrypted with a key in the Android Keystore. |
+| S6 | One server and one account at a time. Signing out warns when unsent changes would be lost, then clears the cache and the queue. |
+| S7 | Read the timezone, first day of the week and `time_resolution_minutes` from `GET /api/v9/me`, and use the account timezone everywhere. |
 
 ### 5.2 Timer
 
-| ID | Requirement | Priority |
-|---|---|---|
-| T1 | Start and stop the timer, and edit the running entry: description, project, task, tags, billable. | MUST |
-| T2 | Continue a past entry. | MUST |
-| T3 | Show stopped entries as the server returns them, after it snaps them to `time_resolution_minutes`. | MUST |
-| T4 | Description autocomplete from recent entries. | SHOULD |
-| T5 | Favorites: start any of up to 9 pinned entries in one tap. They are the same favorites the web app shows, read from and written to `/me/preferences`. | SHOULD |
+| ID | Requirement |
+|---|---|
+| T1 | Start and stop the timer, and edit the running entry: description, project, task, tags, billable. |
+| T2 | Continue a past entry. |
+| T3 | Show stopped entries as the server returns them, after it snaps them to `time_resolution_minutes`. |
+| T4 | Description autocomplete from recent entries. |
+| T5 | Favorites: start any of up to 9 pinned entries in one tap. They are the same favorites the web app shows, read from and written to `/me/preferences`. |
 
 ### 5.3 Manual entry
 
-| ID | Requirement | Priority |
-|---|---|---|
-| M1 | Add a past entry by start and end or by duration, with Tokkl's parsing: `9`, `930`, `9:30`, `4pm`, entries across midnight, and durations like `1h 30m`, `90`, `1,5h`. | MUST |
+| ID | Requirement |
+|---|---|
+| M1 | Add a past entry by start and end or by duration, with Tokkl's parsing: `9`, `930`, `9:30`, `4pm`, entries across midnight, and durations like `1h 30m`, `90`, `1,5h`. |
 
 ### 5.4 History and editing
 
-| ID | Requirement | Priority |
-|---|---|---|
-| H1 | Day-grouped history that loads older days from the server as you scroll. | MUST |
-| H2 | Edit every field of an entry. | MUST |
-| H3 | Delete with undo, using Tokkl's restore endpoint. | MUST |
-| H4 | Group similar entries within a day, as the web app does. | SHOULD |
-| H5 | Duplicate an entry. | SHOULD |
-| H6 | Split an entry. | SHOULD |
-| H7 | Trash: list deleted entries, restore them, purge one or all. | SHOULD |
+| ID | Requirement |
+|---|---|
+| H1 | Day-grouped history that loads older days from the server as you scroll. |
+| H2 | Edit every field of an entry. |
+| H3 | Delete with undo, using Tokkl's restore endpoint. |
+| H4 | Group similar entries within a day, as the web app does. |
+| H5 | Duplicate an entry. |
+| H6 | Split an entry. |
+| H7 | Trash: list deleted entries, restore them, purge one or all. |
 
 ### 5.5 Calendar
 
-| ID | Requirement | Priority |
-|---|---|---|
-| K1 | Week view in the account timezone. | SHOULD |
-| K2 | Create, move and resize entries by touch: long-press then drag. | SHOULD |
+| ID | Requirement |
+|---|---|
+| K1 | Week view in the account timezone. |
+| K2 | Create, move and resize entries by touch: long-press then drag. |
 
 ### 5.6 Projects, clients, tags and tasks
 
-| ID | Requirement | Priority |
-|---|---|---|
-| P1 | Pick a project, task and tags wherever an entry is edited, including archived items when an old entry uses them. | MUST |
-| P2 | Create, edit and archive projects: colour, client, rate, estimate, billable default. | SHOULD |
-| P3 | Create, edit, archive and restore clients. | SHOULD |
-| P4 | Create, rename and delete tags. | SHOULD |
-| P5 | Create, edit and delete tasks within a project. | SHOULD |
+| ID | Requirement |
+|---|---|
+| P1 | Pick a project, task and tags wherever an entry is edited, including archived items when an old entry uses them. |
+| P2 | Create, edit and archive projects: colour, client, rate, estimate, billable default. |
+| P3 | Create, edit, archive and restore clients. |
+| P4 | Create, rename and delete tags. |
+| P5 | Create, edit and delete tasks within a project. |
 
 ### 5.7 Reports
 
-| ID | Requirement | Priority |
-|---|---|---|
-| R1 | Summary report: totals, billable share, amounts, a daily chart and a project breakdown, for any date range. | MUST |
-| R2 | Detailed report: every matching entry, paged by the server. | SHOULD |
-| R3 | Weekly report: the project-by-week grid. | SHOULD |
-| R4 | Filters by project, client, tag and billable, as in the web app. | SHOULD |
-| R5 | Reports need the server. With no connection the screen says so instead of showing stale numbers. | MUST |
+| ID | Requirement |
+|---|---|
+| R1 | Summary report: totals, billable share, amounts, a daily chart and a project breakdown, for any date range. |
+| R2 | Detailed report: every matching entry, paged by the server. |
+| R3 | Weekly report: the project-by-week grid. |
+| R4 | Filters by project, client, tag and billable, as in the web app. |
+| R5 | Reports need the server. With no connection the screen says so instead of showing stale numbers. |
 
 ### 5.8 Android integration
 
-| ID | Requirement | Priority |
-|---|---|---|
-| N1 | An ongoing notification while a timer runs, with the description, project, a ticking elapsed time and a Stop action. | MUST |
-| N2 | On Android 16 and later, promote that notification to a Live Update, which shows as a chip in the status bar, at the top of the notification drawer and on the lock screen. Elsewhere it stays a regular ongoing notification. | SHOULD |
-| N3 | A home screen widget with the running timer, Start and Stop, and the favorites. | MUST |
-| N4 | A Quick Settings tile that shows whether a timer runs. Tapping it stops the running timer, or continues the last entry when none runs. (Proposed.) | MUST |
-| N5 | Ask for the notification permission on Android 13 and later when the first timer starts, and say what is lost without it. | MUST |
-| N6 | Launcher shortcuts (long-press the app icon) for the favorites. (Proposed.) | COULD |
+| ID | Requirement |
+|---|---|
+| N1 | An ongoing notification while a timer runs, with the description, project, a ticking elapsed time and a Stop action. |
+| N2 | On Android 16 and later, promote that notification to a Live Update, which shows as a chip in the status bar, at the top of the notification drawer and on the lock screen. Elsewhere it stays a regular ongoing notification. |
+| N3 | A home screen widget with the running timer, Start and Stop, and the favorites. |
+| N4 | A Quick Settings tile that shows whether a timer runs. Tapping it stops the running timer, or continues the last entry when none runs. (Proposed.) |
+| N5 | Ask for the notification permission on Android 13 and later when the first timer starts, and say what is lost without it. |
+| N6 | Launcher shortcuts (long-press the app icon) for the favorites. (Proposed.) |
 
 ### 5.9 Offline
 
-| ID | Requirement | Priority |
-|---|---|---|
-| O1 | Start, stop, create and edit entries with no route to the server. Each change waits in a queue on the phone, marked as not sent, and goes out in order when the server is reachable. A timer started offline keeps its real start time. | MUST |
-| O2 | Cache what the app last loaded: projects, clients, tags, tasks, favorites and about two weeks of history. All of it can be read offline, and entries can be edited. | MUST |
-| O3 | When the phone and another client both changed an entry, the change that reaches the server last wins. | MUST |
-| O4 | Send the queue in the background when the network comes back, with the app closed. | MUST |
-| O5 | Show how many changes are not sent and when the server last answered. | SHOULD |
+| ID | Requirement |
+|---|---|
+| O1 | Start, stop, create and edit entries with no route to the server. Each change waits in a queue on the phone, marked as not sent, and goes out in order when the server is reachable. A timer started offline keeps its real start time. |
+| O2 | Cache what the app last loaded: projects, clients, tags, tasks, favorites and about two weeks of history. All of it can be read offline, and entries can be edited. |
+| O3 | When the phone and another client both changed an entry, the change that reaches the server last wins. |
+| O4 | Send the queue in the background when the network comes back, with the app closed. |
+| O5 | Show how many changes are not sent and when the server last answered. |
 
 ### 5.10 Settings
 
-| ID | Requirement | Priority |
-|---|---|---|
-| G1 | Theme: light, dark, or follow the system. | SHOULD |
-| G2 | Opt-in dynamic color. | COULD |
+| ID | Requirement |
+|---|---|
+| G1 | Theme: light, dark, or follow the system. |
+| G2 | Opt-in dynamic color. |
 
 ## 6. Architecture
 
@@ -265,3 +265,5 @@ Answers as given on 2026-10-17. Later answers override earlier ones.
 10. Theme? Always Tokkl's palette, light and dark, on Material 3 components, with Anybody for the running clock and totals. Dynamic color off, or at most an opt-in setting.
 11. Devices and versions? Phones first, with layouts that adapt to tablets and foldables but no separate design. No Wear OS app in the first version. Android 8.0 (API 26) or newer. On Android 16 the running timer is a Live Update; older versions get a regular ongoing notification.
 12. Summary and defaults? Confirmed: API token or email and password, one account at a time, English only, Kotlin and Jetpack Compose, MIT, `com.github.e0ipso.tokkl`, F-Droid only for now. No GitHub repo yet, but plan for one with GitHub Actions like Tokkl's.
+13. What goes in the first release? Everything in section 5. The first release is feature complete.
+14. What do priorities mean? Nothing. Everything has to be done, so section 5 has no priority column.
