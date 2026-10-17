@@ -4,7 +4,7 @@ A native Android client for a self-hosted Tokkl server. It does the daily work o
 
 - Owner: Tokkl contributors
 - Status: requirements gathered in an interview on 2026-10-17 (appendix). No code yet. Anything marked "proposed" came from the interviewer and has not been reviewed.
-- Last updated: 2026-10-17
+- Last updated: 2026-10-17 (second interview round, answers 25 to 34)
 
 ## 1. Why this exists
 
@@ -28,6 +28,8 @@ Tokkl set itself a bar: if starting a timer is slower than in Toggl, the owner d
 - Tokkl's admin pages, Toggl CSV import, JSON export and restore, and bulk edit. They stay in the web app.
 - A Wear OS app and a separate tablet design.
 - Client certificates (mTLS).
+- Reminders, idle detection and Pomodoro (Tokkl T13). A "forgot to start" reminder would need a wakeup while no timer runs, which section 7 rules out. If one comes later, it is the "timer still running after N hours" reminder.
+- Push from the server in the first version. The phone learns about changes made elsewhere on the events in section 6.3. UnifiedPush is a later option (risk 10).
 - Proprietary libraries, including Google Play Services and Firebase. There is no push through FCM.
 
 ## 2. User and context
@@ -85,13 +87,14 @@ The first release is feature complete: it ships every requirement below, so they
 
 | ID | Requirement |
 |---|---|
-| S1 | Sign in with a server URL and the API token (default), or email and password. The URL may carry a path, such as `https://example.com/tokkl`. |
+| S1 | Sign in with a server URL and the API token (default), or email and password. The URL may carry a path, such as `https://example.com/tokkl`. Email and password sign in once: the app reads `api_token` from `GET /api/v9/me`, keeps the token and never stores the password. |
 | S2 | Accept HTTPS with a publicly trusted certificate or with a CA the user installed in Android. |
 | S3 | Accept HTTPS with a self-signed certificate after the user reads a disclaimer and trusts it. The app shows the certificate's SHA-256 fingerprint, trusts that certificate only, and asks again when it changes. It never accepts any certificate without a check. |
 | S4 | Accept plain `http://` after a warning, stronger than the one in S3, that the token travels unencrypted unless the network encrypts it (Tailscale does). |
-| S5 | Keep the token or password encrypted with a key in the Android Keystore. |
+| S5 | Keep the token encrypted with a key in the Android Keystore. |
 | S6 | One server and one account at a time. Signing out warns when unsent changes would be lost, then clears the cache and the queue. |
 | S7 | Read the timezone, first day of the week and `time_resolution_minutes` from `GET /api/v9/me`, and use the account timezone everywhere. |
+| S8 | No Android backup. The manifest sets `android:allowBackup="false"`, and `dataExtractionRules` exclude everything from `<cloud-backup>` and `<device-transfer>`, because on Android 12 and later `allowBackup="false"` alone does not stop device-to-device transfer on some phones ([Auto Backup](https://developer.android.com/identity/data/autobackup)). Keystore keys do not move to a new phone, so a restored token could not be decrypted, and a restored queue could replay old changes. On a new phone the user signs in again. |
 
 ### 5.2 Timer
 
@@ -99,7 +102,7 @@ The first release is feature complete: it ships every requirement below, so they
 |---|---|
 | T1 | Start and stop the timer, and edit the running entry: description, project, task, tags, billable. |
 | T2 | Continue a past entry. |
-| T3 | Show stopped entries as the server returns them, after it snaps them to `time_resolution_minutes`. |
+| T3 | Show stopped entries as the server returns them, after it snaps them to `time_resolution_minutes`. Entries not yet sent are snapped on the phone with a port of `snapSpan` (`../tokkl/packages/common/snap.ts`) in the account timezone, so their times do not change when the server answers. The running clock is not snapped. |
 | T4 | Description autocomplete from recent entries. |
 | T5 | Favorites: start any of up to 9 pinned entries in one tap. They are the same favorites the web app shows, read from and written to `/me/preferences`. |
 
@@ -115,24 +118,24 @@ The first release is feature complete: it ships every requirement below, so they
 |---|---|
 | H1 | Day-grouped history that loads older days from the server as you scroll. |
 | H2 | Edit every field of an entry. |
-| H3 | Delete with undo, using Tokkl's restore endpoint. |
+| H3 | Delete with undo, using Tokkl's restore endpoint. A delete made offline waits in the queue; undoing it before it is sent removes it from the queue. |
 | H4 | Group similar entries within a day, as the web app does. |
 | H5 | Duplicate an entry. |
 | H6 | Split an entry. |
-| H7 | Trash: list deleted entries, restore them, purge one or all. |
+| H7 | Trash: list deleted entries, restore them, purge one or all. Needs the server. |
 
 ### 5.5 Calendar
 
 | ID | Requirement |
 |---|---|
-| K1 | Week view in the account timezone. |
-| K2 | Create, move and resize entries by touch: long-press then drag. |
+| K1 | Calendar in the account timezone. Phones in portrait show one day at a time, swipe to the next day, and show the week with its daily totals in a strip on top. Landscape, tablets and unfolded foldables show the week. This differs from the web app, which squeezes seven columns of about 45 px into a phone (`../tokkl/packages/web/src/styles.css`, the 760 px media query). |
+| K2 | Create, move and resize entries by touch: long-press then drag, in both the day and the week view. |
 
 ### 5.6 Projects, clients, tags and tasks
 
 | ID | Requirement |
 |---|---|
-| P1 | Pick a project, task and tags wherever an entry is edited, including archived items when an old entry uses them. |
+| P1 | Pick a project, task and tags wherever an entry is edited, including archived items when an old entry uses them. A new tag can be typed offline: the queue sends tags by name, and Tokkl creates the missing ones (`resolveTagNames` in `../tokkl/packages/api/src/models/tags.ts`). Creating a project, client or task needs the server; offline, the picker offers what is cached and says so. |
 | P2 | Create, edit and archive projects: colour, client, rate, estimate, billable default. |
 | P3 | Create, edit, archive and restore clients. |
 | P4 | Create, rename and delete tags. |
@@ -152,10 +155,10 @@ The first release is feature complete: it ships every requirement below, so they
 
 | ID | Requirement |
 |---|---|
-| N1 | An ongoing notification while a timer runs, with the description, project, a ticking elapsed time and a Stop action. |
-| N2 | On Android 16 and later, promote that notification to a Live Update, which shows as a chip in the status bar, at the top of the notification drawer and on the lock screen. Elsewhere it stays a regular ongoing notification. |
-| N3 | A home screen widget with the running timer, Start and Stop, and the favorites. |
-| N4 | A Quick Settings tile that shows whether a timer runs. Tapping it stops the running timer, or continues the last entry when none runs. |
+| N1 | An ongoing notification while a timer runs, with the description, project, a ticking elapsed time and a Stop action. The system ticks the clock (`setUsesChronometer`), so no foreground service runs. Since Android 14 the user can swipe an ongoing notification away ([behavior changes](https://developer.android.com/about/versions/14/behavior-changes-all)). A dismissed notification comes back on the next start, stop or edit of the running entry from any surface, not when the app opens. |
+| N2 | On Android 16 and later, promote that notification to a Live Update, which shows as a chip in the status bar, at the top of the notification drawer and on the lock screen. Elsewhere it stays a regular ongoing notification. A Live Update cannot be colorized ([Live Updates](https://developer.android.com/develop/ui/views/notifications/live-update)), so Tokkl's palette reaches only its icon and accent colour. |
+| N3 | A home screen widget with the running timer, Start and Stop, and the favorites. It updates on the same events as the notification and the tile (section 6.3). |
+| N4 | A Quick Settings tile that shows whether a timer runs. Tapping it stops the running timer, or continues the last entry when none runs. The tap acts on what the tile shows and never waits for the network. When the notification shade opens (`onStartListening`), the tile asks the server for the running entry, at most once a minute. |
 | N5 | Ask for the notification permission on Android 13 and later when the first timer starts, and say what is lost without it. |
 | N6 | Launcher shortcuts (long-press the app icon) for the favorites. One tap starts that timer. |
 
@@ -163,11 +166,12 @@ The first release is feature complete: it ships every requirement below, so they
 
 | ID | Requirement |
 |---|---|
-| O1 | Start, stop, create and edit entries with no route to the server. Each change waits in a queue on the phone, marked as not sent, and goes out in order when the server is reachable. A timer started offline keeps its real start time. |
+| O1 | Start, stop, create, edit and delete entries with no route to the server. Each change waits in a queue on the phone, marked as not sent, and goes out in order when the server is reachable. A timer started offline keeps its real start time. |
 | O2 | Cache what the app last loaded: projects, clients, tags, tasks, favorites and about two weeks of history. All of it can be read offline, and entries can be edited. |
-| O3 | When the phone and another client both changed an entry, the change that reaches the server last wins. |
+| O3 | When the phone and another client both changed an entry, the change that reaches the server last wins. A queued start is the exception, because Tokkl stops the running entry when a new one starts (Tokkl T2). Before sending a queued start, the app fetches the running entry. If that entry started after the queued start, the app sends the queued entry as stopped at that entry's start, and the later timer keeps running. The timer started last is the one the user meant. |
 | O4 | Send the queue in the background when the network comes back, with the app closed. |
 | O5 | Show how many changes are not sent and when the server last answered. |
+| O6 | When the server rejects a queued change: a 409 on a stop is dropped without a message, because the entry is stopped either way. A 404 is dropped, and the app says so ("1 change discarded: the entry was deleted elsewhere"). A 400 moves to a "needs attention" list with the server's message, where the user fixes and resends it or discards it; later changes to the same entry wait behind it, and the rest of the queue goes on. A 403 pauses the whole queue and asks the user to sign in again, discarding nothing. A 5xx or no network retries with backoff. |
 
 ### 5.10 Settings
 
@@ -188,7 +192,7 @@ Proposed. Nothing here is built.
 - Room (SQLite) for the cache and the queue of unsent changes.
 - WorkManager to send the queue when the network comes back.
 - OkHttp and kotlinx.serialization for the API, with a trust manager that adds the pinned self-signed certificate (S3).
-- A Kotlin port of the duration and time-of-day parsing in `../tokkl/packages/common`, checked against the same cases as the TypeScript tests.
+- A Kotlin port of the duration and time-of-day parsing and of `snapSpan` (T3) in `../tokkl/packages/common`, checked against the same cases as the TypeScript tests.
 
 Every dependency must be free software (section 8.1).
 
@@ -201,6 +205,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 - The server is the source of truth. The phone holds the cache and the queue.
 - The app refreshes the running entry and the visible data when it opens, after a change, and when the network comes back. It does not poll on a short timer.
 - The notification, widget and tile read the running entry from the phone, so they react at once, and the queue sends the change behind them.
+- No push reaches the phone, so it can miss a timer started or stopped on another client. Two more events cover that. Opening the notification shade makes the tile fetch `GET /me/time_entries/current`, at most once a minute (N4); the cap keeps Toggl's 30 requests an hour for `/me` endpoints in reach (risk 2). While a timer runs, a WorkManager job checks the running entry every 15 minutes, the shortest periodic interval WorkManager allows, and clears the notification and widget if the timer stopped elsewhere. Otherwise the phone learns of a timer started elsewhere only on one of these events.
 
 ## 7. Non-functional requirements
 
@@ -209,7 +214,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 | Speed | A tap on Start or Stop in the app, notification, widget or tile changes the state on the phone without waiting for the server. Tests prove it with a network that never answers. Jetpack Macrobenchmark runs cold start (`StartupTimingMetric`) and tap-to-state (`TraceSectionMetric`) on the CI emulator and fails a build that is slower than the previous one. The goals are 200 ms from tap to new state and 1.5 s cold start on a mid-range phone; no real phone checks them, so they guide design but do not gate releases. |
 | Compatibility | Android 8.0 (API 26) and later. Phones first; tablets and foldables get adaptive layouts. |
 | Privacy | No network traffic to any host but the configured server. |
-| Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. |
+| Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. While a timer runs, one check every 15 minutes (section 6.3). |
 | Accessibility | WCAG AA contrast, TalkBack labels on every control, colour never the only signal, layouts that survive the largest font scale. |
 | Language | English. All text lives in string resources. No other language is planned; contributors can add translations. |
 | Tests | JVM unit tests, Compose UI tests, and instrumented tests on an emulator against a real Tokkl server from the `ghcr.io/e0ipso/tokkl` image, never a fake one. |
@@ -227,14 +232,6 @@ From F-Droid's docs, read 2026-10-17:
 
 Decisions: the license is MIT, like Tokkl. The application ID is `com.github.e0ipso.tokkl`, the same ID as the macOS and KDE companions.
 
-### 8.3 Versions and stores
-
-Interviewer's proposals from 2026-10-17, confirmed one by one with the owner:
-
-- F-Droid only (owner, 2026-10-17). No Play Store listing is planned. The signed APK on each GitHub release (section 8.2) serves anyone who sideloads.
-- The app has its own version, independent of Tokkl's, with its own `v*` tags and changelog, starting at 0.1.0 (owner, 2026-10-17). semantic-release does not support a first release below 1.0.0 ([FAQ](https://semantic-release.gitbook.io/semantic-release/support/faq)), so the first release is a hand-made `v0.1.0` tag and semantic-release counts on from it. A commit marked as a breaking change then moves the app to 1.0.0.
-- No minimum server version (owner, 2026-10-17). The app checks what the server can do instead: a missing `time_resolution_minutes` in `GET /api/v9/me` means no snapping to show, and a 404 from a Tokkl-only endpoint such as `/api/app/trash` hides the features that use it. The same checks hide those features against Toggl later (risk 4).
-
 ### 8.2 GitHub and CI
 
 The repo is local only for now. When it moves to `github.com/e0ipso/tokkl-android`, it copies Tokkl's setup:
@@ -245,17 +242,27 @@ The repo is local only for now. When it moves to `github.com/e0ipso/tokkl-androi
 - semantic-release on pushes to `main` with Tokkl's release rules and `v${version}` tags. It writes `CHANGELOG.md` and the version into the Gradle build, derives `versionCode` from the version, and attaches the signed release APK to the GitHub release, where F-Droid's `Binaries` can find it.
 - The signing key lives in GitHub Actions secrets, never in the repo.
 
+### 8.3 Versions and stores
+
+Interviewer's proposals from 2026-10-17, confirmed one by one with the owner:
+
+- F-Droid only (owner, 2026-10-17). No Play Store listing is planned. The signed APK on each GitHub release (section 8.2) serves anyone who sideloads.
+- The app has its own version, independent of Tokkl's, with its own `v*` tags and changelog, starting at 0.1.0 (owner, 2026-10-17). semantic-release does not support a first release below 1.0.0 ([FAQ](https://semantic-release.gitbook.io/semantic-release/support/faq)), so the first release is a hand-made `v0.1.0` tag and semantic-release counts on from it. A commit marked as a breaking change then moves the app to 1.0.0.
+- No minimum server version (owner, 2026-10-17). The app checks what the server can do instead: a missing `time_resolution_minutes` in `GET /api/v9/me` means no snapping to show, and a 404 from a Tokkl-only endpoint such as `/api/app/trash` hides the features that use it. The same checks hide those features against Toggl later (risk 4).
+
 ## 9. Risks and open questions
 
 1. Tokkl's PRD lists native mobile apps as a non-goal, with exceptions only for the three desktop companions. That non-goal and its section 5.8 get a new row when this app's first release ships, not before. On 2026-10-17 tokkl's `main` checkout had uncommitted edits to its PRD, so it was left alone.
 2. Toggl Track's API quotas. Since 2025-09-05, workspace and organization requests are capped per user per organization at 30 an hour on Free, 240 on Starter and 600 on Premium, with custom limits on Enterprise. User endpoints such as `/me` are capped at 30 an hour on every plan below Enterprise. The window slides over 60 minutes, and a request over the limit gets HTTP 402 ([Toggl support](https://support.toggl.com/api-webhook-limits), read 2026-10-17). Tokkl's web app polls the running timer every 30 seconds, which alone is 120 requests an hour. If this app polled like that, pointing it at Toggl would hit the Free quota within 15 minutes.
 3. F-Droid's NonFreeNet anti-feature covers apps that "promote or depend entirely on a proprietary network service" ([Anti-Features](https://f-droid.org/docs/Anti-Features/), read 2026-10-17). It does not apply while the app talks to Tokkl only. Once Toggl support lands, F-Droid's reviewers decide whether supporting Toggl counts as promoting it.
 4. Tokkl-only features (trash, undo of a delete, favorites, time resolution) will not work against Toggl. The capability checks in section 8.3 hide them there, as they do on older Tokkl servers.
-5. The Kotlin port of Tokkl's time parsing can drift from the TypeScript original. Sharing the test cases between the two repos would catch that.
+5. The Kotlin port of Tokkl's time parsing and snapping can drift from the TypeScript original. Sharing the test cases between the two repos would catch that.
 6. Live Updates depend on the device and on the Android 16 release it runs. The notification has to work without them.
 7. Google's developer verification. From 2026-09-30 certified Android 7+ phones in Brazil, Indonesia, Singapore and Thailand block apps from unregistered developers when installed from participating stores, and Google plans to extend it to all apps worldwide in 2027. A full registration needs a government ID checked by Google and a $25 fee; the free limited account covers only 20 devices ([developer verification](https://developer.android.com/developer-verification), [FAQ](https://developer.android.com/developer-verification/guides/faq), read 2026-10-17). Whether F-Droid is a participating store was not confirmed. The owner will not register for now and will decide in 2027. Shipping F-Droid builds signed with the project's own key (section 8.1) keeps registration possible later.
 8. Some phone makers restrict background work, which can delay sending the queue. To verify on real devices.
 9. Build environment. This machine had no JDK or Android SDK on 2026-10-17. `/dev/kvm` exists and the user is in the `kvm` group, so a headless emulator is possible.
+10. Changes made on another client reach the phone late (section 6.3). UnifiedPush would let the Tokkl server tell the phone at once without Google, but it needs new server work, a distributor app such as ntfy on every phone, and an ntfy server, which is a host other than the configured one (principle 1). Toggl cannot send it, so the event-based checks stay either way.
+11. A password change in Tokkl leaves the API token valid today (Tokkl A13), so a phone that signed in with a password keeps working after the password is reset. A Tokkl change to rotate the token on every password change was handed over on 2026-10-17 and is not made yet.
 
 ## Appendix: interview record
 
@@ -285,3 +292,13 @@ Answers as given on 2026-10-17. Later answers override earlier ones.
 22. Speed targets and how to enforce them? Tap path never waits for the server, proven by tests; Macrobenchmark on the CI emulator catches regressions. No manual real-phone run before releases, so 200 ms and 1.5 s are goals, not gates.
 23. Languages? English only. Contributors may add translations; the owner maintains none.
 24. When does tokkl's PRD mention this app? When this app's first release ships.
+25. A start queued offline collides with a timer started later on the laptop? The timer started last wins. Before sending a queued start, fetch the running entry; if it started later, send the queued entry as stopped at its start.
+26. How does the phone learn of changes made elsewhere? No push in the first version. The tile checks when the shade opens, at most once a minute, and a 15-minute check runs while a timer runs. UnifiedPush is a later option.
+27. The server rejects a queued change? 409 on a stop: drop quietly. 404: drop and say so. 400: a "needs attention" list, holding back later changes to the same entry. 403: pause the queue and sign in again. 5xx or no network: retry with backoff.
+28. What else works offline? Delete, with undo removing it from the queue before it is sent, and new tags by name. New projects, clients and tasks and the trash need the server.
+29. The user swipes the timer notification away? It stays gone until the running entry next changes, not when the app opens. No foreground service.
+30. Email and password sign-in? Swap them for the API token and never store the password. Tokkl should also rotate the token on every password change; that is a separate change in `../tokkl`.
+31. Android backup? Off, including device-to-device transfer.
+32. Snap entries not yet sent? Yes, on the phone, with a port of `snapSpan`.
+33. Reminders, idle detection, Pomodoro? Not in the first release.
+34. Week view on a phone? One day at a time in portrait with a week strip on top; the week in landscape, on tablets and on unfolded foldables.
