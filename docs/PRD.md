@@ -206,12 +206,12 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 
 | Area | Requirement |
 |---|---|
-| Speed | A tap on Start or Stop in the notification, widget or tile updates the phone at once, before the server answers. Numeric targets for cold start and screen loads are open. |
+| Speed | A tap on Start or Stop in the app, notification, widget or tile shows the new state within 200 ms, online or offline, before the server answers. A cold start shows the timer screen from the cache within 1.5 s on a mid-range phone, measured with Jetpack Macrobenchmark on a real device. |
 | Compatibility | Android 8.0 (API 26) and later. Phones first; tablets and foldables get adaptive layouts. |
 | Privacy | No network traffic to any host but the configured server. |
 | Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. |
 | Accessibility | WCAG AA contrast, TalkBack labels on every control, colour never the only signal, layouts that survive the largest font scale. |
-| Language | English. All text lives in string resources so translations can be added later. |
+| Language | English. All text lives in string resources. No other language is planned; contributors can add translations. |
 | Tests | JVM unit tests, Compose UI tests, and instrumented tests on an emulator against a real Tokkl server from the `ghcr.io/e0ipso/tokkl` image, never a fake one. |
 
 ## 8. Distribution and release
@@ -227,6 +227,14 @@ From F-Droid's docs, read 2026-10-17:
 
 Decisions: the license is MIT, like Tokkl. The application ID is `com.github.e0ipso.tokkl`, the same ID as the macOS and KDE companions.
 
+### 8.3 Versions and stores
+
+Decided by the interviewer on 2026-10-17, when the owner left these to them:
+
+- F-Droid only. No Play Store listing is planned. The signed APK on each GitHub release (section 8.2) serves anyone who sideloads.
+- The app has its own version, independent of Tokkl's, with its own `v*` tags and changelog. Tying the two would need releases across two repos, and F-Droid reads the version code from this repo's tags.
+- The oldest supported server is Tokkl 1.2.0, the first release whose `GET /api/v9/me` returns `time_resolution_minutes`. The trash, restore and favorites endpoints were already in it. Tokkl does not report its version over the API, so the app checks for that field: when `GET /api/v9/me` lacks it, sign-in fails with a message that the server needs Tokkl 1.2.0 or later.
+
 ### 8.2 GitHub and CI
 
 The repo is local only for now. When it moves to `github.com/e0ipso/tokkl-android`, it copies Tokkl's setup:
@@ -239,7 +247,7 @@ The repo is local only for now. When it moves to `github.com/e0ipso/tokkl-androi
 
 ## 9. Risks and open questions
 
-1. Tokkl's PRD lists native mobile apps as a non-goal, with exceptions only for the three desktop companions. If this app ships, that non-goal and its section 5.8 need a new row.
+1. Tokkl's PRD lists native mobile apps as a non-goal, with exceptions only for the three desktop companions. That non-goal and its section 5.8 get a new row when this app's first release ships, not before. On 2026-10-17 tokkl's `main` checkout had uncommitted edits to its PRD, so it was left alone.
 2. Toggl Track's API quotas. Since 2025-09-05, workspace and organization requests are capped per user per organization at 30 an hour on Free, 240 on Starter and 600 on Premium, with custom limits on Enterprise. User endpoints such as `/me` are capped at 30 an hour on every plan below Enterprise. The window slides over 60 minutes, and a request over the limit gets HTTP 402 ([Toggl support](https://support.toggl.com/api-webhook-limits), read 2026-10-17). Tokkl's web app polls the running timer every 30 seconds, which alone is 120 requests an hour. If this app polled like that, pointing it at Toggl would hit the Free quota within 15 minutes.
 3. F-Droid's NonFreeNet anti-feature covers apps that "promote or depend entirely on a proprietary network service" ([Anti-Features](https://f-droid.org/docs/Anti-Features/), read 2026-10-17). It does not apply while the app talks to Tokkl only. Once Toggl support lands, F-Droid's reviewers decide whether supporting Toggl counts as promoting it.
 4. Tokkl-only features (trash, undo of a delete, favorites, time resolution) will not work against Toggl. The Toggl version must detect the backend and hide them.
@@ -247,7 +255,6 @@ The repo is local only for now. When it moves to `github.com/e0ipso/tokkl-androi
 6. Live Updates depend on the device and on the Android 16 release it runs. The notification has to work without them.
 7. Some phone makers restrict background work, which can delay sending the queue. To verify on real devices.
 8. Build environment. This machine had no JDK or Android SDK on 2026-10-17. `/dev/kvm` exists and the user is in the `kvm` group, so a headless emulator is possible.
-9. Open: Play Store as well as F-Droid; whether the app's version follows Tokkl's or runs on its own; numeric speed targets; which languages come after English.
 
 ## Appendix: interview record
 
@@ -270,3 +277,4 @@ Answers as given on 2026-10-17. Later answers override earlier ones.
 15. Quick Settings tile (N4)? Keep it as written: a tap stops the running timer, or continues the last entry when none runs.
 16. Launcher shortcuts (N6)? Yes: long-pressing the app icon lists the favorites, and a tap starts that timer.
 17. Tests against a real Tokkl server? Yes, the `ghcr.io/e0ipso/tokkl` image, not a fake.
+18. Play Store, versioning, speed targets, languages, tokkl's PRD? Left to the interviewer ("just do it"). Decisions in sections 7, 8.3 and risk 1.
