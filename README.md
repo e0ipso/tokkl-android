@@ -2,19 +2,23 @@
 
 A native Android client for [Tokkl](https://github.com/e0ipso/tokkl) and Toggl Track.
 
-There is no code yet. The product requirements are being collected in [docs/PRD.md](docs/PRD.md).
+The app is a Gradle project with one launch screen so far. The product requirements live in [docs/PRD.md](docs/PRD.md).
 
 ## Building
 
-There is no Gradle project yet. These steps prepare a Linux x86_64 machine to build and test it. Everything installs under `$HOME` and needs no root.
+These steps prepare a Linux x86_64 machine to build and test the app. Everything installs under `$HOME` and needs no root.
 
 | Component | Version | Path |
 | --- | --- | --- |
 | JDK | Eclipse Temurin 21.0.12.1+1 | `~/.local/share/jdk/21` |
 | Android SDK Command-line Tools | 23.0 | `~/Android/Sdk/cmdline-tools/latest` |
 | Android SDK Platform-Tools | 37.0.1 | `~/Android/Sdk/platform-tools` |
+| Android SDK Platform | `platforms;android-37.0`, revision 2 | `~/Android/Sdk/platforms/android-37.0` |
+| Android SDK Build-Tools | 36.0.0 | `~/Android/Sdk/build-tools/36.0.0` |
 | Android Emulator | 37.2.12 | `~/Android/Sdk/emulator` |
 | System image | `system-images;android-36;default;x86_64`, revision 2 | `~/Android/Sdk/system-images` |
+
+The Gradle wrapper downloads Gradle 9.8.1 and checks it against the SHA-256 sum in `gradle/wrapper/gradle-wrapper.properties`. `gradle/libs.versions.toml` sets Android Gradle Plugin 9.4.1, Kotlin 2.4.21 and Compose BOM 2026.09.00. The app compiles against API 37, which Compose UI 1.12 and androidx.core 1.19 require. It targets API 36, the API level of the test emulator. Android Gradle Plugin 9.4 uses Build-Tools 36.0.0 by default.
 
 Android Gradle Plugin 9.4 needs JDK 17 or later, and JDK 21 is an LTS release above that floor. The system image is the plain AOSP build of Android 16 (API 36), not a Google APIs or Play Store build. It keeps SystemUI and the launcher, which tests of the notification, the Quick Settings tile and the widget need. The smaller Automated Test Device images remove both.
 
@@ -44,7 +48,8 @@ unzip -q "$tmp/cmdline-tools.zip" -d "$tmp"
 export JAVA_HOME=~/.local/share/jdk/21
 "$tmp/cmdline-tools/bin/sdkmanager" --sdk_root="$HOME/Android/Sdk" --licenses
 "$tmp/cmdline-tools/bin/sdkmanager" --sdk_root="$HOME/Android/Sdk" \
-  'cmdline-tools;latest' platform-tools emulator 'system-images;android-36;default;x86_64'
+  'cmdline-tools;latest' platform-tools emulator 'system-images;android-36;default;x86_64' \
+  'platforms;android-37.0' 'build-tools;36.0.0'
 rm -rf "$tmp"
 ```
 
@@ -112,6 +117,26 @@ With `-accel on` the emulator refuses to start when KVM is missing, instead of f
 ```sh
 adb emu kill
 adb kill-server
+```
+
+### Build and test
+
+Build the debug APK, run lint and run the JVM unit tests:
+
+```sh
+./gradlew assembleDebug lint testDebugUnitTest
+```
+
+The instrumented tests, including the Compose UI tests, need the emulator from the previous section running:
+
+```sh
+./gradlew connectedDebugAndroidTest
+```
+
+`gradle.properties` caps the Gradle heap at 2 GB and compiles Kotlin inside the Gradle daemon, so no separate Kotlin daemon starts. The Gradle daemon itself stays in memory after the build. Stop it when you finish:
+
+```sh
+./gradlew --stop
 ```
 
 ## Commit messages
