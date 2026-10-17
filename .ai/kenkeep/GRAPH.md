@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:7b86b7da78776b320d7bd34e2cc8581e3cd5ae287f4b98007183af6dccbe08b9'
-node_count: 19
+nodes_hash: 'sha256:11c7bda24c34eb9a602360d2bd0ce2453ad1db7cc0f6c6877cc225d740286d80'
+node_count: 22
 ---
 # kenkeep Graph
 
-Total nodes: 19
+Total nodes: 22
 
 ## map-app-id-license-android-versions
 
@@ -23,6 +23,14 @@ Total nodes: 19
 - **tags:** fdroid, release
 - **derived_from:** docs/PRD.md
 
+## map-gradle-build-sdk-levels-kotlin-and-memory
+
+- **kind:** map
+- **title:** Gradle build settings: SDK levels, Kotlin version source and memory
+- **path:** map-gradle-build-sdk-levels-kotlin-and-memory.md
+- **tags:** android, build, gradle
+- **relates_to:** map-planned-android-stack, practice-emulator-plain-aosp-image-headless, map-jdk-android-sdk-and-agent-shells
+
 ## map-jdk-android-sdk-and-agent-shells
 
 - **kind:** map
@@ -37,6 +45,14 @@ Total nodes: 19
 - **path:** map-planned-android-stack.md
 - **tags:** architecture, android, offline
 - **derived_from:** docs/PRD.md
+
+## map-t3-daily-restart-stops-agent-sessions
+
+- **kind:** map
+- **title:** T3 restarts daily and ends running agent sessions
+- **path:** map-t3-daily-restart-stops-agent-sessions.md
+- **tags:** agents, tooling, machine
+- **relates_to:** map-jdk-android-sdk-and-agent-shells
 
 ## map-tokkl-colour-tokens-and-font
 
@@ -69,6 +85,14 @@ Total nodes: 19
 - **path:** practice-emulator-plain-aosp-image-headless.md
 - **tags:** testing, android, emulator, energy
 - **relates_to:** practice-test-real-tokkl-server-speed-regressions, map-jdk-android-sdk-and-agent-shells
+
+## practice-gradle-no-daemon-in-parallel-worktrees
+
+- **kind:** practice
+- **title:** Build with --no-daemon in parallel worktrees and never run --stop
+- **path:** practice-gradle-no-daemon-in-parallel-worktrees.md
+- **tags:** build, gradle, agents, worktrees
+- **relates_to:** map-jdk-android-sdk-and-agent-shells, practice-run-npm-install-in-every-clone-and-worktree
 
 ## practice-match-web-app-behavior-account-timezone
 

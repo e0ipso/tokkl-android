@@ -22,7 +22,7 @@ The emulator AVD is `tokkl-api36`, built on the plain AOSP image `system-images;
 
 Boot it without a window: `emulator -avd tokkl-api36 -no-window -no-audio -no-boot-anim -no-snapshot -accel on`. With `-accel on` the emulator refuses to start when KVM is missing, instead of falling back to slow software emulation. `emulator -accel-check` says whether KVM works.
 
-This machine is an always-on homelab server tuned for low idle power. When the tests finish, run `adb emu kill` and then `adb kill-server`, so neither the emulator nor the adb server keeps running.
+This machine is an always-on homelab server tuned for low idle power. When the tests finish, run `adb emu kill` and then `adb kill-server`, so neither the emulator nor the adb server keeps running. To look for leftovers, use `pgrep -x adb` and `pgrep -af qemu-system`. `pgrep -f adb` also matches `mariadbd` and the shell that runs the command.
 
 <!-- kk:related:start -->
 # Related
