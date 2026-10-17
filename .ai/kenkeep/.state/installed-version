@@ -2,7 +2,7 @@
   "schema_version": 1,
   "package": "kenkeep",
   "version": "1.19.1",
-  "installed_at": "2026-10-17T19:05:26.420Z",
+  "installed_at": "2026-10-17T19:21:38.551Z",
   "harnesses": [
     "claude",
     "cursor",
