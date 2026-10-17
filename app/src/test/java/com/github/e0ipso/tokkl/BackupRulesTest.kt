@@ -1,8 +1,7 @@
 package com.github.e0ipso.tokkl
 
-import java.io.File
-import java.util.Properties
-import javax.xml.parsers.DocumentBuilderFactory
+import com.github.e0ipso.tokkl.MergedManifest.application
+import com.github.e0ipso.tokkl.MergedManifest.xmlResource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -48,43 +47,7 @@ class BackupRulesTest {
         assertEquals("$where whole-domain excludes", ALL_DOMAINS, excluded)
     }
 
-    private fun application(): Element {
-        val path = testConfig().getProperty("android_merged_manifest")
-            ?: error("test_config.properties has no android_merged_manifest")
-        val manifest = parse(File(path)).documentElement
-        return manifest.childElements().single { it.tagName == "application" }
-    }
-
-    private fun testConfig(): Properties {
-        val stream = javaClass.classLoader!!.getResourceAsStream(TEST_CONFIG)
-            ?: error("$TEST_CONFIG is missing; unitTests.isIncludeAndroidResources must be on")
-        return stream.use { Properties().apply { load(it) } }
-    }
-
-    /** Resolves `@xml/name` to the source file. The app has a single resource directory. */
-    private fun xmlResource(reference: String): Element {
-        assertTrue("$reference is not an @xml/ reference", reference.startsWith("@xml/"))
-        return parse(File("src/main/res/xml/${reference.removePrefix("@xml/")}.xml")).documentElement
-    }
-
-    private fun Element.androidAttribute(name: String): String {
-        assertTrue("<$tagName> has no android:$name", hasAttributeNS(ANDROID_NS, name))
-        return getAttributeNS(ANDROID_NS, name)
-    }
-
-    private fun Element.childElements(): List<Element> {
-        val nodes = childNodes
-        return (0 until nodes.length).map { nodes.item(it) }.filterIsInstance<Element>()
-    }
-
-    private fun parse(file: File) = DocumentBuilderFactory.newInstance()
-        .apply { isNamespaceAware = true }
-        .newDocumentBuilder()
-        .parse(file)
-
     private companion object {
-        const val TEST_CONFIG = "com/android/tools/test_config.properties"
-        const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
         val ALL_DOMAINS = setOf(
             "root", "file", "database", "sharedpref", "external",
             "device_root", "device_file", "device_database", "device_sharedpref",

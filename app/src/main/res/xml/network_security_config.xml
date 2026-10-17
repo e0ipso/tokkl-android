@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Lets the app reach any Tokkl server (docs/PRD.md S2 and S4). Tokkl itself
+    listens on plain HTTP, so cleartext must be allowed; Android 9 and later
+    block it unless the app opts in. Android 7 and later trust only system CAs
+    unless the app also trusts the CAs the user installed.
+
+    A self-signed certificate is pinned in app code (TKA-0021), never here, and
+    the warning before a token goes to an http:// server lives in the sign-in
+    flow (TKA-0022).
+-->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config
+        cleartextTrafficPermitted="true"
+        tools:ignore="InsecureBaseConfiguration,AcceptsUserCertificates">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
