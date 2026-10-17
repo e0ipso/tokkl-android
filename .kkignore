@@ -42,3 +42,8 @@
 .github/skills/
 .opencode/plugins/
 .opencode/skills/
+
+# Agent definitions shipped by strikethroo, not project docs.
+.claude/agents/
+.cursor/agents/
+.codex/agents/
