@@ -3,8 +3,8 @@
 A native Android client for a self-hosted Tokkl server. It does the daily work of Tokkl's web app and adds what a PWA cannot: the running timer in a notification, a home screen widget, a Quick Settings tile, and starting and stopping timers with no connection to the server. A later version talks to Toggl Track through the same API.
 
 - Owner: Tokkl contributors
-- Status: requirements gathered in an interview on 2026-10-17 (appendix). No code yet. Anything marked "proposed" came from the interviewer and has not been reviewed.
-- Last updated: 2026-10-17 (second interview round, answers 25 to 34)
+- Status: requirements gathered in interviews on 2026-10-17. No code yet. Anything marked "proposed" came from the interviewer and has not been reviewed.
+- Last updated: 2026-10-17
 
 ## 1. Why this exists
 
@@ -182,7 +182,7 @@ The first release is feature complete: it ships every requirement below, so they
 
 ## 6. Architecture
 
-Proposed. Nothing here is built.
+Proposed, except Kotlin and Jetpack Compose, which the owner confirmed. Nothing here is built.
 
 ### 6.1 Stack
 
@@ -244,11 +244,9 @@ The repo is local only for now. When it moves to `github.com/e0ipso/tokkl-androi
 
 ### 8.3 Versions and stores
 
-Interviewer's proposals from 2026-10-17, confirmed one by one with the owner:
-
-- F-Droid only (owner, 2026-10-17). No Play Store listing is planned. The signed APK on each GitHub release (section 8.2) serves anyone who sideloads.
-- The app has its own version, independent of Tokkl's, with its own `v*` tags and changelog, starting at 0.1.0 (owner, 2026-10-17). semantic-release does not support a first release below 1.0.0 ([FAQ](https://semantic-release.gitbook.io/semantic-release/support/faq)), so the first release is a hand-made `v0.1.0` tag and semantic-release counts on from it. A commit marked as a breaking change then moves the app to 1.0.0.
-- No minimum server version (owner, 2026-10-17). The app checks what the server can do instead: a missing `time_resolution_minutes` in `GET /api/v9/me` means no snapping to show, and a 404 from a Tokkl-only endpoint such as `/api/app/trash` hides the features that use it. The same checks hide those features against Toggl later (risk 4).
+- F-Droid only. No Play Store listing is planned. The signed APK on each GitHub release (section 8.2) serves anyone who sideloads.
+- The app has its own version, independent of Tokkl's, with its own `v*` tags and changelog, starting at 0.1.0. semantic-release does not support a first release below 1.0.0 ([FAQ](https://semantic-release.gitbook.io/semantic-release/support/faq)), so the first release is a hand-made `v0.1.0` tag and semantic-release counts on from it. A commit marked as a breaking change then moves the app to 1.0.0.
+- No minimum server version. The app checks what the server can do instead: a missing `time_resolution_minutes` in `GET /api/v9/me` means no snapping to show, and a 404 from a Tokkl-only endpoint such as `/api/app/trash` hides the features that use it. The same checks hide those features against Toggl later (risk 4).
 
 ## 9. Risks and open questions
 
@@ -263,42 +261,3 @@ Interviewer's proposals from 2026-10-17, confirmed one by one with the owner:
 9. Build environment. This machine had no JDK or Android SDK on 2026-10-17. `/dev/kvm` exists and the user is in the `kvm` group, so a headless emulator is possible.
 10. Changes made on another client reach the phone late (section 6.3). UnifiedPush would let the Tokkl server tell the phone at once without Google, but it needs new server work, a distributor app such as ntfy on every phone, and an ntfy server, which is a host other than the configured one (principle 1). Toggl cannot send it, so the event-based checks stay either way.
 11. A password change in Tokkl leaves the API token valid today (Tokkl A13), so a phone that signed in with a password keeps working after the password is reset. A Tokkl change to rotate the token on every password change was handed over on 2026-10-17 and is not made yet.
-
-## Appendix: interview record
-
-Answers as given on 2026-10-17. Later answers override earlier ones.
-
-1. Who is it for? Public users, distributed through F-Droid.
-2. Why native? People prefer native apps. Scope is a fully featured client, plus deep Android integration: an ongoing notification with the running timer and a Stop button, a home screen widget, a Quick Settings tile, and offline start and stop that syncs later.
-3. Toggl at full parity? No sync engine. Tokkl and Toggl share the API, so a base URL setting is enough for Toggl. The first version targets Tokkl only.
-4. Server unreachable when you tap Start? Offline first. The app keeps the change on the phone, marks it as not sent, and sends it when the server is back.
-5. What works offline? What the app last loaded: projects, clients and tags for picking, and recent history (about two weeks), which can be edited. Reports and older history need the server. When the phone and the web both changed an entry, the change that reaches the server last wins.
-6. What does fully featured cover? The daily-use features: timer with favorites and continue, manual entry with Tokkl's time parsing, day-grouped history with edit, duplicate, split, undo and trash, the week calendar, projects, clients, tags and tasks, and the summary, detailed and weekly reports. Left to the web app: admin pages, Toggl CSV import, JSON export and restore, bulk edit.
-7. Success after six months? The owner no longer opens the PWA on the phone. F-Droid users are a bonus, but the app must handle servers set up differently from the owner's.
-8. Which server setups? Any HTTPS server. A self-signed certificate works after the user accepts a "trust this certificate" disclaimer.
-9. Plain HTTP? Yes, behind a stronger warning than the self-signed one.
-10. Theme? Always Tokkl's palette, light and dark, on Material 3 components, with Anybody for the running clock and totals. Dynamic color off, or at most an opt-in setting.
-11. Devices and versions? Phones first, with layouts that adapt to tablets and foldables but no separate design. No Wear OS app in the first version. Android 8.0 (API 26) or newer. On Android 16 the running timer is a Live Update; older versions get a regular ongoing notification.
-12. Summary and defaults? Confirmed: API token or email and password, one account at a time, English only, Kotlin and Jetpack Compose, MIT, `com.github.e0ipso.tokkl`, F-Droid only for now. No GitHub repo yet, but plan for one with GitHub Actions like Tokkl's.
-13. What goes in the first release? Everything in section 5. The first release is feature complete.
-14. What do priorities mean? Nothing. Everything has to be done, so section 5 has no priority column.
-15. Quick Settings tile (N4)? Keep it as written: a tap stops the running timer, or continues the last entry when none runs.
-16. Launcher shortcuts (N6)? Yes: long-pressing the app icon lists the favorites, and a tap starts that timer.
-17. Tests against a real Tokkl server? Yes, the `ghcr.io/e0ipso/tokkl` image, not a fake.
-18. Play Store as well? No, F-Droid only.
-19. Register with Google's developer verification (government ID, $25)? Not now; decide in 2027.
-20. Version? Its own, independent of Tokkl's, starting at 0.1.0.
-21. Minimum Tokkl version? None. No version coupling; the app checks each capability on the server.
-22. Speed targets and how to enforce them? Tap path never waits for the server, proven by tests; Macrobenchmark on the CI emulator catches regressions. No manual real-phone run before releases, so 200 ms and 1.5 s are goals, not gates.
-23. Languages? English only. Contributors may add translations; the owner maintains none.
-24. When does tokkl's PRD mention this app? When this app's first release ships.
-25. A start queued offline collides with a timer started later on the laptop? The timer started last wins. Before sending a queued start, fetch the running entry; if it started later, send the queued entry as stopped at its start.
-26. How does the phone learn of changes made elsewhere? No push in the first version. The tile checks when the shade opens, at most once a minute, and a 15-minute check runs while a timer runs. UnifiedPush is a later option.
-27. The server rejects a queued change? 409 on a stop: drop quietly. 404: drop and say so. 400: a "needs attention" list, holding back later changes to the same entry. 403: pause the queue and sign in again. 5xx or no network: retry with backoff.
-28. What else works offline? Delete, with undo removing it from the queue before it is sent, and new tags by name. New projects, clients and tasks and the trash need the server.
-29. The user swipes the timer notification away? It stays gone until the running entry next changes, not when the app opens. No foreground service.
-30. Email and password sign-in? Swap them for the API token and never store the password. Tokkl should also rotate the token on every password change; that is a separate change in `../tokkl`.
-31. Android backup? Off, including device-to-device transfer.
-32. Snap entries not yet sent? Yes, on the phone, with a port of `snapSpan`.
-33. Reminders, idle detection, Pomodoro? Not in the first release.
-34. Week view on a phone? One day at a time in portrait with a week strip on top; the week in landscape, on tablets and on unfolded foldables.
