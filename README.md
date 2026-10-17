@@ -58,20 +58,37 @@ echo --no-metrics > ~/.androidrc
 
 ### Set up the shell
 
-Add this to `~/.profile`, then log in again:
+The variables live in one file, `~/.config/android-env.sh`:
 
 ```sh
 export JAVA_HOME="$HOME/.local/share/jdk/21"
 export ANDROID_HOME="$HOME/Android/Sdk"
-PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+for _android_env_dir in "$JAVA_HOME/bin" "$ANDROID_HOME/emulator" \
+    "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/cmdline-tools/latest/bin"; do
+    case ":$PATH:" in
+        *":$_android_env_dir:"*) ;;
+        *) PATH="$_android_env_dir:$PATH" ;;
+    esac
+done
+unset _android_env_dir
 export PATH
 ```
 
-Check it from a clean login shell:
+Source it at the end of `~/.profile`, and in `~/.bashrc` above the check that returns early for non-interactive shells:
+
+```sh
+if [ -f "$HOME/.config/android-env.sh" ]; then
+    . "$HOME/.config/android-env.sh"
+fi
+```
+
+A bash login shell reads both files, and the loop skips a directory that is already on `PATH`, so none of these directories appears twice. Check it from a clean login shell:
 
 ```sh
 env -i HOME="$HOME" bash -l -c 'java -version && sdkmanager --list_installed'
 ```
+
+Claude Code's Bash tool resets `PATH` to the `PATH` of the Claude Code process, so agents never get the JDK and SDK directories from these files. That `PATH` does include `~/.local/bin`. On this machine `java`, `adb`, `sdkmanager`, `avdmanager` and `emulator` in `~/.local/bin` are symlinks to `~/.local/libexec/android-env/tool-wrapper`, which sources `android-env.sh` and runs the real tool. A symlink straight to the tool breaks `sdkmanager` and `avdmanager`, which look for the SDK relative to their own path. Agent sessions run by t3 also get `JAVA_HOME` and `ANDROID_HOME`, because their shells read the top of `~/.bashrc`. Shells under `claude -p` don't get them, so a Gradle build there needs `ANDROID_HOME` set by hand or `sdk.dir` in `local.properties`.
 
 ### Run the emulator
 
