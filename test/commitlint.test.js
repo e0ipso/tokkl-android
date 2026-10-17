@@ -148,6 +148,40 @@ describe('commitlint.config.js', () => {
       }
     });
   });
+
+  describe('merge subjects count only in the header (TKA-0084)', () => {
+    test('rejects a non-Conventional message with a merge line in the body', async () => {
+      for (const message of [
+        'added a thing\n\nMerge branch y',
+        'added a thing\r\n\r\nMerge branch y',
+        'added a thing\n\nMerge pull request #1 from a/b',
+        "added a thing\n\nMerge tag 'v1.0'",
+        'added a thing\n\nMerge x into y',
+      ]) {
+        const report = await lintMessage(message);
+        assert.equal(report.valid, false, JSON.stringify(message));
+        const rules = failedRules(report);
+        assert.ok(rules.includes('type-empty'), `${JSON.stringify(message)}: ${rules}`);
+        assert.ok(rules.includes('subject-empty'), `${JSON.stringify(message)}: ${rules}`);
+      }
+    });
+
+    test('still accepts a message whose header is a merge subject', async () => {
+      for (const message of [
+        "Merge branch 'topic'",
+        "Merge branch 'topic'\n\n* topic:\n  fix: handle z\n  feat: add z",
+        "Merge branch 'topic'\r\n\r\n# Conflicts:\r\n#\tfile.txt",
+        'Merge pull request #1 from a/b\n\nAdd the thing',
+        "Merge tag 'v1.0'",
+        "Merge remote-tracking branch 'origin/main'",
+        'Merge topic into main',
+      ]) {
+        const report = await lintMessage(message);
+        assert.deepEqual(report.errors, [], JSON.stringify(message));
+        assert.equal(report.valid, true, JSON.stringify(message));
+      }
+    });
+  });
 });
 
 describe('commit-msg hook in a throwaway repository', () => {

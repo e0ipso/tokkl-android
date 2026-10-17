@@ -56,7 +56,12 @@ const findTicketId = header => (header ?? '').match(ticketIdInHeader)?.[0] ?? nu
 const passesCustomChecks = message =>
   findForbiddenContent(message) === null && findTicketId(message.trimStart().split(/\r?\n/, 1)[0]) === null;
 
-const ignoreCleanDefaults = (message = '') => isIgnored(message) && passesCustomChecks(message);
+// The merge defaults match a "Merge branch ..." line anywhere in a message, so `added a thing`
+// with that line in its body skipped the format rules. Hand the defaults the first line only.
+// The other defaults already look at the start of the message, so they see no change.
+const firstLine = message => message.split(/\r?\n/, 1)[0];
+
+const ignoreCleanDefaults = (message = '') => isIgnored(firstLine(message)) && passesCustomChecks(message);
 
 export default {
   extends: ['@commitlint/config-conventional'],
