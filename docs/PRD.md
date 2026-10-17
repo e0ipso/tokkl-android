@@ -155,7 +155,7 @@ The first release is feature complete: it ships every requirement below, so they
 | N1 | An ongoing notification while a timer runs, with the description, project, a ticking elapsed time and a Stop action. |
 | N2 | On Android 16 and later, promote that notification to a Live Update, which shows as a chip in the status bar, at the top of the notification drawer and on the lock screen. Elsewhere it stays a regular ongoing notification. |
 | N3 | A home screen widget with the running timer, Start and Stop, and the favorites. |
-| N4 | A Quick Settings tile that shows whether a timer runs. Tapping it stops the running timer, or continues the last entry when none runs. (Proposed.) |
+| N4 | A Quick Settings tile that shows whether a timer runs. Tapping it stops the running timer, or continues the last entry when none runs. |
 | N5 | Ask for the notification permission on Android 13 and later when the first timer starts, and say what is lost without it. |
 | N6 | Launcher shortcuts (long-press the app icon) for the favorites. (Proposed.) |
 
@@ -267,3 +267,4 @@ Answers as given on 2026-10-17. Later answers override earlier ones.
 12. Summary and defaults? Confirmed: API token or email and password, one account at a time, English only, Kotlin and Jetpack Compose, MIT, `com.github.e0ipso.tokkl`, F-Droid only for now. No GitHub repo yet, but plan for one with GitHub Actions like Tokkl's.
 13. What goes in the first release? Everything in section 5. The first release is feature complete.
 14. What do priorities mean? Nothing. Everything has to be done, so section 5 has no priority column.
+15. Quick Settings tile (N4)? Keep it as written: a tap stops the running timer, or continues the last entry when none runs.
