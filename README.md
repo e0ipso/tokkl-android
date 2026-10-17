@@ -127,11 +127,20 @@ Build the debug APK, run lint and run the JVM unit tests:
 ./gradlew assembleDebug lint testDebugUnitTest
 ```
 
-The instrumented tests, including the Compose UI tests, need the emulator from the previous section running:
+The instrumented tests, including the Compose UI tests, run against a real Tokkl server, never a fake one. One command runs them. It needs Docker, `curl` and `jq`:
 
 ```sh
-./gradlew connectedDebugAndroidTest
+scripts/instrumented-tests.sh
 ```
+
+The script starts `ghcr.io/e0ipso/tokkl`, pinned by digest, on a free port of `127.0.0.1` with its database on a tmpfs. It creates an account with a random password, reads the account's API token, and passes the server URL and the credentials to `./gradlew connectedDebugAndroidTest` as instrumentation arguments. The URL is `http://10.0.2.2:<port>`, the address under which the emulator reaches the host. The script removes the container when it finishes, also when a test fails. If no device is attached, it boots `tokkl-api36` as in the previous section and stops it and the adb server at the end. An emulator that was already running keeps running. Arguments go to Gradle, so one class runs with:
+
+```sh
+scripts/instrumented-tests.sh \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest
+```
+
+Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that need the server. To move to a newer Tokkl, put the digest from `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>` into `IMAGE` in the script.
 
 `gradle.properties` caps the Gradle heap at 2 GB and compiles Kotlin inside the Gradle daemon, so no separate Kotlin daemon starts. The Gradle daemon itself stays in memory after the build. Stop it when you finish:
 
