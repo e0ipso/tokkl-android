@@ -1,4 +1,3 @@
-// Ships with @commitlint/cli, which is why package.json does not list it.
 import isIgnored from '@commitlint/is-ignored';
 
 const aiTools = [

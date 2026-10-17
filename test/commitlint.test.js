@@ -3,7 +3,16 @@
 // throwaway repository and runs real `git commit` and `git merge` against it.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, unlinkSync } from 'node:fs';
+import {
+  copyFileSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
@@ -36,6 +45,20 @@ describe('commitlint.config.js', () => {
   test('loads with both custom rules set to error', () => {
     assert.deepEqual(config.rules['no-ticket-id-in-header'], [2, 'always']);
     assert.deepEqual(config.rules['no-ai-generated'], [2, 'always']);
+  });
+
+  test('package.json declares every package the config imports (TKA-0083)', () => {
+    const source = readFileSync(join(repoRoot, 'commitlint.config.js'), 'utf8');
+    const manifest = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
+    const declared = new Set(Object.keys({ ...manifest.dependencies, ...manifest.devDependencies }));
+    const specifiers = [...source.matchAll(/^import\s[^'"]*['"]([^'"]+)['"]/gm)].map(match => match[1]);
+    const packages = specifiers
+      .filter(specifier => !specifier.startsWith('.') && !specifier.startsWith('node:'))
+      .map(specifier => specifier.split('/').slice(0, specifier.startsWith('@') ? 2 : 1).join('/'));
+    assert.ok(packages.length > 0, `no package import found in: ${specifiers}`);
+    for (const name of packages) {
+      assert.ok(declared.has(name), `${name} is imported by commitlint.config.js but not in package.json`);
+    }
   });
 
   describe('ordinary commits (TKA-0003)', () => {
