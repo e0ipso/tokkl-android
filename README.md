@@ -114,6 +114,10 @@ adb emu kill
 adb kill-server
 ```
 
+## Commit messages
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/). `npm install` sets up a commit-msg hook that runs commitlint, which needs Node 22.12 or later. The hook lives in `.husky/_`, which git ignores, so run `npm install` once in every new clone or git worktree. Until you do, commits there skip the check. The hook rejects a ticket ID such as `TKA-0001` in the subject; put it in a `Refs: TKA-0001` trailer instead. It also rejects commits that credit an AI tool or a co-author (`Co-authored-by:`, "Generated with Claude Code" and the like).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
