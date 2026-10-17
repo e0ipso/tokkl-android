@@ -1,3 +1,6 @@
+// Ships with @commitlint/cli, which is why package.json does not list it.
+import isIgnored from '@commitlint/is-ignored';
+
 const aiTools = [
   'aider',
   'amp',
@@ -33,27 +36,50 @@ const forbiddenPatterns = [
 // TKA is this repo's prefix. TT is Tokkl's, kept from the copied rule.
 const ticketIdInHeader = /\b(?:TKA|TT)-\d+\b/;
 
+const findForbiddenContent = raw => {
+  for (const pattern of forbiddenPatterns) {
+    const match = raw.match(pattern);
+    if (match) {
+      return match[0];
+    }
+  }
+
+  return null;
+};
+
+const findTicketId = header => (header ?? '').match(ticketIdInHeader)?.[0] ?? null;
+
+// commitlint skips every rule for a message that matches one of its default ignores: merge
+// commits, `Revert "..."`, `fixup!`/`squash!`, a bare version number and a few more. That
+// also skipped the two custom rules below, so a revert or fixup could carry a ticket ID or a
+// credit trailer. Turn the defaults off and apply them again only to messages that pass both
+// custom checks. A message that fails one goes through the full rule set and is rejected.
+const passesCustomChecks = message =>
+  findForbiddenContent(message) === null && findTicketId(message.trimStart().split(/\r?\n/, 1)[0]) === null;
+
+const ignoreCleanDefaults = (message = '') => isIgnored(message) && passesCustomChecks(message);
+
 export default {
   extends: ['@commitlint/config-conventional'],
+  defaultIgnores: false,
+  ignores: [ignoreCleanDefaults],
   plugins: [
     {
       rules: {
         'no-ai-generated': parsed => {
-          for (const pattern of forbiddenPatterns) {
-            const match = parsed.raw.match(pattern);
-            if (match) {
-              return [false, `Commit message contains forbidden AI-generated content: "${match[0]}"`];
-            }
+          const match = findForbiddenContent(parsed.raw);
+          if (match) {
+            return [false, `Commit message contains forbidden AI-generated content: "${match}"`];
           }
 
           return [true, ''];
         },
         'no-ticket-id-in-header': parsed => {
-          const match = (parsed.header ?? '').match(ticketIdInHeader);
+          const match = findTicketId(parsed.header);
           if (match) {
             return [
               false,
-              `Commit header contains ticket ID "${match[0]}". Move it to a "Refs: ${match[0]}" trailer in the body.`,
+              `Commit header contains ticket ID "${match}". Move it to a "Refs: ${match}" trailer in the body.`,
             ];
           }
 
