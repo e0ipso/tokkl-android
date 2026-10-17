@@ -157,7 +157,7 @@ The first release is feature complete: it ships every requirement below, so they
 | N3 | A home screen widget with the running timer, Start and Stop, and the favorites. |
 | N4 | A Quick Settings tile that shows whether a timer runs. Tapping it stops the running timer, or continues the last entry when none runs. |
 | N5 | Ask for the notification permission on Android 13 and later when the first timer starts, and say what is lost without it. |
-| N6 | Launcher shortcuts (long-press the app icon) for the favorites. (Proposed.) |
+| N6 | Launcher shortcuts (long-press the app icon) for the favorites. One tap starts that timer. |
 
 ### 5.9 Offline
 
@@ -268,3 +268,4 @@ Answers as given on 2026-10-17. Later answers override earlier ones.
 13. What goes in the first release? Everything in section 5. The first release is feature complete.
 14. What do priorities mean? Nothing. Everything has to be done, so section 5 has no priority column.
 15. Quick Settings tile (N4)? Keep it as written: a tap stops the running timer, or continues the last entry when none runs.
+16. Launcher shortcuts (N6)? Yes: long-pressing the app icon lists the favorites, and a tap starts that timer.
