@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:5ec31a2f495438d0463a098c514c8ca3e09db0295c5132c8db7fce1ab612c110'
-node_count: 15
+nodes_hash: 'sha256:7b86b7da78776b320d7bd34e2cc8581e3cd5ae287f4b98007183af6dccbe08b9'
+node_count: 19
 ---
 # kenkeep Graph
 
-Total nodes: 15
+Total nodes: 19
 
 ## map-app-id-license-android-versions
 
@@ -22,6 +22,13 @@ Total nodes: 15
 - **path:** map-fdroid-metadata-release-artifacts.md
 - **tags:** fdroid, release
 - **derived_from:** docs/PRD.md
+
+## map-jdk-android-sdk-and-agent-shells
+
+- **kind:** map
+- **title:** JDK and Android SDK on this machine, and how agent shells reach them
+- **path:** map-jdk-android-sdk-and-agent-shells.md
+- **tags:** android, tooling, agents, build
 
 ## map-planned-android-stack
 
@@ -55,6 +62,14 @@ Total nodes: 15
 - **tags:** api, toggl, compatibility
 - **derived_from:** docs/PRD.md
 
+## practice-emulator-plain-aosp-image-headless
+
+- **kind:** practice
+- **title:** Test on the plain AOSP API 36 emulator, headless, and stop it afterwards
+- **path:** practice-emulator-plain-aosp-image-headless.md
+- **tags:** testing, android, emulator, energy
+- **relates_to:** practice-test-real-tokkl-server-speed-regressions, map-jdk-android-sdk-and-agent-shells
+
 ## practice-match-web-app-behavior-account-timezone
 
 - **kind:** practice
@@ -70,6 +85,14 @@ Total nodes: 15
 - **path:** practice-never-wait-for-server-on-start-stop.md
 - **tags:** offline, network, api
 - **derived_from:** docs/PRD.md
+
+## practice-opt-sdk-tools-out-of-usage-metrics
+
+- **kind:** practice
+- **title:** Opt the Android SDK tools out of usage metrics with ~/.androidrc
+- **path:** practice-opt-sdk-tools-out-of-usage-metrics.md
+- **tags:** privacy, tooling, android
+- **relates_to:** practice-talk-only-to-configured-server, map-jdk-android-sdk-and-agent-shells
 
 ## practice-own-version-from-v0-1-0-tag
 
@@ -102,6 +125,13 @@ Total nodes: 15
 - **path:** practice-reproducible-builds-project-key.md
 - **tags:** release, fdroid, security, ci
 - **derived_from:** docs/PRD.md
+
+## practice-run-npm-install-in-every-clone-and-worktree
+
+- **kind:** practice
+- **title:** Run npm install in every new clone or worktree to turn on the commit hook
+- **path:** practice-run-npm-install-in-every-clone-and-worktree.md
+- **tags:** git, commits, tooling
 
 ## practice-talk-only-to-configured-server
 
