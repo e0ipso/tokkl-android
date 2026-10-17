@@ -33,6 +33,9 @@ android {
         // Puts the merged manifest's path on the unit test classpath, in
         // com/android/tools/test_config.properties, for BackupRulesTest.
         unitTests.isIncludeAndroidResources = true
+        // Runs each instrumented test in a new app process, which
+        // ApiTokenStoreRestartTest needs to restart the process between steps.
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
 }
 
@@ -50,4 +53,5 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestUtil(libs.androidx.test.orchestrator)
 }
