@@ -32,3 +32,37 @@ jobs:
       # Caches Gradle's files and checks the wrapper jar.
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
       - run: ./gradlew assembleDebug lint testDebugUnitTest --stacktrace
+
+  # Lints the commit messages and runs the tests of the commitlint rules. The
+  # commit-msg hook never sees the message git revert or cherry-pick writes, a
+  # commit made with --no-verify, or one from a clone without npm install.
+  commitlint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # commitlint 21 needs Node 22.12 or later.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+
+      # The PR's commits, or the pushed ones. After a force push the old tip is
+      # gone, so only the last commit is linted.
+      - name: Lint commit messages
+        env:
+          FROM: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TO: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if git cat-file -e "$FROM^{commit}" 2>/dev/null; then
+            npx --no -- commitlint --from "$FROM" --to "$TO" --verbose
+          else
+            npx --no -- commitlint --last --verbose
+          fi
+
+      - run: npm test
