@@ -27,6 +27,12 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        // Puts the merged manifest's path on the unit test classpath, in
+        // com/android/tools/test_config.properties, for BackupRulesTest.
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
