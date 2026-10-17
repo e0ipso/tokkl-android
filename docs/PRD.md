@@ -212,7 +212,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 | Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. |
 | Accessibility | WCAG AA contrast, TalkBack labels on every control, colour never the only signal, layouts that survive the largest font scale. |
 | Language | English. All text lives in string resources so translations can be added later. |
-| Tests | JVM unit tests, Compose UI tests, and instrumented tests on an emulator against a real Tokkl server from the `ghcr.io/e0ipso/tokkl` image. (Proposed.) |
+| Tests | JVM unit tests, Compose UI tests, and instrumented tests on an emulator against a real Tokkl server from the `ghcr.io/e0ipso/tokkl` image, never a fake one. |
 
 ## 8. Distribution and release
 
@@ -269,3 +269,4 @@ Answers as given on 2026-10-17. Later answers override earlier ones.
 14. What do priorities mean? Nothing. Everything has to be done, so section 5 has no priority column.
 15. Quick Settings tile (N4)? Keep it as written: a tap stops the running timer, or continues the last entry when none runs.
 16. Launcher shortcuts (N6)? Yes: long-pressing the app icon lists the favorites, and a tap starts that timer.
+17. Tests against a real Tokkl server? Yes, the `ghcr.io/e0ipso/tokkl` image, not a fake.
