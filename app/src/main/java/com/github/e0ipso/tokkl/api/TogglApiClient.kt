@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.api
 import java.io.IOException
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.JsonElement
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -12,9 +13,9 @@ import okhttp3.Response
 
 /**
  * Client for the Toggl Track API v9 and Reports API v3, as served by Tokkl or
- * by Toggl Track. Build endpoint URLs with [server], then call [get], [send]
- * or [sendNoContent]. Calls block the calling thread, so make them off the
- * main thread.
+ * by Toggl Track. Build endpoint URLs with [server], then call [get], [send],
+ * [sendWithHeaders] or [sendNoContent]. Calls block the calling thread, so
+ * make them off the main thread.
  */
 class TogglApiClient(
     val server: ServerUrl,
@@ -38,6 +39,23 @@ class TogglApiClient(
         body: JsonElement?,
         deserializer: DeserializationStrategy<T>,
     ): ApiResult<T> = execute(method, url, body) { decode(it.body.string(), deserializer) }
+
+    /**
+     * Like [send], and keeps the response's headers too, for calls that put
+     * values in them, such as the Reports API's `X-Next-Row-Number`, the row
+     * the next page of a detailed report starts at.
+     */
+    fun <T> sendWithHeaders(
+        method: String,
+        url: HttpUrl,
+        body: JsonElement?,
+        deserializer: DeserializationStrategy<T>,
+    ): ApiResult<WithHeaders<T>> = execute(method, url, body) { response ->
+        when (val decoded = decode(response.body.string(), deserializer)) {
+            is ApiResult.Success -> ApiResult.Success(WithHeaders(decoded.value, response.headers))
+            is ApiResult.Failure -> decoded
+        }
+    }
 
     /**
      * Like [send], for calls whose response body the caller does not need,
@@ -106,6 +124,9 @@ class TogglApiClient(
         fun retryAfterSeconds(value: String?): Long? = value?.trim()?.toLongOrNull()?.takeIf { it >= 0 }
     }
 }
+
+/** A decoded response body and the headers it came with. */
+class WithHeaders<out T>(val value: T, val headers: Headers)
 
 /**
  * Hears how the signed-in session's requests fare with the trust checks, so

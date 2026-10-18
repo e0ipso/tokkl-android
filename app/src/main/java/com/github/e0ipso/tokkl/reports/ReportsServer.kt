@@ -1,0 +1,135 @@
+package com.github.e0ipso.tokkl.reports
+
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.TogglApiClient
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeParseException
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+
+/**
+ * The workspace a report covers: the account's default workspace, as in the web app, and its
+ * rounding setting. [rounding] is -1 down, 0 to the nearest and 1 up, each entry to
+ * [roundingMinutes], with 0 minutes for no rounding.
+ */
+data class ReportWorkspace(val id: Long, val rounding: Int, val roundingMinutes: Int)
+
+/**
+ * The Reports API v3 calls behind the summary, on the configured server. Every call blocks, so
+ * make them off the main thread. Nothing here stores what the server sends.
+ */
+class ReportsServer(private val api: TogglApiClient) {
+
+    /** The account's default workspace from `GET /api/v9/me`, with its rounding from `GET /api/v9/workspaces/{id}`. */
+    fun workspace(): ApiResult<ReportWorkspace> {
+        val user = when (val answer = api.get(api.server.api("me"), ReportUser.serializer())) {
+            is ApiResult.Success -> answer.value
+            is ApiResult.Failure -> return answer
+        }
+        val id = user.defaultWorkspaceId
+        return when (val answer = api.get(api.server.api("workspaces", id.toString()), WorkspaceRounding.serializer())) {
+            is ApiResult.Success -> ApiResult.Success(ReportWorkspace(id, answer.value.rounding, answer.value.roundingMinutes))
+            is ApiResult.Failure -> answer
+        }
+    }
+
+    /**
+     * Every entry of [range] in [workspace], oldest first, from the detailed search, with each
+     * entry's day in [zone]. Pages follow the `X-Next-Row-Number` the server sends.
+     *
+     * The request asks for the workspace's rounding. Tokkl's web app always applies it, while the
+     * Reports API rounds only when asked, as in Toggl (Tokkl's docs/PRD.md R8).
+     */
+    fun entries(workspace: ReportWorkspace, range: ReportRange, zone: ZoneId): ApiResult<List<ReportEntry>> {
+        val url = api.server.reports("workspace", workspace.id.toString(), "search", "time_entries")
+        val entries = mutableListOf<ReportEntry>()
+        var firstRow = 1
+        repeat(MAX_PAGES) {
+            val body = buildJsonObject {
+                put("start_date", range.from.toString())
+                put("end_date", range.to.toString())
+                put("rounding", workspace.rounding)
+                put("rounding_minutes", workspace.roundingMinutes)
+                put("order_by", "date")
+                put("order_dir", "ASC")
+                put("page_size", PAGE_SIZE)
+                put("first_row_number", firstRow)
+            }
+            val page = when (val answer = api.sendWithHeaders("POST", url, body, ROWS)) {
+                is ApiResult.Success -> answer.value
+                is ApiResult.Failure -> return answer
+            }
+            for (row in page.value) {
+                try {
+                    entries += row.entries(zone)
+                } catch (e: DateTimeParseException) {
+                    return ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("a time entry's start is not a date and time", e)))
+                }
+            }
+            val next = page.headers[NEXT_ROW_HEADER]?.trim()?.toIntOrNull() ?: return ApiResult.Success(entries)
+            if (next <= firstRow) return ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("the next page does not move forward")))
+            firstRow = next
+        }
+        return ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("more than $MAX_PAGES pages")))
+    }
+
+    private companion object {
+        /** Tokkl's largest page. */
+        const val PAGE_SIZE = 1000
+
+        /** A year at a thousand entries a page needs far fewer; the cap stops a server that pages forever. */
+        const val MAX_PAGES = 100
+
+        const val NEXT_ROW_HEADER = "X-Next-Row-Number"
+
+        val ROWS = ListSerializer(DetailedRow.serializer())
+    }
+}
+
+@Serializable
+private class ReportUser(@SerialName("default_workspace_id") val defaultWorkspaceId: Long)
+
+/** Toggl and Tokkl send a workspace's rounding as whole numbers. */
+@Serializable
+private class WorkspaceRounding(
+    val rounding: Int = 0,
+    @SerialName("rounding_minutes") val roundingMinutes: Int = 0,
+)
+
+/**
+ * One row of a detailed search. Tokkl sends one time entry per row. A row that holds several, as
+ * Toggl's grouped rows do, counts its amount once, on its first entry.
+ */
+@Serializable
+private class DetailedRow(
+    val billable: Boolean = false,
+    @SerialName("project_id") val projectId: Long? = null,
+    @SerialName("project_name") val projectName: String? = null,
+    @SerialName("project_color") val projectColor: String? = null,
+    @SerialName("billable_amount_in_cents") val billableAmountInCents: Long? = null,
+    val currency: String? = null,
+    @SerialName("time_entries") val timeEntries: List<DetailedTimeEntry> = emptyList(),
+) {
+    /** Throws [DateTimeParseException] for a start that is not an RFC 3339 date and time. */
+    fun entries(zone: ZoneId): List<ReportEntry> = timeEntries.mapIndexed { index, entry ->
+        ReportEntry(
+            seconds = entry.seconds,
+            billable = billable,
+            amountCents = if (index == 0) billableAmountInCents else billableAmountInCents?.let { 0L },
+            currency = currency ?: "",
+            projectId = projectId,
+            projectName = projectName,
+            projectColor = projectColor,
+            date = OffsetDateTime.parse(entry.start).atZoneSameInstant(zone).toLocalDate(),
+        )
+    }
+}
+
+/** [start] is RFC 3339 with an offset, such as `2026-10-18T09:30:00+00:00`. [seconds] is after rounding. */
+@Serializable
+private class DetailedTimeEntry(val seconds: Long, val start: String)

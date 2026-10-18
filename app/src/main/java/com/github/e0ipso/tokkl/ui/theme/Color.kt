@@ -38,6 +38,10 @@ private class Tokens(
     val sceneSwell: Color,
     val sceneStripe: Color,
     val wordmarkHalo: Color,
+    val chartBillable: Color,
+    val chartOther: Color,
+    val chartOtherWash: Color,
+    val projectMix: Color,
 )
 
 private val Light = Tokens(
@@ -66,6 +70,10 @@ private val Light = Tokens(
     sceneSwell = Color(0xFFB9CBBB), // --scene-swell
     sceneStripe = Color(0xFFE9CEB3), // --scene-stripe
     wordmarkHalo = Color.Transparent, // --wordmark-halo, transparent: only dark mode draws the halo
+    chartBillable = Color(0xFF0091A8), // --chart-billable
+    chartOther = Color(0xFFE0601D), // --chart-other
+    chartOtherWash = Color(0xFFF6CCB1), // --chart-other-wash
+    projectMix = Color(0xFF000000), // --project-mix
 )
 
 private val Dark = Tokens(
@@ -94,6 +102,10 @@ private val Dark = Tokens(
     sceneSwell = Color(0xFF134354), // --scene-swell
     sceneStripe = Color(0xFF2D212A), // --scene-stripe
     wordmarkHalo = Color(0xFFA9B0D6), // --wordmark-halo
+    chartBillable = Color(0xFF0F9BB3), // --chart-billable
+    chartOther = Color(0xFFE46A2A), // --chart-other
+    chartOtherWash = Color(0xFF523232), // --chart-other-wash
+    projectMix = Color(0xFFFFFFFF), // --project-mix
 )
 
 /**
@@ -197,6 +209,17 @@ class TokklExtraColors(
     val sceneStripe: Color,
     /** `--wordmark-halo`, the 1dp outline around the wordmark. Transparent in light. */
     val wordmarkHalo: Color,
+    /** `--chart-billable`, a report chart's billable time, drawn solid. A mark only, never text. */
+    val chartBillable: Color,
+    /** `--chart-other`, the stripes of a report chart's non-billable time. A mark only, never text. */
+    val chartOther: Color,
+    /** `--chart-other-wash`, the wash behind [chartOther]'s stripes. */
+    val chartOtherWash: Color,
+    /**
+     * `--project-mix`, what a project's colour is mixed with, 40% of it, for its dot, so every
+     * colour of Tokkl's project palette reaches 3:1 as a mark. Black in light, white in dark.
+     */
+    val projectMix: Color,
 )
 
 internal val TokklLightExtraColors = TokklExtraColors(
@@ -210,6 +233,10 @@ internal val TokklLightExtraColors = TokklExtraColors(
     sceneSwell = Light.sceneSwell,
     sceneStripe = Light.sceneStripe,
     wordmarkHalo = Light.wordmarkHalo,
+    chartBillable = Light.chartBillable,
+    chartOther = Light.chartOther,
+    chartOtherWash = Light.chartOtherWash,
+    projectMix = Light.projectMix,
 )
 
 internal val TokklDarkExtraColors = TokklExtraColors(
@@ -223,4 +250,8 @@ internal val TokklDarkExtraColors = TokklExtraColors(
     sceneSwell = Dark.sceneSwell,
     sceneStripe = Dark.sceneStripe,
     wordmarkHalo = Dark.wordmarkHalo,
+    chartBillable = Dark.chartBillable,
+    chartOther = Dark.chartOther,
+    chartOtherWash = Dark.chartOtherWash,
+    projectMix = Dark.projectMix,
 )

@@ -8,6 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -30,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
+import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.ui.Brand
 import com.github.e0ipso.tokkl.ui.BrandSize
@@ -43,6 +46,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     private val signInViewModel: SignInViewModel by viewModels()
+    private val reportsViewModel: ReportsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +65,7 @@ class MainActivity : ComponentActivity() {
                     signInModel = signInViewModel.model,
                     themeSettings = themeSettings,
                     sessionTrust = (application as TokklApplication).sessionTrust,
+                    reports = reportsViewModel.model,
                 )
             }
         }
@@ -127,8 +132,14 @@ class MainActivity : ComponentActivity() {
 }
 
 /** The home screen until the timer screen replaces it. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun LaunchScreen(onOpenSettings: () -> Unit, onOpenLicences: () -> Unit, modifier: Modifier = Modifier) {
+fun LaunchScreen(
+    onOpenReports: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenLicences: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier
@@ -147,11 +158,18 @@ fun LaunchScreen(onOpenSettings: () -> Unit, onOpenLicences: () -> Unit, modifie
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(TokklTheme.spacing.space4))
-            TextButton(onClick = onOpenSettings) {
-                Text(stringResource(R.string.settings))
-            }
-            TextButton(onClick = onOpenLicences) {
-                Text(stringResource(R.string.licences))
+            // Side by side where they fit, so at the largest font scale the links take two rows,
+            // and a notice at the bottom of the screen still covers none of them.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2, Alignment.CenterHorizontally)) {
+                TextButton(onClick = onOpenReports) {
+                    Text(stringResource(R.string.reports))
+                }
+                TextButton(onClick = onOpenSettings) {
+                    Text(stringResource(R.string.settings))
+                }
+                TextButton(onClick = onOpenLicences) {
+                    Text(stringResource(R.string.licences))
+                }
             }
         }
     }

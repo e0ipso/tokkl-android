@@ -84,6 +84,7 @@ class LargestFontScaleTest {
         assertFitWithoutOverlap(
             brand(),
             text(R.string.launch_message),
+            text(R.string.reports),
             text(R.string.settings),
             text(R.string.licences),
         )
@@ -485,6 +486,7 @@ class LargestFontScaleTest {
         assertFitWithoutOverlap(
             brand(),
             text(R.string.launch_message),
+            "reports button" to button(R.string.reports),
             "settings button" to button(R.string.settings),
             "licences button" to button(R.string.licences),
             text(message),

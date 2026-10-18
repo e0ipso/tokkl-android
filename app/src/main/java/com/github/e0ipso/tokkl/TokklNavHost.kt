@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.licences.LicencesScreen
+import com.github.e0ipso.tokkl.reports.ReportsModel
+import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.SettingsScreen
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
@@ -28,7 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** The app's screens. */
-enum class Destination { SIGN_IN, HOME, SETTINGS, LICENCES }
+enum class Destination { SIGN_IN, HOME, SETTINGS, LICENCES, REPORTS }
 
 /**
  * The app's navigation host: a back stack of [Destination]s that survives
@@ -41,7 +43,12 @@ enum class Destination { SIGN_IN, HOME, SETTINGS, LICENCES }
  * prompt again. Sign-in shows its own prompts.
  */
 @Composable
-fun TokklNavHost(signInModel: SignInModel, themeSettings: ThemeSettingsModel, sessionTrust: SessionTrustModel) {
+fun TokklNavHost(
+    signInModel: SignInModel,
+    themeSettings: ThemeSettingsModel,
+    sessionTrust: SessionTrustModel,
+    reports: ReportsModel,
+) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
     if (backStack.isEmpty()) {
@@ -56,7 +63,7 @@ fun TokklNavHost(signInModel: SignInModel, themeSettings: ThemeSettingsModel, se
     BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
     val destination = backStack.last()
     Box(Modifier.fillMaxSize()) {
-        Screen(destination, backStack, signInModel, themeSettings)
+        Screen(destination, backStack, signInModel, themeSettings, reports)
         if (destination != Destination.SIGN_IN) SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -67,6 +74,7 @@ private fun Screen(
     backStack: SnapshotStateList<Destination>,
     signInModel: SignInModel,
     themeSettings: ThemeSettingsModel,
+    reports: ReportsModel,
 ) {
     when (destination) {
         Destination.SIGN_IN -> SignInScreen(
@@ -78,6 +86,7 @@ private fun Screen(
             },
         )
         Destination.HOME -> LaunchScreen(
+            onOpenReports = { backStack.add(Destination.REPORTS) },
             onOpenSettings = { backStack.add(Destination.SETTINGS) },
             onOpenLicences = { backStack.add(Destination.LICENCES) },
         )
@@ -87,6 +96,7 @@ private fun Screen(
             onOpenLicences = { backStack.add(Destination.LICENCES) },
         )
         Destination.LICENCES -> LicencesScreen(onBack = { backStack.removeAt(backStack.lastIndex) })
+        Destination.REPORTS -> ReportsScreen(model = reports, onBack = { backStack.removeAt(backStack.lastIndex) })
     }
 }
 

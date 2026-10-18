@@ -2,7 +2,7 @@
 
 A native Android client for [Tokkl](https://github.com/e0ipso/tokkl) and Toggl Track.
 
-The app is a Gradle project with a sign-in screen, a placeholder home screen, a settings screen and a Licences screen so far, joined by a navigation host. The product requirements live in [docs/PRD.md](docs/PRD.md).
+The app is a Gradle project with a sign-in screen, a placeholder home screen, a reports screen with the summary report, a settings screen and a Licences screen so far, joined by a navigation host. The product requirements live in [docs/PRD.md](docs/PRD.md).
 
 ## Building
 
