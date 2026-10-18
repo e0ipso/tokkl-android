@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
@@ -92,6 +93,19 @@ class CertificatePromptTest {
         composeRule.waitUntil("the prompt closes") { !exists(hasText(string(R.string.sign_in_certificate_changed_title))) }
         assertEquals(old, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
         assertNull(ServerConfigStore(context).load())
+    }
+
+    @Test
+    fun neitherATapOutsideNorBackClosesThePrompt() {
+        signIn()
+        awaitPrompt(R.string.sign_in_certificate_title)
+
+        DeviceShell.run("input tap 4 ${context.resources.displayMetrics.heightPixels / 2}")
+        DeviceShell.run("input keyevent KEYCODE_BACK")
+        composeRule.waitForIdle()
+
+        composeRule.onNode(hasText(string(R.string.sign_in_certificate_title))).assertIsDisplayed()
+        assertNull(ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
     }
 
     @Test

@@ -55,9 +55,8 @@ import org.junit.runners.model.Statement
 /**
  * The Anybody headlines and the text around them at Android's largest font scale, 200%: no
  * text is cut off, leaves the screen or overlaps another. The sign-in form and the settings
- * scroll, so each of their parts has to fit once scrolled into view. So do the certificate
- * prompt, from sign-in and over the home screen, and the notice left after cancelling a trust
- * prompt.
+ * scroll, so each of their parts has to fit once scrolled into view. So do the trust prompts,
+ * from sign-in and over the home screen, and the notice left after cancelling one.
  *
  * The clock and totals styles have no screen yet; ClockAndTotalStylesFitTest covers them.
  */
@@ -173,6 +172,19 @@ class LargestFontScaleTest {
 
     @SignedOut
     @Test
+    fun httpWarningFromSignInFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+
+        signInTo(TokklTestServer.url)
+        composeRule.awaitText(string(R.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
+        awaitKeyboardHidden()
+
+        assertHttpWarningFits()
+    }
+
+    @SignedOut
+    @Test
     fun certificatePromptFromSignInFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitText(string(R.string.sign_in_server_url))
@@ -182,6 +194,15 @@ class LargestFontScaleTest {
         awaitKeyboardHidden()
 
         assertCertificatePromptFits(R.string.sign_in_certificate_title, R.string.sign_in_certificate_body)
+    }
+
+    @RefusedSession(Refusal.UNCONFIRMED_HTTP)
+    @Test
+    fun httpWarningOverTheHomeScreenFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
+
+        assertHttpWarningFits()
     }
 
     @RefusedSession(Refusal.UNCONFIRMED_HTTP)
@@ -326,6 +347,29 @@ class LargestFontScaleTest {
         composeRule.waitForIdle()
     }
 
+    private fun assertHttpWarningFits() {
+        val understood = string(R.string.sign_in_http_warning_understood)
+        assertDialogFits(
+            blocks = listOf(
+                "title" to composeRule.onNode(hasText(string(R.string.sign_in_http_warning_title)) and isHeading()),
+                "checkbox" to composeRule.onNode(hasText(understood) and isToggleable()),
+                "cancel button" to button(R.string.sign_in_warning_cancel),
+                "continue button" to button(R.string.sign_in_http_warning_continue),
+            ),
+            texts = listOf(
+                text(R.string.sign_in_http_warning_title),
+                "body" to composeRule.onNodeWithText(string(R.string.sign_in_http_warning_body, TokklTestServer.url.toString())),
+                inside(R.string.sign_in_http_warning_understood, isToggleable()),
+                inside(R.string.sign_in_warning_cancel, hasClickAction()),
+                inside(R.string.sign_in_http_warning_continue, hasClickAction()),
+            ),
+        )
+        assertTouchTargets(
+            "cancel button" to button(R.string.sign_in_warning_cancel),
+            "continue button" to button(R.string.sign_in_http_warning_continue),
+        )
+    }
+
     /** The fingerprint and the subject have to show in full, since the user compares them with the server's. */
     private fun assertCertificatePromptFits(@StringRes title: Int, @StringRes body: Int) {
         val endpoint = TokklTestServer.tlsUrl.api("me")
@@ -347,6 +391,18 @@ class LargestFontScaleTest {
                 inside(R.string.sign_in_certificate_trust, hasClickAction()),
             ),
         )
+        assertTouchTargets(
+            "cancel button" to button(R.string.sign_in_warning_cancel),
+            "trust button" to button(R.string.sign_in_certificate_trust),
+        )
+    }
+
+    /** Each button is at least 48dp tall, the smallest touch target Android's accessibility guidance allows. */
+    private fun assertTouchTargets(vararg buttons: Pair<String, SemanticsNodeInteraction>) {
+        for ((name, node) in buttons) {
+            val height = node.getUnclippedBoundsInRoot().let { it.bottom - it.top }
+            assertTrue("$name is $height tall", height >= MIN_TOUCH_TARGET - SLACK)
+        }
     }
 
     /** The notice sits over the home screen, so it may cover none of the home screen's own parts either. */
@@ -444,6 +500,8 @@ class LargestFontScaleTest {
 
         /** Less than a pixel, for bounds that touch after rounding. */
         val SLACK = 0.5.dp
+
+        val MIN_TOUCH_TARGET = 48.dp
 
         /** The subject of the certificate that scripts/instrumented-tests.sh makes. */
         const val CERTIFICATE_SUBJECT = "CN=Tokkl instrumented tests"

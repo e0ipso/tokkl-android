@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.trust
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
@@ -123,14 +125,7 @@ fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel: () -> U
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = understood) {
-                Text(stringResource(R.string.sign_in_http_warning_continue))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.sign_in_warning_cancel))
-            }
+            TrustActions(risky = R.string.sign_in_http_warning_continue, riskyEnabled = understood, onRisky = onConfirm, onCancel = onCancel)
         },
     )
 }
@@ -139,13 +134,15 @@ fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel: () -> U
  * Asks whether to trust a certificate that no system or user CA signed, and
  * shows its SHA-256 fingerprint and subject so the user can compare them with
  * the server's. [changed] says the user had trusted another certificate for
- * this server. A tap outside or Back cancels, which trusts nothing.
+ * this server. Neither a tap outside nor Back closes it: the user picks Cancel
+ * or Trust.
  */
 @Composable
 fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust: () -> Unit, onCancel: () -> Unit) {
     val server = if (':' in certificate.host) "[${certificate.host}]:${certificate.port}" else "${certificate.host}:${certificate.port}"
     AlertDialog(
-        onDismissRequest = onCancel,
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
         title = {
             Text(
                 text = stringResource(if (changed) R.string.sign_in_certificate_changed_title else R.string.sign_in_certificate_title),
@@ -165,15 +162,27 @@ fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust:
             }
         },
         confirmButton = {
-            TextButton(onClick = onTrust) {
-                Text(stringResource(R.string.sign_in_certificate_trust))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.sign_in_warning_cancel))
-            }
+            TrustActions(risky = R.string.sign_in_certificate_trust, riskyEnabled = true, onRisky = onTrust, onCancel = onCancel)
         },
     )
+}
+
+/**
+ * The two actions of a trust prompt in one slot, stacked full width, so they
+ * cannot overlap at any font scale. AlertDialog's own button row in material3
+ * 1.4.0 placed Cancel over a Continue that wrapped to two lines at 200%. Cancel
+ * comes first. Neither button is filled, so the risky action is never the
+ * call to action.
+ */
+@Composable
+private fun TrustActions(@StringRes risky: Int, riskyEnabled: Boolean, onRisky: () -> Unit, onCancel: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.sign_in_warning_cancel), textAlign = TextAlign.Center)
+        }
+        TextButton(onClick = onRisky, enabled = riskyEnabled, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(risky), textAlign = TextAlign.Center)
+        }
+    }
 }
 
