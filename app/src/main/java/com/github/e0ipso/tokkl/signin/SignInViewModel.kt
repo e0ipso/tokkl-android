@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.signin
 
 import android.app.Application
-import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.TokklApplication
@@ -26,8 +25,9 @@ class SignInViewModel(application: Application) : AndroidViewModel(application) 
             },
         ),
         trust = ServerTrustStore(application),
+        cooldowns = SignInCooldownStore(application),
         scope = viewModelScope,
         io = Dispatchers.IO,
-        clock = SystemClock::elapsedRealtime,
+        clock = System::currentTimeMillis,
     )
 }

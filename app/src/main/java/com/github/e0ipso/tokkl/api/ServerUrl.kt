@@ -25,6 +25,10 @@ class ServerUrl private constructor(private val base: HttpUrl) {
             .apply { (prefix + segments).forEach(::addPathSegment) }
             .build()
 
+    /** `scheme://host:port`, with an IPv6 host in brackets. */
+    val origin: String
+        get() = base.origin()
+
     /** Whether requests to this server travel unencrypted, over plain `http://`. */
     val isCleartext: Boolean
         get() = !base.isHttps
@@ -61,4 +65,10 @@ class ServerUrl private constructor(private val base: HttpUrl) {
             return ServerUrl(base)
         }
     }
+}
+
+/** `scheme://host:port`, with an IPv6 host in brackets. Holds no path, query or credential. */
+internal fun HttpUrl.origin(): String {
+    val host = if (':' in host) "[$host]" else host
+    return "$scheme://$host:$port"
 }

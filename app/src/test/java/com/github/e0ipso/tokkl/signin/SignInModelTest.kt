@@ -38,6 +38,7 @@ class SignInModelTest {
     private val savedSettings = mutableListOf<AccountSettings>()
     private var saveFailure: IOException? = null
     private var now = 5_000_000L
+    private val cooldowns = InMemoryCooldowns()
     private lateinit var trust: InMemoryServerTrust
     private lateinit var model: SignInModel
 
@@ -66,7 +67,22 @@ class SignInModelTest {
             httpClient = httpClient,
         )
         // Unconfined runs each attempt to the end inside submit().
-        return SignInModel(signIn, trust, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
+        return SignInModel(signIn, trust, cooldowns, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
+    }
+
+    /** The deadlines a [SignInCooldownStore] would hold, in memory. */
+    private class InMemoryCooldowns : SignInCooldowns {
+        val stored = mutableMapOf<String, Long>()
+
+        override fun load(): Map<String, Long> = stored.toMap()
+
+        override fun save(origin: String, deadline: Long) {
+            stored[origin] = deadline
+        }
+
+        override fun clear(origin: String) {
+            stored.remove(origin)
+        }
     }
 
     @Test
@@ -170,6 +186,86 @@ class SignInModelTest {
         model.submit()
         assertEquals(2, server.requestCount)
         assertTrue(model.state.value.signedIn)
+    }
+
+    /** A new model, as after process death, for the same server still waits out the 429. */
+    @Test
+    fun recreatedModelWithinTheCooldownStillBlocksSignIn() {
+        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "60").build())
+        fillApiToken()
+        model.submit()
+        assertEquals(60, model.secondsUntilRetry())
+
+        now += 10_000
+        val recreated = model(trust)
+        recreated.onServerUrlChange(baseUrl("/"))
+        recreated.onApiTokenChange(TOKEN)
+
+        assertEquals(50, recreated.secondsUntilRetry())
+        recreated.submit()
+        assertEquals("no request during the cooldown", 1, server.requestCount)
+    }
+
+    @Test
+    fun onlyTheServerOriginAndTheDeadlineAreStored() {
+        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
+        model.onServerUrlChange(baseUrl("/tokkl/"))
+        model.onApiTokenChange(TOKEN)
+
+        model.submit()
+
+        assertEquals(mapOf("http://${server.hostName}:${server.port}" to now + 30_000), cooldowns.stored)
+    }
+
+    @Test
+    fun aPassedDeadlineIsGoneFromThePhone() {
+        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
+        fillApiToken()
+        model.submit()
+
+        now += 30_000
+        model.cooldownEnded()
+
+        assertEquals(0, model.secondsUntilRetry())
+        assertNull(model.state.value.retryAt)
+        assertTrue(cooldowns.stored.isEmpty())
+    }
+
+    @Test
+    fun aStoredDeadlineThatHasPassedIsDroppedWhenTheModelStarts() {
+        cooldowns.stored["http://${server.hostName}:${server.port}"] = now - 1
+
+        model(trust)
+
+        assertTrue(cooldowns.stored.isEmpty())
+    }
+
+    @Test
+    fun aSuccessfulSignInForgetsTheDeadline() {
+        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
+        fillApiToken()
+        model.submit()
+        assertEquals(1, cooldowns.stored.size)
+
+        now += 30_000
+        model.submit()
+
+        assertTrue(model.state.value.signedIn)
+        assertTrue(cooldowns.stored.isEmpty())
+    }
+
+    @Test
+    fun aDeadlineBlocksOnlyItsOwnServer() {
+        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
+        fillApiToken()
+        model.submit()
+
+        model.onServerUrlChange("https://other.example/tokkl")
+
+        assertEquals(0, model.secondsUntilRetry())
+        model.onServerUrlChange(baseUrl("/tokkl"))
+        assertEquals(30, model.secondsUntilRetry())
     }
 
     @Test

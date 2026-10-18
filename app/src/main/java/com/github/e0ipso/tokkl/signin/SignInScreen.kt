@@ -69,13 +69,15 @@ fun SignInScreen(model: SignInModel, onSignedIn: () -> Unit, modifier: Modifier 
         if (state.signedIn) onSignedIn()
     }
     // Recomputed every second from the model's clock, so the countdown stays
-    // right across recomposition and configuration changes.
+    // right across recomposition and configuration changes. At zero the model
+    // forgets the deadline.
     val secondsLeft by produceState(model.secondsUntilRetry(), state.retryAt) {
         while (true) {
             value = model.secondsUntilRetry()
             if (value == 0L) break
             delay(COUNTDOWN_TICK_MS)
         }
+        if (state.retryAt != null) model.cooldownEnded()
     }
     SignInForm(
         state = state,

@@ -58,7 +58,7 @@ internal class ConfiguredServerGuard(
     }
 
     private fun requireAllowed(server: ServerUrl?, url: HttpUrl): ServerUrl {
-        if (server == null || !server.isSameOrigin(url)) throw HostNotAllowedException(origin(url))
+        if (server == null || !server.isSameOrigin(url)) throw HostNotAllowedException(url.origin())
         return server
     }
 
@@ -85,10 +85,5 @@ internal class ConfiguredServerGuard(
 
         /** OkHttp's own limit. */
         const val MAX_FOLLOW_UPS = 20
-
-        fun origin(url: HttpUrl): String {
-            val host = if (':' in url.host) "[${url.host}]" else url.host
-            return "${url.scheme}://$host:${url.port}"
-        }
     }
 }
