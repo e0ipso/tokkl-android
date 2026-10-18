@@ -37,7 +37,7 @@ fun TokklTheme(
     }
     val extraColors = if (darkTheme) TokklDarkExtraColors else TokklLightExtraColors
     CompositionLocalProvider(LocalTokklExtraColors provides extraColors) {
-        MaterialTheme(colorScheme = colorScheme, typography = TokklTypography, content = content)
+        MaterialTheme(colorScheme = colorScheme, shapes = TokklShapes, typography = TokklTypography, content = content)
     }
 }
 

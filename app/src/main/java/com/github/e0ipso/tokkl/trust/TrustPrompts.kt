@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.trust
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,6 +40,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 // The prompts about trusting a server, for sign-in and for any screen of a
@@ -71,6 +73,7 @@ fun TrustRefusedNotice(refusal: ApiError.TrustRefused, onReview: () -> Unit, mod
             .fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        border = BorderStroke(FrameWidth, MaterialTheme.colorScheme.outline),
         shadowElevation = 6.dp,
     ) {
         Column(
