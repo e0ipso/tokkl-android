@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.ui.theme
 
+import android.view.WindowInsets
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
@@ -8,10 +9,14 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -21,13 +26,21 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
+import androidx.compose.ui.unit.dp
+import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
+import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.ServerCertificate
+import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.session.ServerTrustStore
+import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.dynamicColorAvailable
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,11 +48,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
 
 /**
  * The Anybody headlines and the text around them at Android's largest font scale, 200%: no
  * text is cut off, leaves the screen or overlaps another. The sign-in form and the settings
- * scroll, so each of their parts has to fit once scrolled into view.
+ * scroll, so each of their parts has to fit once scrolled into view. So do the certificate
+ * prompt, from sign-in and over the home screen, and the notice left after cancelling a trust
+ * prompt.
  *
  * The clock and totals styles have no screen yet; ClockAndTotalStylesFitTest covers them.
  */
@@ -48,10 +66,12 @@ class LargestFontScaleTest {
 
     /**
      * The session and the font scale are set before the activity starts, so it never has to
-     * restart. Tests start signed in unless marked [SignedOut].
+     * restart. Tests start signed in unless marked [SignedOut]. A test marked [RefusedSession]
+     * starts signed in to a server whose requests wait for the user to trust it.
      */
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(SessionRule())
+        .around(RefusedSessionRule())
         .around(SystemFontScale(SystemFontScale.LARGEST))
         .around(composeRule)
 
@@ -151,6 +171,52 @@ class LargestFontScaleTest {
         )
     }
 
+    @SignedOut
+    @Test
+    fun certificatePromptFromSignInFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+
+        signInTo(TokklTestServer.tlsUrl)
+        composeRule.awaitText(string(R.string.sign_in_certificate_title), NETWORK_TIMEOUT_MS)
+        awaitKeyboardHidden()
+
+        assertCertificatePromptFits(R.string.sign_in_certificate_title, R.string.sign_in_certificate_body)
+    }
+
+    @RefusedSession(Refusal.UNCONFIRMED_HTTP)
+    @Test
+    fun noticeAfterCancellingTheHttpWarningFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
+
+        button(R.string.sign_in_warning_cancel).performClick()
+        composeRule.awaitText(string(R.string.trust_refused_http), NETWORK_TIMEOUT_MS)
+
+        assertNoticeFits(R.string.trust_refused_http)
+    }
+
+    @RefusedSession(Refusal.CHANGED_CERTIFICATE)
+    @Test
+    fun certificatePromptOverTheHomeScreenFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_certificate_changed_title), NETWORK_TIMEOUT_MS)
+
+        assertCertificatePromptFits(R.string.sign_in_certificate_changed_title, R.string.sign_in_certificate_changed_body)
+    }
+
+    @RefusedSession(Refusal.CHANGED_CERTIFICATE)
+    @Test
+    fun noticeAfterCancellingTheCertificatePromptFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_certificate_changed_title), NETWORK_TIMEOUT_MS)
+
+        button(R.string.sign_in_warning_cancel).performClick()
+        composeRule.awaitText(string(R.string.trust_refused_certificate), NETWORK_TIMEOUT_MS)
+
+        assertNoticeFits(R.string.trust_refused_certificate)
+    }
+
     /** The parts of the sign-in form that stack, which must not overlap. */
     private fun signInBlocks(
         vararg credentialFields: Pair<String, SemanticsNodeInteraction>,
@@ -237,6 +303,121 @@ class LargestFontScaleTest {
         }
     }
 
+    /** Types [server] and the account's API token into the sign-in form and submits it. */
+    private fun signInTo(server: ServerUrl) {
+        field(R.string.sign_in_server_url).performScrollTo().performTextInput(server.toString())
+        field(R.string.sign_in_api_token).performScrollTo().performTextInput(TokklTestServer.apiToken)
+        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+    }
+
+    /**
+     * Typing opened the keyboard, which the sign-in screen hides once a prompt shows. The prompt
+     * is measured after that, in the room the user then has.
+     */
+    private fun awaitKeyboardHidden() {
+        val decor = composeRule.activity.window.decorView
+        composeRule.waitUntil("the keyboard hides", NETWORK_TIMEOUT_MS) {
+            var shown = true
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                shown = decor.rootWindowInsets?.isVisible(WindowInsets.Type.ime()) == true
+            }
+            !shown
+        }
+        composeRule.waitForIdle()
+    }
+
+    /** The fingerprint and the subject have to show in full, since the user compares them with the server's. */
+    private fun assertCertificatePromptFits(@StringRes title: Int, @StringRes body: Int) {
+        val endpoint = TokklTestServer.tlsUrl.api("me")
+        val server = "${endpoint.host}:${endpoint.port}"
+        assertDialogFits(
+            blocks = listOf(
+                "title" to composeRule.onNode(hasText(string(title)) and isHeading()),
+                "fingerprint" to composeRule.onNodeWithText(TokklTestServer.tlsFingerprint),
+                "subject" to composeRule.onNodeWithText(CERTIFICATE_SUBJECT),
+                "cancel button" to button(R.string.sign_in_warning_cancel),
+                "trust button" to button(R.string.sign_in_certificate_trust),
+            ),
+            texts = listOf(
+                text(title),
+                "body" to composeRule.onNodeWithText(string(body, server)),
+                text(R.string.sign_in_certificate_fingerprint),
+                text(R.string.sign_in_certificate_subject),
+                inside(R.string.sign_in_warning_cancel, hasClickAction()),
+                inside(R.string.sign_in_certificate_trust, hasClickAction()),
+            ),
+        )
+    }
+
+    /** The notice sits over the home screen, so it may cover none of the home screen's own parts either. */
+    private fun assertNoticeFits(@StringRes message: Int) {
+        assertFitWithoutOverlap(
+            text(R.string.app_name),
+            text(R.string.launch_message),
+            "settings button" to button(R.string.settings),
+            "licences button" to button(R.string.licences),
+            text(message),
+            "review button" to button(R.string.trust_refused_review),
+        )
+        val label = inside(R.string.trust_refused_review, hasClickAction())
+        label.second.textLayout()?.let { assertFalse("text is cut off: ${label.first}", it.didOverflowHeight) }
+    }
+
+    private fun button(@StringRes label: Int): SemanticsNodeInteraction =
+        composeRule.onNode(hasText(string(label)) and hasClickAction())
+
+    /**
+     * Checks the open dialog, whose text scrolls between a fixed title and fixed buttons. Each
+     * of [blocks] shows in full once scrolled into view, and no two of them overlap. Text in
+     * [texts] wraps inside the dialog and is not cut off. Long text may be taller than the
+     * scrolling area, since the user scrolls through it.
+     */
+    private fun assertDialogFits(
+        blocks: List<Pair<String, SemanticsNodeInteraction>>,
+        texts: List<Pair<String, SemanticsNodeInteraction>>,
+    ) {
+        val window = composeRule.onNode(isRoot() and hasAnyDescendant(isDialog())).getBoundsInRoot()
+        val dialog = composeRule.onNode(isDialog()).getUnclippedBoundsInRoot()
+        assertTrue("the dialog leaves its window", dialog.inside(window))
+        val scrollingArea = composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog())).getBoundsInRoot()
+        val fixed = mutableListOf("scrolling area" to scrollingArea)
+        val scrolled = mutableListOf<Pair<String, SemanticsNodeInteraction>>()
+        for ((name, node) in texts) {
+            if (scrolls(node)) node.performScrollTo()
+            node.assertIsDisplayed()
+            node.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
+            val box = node.getUnclippedBoundsInRoot()
+            assertTrue("wider than the dialog: $name", box.left >= dialog.left - SLACK && box.right <= dialog.right + SLACK)
+        }
+        for ((name, node) in blocks) {
+            val scrolls = scrolls(node)
+            if (scrolls) node.performScrollTo()
+            node.assertIsDisplayed()
+            val box = node.getUnclippedBoundsInRoot()
+            assertTrue("does not show in full: $name", box.inside(if (scrolls) scrollingArea else dialog))
+            if (scrolls) scrolled += name to node else fixed += name to box
+        }
+        // Scrolled blocks compare with each other at one scroll position. The scrolling area
+        // clips them, so they cannot cover a fixed part when the area does not.
+        val atOnePosition = scrolled.map { (name, node) -> name to node.getUnclippedBoundsInRoot() }
+        for (group in listOf(fixed, atOnePosition)) {
+            for ((i, first) in group.withIndex()) {
+                for (second in group.drop(i + 1)) {
+                    assertFalse(
+                        "${first.first} ${first.second} overlaps ${second.first} ${second.second}",
+                        first.second.overlaps(second.second),
+                    )
+                }
+            }
+        }
+    }
+
+    private fun scrolls(node: SemanticsNodeInteraction): Boolean =
+        hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())
+
+    private fun DpRect.inside(other: DpRect): Boolean =
+        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK && bottom <= other.bottom + SLACK
+
     /** The text node itself, not the button it may sit in, so its layout result is reachable. */
     private fun text(@StringRes id: Int): Pair<String, SemanticsNodeInteraction> =
         string(id).let { it to composeRule.onNodeWithText(it, useUnmergedTree = true) }
@@ -256,5 +437,53 @@ class LargestFontScaleTest {
     private fun DpRect.overlaps(other: DpRect): Boolean =
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
 
-    private fun string(@StringRes id: Int): String = composeRule.activity.getString(id)
+    private fun string(@StringRes id: Int, vararg arguments: Any): String = composeRule.activity.getString(id, *arguments)
+
+    private companion object {
+        const val NETWORK_TIMEOUT_MS = 15_000L
+
+        /** Less than a pixel, for bounds that touch after rounding. */
+        val SLACK = 0.5.dp
+
+        /** The subject of the certificate that scripts/instrumented-tests.sh makes. */
+        const val CERTIFICATE_SUBJECT = "CN=Tokkl instrumented tests"
+    }
+}
+
+/** A test that starts signed in to a server whose requests the app refuses until the user answers a trust prompt. */
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+private annotation class RefusedSession(val refusal: Refusal)
+
+private enum class Refusal {
+    /** The plain http test server, with no confirmation stored. */
+    UNCONFIRMED_HTTP,
+
+    /** The TLS proxy, with a pin from an earlier certificate stored. */
+    CHANGED_CERTIFICATE,
+}
+
+/** Stores the session of a test marked [RefusedSession]. Order it after [SessionRule] and before the activity starts. */
+private class RefusedSessionRule : TestRule {
+
+    override fun apply(base: Statement, description: Description): Statement =
+        object : Statement() {
+            override fun evaluate() {
+                description.getAnnotation(RefusedSession::class.java)?.let { store(it.refusal) }
+                base.evaluate()
+            }
+        }
+
+    private fun store(refusal: Refusal) {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        SessionRule.signOut()
+        val server = when (refusal) {
+            Refusal.UNCONFIRMED_HTTP -> TokklTestServer.url
+            Refusal.CHANGED_CERTIFICATE -> TokklTestServer.tlsUrl.also {
+                val endpoint = it.api("me")
+                ServerTrustStore(context).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, "00".repeat(32), subject = ""))
+            }
+        }
+        Session(context).save(server, TokklTestServer.apiToken)
+    }
 }

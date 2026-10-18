@@ -323,6 +323,27 @@ class SignInModelTest {
         assertEquals(SignInResult.NotTokkl, model.state.value.failure)
     }
 
+    /** Toggl Track and Tokkl always send both fields, and the week starts on a day from 0 to 6. */
+    @Test
+    fun meWithoutTimezoneOrWeekStartIsNotTokklAndStoresNothing() {
+        val bodies = listOf(
+            """{"id":7,"api_token":"$TOKEN","beginning_of_week":1}""",
+            """{"id":7,"api_token":"$TOKEN","timezone":"Europe/Madrid"}""",
+            """{"id":7,"api_token":"$TOKEN","timezone":"Europe/Madrid","beginning_of_week":7}""",
+        )
+        fillApiToken()
+
+        for (body in bodies) {
+            server.enqueue(me(body))
+            model.submit()
+
+            assertEquals(body, SignInResult.NotTokkl, model.state.value.failure)
+        }
+        assertEquals(bodies.size, server.requestCount)
+        assertTrue(saved.isEmpty())
+        assertTrue(savedSettings.isEmpty())
+    }
+
     @Test
     fun notFoundKeepsItsStatus() {
         server.enqueue(MockResponse.Builder().code(404).build())
