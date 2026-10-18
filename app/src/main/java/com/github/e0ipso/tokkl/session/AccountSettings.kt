@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.api.ServerClient
+import com.github.e0ipso.tokkl.api.ServerProject
+import com.github.e0ipso.tokkl.api.ServerTag
+import com.github.e0ipso.tokkl.api.ServerTask
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.parseTimeZone
 import java.time.Clock
@@ -40,6 +44,9 @@ data class AccountSettings(
  * The fields the app reads from `GET /api/v9/me`. Toggl Track and Tokkl always send `id`,
  * `timezone` and `beginning_of_week`, so a body without them is not a `/me` user.
  * `time_resolution_minutes` is Tokkl's own and may be missing. `toString` leaves out the token.
+ *
+ * [clients], [projects], [tags] and [tasks] come only with `with_related_data=true`, and are null
+ * without it. Tokkl sends every one of them, archived projects and done tasks included.
  */
 @Serializable
 class Me(
@@ -48,6 +55,10 @@ class Me(
     val timezone: String,
     @SerialName("beginning_of_week") val beginningOfWeek: Int,
     @SerialName("time_resolution_minutes") val timeResolutionMinutes: Double? = null,
+    val clients: List<ServerClient>? = null,
+    val projects: List<ServerProject>? = null,
+    val tags: List<ServerTag>? = null,
+    val tasks: List<ServerTask>? = null,
 ) {
 
     /** The account settings, or null when `beginning_of_week` is not a day from 0 to 6. */

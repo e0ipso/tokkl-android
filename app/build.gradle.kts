@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 // The app version lives in gradle/version.properties, which the release step
@@ -147,6 +149,12 @@ android {
     }
 }
 
+// Room writes the schema of each database version here. The files are tracked,
+// so a later version can be checked against them and migrated.
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -154,6 +162,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
 
     // Declares the empty activity that createComposeRule() starts, in debug builds only.
     debugImplementation(libs.androidx.compose.ui.test.manifest)

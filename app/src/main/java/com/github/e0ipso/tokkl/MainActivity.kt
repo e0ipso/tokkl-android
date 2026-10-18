@@ -29,8 +29,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toDrawable
+import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -40,6 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val themeSettings = (application as TokklApplication).themeSettings
+        refreshOnSignIn()
         setContent {
             val settings by themeSettings.state.collectAsState()
             val darkTheme = settings.mode.isDark(systemIsDark = isSystemInDarkTheme())
@@ -54,10 +60,24 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Coming to the foreground reads the account settings again (docs/PRD.md S7). */
+    /**
+     * Coming to the foreground reads the account settings again (docs/PRD.md S7) and refreshes the
+     * offline cache with the same `GET /api/v9/me` (O2). Nothing refreshes on a timer.
+     */
     override fun onStart() {
         super.onStart()
         (application as TokklApplication).accountSettings.refresh()
+    }
+
+    /** A sign-in loads the account settings and the cache, as coming to the foreground does. */
+    private fun refreshOnSignIn() {
+        lifecycleScope.launch {
+            signInViewModel.model.state
+                .map { it.signedIn }
+                .distinctUntilChanged()
+                .filter { it }
+                .collect { (application as TokklApplication).accountSettings.refresh() }
+        }
     }
 
     /**

@@ -5,6 +5,7 @@ composeBom = "2026.09.00"
 activityCompose = "1.13.0"
 glance = "1.2.0"
 room = "2.8.5"
+ksp = "2.3.12"
 work = "2.12.0"
 okhttp = "5.5.0"
 kotlinxSerialization = "1.11.0"
@@ -37,3 +38,5 @@ androidx-test-orchestrator = { module = "androidx.test:orchestrator", version.re
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }

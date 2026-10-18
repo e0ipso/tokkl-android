@@ -23,6 +23,10 @@ import kotlinx.coroutines.launch
  * @param save writes the settings, throwing [IOException] when it cannot.
  * @param client the API client of the signed-in account, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a refresh.
+ * @param onRefresh runs on [io] after each refresh whose `GET /api/v9/me` answered, inside the
+ *   same job, with that client and answer. The cache refreshes there, so one `/me` serves the
+ *   settings and the cache, and a [refresh] call while it runs joins it. It does not run when
+ *   sign-in stored newer settings while the request ran.
  */
 class AccountSettingsSource(
     initial: AccountSettings?,
@@ -30,6 +34,7 @@ class AccountSettingsSource(
     private val client: () -> TogglApiClient?,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
+    private val onRefresh: (TogglApiClient, Me) -> Unit = { _, _ -> },
 ) {
 
     private val mutableState = MutableStateFlow(initial)
@@ -55,9 +60,10 @@ class AccountSettingsSource(
     }
 
     /**
-     * Reads `GET /api/v9/me` for the signed-in account and keeps its settings. Does nothing when
-     * signed out. A failed request or write keeps what is stored. While one refresh runs, another
-     * call returns that one instead of sending a second request.
+     * Reads `GET /api/v9/me` for the signed-in account, with its related data for the cache, and
+     * keeps its settings. Does nothing when signed out. A failed request or write keeps what is
+     * stored. While one refresh runs, another call returns that one instead of sending a second
+     * request.
      */
     fun refresh(): Job {
         val job = synchronized(lock) {
@@ -71,17 +77,21 @@ class AccountSettingsSource(
     private fun refreshNow() {
         val writesBefore = synchronized(lock) { writes }
         val api = client() ?: return
-        val me = api.get(api.server.api("me"), Me.serializer())
-        val settings = (me as? ApiResult.Success)?.value?.accountSettings() ?: return
+        val url = api.server.api("me").newBuilder().addQueryParameter("with_related_data", "true").build()
+        val me = (api.get(url, Me.serializer()) as? ApiResult.Success)?.value ?: return
+        val settings = me.accountSettings() ?: return
         synchronized(lock) {
             // Sign-in stored newer settings while the request ran.
-            if (writes != writesBefore || settings == mutableState.value) return
-            try {
-                write(settings)
-            } catch (e: IOException) {
-                // Keeps the stored settings until the next refresh.
+            if (writes != writesBefore) return
+            if (settings != mutableState.value) {
+                try {
+                    write(settings)
+                } catch (e: IOException) {
+                    // Keeps the stored settings until the next refresh.
+                }
             }
         }
+        onRefresh(api, me)
     }
 
     /** Only while holding [lock]. */

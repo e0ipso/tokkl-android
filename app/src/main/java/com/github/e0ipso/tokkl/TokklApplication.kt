@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl
 import android.app.Application
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -33,7 +35,8 @@ class TokklApplication : Application() {
 
     /**
      * Loaded on first use, which reads the stored settings from disk. That is usually
-     * MainActivity's onStart on the main thread, and the file holds three short values.
+     * MainActivity's onStart on the main thread, and the file holds three short values. Each
+     * refresh refreshes the [cache] too, with the same `GET /api/v9/me`.
      */
     val accountSettings: AccountSettingsSource by lazy {
         val store = AccountSettingsStore(this)
@@ -43,8 +46,12 @@ class TokklApplication : Application() {
             client = Session(this)::client,
             scope = MainScope(),
             io = Dispatchers.IO,
+            onRefresh = { api, me -> cache.refresh(api, me) },
         )
     }
+
+    /** The offline cache. Its database file opens on the first query, which Room keeps off the main thread. */
+    val cache: AccountCache by lazy { AccountCache(CacheDatabase.open(this)) }
 
     /**
      * The trust refusals of the signed-in session's requests, which every

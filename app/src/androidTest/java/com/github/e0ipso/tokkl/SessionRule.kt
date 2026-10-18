@@ -42,11 +42,15 @@ class SessionRule : TestRule {
     companion object {
         private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
-        /** Deletes the stored server, the token, its Keystore key, the account settings and the trust decisions. */
+        /**
+         * Deletes the stored server, the token, its Keystore key, the account settings, the
+         * offline cache and the trust decisions.
+         */
         fun signOut() {
             ServerConfigStore(context).clear()
             ApiTokenStore(context).clear()
             AccountSettingsStore(context).clear()
+            (context.applicationContext as TokklApplication).cache.clear()
             ServerTrustStore(context).clear()
         }
     }
