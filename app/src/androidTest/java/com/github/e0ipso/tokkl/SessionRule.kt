@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.Session
 import org.junit.rules.TestRule
@@ -35,10 +36,11 @@ class SessionRule : TestRule {
     companion object {
         private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
-        /** Deletes the stored server, the token and its Keystore key. */
+        /** Deletes the stored server, the token, its Keystore key and the account settings. */
         fun signOut() {
             ServerConfigStore(context).clear()
             ApiTokenStore(context).clear()
+            AccountSettingsStore(context).clear()
         }
     }
 }

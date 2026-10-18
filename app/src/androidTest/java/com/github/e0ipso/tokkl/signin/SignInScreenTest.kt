@@ -20,12 +20,16 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
+import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import java.io.File
 import java.security.KeyStore
+import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -65,6 +69,10 @@ class SignInScreenTest {
         awaitHome()
         assertEquals(TokklTestServer.url, ServerConfigStore(context).load())
         assertTrue("the token store holds the API token", ApiTokenStore(context).load() == TokklTestServer.apiToken)
+        // The test account is in UTC (scripts/instrumented-tests.sh), with Tokkl's other defaults.
+        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0)
+        assertEquals(settings, AccountSettingsStore(context).load())
+        assertEquals(settings, (context.applicationContext as TokklApplication).accountSettings.state.value)
         assertStoredNowhere(TokklTestServer.apiToken, "the API token in plain text")
     }
 

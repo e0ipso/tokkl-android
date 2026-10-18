@@ -1,7 +1,9 @@
 package com.github.e0ipso.tokkl.session
 
 import android.content.Context
+import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import java.io.IOException
 import java.security.GeneralSecurityException
@@ -31,6 +33,22 @@ class Session(
         } catch (e: IOException) {
             false
         }
+
+    /**
+     * The API client of the signed-in account, or null when signed out. A Keystore or disk
+     * failure counts as signed out, as in [isSignedIn].
+     */
+    fun client(): TogglApiClient? {
+        return try {
+            val server = servers.load() ?: return null
+            val token = tokens.load() ?: return null
+            TogglApiClient(server, ApiCredentials.ApiToken(token))
+        } catch (e: GeneralSecurityException) {
+            null
+        } catch (e: IOException) {
+            null
+        }
+    }
 
     /**
      * Stores [server] as the configured server and [token] as its API token.

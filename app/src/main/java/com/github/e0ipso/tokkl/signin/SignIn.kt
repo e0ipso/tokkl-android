@@ -7,13 +7,13 @@ import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.Me
 import java.io.IOException
 import java.security.GeneralSecurityException
 import java.security.cert.CertPathValidatorException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 
 /** What the user entered to sign in. `toString` never prints a secret. */
@@ -32,7 +32,7 @@ sealed interface SignInCredentials {
 /** How a sign-in attempt ended. None of these carries a credential. */
 sealed interface SignInResult {
 
-    /** The server and the token are stored. */
+    /** The server, the token and the account settings are stored. */
     data object SignedIn : SignInResult
 
     /** 403: wrong API token, or wrong email or password. */
@@ -71,17 +71,20 @@ sealed interface SignInResult {
     data object StorageFailed : SignInResult
 }
 
-/** Stores the configured server and its API token once the server has accepted them. */
+/**
+ * Stores the configured server, its API token and the account settings once the server has
+ * accepted them.
+ */
 fun interface SessionWriter {
     @Throws(GeneralSecurityException::class, IOException::class)
-    fun save(server: ServerUrl, token: String)
+    fun save(server: ServerUrl, token: String, settings: AccountSettings)
 }
 
 /**
- * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then the server
- * and token go to [session]. With email and password, the token kept is the
- * `api_token` from that response; the password is used for this one request
- * and never written anywhere.
+ * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then the server,
+ * the token and the account settings from that response go to [session]. With
+ * email and password, the token kept is the `api_token` from that response;
+ * the password is used for this one request and never written anywhere.
  *
  * The call blocks, so make it off the main thread.
  */
@@ -98,27 +101,19 @@ class SignIn(
             is ApiResult.Success -> result.value
             is ApiResult.Failure -> return result.error.toSignInResult()
         }
+        val settings = me.accountSettings() ?: return SignInResult.NotTokkl
         val token = when (credentials) {
             is SignInCredentials.ApiToken -> credentials.token
             is SignInCredentials.EmailPassword -> me.apiToken?.takeIf { it.isNotEmpty() } ?: return SignInResult.NoApiToken
         }
         return try {
-            session.save(server, token)
+            session.save(server, token, settings)
             SignInResult.SignedIn
         } catch (e: GeneralSecurityException) {
             SignInResult.StorageFailed
         } catch (e: IOException) {
             SignInResult.StorageFailed
         }
-    }
-
-    /** The fields sign-in reads from `GET /api/v9/me`. `toString` hides the token. */
-    @Serializable
-    private class Me(
-        val id: Long,
-        @SerialName("api_token") val apiToken: String? = null,
-    ) {
-        override fun toString(): String = "Me(id=$id)"
     }
 }
 

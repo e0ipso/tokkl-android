@@ -50,6 +50,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** Coming to the foreground reads the account settings again (docs/PRD.md S7). */
+    override fun onStart() {
+        super.onStart()
+        (application as TokklApplication).accountSettings.refresh()
+    }
+
     /**
      * Paints the window in the scheme's background and picks system bar icons that show on it.
      * res/values-night only knows the system's mode, so a light or dark setting that differs

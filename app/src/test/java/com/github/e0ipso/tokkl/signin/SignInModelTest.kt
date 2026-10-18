@@ -2,7 +2,9 @@ package com.github.e0ipso.tokkl.signin
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.session.AccountSettings
 import java.io.IOException
+import java.time.DayOfWeek
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +28,7 @@ class SignInModelTest {
 
     private val server = MockWebServer()
     private val saved = mutableListOf<Pair<ServerUrl, String>>()
+    private val savedSettings = mutableListOf<AccountSettings>()
     private var saveFailure: IOException? = null
     private var now = 5_000_000L
     private lateinit var model: SignInModel
@@ -33,7 +36,13 @@ class SignInModelTest {
     @Before
     fun setUp() {
         server.start()
-        val signIn = SignIn(session = { url, token -> saveFailure?.let { throw it }; saved += url to token })
+        val signIn = SignIn(
+            session = { url, token, settings ->
+                saveFailure?.let { throw it }
+                saved += url to token
+                savedSettings += settings
+            },
+        )
         // Unconfined runs each attempt to the end inside submit().
         model = SignInModel(signIn, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
     }
@@ -45,7 +54,7 @@ class SignInModelTest {
 
     @Test
     fun apiTokenSignInKeepsTheBasePathAndStoresServerAndToken() {
-        server.enqueue(me("""{"id":7,"api_token":"$TOKEN"}"""))
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
         model.onServerUrlChange(" ${baseUrl("/tokkl/")} ")
         model.onApiTokenChange(" $TOKEN\n")
 
@@ -55,12 +64,25 @@ class SignInModelTest {
         assertEquals("/tokkl/api/v9/me", request.url.encodedPath)
         assertEquals(ApiCredentials.ApiToken(TOKEN).authorizationHeader, request.headers["Authorization"])
         assertEquals(listOf(ServerUrl.parse(baseUrl("/tokkl"))!! to TOKEN), saved)
+        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.SUNDAY, 15.0)), savedSettings)
         assertTrue(model.state.value.signedIn)
     }
 
     @Test
+    fun meWithoutTimeResolutionSignsInWithNoSnapping() {
+        server.enqueue(me("""{"id":7,"api_token":"$TOKEN","timezone":"Europe/Madrid","beginning_of_week":1}"""))
+        fillApiToken()
+
+        model.submit()
+
+        assertNull(model.state.value.failure)
+        assertTrue(model.state.value.signedIn)
+        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null)), savedSettings)
+    }
+
+    @Test
     fun emailAndPasswordSignInStoresOnlyTheTokenFromMe() {
-        server.enqueue(me("""{"id":7,"email":"ana@example.com","api_token":"$TOKEN"}"""))
+        server.enqueue(me("""{"id":7,$SETTINGS,"email":"ana@example.com","api_token":"$TOKEN"}"""))
         model.onServerUrlChange(baseUrl("/"))
         model.onMethodChange(SignInMethod.EMAIL_PASSWORD)
         model.onEmailChange("ana@example.com")
@@ -80,7 +102,7 @@ class SignInModelTest {
 
     @Test
     fun passwordIsSentExactlyAsTyped() {
-        server.enqueue(me("""{"id":7,"api_token":"$TOKEN"}"""))
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
         model.onServerUrlChange(baseUrl("/"))
         model.onMethodChange(SignInMethod.EMAIL_PASSWORD)
         model.onEmailChange(" ana@example.com ")
@@ -111,7 +133,7 @@ class SignInModelTest {
     @Test
     fun tooManyRequestsBlocksSubmitUntilRetryAfterPassesAndNeverRetriesAlone() {
         server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
-        server.enqueue(me("""{"id":7,"api_token":"$TOKEN"}"""))
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
         fillApiToken()
 
         model.submit()
@@ -165,7 +187,7 @@ class SignInModelTest {
 
     @Test
     fun meWithoutAnApiTokenFailsEmailAndPasswordSignIn() {
-        server.enqueue(me("""{"id":7,"email":"ana@example.com"}"""))
+        server.enqueue(me("""{"id":7,$SETTINGS,"email":"ana@example.com"}"""))
         model.onServerUrlChange(baseUrl("/"))
         model.onMethodChange(SignInMethod.EMAIL_PASSWORD)
         model.onEmailChange("ana@example.com")
@@ -218,7 +240,7 @@ class SignInModelTest {
     @Test
     fun storageFailureIsReported() {
         saveFailure = IOException("disk full")
-        server.enqueue(me("""{"id":7,"api_token":"$TOKEN"}"""))
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
         fillApiToken()
 
         model.submit()
@@ -272,5 +294,8 @@ class SignInModelTest {
     private companion object {
         const val TOKEN = "0123456789abcdef0123456789abcdef"
         const val PASSWORD = "correct horse:battery"
+
+        /** The settings fields of `GET /api/v9/me`, which Toggl Track and Tokkl always send. */
+        const val SETTINGS = """"timezone":"Europe/Madrid","beginning_of_week":0,"time_resolution_minutes":15"""
     }
 }
