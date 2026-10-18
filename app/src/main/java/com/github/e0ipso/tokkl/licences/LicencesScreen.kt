@@ -85,26 +85,18 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
 /**
  * [text] in the body size, with each line made only of dashes drawn as a rule. A line of dashes
- * set as text wraps onto a second line wherever the screen is narrower than it. The rest of the
- * text shows as it ships. Semantics keeps the whole text, dashes included, as one node, as the
- * single Text did before.
+ * set as text wraps onto a second line wherever the screen is narrower than it. Each paragraph's
+ * hard-wrapped lines are joined, so it wraps at the screen's width instead of breaking early
+ * ([licenceBlocks]). Semantics keeps the whole text as it ships, dashes included, as one node,
+ * as the single Text did before.
  */
 @Composable
 private fun LicenceText(text: String) {
-    val blocks = remember(text) { splitAtRules(text) }
+    val blocks = remember(text) { licenceBlocks(text) }
     Column(Modifier.clearAndSetSemantics { this.text = AnnotatedString(text) }) {
         for ((i, block) in blocks.withIndex()) {
             if (i > 0) HorizontalDivider(Modifier.padding(vertical = TokklTheme.spacing.space2))
             Text(text = block, style = MaterialTheme.typography.bodyMedium)
         }
     }
-}
-
-/** The blocks of [text] between the lines made only of dashes, without those lines. */
-private fun splitAtRules(text: String): List<String> {
-    val blocks = mutableListOf(mutableListOf<String>())
-    for (line in text.split('\n')) {
-        if (line.isNotEmpty() && line.all { it == '-' }) blocks += mutableListOf<String>() else blocks.last() += line
-    }
-    return blocks.map { it.joinToString("\n") }
 }
