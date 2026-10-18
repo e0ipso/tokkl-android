@@ -1,11 +1,59 @@
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+}
+
+// The app version lives in gradle/version.properties, which the release step
+// rewrites. versionName is MAJOR.MINOR.PATCH, and
+//
+//     versionCode = major * 1_000_000 + minor * 1_000 + patch
+//
+// with minor and patch below 1000, so every release gets a higher code than
+// the one before it. 0.1.0 gets 1000.
+//
+// The file also stores the computed number, because F-Droid reads it at each
+// v* tag and cannot evaluate a formula. Its metadata for the app needs
+//
+//     UpdateCheckMode: Tags
+//     UpdateCheckData: gradle/version.properties|versionCode=(\d+)|.|versionName=(\S+)
+//
+// The build fails when the stored number breaks the formula.
+val appVersion = Properties().apply {
+    load(
+        providers.fileContents(layout.settingsDirectory.file("gradle/version.properties"))
+            .asText.get().reader(),
+    )
+}
+val appVersionName: String = appVersion.getProperty("versionName")
+    ?: throw GradleException("gradle/version.properties has no versionName.")
+val appVersionCode: Int = run {
+    val parts = Regex("""(0|[1-9][0-9]{0,3})\.(0|[1-9][0-9]{0,2})\.(0|[1-9][0-9]{0,2})""")
+        .matchEntire(appVersionName)
+        ?.destructured?.toList()?.map { it.toLong() }
+        ?: throw GradleException(
+            "gradle/version.properties: versionName $appVersionName is not MAJOR.MINOR.PATCH " +
+                "with MINOR and PATCH below 1000.",
+        )
+    val (major, minor, patch) = parts
+    val code = major * 1_000_000 + minor * 1_000 + patch
+    if (code !in 1..Int.MAX_VALUE) {
+        throw GradleException("versionName $appVersionName gives $code, outside 1..${Int.MAX_VALUE}.")
+    }
+    code.toInt()
+}
+appVersion.getProperty("versionCode").let { stored ->
+    if (stored != appVersionCode.toString()) {
+        throw GradleException(
+            "gradle/version.properties: versionCode is $stored, but versionName " +
+                "$appVersionName needs $appVersionCode.",
+        )
+    }
 }
 
 android {
@@ -18,8 +66,8 @@ android {
         minSdk = 26
         // The API level of the test emulator.
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
