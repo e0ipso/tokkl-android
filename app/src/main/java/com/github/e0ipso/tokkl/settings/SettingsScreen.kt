@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -21,7 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -37,6 +35,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -122,21 +121,12 @@ private fun ThemeSection(
     // Radio buttons: the selected one differs in shape, not only in colour.
     Column(Modifier.selectableGroup()) {
         for ((mode, label) in MODE_LABELS) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .selectable(
-                        selected = settings.mode == mode,
-                        role = Role.RadioButton,
-                        onClick = { onModeChange(mode) },
-                    ),
-            ) {
-                RadioButton(selected = settings.mode == mode, onClick = null)
-                Spacer(Modifier.width(TokklTheme.spacing.space3))
-                Text(text = stringResource(label), style = MaterialTheme.typography.bodyLarge)
-            }
+            RadioOptionRow(
+                label = stringResource(label),
+                selected = settings.mode == mode,
+                onSelect = { onModeChange(mode) },
+                textStyle = MaterialTheme.typography.bodyLarge,
+            )
         }
     }
     if (showDynamicColor) {

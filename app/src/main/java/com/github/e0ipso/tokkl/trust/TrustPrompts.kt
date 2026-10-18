@@ -4,18 +4,12 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -40,6 +33,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
@@ -121,17 +115,11 @@ fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel: () -> U
                 verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
             ) {
                 Text(stringResource(R.string.sign_in_http_warning_body, server.toString()))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                        .toggleable(value = understood, role = Role.Checkbox, onValueChange = { understood = it }),
-                ) {
-                    Checkbox(checked = understood, onCheckedChange = null)
-                    Spacer(Modifier.width(TokklTheme.spacing.space3))
-                    Text(stringResource(R.string.sign_in_http_warning_understood))
-                }
+                CheckboxOptionRow(
+                    label = stringResource(R.string.sign_in_http_warning_understood),
+                    checked = understood,
+                    onCheckedChange = { understood = it },
+                )
             }
         },
         confirmButton = {
