@@ -19,6 +19,7 @@ import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Dp
 import androidx.test.platform.app.InstrumentationRegistry
@@ -168,7 +169,8 @@ class SignInScreenTest {
     /**
      * The email field keeps its supporting line with or without an error, so the error takes the
      * hint's place and the fields under it stay put. Positions are taken from the email field,
-     * which an open keyboard may scroll.
+     * which an open keyboard or the scroll to the sign-in button may move, so the offsets match to
+     * within a pixel: each is the difference of two positions, which loses float precision.
      */
     @Test
     fun emailErrorLeavesTheFieldsBelowInPlace() {
@@ -186,8 +188,8 @@ class SignInScreenTest {
         field(R.string.sign_in_email).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Error))
         val cleared = passwordOffset()
 
-        assertEquals("the password field moved when the email error showed", before, withError)
-        assertEquals("the password field moved when the email error cleared", before, cleared)
+        assertEquals("the password field moved when the email error showed", before.value, withError.value, SLACK_DP)
+        assertEquals("the password field moved when the email error cleared", before.value, cleared.value, SLACK_DP)
     }
 
     @Test
@@ -233,8 +235,9 @@ class SignInScreenTest {
         field(R.string.sign_in_server_url).performTextInput(TokklTestServer.url.toString())
     }
 
+    /** The brand above the form can push the button below the screen's or the keyboard's edge. */
     private fun submit() {
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
     }
 
     private fun awaitHttpWarning() {
@@ -315,5 +318,8 @@ class SignInScreenTest {
 
     private companion object {
         const val NETWORK_TIMEOUT_MS = 15_000L
+
+        /** Less than a pixel, in dp. */
+        const val SLACK_DP = 0.5f
     }
 }

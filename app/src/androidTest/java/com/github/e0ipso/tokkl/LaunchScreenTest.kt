@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import org.junit.Rule
 import org.junit.Test
@@ -17,7 +18,8 @@ class LaunchScreenTest {
     fun showsTheLaunchTextFromStringResources() {
         val activity = composeRule.activity
         composeRule.awaitText(activity.getString(R.string.launch_message))
-        composeRule.onNodeWithText(activity.getString(R.string.app_name)).assertIsDisplayed()
+        // The brand's wordmark, an image that TalkBack reads as the app's name.
+        composeRule.onNodeWithContentDescription(activity.getString(R.string.app_name)).assertIsDisplayed()
         composeRule.onNodeWithText(activity.getString(R.string.launch_message)).assertIsDisplayed()
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
@@ -38,6 +39,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
+import com.github.e0ipso.tokkl.ui.Brand
+import com.github.e0ipso.tokkl.ui.BrandSize
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -129,6 +132,7 @@ private fun SignInForm(
                 .padding(vertical = TokklTheme.spacing.space6),
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space4),
         ) {
+            Brand(BrandSize.LARGE, Modifier.align(Alignment.CenterHorizontally))
             Text(
                 text = stringResource(R.string.sign_in_title),
                 style = MaterialTheme.typography.headlineLarge,

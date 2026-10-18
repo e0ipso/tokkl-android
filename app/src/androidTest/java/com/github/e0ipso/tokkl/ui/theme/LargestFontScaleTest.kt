@@ -82,7 +82,7 @@ class LargestFontScaleTest {
         composeRule.awaitText(string(R.string.launch_message))
 
         assertFitWithoutOverlap(
-            text(R.string.app_name),
+            brand(),
             text(R.string.launch_message),
             text(R.string.settings),
             text(R.string.licences),
@@ -276,6 +276,7 @@ class LargestFontScaleTest {
         vararg credentialFields: Pair<String, SemanticsNodeInteraction>,
     ): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
+            brand(),
             "heading" to composeRule.onNode(hasText(string(R.string.sign_in_title)) and isHeading()),
             "server URL field" to field(R.string.sign_in_server_url),
             text(R.string.sign_in_method),
@@ -482,7 +483,7 @@ class LargestFontScaleTest {
     /** The notice sits over the home screen, so it may cover none of the home screen's own parts either. */
     private fun assertNoticeFits(@StringRes message: Int) {
         assertFitWithoutOverlap(
-            text(R.string.app_name),
+            brand(),
             text(R.string.launch_message),
             "settings button" to button(R.string.settings),
             "licences button" to button(R.string.licences),
@@ -495,6 +496,10 @@ class LargestFontScaleTest {
 
     private fun button(@StringRes label: Int): SemanticsNodeInteraction =
         composeRule.onNode(hasText(string(label)) and hasClickAction())
+
+    /** The brand, which TalkBack reads by its wordmark's description, the app's name. */
+    private fun brand(): Pair<String, SemanticsNodeInteraction> =
+        "brand" to composeRule.onNodeWithContentDescription(string(R.string.app_name))
 
     /**
      * Checks the open dialog, whose text scrolls between a fixed title and fixed buttons. Each
