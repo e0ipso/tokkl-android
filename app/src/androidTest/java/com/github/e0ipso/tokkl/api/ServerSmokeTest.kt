@@ -1,27 +1,42 @@
 package com.github.e0ipso.tokkl.api
 
 import com.github.e0ipso.tokkl.TokklTestServer
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
+import java.util.UUID
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
  * Talks to the real Tokkl container over plain HTTP, which the network
- * security config permits. Assertion messages never carry the token.
+ * security config permits. Assertion messages never carry the token or the
+ * password.
  */
 class ServerSmokeTest {
 
+    private val client = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+
     @Test
     fun apiTokenAuthenticatesWithGetMe() {
-        val client = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+        assertEquals(TokklTestServer.email, email(client))
+    }
 
-        val me = when (val result = client.get(client.server.api("me"), JsonObject.serializer())) {
-            is ApiResult.Success -> result.value
-            is ApiResult.Failure -> throw AssertionError("GET /api/v9/me failed: ${result.error}")
-        }
+    @Test
+    fun emailAndPasswordAuthenticateWithGetMe() {
+        val credentials = ApiCredentials.EmailPassword(TokklTestServer.email, TokklTestServer.password)
 
-        assertEquals(TokklTestServer.email, me.getValue("email").jsonPrimitive.content)
+        assertEquals(TokklTestServer.email, email(TogglApiClient(TokklTestServer.url, credentials)))
     }
 
     @Test
@@ -33,4 +48,83 @@ class ServerSmokeTest {
         // Compares the error alone, so a success body never lands in the message.
         assertEquals(ApiError.AuthFailed, (result as? ApiResult.Failure)?.error)
     }
+
+    /** Tokkl answers every DELETE with 200 and an empty body. */
+    @Test
+    fun deleteWithAnEmptyResponseBodySucceeds() {
+        val tags = client.server.api("workspaces", workspaceId(), "tags")
+        val name = "smoke-${UUID.randomUUID()}"
+        val tag = client.send("POST", tags, buildJsonObject { put("name", name) }, JsonObject.serializer())
+            .valueOrFail("POST tags")
+        assertEquals(name, tag.string("name"))
+
+        val deleted = client.sendNoContent("DELETE", tags.newBuilder().addPathSegment(tag.string("id")).build())
+
+        assertEquals(ApiResult.Success(Unit), deleted)
+        val left = client.get(tags, JsonArray.serializer()).valueOrFail("GET tags")
+        assertFalse("the deleted tag is still listed", left.any { it.jsonObject.string("id") == tag.string("id") })
+    }
+
+    @Test
+    fun reportsSearchFindsAnEntryCreatedThroughTheApi() {
+        val workspaceId = workspaceId()
+        val entries = client.server.api("workspaces", workspaceId, "time_entries")
+        val start = Instant.now().minus(Duration.ofHours(1)).truncatedTo(ChronoUnit.SECONDS)
+        val entry = client.send(
+            "POST",
+            entries,
+            buildJsonObject {
+                put("workspace_id", workspaceId.toLong())
+                put("description", "smoke-${UUID.randomUUID()}")
+                put("start", start.toString())
+                put("duration", 600)
+                put("created_with", "tokkl-android instrumented tests")
+            },
+            JsonObject.serializer(),
+        ).valueOrFail("POST time_entries")
+        val entryId = entry.string("id")
+        try {
+            // The test account's timezone is UTC (scripts/instrumented-tests.sh).
+            val day = start.atZone(ZoneOffset.UTC).toLocalDate()
+            val rows = client.send(
+                "POST",
+                client.server.reports("workspace", workspaceId, "search", "time_entries"),
+                buildJsonObject {
+                    put("start_date", day.minusDays(1).toString())
+                    put("end_date", day.plusDays(1).toString())
+                },
+                JsonArray.serializer(),
+            ).valueOrFail("POST reports search/time_entries")
+
+            val found = rows.any { row ->
+                row.jsonObject.getValue("time_entries").jsonArray.any { it.jsonObject.string("id") == entryId }
+            }
+            assertTrue("the report has no row for the new entry", found)
+        } finally {
+            client.sendNoContent("DELETE", entries.newBuilder().addPathSegment(entryId).build())
+        }
+    }
+
+    private fun email(client: TogglApiClient): String =
+        client.get(client.server.api("me"), JsonObject.serializer()).valueOrFail("GET /api/v9/me").string("email")
+
+    private fun workspaceId(): String =
+        client.get(client.server.api("me"), JsonObject.serializer()).valueOrFail("GET /api/v9/me")
+            .string("default_workspace_id")
+
+    private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
+
+    /** Fails with the error alone, so neither a response body nor a secret lands in the message. */
+    private fun <T> ApiResult<T>.valueOrFail(call: String): T =
+        when (this) {
+            is ApiResult.Success -> value
+            is ApiResult.Failure -> throw AssertionError("$call failed: ${error.describe()}")
+        }
+
+    private fun ApiError.describe(): String =
+        when (this) {
+            is ApiError.Http -> "HTTP $status"
+            is ApiError.Network -> "network error: $cause"
+            is ApiError.InvalidResponse -> "response is not the expected JSON"
+        }
 }
