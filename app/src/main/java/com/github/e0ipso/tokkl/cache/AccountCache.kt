@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.Me
 import java.time.Clock
 import kotlinx.coroutines.flow.Flow
@@ -30,11 +31,12 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
 
     /**
      * Reads the server with [api] and replaces the cached rows, as [refreshedWith] describes.
-     * [me] is the refresh's `GET /api/v9/me` with related data. A failed request keeps its rows,
-     * and a failed write keeps the whole cache as it was. Blocks, so call it off the main thread.
+     * [me] is the refresh's `GET /api/v9/me` with related data, and [capabilities] the flags it
+     * set. A server without favorites gets none cached. A failed request keeps its rows, and a
+     * failed write keeps the whole cache as it was. Blocks, so call it off the main thread.
      */
-    fun refresh(api: TogglApiClient, me: Me) {
-        val snapshot = readServerSnapshot(api, me, clock)
+    fun refresh(api: TogglApiClient, me: Me, capabilities: Capabilities) {
+        val snapshot = readServerSnapshot(api, me, clock, favorites = capabilities.favorites)
         try {
             dao.refresh { it.refreshedWith(snapshot) }
         } catch (e: SQLiteException) {

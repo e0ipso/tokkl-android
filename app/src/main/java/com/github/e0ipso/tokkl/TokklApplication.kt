@@ -5,6 +5,8 @@ import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CacheDatabase
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -36,7 +38,7 @@ class TokklApplication : Application() {
     /**
      * Loaded on first use, which reads the stored settings from disk. That is usually
      * MainActivity's onStart on the main thread, and the file holds three short values. Each
-     * refresh refreshes the [cache] too, with the same `GET /api/v9/me`.
+     * refresh refreshes the [capabilities] and the [cache] too, with the same `GET /api/v9/me`.
      */
     val accountSettings: AccountSettingsSource by lazy {
         val store = AccountSettingsStore(this)
@@ -46,8 +48,14 @@ class TokklApplication : Application() {
             client = Session(this)::client,
             scope = MainScope(),
             io = Dispatchers.IO,
-            onRefresh = { api, me -> cache.refresh(api, me) },
+            onRefresh = { api, me -> cache.refresh(api, me, capabilities.refresh(api, me)) },
         )
+    }
+
+    /** What the server offers. Loaded on first use from a file of four flags. */
+    val capabilities: CapabilitiesSource by lazy {
+        val store = CapabilitiesStore(this)
+        CapabilitiesSource(initial = store.load(), save = store::save)
     }
 
     /** The offline cache. Its database file opens on the first query, which Room keeps off the main thread. */

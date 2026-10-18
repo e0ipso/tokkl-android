@@ -20,11 +20,12 @@ import kotlinx.serialization.builtins.ListSerializer
  * Reads what a refresh puts in the cache. [me] is the refresh's `GET /api/v9/me` with related
  * data, which carries the clients, projects, tags and tasks. On top of it come two requests:
  * `GET /api/v9/me/time_entries` for the history window, counted in the account's timezone, and
- * `GET /api/v9/me/preferences` for the favorites. A failed request leaves its list null.
+ * `GET /api/v9/me/preferences` for the favorites. A failed request leaves its list null. Without
+ * [favorites], as on Toggl Track, the favorites are an empty list and not asked for.
  *
  * Blocks on the network, so call it off the main thread.
  */
-fun readServerSnapshot(api: TogglApiClient, me: Me, clock: Clock): ServerSnapshot {
+fun readServerSnapshot(api: TogglApiClient, me: Me, clock: Clock, favorites: Boolean): ServerSnapshot {
     val history = me.accountSettings()?.time(clock)?.let(HistoryWindow::endingToday)
     return ServerSnapshot(
         history = history,
@@ -33,7 +34,7 @@ fun readServerSnapshot(api: TogglApiClient, me: Me, clock: Clock): ServerSnapsho
         clients = me.clients?.map { it.toCached() },
         tags = me.tags?.map { it.toCached() },
         tasks = me.tasks?.map { it.toCached() },
-        favorites = readFavorites(api),
+        favorites = if (favorites) readFavorites(api) else emptyList(),
     )
 }
 

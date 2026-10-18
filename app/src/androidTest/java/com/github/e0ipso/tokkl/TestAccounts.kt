@@ -12,8 +12,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -36,7 +34,8 @@ object TestAccounts {
     private val admin get() = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
 
     fun create(timezone: String): Account {
-        val invite = admin.send("POST", app("admin", "invites"), buildJsonObject { put("role", "user") }, JsonObject.serializer())
+        val invite = admin
+            .send("POST", TokklTestServer.url.app("admin", "invites"), buildJsonObject { put("role", "user") }, JsonObject.serializer())
             .orFail("POST /api/app/admin/invites")
         val token = invite.getValue("url").jsonPrimitive.content.substringAfterLast('/')
         val email = "cache-${hex(8)}@example.com"
@@ -49,7 +48,7 @@ object TestAccounts {
         }
         // The web app's form, which needs the CSRF header and no Basic auth.
         val accept = Request.Builder()
-            .url(app("invites", token))
+            .url(TokklTestServer.url.app("invites", token))
             .header("X-Tokkl-Csrf", "1")
             .post(account.toString().toRequestBody("application/json".toMediaType()))
             .build()
@@ -65,16 +64,9 @@ object TestAccounts {
     /** Deletes [account] with its workspace and everything in it. */
     fun delete(account: Account) {
         val confirm = buildJsonObject { put("email", account.email) }
-        admin.sendNoContent("DELETE", app("admin", "users", account.id.toString()), confirm)
+        admin.sendNoContent("DELETE", TokklTestServer.url.app("admin", "users", account.id.toString()), confirm)
             .orFail("DELETE /api/app/admin/users/<id>")
     }
-
-    /** A Tokkl-only endpoint under `<base>/api/app`. */
-    fun app(vararg segments: String): HttpUrl =
-        TokklTestServer.url.toString().toHttpUrl().newBuilder()
-            .addPathSegments("api/app")
-            .apply { segments.forEach(::addPathSegment) }
-            .build()
 
     private fun hex(bytes: Int): String =
         ByteArray(bytes).also(SecureRandom()::nextBytes).joinToString("") { "%02x".format(it) }

@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl
 
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -44,12 +45,13 @@ class SessionRule : TestRule {
 
         /**
          * Deletes the stored server, the token, its Keystore key, the account settings, the
-         * offline cache and the trust decisions.
+         * server's capabilities, the offline cache and the trust decisions.
          */
         fun signOut() {
             ServerConfigStore(context).clear()
             ApiTokenStore(context).clear()
             AccountSettingsStore(context).clear()
+            CapabilitiesStore(context).clear()
             (context.applicationContext as TokklApplication).cache.clear()
             ServerTrustStore(context).clear()
         }

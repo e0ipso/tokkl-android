@@ -24,8 +24,8 @@ import kotlinx.coroutines.launch
  * @param client the API client of the signed-in account, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a refresh.
  * @param onRefresh runs on [io] after each refresh whose `GET /api/v9/me` answered, inside the
- *   same job, with that client and answer. The cache refreshes there, so one `/me` serves the
- *   settings and the cache, and a [refresh] call while it runs joins it. It does not run when
+ *   same job, with that client and answer. The capabilities and the cache refresh there, so one
+ *   `/me` serves them all, and a [refresh] call while it runs joins it. It does not run when
  *   sign-in stored newer settings while the request ran.
  */
 class AccountSettingsSource(

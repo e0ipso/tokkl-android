@@ -17,6 +17,12 @@ class ServerUrl private constructor(private val base: HttpUrl) {
     fun reports(vararg segments: String): HttpUrl = endpoint(REPORTS_V3, segments)
 
     /**
+     * A Tokkl-only endpoint outside the Toggl API, such as `app("trash")` for
+     * `GET /api/app/trash`. Toggl Track and older Tokkl servers answer 404.
+     */
+    fun app(vararg segments: String): HttpUrl = endpoint(APP, segments)
+
+    /**
      * Each segment is percent-encoded on its own, so a `/` or `?` inside one
      * cannot change the path or add a query.
      */
@@ -46,6 +52,7 @@ class ServerUrl private constructor(private val base: HttpUrl) {
     companion object {
         private val API_V9 = listOf("api", "v9")
         private val REPORTS_V3 = listOf("reports", "api", "v3")
+        private val APP = listOf("api", "app")
 
         /**
          * Returns null unless [url] is an absolute `http` or `https` URL with

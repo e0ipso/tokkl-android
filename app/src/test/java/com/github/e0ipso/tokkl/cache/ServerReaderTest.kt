@@ -58,7 +58,7 @@ class ServerReaderTest {
         )
         answers["/api/v9/me/preferences"] = json("""{"date_format":"YYYY-MM-DD"}""")
 
-        val snapshot = readServerSnapshot(client, me("Pacific/Auckland"), Clock.fixed(NOW, ZoneOffset.UTC))
+        val snapshot = readServerSnapshot(client, me("Pacific/Auckland"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
 
         val request = recorded("/api/v9/me/time_entries")
         assertEquals("2026-10-04T11:00:00Z", request.url.queryParameter("start_date"))
@@ -84,14 +84,25 @@ class ServerReaderTest {
         answers["/api/v9/me/time_entries"] = json("[]")
         answers["/api/v9/me/preferences"] = json("""{"date_format":"YYYY-MM-DD"}""")
 
-        val snapshot = readServerSnapshot(client, me("UTC"), Clock.fixed(NOW, ZoneOffset.UTC))
+        val snapshot = readServerSnapshot(client, me("UTC"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
 
         assertEquals(emptyList<CachedFavorite>(), snapshot.favorites)
     }
 
+    /** Toggl Track has no favorites, so the refresh neither asks for them nor keeps any. */
+    @Test
+    fun withoutFavoritesThePreferencesAreNotAskedFor() {
+        answers["/api/v9/me/time_entries"] = json("[]")
+
+        val snapshot = readServerSnapshot(client, me("UTC"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = false)
+
+        assertEquals(emptyList<CachedFavorite>(), snapshot.favorites)
+        assertEquals(listOf("/api/v9/me/time_entries"), List(server.requestCount) { server.takeRequest().url.encodedPath })
+    }
+
     @Test
     fun failedRequestsLeaveTheirListsUnread() {
-        val snapshot = readServerSnapshot(client, me("UTC"), Clock.fixed(NOW, ZoneOffset.UTC))
+        val snapshot = readServerSnapshot(client, me("UTC"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
 
         assertNull(snapshot.timeEntries)
         assertNull(snapshot.favorites)
@@ -101,7 +112,7 @@ class ServerReaderTest {
     fun anUnknownZoneReadsNoEntries() {
         answers["/api/v9/me/preferences"] = json("{}")
 
-        val snapshot = readServerSnapshot(client, me("Mars/Olympus_Mons"), Clock.fixed(NOW, ZoneOffset.UTC))
+        val snapshot = readServerSnapshot(client, me("Mars/Olympus_Mons"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
 
         assertNull(snapshot.history)
         assertNull(snapshot.timeEntries)
