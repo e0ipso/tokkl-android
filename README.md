@@ -152,6 +152,22 @@ Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that n
 ./gradlew --stop
 ```
 
+### Screenshot tests
+
+`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/` captures sign-in with each method, home, Settings, Licences, Reports, the http warning and the certificate prompt, in the light and the dark theme, at font scale 1.0 and 2.0. Each capture shrinks to a third in each direction and is compared with its reference image in `app/src/androidTest/assets/screenshots/`. The references come from `tokkl-api36`, because density and system fonts change the pixels. Run all four classes with:
+
+```sh
+scripts/instrumented-tests.sh \
+  -Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.ui.screenshot
+```
+
+A capture that differs from its reference, or has none, fails its test. The capture and a diff, with the differing pixels in magenta, land in `actual/` and `diff/` under `app/build/outputs/connected_android_test_additional_output/debugAndroidTest/connected/<device>/screenshots/`. A change to how a screen looks updates its references in the same commit. Look at every diff and capture. When all of them show the intended change, copy them into the references and run the tests again:
+
+```sh
+cp app/build/outputs/connected_android_test_additional_output/debugAndroidTest/connected/*/screenshots/actual/*.png \
+  app/src/androidTest/assets/screenshots/
+```
+
 ## Release builds
 
 F-Droid builds the app from source and compares its unsigned APK with the signed APK on the GitHub release. It publishes the APK signed with the project's key only when the two match apart from the signature ([reproducible builds](https://f-droid.org/docs/Reproducible_Builds/)). People who sideload install the same APK from the GitHub release.
