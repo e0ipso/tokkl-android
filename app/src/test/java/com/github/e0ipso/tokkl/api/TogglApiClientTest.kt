@@ -106,6 +106,56 @@ class TogglApiClientTest {
     }
 
     @Test
+    fun emptyBodyOnADecodingCallIsAnInvalidResponse() {
+        server.enqueue(MockResponse.Builder().code(200).build())
+
+        assertTrue(failure(client.get(client.server.api("me"), Me.serializer())) is ApiError.InvalidResponse)
+    }
+
+    @Test
+    fun noContentCallSucceedsOn200WithAnEmptyBody() {
+        // Tokkl's DELETE routes answer this way.
+        server.enqueue(MockResponse.Builder().code(200).build())
+
+        val result = client.sendNoContent("DELETE", client.server.api("workspaces", "1", "time_entries", "2"))
+
+        assertEquals(ApiResult.Success(Unit), result)
+        val request = server.takeRequest()
+        assertEquals("DELETE", request.method)
+        assertEquals("/tokkl/api/v9/workspaces/1/time_entries/2", request.url.encodedPath)
+        assertEquals(credentials.authorizationHeader, request.headers["Authorization"])
+    }
+
+    @Test
+    fun noContentCallSucceedsOn204() {
+        server.enqueue(MockResponse.Builder().code(204).build())
+
+        assertEquals(ApiResult.Success(Unit), client.sendNoContent("DELETE", client.server.api("me")))
+    }
+
+    @Test
+    fun noContentCallKeepsTheHttpErrorMappings() {
+        server.enqueue(json(403, "\"Incorrect username and/or password\""))
+        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "5").build())
+        server.enqueue(json(404, "\"Not found\""))
+        val url = client.server.api("workspaces", "1", "time_entries", "2")
+
+        assertEquals(ApiError.AuthFailed, failure(client.sendNoContent("DELETE", url)))
+        assertEquals(ApiError.RateLimited(5), failure(client.sendNoContent("DELETE", url)))
+        assertEquals(ApiError.UnexpectedStatus(404), failure(client.sendNoContent("DELETE", url)))
+    }
+
+    @Test
+    fun noContentCallReportsANetworkFailure() {
+        val url = serverUrl()
+        server.close()
+
+        val error = failure(TogglApiClient(url, credentials).sendNoContent("DELETE", url.api("me")))
+
+        assertTrue(error.toString(), error is ApiError.Network)
+    }
+
+    @Test
     fun refusedConnectionIsANetworkError() {
         val url = serverUrl()
         server.close()

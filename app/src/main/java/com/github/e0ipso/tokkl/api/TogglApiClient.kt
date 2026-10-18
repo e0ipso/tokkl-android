@@ -12,8 +12,9 @@ import okhttp3.Response
 
 /**
  * Client for the Toggl Track API v9 and Reports API v3, as served by Tokkl or
- * by Toggl Track. Build endpoint URLs with [server], then call [get] or
- * [send]. Calls block the calling thread, so make them off the main thread.
+ * by Toggl Track. Build endpoint URLs with [server], then call [get], [send]
+ * or [sendNoContent]. Calls block the calling thread, so make them off the
+ * main thread.
  */
 class TogglApiClient(
     val server: ServerUrl,
@@ -25,14 +26,31 @@ class TogglApiClient(
         send("GET", url, body = null, deserializer)
 
     /**
-     * Sends [body] as JSON, or no body when it is null. OkHttp refuses a null
-     * body for POST, PUT and PATCH.
+     * Sends [body] as JSON, or no body when it is null, and decodes the 2xx
+     * response body. An empty body does not decode, so use [sendNoContent]
+     * for calls that answer without one. OkHttp refuses a null body for POST,
+     * PUT and PATCH.
      */
     fun <T> send(
         method: String,
         url: HttpUrl,
         body: JsonElement?,
         deserializer: DeserializationStrategy<T>,
+    ): ApiResult<T> = execute(method, url, body) { decode(it.body.string(), deserializer) }
+
+    /**
+     * Like [send], for calls that expect no content, such as Tokkl's DELETE
+     * routes, which answer 200 with an empty body. Any 2xx is a success, and
+     * the client ignores whatever body it carries.
+     */
+    fun sendNoContent(method: String, url: HttpUrl, body: JsonElement? = null): ApiResult<Unit> =
+        execute(method, url, body) { ApiResult.Success(Unit) }
+
+    private fun <T> execute(
+        method: String,
+        url: HttpUrl,
+        body: JsonElement?,
+        onSuccess: (Response) -> ApiResult<T>,
     ): ApiResult<T> {
         val request = Request.Builder()
             .url(url)
@@ -40,18 +58,19 @@ class TogglApiClient(
             .method(method, body?.let { ApiJson.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) })
             .build()
         return try {
-            httpClient.newCall(request).execute().use { it.toResult(deserializer) }
+            httpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) onSuccess(response) else ApiResult.Failure(httpError(response))
+            }
         } catch (e: IOException) {
             ApiResult.Failure(ApiError.Network(e))
         }
     }
 
-    private fun <T> Response.toResult(deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        when {
-            isSuccessful -> decode(body.string(), deserializer)
-            code == 403 -> ApiResult.Failure(ApiError.AuthFailed)
-            code == 429 -> ApiResult.Failure(ApiError.RateLimited(retryAfterSeconds(header("Retry-After"))))
-            else -> ApiResult.Failure(ApiError.UnexpectedStatus(code))
+    private fun httpError(response: Response): ApiError.Http =
+        when (response.code) {
+            403 -> ApiError.AuthFailed
+            429 -> ApiError.RateLimited(retryAfterSeconds(response.header("Retry-After")))
+            else -> ApiError.UnexpectedStatus(response.code)
         }
 
     private fun <T> decode(text: String, deserializer: DeserializationStrategy<T>): ApiResult<T> =
