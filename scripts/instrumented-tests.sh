@@ -11,6 +11,8 @@
 # 4. Runs connectedDebugAndroidTest with the server URL, the email and that
 #    file's path as instrumentation arguments. The emulator reaches the host's
 #    127.0.0.1 as 10.0.2.2. The credentials work only on this container.
+#    The run fails when a test device goes away during it, even if Gradle
+#    reports success.
 # 5. Removes the container and the credentials file, also when a step fails.
 #
 # The setup code, the password and the API token never appear in a process's
@@ -61,6 +63,8 @@ if pgrep -x adb >/dev/null; then adb_was_running=true; fi
 
 # Reports why the emulator this script booted exited on its own, and forgets
 # it. The OOM killer ends qemu with SIGKILL, which wait reports as 137.
+# ShellCheck 0.11 misses that the EXIT trap runs cleanup, which calls this.
+# shellcheck disable=SC2329
 report_emulator_exit() {
     local status=0
     wait "$emulator_pid" 2>/dev/null || status=$?
@@ -74,6 +78,8 @@ report_emulator_exit() {
     fi
 }
 
+# ShellCheck 0.11 misses that the EXIT trap runs this.
+# shellcheck disable=SC2329
 cleanup() {
     local status=$?
     if [ -n "$container" ]; then
@@ -211,8 +217,22 @@ for device in "${devices[@]}"; do
 done
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
+gradle_status=0
 ./gradlew --no-daemon connectedDebugAndroidTest \
     "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
     "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
     "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
-    "$@"
+    "$@" || gradle_status=$?
+
+# AGP's test task can pass when a device dies between two tests. With the
+# emulator killed a second into the run, Gradle printed BUILD SUCCESSFUL and
+# had run none of the 32 tests. So every test device must still be online.
+gone=()
+for device in "${devices[@]}"; do
+    if [ "$(adb -s "$device" get-state 2>/dev/null)" != device ]; then gone+=("$device"); fi
+done
+if [ "${#gone[@]}" -gt 0 ]; then
+    echo "$0: ${gone[*]} went away during the run. Gradle can pass without running every test, so this run fails." >&2
+    exit 1
+fi
+exit "$gradle_status"
