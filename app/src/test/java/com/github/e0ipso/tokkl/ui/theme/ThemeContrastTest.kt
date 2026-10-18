@@ -91,7 +91,7 @@ class ThemeContrastTest {
             Pair("onTertiaryFixed on tertiaryFixedDim", s.onTertiaryFixed, s.tertiaryFixedDim, Kind.TEXT),
             Pair("onTertiaryFixedVariant on tertiaryFixed", s.onTertiaryFixedVariant, s.tertiaryFixed, Kind.TEXT),
         )
-        return surfacePairs + fills + navigationBarPairs(s)
+        return surfacePairs + fills + navigationBarPairs(s) + texturePairs(s, x)
     }
 
     /**
@@ -107,6 +107,31 @@ class ThemeContrastTest {
             Pair("inactive nav icon on bar", item.unselectedIconColor, bar, Kind.NON_TEXT),
             Pair("inactive nav label on bar", item.unselectedTextColor, bar, Kind.TEXT),
         )
+    }
+
+    /**
+     * The pairs styles.css lists for the gradients behind the top bar strip and the sign-in
+     * scene: text and muted text on each texture colour, text on each scene colour, and the
+     * wordmark halo on the surfaces the wordmark sits on. Light draws no halo, so it has no halo
+     * pairs. The pairs where gradients overlap are a drawing ticket's check.
+     */
+    private fun texturePairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
+        val texture = listOf("textureGlow" to x.textureGlow, "textureSwell" to x.textureSwell, "textureStripe" to x.textureStripe)
+        val scene = listOf("sceneGlow" to x.sceneGlow, "sceneSwell" to x.sceneSwell, "sceneStripe" to x.sceneStripe)
+        val text = texture.flatMap { (name, colour) ->
+            listOf(
+                Pair("onSurface on $name", s.onSurface, colour, Kind.TEXT),
+                Pair("onSurfaceVariant on $name", s.onSurfaceVariant, colour, Kind.TEXT),
+            )
+        } + scene.map { (name, colour) -> Pair("onSurface on $name", s.onSurface, colour, Kind.TEXT) }
+        val haloDrawn = x.wordmarkHalo.alpha > 0f
+        val halo = if (haloDrawn) {
+            (listOf("background" to s.background, "surface" to s.surface) + texture + scene)
+                .map { (name, colour) -> Pair("wordmarkHalo on $name", x.wordmarkHalo, colour, Kind.NON_TEXT) }
+        } else {
+            emptyList()
+        }
+        return text + halo
     }
 
     private fun assertPairsPass(scheme: String, colours: ColorScheme, extra: TokklExtraColors) {
