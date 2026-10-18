@@ -62,10 +62,10 @@ sealed interface ReportFailure {
 }
 
 /**
- * The reports screen's state. Each time the screen opens and each time the range changes, it
- * asks the configured server for the report, and it never asks on a timer. Reports live in
- * memory while the screen is open; [close] drops them, and nothing is written to the phone.
- * When a request fails, the screen shows why and no numbers.
+ * The reports screen's state. Each time the screen opens, the range changes or the app comes
+ * back to the foreground, it asks the configured server for the report, and it never asks on a
+ * timer. Reports live in memory while the screen is open; [close] drops them, and nothing is
+ * written to the phone. When a request fails, the screen shows why and no numbers.
  *
  * Call every function on the main thread.
  *
@@ -88,6 +88,9 @@ class ReportsModel(
     private var workspace: ReportWorkspace? = null
 
     private var loading: Job? = null
+
+    /** The app went to the background with the screen open, so what it shows may be old. */
+    private var backgrounded = false
 
     /**
      * Opens the screen on this week. Does nothing while the screen is open, so a configuration
@@ -121,11 +124,31 @@ class ReportsModel(
         if (current == null) select(RangePreset.THIS_WEEK) else load(current)
     }
 
+    /**
+     * The app went to the background with the screen open. Call it when the activity stops, but
+     * not for a configuration change, which is no trip to the background.
+     */
+    fun wentToBackground() {
+        if (state.value != ReportsState.Closed) backgrounded = true
+    }
+
+    /**
+     * The app came back to the foreground. After [wentToBackground], asks again for the range on
+     * screen, and shows no numbers until the answer comes, so a phone that lost its connection in
+     * the background says that reports need the server instead of showing old numbers.
+     */
+    fun cameToForeground() {
+        if (!backgrounded) return
+        backgrounded = false
+        retry()
+    }
+
     /** Closes the screen: stops waiting for an answer and forgets the report and the workspace. */
     fun close() {
         loading?.cancel()
         loading = null
         workspace = null
+        backgrounded = false
         mutableState.value = ReportsState.Closed
     }
 

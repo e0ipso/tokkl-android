@@ -37,6 +37,9 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -46,16 +49,30 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
  * The reports screen (docs/PRD.md R1 and R5): a tab per report, so far the summary, under the
- * range they share. Opening the screen asks the server for this week; leaving it forgets the
- * report, while a configuration change keeps it. Offline, it says that reports need the server
+ * range they share. Opening the screen asks the server for this week, and coming back to the
+ * foreground asks again for the range on screen; leaving it forgets the report, while a
+ * configuration change keeps it and asks nothing. Offline, it says that reports need the server
  * and shows no numbers. The detailed (TKA-0034) and weekly (TKA-0035) reports add their tabs here.
  */
 @Composable
 fun ReportsScreen(model: ReportsModel, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val activity = LocalActivity.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(model) {
         model.open()
         onDispose { if (activity?.isChangingConfigurations != true) model.close() }
+    }
+    DisposableEffect(model, lifecycle) {
+        // Adding the observer replays ON_START at once, which the model ignores until a stop.
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> if (activity?.isChangingConfigurations != true) model.wentToBackground()
+                Lifecycle.Event.ON_START -> model.cameToForeground()
+                else -> Unit
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
     val state by model.state.collectAsState()
     val settings by model.accountSettings.collectAsState()
