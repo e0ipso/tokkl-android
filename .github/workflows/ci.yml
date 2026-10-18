@@ -93,8 +93,8 @@ jobs:
       # disable-linux-hw-accel: false make the job fail without KVM instead of
       # falling back to software emulation. Animations stay on, as they do
       # locally. The runner runs each script line on its own with sh -c. The
-      # first two turn off error dialogs, which the script does only on an
-      # emulator it boots itself.
+      # first two turn off error dialogs and the third lets the soft keyboard
+      # open, which the script does only on an emulator it boots itself.
       - uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 36
@@ -108,6 +108,7 @@ jobs:
           script: |
             adb shell settings put global hide_error_dialogs 1
             adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS
+            adb shell settings put secure show_ime_with_hard_keyboard 1
             scripts/instrumented-tests.sh
 
   # Lints the commit messages and runs the tests of the commitlint rules. The

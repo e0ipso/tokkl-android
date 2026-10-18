@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.ui.theme
 
+import android.os.SystemClock
 import android.view.WindowInsets
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
@@ -56,7 +57,8 @@ import org.junit.runners.model.Statement
  * The Anybody headlines and the text around them at Android's largest font scale, 200%: no
  * text is cut off, leaves the screen or overlaps another. The sign-in form and the settings
  * scroll, so each of their parts has to fit once scrolled into view. So do the trust prompts,
- * from sign-in and over the home screen, and the notice left after cancelling one.
+ * from sign-in and over the home screen, and the notice left after cancelling one. With the
+ * keyboard open, the sign-in field being typed in stays above it.
  *
  * The clock and totals styles have no screen yet; ClockAndTotalStylesFitTest covers them.
  */
@@ -168,6 +170,36 @@ class LargestFontScaleTest {
                 text(R.string.sign_in_password_hint),
             ),
         )
+    }
+
+    /**
+     * The keyboard opens over the bottom of the sign-in form. The password field starts where
+     * the keyboard then shows, and has to move up and end above the keyboard's top edge.
+     *
+     * MainActivity sets no windowSoftInputMode, so Android also pans the whole window up when
+     * the keyboard opens, by 258 px on tokkl-api36. Window positions include that pan, and the
+     * pan alone keeps the field in view, so this test still passes without the form's IME
+     * padding.
+     */
+    @SignedOut
+    @Test
+    fun focusedSignInFieldStaysAboveTheKeyboard() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+        choice(R.string.sign_in_method_email_password).performClick()
+        val password = field(R.string.sign_in_password)
+        password.performScrollTo()
+        val before = password.bottomInWindow()
+
+        password.performClick()
+        val keyboardTop = awaitKeyboardTop()
+        val after = awaitStill(password)
+
+        assertTrue(
+            "the password field ends at $before px before the keyboard opens, above its top at $keyboardTop px, so this test checks nothing",
+            before > keyboardTop,
+        )
+        assertTrue("the focused password field ends at $after px, under the keyboard's top at $keyboardTop px", after <= keyboardTop)
     }
 
     @SignedOut
@@ -347,6 +379,47 @@ class LargestFontScaleTest {
         composeRule.waitForIdle()
     }
 
+    /**
+     * Waits until the keyboard takes up room and returns its top edge, in window pixels. Visible
+     * is not enough: with show_ime_with_hard_keyboard at 0, tokkl-api36 reported the keyboard as
+     * visible with a height of 0.
+     */
+    private fun awaitKeyboardTop(): Int {
+        val decor = composeRule.activity.window.decorView
+        var height = 0
+        var top = 0
+        composeRule.waitUntil("the keyboard shows", KEYBOARD_TIMEOUT_MS) {
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                height = decor.rootWindowInsets?.getInsets(WindowInsets.Type.ime())?.bottom ?: 0
+                top = decor.height - height
+            }
+            height > 0
+        }
+        return top
+    }
+
+    /**
+     * Waits until [node] has kept still for [STILL_MS], once the keyboard's animation and the
+     * scroll it starts are over, and returns its bottom edge in window pixels.
+     */
+    private fun awaitStill(node: SemanticsNodeInteraction): Float {
+        var bottom = Float.NaN
+        var since = SystemClock.uptimeMillis()
+        composeRule.waitUntil("the sign-in form stops moving", KEYBOARD_TIMEOUT_MS) {
+            val now = node.bottomInWindow()
+            if (now != bottom) {
+                bottom = now
+                since = SystemClock.uptimeMillis()
+            }
+            SystemClock.uptimeMillis() - since >= STILL_MS
+        }
+        return bottom
+    }
+
+    /** The node's bottom edge in window pixels, also when its scrolling parent clips it. */
+    private fun SemanticsNodeInteraction.bottomInWindow(): Float =
+        fetchSemanticsNode().let { it.positionInWindow.y + it.size.height }
+
     private fun assertHttpWarningFits() {
         val understood = string(R.string.sign_in_http_warning_understood)
         assertDialogFits(
@@ -497,6 +570,11 @@ class LargestFontScaleTest {
 
     private companion object {
         const val NETWORK_TIMEOUT_MS = 15_000L
+
+        const val KEYBOARD_TIMEOUT_MS = 10_000L
+
+        /** Longer than the keyboard's animation, so a field still moving does not count as still. */
+        const val STILL_MS = 1_000L
 
         /** Less than a pixel, for bounds that touch after rounding. */
         val SLACK = 0.5.dp
