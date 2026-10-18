@@ -13,8 +13,16 @@
 #
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
 # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
-# tokkl-api36) without a window and stops it at the end. It also stops the adb
-# server if that was not running before.
+# tokkl-api36) without a window and with 2 GB of guest RAM, and stops it at the
+# end. It also stops the adb server if that was not running before.
+#
+# qemu holds up to 5 GB, and its oom_score_adj of 800 makes it the kernel OOM
+# killer's first pick. When the user's systemd manager is reachable, the
+# emulator runs in a scope of its own with OOMPolicy=continue, so an OOM kill
+# ends only qemu and this script, not the caller's scope with everything else
+# in it, such as an agent session. The scope is PartOf the caller's unit, so
+# stopping the caller still stops the emulator. Without a user manager, as in
+# CI, the emulator starts as a plain child process.
 #
 # Arguments go to Gradle, for example to run one class:
 #   scripts/instrumented-tests.sh \
@@ -39,8 +47,24 @@ work_dir=$(mktemp -d)
 container=''
 emulator_pid=''
 emulator_serial=''
+emulator_unit=''
 adb_was_running=false
 if pgrep -x adb >/dev/null; then adb_was_running=true; fi
+
+# Reports why the emulator this script booted exited on its own, and forgets
+# it. The OOM killer ends qemu with SIGKILL, which wait reports as 137.
+report_emulator_exit() {
+    local status=0
+    wait "$emulator_pid" 2>/dev/null || status=$?
+    emulator_pid=''
+    if [ "$status" -eq 137 ]; then
+        echo "$0: the emulator was killed with SIGKILL, most likely by the kernel's OOM killer." >&2
+        echo "$0: \`journalctl -k --grep=oom\` shows OOM kills. Free memory before running the tests again." >&2
+    else
+        echo "$0: the emulator exited with status $status. Last emulator output:" >&2
+        tail -n 20 "$work_dir/emulator.log" >&2
+    fi
+}
 
 cleanup() {
     local status=$?
@@ -48,9 +72,17 @@ cleanup() {
         docker rm --force --volumes "$container" >/dev/null 2>&1 ||
             echo "$0: could not remove container $container" >&2
     fi
+    if [ -n "$emulator_pid" ] && ! kill -0 "$emulator_pid" 2>/dev/null; then
+        report_emulator_exit
+        if [ "$status" -eq 0 ]; then status=1; fi
+    fi
     if [ -n "$emulator_pid" ]; then
         adb -s "$emulator_serial" emu kill >/dev/null 2>&1 || kill "$emulator_pid" 2>/dev/null || true
         wait "$emulator_pid" 2>/dev/null || true
+    fi
+    if [ -n "$emulator_unit" ]; then
+        # Stops whatever is left in the scope. It is gone once qemu exits.
+        systemctl --user stop "$emulator_unit" >/dev/null 2>&1 || true
     fi
     if [ "$adb_was_running" = false ]; then
         adb kill-server >/dev/null 2>&1 || true
@@ -72,16 +104,28 @@ attached_devices() {
 
 boot_emulator() {
     command -v emulator >/dev/null || { echo "$0: no device attached and emulator is not on PATH" >&2; exit 1; }
-    local port=5554 log="$work_dir/emulator.log" deadline=$((SECONDS + 300))
-    while adb devices | grep -q "^emulator-$port[[:space:]]"; do port=$((port + 2)); done
+    local port=5554 log="$work_dir/emulator.log" deadline=$((SECONDS + 300)) caller
+    local -a launch=()
+    while adb devices | grep -q "^emulator-${port}[[:space:]]"; do port=$((port + 2)); done
     emulator_serial="emulator-$port"
-    echo "Booting $AVD as $emulator_serial"
-    emulator -avd "$AVD" -port "$port" -no-window -no-audio -no-boot-anim -no-snapshot -accel on >"$log" 2>&1 &
+    if command -v systemd-run >/dev/null && systemctl --user show --property=Version >/dev/null 2>&1; then
+        emulator_unit="tokkl-emulator-$port-$(random_hex 4).scope"
+        launch=(systemd-run --user --scope --quiet --collect --unit="$emulator_unit" -p OOMPolicy=continue)
+        if caller=$(systemctl --user whoami 2>/dev/null); then launch+=(-p "PartOf=$caller"); fi
+        launch+=(--)
+    fi
+    echo "Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit}"
+    "${launch[@]}" emulator -avd "$AVD" -port "$port" -memory 2048 \
+        -no-window -no-audio -no-boot-anim -no-snapshot -accel on >"$log" 2>&1 &
     emulator_pid=$!
     export ANDROID_SERIAL="$emulator_serial"
     until [ "$(adb -s "$emulator_serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
-        if ! kill -0 "$emulator_pid" 2>/dev/null || [ "$SECONDS" -ge "$deadline" ]; then
-            echo "$0: $AVD did not boot. Last emulator output:" >&2
+        if ! kill -0 "$emulator_pid" 2>/dev/null; then
+            echo "$0: $AVD did not boot." >&2
+            exit 1
+        fi
+        if [ "$SECONDS" -ge "$deadline" ]; then
+            echo "$0: $AVD did not boot in 5 minutes. Last emulator output:" >&2
             tail -n 20 "$log" >&2
             exit 1
         fi
