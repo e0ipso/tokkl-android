@@ -22,6 +22,8 @@ Anybody, bundled with the app, sets the running clock, totals and headings. Ever
 
 Contrast meets WCAG AA as in Tokkl: 4.5:1 for text and 3:1 for non-text elements. Colour is never the only signal for a state. Every control has a TalkBack label, and layouts survive the largest font scale. Tokkl's sixth principle applies as written. Any style that costs a readable number, a reachable control or a passing test gets dropped.
 
+The owner's design brief, "radical graffiti surfer", is Tokkl's principle 6, "Loud look, plain function" (surf-shop graffiti), together with the Visual direction subsection that follows the principles in section 4 of `../tokkl/docs/PRD.md`. The app's spacing scale, content width, type scale, shapes and wordmark values are drafted in the look-and-feel tickets TKA-0105 to TKA-0124. The code does not have them until those tickets land.
+
 The app is English only. All text lives in string resources. No other language is planned, and contributors can add translations.
 
 <!-- kk:citations:start -->

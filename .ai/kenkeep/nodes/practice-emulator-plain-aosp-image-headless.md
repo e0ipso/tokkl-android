@@ -30,6 +30,8 @@ qemu holds up to about 5 GB of RAM, and its `oom_score_adj` of 800 makes it the 
 
 This machine is an always-on homelab server tuned for low idle power. When the tests finish, run `adb emu kill` and then `adb kill-server`, so neither the emulator nor the adb server keeps running. Run `adb shell sync` first when a change on the emulator's disk has to survive. A file the script deleted without it was back on the next boot. To look for leftovers, use `pgrep -x adb` and `pgrep -af qemu-system`. `pgrep -f adb` also matches `mariadbd` and the shell that runs the command.
 
+`adb shell screenrecord` stopped with SIGINT has lost roughly the last 1 to 2 s of video. Hold the final screen at least that long before stopping a recording.
+
 <!-- kk:related:start -->
 # Related
 

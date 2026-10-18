@@ -13,6 +13,7 @@ kk_derived_from:
   - docs/PRD.md
 kk_relates_to:
   - map-api-client-shared-okhttp-serverurl-and-errors
+  - map-connection-trust-store-pinning-and-prompts
 kk_depends_on: []
 kk_confidence: high
 ---

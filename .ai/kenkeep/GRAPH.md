@@ -1,11 +1,19 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:601c9b7caac1c9d389862a58f28db8f09b43eb06d8d256208e71939b136aa0d4'
-node_count: 28
+nodes_hash: 'sha256:0f3e06a51e287ec4ad7f5e21c1f023ba277b4842c0e33f726fd0eca7fb72a86a'
+node_count: 30
 ---
 # kenkeep Graph
 
-Total nodes: 28
+Total nodes: 30
+
+## map-account-settings-source-and-account-time
+
+- **kind:** map
+- **title:** Account settings: AccountSettingsSource, AccountTime and NoDeviceZoneTest
+- **path:** map-account-settings-source-and-account-time.md
+- **tags:** time, api, android, settings
+- **relates_to:** practice-match-web-app-behavior-account-timezone, map-signin-session-settings-and-navigation-host, map-connection-trust-store-pinning-and-prompts, practice-refresh-on-events-no-polling
 
 ## map-api-client-shared-okhttp-serverurl-and-errors
 
@@ -13,7 +21,7 @@ Total nodes: 28
 - **title:** API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError
 - **path:** map-api-client-shared-okhttp-serverurl-and-errors.md
 - **tags:** api, network, okhttp
-- **relates_to:** map-tokkl-toggl-api, practice-talk-only-to-configured-server, practice-pin-self-signed-certs-warn-on-http
+- **relates_to:** map-tokkl-toggl-api, practice-talk-only-to-configured-server, practice-pin-self-signed-certs-warn-on-http, map-connection-trust-store-pinning-and-prompts
 
 ## map-api-token-store-and-backup-exclusion
 
@@ -30,6 +38,14 @@ Total nodes: 28
 - **path:** map-app-id-license-android-versions.md
 - **tags:** release, fdroid, android
 - **derived_from:** docs/PRD.md
+
+## map-connection-trust-store-pinning-and-prompts
+
+- **kind:** map
+- **title:** Connection trust: ServerTrustStore, PinningTrustManager and the trust prompts
+- **path:** map-connection-trust-store-pinning-and-prompts.md
+- **tags:** security, network, ui, dialogs
+- **relates_to:** practice-pin-self-signed-certs-warn-on-http, map-api-client-shared-okhttp-serverurl-and-errors, map-signin-session-settings-and-navigation-host, map-account-settings-source-and-account-time
 
 ## map-fdroid-metadata-release-artifacts
 
@@ -76,7 +92,7 @@ Total nodes: 28
 - **title:** Sign-in, the stored session, theme settings and the navigation host
 - **path:** map-signin-session-settings-and-navigation-host.md
 - **tags:** android, ui, credentials, navigation
-- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-api-token-store-and-backup-exclusion, map-tokkl-colour-tokens-and-font
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-api-token-store-and-backup-exclusion, map-tokkl-colour-tokens-and-font, map-account-settings-source-and-account-time, map-connection-trust-store-pinning-and-prompts
 
 ## map-t3-daily-restart-stops-agent-sessions
 
@@ -133,7 +149,7 @@ Total nodes: 28
 - **title:** Match Tokkl web app behavior in the account timezone
 - **path:** practice-match-web-app-behavior-account-timezone.md
 - **tags:** api, ui, time
-- **relates_to:** practice-port-tokkl-typescript-with-javascript-semantics
+- **relates_to:** practice-port-tokkl-typescript-with-javascript-semantics, map-account-settings-source-and-account-time
 - **derived_from:** docs/PRD.md
 
 ## practice-never-wait-for-server-on-start-stop
@@ -167,7 +183,7 @@ Total nodes: 28
 - **title:** Pin self-signed certificates by fingerprint and warn before plain HTTP
 - **path:** practice-pin-self-signed-certs-warn-on-http.md
 - **tags:** security, network
-- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-connection-trust-store-pinning-and-prompts
 - **derived_from:** docs/PRD.md
 
 ## practice-port-tokkl-typescript-with-javascript-semantics
