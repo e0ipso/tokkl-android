@@ -1,0 +1,19 @@
+version: 2
+# Weekly, as in Tokkl. The prefixes are commitlint types.
+updates:
+  # The actions in .github/workflows, pinned by commit SHA with the version
+  # in a comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    commit-message: { prefix: ci }
+  # The libraries and plugins in gradle/libs.versions.toml.
+  - package-ecosystem: gradle
+    directory: /
+    schedule: { interval: weekly }
+    commit-message: { prefix: build }
+  # The commitlint and husky tooling in package.json.
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    commit-message: { prefix: build }
