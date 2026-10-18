@@ -20,6 +20,7 @@ class TogglApiClient(
     val server: ServerUrl,
     private val credentials: ApiCredentials,
     private val httpClient: OkHttpClient = SharedHttpClient.instance,
+    private val trustListener: TrustListener? = null,
 ) {
 
     fun <T> get(url: HttpUrl, deserializer: DeserializationStrategy<T>): ApiResult<T> =
@@ -60,15 +61,27 @@ class TogglApiClient(
             .build()
         return try {
             httpClient.newCall(request).execute().use { response ->
+                // The server answered, so it passed the trust checks.
+                trustListener?.answered()
                 if (response.isSuccessful) onSuccess(response) else ApiResult.Failure(httpError(response))
             }
         } catch (e: HostNotAllowedException) {
             ApiResult.Failure(ApiError.HostNotAllowed(e.origin))
         } catch (e: CleartextNotConfirmedException) {
-            ApiResult.Failure(ApiError.CleartextNotConfirmed(e.server))
+            refused(ApiError.CleartextNotConfirmed(e.server))
         } catch (e: IOException) {
-            ApiResult.Failure(ApiError.Network(e))
+            val untrusted = e.untrustedCertificate()
+            if (untrusted != null) {
+                refused(ApiError.UntrustedCertificate(untrusted.certificate, changed = untrusted.pinChanged))
+            } else {
+                ApiResult.Failure(ApiError.Network(e))
+            }
         }
+    }
+
+    private fun refused(refusal: ApiError.TrustRefused): ApiResult.Failure {
+        trustListener?.refused(refusal)
+        return ApiResult.Failure(refusal)
     }
 
     private fun httpError(response: Response): ApiError.Http =
@@ -92,4 +105,18 @@ class TogglApiClient(
         /** Tokkl sends whole seconds. An HTTP date or a negative number counts as missing. */
         fun retryAfterSeconds(value: String?): Long? = value?.trim()?.toLongOrNull()?.takeIf { it >= 0 }
     }
+}
+
+/**
+ * Hears how the signed-in session's requests fare with the trust checks, so
+ * the app can show the matching prompt from any screen. Called on the thread
+ * that made the request.
+ */
+interface TrustListener {
+
+    /** A request was refused for [refusal] before anything was sent. */
+    fun refused(refusal: ApiError.TrustRefused)
+
+    /** The server answered a request, so it passes the trust checks again. */
+    fun answered()
 }

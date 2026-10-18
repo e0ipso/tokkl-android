@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
+import com.github.e0ipso.tokkl.api.untrustedCertificate
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.io.IOException
 import java.time.DayOfWeek

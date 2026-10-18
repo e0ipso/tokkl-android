@@ -45,7 +45,11 @@ class MainActivity : ComponentActivity() {
             val darkTheme = settings.mode.isDark(systemIsDark = isSystemInDarkTheme())
             TokklTheme(darkTheme = darkTheme, dynamicColor = settings.dynamicColor) {
                 WindowFollowsTheme(darkTheme)
-                TokklNavHost(signInModel = signInViewModel.model, themeSettings = themeSettings)
+                TokklNavHost(
+                    signInModel = signInViewModel.model,
+                    themeSettings = themeSettings,
+                    sessionTrust = (application as TokklApplication).sessionTrust,
+                )
             }
         }
     }

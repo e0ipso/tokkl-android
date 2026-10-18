@@ -8,7 +8,6 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.api.UntrustedCertificateException
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Me
 import java.io.IOException
@@ -141,18 +140,6 @@ private fun ApiError.toSignInResult(): SignInResult =
         is ApiError.InvalidResponse -> SignInResult.NotTokkl
         is ApiError.HostNotAllowed -> SignInResult.HostNotAllowed(origin)
         is ApiError.CleartextNotConfirmed -> SignInResult.CleartextNotConfirmed(server)
-        is ApiError.Network -> cause.untrustedCertificate()
-            ?.let { SignInResult.UntrustedCertificate(it.certificate, changed = it.pinChanged) }
-            ?: SignInResult.Unreachable
+        is ApiError.UntrustedCertificate -> SignInResult.UntrustedCertificate(certificate, changed)
+        is ApiError.Network -> SignInResult.Unreachable
     }
-
-/**
- * The shared client's trust manager refused the server's certificate. The TLS
- * stack reports that as an `SSLHandshakeException` whose causes hold the
- * trust manager's [UntrustedCertificateException].
- */
-internal fun IOException.untrustedCertificate(): UntrustedCertificateException? =
-    generateSequence<Throwable>(this) { it.cause }.take(MAX_CAUSES).filterIsInstance<UntrustedCertificateException>().firstOrNull()
-
-/** Enough for Android's TLS errors, and an end to a cycle of causes. */
-private const val MAX_CAUSES = 8

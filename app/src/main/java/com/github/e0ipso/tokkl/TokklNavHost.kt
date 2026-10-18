@@ -1,12 +1,18 @@
 package com.github.e0ipso.tokkl
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.session.Session
@@ -14,6 +20,9 @@ import com.github.e0ipso.tokkl.settings.SettingsScreen
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
+import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.trust.TrustPrompt
+import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -25,9 +34,13 @@ enum class Destination { SIGN_IN, HOME, SETTINGS, LICENCES }
  * configuration changes and process death. It starts at sign-in until a
  * server and its token are stored, and at the home screen after that.
  * System back pops the stack and closes the app from its first screen.
+ *
+ * Above any screen of a signed-in session it shows the prompt for a request
+ * that [sessionTrust] saw refused, and after a cancel a notice that opens the
+ * prompt again. Sign-in shows its own prompts.
  */
 @Composable
-fun TokklNavHost(signInModel: SignInModel, themeSettings: ThemeSettingsModel) {
+fun TokklNavHost(signInModel: SignInModel, themeSettings: ThemeSettingsModel, sessionTrust: SessionTrustModel) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
     if (backStack.isEmpty()) {
@@ -40,7 +53,21 @@ fun TokklNavHost(signInModel: SignInModel, themeSettings: ThemeSettingsModel) {
         return
     }
     BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
-    when (backStack.last()) {
+    val destination = backStack.last()
+    Box(Modifier.fillMaxSize()) {
+        Screen(destination, backStack, signInModel, themeSettings)
+        if (destination != Destination.SIGN_IN) SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+private fun Screen(
+    destination: Destination,
+    backStack: SnapshotStateList<Destination>,
+    signInModel: SignInModel,
+    themeSettings: ThemeSettingsModel,
+) {
+    when (destination) {
         Destination.SIGN_IN -> SignInScreen(
             model = signInModel,
             onSignedIn = {
@@ -58,6 +85,18 @@ fun TokklNavHost(signInModel: SignInModel, themeSettings: ThemeSettingsModel) {
             onBack = { backStack.removeAt(backStack.lastIndex) },
         )
         Destination.LICENCES -> LicencesScreen(onBack = { backStack.removeAt(backStack.lastIndex) })
+    }
+}
+
+/** The prompt for a refused request, or after a cancel the notice that reopens it. [modifier] places the notice. */
+@Composable
+private fun SessionTrustPrompts(sessionTrust: SessionTrustModel, modifier: Modifier = Modifier) {
+    val state by sessionTrust.state.collectAsState()
+    val refusal = state.refusal ?: return
+    if (state.promptOpen) {
+        TrustPrompt(refusal, onAccept = sessionTrust::accept, onCancel = sessionTrust::cancel)
+    } else {
+        TrustRefusedNotice(refusal, onReview = sessionTrust::reopen, modifier = modifier)
     }
 }
 

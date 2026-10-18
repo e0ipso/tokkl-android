@@ -46,7 +46,7 @@ class PinnedCertificateTest {
 
         assertEquals(TokklTestServer.tlsFingerprint, refusal.certificate.displaySha256)
         assertEquals(me.host to me.port, refusal.certificate.host to refusal.certificate.port)
-        assertFalse(refusal.pinChanged)
+        assertFalse(refusal.changed)
     }
 
     @Test
@@ -65,16 +65,15 @@ class PinnedCertificateTest {
 
         val refusal = refusal(client.get(me, JsonObject.serializer()))
 
-        assertTrue(refusal.pinChanged)
+        assertTrue(refusal.changed)
         assertEquals(TokklTestServer.tlsFingerprint, refusal.certificate.displaySha256)
     }
 
     private fun pin(sha256: String) = ServerCertificate(me.host, me.port, sha256, subject = "")
 
-    private fun refusal(result: ApiResult<*>): UntrustedCertificateException {
+    /** The pinning trust manager's refusal, which the client reports as its own error. */
+    private fun refusal(result: ApiResult<*>): ApiError.UntrustedCertificate {
         val error = (result as? ApiResult.Failure)?.error
-        val cause = (error as? ApiError.Network)?.cause ?: throw AssertionError("expected a network error, got ${error ?: "a success"}")
-        return generateSequence<Throwable>(cause) { it.cause }.filterIsInstance<UntrustedCertificateException>().firstOrNull()
-            ?: throw AssertionError("the handshake failed without the pinning trust manager's refusal: $cause")
+        return error as? ApiError.UntrustedCertificate ?: throw AssertionError("expected a refused certificate, got ${error ?: "a success"}")
     }
 }

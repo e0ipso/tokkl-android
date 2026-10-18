@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.api
 
 import android.annotation.SuppressLint
+import java.io.IOException
 import java.net.Socket
 import java.security.MessageDigest
 import java.security.cert.CertificateException
@@ -50,6 +51,17 @@ class UntrustedCertificateException(
     val pinChanged: Boolean,
     cause: CertificateException,
 ) : CertificateException("No trusted CA or pin covers the certificate of ${certificate.host}:${certificate.port}", cause)
+
+/**
+ * The [UntrustedCertificateException] among this exception's causes. The TLS
+ * stack reports a certificate that [PinningTrustManager] refused as an
+ * `SSLHandshakeException` caused by it.
+ */
+internal fun IOException.untrustedCertificate(): UntrustedCertificateException? =
+    generateSequence<Throwable>(this) { it.cause }.take(MAX_CAUSES).filterIsInstance<UntrustedCertificateException>().firstOrNull()
+
+/** Enough for Android's TLS errors, and an end to a cycle of causes. */
+private const val MAX_CAUSES = 8
 
 /**
  * The trust manager of [SharedHttpClient]. The [platform] trust manager

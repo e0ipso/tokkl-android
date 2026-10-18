@@ -164,5 +164,6 @@ class ServerSmokeTest {
             is ApiError.InvalidResponse -> "response is not the expected JSON"
             is ApiError.HostNotAllowed -> "refused a request to $origin"
             is ApiError.CleartextNotConfirmed -> "refused a request to $server, an unconfirmed http server"
+            is ApiError.UntrustedCertificate -> "refused the certificate of ${certificate.host}:${certificate.port}"
         }
 }

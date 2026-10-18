@@ -61,4 +61,8 @@
     <string name="sign_in_certificate_fingerprint">SHA-256 fingerprint</string>
     <string name="sign_in_certificate_subject">Subject</string>
     <string name="sign_in_certificate_trust">Trust this certificate</string>
+
+    <string name="trust_refused_certificate">The app sends nothing to the server until you review its certificate.</string>
+    <string name="trust_refused_http">The app sends nothing to the server until you review its unencrypted connection.</string>
+    <string name="trust_refused_review">Review connection</string>
 </resources>

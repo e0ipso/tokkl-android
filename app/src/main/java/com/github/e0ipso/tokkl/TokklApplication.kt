@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
+import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.map
@@ -40,6 +41,20 @@ class TokklApplication : Application() {
             initial = store.load(),
             save = store::save,
             client = Session(this)::client,
+            scope = MainScope(),
+            io = Dispatchers.IO,
+        )
+    }
+
+    /**
+     * The trust refusals of the signed-in session's requests, which every
+     * [Session] reports and the navigation host prompts about. Accepting one
+     * refreshes the account settings, the request that ran into it.
+     */
+    val sessionTrust: SessionTrustModel by lazy {
+        SessionTrustModel(
+            trust = ServerTrustStore(this),
+            retry = { accountSettings.refresh() },
             scope = MainScope(),
             io = Dispatchers.IO,
         )

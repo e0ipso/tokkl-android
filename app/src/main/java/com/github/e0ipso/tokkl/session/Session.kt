@@ -1,9 +1,11 @@
 package com.github.e0ipso.tokkl.session
 
 import android.content.Context
+import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import java.io.IOException
 import java.security.GeneralSecurityException
@@ -13,13 +15,22 @@ import java.security.GeneralSecurityException
  * The token goes only through [ApiTokenStore]; no password is ever stored.
  *
  * Calls do disk and Keystore I/O, so make them off the main thread.
+ *
+ * @param trustListener hears every request of [client] that the trust checks
+ *   refuse, so the app can prompt from any screen.
  */
 class Session(
     private val servers: ServerConfigStore,
     private val tokens: ApiTokenStore,
+    private val trustListener: TrustListener? = null,
 ) {
 
-    constructor(context: Context) : this(ServerConfigStore(context), ApiTokenStore(context))
+    /** Reports trust refusals to the app's [TokklApplication.sessionTrust]. */
+    constructor(context: Context) : this(
+        ServerConfigStore(context),
+        ApiTokenStore(context),
+        (context.applicationContext as? TokklApplication)?.sessionTrust,
+    )
 
     /**
      * Signed in means a server is stored and the token decrypts. A Keystore or
@@ -42,7 +53,7 @@ class Session(
         return try {
             val server = servers.load() ?: return null
             val token = tokens.load() ?: return null
-            TogglApiClient(server, ApiCredentials.ApiToken(token))
+            TogglApiClient(server, ApiCredentials.ApiToken(token), trustListener = trustListener)
         } catch (e: GeneralSecurityException) {
             null
         } catch (e: IOException) {

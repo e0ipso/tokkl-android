@@ -51,9 +51,24 @@ sealed interface ApiError {
     data class HostNotAllowed(val origin: String) : ApiError
 
     /**
+     * The request was refused before any credential left the phone, because
+     * the user has not agreed to trust the server. The user's answer to the
+     * matching prompt lets the next request through.
+     */
+    sealed interface TrustRefused : ApiError
+
+    /**
      * [server] is a plain `http://` URL the user has not confirmed, so the
      * request, which would have carried the credentials unencrypted, was not
      * sent.
      */
-    data class CleartextNotConfirmed(val server: ServerUrl) : ApiError
+    data class CleartextNotConfirmed(val server: ServerUrl) : TrustRefused
+
+    /**
+     * No system or user CA trusts the server's [certificate], and the user
+     * has not pinned it. [changed] is true when the user pinned another
+     * certificate for that server. The TLS handshake failed, so nothing was
+     * sent.
+     */
+    data class UntrustedCertificate(val certificate: ServerCertificate, val changed: Boolean) : TrustRefused
 }
