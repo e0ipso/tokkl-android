@@ -14,13 +14,18 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.awaitText
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 /** The Licences screen, reached from the launch screen of the real activity. */
 class LicencesScreenTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val session = SessionRule()
+
+    @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
@@ -75,6 +80,7 @@ class LicencesScreenTest {
     }
 
     private fun openLicences() {
+        composeRule.awaitText(string(R.string.licences))
         composeRule.onNodeWithText(string(R.string.licences)).performClick()
         licencesHeading().assertIsDisplayed()
     }

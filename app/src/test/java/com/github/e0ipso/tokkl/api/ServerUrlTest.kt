@@ -81,6 +81,7 @@ class ServerUrlTest {
         val bad = listOf(
             "", "example.com", "ftp://example.com", "https://",
             "https://example.com/tokkl?x=1", "https://example.com/#top",
+            "https://ana@example.com/tokkl", "https://ana:secret@example.com/tokkl",
         )
         for (url in bad) {
             assertNull(url, ServerUrl.parse(url))

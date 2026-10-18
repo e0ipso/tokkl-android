@@ -6,4 +6,37 @@
     <string name="licences">Licences</string>
     <string name="licence_anybody_title">Anybody font</string>
     <string name="licence_anybody_licence">SIL Open Font License 1.1</string>
+
+    <string name="sign_in_title">Sign in</string>
+    <string name="sign_in_server_url">Server URL</string>
+    <string name="sign_in_server_url_hint">For example, https://example.com/tokkl</string>
+    <string name="sign_in_method">Sign in with</string>
+    <string name="sign_in_method_api_token">API token</string>
+    <string name="sign_in_method_email_password">Email and password</string>
+    <string name="sign_in_api_token">API token</string>
+    <string name="sign_in_api_token_hint">Find it in Tokkl under Settings, API token.</string>
+    <string name="sign_in_email">Email</string>
+    <string name="sign_in_password">Password</string>
+    <string name="sign_in_password_hint">The app sends it once to get your API token and never stores it.</string>
+    <string name="sign_in_submit">Sign in</string>
+    <string name="sign_in_submitting">Signing in…</string>
+    <plurals name="sign_in_retry_countdown">
+        <item quantity="one">You can try again in %d second.</item>
+        <item quantity="other">You can try again in %d seconds.</item>
+    </plurals>
+
+    <string name="sign_in_error_server_url">Enter an http or https URL, such as https://example.com/tokkl. Leave out any user name or password.</string>
+    <string name="sign_in_error_api_token">Enter your API token.</string>
+    <string name="sign_in_error_email">Enter your email.</string>
+    <string name="sign_in_error_email_colon">An email can\'t contain a colon.</string>
+    <string name="sign_in_error_password">Enter your password.</string>
+    <string name="sign_in_error_wrong_api_token">Wrong API token. Check it and try again.</string>
+    <string name="sign_in_error_wrong_password">Wrong email or password. Check them and try again.</string>
+    <string name="sign_in_error_rate_limited">Too many failed attempts. Wait for the countdown before you try again.</string>
+    <string name="sign_in_error_untrusted_certificate">This phone doesn\'t trust the server\'s certificate, so the app sent nothing.</string>
+    <string name="sign_in_error_unreachable">Can\'t reach the server. Check the URL and your connection.</string>
+    <string name="sign_in_error_unexpected_status">The server answered with HTTP %d. Check the URL.</string>
+    <string name="sign_in_error_not_tokkl">That URL doesn\'t answer like a Tokkl server. Check it.</string>
+    <string name="sign_in_error_no_api_token">The server didn\'t send an API token. Sign in with your API token instead.</string>
+    <string name="sign_in_error_storage">Couldn\'t store the API token on this phone. Try again.</string>
 </resources>

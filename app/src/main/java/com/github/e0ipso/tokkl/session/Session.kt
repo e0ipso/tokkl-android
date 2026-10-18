@@ -1,0 +1,46 @@
+package com.github.e0ipso.tokkl.session
+
+import android.content.Context
+import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import java.io.IOException
+import java.security.GeneralSecurityException
+
+/**
+ * The account the app is signed in to: the configured server and its API token.
+ * The token goes only through [ApiTokenStore]; no password is ever stored.
+ *
+ * Calls do disk and Keystore I/O, so make them off the main thread.
+ */
+class Session(
+    private val servers: ServerConfigStore,
+    private val tokens: ApiTokenStore,
+) {
+
+    constructor(context: Context) : this(ServerConfigStore(context), ApiTokenStore(context))
+
+    /**
+     * Signed in means a server is stored and the token decrypts. A Keystore or
+     * disk failure counts as signed out, so the user can sign in again.
+     */
+    fun isSignedIn(): Boolean =
+        try {
+            servers.load() != null && tokens.load() != null
+        } catch (e: GeneralSecurityException) {
+            false
+        } catch (e: IOException) {
+            false
+        }
+
+    /**
+     * Stores [server] as the configured server and [token] as its API token.
+     * The server is cleared first and written last, so a failure part way
+     * leaves the app signed out instead of pairing a token with another server.
+     */
+    @Throws(GeneralSecurityException::class, IOException::class)
+    fun save(server: ServerUrl, token: String) {
+        servers.clear()
+        tokens.save(token)
+        servers.save(server)
+    }
+}

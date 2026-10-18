@@ -13,6 +13,9 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
+import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.awaitText
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -27,7 +30,11 @@ import org.junit.Test
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class WindowBackgroundTest {
-    @get:Rule
+    /** Signed in, so the launch screen shows. */
+    @get:Rule(order = 0)
+    val session = SessionRule()
+
+    @get:Rule(order = 1)
     val composeRule = createEmptyComposeRule()
 
     private val uiModeManager = InstrumentationRegistry.getInstrumentation().targetContext
@@ -52,6 +59,7 @@ class WindowBackgroundTest {
         uiModeManager.setApplicationNightMode(nightMode)
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            composeRule.awaitText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.launch_message))
             var window: Int? = null
             scenario.onActivity { window = (it.window.decorView.background as? ColorDrawable)?.color }
             // The launch screen leaves its left edge empty, so the pixel there is the

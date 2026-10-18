@@ -1,0 +1,44 @@
+package com.github.e0ipso.tokkl
+
+import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.session.Session
+import org.junit.rules.TestRule
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
+
+/** A test, or every test in a class, that starts signed out. */
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class SignedOut
+
+/**
+ * Sets the stored session before the activity starts: signed in to the Tokkl
+ * test server with its API token, or signed out for a test marked [SignedOut].
+ * Every test process shares the app's data, so each test that launches
+ * MainActivity sets the state it needs. Order it before the compose rule.
+ */
+class SessionRule : TestRule {
+
+    override fun apply(base: Statement, description: Description): Statement =
+        object : Statement() {
+            override fun evaluate() {
+                val signedOut = description.getAnnotation(SignedOut::class.java) != null ||
+                    description.testClass?.isAnnotationPresent(SignedOut::class.java) == true
+                signOut()
+                if (!signedOut) Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
+                base.evaluate()
+            }
+        }
+
+    companion object {
+        private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
+
+        /** Deletes the stored server, the token and its Keystore key. */
+        fun signOut() {
+            ServerConfigStore(context).clear()
+            ApiTokenStore(context).clear()
+        }
+    }
+}

@@ -2,14 +2,23 @@ package com.github.e0ipso.tokkl.ui.theme
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
@@ -17,6 +26,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.SignedOut
+import com.github.e0ipso.tokkl.awaitText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -27,20 +39,27 @@ import org.junit.rules.RuleChain
 
 /**
  * The Anybody headlines and the text around them at Android's largest font scale, 200%: no
- * text is cut off, leaves the screen or overlaps another.
+ * text is cut off, leaves the screen or overlaps another. The sign-in form scrolls, so each of
+ * its parts has to fit once scrolled into view.
  *
  * The clock and totals styles have no screen yet, so this covers the headline styles only.
  */
 class LargestFontScaleTest {
     private val composeRule = createAndroidComposeRule<MainActivity>()
 
-    /** The font scale is set before the activity starts, so it never has to restart. */
+    /**
+     * The session and the font scale are set before the activity starts, so it never has to
+     * restart. Tests start signed in unless marked [SignedOut].
+     */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(LARGEST_FONT_SCALE)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(SessionRule())
+        .around(SystemFontScale(LARGEST_FONT_SCALE))
+        .around(composeRule)
 
     @Test
     fun launchScreenFits() {
         assertEquals(LARGEST_FONT_SCALE, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.launch_message))
 
         assertFitWithoutOverlap(
             text(R.string.app_name),
@@ -52,6 +71,7 @@ class LargestFontScaleTest {
     @Test
     fun licencesHeadingsFit() {
         assertEquals(LARGEST_FONT_SCALE, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.licences))
         composeRule.onNodeWithText(string(R.string.licences)).performClick()
 
         assertFitWithoutOverlap(
@@ -60,6 +80,105 @@ class LargestFontScaleTest {
             text(R.string.licence_anybody_title),
             text(R.string.licence_anybody_licence),
         )
+    }
+
+    @SignedOut
+    @Test
+    fun signInWithApiTokenFits() {
+        assertEquals(LARGEST_FONT_SCALE, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+
+        assertFitWhenScrolledTo(
+            blocks = signInBlocks("API token field" to field(R.string.sign_in_api_token)),
+            texts = signInTexts() + listOf(
+                fieldLabel(R.string.sign_in_api_token),
+                text(R.string.sign_in_api_token_hint),
+            ),
+        )
+    }
+
+    @SignedOut
+    @Test
+    fun signInWithEmailAndPasswordFits() {
+        assertEquals(LARGEST_FONT_SCALE, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+        method(R.string.sign_in_method_email_password).performClick()
+
+        assertFitWhenScrolledTo(
+            blocks = signInBlocks(
+                "email field" to field(R.string.sign_in_email),
+                "password field" to field(R.string.sign_in_password),
+            ),
+            texts = signInTexts() + listOf(
+                fieldLabel(R.string.sign_in_email),
+                fieldLabel(R.string.sign_in_password),
+                text(R.string.sign_in_password_hint),
+            ),
+        )
+    }
+
+    /** The parts of the sign-in form that stack, which must not overlap. */
+    private fun signInBlocks(
+        vararg credentialFields: Pair<String, SemanticsNodeInteraction>,
+    ): List<Pair<String, SemanticsNodeInteraction>> =
+        listOf(
+            "heading" to composeRule.onNode(hasText(string(R.string.sign_in_title)) and isHeading()),
+            "server URL field" to field(R.string.sign_in_server_url),
+            text(R.string.sign_in_method),
+            "API token choice" to method(R.string.sign_in_method_api_token),
+            "email and password choice" to method(R.string.sign_in_method_email_password),
+        ) + credentialFields + listOf(
+            "sign-in button" to composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()),
+        )
+
+    /** Text inside the blocks, checked for clipping only. */
+    private fun signInTexts(): List<Pair<String, SemanticsNodeInteraction>> =
+        listOf(
+            fieldLabel(R.string.sign_in_server_url),
+            text(R.string.sign_in_server_url_hint),
+            inside(R.string.sign_in_method_api_token, isSelectable()),
+            inside(R.string.sign_in_method_email_password, isSelectable()),
+            inside(R.string.sign_in_submit, hasClickAction()),
+        )
+
+    private fun field(@StringRes label: Int): SemanticsNodeInteraction =
+        composeRule.onNode(hasSetTextAction() and hasText(string(label)))
+
+    private fun method(@StringRes label: Int): SemanticsNodeInteraction =
+        composeRule.onNode(hasText(string(label)) and isSelectable())
+
+    private fun fieldLabel(@StringRes id: Int): Pair<String, SemanticsNodeInteraction> =
+        inside(id, hasSetTextAction())
+
+    /** The text node itself, inside a control that merges its children. */
+    private fun inside(@StringRes id: Int, control: SemanticsMatcher): Pair<String, SemanticsNodeInteraction> =
+        string(id).let { "$it text" to composeRule.onNode(hasText(it) and hasAnyAncestor(control), useUnmergedTree = true) }
+
+    /**
+     * Scrolls to each node in turn, which then has to show in full: inside the screen and, for
+     * text, not cut off. Then no two [blocks] overlap.
+     */
+    private fun assertFitWhenScrolledTo(
+        blocks: List<Pair<String, SemanticsNodeInteraction>>,
+        texts: List<Pair<String, SemanticsNodeInteraction>>,
+    ) {
+        val screen = composeRule.onRoot().getBoundsInRoot()
+        for ((name, node) in blocks + texts) {
+            node.performScrollTo()
+            node.assertIsDisplayed()
+            node.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
+            val box = node.getUnclippedBoundsInRoot()
+            val inside = box.left >= screen.left && box.top >= screen.top &&
+                box.right <= screen.right && box.bottom <= screen.bottom
+            assertTrue("does not fit on the screen: $name", inside)
+        }
+        // Unclipped bounds share one scroll position, so they compare even off screen.
+        val bounds = blocks.map { (name, node) -> name to node.getUnclippedBoundsInRoot() }
+        for ((i, first) in bounds.withIndex()) {
+            for (second in bounds.drop(i + 1)) {
+                assertFalse("${first.first} overlaps ${second.first}", first.second.overlaps(second.second))
+            }
+        }
     }
 
     private fun assertFitWithoutOverlap(vararg nodes: Pair<String, SemanticsNodeInteraction>) {

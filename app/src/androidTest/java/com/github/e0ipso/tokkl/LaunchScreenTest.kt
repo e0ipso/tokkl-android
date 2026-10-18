@@ -7,12 +7,16 @@ import org.junit.Rule
 import org.junit.Test
 
 class LaunchScreenTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val session = SessionRule()
+
+    @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun showsTheLaunchTextFromStringResources() {
         val activity = composeRule.activity
+        composeRule.awaitText(activity.getString(R.string.launch_message))
         composeRule.onNodeWithText(activity.getString(R.string.app_name)).assertIsDisplayed()
         composeRule.onNodeWithText(activity.getString(R.string.launch_message)).assertIsDisplayed()
     }
