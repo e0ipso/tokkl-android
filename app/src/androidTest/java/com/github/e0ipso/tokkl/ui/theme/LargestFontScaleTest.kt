@@ -22,8 +22,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
-import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
@@ -34,7 +32,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExternalResource
 import org.junit.rules.RuleChain
 
 /**
@@ -42,7 +39,7 @@ import org.junit.rules.RuleChain
  * text is cut off, leaves the screen or overlaps another. The sign-in form scrolls, so each of
  * its parts has to fit once scrolled into view.
  *
- * The clock and totals styles have no screen yet, so this covers the headline styles only.
+ * The clock and totals styles have no screen yet; ClockAndTotalStylesFitTest covers them.
  */
 class LargestFontScaleTest {
     private val composeRule = createAndroidComposeRule<MainActivity>()
@@ -53,12 +50,12 @@ class LargestFontScaleTest {
      */
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(SessionRule())
-        .around(SystemFontScale(LARGEST_FONT_SCALE))
+        .around(SystemFontScale(SystemFontScale.LARGEST))
         .around(composeRule)
 
     @Test
     fun launchScreenFits() {
-        assertEquals(LARGEST_FONT_SCALE, composeRule.activity.resources.configuration.fontScale)
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitText(string(R.string.launch_message))
 
         assertFitWithoutOverlap(
@@ -70,7 +67,7 @@ class LargestFontScaleTest {
 
     @Test
     fun licencesHeadingsFit() {
-        assertEquals(LARGEST_FONT_SCALE, composeRule.activity.resources.configuration.fontScale)
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitText(string(R.string.licences))
         composeRule.onNodeWithText(string(R.string.licences)).performClick()
 
@@ -85,7 +82,7 @@ class LargestFontScaleTest {
     @SignedOut
     @Test
     fun signInWithApiTokenFits() {
-        assertEquals(LARGEST_FONT_SCALE, composeRule.activity.resources.configuration.fontScale)
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitText(string(R.string.sign_in_server_url))
 
         assertFitWhenScrolledTo(
@@ -100,7 +97,7 @@ class LargestFontScaleTest {
     @SignedOut
     @Test
     fun signInWithEmailAndPasswordFits() {
-        assertEquals(LARGEST_FONT_SCALE, composeRule.activity.resources.configuration.fontScale)
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitText(string(R.string.sign_in_server_url))
         method(R.string.sign_in_method_email_password).performClick()
 
@@ -219,51 +216,4 @@ class LargestFontScaleTest {
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
 
     private fun string(@StringRes id: Int): String = composeRule.activity.getString(id)
-
-    /**
-     * Sets the device's font scale, waits until the app's configuration has it, and puts the
-     * previous setting back afterwards, again waiting for the app to see it so the next test
-     * starts at the usual scale.
-     */
-    private class SystemFontScale(private val scale: Float) : ExternalResource() {
-        private var previous: String = NOT_SET
-
-        override fun before() {
-            previous = DeviceShell.run("settings get system font_scale").trim()
-            DeviceShell.run("settings put system font_scale $scale")
-            awaitAppFontScale(scale)
-        }
-
-        override fun after() {
-            if (previous == NOT_SET) {
-                DeviceShell.run("settings delete system font_scale")
-            } else {
-                DeviceShell.run("settings put system font_scale $previous")
-            }
-            awaitAppFontScale(previous.toFloatOrNull() ?: 1f)
-        }
-
-        private fun awaitAppFontScale(expected: Float) {
-            val resources = InstrumentationRegistry.getInstrumentation().targetContext.resources
-            val deadline = System.nanoTime() + CONFIGURATION_TIMEOUT_NS
-            while (resources.configuration.fontScale != expected) {
-                check(System.nanoTime() < deadline) {
-                    "the app's font scale is ${resources.configuration.fontScale}, not $expected"
-                }
-                Thread.sleep(POLL_MS)
-            }
-        }
-
-        private companion object {
-            /** What `settings get` prints for a setting that was never written. */
-            const val NOT_SET = "null"
-            const val CONFIGURATION_TIMEOUT_NS = 10_000_000_000L
-            const val POLL_MS = 50L
-        }
-    }
-
-    private companion object {
-        /** The largest step of Android's font size setting since Android 14. */
-        const val LARGEST_FONT_SCALE = 2f
-    }
 }

@@ -155,6 +155,9 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
 
+    // Declares the empty activity that createComposeRule() starts, in debug builds only.
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver3)
 
