@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.api
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -23,8 +24,8 @@ import org.junit.Test
 
 /**
  * Talks to the real Tokkl container over plain HTTP, which the network
- * security config permits. Assertion messages never carry the token or the
- * password.
+ * security config permits once the user has confirmed the URL. Assertion
+ * messages never carry the token or the password.
  */
 class ServerSmokeTest {
 
@@ -32,10 +33,23 @@ class ServerSmokeTest {
 
     private val servers = ServerConfigStore(InstrumentationRegistry.getInstrumentation().targetContext)
 
-    /** The shared client sends requests only to the stored server. */
+    private val trust = ServerTrustStore(InstrumentationRegistry.getInstrumentation().targetContext)
+
+    /** The shared client sends requests only to the stored server, and to a plain http one only once confirmed. */
     @Before
     fun configureTheServer() {
         servers.save(TokklTestServer.url)
+        trust.confirmCleartext(TokklTestServer.url)
+    }
+
+    /** TokklApplication points the guard at the stored trust decisions, so an unconfirmed http server gets nothing. */
+    @Test
+    fun unconfirmedHttpServerGetsNoRequest() {
+        trust.clear()
+
+        val result = client.get(client.server.api("me"), JsonObject.serializer())
+
+        assertEquals(ApiError.CleartextNotConfirmed(TokklTestServer.url), (result as? ApiResult.Failure)?.error)
     }
 
     /** TokklApplication points the host guard at the stored server, so with none stored nothing goes out. */
@@ -149,5 +163,6 @@ class ServerSmokeTest {
             is ApiError.Network -> "network error: $cause"
             is ApiError.InvalidResponse -> "response is not the expected JSON"
             is ApiError.HostNotAllowed -> "refused a request to $origin"
+            is ApiError.CleartextNotConfirmed -> "refused a request to $server, an unconfirmed http server"
         }
 }

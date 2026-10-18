@@ -2,9 +2,11 @@ package com.github.e0ipso.tokkl
 
 import android.app.Application
 import com.github.e0ipso.tokkl.api.ConfiguredServer
+import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
@@ -41,5 +43,7 @@ class TokklApplication : Application() {
         super.onCreate()
         // Every process, whatever starts it, sends requests only to the stored server.
         ConfiguredServer.readStoredFrom(ServerConfigStore(this)::load)
+        // A plain http:// server gets requests only once the user has confirmed it.
+        ConfiguredTrust.readFrom(ServerTrustStore(this))
     }
 }

@@ -49,4 +49,11 @@ sealed interface ApiError {
      * no credential.
      */
     data class HostNotAllowed(val origin: String) : ApiError
+
+    /**
+     * [server] is a plain `http://` URL the user has not confirmed, so the
+     * request, which would have carried the credentials unencrypted, was not
+     * sent.
+     */
+    data class CleartextNotConfirmed(val server: ServerUrl) : ApiError
 }

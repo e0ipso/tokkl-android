@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.signin
 
+import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
+import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,11 +46,19 @@ data class SignInState(
  * when the user asks: after a 429 the model refuses to submit until
  * `Retry-After` has passed, and it never retries on its own.
  *
+ * A plain `http://` server gets nothing until the user confirms the warning
+ * that the token or password travels unencrypted. The shared client refuses
+ * the request, the attempt ends with [SignInResult.CleartextNotConfirmed], and
+ * [confirmCleartext] records the confirmation in [trust] and sends it again.
+ *
+ * @param trust where [confirmCleartext] records the user's confirmation, which
+ *   the shared client checks before every request.
  * @param clock monotonic milliseconds, such as `SystemClock.elapsedRealtime`.
- * @param io where the blocking [SignIn.attempt] runs.
+ * @param io where the blocking [SignIn.attempt] and the writes to [trust] run.
  */
 class SignInModel(
     private val signIn: SignIn,
+    private val trust: ServerTrust,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: () -> Long,
@@ -87,11 +97,37 @@ class SignInModel(
         }
         mutableState.update { it.copy(inputErrors = emptySet(), submitting = true, failure = null, retryAt = null) }
         scope.launch {
-            // TKA-0022 goes here: an http:// server shows the unencrypted
-            // connection warning, and nothing is sent until the user confirms.
             val result = withContext(io) { signIn.attempt(server, credentials) }
             mutableState.update { it.after(result) }
         }
+    }
+
+    /**
+     * The user confirmed the warning about a plain `http://` server. Records
+     * the confirmation for that URL, then sends the attempt.
+     */
+    fun confirmCleartext() {
+        val current = mutableState.value
+        val warning = current.failure as? SignInResult.CleartextNotConfirmed ?: return
+        if (current.submitting) return
+        mutableState.update { it.copy(submitting = true, failure = null) }
+        scope.launch {
+            val stored = withContext(io) {
+                try {
+                    trust.confirmCleartext(warning.server)
+                    true
+                } catch (e: IOException) {
+                    false
+                }
+            }
+            mutableState.update { it.copy(submitting = false, failure = SignInResult.AnswerNotStored.takeUnless { stored }) }
+            if (stored) submit()
+        }
+    }
+
+    /** Closes a warning without sending or storing anything. */
+    fun dismissPrompt() {
+        mutableState.update { if (it.failure is SignInResult.CleartextNotConfirmed) it.copy(failure = null) else it }
     }
 
     /** Clears the form after the app has moved on from a successful sign-in. */

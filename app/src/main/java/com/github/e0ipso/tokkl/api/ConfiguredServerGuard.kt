@@ -16,20 +16,36 @@ class HostNotAllowedException(val origin: String) :
     IOException("Refused a request to $origin, which is not the configured server")
 
 /**
+ * The guard refused a request to [server], a plain `http://` URL the user has
+ * not confirmed, so nothing was sent. The message names the URL, which holds
+ * no credential.
+ */
+class CleartextNotConfirmedException(val server: ServerUrl) :
+    IOException("Refused a request to $server, a plain http server the user has not confirmed")
+
+/**
  * Lets requests reach the configured server only. It checks the request
  * before OkHttp connects, and it follows redirects itself: OkHttp would
  * follow them inside the call, past any application interceptor, so
  * [SharedHttpClient] turns automatic redirects off. A redirect to the same
  * origin is followed, with OkHttp's rules for the method and body. A redirect
  * anywhere else fails with [HostNotAllowedException].
+ *
+ * A plain `http://` server gets no request until the user has confirmed its
+ * URL in [trust], since every API call carries the token or password. The
+ * guard refuses it with [CleartextNotConfirmedException]. A redirect stays on
+ * the same origin, and so on the same scheme.
  */
-internal class ConfiguredServerGuard(private val configured: () -> ServerUrl?) : Interceptor {
+internal class ConfiguredServerGuard(
+    private val configured: () -> ServerUrl?,
+    private val trust: () -> ServerTrust,
+) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        // One server for the whole call, redirects included.
-        val server = configured()
         var request = chain.request()
-        requireAllowed(server, request.url)
+        // One server for the whole call, redirects included.
+        val server = requireAllowed(configured(), request.url)
+        if (server.isCleartext && !trust().isCleartextConfirmed(server)) throw CleartextNotConfirmedException(server)
         var followUps = 0
         while (true) {
             val response = chain.proceed(request)
@@ -41,8 +57,9 @@ internal class ConfiguredServerGuard(private val configured: () -> ServerUrl?) :
         }
     }
 
-    private fun requireAllowed(server: ServerUrl?, url: HttpUrl) {
+    private fun requireAllowed(server: ServerUrl?, url: HttpUrl): ServerUrl {
         if (server == null || !server.isSameOrigin(url)) throw HostNotAllowedException(origin(url))
+        return server
     }
 
     /** The request OkHttp would send for a redirect, or null when [response] is not one it follows. */

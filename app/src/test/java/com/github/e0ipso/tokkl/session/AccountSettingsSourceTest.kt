@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ConfiguredServer
+import com.github.e0ipso.tokkl.api.ConfiguredTrust
+import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -30,12 +32,15 @@ class AccountSettingsSourceTest {
         val configured = ServerUrl.parse(server.url("/").toString())!!
         // The shared client sends requests only to the configured server.
         ConfiguredServer.readStoredFrom { configured }
+        // The user has confirmed the MockWebServer's plain http URL.
+        ConfiguredTrust.readFrom(InMemoryServerTrust(configured))
         client = TogglApiClient(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After
     fun tearDown() {
         ConfiguredServer.readStoredFrom { null }
+        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

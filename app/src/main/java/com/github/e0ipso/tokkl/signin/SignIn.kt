@@ -55,6 +55,16 @@ sealed interface SignInResult {
      */
     data class HostNotAllowed(val origin: String) : SignInResult
 
+    /**
+     * [server] is a plain `http://` URL the user has not confirmed, so nothing
+     * was sent. The screen warns that the token or password would travel
+     * unencrypted, and the attempt goes ahead only once the user confirms.
+     */
+    data class CleartextNotConfirmed(val server: ServerUrl) : SignInResult
+
+    /** The phone could not store the user's answer to a warning, so nothing was sent. */
+    data object AnswerNotStored : SignInResult
+
     /** No response: wrong host, no route, refused connection, other TLS failure or timeout. */
     data object Unreachable : SignInResult
 
@@ -130,6 +140,7 @@ private fun ApiError.toSignInResult(): SignInResult =
         is ApiError.UnexpectedStatus -> SignInResult.UnexpectedStatus(status)
         is ApiError.InvalidResponse -> SignInResult.NotTokkl
         is ApiError.HostNotAllowed -> SignInResult.HostNotAllowed(origin)
+        is ApiError.CleartextNotConfirmed -> SignInResult.CleartextNotConfirmed(server)
         is ApiError.Network -> if (cause.isUntrustedCertificate()) SignInResult.UntrustedCertificate else SignInResult.Unreachable
     }
 

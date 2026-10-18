@@ -48,4 +48,11 @@
     <string name="sign_in_error_no_api_token">The server didn\'t send an API token. Sign in with your API token instead.</string>
     <string name="sign_in_error_host_not_allowed">The server redirected to %1$s. The app talks only to the URL you entered, so it sent nothing there.</string>
     <string name="sign_in_error_storage">Couldn\'t store the API token on this phone. Try again.</string>
+    <string name="sign_in_error_answer_not_stored">Couldn\'t save your answer on this phone, so the app sent nothing. Try again.</string>
+
+    <string name="sign_in_warning_cancel">Cancel</string>
+    <string name="sign_in_http_warning_title">Unencrypted connection</string>
+    <string name="sign_in_http_warning_body">%1$s uses plain http. Your API token or password would travel unencrypted, so anyone on the network between this phone and the server could read it. Continue only if the network encrypts the traffic, as Tailscale does.</string>
+    <string name="sign_in_http_warning_understood">I understand that my API token or password travels unencrypted</string>
+    <string name="sign_in_http_warning_continue">Continue without encryption</string>
 </resources>

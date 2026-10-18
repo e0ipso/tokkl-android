@@ -5,9 +5,9 @@
     block it unless the app opts in. Android 7 and later trust only system CAs
     unless the app also trusts the CAs the user installed.
 
-    A self-signed certificate is pinned in app code (TKA-0021), never here, and
-    the warning before a token goes to an http:// server lives in the sign-in
-    flow (TKA-0022).
+    A self-signed certificate is pinned in app code (TKA-0021), never here. The
+    shared HTTP client sends nothing to an http:// server until the user has
+    confirmed the warning that the token travels unencrypted.
 -->
 <network-security-config xmlns:tools="http://schemas.android.com/tools">
     <base-config

@@ -25,6 +25,10 @@ class ServerUrl private constructor(private val base: HttpUrl) {
             .apply { (prefix + segments).forEach(::addPathSegment) }
             .build()
 
+    /** Whether requests to this server travel unencrypted, over plain `http://`. */
+    val isCleartext: Boolean
+        get() = !base.isHttps
+
     /** Whether [url] has this server's scheme, host and port. */
     fun isSameOrigin(url: HttpUrl): Boolean =
         url.scheme == base.scheme && url.host == base.host && url.port == base.port

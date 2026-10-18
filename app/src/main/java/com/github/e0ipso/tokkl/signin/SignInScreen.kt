@@ -15,20 +15,27 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -42,7 +49,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.api.ServerUrl
 import kotlinx.coroutines.delay
 
 /**
@@ -76,6 +85,14 @@ fun SignInScreen(model: SignInModel, onSignedIn: () -> Unit, modifier: Modifier 
         onSubmit = model::submit,
         modifier = modifier,
     )
+    when (val failure = state.failure) {
+        is SignInResult.CleartextNotConfirmed -> CleartextWarning(
+            server = failure.server,
+            onConfirm = model::confirmCleartext,
+            onCancel = model::dismissPrompt,
+        )
+        else -> Unit
+    }
 }
 
 @Composable
@@ -169,9 +186,9 @@ private fun SignInForm(
                     )
                 }
             }
-            state.failure?.let { failure ->
+            state.failure?.let { failureMessage(it, state.method) }?.let { message ->
                 Text(
-                    text = failureMessage(failure, state.method),
+                    text = message,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
@@ -247,8 +264,58 @@ private fun SecretField(
     )
 }
 
+/**
+ * Warns that a plain `http://` server would get the token or password
+ * unencrypted. Neither a tap outside nor Back closes it. Continuing takes two
+ * steps: ticking that the user understands, then the continue button.
+ */
 @Composable
-private fun failureMessage(failure: SignInResult, method: SignInMethod): String =
+private fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel: () -> Unit) {
+    var understood by rememberSaveable(server.toString()) { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+        title = {
+            Text(
+                text = stringResource(R.string.sign_in_http_warning_title),
+                modifier = Modifier.semantics { heading() },
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(stringResource(R.string.sign_in_http_warning_body, server.toString()))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .toggleable(value = understood, role = Role.Checkbox, onValueChange = { understood = it }),
+                ) {
+                    Checkbox(checked = understood, onCheckedChange = null)
+                    Spacer(Modifier.width(12.dp))
+                    Text(stringResource(R.string.sign_in_http_warning_understood))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = understood) {
+                Text(stringResource(R.string.sign_in_http_warning_continue))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text(stringResource(R.string.sign_in_warning_cancel))
+            }
+        },
+    )
+}
+
+/** The message under the form, or null for a result that the screen shows in a dialog or not at all. */
+@Composable
+private fun failureMessage(failure: SignInResult, method: SignInMethod): String? =
     when (failure) {
         SignInResult.BadCredentials -> stringResource(
             if (method == SignInMethod.API_TOKEN) R.string.sign_in_error_wrong_api_token else R.string.sign_in_error_wrong_password,
@@ -262,7 +329,8 @@ private fun failureMessage(failure: SignInResult, method: SignInMethod): String 
         is SignInResult.HostNotAllowed -> stringResource(R.string.sign_in_error_host_not_allowed, failure.origin)
         SignInResult.NoApiToken -> stringResource(R.string.sign_in_error_no_api_token)
         SignInResult.StorageFailed -> stringResource(R.string.sign_in_error_storage)
-        SignInResult.SignedIn -> ""
+        SignInResult.AnswerNotStored -> stringResource(R.string.sign_in_error_answer_not_stored)
+        is SignInResult.CleartextNotConfirmed, SignInResult.SignedIn -> null
     }
 
 private val METHOD_LABELS = listOf(

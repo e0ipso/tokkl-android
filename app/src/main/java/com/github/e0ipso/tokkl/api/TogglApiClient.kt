@@ -64,6 +64,8 @@ class TogglApiClient(
             }
         } catch (e: HostNotAllowedException) {
             ApiResult.Failure(ApiError.HostNotAllowed(e.origin))
+        } catch (e: CleartextNotConfirmedException) {
+            ApiResult.Failure(ApiError.CleartextNotConfirmed(e.server))
         } catch (e: IOException) {
             ApiResult.Failure(ApiError.Network(e))
         }

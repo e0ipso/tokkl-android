@@ -26,6 +26,7 @@ class ConfiguredServerGuardTest {
     private val other = MockWebServer()
     private val credentials = ApiCredentials.ApiToken(TOKEN)
     private lateinit var server: ServerUrl
+    private lateinit var trust: InMemoryServerTrust
     private lateinit var client: TogglApiClient
 
     @Before
@@ -34,12 +35,16 @@ class ConfiguredServerGuardTest {
         other.start()
         server = ServerUrl.parse(configured.url("/tokkl/").toString())!!
         ConfiguredServer.readStoredFrom { server }
+        // The user has confirmed the MockWebServer's plain http URL.
+        trust = InMemoryServerTrust(server)
+        ConfiguredTrust.readFrom(trust)
         client = TogglApiClient(server, credentials)
     }
 
     @After
     fun tearDown() {
         ConfiguredServer.readStoredFrom { null }
+        ConfiguredTrust.readFrom(InMemoryServerTrust())
         configured.close()
         other.close()
     }
@@ -174,6 +179,48 @@ class ConfiguredServerGuardTest {
         assertEquals(ApiResult.Success(Me(7)), during)
         assertEquals(ApiResult.Failure(ApiError.HostNotAllowed(origin(server.api("me")))), after)
         assertEquals(1, configured.requestCount)
+    }
+
+    /** The check sits in the shared client, so it holds for every call, not only the sign-in button. */
+    @Test
+    fun plainHttpServerGetsNoRequestUntilTheUserConfirmsIt() {
+        trust.cleartextConfirmed.clear()
+        configured.enqueue(me())
+
+        val refused = client.get(server.api("me"), Me.serializer())
+
+        assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(server)), refused)
+        assertEquals("nothing reached the server", 0, configured.requestCount)
+
+        trust.confirmCleartext(server)
+        val sent = client.get(server.api("me"), Me.serializer())
+
+        assertEquals(ApiResult.Success(Me(7)), sent)
+        assertEquals(credentials.authorizationHeader, configured.takeRequest().headers["Authorization"])
+    }
+
+    @Test
+    fun confirmationCoversOnlyTheUrlTheUserConfirmed() {
+        val elsewhere = ServerUrl.parse(configured.url("/other/").toString())!!
+        ConfiguredServer.readStoredFrom { elsewhere }
+        configured.enqueue(me())
+
+        val result = TogglApiClient(elsewhere, credentials).get(elsewhere.api("me"), Me.serializer())
+
+        assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(elsewhere)), result)
+        assertEquals(0, configured.requestCount)
+    }
+
+    @Test
+    fun httpsServerNeedsNoConfirmation() {
+        trust.cleartextConfirmed.clear()
+        // The MockWebServer speaks plain HTTP, so the TLS handshake fails, but only after the guard let the call through.
+        val https = ServerUrl.parse(configured.url("/").newBuilder().scheme("https").port(configured.port).build().toString())!!
+        ConfiguredServer.readStoredFrom { https }
+
+        val error = failure(TogglApiClient(https, credentials).get(https.api("me"), Me.serializer()))
+
+        assertTrue(error.toString(), error is ApiError.Network)
     }
 
     private fun origin(url: HttpUrl): String = "${url.scheme}://${url.host}:${url.port}"

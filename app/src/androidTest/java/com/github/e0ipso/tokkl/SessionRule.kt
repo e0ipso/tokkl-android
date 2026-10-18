@@ -4,6 +4,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -17,8 +18,10 @@ annotation class SignedOut
 /**
  * Sets the stored session before the activity starts: signed in to the Tokkl
  * test server with its API token, or signed out for a test marked [SignedOut].
- * Every test process shares the app's data, so each test that launches
- * MainActivity sets the state it needs. Order it before the compose rule.
+ * The test server is plain http, so signing in also records the user's
+ * confirmation of its URL, as the sign-in screen does. Every test process
+ * shares the app's data, so each test that launches MainActivity sets the
+ * state it needs. Order it before the compose rule.
  */
 class SessionRule : TestRule {
 
@@ -28,7 +31,10 @@ class SessionRule : TestRule {
                 val signedOut = description.getAnnotation(SignedOut::class.java) != null ||
                     description.testClass?.isAnnotationPresent(SignedOut::class.java) == true
                 signOut()
-                if (!signedOut) Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
+                if (!signedOut) {
+                    ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                    Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
+                }
                 base.evaluate()
             }
         }
@@ -36,11 +42,12 @@ class SessionRule : TestRule {
     companion object {
         private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
-        /** Deletes the stored server, the token, its Keystore key and the account settings. */
+        /** Deletes the stored server, the token, its Keystore key, the account settings and the trust decisions. */
         fun signOut() {
             ServerConfigStore(context).clear()
             ApiTokenStore(context).clear()
             AccountSettingsStore(context).clear()
+            ServerTrustStore(context).clear()
         }
     }
 }

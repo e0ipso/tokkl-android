@@ -5,6 +5,7 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.Dispatchers
 
@@ -24,6 +25,7 @@ class SignInViewModel(application: Application) : AndroidViewModel(application) 
                 Session(application).save(server, token)
             },
         ),
+        trust = ServerTrustStore(application),
         scope = viewModelScope,
         io = Dispatchers.IO,
         clock = SystemClock::elapsedRealtime,

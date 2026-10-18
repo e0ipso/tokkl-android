@@ -30,12 +30,15 @@ class TogglApiClientTest {
         val configured = serverUrl()
         // The shared client sends requests only to the configured server.
         ConfiguredServer.readStoredFrom { configured }
+        // The user has confirmed the MockWebServer's plain http URL.
+        ConfiguredTrust.readFrom(InMemoryServerTrust(configured))
         client = TogglApiClient(configured, credentials)
     }
 
     @After
     fun tearDown() {
         ConfiguredServer.readStoredFrom { null }
+        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

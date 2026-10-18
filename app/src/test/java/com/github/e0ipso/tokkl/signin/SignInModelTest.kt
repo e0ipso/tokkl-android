@@ -1,6 +1,9 @@
 package com.github.e0ipso.tokkl.signin
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.ConfiguredTrust
+import com.github.e0ipso.tokkl.api.InMemoryServerTrust
+import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.io.IOException
@@ -31,11 +34,25 @@ class SignInModelTest {
     private val savedSettings = mutableListOf<AccountSettings>()
     private var saveFailure: IOException? = null
     private var now = 5_000_000L
+    private lateinit var trust: InMemoryServerTrust
     private lateinit var model: SignInModel
 
     @Before
     fun setUp() {
         server.start()
+        // Most tests sign in to the MockWebServer's plain http URLs, which the user has confirmed here.
+        trust = InMemoryServerTrust(ServerUrl.parse(baseUrl("/"))!!, ServerUrl.parse(baseUrl("/tokkl"))!!)
+        ConfiguredTrust.readFrom(trust)
+        model = model(trust)
+    }
+
+    @After
+    fun tearDown() {
+        ConfiguredTrust.readFrom(InMemoryServerTrust())
+        server.close()
+    }
+
+    private fun model(trust: ServerTrust): SignInModel {
         val signIn = SignIn(
             session = { url, token, settings ->
                 saveFailure?.let { throw it }
@@ -44,12 +61,7 @@ class SignInModelTest {
             },
         )
         // Unconfined runs each attempt to the end inside submit().
-        model = SignInModel(signIn, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
-    }
-
-    @After
-    fun tearDown() {
-        server.close()
+        return SignInModel(signIn, trust, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
     }
 
     @Test
@@ -258,6 +270,87 @@ class SignInModelTest {
         assertTrue(untrusted.isUntrustedCertificate())
         assertFalse(SSLHandshakeException("protocol version").isUntrustedCertificate())
         assertFalse(IOException("refused").isUntrustedCertificate())
+    }
+
+    @Test
+    fun plainHttpServerShowsTheWarningAndSendsNothingUntilTheUserConfirms() {
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
+        val fresh = ServerUrl.parse(baseUrl("/fresh"))!!
+        model.onServerUrlChange(fresh.toString())
+        model.onApiTokenChange(TOKEN)
+
+        model.submit()
+
+        assertEquals(SignInResult.CleartextNotConfirmed(fresh), model.state.value.failure)
+        assertFalse(model.state.value.submitting)
+        assertEquals("no request before the confirmation", 0, server.requestCount)
+
+        model.confirmCleartext()
+
+        assertTrue(trust.isCleartextConfirmed(fresh))
+        assertEquals(1, server.requestCount)
+        assertTrue(model.state.value.signedIn)
+    }
+
+    @Test
+    fun dismissingTheWarningSendsAndStoresNothingAndTheNextSubmitAsksAgain() {
+        val fresh = ServerUrl.parse(baseUrl("/fresh"))!!
+        model.onServerUrlChange(fresh.toString())
+        model.onApiTokenChange(TOKEN)
+        model.submit()
+
+        model.dismissPrompt()
+
+        assertNull(model.state.value.failure)
+        assertFalse(trust.isCleartextConfirmed(fresh))
+        model.submit()
+        assertEquals(SignInResult.CleartextNotConfirmed(fresh), model.state.value.failure)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun anotherUrlAsksAgain() {
+        // baseUrl("/tokkl") is confirmed; the same host under another path is a different URL.
+        model.onServerUrlChange(baseUrl("/tokkl/other"))
+        model.onApiTokenChange(TOKEN)
+
+        model.submit()
+
+        assertEquals(SignInResult.CleartextNotConfirmed(ServerUrl.parse(baseUrl("/tokkl/other"))!!), model.state.value.failure)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun httpsServerNeverShowsTheWarning() {
+        val nothingConfirmed = InMemoryServerTrust()
+        ConfiguredTrust.readFrom(nothingConfirmed)
+        model = model(nothingConfirmed)
+        // The MockWebServer speaks plain HTTP, so the TLS handshake fails.
+        model.onServerUrlChange(server.url("/").newBuilder().scheme("https").port(server.port).build().toString())
+        model.onApiTokenChange(TOKEN)
+
+        model.submit()
+
+        assertEquals(SignInResult.Unreachable, model.state.value.failure)
+        assertTrue(nothingConfirmed.cleartextConfirmed.isEmpty())
+    }
+
+    @Test
+    fun confirmationThatCannotBeStoredSendsNothing() {
+        val failing = object : ServerTrust {
+            override fun isCleartextConfirmed(server: ServerUrl) = false
+
+            override fun confirmCleartext(server: ServerUrl) = throw IOException("disk full")
+        }
+        ConfiguredTrust.readFrom(failing)
+        model = model(failing)
+        fillApiToken()
+        model.submit()
+
+        model.confirmCleartext()
+
+        assertEquals(SignInResult.AnswerNotStored, model.state.value.failure)
+        assertEquals(0, server.requestCount)
     }
 
     @Test

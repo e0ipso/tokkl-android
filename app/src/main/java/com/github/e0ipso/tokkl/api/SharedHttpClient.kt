@@ -8,10 +8,11 @@ import okhttp3.OkHttpClient
  * connection pool, dispatcher and security settings apply everywhere.
  * SingleHttpClientTest fails when other app code builds an HTTP client.
  *
- * Every request and redirect must stay on [ConfiguredServer.current]; see
- * [ConfiguredServerGuard]. Later security settings go into [build], never into
- * a second client, such as the trust manager for a pinned self-signed
- * certificate (TKA-0021).
+ * Every request and redirect must stay on [ConfiguredServer.current], and a
+ * plain `http://` server needs the user's confirmation in
+ * [ConfiguredTrust.current]; see [ConfiguredServerGuard]. Later security
+ * settings go into [build], never into a second client, such as the trust
+ * manager for a pinned self-signed certificate (TKA-0021).
  */
 object SharedHttpClient {
 
@@ -21,7 +22,7 @@ object SharedHttpClient {
         // The guard follows same-origin redirects itself.
         .followRedirects(false)
         .followSslRedirects(false)
-        .addInterceptor(ConfiguredServerGuard { ConfiguredServer.current })
+        .addInterceptor(ConfiguredServerGuard(configured = { ConfiguredServer.current }, trust = { ConfiguredTrust.current }))
         .build()
 }
 
