@@ -39,9 +39,10 @@ class TogglApiClient(
     ): ApiResult<T> = execute(method, url, body) { decode(it.body.string(), deserializer) }
 
     /**
-     * Like [send], for calls that expect no content, such as Tokkl's DELETE
-     * routes, which answer 200 with an empty body. Any 2xx is a success, and
-     * the client ignores whatever body it carries.
+     * Like [send], for calls whose response body the caller does not need,
+     * such as Tokkl's DELETE of a time entry, task, client or tag, which
+     * answer 200 with an empty body. Tokkl's project DELETE answers with the
+     * project id as JSON, which this method ignores too. Any 2xx is a success.
      */
     fun sendNoContent(method: String, url: HttpUrl, body: JsonElement? = null): ApiResult<Unit> =
         execute(method, url, body) { ApiResult.Success(Unit) }

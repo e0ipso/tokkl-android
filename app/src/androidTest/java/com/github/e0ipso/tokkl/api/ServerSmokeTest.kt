@@ -71,7 +71,7 @@ class ServerSmokeTest {
         assertEquals(ApiError.AuthFailed, (result as? ApiResult.Failure)?.error)
     }
 
-    /** Tokkl answers every DELETE with 200 and an empty body. */
+    /** Tokkl answers a tag DELETE with 200 and an empty body. */
     @Test
     fun deleteWithAnEmptyResponseBodySucceeds() {
         val tags = client.server.api("workspaces", workspaceId(), "tags")
