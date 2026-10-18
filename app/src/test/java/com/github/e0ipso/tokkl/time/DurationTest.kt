@@ -1,8 +1,7 @@
 // Cases copied verbatim from ../tokkl/packages/common/duration.test.ts at tokkl commit
-// e41ead72c08bbb3e87bbe4146d7fd5d06565c924, for the port of parseDuration in
+// e41ead72c08bbb3e87bbe4146d7fd5d06565c924, for the ports of parseDuration and formatDuration in
 // ../tokkl/packages/common/duration.ts at tokkl commit ec84de60087b32e8279c74197bdc94e52164579b.
-// Diff the TypeScript file against this one to spot drift. Its formatDuration test is not here,
-// because this port covers parsing only.
+// Diff the TypeScript file against this one to spot drift.
 package com.github.e0ipso.tokkl.time
 
 import org.junit.Assert.assertEquals
@@ -31,4 +30,19 @@ class DurationTest {
             assertEquals("input \"$input\"", expected, parseDuration(input))
         }
     }
+
+    @Test
+    fun `formatDuration renders each Toggl duration format`() {
+        assertEquals("1:05:06", formatDuration(3906, "improved"))
+        assertEquals("0:05:06", formatDuration(306, "improved"))
+        assertEquals("5:06 min", formatDuration(306, "classic"))
+        assertEquals("6 sec", formatDuration(6, "classic"))
+        assertEquals("1:05:06", formatDuration(3906, "classic"))
+        assertEquals("0.79 h", formatDuration(2826, "decimal"))
+        assertEquals("0:00:00", formatDuration(-5, "improved"))
+    }
+
+    /** Takes the format by the name the TypeScript cases use, and fails on a name it lacks. */
+    private fun formatDuration(totalSeconds: Long, format: String): String =
+        formatDuration(totalSeconds, DurationFormat.entries.single { it.togglName == format })
 }

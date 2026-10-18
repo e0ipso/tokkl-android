@@ -1,7 +1,9 @@
 package com.github.e0ipso.tokkl.time
 
-// Port of parseDuration in ../tokkl/packages/common/duration.ts at tokkl commit
+// Port of parseDuration and formatDuration in ../tokkl/packages/common/duration.ts at tokkl commit
 // ec84de60087b32e8279c74197bdc94e52164579b. DurationTest replays the cases from duration.test.ts.
+
+import kotlin.math.floor
 
 private val UNIT_SECONDS = mapOf(
     "h" to 3600, "hr" to 3600, "hrs" to 3600, "hour" to 3600, "hours" to 3600,
@@ -63,3 +65,66 @@ fun parseDuration(raw: String): Long? {
 /** Returns [seconds], already whole, as a Long, or null when it is not finite or too large. */
 private fun wholeSeconds(seconds: Double): Long? =
     if (seconds.isFinite() && seconds < LONG_LIMIT) seconds.toLong() else null
+
+/**
+ * The account's `duration_format` preference, which decides how [formatDuration] writes a
+ * duration. Toggl Track and Tokkl name it in `GET /api/v9/me/preferences`.
+ *
+ * @property togglName the name the server sends.
+ */
+enum class DurationFormat(val togglName: String) {
+    /** Hours, minutes and seconds, as `1:05:06` or `0:05:06`. */
+    IMPROVED("improved"),
+
+    /** `1:05:06` from an hour up, then `5:06 min`, then `6 sec`. */
+    CLASSIC("classic"),
+
+    /** Hours to two decimals, as `0.79 h`. */
+    DECIMAL("decimal"),
+    ;
+
+    companion object {
+        /**
+         * The format the server calls [name]. A missing name means improved, as in the web app,
+         * and so does any name other than classic or decimal, because the TypeScript
+         * formatDuration writes every other format the improved way.
+         */
+        fun fromTogglName(name: String?): DurationFormat = when (name) {
+            CLASSIC.togglName -> CLASSIC
+            DECIMAL.togglName -> DECIMAL
+            else -> IMPROVED
+        }
+    }
+}
+
+/**
+ * Writes [totalSeconds] the way the web app shows a duration in [format]. A negative duration
+ * shows as zero.
+ *
+ * The arithmetic runs on doubles, as in JavaScript, so a duration from 2^53 seconds up is first
+ * rounded to the nearest double. The decimal format rounds the double's exact value with halves
+ * up, as `toFixed(2)` does, so 3618 seconds give `1.00 h`, and the point is a dot in every locale.
+ */
+fun formatDuration(totalSeconds: Long, format: DurationFormat = DurationFormat.IMPROVED): String {
+    // Math.floor in the TypeScript has nothing to do here, since a Long is already whole.
+    val seconds = if (totalSeconds < 0) 0.0 else totalSeconds.toDouble()
+    if (format == DurationFormat.DECIMAL) return "${jsToFixed(seconds / 3600, 2)} h"
+
+    val h = floor(seconds / 3600)
+    val m = floor((seconds % 3600) / 60)
+    val s = seconds % 60
+    if (format == DurationFormat.CLASSIC) {
+        if (h > 0) return "${whole(h)}:${pad(m)}:${pad(s)}"
+        if (m > 0) return "${whole(m)}:${pad(s)} min"
+        return "${whole(s)} sec"
+    }
+    return "${whole(h)}:${pad(m)}:${pad(s)}"
+}
+
+/**
+ * JavaScript's `String(n)` for a whole [n] below 2^53. The hours of a Long's seconds stay below
+ * that, and there both give the plain digits.
+ */
+private fun whole(n: Double): String = n.toLong().toString()
+
+private fun pad(n: Double): String = whole(n).padStart(2, '0')

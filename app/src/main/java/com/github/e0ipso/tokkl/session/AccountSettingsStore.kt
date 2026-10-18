@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.session
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.time.DurationFormat
 import java.io.IOException
 
 /**
@@ -20,7 +21,9 @@ class AccountSettingsStore(context: Context) {
         val timeZone = preferences.getString(KEY_TIME_ZONE, null) ?: return null
         val beginningOfWeek = dayOfWeek(preferences.getInt(KEY_BEGINNING_OF_WEEK, -1)) ?: return null
         val timeResolution = preferences.getString(KEY_TIME_RESOLUTION_MINUTES, null)?.toDoubleOrNull()
-        return AccountSettings(timeZone, beginningOfWeek, timeResolution)
+        // Settings stored before the app read the duration format have none, which means improved.
+        val durationFormat = DurationFormat.fromTogglName(preferences.getString(KEY_DURATION_FORMAT, null))
+        return AccountSettings(timeZone, beginningOfWeek, timeResolution, durationFormat)
     }
 
     /** Replaces the stored settings in one write. */
@@ -36,6 +39,7 @@ class AccountSettingsStore(context: Context) {
                 // A Double's string form reads back as the same Double.
                 putString(KEY_TIME_RESOLUTION_MINUTES, timeResolution.toString())
             }
+            putString(KEY_DURATION_FORMAT, settings.durationFormat.togglName)
         }
     }
 
@@ -53,5 +57,6 @@ class AccountSettingsStore(context: Context) {
         private const val KEY_TIME_ZONE = "timezone"
         private const val KEY_BEGINNING_OF_WEEK = "beginning_of_week"
         private const val KEY_TIME_RESOLUTION_MINUTES = "time_resolution_minutes"
+        private const val KEY_DURATION_FORMAT = "duration_format"
     }
 }

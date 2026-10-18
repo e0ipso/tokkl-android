@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.time.DurationFormat
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -17,7 +18,7 @@ import kotlinx.coroutines.launch
  * Sign-in stores the settings from its own `GET /api/v9/me`, and [refresh] reads them again, so
  * a change made in the web app reaches the phone. They persist, so screens have them offline and
  * after a restart. Screens take their zone, clock and week start from [AccountSettings.time],
- * never from the device.
+ * never from the device, and write durations with [AccountSettings.formatDuration].
  *
  * @param initial the stored settings, or null when none are stored.
  * @param save writes the settings, throwing [IOException] when it cannot.
@@ -61,9 +62,10 @@ class AccountSettingsSource(
 
     /**
      * Reads `GET /api/v9/me` for the signed-in account, with its related data for the cache, and
-     * keeps its settings. Does nothing when signed out. A failed request or write keeps what is
-     * stored. While one refresh runs, another call returns that one instead of sending a second
-     * request.
+     * `GET /api/v9/me/preferences` for the duration format, and keeps the settings. Does nothing
+     * when signed out. A failed `/me` or write keeps what is stored, and failed preferences keep
+     * the stored duration format. While one refresh runs, another call returns that one instead
+     * of sending a second request.
      */
     fun refresh(): Job {
         val job = synchronized(lock) {
@@ -79,10 +81,14 @@ class AccountSettingsSource(
         val api = client() ?: return
         val url = api.server.api("me").newBuilder().addQueryParameter("with_related_data", "true").build()
         val me = (api.get(url, Me.serializer()) as? ApiResult.Success)?.value ?: return
-        val settings = me.accountSettings() ?: return
+        val fromMe = me.accountSettings() ?: return
+        val durationFormat = readDurationFormat(api)
         synchronized(lock) {
-            // Sign-in stored newer settings while the request ran.
+            // Sign-in stored newer settings while the requests ran.
             if (writes != writesBefore) return
+            val settings = fromMe.copy(
+                durationFormat = durationFormat ?: mutableState.value?.durationFormat ?: DurationFormat.IMPROVED,
+            )
             if (settings != mutableState.value) {
                 try {
                     write(settings)
@@ -92,6 +98,12 @@ class AccountSettingsSource(
             }
         }
         onRefresh(api, me)
+    }
+
+    /** The preferences' duration format, or null when the request fails. */
+    private fun readDurationFormat(api: TogglApiClient): DurationFormat? {
+        val preferences = api.get(api.server.api("me", "preferences"), MePreferences.serializer())
+        return (preferences as? ApiResult.Success)?.value?.durationFormat
     }
 
     /** Only while holding [lock]. */

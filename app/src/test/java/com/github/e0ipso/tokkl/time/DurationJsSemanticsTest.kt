@@ -1,10 +1,12 @@
-// Pins for the places where JavaScript and Kotlin disagree, for the port of parseDuration in
-// ../tokkl/packages/common/duration.ts at tokkl commit ec84de60087b32e8279c74197bdc94e52164579b.
+// Pins for the places where JavaScript and Kotlin disagree, for the ports of parseDuration and
+// formatDuration in ../tokkl/packages/common/duration.ts at tokkl commit
+// ec84de60087b32e8279c74197bdc94e52164579b.
 // Unlike DurationTest, these cases are not in duration.test.ts, so a later diff against tokkl
 // leaves them alone. Each expected value was checked by running that TypeScript file in Node 24
 // (`node file.mts` strips the types), except where a case says the port departs on purpose.
 package com.github.e0ipso.tokkl.time
 
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -120,6 +122,77 @@ class DurationJsSemanticsTest {
                 "2.5s" to 3,
                 "3.5s" to 4,
                 "0.5h 0.5s" to 1801,
+            ),
+        )
+    }
+
+    private fun assertFormats(format: DurationFormat, cases: List<Pair<Long, String>>) {
+        for ((seconds, expected) in cases) {
+            assertEquals("$seconds seconds, ${format.togglName}", expected, formatDuration(seconds, format))
+        }
+    }
+
+    @Test
+    fun `decimal rounds the double's exact value as toFixed does`() {
+        // String.format("%.2f") would give 1.01, 0.02, 0.05, 0.08, 1.00 and 2.01 for the first six,
+        // whose quotient is stored just below a half. The last four are stored just above one.
+        assertFormats(
+            DurationFormat.DECIMAL,
+            listOf(
+                3618L to "1.00 h",
+                54L to "0.01 h",
+                162L to "0.04 h",
+                270L to "0.07 h",
+                3582L to "0.99 h",
+                7218L to "2.00 h",
+                18L to "0.01 h",
+                126L to "0.04 h",
+                342L to "0.10 h",
+                36018L to "10.01 h",
+            ),
+        )
+    }
+
+    @Test
+    fun `decimal writes a dot in a locale that writes a comma`() {
+        val before = Locale.getDefault()
+        Locale.setDefault(Locale.GERMANY)
+        try {
+            assertFormats(DurationFormat.DECIMAL, listOf(2826L to "0.79 h", 3618L to "1.00 h"))
+        } finally {
+            Locale.setDefault(before)
+        }
+    }
+
+    @Test
+    fun `a format other than classic or decimal is improved`() {
+        // The TypeScript gives 0:05:06 for each of these names, and for null and the number 5.
+        for (name in listOf("foo", "Classic", "DECIMAL", "", null)) {
+            val format = DurationFormat.fromTogglName(name)
+            assertEquals("name $name", DurationFormat.IMPROVED, format)
+            assertEquals("name $name", "0:05:06", formatDuration(306, format))
+        }
+    }
+
+    @Test
+    fun `a duration from 2 to the power 53 up is rounded to a double first`() {
+        // Long.MAX_VALUE becomes 2^63, so the seconds end in 08 where Long arithmetic gives 07.
+        for (format in listOf(DurationFormat.IMPROVED, DurationFormat.CLASSIC)) {
+            assertFormats(
+                format,
+                listOf(
+                    Long.MAX_VALUE to "2562047788015215:30:08",
+                    9007199254740993L to "2501999792983:36:32",
+                    Long.MIN_VALUE to if (format == DurationFormat.CLASSIC) "0 sec" else "0:00:00",
+                ),
+            )
+        }
+        assertFormats(
+            DurationFormat.DECIMAL,
+            listOf(
+                Long.MAX_VALUE to "2562047788015215.50 h",
+                9007199254740993L to "2501999792983.61 h",
+                Long.MIN_VALUE to "0.00 h",
             ),
         )
     }

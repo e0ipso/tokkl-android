@@ -5,26 +5,41 @@ import com.github.e0ipso.tokkl.api.ServerProject
 import com.github.e0ipso.tokkl.api.ServerTag
 import com.github.e0ipso.tokkl.api.ServerTask
 import com.github.e0ipso.tokkl.time.AccountTime
+import com.github.e0ipso.tokkl.time.DurationFormat
+import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.time.parseTimeZone
 import java.time.Clock
 import java.time.DayOfWeek
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * The settings from `GET /api/v9/me` that decide how the app shows and reads times (docs/PRD.md
- * S7). They hold no credential.
+ * The settings that decide how the app shows and reads times: those from `GET /api/v9/me`
+ * (docs/PRD.md S7), and the duration format from `GET /api/v9/me/preferences`. They hold no
+ * credential.
  *
  * @property timeZone the account's timezone name, exactly as the server sent it.
  * @property timeResolutionMinutes Tokkl's `time_resolution_minutes`, which the server snaps
  *   stopped entries to. Null when `/me` leaves it out. Toggl Track and older Tokkl servers leave
  *   it out, and they do not snap.
+ * @property durationFormat the preferences' `duration_format`. Improved until a refresh reads
+ *   the preferences, and when they leave it out, as in the web app.
  */
 data class AccountSettings(
     val timeZone: String,
     val beginningOfWeek: DayOfWeek,
     val timeResolutionMinutes: Double?,
+    val durationFormat: DurationFormat = DurationFormat.IMPROVED,
 ) {
+
+    /**
+     * [totalSeconds] in the account's [durationFormat], the text the web app's `duration()`
+     * helper gives. Screens show every duration this way. It needs no zone, so it works when
+     * [time] is null.
+     */
+    fun formatDuration(totalSeconds: Long): String = formatDuration(totalSeconds, durationFormat)
 
     /**
      * Times in the account's zone, read from [clock], or null when [parseTimeZone] cannot
@@ -68,6 +83,23 @@ class Me(
         dayOfWeek(beginningOfWeek)?.let { AccountSettings(timezone, it, timeResolutionMinutes) }
 
     override fun toString(): String = "Me(id=$id)"
+}
+
+/**
+ * The field the account settings read from `GET /api/v9/me/preferences`. The web app shows
+ * durations as improved when `duration_format` is missing or null, and when it names any format
+ * other than classic or decimal. The field stays a [JsonElement], so a value that is not a string
+ * reads as improved too, instead of failing the whole response.
+ */
+@Serializable
+internal class MePreferences(
+    @SerialName("duration_format") private val durationFormatName: JsonElement? = null,
+) {
+    val durationFormat: DurationFormat
+        get() {
+            val name = (durationFormatName as? JsonPrimitive)?.takeIf { it.isString }?.content
+            return DurationFormat.fromTogglName(name)
+        }
 }
 
 /** The day Toggl numbers [number], from 0 for Sunday to 6 for Saturday, or null outside that. */
