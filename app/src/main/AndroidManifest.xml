@@ -22,11 +22,16 @@
             The app gives Android its night mode (settings/ApplicationNightMode.kt), which
             changes the activity's configuration. Compose redraws in place, so choosing a theme
             keeps the activity and the screen it shows instead of restarting it.
+
+            adjustResize keeps the window in place when the keyboard opens and hands its
+            height to Compose as the IME inset, which a form makes room for with imePadding.
+            With no mode set, Android also panned the window, so the top of the screen left it.
         -->
         <activity
             android:name=".MainActivity"
             android:configChanges="uiMode"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

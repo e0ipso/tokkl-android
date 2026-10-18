@@ -176,10 +176,9 @@ class LargestFontScaleTest {
      * The keyboard opens over the bottom of the sign-in form. The password field starts where
      * the keyboard then shows, and has to move up and end above the keyboard's top edge.
      *
-     * MainActivity sets no windowSoftInputMode, so Android also pans the whole window up when
-     * the keyboard opens, by 258 px on tokkl-api36. Window positions include that pan, and the
-     * pan alone keeps the field in view, so this test still passes without the form's IME
-     * padding.
+     * Only the form's IME padding may move it. MainActivity's adjustResize keeps the window in
+     * place, so the compose root stays at the window's top. Without it, Android panned the whole
+     * window up by 258 px on tokkl-api36, and the pan alone kept the field in view.
      */
     @SignedOut
     @Test
@@ -194,11 +193,13 @@ class LargestFontScaleTest {
         password.performClick()
         val keyboardTop = awaitKeyboardTop()
         val after = awaitStill(password)
+        val rootTop = composeRule.onRoot().fetchSemanticsNode().positionInWindow.y
 
         assertTrue(
             "the password field ends at $before px before the keyboard opens, above its top at $keyboardTop px, so this test checks nothing",
             before > keyboardTop,
         )
+        assertEquals("the window panned for the keyboard: the compose root starts at $rootTop px", 0f, rootTop, 0f)
         assertTrue("the focused password field ends at $after px, under the keyboard's top at $keyboardTop px", after <= keyboardTop)
     }
 
