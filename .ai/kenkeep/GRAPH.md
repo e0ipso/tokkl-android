@@ -1,11 +1,27 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:11c7bda24c34eb9a602360d2bd0ce2453ad1db7cc0f6c6877cc225d740286d80'
-node_count: 22
+nodes_hash: 'sha256:f35d4495e8eae5565b32a2db9624d7795d023f13d026bcb67ab69a362e6fdd10'
+node_count: 26
 ---
 # kenkeep Graph
 
-Total nodes: 22
+Total nodes: 26
+
+## map-api-client-shared-okhttp-serverurl-and-errors
+
+- **kind:** map
+- **title:** API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError
+- **path:** map-api-client-shared-okhttp-serverurl-and-errors.md
+- **tags:** api, network, okhttp
+- **relates_to:** map-tokkl-toggl-api, practice-talk-only-to-configured-server, practice-pin-self-signed-certs-warn-on-http
+
+## map-api-token-store-and-backup-exclusion
+
+- **kind:** map
+- **title:** API token store and the rules that keep app data out of backups
+- **path:** map-api-token-store-and-backup-exclusion.md
+- **tags:** security, credentials, backup
+- **relates_to:** practice-pin-self-signed-certs-warn-on-http, practice-talk-only-to-configured-server
 
 ## map-app-id-license-android-versions
 
@@ -60,6 +76,7 @@ Total nodes: 22
 - **title:** Tokkl colour tokens and Anybody font in ../tokkl
 - **path:** map-tokkl-colour-tokens-and-font.md
 - **tags:** ui, tokkl
+- **relates_to:** practice-tokkl-palette-wcag-english-strings
 - **derived_from:** docs/PRD.md
 
 ## map-tokkl-toggl-api
@@ -84,7 +101,7 @@ Total nodes: 22
 - **title:** Test on the plain AOSP API 36 emulator, headless, and stop it afterwards
 - **path:** practice-emulator-plain-aosp-image-headless.md
 - **tags:** testing, android, emulator, energy
-- **relates_to:** practice-test-real-tokkl-server-speed-regressions, map-jdk-android-sdk-and-agent-shells
+- **relates_to:** practice-test-real-tokkl-server-speed-regressions, map-jdk-android-sdk-and-agent-shells, practice-run-instrumented-tests-only-through-the-script
 
 ## practice-gradle-no-daemon-in-parallel-worktrees
 
@@ -100,6 +117,7 @@ Total nodes: 22
 - **title:** Match Tokkl web app behavior in the account timezone
 - **path:** practice-match-web-app-behavior-account-timezone.md
 - **tags:** api, ui, time
+- **relates_to:** practice-port-tokkl-typescript-with-javascript-semantics
 - **derived_from:** docs/PRD.md
 
 ## practice-never-wait-for-server-on-start-stop
@@ -124,6 +142,7 @@ Total nodes: 22
 - **title:** Version the app on its own, starting from a hand-made v0.1.0 tag
 - **path:** practice-own-version-from-v0-1-0-tag.md
 - **tags:** release, versioning
+- **relates_to:** map-fdroid-metadata-release-artifacts
 - **derived_from:** docs/PRD.md
 
 ## practice-pin-self-signed-certs-warn-on-http
@@ -132,7 +151,16 @@ Total nodes: 22
 - **title:** Pin self-signed certificates by fingerprint and warn before plain HTTP
 - **path:** practice-pin-self-signed-certs-warn-on-http.md
 - **tags:** security, network
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors
 - **derived_from:** docs/PRD.md
+
+## practice-port-tokkl-typescript-with-javascript-semantics
+
+- **kind:** practice
+- **title:** Port Tokkl's TypeScript with JavaScript semantics and verbatim test cases
+- **path:** practice-port-tokkl-typescript-with-javascript-semantics.md
+- **tags:** time, parsing, testing, tokkl
+- **relates_to:** practice-match-web-app-behavior-account-timezone
 
 ## practice-refresh-on-events-no-polling
 
@@ -149,6 +177,14 @@ Total nodes: 22
 - **path:** practice-reproducible-builds-project-key.md
 - **tags:** release, fdroid, security, ci
 - **derived_from:** docs/PRD.md
+
+## practice-run-instrumented-tests-only-through-the-script
+
+- **kind:** practice
+- **title:** Run instrumented tests only through scripts/instrumented-tests.sh
+- **path:** practice-run-instrumented-tests-only-through-the-script.md
+- **tags:** testing, android, emulator, docker
+- **relates_to:** practice-test-real-tokkl-server-speed-regressions, practice-emulator-plain-aosp-image-headless, practice-gradle-no-daemon-in-parallel-worktrees
 
 ## practice-run-npm-install-in-every-clone-and-worktree
 
@@ -171,6 +207,7 @@ Total nodes: 22
 - **title:** Test against a real Tokkl server and catch speed regressions in CI
 - **path:** practice-test-real-tokkl-server-speed-regressions.md
 - **tags:** testing, ci, performance
+- **relates_to:** practice-run-instrumented-tests-only-through-the-script
 - **derived_from:** docs/PRD.md
 
 ## practice-tokkl-palette-wcag-english-strings

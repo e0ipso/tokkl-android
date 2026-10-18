@@ -21,6 +21,8 @@ Data stays between the phone and the server. The app has no telemetry, analytics
 
 Every dependency must be free software. F-Droid builds the app from source with a free toolchain and rejects proprietary libraries such as Google Play Services and Firebase. So the app has no push through FCM.
 
+`:app:checkDeniedDependencies` enforces this. It fails when the release runtime classpath holds a module from a group listed in `gradle/denied-dependency-groups.txt`, or from a group below one, and prints the path that pulled it in. Each line of that file reads `<group> # <reason>`. `check` depends on the task, and CI runs `./gradlew assembleDebug check`.
+
 <!-- kk:citations:start -->
 # Citations
 

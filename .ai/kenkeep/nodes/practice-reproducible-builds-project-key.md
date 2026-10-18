@@ -21,7 +21,7 @@ If the build is reproducible, F-Droid publishes the APK signed with the project'
 
 The signing key lives in GitHub Actions secrets, never in the repo.
 
-CI on GitHub copies Tokkl's setup. One `ci.yml` workflow runs on pull requests and pushes to `main`. Every action is pinned to a commit SHA with its version in a comment, and Dependabot updates them. Jobs cover the Gradle build, lint and unit tests, and instrumented tests on an emulator. GitHub's Ubuntu runners need a udev rule before the emulator can use KVM.
+CI on GitHub copies Tokkl's setup. One `ci.yml` workflow runs on pull requests and pushes to `main`. Every action is pinned to a commit SHA with its version in a comment, and Dependabot updates them. Jobs cover the Gradle build, lint and unit tests, and instrumented tests on an emulator. GitHub's Ubuntu runners need a udev rule before the emulator can use KVM. Today `ci.yml` has two jobs, `gradle` (`./gradlew assembleDebug check`) and `commitlint`. The emulator job and the Dependabot config do not exist yet.
 
 <!-- kk:citations:start -->
 # Citations
