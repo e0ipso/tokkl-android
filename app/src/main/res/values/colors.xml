@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The window behind Compose, so launch shows the theme's background with no flash.
+        The light bg token at styles.css:161, the same value as TokklLightColorScheme.background
+        in ui/theme/Color.kt.
+    -->
+    <color name="window_background">#F4E7CF</color>
+</resources>

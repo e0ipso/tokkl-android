@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The window theme. Compose draws everything else through TokklTheme; this only paints
+        the window in the scheme's background before the first frame.
+    -->
+    <style name="Theme.Tokkl" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>
