@@ -91,7 +91,22 @@ class ThemeContrastTest {
             Pair("onTertiaryFixed on tertiaryFixedDim", s.onTertiaryFixed, s.tertiaryFixedDim, Kind.TEXT),
             Pair("onTertiaryFixedVariant on tertiaryFixed", s.onTertiaryFixedVariant, s.tertiaryFixed, Kind.TEXT),
         )
-        return surfacePairs + fills
+        return surfacePairs + fills + navigationBarPairs(s)
+    }
+
+    /**
+     * The colours Tokkl gives a bottom bar item: the icon sits on the primary indicator, and the
+     * label sits below it, on the bar, which is surfaceContainer.
+     */
+    private fun navigationBarPairs(s: ColorScheme): List<Pair> {
+        val item = navigationBarItemColors(s)
+        val bar = s.surfaceContainer
+        return listOf(
+            Pair("active nav icon on indicator", item.selectedIconColor, item.selectedIndicatorColor, Kind.NON_TEXT),
+            Pair("active nav label on bar", item.selectedTextColor, bar, Kind.TEXT),
+            Pair("inactive nav icon on bar", item.unselectedIconColor, bar, Kind.NON_TEXT),
+            Pair("inactive nav label on bar", item.unselectedTextColor, bar, Kind.TEXT),
+        )
     }
 
     private fun assertPairsPass(scheme: String, colours: ColorScheme, extra: TokklExtraColors) {
