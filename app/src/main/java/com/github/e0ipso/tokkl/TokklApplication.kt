@@ -37,8 +37,9 @@ class TokklApplication : Application() {
 
     /**
      * Loaded on first use, which reads the stored settings from disk. That is usually
-     * MainActivity's onStart on the main thread, and the file holds three short values. Each
-     * refresh refreshes the [capabilities] and the [cache] too, with the same `GET /api/v9/me`.
+     * MainActivity's onStart on the main thread, and the file holds four short values. Each
+     * refresh refreshes the [capabilities] and the [cache] too, with the same `GET /api/v9/me`,
+     * and the cache takes the favorites from the settings' `GET /api/v9/me/preferences`.
      */
     val accountSettings: AccountSettingsSource by lazy {
         val store = AccountSettingsStore(this)
@@ -48,7 +49,7 @@ class TokklApplication : Application() {
             client = Session(this)::client,
             scope = MainScope(),
             io = Dispatchers.IO,
-            onRefresh = { api, me -> cache.refresh(api, me, capabilities.refresh(api, me)) },
+            onRefresh = { api, me, preferences -> cache.refresh(api, me, preferences, capabilities.refresh(api, me)) },
         )
     }
 

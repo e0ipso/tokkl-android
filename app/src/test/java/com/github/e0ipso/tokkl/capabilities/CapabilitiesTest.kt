@@ -9,9 +9,11 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.readServerSnapshot
 import com.github.e0ipso.tokkl.session.Me
+import com.github.e0ipso.tokkl.session.MePreferences
 import java.io.IOException
 import java.time.Clock
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -75,11 +77,11 @@ class CapabilitiesTest {
     fun favoritesAreTrueOnAFreshTokklAccountWithNoSavedFavorites() {
         answers[TRASH] = json("[]")
         answers["/api/v9/me/time_entries"] = json("[]")
-        answers["/api/v9/me/preferences"] = json("""{"date_format":"YYYY-MM-DD","timeofday_format":"H:mm"}""")
+        val preferences = MePreferences(Json.parseToJsonElement("""{"date_format":"YYYY-MM-DD","timeofday_format":"H:mm"}""").jsonObject)
         val me = me(TOKKL_ME)
 
         val capabilities = source().refresh(client, me)
-        val snapshot = readServerSnapshot(client, me, Clock.systemUTC(), favorites = capabilities.favorites)
+        val snapshot = readServerSnapshot(client, me, preferences, Clock.systemUTC(), favorites = capabilities.favorites)
 
         assertTrue(capabilities.favorites)
         assertEquals("no favorites yet", emptyList<CachedFavorite>(), snapshot.favorites)

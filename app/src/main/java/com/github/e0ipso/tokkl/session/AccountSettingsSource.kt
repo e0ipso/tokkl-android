@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
 
 /**
  * The account settings for the whole process, and the one place screens read them from.
@@ -25,9 +26,10 @@ import kotlinx.coroutines.launch
  * @param client the API client of the signed-in account, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a refresh.
  * @param onRefresh runs on [io] after each refresh whose `GET /api/v9/me` answered, inside the
- *   same job, with that client and answer. The capabilities and the cache refresh there, so one
- *   `/me` serves them all, and a [refresh] call while it runs joins it. It does not run when
- *   sign-in stored newer settings while the request ran.
+ *   same job, with that client and answer, and the refresh's `GET /api/v9/me/preferences`, null
+ *   when that request failed. The capabilities and the cache refresh there, so one `/me` and one
+ *   `/me/preferences` serve them all, and a [refresh] call while it runs joins it. It does not
+ *   run when sign-in stored newer settings while the requests ran.
  */
 class AccountSettingsSource(
     initial: AccountSettings?,
@@ -35,7 +37,7 @@ class AccountSettingsSource(
     private val client: () -> TogglApiClient?,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val onRefresh: (TogglApiClient, Me) -> Unit = { _, _ -> },
+    private val onRefresh: (TogglApiClient, Me, MePreferences?) -> Unit = { _, _, _ -> },
 ) {
 
     private val mutableState = MutableStateFlow(initial)
@@ -82,12 +84,12 @@ class AccountSettingsSource(
         val url = api.server.api("me").newBuilder().addQueryParameter("with_related_data", "true").build()
         val me = (api.get(url, Me.serializer()) as? ApiResult.Success)?.value ?: return
         val fromMe = me.accountSettings() ?: return
-        val durationFormat = readDurationFormat(api)
+        val preferences = readPreferences(api)
         synchronized(lock) {
             // Sign-in stored newer settings while the requests ran.
             if (writes != writesBefore) return
             val settings = fromMe.copy(
-                durationFormat = durationFormat ?: mutableState.value?.durationFormat ?: DurationFormat.IMPROVED,
+                durationFormat = preferences?.durationFormat ?: mutableState.value?.durationFormat ?: DurationFormat.IMPROVED,
             )
             if (settings != mutableState.value) {
                 try {
@@ -97,13 +99,13 @@ class AccountSettingsSource(
                 }
             }
         }
-        onRefresh(api, me)
+        onRefresh(api, me, preferences)
     }
 
-    /** The preferences' duration format, or null when the request fails. */
-    private fun readDurationFormat(api: TogglApiClient): DurationFormat? {
-        val preferences = api.get(api.server.api("me", "preferences"), MePreferences.serializer())
-        return (preferences as? ApiResult.Success)?.value?.durationFormat
+    /** The account's preferences, or null when the request fails. */
+    private fun readPreferences(api: TogglApiClient): MePreferences? {
+        val answer = api.get(api.server.api("me", "preferences"), JsonObject.serializer())
+        return (answer as? ApiResult.Success)?.value?.let(::MePreferences)
     }
 
     /** Only while holding [lock]. */

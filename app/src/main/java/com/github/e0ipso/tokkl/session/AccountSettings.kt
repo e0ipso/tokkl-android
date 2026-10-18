@@ -12,7 +12,7 @@ import java.time.Clock
 import java.time.DayOfWeek
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
@@ -86,18 +86,20 @@ class Me(
 }
 
 /**
- * The field the account settings read from `GET /api/v9/me/preferences`. The web app shows
- * durations as improved when `duration_format` is missing or null, and when it names any format
- * other than classic or decimal. The field stays a [JsonElement], so a value that is not a string
- * reads as improved too, instead of failing the whole response.
+ * One `GET /api/v9/me/preferences` answer. A refresh asks for it once and hands it to each
+ * reader: the account settings take [durationFormat], the cache the favorites. Each reader
+ * decodes only its own key from [body], so a malformed key fails that reader alone.
  */
-@Serializable
-internal class MePreferences(
-    @SerialName("duration_format") private val durationFormatName: JsonElement? = null,
-) {
+class MePreferences(val body: JsonObject) {
+
+    /**
+     * The web app shows durations as improved when `duration_format` is missing or null, and
+     * when it names any format other than classic or decimal. A value that is not a string reads
+     * as improved too.
+     */
     val durationFormat: DurationFormat
         get() {
-            val name = (durationFormatName as? JsonPrimitive)?.takeIf { it.isString }?.content
+            val name = (body["duration_format"] as? JsonPrimitive)?.takeIf { it.isString }?.content
             return DurationFormat.fromTogglName(name)
         }
 }

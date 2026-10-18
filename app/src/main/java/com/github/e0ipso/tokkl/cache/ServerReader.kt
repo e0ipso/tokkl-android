@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerClient
 import com.github.e0ipso.tokkl.api.ServerFavorite
@@ -10,6 +11,7 @@ import com.github.e0ipso.tokkl.api.ServerTask
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.Me
+import com.github.e0ipso.tokkl.session.MePreferences
 import java.time.Clock
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -18,14 +20,21 @@ import kotlinx.serialization.builtins.ListSerializer
 
 /**
  * Reads what a refresh puts in the cache. [me] is the refresh's `GET /api/v9/me` with related
- * data, which carries the clients, projects, tags and tasks. On top of it come two requests:
- * `GET /api/v9/me/time_entries` for the history window, counted in the account's timezone, and
- * `GET /api/v9/me/preferences` for the favorites. A failed request leaves its list null. Without
- * [favorites], as on Toggl Track, the favorites are an empty list and not asked for.
+ * data, which carries the clients, projects, tags and tasks. [preferences] is its
+ * `GET /api/v9/me/preferences`, which carries the favorites, or null when that request failed. On
+ * top of them comes one request, `GET /api/v9/me/time_entries` for the history window, counted in
+ * the account's timezone. A failed request leaves its list null. Without [favorites], as on Toggl
+ * Track, the favorites are an empty list.
  *
  * Blocks on the network, so call it off the main thread.
  */
-fun readServerSnapshot(api: TogglApiClient, me: Me, clock: Clock, favorites: Boolean): ServerSnapshot {
+fun readServerSnapshot(
+    api: TogglApiClient,
+    me: Me,
+    preferences: MePreferences?,
+    clock: Clock,
+    favorites: Boolean,
+): ServerSnapshot {
     val history = me.accountSettings()?.time(clock)?.let(HistoryWindow::endingToday)
     return ServerSnapshot(
         history = history,
@@ -34,7 +43,7 @@ fun readServerSnapshot(api: TogglApiClient, me: Me, clock: Clock, favorites: Boo
         clients = me.clients?.map { it.toCached() },
         tags = me.tags?.map { it.toCached() },
         tasks = me.tasks?.map { it.toCached() },
-        favorites = if (favorites) readFavorites(api) else emptyList(),
+        favorites = if (favorites) favoritesFrom(preferences) else emptyList(),
     )
 }
 
@@ -51,11 +60,19 @@ private fun readTimeEntries(api: TogglApiClient, history: HistoryWindow): List<C
     return (entries as? ApiResult.Success)?.value?.mapNotNull { it.toCached() }
 }
 
-/** Tokkl leaves `favorites` out until the user saves one, which means none. */
-private fun readFavorites(api: TogglApiClient): List<CachedFavorite>? {
-    val preferences = api.get(api.server.api("me", "preferences"), ServerPreferences.serializer())
-    return (preferences as? ApiResult.Success)?.value
-        ?.let { it.favorites.orEmpty().mapIndexed { position, favorite -> favorite.toCached(position) } }
+/**
+ * Tokkl leaves `favorites` out until the user saves one, which means none. Null when the request
+ * failed or the favorites do not decode.
+ */
+private fun favoritesFrom(preferences: MePreferences?): List<CachedFavorite>? {
+    val body = preferences?.body ?: return null
+    val decoded = try {
+        ApiJson.decodeFromJsonElement(ServerPreferences.serializer(), body)
+    } catch (e: IllegalArgumentException) {
+        // kotlinx.serialization's SerializationException is an IllegalArgumentException.
+        return null
+    }
+    return decoded.favorites.orEmpty().mapIndexed { position, favorite -> favorite.toCached(position) }
 }
 
 /** Null when [ServerTimeEntry.start] is not an RFC 3339 timestamp. */
