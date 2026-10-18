@@ -1,0 +1,5 @@
+# Line endings for the Gradle wrapper, as in Gradle's init template. A gradlew
+# with CRLF does not run on Linux, whatever core.autocrlf says.
+/gradlew        text eol=lf
+*.bat           text eol=crlf
+*.jar           binary
