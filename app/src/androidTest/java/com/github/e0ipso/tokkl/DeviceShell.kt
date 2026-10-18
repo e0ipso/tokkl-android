@@ -11,12 +11,4 @@ object DeviceShell {
         val output = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
         return ParcelFileDescriptor.AutoCloseInputStream(output).bufferedReader().use { it.readText() }
     }
-
-    /**
-     * Closes system dialogs. On a freshly booted headless emulator a "System UI isn't
-     * responding" dialog can hold window focus, so an injected key would go to it, not the app.
-     */
-    fun closeSystemDialogs() {
-        run("am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS")
-    }
 }

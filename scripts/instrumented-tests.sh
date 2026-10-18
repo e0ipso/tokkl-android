@@ -18,8 +18,9 @@
 #
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
 # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
-# tokkl-api36) without a window and with 2 GB of guest RAM, and stops it at the
-# end. It also stops the adb server if that was not running before.
+# tokkl-api36) without a window and with 2 GB of guest RAM, turns off error
+# dialogs on it, and stops it at the end. It changes no setting on a device it
+# did not boot. It also stops the adb server if that was not running before.
 #
 # qemu holds up to 5 GB, and its oom_score_adj of 800 makes it the kernel OOM
 # killer's first pick. When the user's systemd manager is reachable, the
@@ -144,6 +145,12 @@ boot_emulator() {
         fi
         sleep 2
     done
+    # A fresh headless boot often leaves "System UI isn't responding" holding
+    # window focus, so keys the tests inject go to that dialog. This emulator
+    # is the script's own, so it may change its settings: hide error dialogs
+    # from now on, and close the ones already open.
+    adb -s "$emulator_serial" shell settings put global hide_error_dialogs 1
+    adb -s "$emulator_serial" shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null
 }
 
 if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then

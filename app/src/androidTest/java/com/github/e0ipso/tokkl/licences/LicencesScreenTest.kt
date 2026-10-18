@@ -11,7 +11,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
@@ -58,7 +57,6 @@ class LicencesScreenTest {
     fun systemBackReturnsToTheLaunchScreen() {
         openLicences()
 
-        DeviceShell.closeSystemDialogs()
         composeRule.waitUntil("the app window has input focus", FOCUS_TIMEOUT_MS) {
             var focused = false
             composeRule.activityRule.scenario.onActivity { focused = it.hasWindowFocus() }
