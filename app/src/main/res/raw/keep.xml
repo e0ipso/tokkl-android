@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    anybody_font_source.txt records where res/font/anybody_wdth_wght.ttf comes from. No code
+    reads it; it sits beside the font's licence because res/font accepts only font files.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/anybody_font_source" />

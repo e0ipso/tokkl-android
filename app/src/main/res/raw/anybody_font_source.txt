@@ -1,0 +1,25 @@
+Where res/font/anybody_wdth_wght.ttf comes from
+
+Font: Anybody by Etcetera Type Co., the variable font with a width axis
+(50 to 150) and a weight axis (100 to 900).
+Project: https://github.com/Etcetera-Type-Co/Anybody
+File: fonts/variable/Anybody[wdth,wght].ttf at commit
+fe7b55cf9d1563348ad95ac8e05f43b81a420c31 (master, 2023-03-10)
+URL: https://raw.githubusercontent.com/Etcetera-Type-Co/Anybody/fe7b55cf9d1563348ad95ac8e05f43b81a420c31/fonts/variable/Anybody%5Bwdth,wght%5D.ttf
+Version: 1.114 (name ID 5 reads "Version 1.114;gftools[0.9.25]")
+SHA-256: b184bd7e6ca8348bbaecec98951565729d7e89b7872d4898a1f9981342b5b64c
+Downloaded: 2026-10-18
+
+Conversion: none. The bytes are the upstream TTF's. Only the name changed,
+because Android resource names allow only a-z, 0-9 and _. Tokkl's web app
+serves the woff2 from the same commit
+(../tokkl/packages/web/public/fonts/anybody-wdth-wght.woff2, the same git
+blob, a3493241a0c23b84369850724137d3067c03b401).
+
+Licence: SIL Open Font License 1.1, with no Reserved Font Name. The text is
+anybody_ofl.txt beside this note, OFL.txt from the same commit, unchanged
+(SHA-256 7f0313b042b462fcae1934436cc747f9fd4433e3b08fd6459a4a5104b0bbd5db).
+It is the same file as ../tokkl/packages/web/public/fonts/OFL.txt.
+
+This note lives in res/raw because the build accepts only font and XML
+files in res/font.

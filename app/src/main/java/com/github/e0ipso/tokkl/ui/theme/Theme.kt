@@ -10,6 +10,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 
 private val LocalTokklExtraColors = staticCompositionLocalOf { TokklLightExtraColors }
 
@@ -36,7 +37,7 @@ fun TokklTheme(
     }
     val extraColors = if (darkTheme) TokklDarkExtraColors else TokklLightExtraColors
     CompositionLocalProvider(LocalTokklExtraColors provides extraColors) {
-        MaterialTheme(colorScheme = colorScheme, content = content)
+        MaterialTheme(colorScheme = colorScheme, typography = TokklTypography, content = content)
     }
 }
 
@@ -46,4 +47,10 @@ object TokklTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalTokklExtraColors.current
+
+    /** The running clock, in Anybody with tabular digits. */
+    val clockTextStyle: TextStyle get() = ClockTextStyle
+
+    /** Day and report totals, in Anybody with tabular digits. */
+    val totalTextStyle: TextStyle get() = TotalTextStyle
 }
