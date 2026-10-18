@@ -31,6 +31,7 @@ class DynamicColourSwitchTest {
                     onModeChange = {},
                     onDynamicColorChange = {},
                     onBack = {},
+                    onOpenLicences = {},
                 )
             }
         }

@@ -114,8 +114,8 @@ class SettingsScreenTest {
         }
         assertTrue("a control without a label among $labels", labels.none { it.isBlank() })
         val switches = if (dynamicColorAvailable()) 1 else 0
-        // Back, three theme modes and the wallpaper colours switch.
-        assertEquals(labels.toString(), 1 + 3 + switches, controls.size)
+        // Back, three theme modes, the wallpaper colours switch and Licences.
+        assertEquals(labels.toString(), 1 + 3 + switches + 1, controls.size)
         assertEquals(3, composeRule.onAllNodes(hasRole(Role.RadioButton)).fetchSemanticsNodes().size)
         assertEquals(switches, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
     }

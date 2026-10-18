@@ -14,6 +14,7 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_dynamic_colour">Wallpaper colours</string>
     <string name="settings_dynamic_colour_summary">Use colours from your wallpaper instead of Tokkl\'s.</string>
+    <string name="settings_about">About</string>
 
     <string name="sign_in_title">Sign in</string>
     <string name="sign_in_server_url">Server URL</string>

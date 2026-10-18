@@ -83,6 +83,7 @@ private fun Screen(
         Destination.SETTINGS -> SettingsScreen(
             model = themeSettings,
             onBack = { backStack.removeAt(backStack.lastIndex) },
+            onOpenLicences = { backStack.add(Destination.LICENCES) },
         )
         Destination.LICENCES -> LicencesScreen(onBack = { backStack.removeAt(backStack.lastIndex) })
     }

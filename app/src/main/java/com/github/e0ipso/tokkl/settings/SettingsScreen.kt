@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -40,11 +42,16 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The app's settings. So far that is the theme; sign-out (TKA-0038) goes in a section of its
- * own below it. Every change applies at once.
+ * The app's settings: the theme, then About, which opens the licences through [onOpenLicences].
+ * Sign-out (TKA-0038) goes in a section of its own between the two. Every change applies at once.
  */
 @Composable
-fun SettingsScreen(model: ThemeSettingsModel, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    model: ThemeSettingsModel,
+    onBack: () -> Unit,
+    onOpenLicences: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val settings by model.state.collectAsState()
     SettingsContent(
         settings = settings,
@@ -52,6 +59,7 @@ fun SettingsScreen(model: ThemeSettingsModel, onBack: () -> Unit, modifier: Modi
         onModeChange = model::onModeChange,
         onDynamicColorChange = model::onDynamicColorChange,
         onBack = onBack,
+        onOpenLicences = onOpenLicences,
         modifier = modifier,
     )
 }
@@ -64,6 +72,7 @@ internal fun SettingsContent(
     onModeChange: (ThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
     onBack: () -> Unit,
+    onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
@@ -92,6 +101,8 @@ internal fun SettingsContent(
             }
             Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             ThemeSection(settings, showDynamicColor, onModeChange, onDynamicColorChange)
+            Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+            AboutSection(onOpenLicences)
         }
     }
 }
@@ -148,6 +159,25 @@ private fun ThemeSection(
             Spacer(Modifier.width(TokklTheme.spacing.space3))
             Switch(checked = settings.dynamicColor, onCheckedChange = null)
         }
+    }
+}
+
+/** One row that opens the licences, clickable across its width, which TalkBack reads as a button. */
+@Composable
+private fun AboutSection(onOpenLicences: () -> Unit) {
+    Text(
+        text = stringResource(R.string.settings_about),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics { heading() },
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .clickable(role = Role.Button, onClick = onOpenLicences),
+    ) {
+        Text(text = stringResource(R.string.licences), style = MaterialTheme.typography.bodyLarge)
     }
 }
 
