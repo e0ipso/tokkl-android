@@ -13,11 +13,12 @@ kk_schema_version: 3
 kk_id: practice-talk-only-to-configured-server
 kk_derived_from:
   - docs/PRD.md
-kk_relates_to: []
+kk_relates_to:
+  - map-api-client-shared-okhttp-serverurl-and-errors
 kk_depends_on: []
 kk_confidence: high
 ---
-Data stays between the phone and the server. The app has no telemetry, analytics, crash reporting or ads, and sends no request to any host other than the configured server. This carries Tokkl's first principle over and matches F-Droid's rules.
+Data stays between the phone and the server. The app has no telemetry, analytics, crash reporting or ads, and sends no request to any host other than the configured server. This carries Tokkl's first principle over and matches F-Droid's rules. `ConfiguredServerGuard` on the app's single OkHttp client refuses every other host, and `SingleHttpClientTest` fails when code builds a second client.
 
 Every dependency must be free software. F-Droid builds the app from source with a free toolchain and rejects proprietary libraries such as Google Play Services and Firebase. So the app has no push through FCM.
 

@@ -24,7 +24,7 @@ The PRD marks this stack as proposed.
 - Room (SQLite) for the cache and the queue of unsent changes.
 - WorkManager to send the queue when the network comes back.
 - OkHttp and kotlinx.serialization for the API, with a trust manager that adds the pinned self-signed certificate (S3).
-- A Kotlin port of three functions from `../tokkl`, each checked against the cases in the `.test.ts` file next to it: `parseDuration` in `packages/common/duration.ts`, `parseTimeOfDay` in `packages/web/src/lib/timeOfDay.ts` and `snapSpan` in `packages/common/snap.ts`. The time-of-day parser lives in the web package, not in `packages/common`. The two parsers exist in `com.github.e0ipso.tokkl.time`; `snapSpan` is not ported yet.
+- A Kotlin port of three functions from `../tokkl`, each checked against the cases in the `.test.ts` file next to it: `parseDuration` in `packages/common/duration.ts`, `parseTimeOfDay` in `packages/web/src/lib/timeOfDay.ts` and `snapSpan` in `packages/common/snap.ts`. The time-of-day parser lives in the web package, not in `packages/common`. All three ports live in `com.github.e0ipso.tokkl.time`.
 
 Every dependency must be free software.
 

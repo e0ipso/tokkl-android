@@ -26,6 +26,8 @@ AGP 9 compiles Kotlin itself and brings Kotlin Gradle plugin 2.2.10. The `kotlin
 
 The wrapper is Gradle 9.8.1. `distributionSha256Sum` in `gradle/wrapper/gradle-wrapper.properties` pins its checksum, so change the sum whenever `distributionUrl` changes.
 
+`.gitattributes` keeps `gradlew` at LF and `*.bat` at CRLF, as Gradle's init template does. A `gradlew` with CRLF does not run on Linux, whatever `core.autocrlf` says.
+
 <!-- kk:related:start -->
 # Related
 

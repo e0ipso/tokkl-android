@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:f35d4495e8eae5565b32a2db9624d7795d023f13d026bcb67ab69a362e6fdd10'
-node_count: 26
+nodes_hash: 'sha256:601c9b7caac1c9d389862a58f28db8f09b43eb06d8d256208e71939b136aa0d4'
+node_count: 28
 ---
 # kenkeep Graph
 
-Total nodes: 26
+Total nodes: 28
 
 ## map-api-client-shared-okhttp-serverurl-and-errors
 
@@ -54,6 +54,14 @@ Total nodes: 26
 - **path:** map-jdk-android-sdk-and-agent-shells.md
 - **tags:** android, tooling, agents, build
 
+## map-oom-kill-ends-agent-session
+
+- **kind:** map
+- **title:** An OOM kill inside an agent session's scope ends the whole session
+- **path:** map-oom-kill-ends-agent-session.md
+- **tags:** agents, machine, memory, emulator
+- **relates_to:** map-t3-daily-restart-stops-agent-sessions, practice-emulator-plain-aosp-image-headless
+
 ## map-planned-android-stack
 
 - **kind:** map
@@ -62,13 +70,21 @@ Total nodes: 26
 - **tags:** architecture, android, offline
 - **derived_from:** docs/PRD.md
 
+## map-signin-session-settings-and-navigation-host
+
+- **kind:** map
+- **title:** Sign-in, the stored session, theme settings and the navigation host
+- **path:** map-signin-session-settings-and-navigation-host.md
+- **tags:** android, ui, credentials, navigation
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-api-token-store-and-backup-exclusion, map-tokkl-colour-tokens-and-font
+
 ## map-t3-daily-restart-stops-agent-sessions
 
 - **kind:** map
 - **title:** T3 restarts daily and ends running agent sessions
 - **path:** map-t3-daily-restart-stops-agent-sessions.md
 - **tags:** agents, tooling, machine
-- **relates_to:** map-jdk-android-sdk-and-agent-shells
+- **relates_to:** map-oom-kill-ends-agent-session, map-jdk-android-sdk-and-agent-shells
 
 ## map-tokkl-colour-tokens-and-font
 
@@ -101,7 +117,7 @@ Total nodes: 26
 - **title:** Test on the plain AOSP API 36 emulator, headless, and stop it afterwards
 - **path:** practice-emulator-plain-aosp-image-headless.md
 - **tags:** testing, android, emulator, energy
-- **relates_to:** practice-test-real-tokkl-server-speed-regressions, map-jdk-android-sdk-and-agent-shells, practice-run-instrumented-tests-only-through-the-script
+- **relates_to:** map-oom-kill-ends-agent-session, practice-test-real-tokkl-server-speed-regressions, map-jdk-android-sdk-and-agent-shells, practice-run-instrumented-tests-only-through-the-script
 
 ## practice-gradle-no-daemon-in-parallel-worktrees
 
@@ -176,6 +192,7 @@ Total nodes: 26
 - **title:** Keep release builds reproducible and signed with the project key
 - **path:** practice-reproducible-builds-project-key.md
 - **tags:** release, fdroid, security, ci
+- **relates_to:** map-fdroid-metadata-release-artifacts, practice-own-version-from-v0-1-0-tag, practice-run-instrumented-tests-only-through-the-script
 - **derived_from:** docs/PRD.md
 
 ## practice-run-instrumented-tests-only-through-the-script
@@ -199,6 +216,7 @@ Total nodes: 26
 - **title:** Talk only to the configured server and use only free software
 - **path:** practice-talk-only-to-configured-server.md
 - **tags:** privacy, network, fdroid, security
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors
 - **derived_from:** docs/PRD.md
 
 ## practice-test-real-tokkl-server-speed-regressions

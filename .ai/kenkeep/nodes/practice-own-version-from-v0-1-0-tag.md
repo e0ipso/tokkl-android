@@ -20,7 +20,7 @@ The app has its own version, independent of Tokkl's, with its own `v*` tags and 
 
 semantic-release does not support a first release below 1.0.0. So the first release is a hand-made `v0.1.0` tag, and semantic-release counts on from it. A commit marked as a breaking change moves the app to 1.0.0.
 
-semantic-release runs on pushes to `main` with Tokkl's release rules and `v${version}` tags. It writes `CHANGELOG.md`, rewrites both lines of `gradle/version.properties`, and attaches the signed release APK to the GitHub release.
+semantic-release runs on pushes to `main` with Tokkl's release rules and `v${version}` tags. It writes `CHANGELOG.md`, rewrites both lines of `gradle/version.properties`, and attaches the signed release APK to the GitHub release. Build that APK from a clean checkout of the tagged commit, after the release commit and its tag exist, never in the tree where the release step has just rewritten `gradle/version.properties`. AGP embeds the commit hash, so an APK built from any other tree cannot match F-Droid's build of the tag.
 
 `gradle/version.properties` is the only place the version is set. It holds `versionName` (MAJOR.MINOR.PATCH) and the computed `versionCode`, which must equal `major * 1_000_000 + minor * 1_000 + patch`, so 0.1.0 is 1000. `app/build.gradle.kts` fails the build when the stored number breaks the formula. The file keeps the number because F-Droid reads it at each tag and cannot evaluate a formula. Keep each value on its own `key=value` line.
 

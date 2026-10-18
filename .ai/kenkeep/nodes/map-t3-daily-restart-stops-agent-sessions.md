@@ -12,6 +12,7 @@ kk_schema_version: 3
 kk_id: map-t3-daily-restart-stops-agent-sessions
 kk_derived_from: []
 kk_relates_to:
+  - map-oom-kill-ends-agent-session
   - map-jdk-android-sdk-and-agent-shells
 kk_depends_on: []
 kk_confidence: high
@@ -23,5 +24,6 @@ An agent run or background agent still going between about 00:00 and 01:00 local
 <!-- kk:related:start -->
 # Related
 
+- Related: [map-oom-kill-ends-agent-session](map-oom-kill-ends-agent-session.md)
 - Related: [map-jdk-android-sdk-and-agent-shells](map-jdk-android-sdk-and-agent-shells.md)
 <!-- kk:related:end -->
