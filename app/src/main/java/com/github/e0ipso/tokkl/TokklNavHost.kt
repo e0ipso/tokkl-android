@@ -10,13 +10,15 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.settings.SettingsScreen
+import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** The app's screens. */
-enum class Destination { SIGN_IN, HOME, LICENCES }
+enum class Destination { SIGN_IN, HOME, SETTINGS, LICENCES }
 
 /**
  * The app's navigation host: a back stack of [Destination]s that survives
@@ -25,7 +27,7 @@ enum class Destination { SIGN_IN, HOME, LICENCES }
  * System back pops the stack and closes the app from its first screen.
  */
 @Composable
-fun TokklNavHost(signInModel: SignInModel) {
+fun TokklNavHost(signInModel: SignInModel, themeSettings: ThemeSettingsModel) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
     if (backStack.isEmpty()) {
@@ -47,7 +49,14 @@ fun TokklNavHost(signInModel: SignInModel) {
                 backStack.add(Destination.HOME)
             },
         )
-        Destination.HOME -> LaunchScreen(onOpenLicences = { backStack.add(Destination.LICENCES) })
+        Destination.HOME -> LaunchScreen(
+            onOpenSettings = { backStack.add(Destination.SETTINGS) },
+            onOpenLicences = { backStack.add(Destination.LICENCES) },
+        )
+        Destination.SETTINGS -> SettingsScreen(
+            model = themeSettings,
+            onBack = { backStack.removeAt(backStack.lastIndex) },
+        )
         Destination.LICENCES -> LicencesScreen(onBack = { backStack.removeAt(backStack.lastIndex) })
     }
 }

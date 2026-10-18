@@ -13,6 +13,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -27,6 +28,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.settings.dynamicColorAvailable
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -36,8 +38,8 @@ import org.junit.rules.RuleChain
 
 /**
  * The Anybody headlines and the text around them at Android's largest font scale, 200%: no
- * text is cut off, leaves the screen or overlaps another. The sign-in form scrolls, so each of
- * its parts has to fit once scrolled into view.
+ * text is cut off, leaves the screen or overlaps another. The sign-in form and the settings
+ * scroll, so each of their parts has to fit once scrolled into view.
  *
  * The clock and totals styles have no screen yet; ClockAndTotalStylesFitTest covers them.
  */
@@ -61,7 +63,42 @@ class LargestFontScaleTest {
         assertFitWithoutOverlap(
             text(R.string.app_name),
             text(R.string.launch_message),
+            text(R.string.settings),
             text(R.string.licences),
+        )
+    }
+
+    @Test
+    fun settingsFit() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.settings))
+        composeRule.onNodeWithText(string(R.string.settings)).performClick()
+        composeRule.awaitText(string(R.string.settings_theme))
+
+        val wallpaperColours = dynamicColorAvailable()
+        assertFitWhenScrolledTo(
+            blocks = listOf(
+                "Back button" to composeRule.onNodeWithContentDescription(string(R.string.back)),
+                "heading" to composeRule.onNode(hasText(string(R.string.settings)) and isHeading()),
+                "theme heading" to composeRule.onNode(hasText(string(R.string.settings_theme)) and isHeading()),
+                "follow the system choice" to choice(R.string.settings_theme_system),
+                "light choice" to choice(R.string.settings_theme_light),
+                "dark choice" to choice(R.string.settings_theme_dark),
+            ) + listOfNotNull(
+                ("wallpaper colours switch" to switch(R.string.settings_dynamic_colour)).takeIf { wallpaperColours },
+            ),
+            texts = listOf(
+                inside(R.string.settings_theme_system, isSelectable()),
+                inside(R.string.settings_theme_light, isSelectable()),
+                inside(R.string.settings_theme_dark, isSelectable()),
+            ) + if (wallpaperColours) {
+                listOf(
+                    inside(R.string.settings_dynamic_colour, isToggleable()),
+                    inside(R.string.settings_dynamic_colour_summary, isToggleable()),
+                )
+            } else {
+                emptyList()
+            },
         )
     }
 
@@ -99,7 +136,7 @@ class LargestFontScaleTest {
     fun signInWithEmailAndPasswordFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitText(string(R.string.sign_in_server_url))
-        method(R.string.sign_in_method_email_password).performClick()
+        choice(R.string.sign_in_method_email_password).performClick()
 
         assertFitWhenScrolledTo(
             blocks = signInBlocks(
@@ -122,8 +159,8 @@ class LargestFontScaleTest {
             "heading" to composeRule.onNode(hasText(string(R.string.sign_in_title)) and isHeading()),
             "server URL field" to field(R.string.sign_in_server_url),
             text(R.string.sign_in_method),
-            "API token choice" to method(R.string.sign_in_method_api_token),
-            "email and password choice" to method(R.string.sign_in_method_email_password),
+            "API token choice" to choice(R.string.sign_in_method_api_token),
+            "email and password choice" to choice(R.string.sign_in_method_email_password),
         ) + credentialFields + listOf(
             "sign-in button" to composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()),
         )
@@ -141,8 +178,12 @@ class LargestFontScaleTest {
     private fun field(@StringRes label: Int): SemanticsNodeInteraction =
         composeRule.onNode(hasSetTextAction() and hasText(string(label)))
 
-    private fun method(@StringRes label: Int): SemanticsNodeInteraction =
+    /** A radio button, by its label. */
+    private fun choice(@StringRes label: Int): SemanticsNodeInteraction =
         composeRule.onNode(hasText(string(label)) and isSelectable())
+
+    private fun switch(@StringRes label: Int): SemanticsNodeInteraction =
+        composeRule.onNode(hasText(string(label)) and isToggleable())
 
     private fun fieldLabel(@StringRes id: Int): Pair<String, SemanticsNodeInteraction> =
         inside(id, hasSetTextAction())

@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.settings.DefaultThemeSettings
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -26,7 +27,8 @@ import org.junit.Test
  * frame, so starting the app shows no flash of another colour, in light and in dark.
  *
  * Sets the app's own night mode, which Android keeps until it is changed, and hands the choice
- * back to the system afterwards. UiModeManager.setApplicationNightMode needs Android 12.
+ * back to the system afterwards. UiModeManager.setApplicationNightMode needs Android 12. The
+ * theme setting stays at its default, following the system.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class WindowBackgroundTest {
@@ -35,6 +37,9 @@ class WindowBackgroundTest {
     val session = SessionRule()
 
     @get:Rule(order = 1)
+    val themeSettings = DefaultThemeSettings()
+
+    @get:Rule(order = 2)
     val composeRule = createEmptyComposeRule()
 
     private val uiModeManager = InstrumentationRegistry.getInstrumentation().targetContext

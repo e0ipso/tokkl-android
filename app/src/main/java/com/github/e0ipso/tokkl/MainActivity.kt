@@ -1,10 +1,13 @@
 package com.github.e0ipso.tokkl
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,11 +19,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toDrawable
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
@@ -31,17 +39,45 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val themeSettings = (application as TokklApplication).themeSettings
         setContent {
-            TokklTheme {
-                TokklNavHost(signInModel = signInViewModel.model)
+            val settings by themeSettings.state.collectAsState()
+            val darkTheme = settings.mode.isDark(systemIsDark = isSystemInDarkTheme())
+            TokklTheme(darkTheme = darkTheme, dynamicColor = settings.dynamicColor) {
+                WindowFollowsTheme(darkTheme)
+                TokklNavHost(signInModel = signInViewModel.model, themeSettings = themeSettings)
             }
         }
+    }
+
+    /**
+     * Paints the window in the scheme's background and picks system bar icons that show on it.
+     * res/values-night only knows the system's mode, so a light or dark setting that differs
+     * from it needs both set here. Effects run before the first frame draws.
+     */
+    @Composable
+    private fun WindowFollowsTheme(darkTheme: Boolean) {
+        val background = MaterialTheme.colorScheme.background.toArgb()
+        DisposableEffect(darkTheme, background) {
+            window.setBackgroundDrawable(background.toDrawable())
+            enableEdgeToEdge(
+                statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
+                navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { darkTheme },
+            )
+            onDispose {}
+        }
+    }
+
+    private companion object {
+        // enableEdgeToEdge's own navigation bar scrims, which only Android 9 and earlier draw.
+        val LIGHT_SCRIM = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+        val DARK_SCRIM = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
     }
 }
 
 /** The home screen until the timer screen replaces it. */
 @Composable
-fun LaunchScreen(onOpenLicences: () -> Unit, modifier: Modifier = Modifier) {
+fun LaunchScreen(onOpenSettings: () -> Unit, onOpenLicences: () -> Unit, modifier: Modifier = Modifier) {
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier
@@ -62,6 +98,9 @@ fun LaunchScreen(onOpenLicences: () -> Unit, modifier: Modifier = Modifier) {
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(16.dp))
+            TextButton(onClick = onOpenSettings) {
+                Text(stringResource(R.string.settings))
+            }
             TextButton(onClick = onOpenLicences) {
                 Text(stringResource(R.string.licences))
             }

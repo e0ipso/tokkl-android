@@ -7,6 +7,14 @@
     <string name="licence_anybody_title">Anybody font</string>
     <string name="licence_anybody_licence">SIL Open Font License 1.1</string>
 
+    <string name="settings">Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">Follow the system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_colour">Wallpaper colours</string>
+    <string name="settings_dynamic_colour_summary">Use colours from your wallpaper instead of Tokkl\'s.</string>
+
     <string name="sign_in_title">Sign in</string>
     <string name="sign_in_server_url">Server URL</string>
     <string name="sign_in_server_url_hint">For example, https://example.com/tokkl</string>
