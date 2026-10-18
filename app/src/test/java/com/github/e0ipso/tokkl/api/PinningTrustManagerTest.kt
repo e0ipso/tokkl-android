@@ -75,7 +75,8 @@ class PinningTrustManagerTest {
         pins["tokkl.test:443"] = ServerCertificate.sha256(a)
 
         assertThrows(UntrustedCertificateException::class.java) { check(a, "tokkl.test", 8443) }
-        assertThrows(UntrustedCertificateException::class.java) { check(a, "other.test", 443) }
+        // The certificate names only tokkl.test, so another host is refused before any prompt.
+        assertThrows(CertificateHostMismatchException::class.java) { check(a, "other.test", 443) }
     }
 
     @Test

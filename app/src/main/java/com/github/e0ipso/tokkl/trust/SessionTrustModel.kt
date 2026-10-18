@@ -18,12 +18,15 @@ import kotlinx.coroutines.withContext
  * navigation host shows above whatever screen is open. A refused request sent
  * nothing, so no credential left the phone.
  *
- * A refusal opens its prompt: the certificate prompt or the http warning that
- * sign-in shows. [accept] stores the pin or the confirmation in [trust], which
- * the shared client reads, then runs [retry]. [cancel] closes the prompt but
- * keeps the refusal, so requests stay refused and the host shows a way back
- * through [reopen]. The same refusal again, as every refresh brings, leaves a
- * closed prompt closed. Any answer from the server clears the refusal.
+ * A refusal the user can answer, an [ApiError.TrustQuestion], opens its
+ * prompt: the certificate prompt or the http warning that sign-in shows.
+ * [accept] stores the pin or the confirmation in [trust], which the shared
+ * client reads, then runs [retry]. [cancel] closes the prompt but keeps the
+ * refusal, so requests stay refused and the host shows a way back through
+ * [reopen]. A certificate that does not name the server's host opens no
+ * prompt, since no answer fixes it: the host shows only its notice. The same
+ * refusal again, as every refresh brings, leaves a closed prompt closed. Any
+ * answer from the server clears the refusal.
  *
  * @param retry sends the refused request again, such as the account settings
  *   refresh.
@@ -47,7 +50,7 @@ class SessionTrustModel(
     val state: StateFlow<State> = mutableState.asStateFlow()
 
     override fun refused(refusal: ApiError.TrustRefused) {
-        mutableState.update { if (it.refusal == refusal) it else State(refusal, promptOpen = true) }
+        mutableState.update { if (it.refusal == refusal) it else State(refusal, promptOpen = refusal is ApiError.TrustQuestion) }
     }
 
     override fun answered() {
@@ -60,7 +63,7 @@ class SessionTrustModel(
      * prompt.
      */
     fun accept() {
-        val refusal = mutableState.value.refusal ?: return
+        val refusal = mutableState.value.refusal as? ApiError.TrustQuestion ?: return
         mutableState.update { it.copy(promptOpen = false) }
         scope.launch {
             val stored = withContext(io) {
@@ -88,6 +91,6 @@ class SessionTrustModel(
 
     /** Opens the prompt again for the refusal the user cancelled. */
     fun reopen() {
-        mutableState.update { if (it.refusal == null) it else it.copy(promptOpen = true) }
+        mutableState.update { if (it.refusal is ApiError.TrustQuestion) it.copy(promptOpen = true) else it }
     }
 }

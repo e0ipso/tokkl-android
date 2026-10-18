@@ -7,10 +7,12 @@ import java.security.MessageDigest
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLEngine
+import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 import javax.security.auth.x500.X500Principal
+import okhttp3.internal.tls.OkHostnameVerifier
 
 /**
  * A server's leaf certificate as the trust prompt shows it, and as a pin
@@ -53,12 +55,33 @@ class UntrustedCertificateException(
 ) : CertificateException("No trusted CA or pin covers the certificate of ${certificate.host}:${certificate.port}", cause)
 
 /**
+ * No system or user CA trusts the server's certificate, and it does not name
+ * [host], so pinning it could not work: OkHttp's host name check would refuse
+ * it after the handshake. The handshake fails on this before any HTTP request.
+ */
+class CertificateHostMismatchException(
+    val host: String,
+    cause: CertificateException,
+) : CertificateException("The certificate does not name $host", cause)
+
+/**
  * The [UntrustedCertificateException] among this exception's causes. The TLS
  * stack reports a certificate that [PinningTrustManager] refused as an
  * `SSLHandshakeException` caused by it.
  */
 internal fun IOException.untrustedCertificate(): UntrustedCertificateException? =
-    generateSequence<Throwable>(this) { it.cause }.take(MAX_CAUSES).filterIsInstance<UntrustedCertificateException>().firstOrNull()
+    causes().filterIsInstance<UntrustedCertificateException>().firstOrNull()
+
+/**
+ * Whether the server's certificate does not name the host: [PinningTrustManager]
+ * refused it with a [CertificateHostMismatchException], or OkHttp's host name
+ * check, which runs after the handshake and before any request, threw
+ * `SSLPeerUnverifiedException` for a certificate that a CA or a pin trusts.
+ */
+internal fun IOException.certificateHostMismatch(): Boolean =
+    causes().any { it is CertificateHostMismatchException || it is SSLPeerUnverifiedException }
+
+private fun IOException.causes(): Sequence<Throwable> = generateSequence<Throwable>(this) { it.cause }.take(MAX_CAUSES)
 
 /** Enough for Android's TLS errors, and an end to a cycle of causes. */
 private const val MAX_CAUSES = 8
@@ -70,7 +93,9 @@ private const val MAX_CAUSES = 8
  * refuses the chain, the leaf is trusted only if its SHA-256 matches the pin
  * the user stored for that host and port, read through [pinnedSha256].
  * Anything else fails with [UntrustedCertificateException], which carries
- * the leaf for the trust prompt.
+ * the leaf for the trust prompt, or with [CertificateHostMismatchException]
+ * when the leaf does not name the host, so the prompt never offers a
+ * certificate that OkHttp's host name check would refuse.
  *
  * The pin covers the exact leaf certificate. The handshake proves the server
  * holds its private key, so a matching leaf is the certificate the user
@@ -141,6 +166,8 @@ internal class PinningTrustManager(
         val seen = ServerCertificate.of(leaf, host, port)
         val pin = pinnedSha256(host, port)
         if (pin != null && MessageDigest.isEqual(pin.toByteArray(), seen.sha256.toByteArray())) return
+        // The same check OkHttp makes after the handshake. It only decides what to say; it never accepts.
+        if (!OkHostnameVerifier.verify(host, leaf)) throw CertificateHostMismatchException(host, cause = refusal)
         throw UntrustedCertificateException(seen, pinChanged = pin != null, cause = refusal)
     }
 

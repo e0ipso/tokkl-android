@@ -52,17 +52,24 @@ sealed interface ApiError {
 
     /**
      * The request was refused before any credential left the phone, because
-     * the user has not agreed to trust the server. The user's answer to the
-     * matching prompt lets the next request through.
+     * the server failed a trust check. A signed-in session shows it on every
+     * screen.
      */
     sealed interface TrustRefused : ApiError
+
+    /**
+     * A [TrustRefused] the user can answer: the user has not agreed to trust
+     * the server, and the answer to the matching prompt lets the next request
+     * through.
+     */
+    sealed interface TrustQuestion : TrustRefused
 
     /**
      * [server] is a plain `http://` URL the user has not confirmed, so the
      * request, which would have carried the credentials unencrypted, was not
      * sent.
      */
-    data class CleartextNotConfirmed(val server: ServerUrl) : TrustRefused
+    data class CleartextNotConfirmed(val server: ServerUrl) : TrustQuestion
 
     /**
      * No system or user CA trusts the server's [certificate], and the user
@@ -70,5 +77,14 @@ sealed interface ApiError {
      * certificate for that server. The TLS handshake failed, so nothing was
      * sent.
      */
-    data class UntrustedCertificate(val certificate: ServerCertificate, val changed: Boolean) : TrustRefused
+    data class UntrustedCertificate(val certificate: ServerCertificate, val changed: Boolean) : TrustQuestion
+
+    /**
+     * The server's certificate does not name [host], the host of the URL,
+     * in its subjectAltName, so OkHttp's host name check refuses it, also
+     * when the user pinned it. Nothing was sent. No answer from the user
+     * lets a request through: the certificate has to name the host, or the
+     * URL has to use a host it names.
+     */
+    data class CertificateHostMismatch(val host: String) : TrustRefused
 }

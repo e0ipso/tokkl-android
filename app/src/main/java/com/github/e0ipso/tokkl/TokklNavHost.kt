@@ -14,6 +14,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.SettingsScreen
@@ -94,7 +95,7 @@ private fun Screen(
 private fun SessionTrustPrompts(sessionTrust: SessionTrustModel, modifier: Modifier = Modifier) {
     val state by sessionTrust.state.collectAsState()
     val refusal = state.refusal ?: return
-    if (state.promptOpen) {
+    if (state.promptOpen && refusal is ApiError.TrustQuestion) {
         TrustPrompt(refusal, onAccept = sessionTrust::accept, onCancel = sessionTrust::cancel)
     } else {
         TrustRefusedNotice(refusal, onReview = sessionTrust::reopen, modifier = modifier)

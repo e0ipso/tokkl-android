@@ -277,6 +277,7 @@ private fun failureMessage(failure: SignInResult, method: SignInMethod): String?
         )
         is SignInResult.RateLimited -> stringResource(R.string.sign_in_error_rate_limited)
         SignInResult.Unreachable -> stringResource(R.string.sign_in_error_unreachable)
+        is SignInResult.CertificateHostMismatch -> stringResource(R.string.sign_in_error_certificate_host, failure.host)
         is SignInResult.UnexpectedStatus -> stringResource(R.string.sign_in_error_unexpected_status, failure.status)
         SignInResult.NotTokkl -> stringResource(R.string.sign_in_error_not_tokkl)
         is SignInResult.HostNotAllowed -> stringResource(R.string.sign_in_error_host_not_allowed, failure.origin)

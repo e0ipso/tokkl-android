@@ -44,6 +44,7 @@
     <string name="sign_in_error_wrong_password">Wrong email or password. Check them and try again.</string>
     <string name="sign_in_error_rate_limited">Too many failed attempts. Wait for the countdown before you try again.</string>
     <string name="sign_in_error_unreachable">Can\'t reach the server. Check the URL and your connection.</string>
+    <string name="sign_in_error_certificate_host">The server\'s certificate doesn\'t cover %1$s, so the app sent nothing. Add %1$s to the certificate\'s subjectAltName, as a DNS name or an IP address, and reissue it. Or enter a URL with a host the certificate names.</string>
     <string name="sign_in_error_unexpected_status">The server answered with HTTP %d. Check the URL.</string>
     <string name="sign_in_error_not_tokkl">That URL doesn\'t answer like a Tokkl server. Check it.</string>
     <string name="sign_in_error_no_api_token">The server didn\'t send an API token. Sign in with your API token instead.</string>
@@ -65,6 +66,7 @@
     <string name="sign_in_certificate_trust">Trust this certificate</string>
 
     <string name="trust_refused_certificate">The app sends nothing to the server until you review its certificate.</string>
+    <string name="trust_refused_certificate_host">The server\'s certificate doesn\'t cover %1$s, so the app sends nothing to it. Add %1$s to the certificate\'s subjectAltName, as a DNS name or an IP address, and reissue it.</string>
     <string name="trust_refused_http">The app sends nothing to the server until you review its unencrypted connection.</string>
     <string name="trust_refused_review">Review connection</string>
 </resources>

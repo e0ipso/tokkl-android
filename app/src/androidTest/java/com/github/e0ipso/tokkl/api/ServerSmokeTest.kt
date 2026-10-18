@@ -165,5 +165,6 @@ class ServerSmokeTest {
             is ApiError.HostNotAllowed -> "refused a request to $origin"
             is ApiError.CleartextNotConfirmed -> "refused a request to $server, an unconfirmed http server"
             is ApiError.UntrustedCertificate -> "refused the certificate of ${certificate.host}:${certificate.port}"
+            is ApiError.CertificateHostMismatch -> "refused a certificate that does not name $host"
         }
 }

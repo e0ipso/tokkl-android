@@ -42,7 +42,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /** The prompt for [refusal]: the http warning or the certificate prompt. */
 @Composable
-fun TrustPrompt(refusal: ApiError.TrustRefused, onAccept: () -> Unit, onCancel: () -> Unit) {
+fun TrustPrompt(refusal: ApiError.TrustQuestion, onAccept: () -> Unit, onCancel: () -> Unit) {
     when (refusal) {
         is ApiError.CleartextNotConfirmed -> CleartextWarning(refusal.server, onConfirm = onAccept, onCancel = onCancel)
         is ApiError.UntrustedCertificate -> CertificatePrompt(refusal.certificate, refusal.changed, onTrust = onAccept, onCancel = onCancel)
@@ -50,16 +50,19 @@ fun TrustPrompt(refusal: ApiError.TrustRefused, onAccept: () -> Unit, onCancel: 
 }
 
 /**
- * Says that requests to the server are on hold after the user cancelled a
- * trust prompt, with a button that opens the prompt again. Text, not colour,
- * carries the message.
+ * Says that requests to the server are on hold: after the user cancelled a
+ * trust prompt, with a button that opens the prompt again, or because the
+ * server's certificate does not name its host, which no prompt can fix. Text,
+ * not colour, carries the message.
  */
 @Composable
 fun TrustRefusedNotice(refusal: ApiError.TrustRefused, onReview: () -> Unit, modifier: Modifier = Modifier) {
     val message = when (refusal) {
-        is ApiError.CleartextNotConfirmed -> R.string.trust_refused_http
-        is ApiError.UntrustedCertificate -> R.string.trust_refused_certificate
+        is ApiError.CleartextNotConfirmed -> stringResource(R.string.trust_refused_http)
+        is ApiError.UntrustedCertificate -> stringResource(R.string.trust_refused_certificate)
+        is ApiError.CertificateHostMismatch -> stringResource(R.string.trust_refused_certificate_host, refusal.host)
     }
+    val reviewable = refusal is ApiError.TrustQuestion
     Surface(
         modifier = modifier
             .navigationBarsPadding()
@@ -75,18 +78,21 @@ fun TrustRefusedNotice(refusal: ApiError.TrustRefused, onReview: () -> Unit, mod
                 start = TokklTheme.spacing.space4,
                 top = TokklTheme.spacing.space4,
                 end = TokklTheme.spacing.space2,
-                bottom = TokklTheme.spacing.space2,
+                // The text button brings its own padding.
+                bottom = if (reviewable) TokklTheme.spacing.space2 else TokklTheme.spacing.space4,
             ),
         ) {
             Text(
-                text = stringResource(message),
+                text = message,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
                     .padding(end = TokklTheme.spacing.space2)
                     .semantics { liveRegion = LiveRegionMode.Polite },
             )
-            TextButton(onClick = onReview, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(R.string.trust_refused_review))
+            if (reviewable) {
+                TextButton(onClick = onReview, modifier = Modifier.align(Alignment.End)) {
+                    Text(stringResource(R.string.trust_refused_review))
+                }
             }
         }
     }

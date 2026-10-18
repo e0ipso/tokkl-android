@@ -13,6 +13,8 @@ import org.junit.Test
  * trust-all trust manager and no host name verifier anywhere, in the app,
  * its debug build, its tests or the scripts. The only trust manager is
  * [PinningTrustManager], and only [SharedHttpClient] installs it.
+ * [PinningTrustManager] may call OkHttp's own host name check, to refuse a
+ * certificate that check would refuse later anyway.
  */
 class NoTrustAllTest {
 
@@ -88,7 +90,8 @@ class NoTrustAllTest {
 
         /** A pattern, and the only files where it may appear. */
         val SOURCE_RULES = listOf(
-            Regex("""HostnameVerifier|hostnameVerifier""") to emptySet(),
+            Regex("""(?<!Ok)HostnameVerifier|hostnameVerifier""") to emptySet(),
+            Regex("""OkHostnameVerifier""") to setOf("PinningTrustManager.kt"),
             // Every trust manager implements checkServerTrusted.
             Regex("""(fun|void)\s+checkServerTrusted""") to setOf("PinningTrustManager.kt"),
             Regex("""sslSocketFactory|SSLContext""") to setOf("SharedHttpClient.kt"),

@@ -71,10 +71,10 @@ class TogglApiClient(
             refused(ApiError.CleartextNotConfirmed(e.server))
         } catch (e: IOException) {
             val untrusted = e.untrustedCertificate()
-            if (untrusted != null) {
-                refused(ApiError.UntrustedCertificate(untrusted.certificate, changed = untrusted.pinChanged))
-            } else {
-                ApiResult.Failure(ApiError.Network(e))
+            when {
+                untrusted != null -> refused(ApiError.UntrustedCertificate(untrusted.certificate, changed = untrusted.pinChanged))
+                e.certificateHostMismatch() -> refused(ApiError.CertificateHostMismatch(url.host))
+                else -> ApiResult.Failure(ApiError.Network(e))
             }
         }
     }

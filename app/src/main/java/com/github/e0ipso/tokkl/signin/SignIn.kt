@@ -49,6 +49,13 @@ sealed interface SignInResult {
     data class UntrustedCertificate(val certificate: ServerCertificate, val changed: Boolean) : SignInResult
 
     /**
+     * The server's certificate does not name [host], the host of the URL the
+     * user entered, so the host name check refused it and nothing was sent.
+     * The screen says how to fix the certificate and never offers to trust it.
+     */
+    data class CertificateHostMismatch(val host: String) : SignInResult
+
+    /**
      * The server redirected to [origin] (`scheme://host:port`), and the app
      * talks only to the server the user entered.
      */
@@ -141,5 +148,6 @@ private fun ApiError.toSignInResult(): SignInResult =
         is ApiError.HostNotAllowed -> SignInResult.HostNotAllowed(origin)
         is ApiError.CleartextNotConfirmed -> SignInResult.CleartextNotConfirmed(server)
         is ApiError.UntrustedCertificate -> SignInResult.UntrustedCertificate(certificate, changed)
+        is ApiError.CertificateHostMismatch -> SignInResult.CertificateHostMismatch(host)
         is ApiError.Network -> SignInResult.Unreachable
     }
