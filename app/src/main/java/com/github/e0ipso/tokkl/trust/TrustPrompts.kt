@@ -40,6 +40,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 // The prompts about trusting a server, for sign-in and for any screen of a
 // signed-in session. Their text lives in string resources.
@@ -67,18 +68,25 @@ fun TrustRefusedNotice(refusal: ApiError.TrustRefused, onReview: () -> Unit, mod
     Surface(
         modifier = modifier
             .navigationBarsPadding()
-            .padding(16.dp)
+            .padding(TokklTheme.spacing.space4)
             .fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         shadowElevation = 6.dp,
     ) {
-        Column(modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 8.dp, bottom = 8.dp)) {
+        Column(
+            modifier = Modifier.padding(
+                start = TokklTheme.spacing.space4,
+                top = TokklTheme.spacing.space4,
+                end = TokklTheme.spacing.space2,
+                bottom = TokklTheme.spacing.space2,
+            ),
+        ) {
             Text(
                 text = stringResource(message),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
-                    .padding(end = 8.dp)
+                    .padding(end = TokklTheme.spacing.space2)
                     .semantics { liveRegion = LiveRegionMode.Polite },
             )
             TextButton(onClick = onReview, modifier = Modifier.align(Alignment.End)) {
@@ -108,7 +116,7 @@ fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel: () -> U
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
             ) {
                 Text(stringResource(R.string.sign_in_http_warning_body, server.toString()))
                 Row(
@@ -119,7 +127,7 @@ fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel: () -> U
                         .toggleable(value = understood, role = Role.Checkbox, onValueChange = { understood = it }),
                 ) {
                     Checkbox(checked = understood, onCheckedChange = null)
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(TokklTheme.spacing.space3))
                     Text(stringResource(R.string.sign_in_http_warning_understood))
                 }
             }
@@ -150,15 +158,20 @@ fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust:
             )
         },
         text = {
+            // Three groups: the message, the fingerprint and the subject.
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
             ) {
                 Text(stringResource(if (changed) R.string.sign_in_certificate_changed_body else R.string.sign_in_certificate_body, server))
-                Text(stringResource(R.string.sign_in_certificate_fingerprint), style = MaterialTheme.typography.titleSmall)
-                Text(certificate.displaySha256, fontFamily = FontFamily.Monospace)
-                Text(stringResource(R.string.sign_in_certificate_subject), style = MaterialTheme.typography.titleSmall)
-                Text(certificate.subject)
+                Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+                    Text(stringResource(R.string.sign_in_certificate_fingerprint), style = MaterialTheme.typography.titleSmall)
+                    Text(certificate.displaySha256, fontFamily = FontFamily.Monospace)
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+                    Text(stringResource(R.string.sign_in_certificate_subject), style = MaterialTheme.typography.titleSmall)
+                    Text(certificate.subject)
+                }
             }
         },
         confirmButton = {
@@ -176,7 +189,7 @@ fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust:
  */
 @Composable
 private fun TrustActions(@StringRes risky: Int, riskyEnabled: Boolean, onRisky: () -> Unit, onCancel: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.sign_in_warning_cancel), textAlign = TextAlign.Center)
         }

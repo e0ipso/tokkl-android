@@ -48,6 +48,8 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.theme.screenContent
 import kotlinx.coroutines.delay
 
 /**
@@ -131,8 +133,9 @@ private fun SignInForm(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .screenContent()
+                .padding(vertical = TokklTheme.spacing.space6),
+            verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space4),
         ) {
             Text(
                 text = stringResource(R.string.sign_in_title),
@@ -238,7 +241,7 @@ private fun MethodChoice(selected: SignInMethod, onSelect: (SignInMethod) -> Uni
                     .selectable(selected = method == selected, role = Role.RadioButton, onClick = { onSelect(method) }),
             ) {
                 RadioButton(selected = method == selected, onClick = null)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(TokklTheme.spacing.space3))
                 Text(text = stringResource(label), style = MaterialTheme.typography.bodyLarge)
             }
         }

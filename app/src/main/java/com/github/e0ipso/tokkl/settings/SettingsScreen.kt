@@ -36,6 +36,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
  * The app's settings. So far that is the theme; sign-out (TKA-0038) goes in a section of its
@@ -72,7 +74,8 @@ internal fun SettingsContent(
                 .consumeWindowInsets(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .screenContent()
+                .padding(vertical = TokklTheme.spacing.space2),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
@@ -87,7 +90,7 @@ internal fun SettingsContent(
                     modifier = Modifier.semantics { heading() },
                 )
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             ThemeSection(settings, showDynamicColor, onModeChange, onDynamicColorChange)
         }
     }
@@ -120,13 +123,13 @@ private fun ThemeSection(
                     ),
             ) {
                 RadioButton(selected = settings.mode == mode, onClick = null)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(TokklTheme.spacing.space3))
                 Text(text = stringResource(label), style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
     if (showDynamicColor) {
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(TokklTheme.spacing.inGroup))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -142,7 +145,7 @@ private fun ThemeSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(TokklTheme.spacing.space3))
             Switch(checked = settings.dynamicColor, onCheckedChange = null)
         }
     }

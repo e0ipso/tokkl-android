@@ -24,9 +24,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /** The licences of what the app bundles: so far the Anybody font, under the SIL OFL 1.1. */
 @Composable
@@ -45,7 +46,8 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 .consumeWindowInsets(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .screenContent()
+                .padding(vertical = TokklTheme.spacing.space2),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
@@ -60,7 +62,7 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     modifier = Modifier.semantics { heading() },
                 )
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             Text(
                 text = stringResource(R.string.licence_anybody_title),
                 style = MaterialTheme.typography.headlineSmall,
@@ -71,7 +73,7 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
             Text(text = oflText, style = MaterialTheme.typography.bodySmall)
         }
     }

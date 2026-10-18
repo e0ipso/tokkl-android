@@ -25,12 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.theme.screenContent
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -130,7 +130,8 @@ fun LaunchScreen(onOpenSettings: () -> Unit, onOpenLicences: () -> Unit, modifie
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
+                .screenContent()
+                .padding(vertical = TokklTheme.spacing.space6),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -144,7 +145,7 @@ fun LaunchScreen(onOpenSettings: () -> Unit, onOpenLicences: () -> Unit, modifie
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(TokklTheme.spacing.space4))
             TextButton(onClick = onOpenSettings) {
                 Text(stringResource(R.string.settings))
             }

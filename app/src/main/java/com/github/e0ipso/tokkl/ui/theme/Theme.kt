@@ -48,6 +48,9 @@ object TokklTheme {
         @ReadOnlyComposable
         get() = LocalTokklExtraColors.current
 
+    /** Tokkl's spacing scale, rhythm, screen margin and content width. */
+    val spacing: TokklSpacing get() = TokklSpacing
+
     /** The running clock, in Anybody with tabular digits. */
     val clockTextStyle: TextStyle get() = ClockTextStyle
 
