@@ -26,8 +26,9 @@
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
 # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
 # tokkl-api36) without a window and with 2 GB of guest RAM, turns off error
-# dialogs on it, and stops it at the end. It changes no setting on a device it
-# did not boot. It also stops the adb server if that was not running before.
+# dialogs on it, sets its font scale to 1.0, and stops it at the end. It
+# changes no setting on a device it did not boot. It also stops the adb server
+# if that was not running before.
 #
 # qemu holds up to 5 GB, and its oom_score_adj of 800 makes it the kernel OOM
 # killer's first pick. When the user's systemd manager is reachable, the
@@ -170,6 +171,10 @@ boot_emulator() {
     # from now on, and close the ones already open.
     adb -s "$emulator_serial" shell settings put global hide_error_dialogs 1
     adb -s "$emulator_serial" shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null
+    # The AVD keeps its font scale across boots, and SystemFontScale puts back
+    # whatever it read before a test. Start every run at the default size, so a
+    # test that sets no scale of its own does not run at a scale left behind.
+    adb -s "$emulator_serial" shell settings put system font_scale 1.0
 }
 
 if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then
