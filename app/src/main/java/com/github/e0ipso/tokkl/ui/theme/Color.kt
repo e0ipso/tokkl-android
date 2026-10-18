@@ -6,9 +6,10 @@ import androidx.compose.ui.graphics.Color
 
 // Tokkl's palette. Every value comes from the first :root block of
 // ../tokkl/packages/web/src/styles.css, the source of truth for the app's colours
-// (docs/PRD.md:75). styles.css writes each token once as light-dark(light, dark), and the
-// comment on each value names its line there. res/values/colors.xml and
-// res/values-night/colors.xml repeat --bg for the window behind Compose; change them with it.
+// (docs/PRD.md, Visual direction, Colour). styles.css writes each token once as
+// light-dark(light, dark), and the comment on each value names its token there. Find a token by
+// name, not by line. res/values/colors.xml and res/values-night/colors.xml repeat --bg for the
+// window behind Compose; change them with it.
 
 /** One side, light or dark, of the styles.css colour tokens the app uses. */
 private class Tokens(
@@ -33,45 +34,45 @@ private class Tokens(
 )
 
 private val Light = Tokens(
-    bg = Color(0xFFF4E7CF), // styles.css:161 --bg
-    surface = Color(0xFFFFFAF1), // styles.css:162 --surface
-    surface2 = Color(0xFFECDCBF), // styles.css:163 --surface-2
-    text = Color(0xFF1C1A2B), // styles.css:164 --text
-    muted = Color(0xFF5F5242), // styles.css:165 --muted
-    border = Color(0xFF8F7B5F), // styles.css:166 --border
-    primary = Color(0xFFA8380A), // styles.css:167 --primary
-    onPrimary = Color(0xFFFFFFFF), // styles.css:168 --on-primary
-    secondary = Color(0xFF00727C), // styles.css:169 --secondary
-    accentPink = Color(0xFFD81B72), // styles.css:170 --accent-pink
-    accentLime = Color(0xFF4F7A00), // styles.css:171 --accent-lime
-    danger = Color(0xFFB3261E), // styles.css:172 --danger
-    onDanger = Color(0xFFFFFFFF), // styles.css:173 --on-danger
-    dangerSoft = Color(0xFFFBE0D9), // styles.css:174 --danger-soft
-    backdrop = Color(0xFF1C1A2B), // styles.css:178 --backdrop, rgb(28 26 43) without its 0.45 alpha
-    stateRunning = Color(0xFFD81B72), // styles.css:187 --state-running, which is --accent-pink (:170)
-    stateSelected = Color(0xFFCDEEEA), // styles.css:188 --state-selected
-    stateBillable = Color(0xFF4A7C00), // styles.css:189 --state-billable
+    bg = Color(0xFFF4E7CF), // --bg
+    surface = Color(0xFFFFFAF1), // --surface
+    surface2 = Color(0xFFECDCBF), // --surface-2
+    text = Color(0xFF1C1A2B), // --text
+    muted = Color(0xFF5F5242), // --muted
+    border = Color(0xFF8F7B5F), // --border
+    primary = Color(0xFFA8380A), // --primary
+    onPrimary = Color(0xFFFFFFFF), // --on-primary
+    secondary = Color(0xFF00727C), // --secondary
+    accentPink = Color(0xFFD81B72), // --accent-pink
+    accentLime = Color(0xFF4F7A00), // --accent-lime
+    danger = Color(0xFFB3261E), // --danger
+    onDanger = Color(0xFFFFFFFF), // --on-danger
+    dangerSoft = Color(0xFFFBE0D9), // --danger-soft
+    backdrop = Color(0xFF1C1A2B), // --backdrop, rgb(28 26 43) without its 0.45 alpha
+    stateRunning = Color(0xFFD81B72), // --state-running, which is --accent-pink
+    stateSelected = Color(0xFFCDEEEA), // --state-selected
+    stateBillable = Color(0xFF4A7C00), // --state-billable
 )
 
 private val Dark = Tokens(
-    bg = Color(0xFF0B1026), // styles.css:161 --bg
-    surface = Color(0xFF141A36), // styles.css:162 --surface
-    surface2 = Color(0xFF1D2547), // styles.css:163 --surface-2
-    text = Color(0xFFF3F1FF), // styles.css:164 --text
-    muted = Color(0xFFA9B0D6), // styles.css:165 --muted
-    border = Color(0xFF6A76A8), // styles.css:166 --border
-    primary = Color(0xFFFF8C42), // styles.css:167 --primary
-    onPrimary = Color(0xFF0B1026), // styles.css:168 --on-primary
-    secondary = Color(0xFF2EE6E6), // styles.css:169 --secondary
-    accentPink = Color(0xFFFF4FA8), // styles.css:170 --accent-pink
-    accentLime = Color(0xFFB6FF3B), // styles.css:171 --accent-lime
-    danger = Color(0xFFFF6B6B), // styles.css:172 --danger
-    onDanger = Color(0xFF0B1026), // styles.css:173 --on-danger
-    dangerSoft = Color(0xFF3D1626), // styles.css:174 --danger-soft
-    backdrop = Color(0xFF030512), // styles.css:178 --backdrop, rgb(3 5 18) without its 0.6 alpha
-    stateRunning = Color(0xFFFF4FA8), // styles.css:187 --state-running, which is --accent-pink (:170)
-    stateSelected = Color(0xFF1D3B52), // styles.css:188 --state-selected
-    stateBillable = Color(0xFFB6FF3B), // styles.css:189 --state-billable
+    bg = Color(0xFF0B1026), // --bg
+    surface = Color(0xFF141A36), // --surface
+    surface2 = Color(0xFF1D2547), // --surface-2
+    text = Color(0xFFF3F1FF), // --text
+    muted = Color(0xFFA9B0D6), // --muted
+    border = Color(0xFF6A76A8), // --border
+    primary = Color(0xFFFF8C42), // --primary
+    onPrimary = Color(0xFF0B1026), // --on-primary
+    secondary = Color(0xFF2EE6E6), // --secondary
+    accentPink = Color(0xFFFF4FA8), // --accent-pink
+    accentLime = Color(0xFFB6FF3B), // --accent-lime
+    danger = Color(0xFFFF6B6B), // --danger
+    onDanger = Color(0xFF0B1026), // --on-danger
+    dangerSoft = Color(0xFF3D1626), // --danger-soft
+    backdrop = Color(0xFF030512), // --backdrop, rgb(3 5 18) without its 0.6 alpha
+    stateRunning = Color(0xFFFF4FA8), // --state-running, which is --accent-pink
+    stateSelected = Color(0xFF1D3B52), // --state-selected
+    stateBillable = Color(0xFFB6FF3B), // --state-billable
 )
 
 /**

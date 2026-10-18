@@ -11,7 +11,8 @@ import org.junit.Test
 
 /**
  * WCAG 2 contrast for every pair the Tokkl theme defines, in light and dark: 4.5:1 for text and
- * 3:1 for other UI parts such as borders and state marks (docs/PRD.md:70 and :75).
+ * 3:1 for other UI parts such as borders and state marks (docs/PRD.md, Visual direction, Contrast
+ * and signals).
  */
 class ThemeContrastTest {
 
@@ -27,7 +28,8 @@ class ThemeContrastTest {
     fun contrastMatchesWcagReferenceValues() {
         assertRatio(21.0, Color.Black, Color.White)
         assertRatio(1.0, Color.White, Color.White)
-        // styles.css:10 records "text on bg" in light as 13.94, rounded down.
+        // The contrast table at the top of styles.css records "text on bg" in light as 13.94,
+        // rounded down.
         assertRatio(13.94, Color(0xFF1C1A2B), Color(0xFFF4E7CF))
     }
 

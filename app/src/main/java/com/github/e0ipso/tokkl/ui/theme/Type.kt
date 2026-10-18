@@ -10,10 +10,11 @@ import androidx.compose.ui.unit.sp
 import com.github.e0ipso.tokkl.R
 
 /**
- * Anybody, Tokkl's display face (docs/PRD.md:76), from the variable font in res/font.
- * res/raw/anybody_font_source.txt records where the file comes from.
+ * Anybody, Tokkl's display face (docs/PRD.md, Visual direction, Type), from the variable font in
+ * res/font. res/raw/anybody_font_source.txt records where the file comes from.
  *
- * Tokkl's web app sets it at 85% width and weight 800 (styles.css:306 and :308). The variable
+ * Tokkl's web app sets it at 85% width (`font-stretch` on the display-face rule that uses
+ * --font-display) and weight 800 (`font-weight` on h1, h2 and h3 in styles.css). The variable
  * font's default instance is Thin at 100% width, so each weight a style uses needs a Font entry
  * that sets both axes.
  */
@@ -40,8 +41,9 @@ internal val TokklTypography = Typography(
 )
 
 /**
- * The running clock, 2.4rem in the web app (styles.css:562). Tabular digits keep it from
- * shifting sideways as it counts. The line height stays the font's own, so no scale clips it.
+ * The running clock, 2.4rem in the web app (--text-3xl on .timer-clock in styles.css). Tabular
+ * digits keep it from shifting sideways as it counts. The line height stays the font's own, so no
+ * scale clips it.
  */
 internal val ClockTextStyle = TextStyle(
     fontFamily = Anybody,
@@ -50,7 +52,7 @@ internal val ClockTextStyle = TextStyle(
     fontFeatureSettings = "tnum",
 )
 
-/** Day and report totals, 1.5rem in the web app (styles.css:678), with tabular digits. */
+/** Day and report totals, 1.5rem in the web app (--text-xl on .day-total in styles.css), with tabular digits. */
 internal val TotalTextStyle = TextStyle(
     fontFamily = Anybody,
     fontWeight = FontWeight.ExtraBold,
