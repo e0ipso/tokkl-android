@@ -6,56 +6,85 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.github.e0ipso.tokkl.R
+
+/** The width every Anybody role uses: `font-stretch: 85%` on the display-face rule in styles.css. */
+internal const val ANYBODY_WIDTH = 85f
 
 /**
  * Anybody, Tokkl's display face (docs/PRD.md, Visual direction, Type), from the variable font in
  * res/font. res/raw/anybody_font_source.txt records where the file comes from.
  *
- * Tokkl's web app sets it at 85% width (`font-stretch` on the display-face rule that uses
- * --font-display) and weight 800 (`font-weight` on h1, h2 and h3 in styles.css). The variable
- * font's default instance is Thin at 100% width, so each weight a style uses needs a Font entry
- * that sets both axes.
+ * The variable font's default instance is Thin at 100% width, so each weight a role uses has its
+ * own Font entry that sets both axes. Without the 900 entry, a role asking for 900 would get 800.
  */
-private val Anybody = FontFamily(
-    Font(
-        R.font.anybody_wdth_wght,
-        weight = FontWeight.ExtraBold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(800), FontVariation.width(85f)),
-    ),
+internal val Anybody = FontFamily(anybody(FontWeight.ExtraBold), anybody(FontWeight.Black))
+
+private fun anybody(weight: FontWeight) = Font(
+    R.font.anybody_wdth_wght,
+    weight = weight,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight), FontVariation.width(ANYBODY_WIDTH)),
 )
+
+private fun anybodyStyle(size: Int, weight: FontWeight) =
+    TextStyle(fontFamily = Anybody, fontWeight = weight, fontSize = size.sp)
+
+// Tokkl's type scale (docs/PRD.md, Visual direction, Spacing and type scale). The Anybody roles
+// keep the font's own line height, so no font scale clips them.
+
+/** Page titles, 28sp Anybody 900 with 0.02em tracking. Uppercase the text where it is set. */
+internal val PageTitleTextStyle = anybodyStyle(28, FontWeight.Black).copy(letterSpacing = 0.02.em)
+
+/** The running clock, 36sp Anybody 800 with tabular digits, so it does not shift as it counts. */
+internal val ClockTextStyle = anybodyStyle(36, FontWeight.ExtraBold).copy(fontFeatureSettings = "tnum")
+
+/** Week and report totals, 28sp Anybody 800 with tabular digits. */
+internal val TotalTextStyle = anybodyStyle(28, FontWeight.ExtraBold).copy(fontFeatureSettings = "tnum")
+
+/** A day's total, 22sp Anybody 800 with tabular digits. */
+internal val DayTotalTextStyle = anybodyStyle(22, FontWeight.ExtraBold).copy(fontFeatureSettings = "tnum")
+
+/** The header of a day in the history, 17sp Anybody 900. Uppercase the text where it is set. */
+internal val DayHeaderTextStyle = anybodyStyle(17, FontWeight.Black)
+
+/** A card's title, 18sp Anybody 800. */
+internal val CardTitleTextStyle = anybodyStyle(18, FontWeight.ExtraBold)
+
+/** A section heading inside a screen, 16sp Anybody 800. */
+internal val SectionHeadingTextStyle = anybodyStyle(16, FontWeight.ExtraBold)
 
 private val Default = Typography()
 
-private fun TextStyle.inAnybody() = copy(fontFamily = Anybody, fontWeight = FontWeight.ExtraBold)
+/** Small-caps labels, 12sp system font 700 with 0.06em tracking. Uppercase the text where it is set. */
+internal val SmallCapsLabelTextStyle = Default.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.06.em)
 
-/** Material 3's type scale with Anybody for display and headline styles; the rest is the system font. */
-internal val TokklTypography = Typography(
-    displayLarge = Default.displayLarge.inAnybody(),
-    displayMedium = Default.displayMedium.inAnybody(),
-    displaySmall = Default.displaySmall.inAnybody(),
-    headlineLarge = Default.headlineLarge.inAnybody(),
-    headlineMedium = Default.headlineMedium.inAnybody(),
-    headlineSmall = Default.headlineSmall.inAnybody(),
-)
+/** Button labels, 14sp system font 700. */
+internal val ButtonLabelTextStyle = Default.labelLarge.copy(fontWeight = FontWeight.Bold)
+
+/** Certificate fingerprints and other codes, at the 14sp body size. */
+internal val MonospaceTextStyle = Default.bodyMedium.copy(fontFamily = FontFamily.Monospace)
 
 /**
- * The running clock, 2.4rem in the web app (--text-3xl on .timer-clock in styles.css). Tabular
- * digits keep it from shifting sideways as it counts. The line height stays the font's own, so no
- * scale clips it.
+ * Material 3's roles, sized from Tokkl's scale. Display, headline and title roles are headings
+ * and numbers, in Anybody. Body and label roles keep the system font. The scale stops at the
+ * clock's 36sp, so every display role is the clock's size.
  */
-internal val ClockTextStyle = TextStyle(
-    fontFamily = Anybody,
-    fontWeight = FontWeight.ExtraBold,
-    fontSize = 36.sp,
-    fontFeatureSettings = "tnum",
-)
-
-/** Day and report totals, 1.5rem in the web app (--text-xl on .day-total in styles.css), with tabular digits. */
-internal val TotalTextStyle = TextStyle(
-    fontFamily = Anybody,
-    fontWeight = FontWeight.ExtraBold,
-    fontSize = 22.sp,
-    fontFeatureSettings = "tnum",
+internal val TokklTypography = Typography(
+    displayLarge = ClockTextStyle,
+    displayMedium = ClockTextStyle,
+    displaySmall = ClockTextStyle,
+    headlineLarge = PageTitleTextStyle,
+    headlineMedium = anybodyStyle(22, FontWeight.ExtraBold),
+    headlineSmall = CardTitleTextStyle,
+    titleLarge = CardTitleTextStyle,
+    titleMedium = SectionHeadingTextStyle,
+    titleSmall = Default.titleSmall.copy(fontWeight = FontWeight.Bold),
+    bodyLarge = Default.bodyLarge.copy(fontWeight = FontWeight.Normal),
+    bodyMedium = Default.bodyMedium.copy(fontWeight = FontWeight.Normal),
+    bodySmall = Default.bodySmall.copy(fontWeight = FontWeight.Normal),
+    labelLarge = ButtonLabelTextStyle,
+    labelMedium = Default.labelMedium.copy(fontWeight = FontWeight.Bold),
+    labelSmall = Default.labelMedium.copy(fontWeight = FontWeight.Bold),
 )

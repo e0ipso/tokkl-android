@@ -32,7 +32,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -166,7 +165,7 @@ fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust:
                 Text(stringResource(if (changed) R.string.sign_in_certificate_changed_body else R.string.sign_in_certificate_body, server))
                 Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
                     Text(stringResource(R.string.sign_in_certificate_fingerprint), style = MaterialTheme.typography.titleSmall)
-                    Text(certificate.displaySha256, fontFamily = FontFamily.Monospace)
+                    Text(certificate.displaySha256, style = TokklTheme.monospaceTextStyle)
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
                     Text(stringResource(R.string.sign_in_certificate_subject), style = MaterialTheme.typography.titleSmall)

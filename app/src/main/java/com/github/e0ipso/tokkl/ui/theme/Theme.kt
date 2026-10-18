@@ -51,9 +51,39 @@ object TokklTheme {
     /** Tokkl's spacing scale, rhythm, screen margin and content width. */
     val spacing: TokklSpacing get() = TokklSpacing
 
-    /** The running clock, in Anybody with tabular digits. */
+    // Tokkl's named type roles (docs/PRD.md, Visual direction, Spacing and type scale). Compose's
+    // TextStyle cannot change case, so set the uppercase roles' text in uppercase where it is used.
+
+    /** Page titles, 28sp Anybody 900, uppercase. Material's headlineLarge. */
+    val pageTitleTextStyle: TextStyle get() = PageTitleTextStyle
+
+    /** The running clock, 36sp Anybody 800 with tabular digits. */
     val clockTextStyle: TextStyle get() = ClockTextStyle
 
-    /** Day and report totals, in Anybody with tabular digits. */
+    /** Week and report totals, 28sp Anybody 800 with tabular digits. */
     val totalTextStyle: TextStyle get() = TotalTextStyle
+
+    /** A day's total, 22sp Anybody 800 with tabular digits. */
+    val dayTotalTextStyle: TextStyle get() = DayTotalTextStyle
+
+    /** A day's header in the history, 17sp Anybody 900, uppercase. */
+    val dayHeaderTextStyle: TextStyle get() = DayHeaderTextStyle
+
+    /** A card's title, 18sp Anybody 800. Material's headlineSmall and titleLarge. */
+    val cardTitleTextStyle: TextStyle get() = CardTitleTextStyle
+
+    /** A section heading inside a screen, 16sp Anybody 800. Material's titleMedium. */
+    val sectionHeadingTextStyle: TextStyle get() = SectionHeadingTextStyle
+
+    /** Small-caps labels, 12sp system font 700, uppercase, in onSurfaceVariant. */
+    val smallCapsLabelTextStyle: TextStyle
+        @Composable
+        @ReadOnlyComposable
+        get() = SmallCapsLabelTextStyle.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+    /** Button labels, 14sp system font 700. Material's labelLarge. */
+    val buttonLabelTextStyle: TextStyle get() = ButtonLabelTextStyle
+
+    /** Certificate fingerprints and other codes, in the system's monospace font. */
+    val monospaceTextStyle: TextStyle get() = MonospaceTextStyle
 }
