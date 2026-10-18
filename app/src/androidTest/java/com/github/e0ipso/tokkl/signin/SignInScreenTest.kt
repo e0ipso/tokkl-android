@@ -7,9 +7,11 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -18,6 +20,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.Dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
@@ -162,6 +165,31 @@ class SignInScreenTest {
         awaitHome()
     }
 
+    /**
+     * The email field keeps its supporting line with or without an error, so the error takes the
+     * hint's place and the fields under it stay put. Positions are taken from the email field,
+     * which an open keyboard may scroll.
+     */
+    @Test
+    fun emailErrorLeavesTheFieldsBelowInPlace() {
+        composeRule.onNode(hasText(string(R.string.sign_in_method_email_password)) and isSelectable()).performClick()
+        enterServerUrl()
+        val before = passwordOffset()
+
+        submit()
+        composeRule.onNode(hasText(string(R.string.sign_in_error_email)), useUnmergedTree = true).assertExists()
+        // The field's error semantics make TalkBack announce it.
+        field(R.string.sign_in_email).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Error))
+        val withError = passwordOffset()
+        field(R.string.sign_in_email).performTextInput(TokklTestServer.email)
+        composeRule.onNode(hasText(string(R.string.sign_in_error_email)), useUnmergedTree = true).assertDoesNotExist()
+        field(R.string.sign_in_email).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Error))
+        val cleared = passwordOffset()
+
+        assertEquals("the password field moved when the email error showed", before, withError)
+        assertEquals("the password field moved when the email error cleared", before, cleared)
+    }
+
     @Test
     fun everyFieldAndButtonHasATalkBackLabel() {
         assertEveryControlIsLabelled()
@@ -244,6 +272,10 @@ class SignInScreenTest {
     /** The text field whose label is [label]. */
     private fun field(@StringRes label: Int): SemanticsNodeInteraction =
         composeRule.onNode(hasSetTextAction() and hasText(string(label)))
+
+    /** How far below the email field's top the password field's top is. */
+    private fun passwordOffset(): Dp =
+        field(R.string.sign_in_password).getUnclippedBoundsInRoot().top - field(R.string.sign_in_email).getUnclippedBoundsInRoot().top
 
     /**
      * No file in the app's storage and no Keystore alias holds [secret], in

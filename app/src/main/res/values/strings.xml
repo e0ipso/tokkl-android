@@ -25,6 +25,7 @@
     <string name="sign_in_api_token">API token</string>
     <string name="sign_in_api_token_hint">Find it in Tokkl under Settings, API token.</string>
     <string name="sign_in_email">Email</string>
+    <string name="sign_in_email_hint">The email of your account on that server.</string>
     <string name="sign_in_password">Password</string>
     <string name="sign_in_password_hint">The app sends it once to get your API token and never stores it.</string>
     <string name="sign_in_submit">Sign in</string>

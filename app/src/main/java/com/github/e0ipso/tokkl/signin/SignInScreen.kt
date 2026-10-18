@@ -174,7 +174,8 @@ private fun SignInForm(
                         value = state.email,
                         onValueChange = onEmailChange,
                         label = { Text(stringResource(R.string.sign_in_email)) },
-                        supportingText = emailError?.let { { Text(stringResource(it)) } },
+                        // Always there, with the hint or the error, so an error does not move the fields below.
+                        supportingText = { Text(stringResource(emailError ?: R.string.sign_in_email_hint)) },
                         isError = emailError != null,
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
