@@ -89,6 +89,7 @@ class ThemeSettingsRestartTest {
             }
         } finally {
             ThemeSettingsStore(context).clear()
+            followTheSystemNightMode()
             previousStep.delete()
         }
     }

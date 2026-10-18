@@ -58,8 +58,9 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Paints the window in the scheme's background and picks system bar icons that show on it.
-     * res/values-night only knows the system's mode, so a light or dark setting that differs
-     * from it needs both set here. Effects run before the first frame draws.
+     * The window theme follows a light or dark setting only from Android 12 on, once Android has
+     * the app's night mode, and never knows the wallpaper's colours, so this sets the background
+     * and the icons from the chosen theme. Effects run before the first frame draws.
      */
     @Composable
     private fun WindowFollowsTheme(darkTheme: Boolean) {

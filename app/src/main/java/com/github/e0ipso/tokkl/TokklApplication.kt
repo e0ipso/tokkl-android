@@ -10,18 +10,24 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
+import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.map
 
 class TokklApplication : Application() {
 
     /**
      * Loaded on first use, which is MainActivity's onCreate, on the main thread. The first frame
-     * has to know the theme, or launch would show the other mode's colours first.
+     * has to know the theme, or launch would show the other mode's colours first. Android learns
+     * the chosen mode too, for the starting window of the next launch.
      */
     val themeSettings: ThemeSettingsModel by lazy {
         val store = ThemeSettingsStore(this)
-        ThemeSettingsModel(initial = store.load(), save = store::save, scope = MainScope(), io = Dispatchers.IO)
+        val scope = MainScope()
+        ThemeSettingsModel(initial = store.load(), save = store::save, scope = scope, io = Dispatchers.IO).also { model ->
+            syncApplicationNightMode(this, model.state.map { it.mode }, scope, Dispatchers.IO)
+        }
     }
 
     /**

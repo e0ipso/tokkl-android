@@ -1,8 +1,10 @@
 package com.github.e0ipso.tokkl.settings
 
 import android.app.Activity
+import android.app.UiModeManager
 import android.content.res.Configuration
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
@@ -21,13 +23,27 @@ import org.junit.rules.ExternalResource
 private val targetContext get() = InstrumentationRegistry.getInstrumentation().targetContext
 
 /**
- * Puts the theme settings back to their defaults before and after each test. Order it before
- * the rule that starts the activity, which reads the settings once per process.
+ * Puts the theme settings back to their defaults before and after each test, and hands the
+ * night mode back to the system, which the app gives Android on Android 12 and later and Android
+ * keeps until it is changed. Order it before the rule that starts the activity, which reads the
+ * settings once per process.
  */
 class DefaultThemeSettings : ExternalResource() {
-    override fun before() = ThemeSettingsStore(targetContext).clear()
+    override fun before() = reset()
 
-    override fun after() = ThemeSettingsStore(targetContext).clear()
+    override fun after() = reset()
+
+    private fun reset() {
+        ThemeSettingsStore(targetContext).clear()
+        followTheSystemNightMode()
+    }
+}
+
+/** Hands the app's night mode back to the system, on Android 12 and later where it exists. */
+fun followTheSystemNightMode() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        targetContext.getSystemService(UiModeManager::class.java).setApplicationNightMode(UiModeManager.MODE_NIGHT_AUTO)
+    }
 }
 
 fun string(id: Int): String = targetContext.getString(id)
@@ -69,8 +85,22 @@ fun ComposeTestRule.shownTheme(activity: Activity): ShownTheme {
 fun expectedTheme(background: Color, dark: Boolean): ShownTheme =
     hex(background.toArgb()).let { ShownTheme(content = it, window = it, lightStatusBar = !dark) }
 
+/**
+ * Whether [activity] runs in night mode. While the app follows the system, as every test starts,
+ * that is the system's mode. On Android 12 and later a light or dark setting replaces it.
+ */
 fun systemIsDark(activity: Activity): Boolean =
     (activity.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+/**
+ * Waits until [activity] runs in the night mode Android gives the app for [mode]. On Android 12
+ * and later that is the chosen mode, and the configuration change arrives a moment after the
+ * choice. Below that it is the system's.
+ */
+fun ComposeTestRule.awaitNightModeFor(mode: ThemeMode, activity: Activity, systemDark: Boolean) {
+    val dark = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) mode.isDark(systemDark) else systemDark
+    waitUntil("the activity runs in the night mode for $mode", 5_000) { systemIsDark(activity) == dark }
+}
 
 /**
  * Waits until the preferences file on disk holds [mode], so a test that ends now leaves the

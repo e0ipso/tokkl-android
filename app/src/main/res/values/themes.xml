@@ -2,9 +2,11 @@
 <resources>
     <!--
         The window theme. Compose draws everything else through TokklTheme; this only paints
-        the window in the scheme's background before the first frame. It knows only the
-        system's mode, so when the theme setting picks the other one, MainActivity repaints the
-        window before its first frame.
+        the window in the scheme's background before the first frame, starting window included.
+        Android picks res/values or res/values-night by the night mode it keeps for the app,
+        which the app sets to the theme setting on Android 12 and later. Below that it knows
+        only the system's mode, so when the setting picks the other one, MainActivity repaints
+        the window before its first frame.
     -->
     <style name="Theme.Tokkl" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>

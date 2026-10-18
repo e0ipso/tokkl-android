@@ -57,7 +57,10 @@ class SettingsScreenTest {
         assertEquals(tokklTheme(dark = systemIsDark(activity)), composeRule.shownTheme(activity))
     }
 
-    /** Every choice shows at once, in the same activity, without leaving the settings screen. */
+    /**
+     * Every choice shows at once, in the same activity, without leaving the settings screen. Going
+     * back to the system's mode on Android 12 and later waits for Android to hand it back.
+     */
     @Test
     fun eachThemeModeAppliesAtOnce() {
         composeRule.openSettings()
@@ -68,6 +71,7 @@ class SettingsScreenTest {
 
         for (choice in listOf(opposite, same, opposite, ThemeMode.SYSTEM)) {
             mode(THEME_MODE_LABELS.getValue(choice)).performClick().assertIsSelected()
+            composeRule.awaitNightModeFor(choice, activity, systemDark)
 
             assertEquals("$choice", tokklTheme(dark = choice.isDark(systemDark)), composeRule.shownTheme(activity))
             assertSame("the activity restarted for $choice", activity, composeRule.activity)
