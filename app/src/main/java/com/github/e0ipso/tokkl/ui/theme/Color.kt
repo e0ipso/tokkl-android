@@ -31,6 +31,13 @@ private class Tokens(
     val stateRunning: Color,
     val stateSelected: Color,
     val stateBillable: Color,
+    val textureGlow: Color,
+    val textureSwell: Color,
+    val textureStripe: Color,
+    val sceneGlow: Color,
+    val sceneSwell: Color,
+    val sceneStripe: Color,
+    val wordmarkHalo: Color,
 )
 
 private val Light = Tokens(
@@ -52,6 +59,13 @@ private val Light = Tokens(
     stateRunning = Color(0xFFD81B72), // --state-running, which is --accent-pink
     stateSelected = Color(0xFFCDEEEA), // --state-selected
     stateBillable = Color(0xFF4A7C00), // --state-billable
+    textureGlow = Color(0xFFF3DFD1), // --texture-glow
+    textureSwell = Color(0xFFE0EAE3), // --texture-swell
+    textureStripe = Color(0xFFC7DCD7), // --texture-stripe
+    sceneGlow = Color(0xFFDFB698), // --scene-glow
+    sceneSwell = Color(0xFFB9CBBB), // --scene-swell
+    sceneStripe = Color(0xFFE9CEB3), // --scene-stripe
+    wordmarkHalo = Color.Transparent, // --wordmark-halo, transparent: only dark mode draws the halo
 )
 
 private val Dark = Tokens(
@@ -73,6 +87,13 @@ private val Dark = Tokens(
     stateRunning = Color(0xFFFF4FA8), // --state-running, which is --accent-pink
     stateSelected = Color(0xFF1D3B52), // --state-selected
     stateBillable = Color(0xFFB6FF3B), // --state-billable
+    textureGlow = Color(0xFF352A38), // --texture-glow
+    textureSwell = Color(0xFF17324B), // --texture-swell
+    textureStripe = Color(0xFF1A475D), // --texture-stripe
+    sceneGlow = Color(0xFF4F332E), // --scene-glow
+    sceneSwell = Color(0xFF134354), // --scene-swell
+    sceneStripe = Color(0xFF2D212A), // --scene-stripe
+    wordmarkHalo = Color(0xFFA9B0D6), // --wordmark-halo
 )
 
 /**
@@ -150,6 +171,9 @@ internal val TokklDarkColorScheme =
 /**
  * Tokkl colours with no Material 3 role. Screens show [running] and [billable] together with an
  * icon or a label, never as the only sign of the state.
+ *
+ * The texture and scene colours are the stops of gradients behind the top bar strip and the
+ * sign-in scene. Draw them as gradients, never as images, and never behind an input or data.
  */
 @Immutable
 class TokklExtraColors(
@@ -159,16 +183,44 @@ class TokklExtraColors(
     val billable: Color,
     /** The lime accent. A mark only, never text. */
     val accentLime: Color,
+    /** `--texture-glow`, the sunset glow over surface behind the top bar strip. */
+    val textureGlow: Color,
+    /** `--texture-swell`, the striped swell's base over surface behind the top bar strip. */
+    val textureSwell: Color,
+    /** `--texture-stripe`, the swell's stripes over surface behind the top bar strip. */
+    val textureStripe: Color,
+    /** `--scene-glow`, the sunset glow over bg behind the sign-in scene and the splash. */
+    val sceneGlow: Color,
+    /** `--scene-swell`, the swell's base over bg behind the sign-in scene and the splash. */
+    val sceneSwell: Color,
+    /** `--scene-stripe`, the stripes over bg behind the sign-in scene and the splash. */
+    val sceneStripe: Color,
+    /** `--wordmark-halo`, the 1dp outline around the wordmark. Transparent in light. */
+    val wordmarkHalo: Color,
 )
 
 internal val TokklLightExtraColors = TokklExtraColors(
     running = Light.stateRunning,
     billable = Light.stateBillable,
     accentLime = Light.accentLime,
+    textureGlow = Light.textureGlow,
+    textureSwell = Light.textureSwell,
+    textureStripe = Light.textureStripe,
+    sceneGlow = Light.sceneGlow,
+    sceneSwell = Light.sceneSwell,
+    sceneStripe = Light.sceneStripe,
+    wordmarkHalo = Light.wordmarkHalo,
 )
 
 internal val TokklDarkExtraColors = TokklExtraColors(
     running = Dark.stateRunning,
     billable = Dark.stateBillable,
     accentLime = Dark.accentLime,
+    textureGlow = Dark.textureGlow,
+    textureSwell = Dark.textureSwell,
+    textureStripe = Dark.textureStripe,
+    sceneGlow = Dark.sceneGlow,
+    sceneSwell = Dark.sceneSwell,
+    sceneStripe = Dark.sceneStripe,
+    wordmarkHalo = Dark.wordmarkHalo,
 )
