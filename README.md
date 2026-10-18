@@ -127,6 +127,8 @@ Build the debug APK, run lint and run the JVM unit tests:
 ./gradlew assembleDebug lint testDebugUnitTest
 ```
 
+`./gradlew check` runs the same lint and unit tests, plus `:app:checkDeniedDependencies`. That task fails when the release runtime classpath holds a module from a group listed in `gradle/denied-dependency-groups.txt`, such as Google Play Services, Firebase or an analytics SDK. The failure names each module and the dependencies that pulled it in.
+
 The instrumented tests, including the Compose UI tests, run against a real Tokkl server, never a fake one. One command runs them. It needs Docker, `curl` and `jq`:
 
 ```sh

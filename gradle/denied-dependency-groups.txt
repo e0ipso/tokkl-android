@@ -1,0 +1,42 @@
+# Dependency groups the app must never ship. `./gradlew check` runs
+# :app:checkDeniedDependencies, which resolves the release runtime classpath
+# and fails on every module whose group is listed here or sits below a listed
+# group. So com.google.firebase also covers com.google.firebase.crashlytics.
+#
+# Write each entry as "<group> # <reason>". The check rejects an entry without
+# a reason. Principle 1 in docs/PRD.md rules out telemetry, analytics, crash
+# reporting and ads. Section 8.1 says F-Droid accepts no proprietary libraries.
+
+# Proprietary Google libraries, which F-Droid's inclusion policy rejects.
+com.google.android.gms # Google Play Services, proprietary.
+com.google.firebase # Firebase, proprietary. Includes Analytics, Crashlytics and FCM push.
+com.google.android.play # Play Core libraries for in-app updates, reviews and Integrity. Proprietary and tied to the Play Store.
+com.google.android.datatransport # Uploads log events from Firebase SDKs to firebaselogging.googleapis.com.
+
+# Crash and error reporting.
+io.sentry # Sentry.
+com.bugsnag # Bugsnag.
+ch.acra # ACRA. Free software, but principle 1 rules out crash reporting.
+com.instabug.library # Instabug bug and crash reporting.
+com.microsoft.appcenter # Visual Studio App Center analytics and crash reporting.
+io.embrace # Embrace crash reporting and monitoring.
+
+# Analytics, monitoring and install attribution.
+com.datadoghq # Datadog monitoring, dd-sdk-android.
+com.newrelic.agent.android # New Relic mobile monitoring.
+io.opentelemetry.android # OpenTelemetry's Android agent. Free software, but it sends telemetry.
+com.amplitude # Amplitude analytics.
+com.mixpanel.android # Mixpanel analytics.
+com.segment.analytics # Segment analytics. Covers the Java SDK group and the Kotlin SDK group below it.
+com.flurry.android # Flurry analytics and ads.
+com.posthog # PostHog analytics.
+com.heapanalytics.android # Heap analytics.
+ly.count.android # Countly analytics.
+com.facebook.android # Facebook SDK. Its core module logs app events to Facebook.
+com.appsflyer # AppsFlyer install attribution.
+com.adjust.sdk # Adjust install attribution.
+io.branch.sdk.android # Branch deep linking and attribution.
+
+# Ads.
+com.applovin # AppLovin ads.
+com.unity3d.ads # Unity Ads.
