@@ -18,7 +18,7 @@ These steps prepare a Linux x86_64 machine to build and test the app. Everything
 | Android Emulator | 37.2.12 | `~/Android/Sdk/emulator` |
 | System image | `system-images;android-36;default;x86_64`, revision 2 | `~/Android/Sdk/system-images` |
 
-The Gradle wrapper downloads Gradle 9.8.1 and checks it against the SHA-256 sum in `gradle/wrapper/gradle-wrapper.properties`. `gradle/libs.versions.toml` sets Android Gradle Plugin 9.4.1, Kotlin 2.4.21 and Compose BOM 2026.09.00. The app compiles against API 37, which Compose UI 1.12 and androidx.core 1.19 require. It targets API 36, the API level of the test emulator. Android Gradle Plugin 9.4 uses Build-Tools 36.0.0 by default.
+The Gradle wrapper downloads Gradle 9.8.1 and checks it against the SHA-256 sum in `gradle/wrapper/gradle-wrapper.properties`. `gradle/libs.versions.toml` sets Android Gradle Plugin 9.4.1, Kotlin 2.4.21 and Compose BOM 2026.09.00. The app compiles against API 37, which Compose UI 1.12 and androidx.core 1.19 require. It targets API 36, the API level of the test emulator. `app/build.gradle.kts` pins Build-Tools 36.0.0, which is also the default and the minimum of Android Gradle Plugin 9.4.1.
 
 Android Gradle Plugin 9.4 needs JDK 17 or later, and JDK 21 is an LTS release above that floor. The system image is the plain AOSP build of Android 16 (API 36), not a Google APIs or Play Store build. It keeps SystemUI and the launcher, which tests of the notification, the Quick Settings tile and the widget need. The smaller Automated Test Device images remove both.
 
@@ -148,6 +148,96 @@ Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that n
 
 ```sh
 ./gradlew --stop
+```
+
+## Release builds
+
+F-Droid builds the app from source and compares its unsigned APK with the signed APK on the GitHub release. It publishes the APK signed with the project's key only when the two match apart from the signature ([reproducible builds](https://f-droid.org/docs/Reproducible_Builds/)). People who sideload install the same APK from the GitHub release.
+
+### Check that the release build is reproducible
+
+```sh
+scripts/reproducible-release.sh          # HEAD
+scripts/reproducible-release.sh v0.1.0   # a tag or any other commit
+```
+
+The script clones the commit twice, runs `./gradlew --no-daemon assembleRelease` in each clone without the signing variables below, and compares the two unsigned APKs byte for byte. It builds committed work only. The clones sit at paths of different lengths. The second build runs on at most two CPU cores and gets its own Gradle user home, which reads downloaded dependencies from yours but redoes every transform. So an embedded path, output that depends on the core count, and a transform that differs from run to run all show up as differences. When the APKs differ, the script lists the zip entries that differ and keeps both APKs. On this machine the two builds take about four minutes and use up to about 700 MB under `build/`, which the script removes at the end.
+
+These keep the APK the same from build to build:
+
+- `app/build.gradle.kts` pins Build-Tools 36.0.0. The wrapper pins Gradle 9.8.1 by checksum, and `gradle/libs.versions.toml` pins the Android Gradle Plugin, Kotlin and every library. CI builds with Temurin JDK 21, a version F-Droid's build server also offers.
+- Every zip entry carries the fixed date 1981-01-01 and no extra timestamp field.
+- The manifest records `platformBuildVersionName='17'` and `platformBuildVersionCode='37'`, which come from the `platforms;android-37.0` package, revision 2 here. Gradle cannot pin a platform revision, so a newer revision on F-Droid's server could change them.
+- The Android Gradle Plugin writes the commit hash, and no path, into `META-INF/version-control-info.textproto`. F-Droid asks to keep that file and to build the release APK from a clean checkout of the tagged commit. So build the GitHub release APK once the release commit and its tag exist, never from a tree with uncommitted changes, such as one where the release step has just rewritten `gradle/version.properties`.
+- The ART baseline profile, `assets/dexopt/baseline.prof` and `baseline.profm`, stays in the APK because it speeds up start-up and came out the same on 8 and on 2 cores. F-Droid's docs say it is sometimes unstable. If the script ever shows it differing, turn off the tasks whose names contain `ArtProfile`, as those docs describe.
+- `dependenciesInfo` is off. Otherwise the Android Gradle Plugin adds the dependency list to the signing block of the signed APK, encrypted with a key only Google holds, and F-Droid fails a build whose APK carries that block.
+
+### Sign the release APK
+
+Release signing reads four environment variables and nothing else:
+
+| Variable | Value |
+| --- | --- |
+| `TOKKL_RELEASE_KEYSTORE` | Path of the keystore file. Use an absolute path; a relative one counts from `app/`. |
+| `TOKKL_RELEASE_KEYSTORE_PASSWORD` | Keystore password |
+| `TOKKL_RELEASE_KEY_ALIAS` | Alias of the key in the keystore |
+| `TOKKL_RELEASE_KEY_PASSWORD` | Key password, the same as the keystore password in a PKCS12 keystore |
+
+With all four set, `./gradlew assembleRelease` writes the signed `app/build/outputs/apk/release/app-release.apk`. With none set, it writes `app-release-unsigned.apk` instead. With only some set, the build fails and names the missing ones. An empty variable counts as not set, which is what Actions passes for a secret that does not exist.
+
+The owner creates the key once, outside the repo:
+
+```sh
+keytool -genkeypair -keystore ~/tokkl-release.p12 -storetype PKCS12 \
+  -alias tokkl -keyalg RSA -keysize 4096 -validity 10000
+```
+
+keytool asks for the keystore password and for the name on the certificate. A PKCS12 keystore protects the key with the keystore password, so the key password is the same one. Android installs an update only when it is signed with the same key as the installed app, so back up the keystore and its password, for example in a password manager. `.gitignore` ignores `*.jks`, `*.keystore`, `*.p12`, `*.pfx`, `*.pk8`, `*.key` and `*.pem`, but keep the keystore outside the checkout anyway.
+
+CI gets the key from four GitHub Actions secrets. Set them from the repo directory; `gh secret set` without `--body` asks for the value, so the passwords stay out of the shell history:
+
+```sh
+base64 -w0 ~/tokkl-release.p12 | gh secret set TOKKL_RELEASE_KEYSTORE_BASE64
+gh secret set TOKKL_RELEASE_KEYSTORE_PASSWORD
+gh secret set TOKKL_RELEASE_KEY_ALIAS --body tokkl
+gh secret set TOKKL_RELEASE_KEY_PASSWORD
+```
+
+The release job writes the keystore to the runner's temporary directory and points `TOKKL_RELEASE_KEYSTORE` at it. No workflow has this step yet; the release workflow adds it once the repo is on GitHub:
+
+```yaml
+- name: Build the signed release APK
+  env:
+    TOKKL_RELEASE_KEYSTORE_BASE64: ${{ secrets.TOKKL_RELEASE_KEYSTORE_BASE64 }}
+    TOKKL_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.TOKKL_RELEASE_KEYSTORE_PASSWORD }}
+    TOKKL_RELEASE_KEY_ALIAS: ${{ secrets.TOKKL_RELEASE_KEY_ALIAS }}
+    TOKKL_RELEASE_KEY_PASSWORD: ${{ secrets.TOKKL_RELEASE_KEY_PASSWORD }}
+  run: |
+    export TOKKL_RELEASE_KEYSTORE="$RUNNER_TEMP/release.p12"
+    printf '%s' "$TOKKL_RELEASE_KEYSTORE_BASE64" | base64 -d >"$TOKKL_RELEASE_KEYSTORE"
+    ./gradlew assembleRelease
+```
+
+The Android Gradle Plugin signs the APK itself. Don't sign it again with `apksigner` from Build-Tools 35 or later: F-Droid's docs say its signature copy check fails on APKs signed that way.
+
+F-Droid's `AllowedAPKSigningKeys` takes the SHA-256 fingerprint of the signing certificate in lower-case hex. This prints it from a signed APK:
+
+```sh
+"$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs \
+  app/build/outputs/apk/release/app-release.apk | grep 'SHA-256'
+```
+
+Before any APK exists, keytool prints the same value from the keystore:
+
+```sh
+keytool -list -v -keystore ~/tokkl-release.p12 -alias tokkl \
+  | sed -n 's/^[[:space:]]*SHA256: //p' | tr -d ':' | tr '[:upper:]' '[:lower:]'
+```
+
+F-Droid checks a release by copying the signature from the GitHub APK onto its own unsigned build with [apksigcopier](https://github.com/obfusk/apksigcopier). This runs the same check locally:
+
+```sh
+apksigcopier compare --unsigned app-release.apk app-release-unsigned.apk
 ```
 
 ## Commit messages

@@ -56,10 +56,40 @@ appVersion.getProperty("versionCode").let { stored ->
     }
 }
 
+// Release signing reads the keystore path, the passwords and the key alias
+// from these environment variables and from nowhere else, so no tracked file
+// holds any of them. CI fills them from Actions secrets; README.md, "Release
+// builds", names the secrets. With none of them set, assembleRelease builds
+// the unsigned APK. Setting only some of them fails the build.
+val releaseSigningVariables = listOf(
+    "TOKKL_RELEASE_KEYSTORE",
+    "TOKKL_RELEASE_KEYSTORE_PASSWORD",
+    "TOKKL_RELEASE_KEY_ALIAS",
+    "TOKKL_RELEASE_KEY_PASSWORD",
+)
+val releaseSigning: Map<String, String>? = run {
+    val values = releaseSigningVariables.associateWith { name ->
+        providers.environmentVariable(name).orNull?.takeIf { it.isNotEmpty() }
+    }
+    val missing = values.filterValues { it == null }.keys
+    when {
+        missing.size == values.size -> null
+        missing.isNotEmpty() -> throw GradleException(
+            "Release signing needs all of ${releaseSigningVariables.joinToString()}, or none " +
+                "of them for an unsigned APK. Not set: ${missing.joinToString()}.",
+        )
+        else -> values.mapValues { (_, value) -> checkNotNull(value) }
+    }
+}
+
 android {
     namespace = "com.github.e0ipso.tokkl"
     // Compose UI 1.12 and androidx.core 1.19 need compileSdk 37.
     compileSdk = 37
+    // Pinned so that F-Droid builds with the same build-tools as CI, which
+    // installs this version. 36.0.0 is both the default and the minimum of AGP
+    // 9.4.1, so check this pin whenever AGP changes.
+    buildToolsVersion = "36.0.0"
 
     defaultConfig {
         applicationId = "com.github.e0ipso.tokkl"
@@ -70,6 +100,32 @@ android {
         versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (releaseSigning != null) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("TOKKL_RELEASE_KEYSTORE"))
+                storePassword = releaseSigning.getValue("TOKKL_RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("TOKKL_RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("TOKKL_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.findByName("release")
+        }
+    }
+
+    // When signing, AGP adds the dependency list to the APK signing block,
+    // encrypted with a key only Google can read. F-Droid fails the build of an
+    // app whose signed APK carries it ("found extra signing block 'Dependency
+    // metadata'").
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 
     compileOptions {

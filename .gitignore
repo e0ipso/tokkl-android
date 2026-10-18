@@ -6,6 +6,8 @@
 *.pem
 *.key
 *.p12
+*.pfx
+*.pk8
 local.properties
 .gradle/
 .kotlin/
