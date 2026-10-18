@@ -27,11 +27,15 @@ class TogglApiClientTest {
     @Before
     fun setUp() {
         server.start()
-        client = TogglApiClient(serverUrl(), credentials)
+        val configured = serverUrl()
+        // The shared client sends requests only to the configured server.
+        ConfiguredServer.readStoredFrom { configured }
+        client = TogglApiClient(configured, credentials)
     }
 
     @After
     fun tearDown() {
+        ConfiguredServer.readStoredFrom { null }
         server.close()
     }
 

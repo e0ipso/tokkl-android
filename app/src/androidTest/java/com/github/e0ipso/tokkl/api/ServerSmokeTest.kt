@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.api
 
+import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.session.ServerConfigStore
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -16,6 +18,7 @@ import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 /**
@@ -26,6 +29,25 @@ import org.junit.Test
 class ServerSmokeTest {
 
     private val client = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+
+    private val servers = ServerConfigStore(InstrumentationRegistry.getInstrumentation().targetContext)
+
+    /** The shared client sends requests only to the stored server. */
+    @Before
+    fun configureTheServer() {
+        servers.save(TokklTestServer.url)
+    }
+
+    /** TokklApplication points the host guard at the stored server, so with none stored nothing goes out. */
+    @Test
+    fun withNoStoredServerTheGuardRefusesTheRequest() {
+        servers.clear()
+        val me = client.server.api("me")
+
+        val result = client.get(me, JsonObject.serializer())
+
+        assertEquals(ApiError.HostNotAllowed("${me.scheme}://${me.host}:${me.port}"), (result as? ApiResult.Failure)?.error)
+    }
 
     @Test
     fun apiTokenAuthenticatesWithGetMe() {
@@ -126,5 +148,6 @@ class ServerSmokeTest {
             is ApiError.Http -> "HTTP $status"
             is ApiError.Network -> "network error: $cause"
             is ApiError.InvalidResponse -> "response is not the expected JSON"
+            is ApiError.HostNotAllowed -> "refused a request to $origin"
         }
 }

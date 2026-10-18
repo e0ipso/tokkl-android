@@ -198,6 +198,24 @@ class SignInModelTest {
     }
 
     @Test
+    fun redirectToAnotherHostIsRefusedAndStoresNothing() {
+        val elsewhere = MockWebServer().apply { start() }
+        try {
+            val target = elsewhere.url("/api/v9/me")
+            server.enqueue(MockResponse.Builder().code(302).addHeader("Location", target.toString()).build())
+            fillApiToken()
+
+            model.submit()
+
+            assertEquals(SignInResult.HostNotAllowed("http://${target.host}:${target.port}"), model.state.value.failure)
+            assertEquals(0, elsewhere.requestCount)
+            assertTrue(saved.isEmpty())
+        } finally {
+            elsewhere.close()
+        }
+    }
+
+    @Test
     fun storageFailureIsReported() {
         saveFailure = IOException("disk full")
         server.enqueue(me("""{"id":7,"api_token":"$TOKEN"}"""))

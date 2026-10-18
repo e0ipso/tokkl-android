@@ -38,5 +38,6 @@
     <string name="sign_in_error_unexpected_status">The server answered with HTTP %d. Check the URL.</string>
     <string name="sign_in_error_not_tokkl">That URL doesn\'t answer like a Tokkl server. Check it.</string>
     <string name="sign_in_error_no_api_token">The server didn\'t send an API token. Sign in with your API token instead.</string>
+    <string name="sign_in_error_host_not_allowed">The server redirected to %1$s. The app talks only to the URL you entered, so it sent nothing there.</string>
     <string name="sign_in_error_storage">Couldn\'t store the API token on this phone. Try again.</string>
 </resources>

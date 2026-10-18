@@ -42,4 +42,11 @@ sealed interface ApiError {
 
     /** A 2xx response whose body is not the expected JSON. */
     data class InvalidResponse(val cause: IllegalArgumentException) : ApiError
+
+    /**
+     * The request, or a redirect, pointed at [origin] (`scheme://host:port`),
+     * which is not the configured server, so nothing was sent there. Carries
+     * no credential.
+     */
+    data class HostNotAllowed(val origin: String) : ApiError
 }

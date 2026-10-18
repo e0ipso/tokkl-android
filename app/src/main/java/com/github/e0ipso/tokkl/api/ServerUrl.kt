@@ -25,6 +25,10 @@ class ServerUrl private constructor(private val base: HttpUrl) {
             .apply { (prefix + segments).forEach(::addPathSegment) }
             .build()
 
+    /** Whether [url] has this server's scheme, host and port. */
+    fun isSameOrigin(url: HttpUrl): Boolean =
+        url.scheme == base.scheme && url.host == base.host && url.port == base.port
+
     override fun toString(): String = base.toString()
 
     override fun equals(other: Any?): Boolean = other is ServerUrl && other.base == base

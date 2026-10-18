@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.signin
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -48,6 +49,12 @@ sealed interface SignInResult {
      */
     data object UntrustedCertificate : SignInResult
 
+    /**
+     * The server redirected to [origin] (`scheme://host:port`), and the app
+     * talks only to the server the user entered.
+     */
+    data class HostNotAllowed(val origin: String) : SignInResult
+
     /** No response: wrong host, no route, refused connection, other TLS failure or timeout. */
     data object Unreachable : SignInResult
 
@@ -85,7 +92,9 @@ class SignIn(
 
     fun attempt(server: ServerUrl, credentials: SignInCredentials): SignInResult {
         val client = TogglApiClient(server, credentials.toApiCredentials(), httpClient)
-        val me = when (val result = client.get(server.api("me"), Me.serializer())) {
+        // Until the server is stored, the URL being tried is the configured server.
+        val result = ConfiguredServer.signingIn(server) { client.get(server.api("me"), Me.serializer()) }
+        val me = when (result) {
             is ApiResult.Success -> result.value
             is ApiResult.Failure -> return result.error.toSignInResult()
         }
@@ -125,6 +134,7 @@ private fun ApiError.toSignInResult(): SignInResult =
         is ApiError.RateLimited -> SignInResult.RateLimited(retryAfterSeconds)
         is ApiError.UnexpectedStatus -> SignInResult.UnexpectedStatus(status)
         is ApiError.InvalidResponse -> SignInResult.NotTokkl
+        is ApiError.HostNotAllowed -> SignInResult.HostNotAllowed(origin)
         is ApiError.Network -> if (cause.isUntrustedCertificate()) SignInResult.UntrustedCertificate else SignInResult.Unreachable
     }
 

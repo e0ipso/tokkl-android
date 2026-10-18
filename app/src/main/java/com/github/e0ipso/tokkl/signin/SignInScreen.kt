@@ -259,6 +259,7 @@ private fun failureMessage(failure: SignInResult, method: SignInMethod): String 
         SignInResult.Unreachable -> stringResource(R.string.sign_in_error_unreachable)
         is SignInResult.UnexpectedStatus -> stringResource(R.string.sign_in_error_unexpected_status, failure.status)
         SignInResult.NotTokkl -> stringResource(R.string.sign_in_error_not_tokkl)
+        is SignInResult.HostNotAllowed -> stringResource(R.string.sign_in_error_host_not_allowed, failure.origin)
         SignInResult.NoApiToken -> stringResource(R.string.sign_in_error_no_api_token)
         SignInResult.StorageFailed -> stringResource(R.string.sign_in_error_storage)
         SignInResult.SignedIn -> ""

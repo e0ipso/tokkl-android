@@ -61,6 +61,8 @@ class TogglApiClient(
             httpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) onSuccess(response) else ApiResult.Failure(httpError(response))
             }
+        } catch (e: HostNotAllowedException) {
+            ApiResult.Failure(ApiError.HostNotAllowed(e.origin))
         } catch (e: IOException) {
             ApiResult.Failure(ApiError.Network(e))
         }
