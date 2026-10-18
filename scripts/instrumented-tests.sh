@@ -11,7 +11,9 @@
 #    10.0.2.2 and 127.0.0.1 as IP addresses, so host name checks pass. Its
 #    private key stays in this script's temporary directory.
 # 4. Copies the password and the API token to each test device, in a file
-#    that only the shell user can read.
+#    that only the shell user can read. Before that it deletes the
+#    credentials files that killed runs left behind, once they are older than
+#    any run lasts.
 # 5. Runs connectedDebugAndroidTest with the http and https server URLs, the
 #    proxy certificate's SHA-256 fingerprint, the email and that file's path
 #    as instrumentation arguments. The emulator reaches the host's 127.0.0.1
@@ -53,6 +55,13 @@ readonly PROXY_IMAGE='haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c6
 readonly AVD="${TOKKL_TEST_AVD:-tokkl-api36}"
 readonly EMAIL='instrumented-tests@example.com'
 readonly RUNNER_ARGS='android.testInstrumentationRunnerArguments'
+# Where each run puts its credentials file on a test device, named with this
+# prefix, a random part and .properties.
+readonly CREDENTIALS_DIR='/data/local/tmp'
+readonly CREDENTIALS_PREFIX='tokkl-test-credentials-'
+# A run takes minutes, so a credentials file this many hours old belongs to a
+# run that ended without its cleanup, never to one still reading it.
+readonly STALE_CREDENTIALS_HOURS=6
 
 cd "$(dirname "$0")/.."
 
@@ -130,6 +139,24 @@ trap 'exit 143' TERM
 
 random_hex() {
     od -An -N"$1" -tx1 /dev/urandom | tr -d ' \n'
+}
+
+# A run killed with SIGKILL, or ended along with the session that started it,
+# skips the EXIT trap and leaves its credentials file on the device. This
+# deletes those files on device $1 once they are STALE_CREDENTIALS_HOURS old,
+# so a file that another run on the same device still reads stays, then syncs
+# as the cleanup does. A device whose find rejects toybox's +6h syntax keeps
+# its files and gets a warning.
+remove_stale_credentials() {
+    local device=$1 removed
+    if removed=$(adb -s "$device" shell \
+        "find $CREDENTIALS_DIR -maxdepth 1 -name '$CREDENTIALS_PREFIX*.properties' -mtime +${STALE_CREDENTIALS_HOURS}h -print -delete && sync"); then
+        if [ -n "$removed" ]; then
+            echo "Removed stale credentials files from $device: ${removed//$'\n'/ }"
+        fi
+    else
+        echo "$0: could not look for stale credentials files on $device" >&2
+    fi
 }
 
 attached_devices() {
@@ -276,7 +303,7 @@ api_token=$(printf 'user = "%s:%s"\n' "$EMAIL" "$password" |
 # and an adb process on this machine. The file is mode 600 on both sides, and
 # adb push gets only its path.
 credentials="$work_dir/credentials.properties"
-credentials_on_device="/data/local/tmp/tokkl-test-credentials-$(random_hex 4).properties"
+credentials_on_device="$CREDENTIALS_DIR/$CREDENTIALS_PREFIX$(random_hex 4).properties"
 (
     umask 077
     printf 'tokklPassword=%s\ntokklApiToken=%s\n' "$password" "$api_token" >"$credentials"
@@ -287,9 +314,12 @@ else
     mapfile -t devices < <(attached_devices)
 fi
 for device in "${devices[@]}"; do
+    remove_stale_credentials "$device"
     devices_with_credentials+=("$device")
     adb -s "$device" push "$credentials" "$credentials_on_device" >/dev/null
-    adb -s "$device" shell chmod 600 "$credentials_on_device"
+    # adb push keeps this machine's modification time. touch sets the device's
+    # own, the clock its stale file check reads.
+    adb -s "$device" shell "chmod 600 $credentials_on_device && touch $credentials_on_device"
 done
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
