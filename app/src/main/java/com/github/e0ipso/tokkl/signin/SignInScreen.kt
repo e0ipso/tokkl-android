@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
+import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import kotlinx.coroutines.delay
 
 /**
@@ -118,14 +120,17 @@ private fun SignInForm(
     val errors = state.inputErrors
     val canSubmit = !state.submitting && secondsLeft == 0L
     val submitFromKeyboard = KeyboardActions(onDone = { if (canSubmit) onSubmit() })
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
+                // The keyboard's full height, which covers the navigation bar. imePadding consumes
+                // it, so navigationBarsPadding adds nothing while the keyboard is open.
                 .imePadding()
                 .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {

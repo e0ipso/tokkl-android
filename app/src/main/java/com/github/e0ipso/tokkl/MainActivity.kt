@@ -1,11 +1,9 @@
 package com.github.e0ipso.tokkl
 
-import android.graphics.Color
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toDrawable
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -43,8 +42,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        drawEdgeToEdge()
         val themeSettings = (application as TokklApplication).themeSettings
+        // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
+        val systemIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        showSystemBarIconsFor(darkTheme = themeSettings.state.value.mode.isDark(systemIsDark))
         refreshOnSignIn()
         setContent {
             val settings by themeSettings.state.collectAsState()
@@ -91,18 +93,32 @@ class MainActivity : ComponentActivity() {
         val background = MaterialTheme.colorScheme.background.toArgb()
         DisposableEffect(darkTheme, background) {
             window.setBackgroundDrawable(background.toDrawable())
-            enableEdgeToEdge(
-                statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
-                navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { darkTheme },
-            )
+            showSystemBarIconsFor(darkTheme)
             onDispose {}
         }
     }
 
-    private companion object {
-        // enableEdgeToEdge's own navigation bar scrims, which only Android 9 and earlier draw.
-        val LIGHT_SCRIM = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
-        val DARK_SCRIM = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
+    /**
+     * Draws behind transparent system bars, with the system's navigation bar contrast enforcement
+     * off, so the screen's own background shows under both bars.
+     *
+     * With enforcement on, which androidx.activity's `enableEdgeToEdge` turns on for
+     * `SystemBarStyle.auto`, Android 10 and later paint a translucent scrim over a three-button
+     * navigation bar: a near-white band on the light background, a lighter one on the dark.
+     * `enableEdgeToEdge` also reapplies its first call's styles after every configuration change,
+     * whatever later calls set. `WindowCompat.enableEdgeToEdge` sets the window flags once, with
+     * enforcement off, and leaves the icons to [showSystemBarIconsFor].
+     */
+    private fun drawEdgeToEdge() {
+        WindowCompat.enableEdgeToEdge(window)
+    }
+
+    /** Dark status and navigation bar icons on a light theme, light icons on a dark one. */
+    private fun showSystemBarIconsFor(darkTheme: Boolean) {
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightNavigationBars = !darkTheme
+        }
     }
 }
 
