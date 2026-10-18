@@ -6,10 +6,15 @@
 #    127.0.0.1 with its database on a tmpfs, and waits until it answers.
 # 2. Creates the first account with a random setup code and password, and
 #    reads its API token from GET /api/v9/me.
-# 3. Runs connectedDebugAndroidTest with the server URL and the credentials as
-#    instrumentation arguments. The emulator reaches the host's 127.0.0.1 as
-#    10.0.2.2. The credentials work only on this container.
-# 4. Removes the container, also when a step fails.
+# 3. Copies the password and the API token to each test device, in a file
+#    that only the shell user can read.
+# 4. Runs connectedDebugAndroidTest with the server URL, the email and that
+#    file's path as instrumentation arguments. The emulator reaches the host's
+#    127.0.0.1 as 10.0.2.2. The credentials work only on this container.
+# 5. Removes the container and the credentials file, also when a step fails.
+#
+# The setup code, the password and the API token never appear in a process's
+# arguments, which every user on the machine can read with ps.
 #
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
 # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
@@ -48,6 +53,8 @@ container=''
 emulator_pid=''
 emulator_serial=''
 emulator_unit=''
+credentials_on_device=''
+devices_with_credentials=()
 adb_was_running=false
 if pgrep -x adb >/dev/null; then adb_was_running=true; fi
 
@@ -72,6 +79,12 @@ cleanup() {
         docker rm --force --volumes "$container" >/dev/null 2>&1 ||
             echo "$0: could not remove container $container" >&2
     fi
+    # sync writes the deletion to disk before an emulator this script booted
+    # is killed below. Without it, the file was back on the next boot.
+    for device in "${devices_with_credentials[@]}"; do
+        adb -s "$device" shell "rm -f $credentials_on_device && sync" >/dev/null 2>&1 ||
+            echo "$0: could not remove $credentials_on_device from $device" >&2
+    done
     if [ -n "$emulator_pid" ] && ! kill -0 "$emulator_pid" 2>/dev/null; then
         report_emulator_exit
         if [ "$status" -eq 0 ]; then status=1; fi
@@ -157,8 +170,7 @@ if ! curl --silent --fail --output /dev/null \
     exit 1
 fi
 
-# printf is a shell builtin, so the secrets reach curl on stdin and never
-# appear in a process's arguments.
+# printf is a shell builtin, so the secrets reach curl on stdin.
 printf '{"setup_code":"%s","email":"%s","password":"%s","fullname":"Instrumented tests","timezone":"UTC"}' \
     "$setup_code" "$EMAIL" "$password" |
     curl --silent --show-error --fail --output /dev/null \
@@ -168,10 +180,32 @@ api_token=$(printf 'user = "%s:%s"\n' "$EMAIL" "$password" |
     curl --silent --show-error --fail --config - "$server/api/v9/me" |
     jq --raw-output --exit-status .api_token)
 
+# The password and the token reach the tests in a file on each device, which
+# TokklTestServer reads through UiAutomation as the shell user. Instrumentation
+# arguments cannot carry them: AGP's test runner passes every one to
+# `adb shell am instrument -e`, so they would show in the arguments of a java
+# and an adb process on this machine. The file is mode 600 on both sides, and
+# adb push gets only its path.
+credentials="$work_dir/credentials.properties"
+credentials_on_device="/data/local/tmp/tokkl-test-credentials-$(random_hex 4).properties"
+(
+    umask 077
+    printf 'tokklPassword=%s\ntokklApiToken=%s\n' "$password" "$api_token" >"$credentials"
+)
+if [ -n "${ANDROID_SERIAL:-}" ]; then
+    devices=("$ANDROID_SERIAL")
+else
+    mapfile -t devices < <(attached_devices)
+fi
+for device in "${devices[@]}"; do
+    devices_with_credentials+=("$device")
+    adb -s "$device" push "$credentials" "$credentials_on_device" >/dev/null
+    adb -s "$device" shell chmod 600 "$credentials_on_device"
+done
+
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
 ./gradlew --no-daemon connectedDebugAndroidTest \
     "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
     "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
-    "-P$RUNNER_ARGS.tokklPassword=$password" \
-    "-P$RUNNER_ARGS.tokklApiToken=$api_token" \
+    "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
     "$@"
