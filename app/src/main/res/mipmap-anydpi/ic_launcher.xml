@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The launcher icon. minSdk is 26, so this adaptive icon covers every supported release and
+    the app needs no legacy PNG mipmaps.
+
+    Source: the owner's Tokkl artwork, ../tokkl/docs/brand/tokkl-icon-v4-1024.png
+    (github.com/e0ipso/tokkl at 36bcba9, 1024x1024 RGBA, SHA-256
+    874f7ec9ccb91c4c60b426a4aa75827db1ed96833cdfbcd3b7e24edb3efe3aae). It exists only as PNG,
+    so the layers are PNGs at xxxhdpi: 432x432 px for the 108 dp layer, in drawable-xxxhdpi.
+
+    The stopwatch's smallest enclosing circle in the source, counting pixels with alpha 8 or
+    more, has its centre at (509, 503.5) and a radius of 457.5 px. Scaling the source to
+    286 px and placing it at +74+75 puts that circle at the layer's centre with a radius of
+    32 dp, inside the 66 dp safe zone, so circle and squircle masks never clip it.
+
+    Built with ImageMagick 7.1.1-43 (SRC is the source PNG):
+
+    ic_launcher_foreground.png, the artwork with its alpha below 3.1% cleared:
+      magick SRC ( +clone -alpha extract -black-threshold 3.1% ) -compose CopyOpacity
+        -composite fg.png
+      magick -size 432x432 xc:none ( fg.png -filter Lanczos -resize 286x286 ) -compose over
+        -geometry +74+75 -composite -strip -define png:exclude-chunks=date,time
+        png32:ic_launcher_foreground.png
+
+    ic_launcher_monochrome.png, for themed icons on Android 13 and later: the artwork's dark
+    outline and hands (grey below 20% on opaque pixels), with specks removed:
+      magick SRC ( +clone -alpha off -colorspace gray -threshold 20% -negate )
+        ( -clone 0 -alpha extract -threshold 50% ) -delete 0 -compose multiply -composite
+        -morphology Open Disk:5 -morphology Close Disk:10 mask.png
+      magick -size 432x432 xc:none ( -size 1024x1024 xc:white mask.png -alpha off
+        -compose CopyOpacity -composite -filter Lanczos -resize 286x286 ) -compose over
+        -geometry +74+75 -composite -strip -define png:exclude-chunks=date,time
+        png32:ic_launcher_monochrome.png
+
+    The background layer is the palette colour @color/ic_launcher_background.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
+</adaptive-icon>
