@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,8 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -74,7 +78,33 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
-            Text(text = oflText, style = MaterialTheme.typography.bodySmall)
+            LicenceText(oflText)
         }
     }
+}
+
+/**
+ * [text] in the body size, with each line made only of dashes drawn as a rule. A line of dashes
+ * set as text wraps onto a second line wherever the screen is narrower than it. The rest of the
+ * text shows as it ships. Semantics keeps the whole text, dashes included, as one node, as the
+ * single Text did before.
+ */
+@Composable
+private fun LicenceText(text: String) {
+    val blocks = remember(text) { splitAtRules(text) }
+    Column(Modifier.clearAndSetSemantics { this.text = AnnotatedString(text) }) {
+        for ((i, block) in blocks.withIndex()) {
+            if (i > 0) HorizontalDivider(Modifier.padding(vertical = TokklTheme.spacing.space2))
+            Text(text = block, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/** The blocks of [text] between the lines made only of dashes, without those lines. */
+private fun splitAtRules(text: String): List<String> {
+    val blocks = mutableListOf(mutableListOf<String>())
+    for (line in text.split('\n')) {
+        if (line.isNotEmpty() && line.all { it == '-' }) blocks += mutableListOf<String>() else blocks.last() += line
+    }
+    return blocks.map { it.joinToString("\n") }
 }
