@@ -3,8 +3,11 @@ package com.github.e0ipso.tokkl.signin
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
+import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.api.UntrustedCertificateException
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.io.IOException
 import java.time.DayOfWeek
@@ -14,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -52,13 +56,14 @@ class SignInModelTest {
         server.close()
     }
 
-    private fun model(trust: ServerTrust): SignInModel {
+    private fun model(trust: ServerTrust, httpClient: OkHttpClient = SharedHttpClient.instance): SignInModel {
         val signIn = SignIn(
             session = { url, token, settings ->
                 saveFailure?.let { throw it }
                 saved += url to token
                 savedSettings += settings
             },
+            httpClient = httpClient,
         )
         // Unconfined runs each attempt to the end inside submit().
         return SignInModel(signIn, trust, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
@@ -262,15 +267,69 @@ class SignInModelTest {
     }
 
     @Test
-    fun handshakeFailureFromAnUntrustedChainIsAnUntrustedCertificate() {
-        val untrusted = SSLHandshakeException("handshake failed").apply {
+    fun handshakeFailureFromThePinningTrustManagerCarriesTheCertificate() {
+        val refusal = UntrustedCertificateException(CERTIFICATE, pinChanged = false, cause = CertificateException("no trust anchor"))
+        val untrusted = SSLHandshakeException("handshake failed").apply { initCause(refusal) }
+        val platformOnly = SSLHandshakeException("handshake failed").apply {
             initCause(CertificateException("Trust anchor for certification path not found."))
         }
 
-        assertTrue(untrusted.isUntrustedCertificate())
-        assertFalse(SSLHandshakeException("protocol version").isUntrustedCertificate())
-        assertFalse(IOException("refused").isUntrustedCertificate())
+        assertEquals(refusal, untrusted.untrustedCertificate())
+        assertNull(platformOnly.untrustedCertificate())
+        assertNull(IOException("refused").untrustedCertificate())
     }
+
+    @Test
+    fun untrustedCertificatePromptsAndTrustingItPinsThatCertificateThenSends() {
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
+        model = model(trust, handshakeAsIfServing(CERTIFICATE))
+        fillApiToken()
+
+        model.submit()
+
+        assertEquals(SignInResult.UntrustedCertificate(CERTIFICATE, changed = false), model.state.value.failure)
+        assertEquals("no request before the user trusts the certificate", 0, server.requestCount)
+
+        model.trustCertificate()
+
+        assertEquals(mapOf("${CERTIFICATE.host}:${CERTIFICATE.port}" to CERTIFICATE.sha256), trust.pins)
+        assertEquals(1, server.requestCount)
+        assertTrue(model.state.value.signedIn)
+    }
+
+    @Test
+    fun changedCertificatePromptsAgainAndCancelKeepsTheOldPin() {
+        val old = "cd".repeat(32)
+        trust.pins["${CERTIFICATE.host}:${CERTIFICATE.port}"] = old
+        model = model(trust, handshakeAsIfServing(CERTIFICATE))
+        fillApiToken()
+
+        model.submit()
+        assertEquals(SignInResult.UntrustedCertificate(CERTIFICATE, changed = true), model.state.value.failure)
+
+        model.dismissPrompt()
+
+        assertNull(model.state.value.failure)
+        assertEquals(old, trust.pinnedSha256(CERTIFICATE.host, CERTIFICATE.port))
+        assertEquals(0, server.requestCount)
+    }
+
+    /**
+     * The shared client with a step that stands in for its trust manager: the
+     * handshake with a server presenting [certificate] fails unless the user
+     * pinned it, as PinningTrustManager makes it fail.
+     */
+    private fun handshakeAsIfServing(certificate: ServerCertificate): OkHttpClient =
+        SharedHttpClient.instance.newBuilder()
+            .addInterceptor { chain ->
+                val pin = trust.pinnedSha256(certificate.host, certificate.port)
+                if (pin != certificate.sha256) {
+                    val refusal = UntrustedCertificateException(certificate, pinChanged = pin != null, cause = CertificateException("no trust anchor"))
+                    throw SSLHandshakeException("handshake failed").apply { initCause(refusal) }
+                }
+                chain.proceed(chain.request())
+            }
+            .build()
 
     @Test
     fun plainHttpServerShowsTheWarningAndSendsNothingUntilTheUserConfirms() {
@@ -341,6 +400,10 @@ class SignInModelTest {
             override fun isCleartextConfirmed(server: ServerUrl) = false
 
             override fun confirmCleartext(server: ServerUrl) = throw IOException("disk full")
+
+            override fun pinnedSha256(host: String, port: Int): String? = null
+
+            override fun pinCertificate(certificate: ServerCertificate) = throw IOException("disk full")
         }
         ConfiguredTrust.readFrom(failing)
         model = model(failing)
@@ -385,6 +448,8 @@ class SignInModelTest {
         .build()
 
     private companion object {
+        val CERTIFICATE = ServerCertificate("tokkl.test", 443, "ab".repeat(32), "CN=tokkl.test")
+
         const val TOKEN = "0123456789abcdef0123456789abcdef"
         const val PASSWORD = "correct horse:battery"
 

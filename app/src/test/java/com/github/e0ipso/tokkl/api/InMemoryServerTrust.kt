@@ -5,9 +5,18 @@ class InMemoryServerTrust(vararg confirmed: ServerUrl) : ServerTrust {
 
     val cleartextConfirmed: MutableSet<ServerUrl> = confirmed.toMutableSet()
 
+    /** Pinned SHA-256 fingerprints by `host:port`. */
+    val pins: MutableMap<String, String> = mutableMapOf()
+
     override fun isCleartextConfirmed(server: ServerUrl): Boolean = server in cleartextConfirmed
 
     override fun confirmCleartext(server: ServerUrl) {
         cleartextConfirmed += server
+    }
+
+    override fun pinnedSha256(host: String, port: Int): String? = pins["$host:$port"]
+
+    override fun pinCertificate(certificate: ServerCertificate) {
+        pins["${certificate.host}:${certificate.port}"] = certificate.sha256
     }
 }

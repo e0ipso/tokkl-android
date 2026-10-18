@@ -50,9 +50,12 @@ data class SignInState(
  * that the token or password travels unencrypted. The shared client refuses
  * the request, the attempt ends with [SignInResult.CleartextNotConfirmed], and
  * [confirmCleartext] records the confirmation in [trust] and sends it again.
+ * A certificate that no system or user CA trusts ends the attempt with
+ * [SignInResult.UntrustedCertificate] before any credential is sent, and
+ * [trustCertificate] pins the certificate the prompt showed and sends it again.
  *
- * @param trust where [confirmCleartext] records the user's confirmation, which
- *   the shared client checks before every request.
+ * @param trust where the user's answers go. The shared client checks it
+ *   before every request and in every TLS handshake.
  * @param clock monotonic milliseconds, such as `SystemClock.elapsedRealtime`.
  * @param io where the blocking [SignIn.attempt] and the writes to [trust] run.
  */
@@ -107,14 +110,32 @@ class SignInModel(
      * the confirmation for that URL, then sends the attempt.
      */
     fun confirmCleartext() {
-        val current = mutableState.value
-        val warning = current.failure as? SignInResult.CleartextNotConfirmed ?: return
-        if (current.submitting) return
+        val warning = mutableState.value.failure as? SignInResult.CleartextNotConfirmed ?: return
+        storeAnswerThenSubmit { trust.confirmCleartext(warning.server) }
+    }
+
+    /**
+     * The user trusts the certificate that the prompt showed. Pins exactly
+     * that certificate, by its SHA-256, then sends the attempt. A server that
+     * now presents another certificate fails the handshake and prompts again.
+     */
+    fun trustCertificate() {
+        val prompt = mutableState.value.failure as? SignInResult.UntrustedCertificate ?: return
+        storeAnswerThenSubmit { trust.pinCertificate(prompt.certificate) }
+    }
+
+    /** Closes a warning or prompt without sending or storing anything. */
+    fun dismissPrompt() {
+        mutableState.update { if (it.failure.isPrompt()) it.copy(failure = null) else it }
+    }
+
+    private fun storeAnswerThenSubmit(store: () -> Unit) {
+        if (mutableState.value.submitting) return
         mutableState.update { it.copy(submitting = true, failure = null) }
         scope.launch {
             val stored = withContext(io) {
                 try {
-                    trust.confirmCleartext(warning.server)
+                    store()
                     true
                 } catch (e: IOException) {
                     false
@@ -125,10 +146,8 @@ class SignInModel(
         }
     }
 
-    /** Closes a warning without sending or storing anything. */
-    fun dismissPrompt() {
-        mutableState.update { if (it.failure is SignInResult.CleartextNotConfirmed) it.copy(failure = null) else it }
-    }
+    private fun SignInResult?.isPrompt(): Boolean =
+        this is SignInResult.CleartextNotConfirmed || this is SignInResult.UntrustedCertificate
 
     /** Clears the form after the app has moved on from a successful sign-in. */
     fun reset() {

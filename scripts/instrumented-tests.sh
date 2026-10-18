@@ -6,14 +6,19 @@
 #    127.0.0.1 with its database on a tmpfs, and waits until it answers.
 # 2. Creates the first account with a random setup code and password, and
 #    reads its API token from GET /api/v9/me.
-# 3. Copies the password and the API token to each test device, in a file
+# 3. Puts a TLS proxy, haproxy pinned by digest, in front of the same server,
+#    with a self-signed certificate made for this run. The certificate names
+#    10.0.2.2 and 127.0.0.1 as IP addresses, so host name checks pass. Its
+#    private key stays in this script's temporary directory.
+# 4. Copies the password and the API token to each test device, in a file
 #    that only the shell user can read.
-# 4. Runs connectedDebugAndroidTest with the server URL, the email and that
-#    file's path as instrumentation arguments. The emulator reaches the host's
-#    127.0.0.1 as 10.0.2.2. The credentials work only on this container.
-#    The run fails when a test device goes away during it, even if Gradle
-#    reports success.
-# 5. Removes the container and the credentials file, also when a step fails.
+# 5. Runs connectedDebugAndroidTest with the http and https server URLs, the
+#    proxy certificate's SHA-256 fingerprint, the email and that file's path
+#    as instrumentation arguments. The emulator reaches the host's 127.0.0.1
+#    as 10.0.2.2. The credentials work only on this container. The run fails
+#    when a test device goes away during it, even if Gradle reports success.
+# 6. Removes both containers, the certificate's key and the credentials file,
+#    also when a step fails.
 #
 # The setup code, the password and the API token never appear in a process's
 # arguments, which every user on the machine can read with ps.
@@ -41,18 +46,22 @@ set -euo pipefail
 # Tokkl 1.3.1. To upgrade, take the index digest from
 # `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>`.
 readonly IMAGE='ghcr.io/e0ipso/tokkl:1.3.1@sha256:12591e2b04d17cc6a12a7ff6bd0dffc718079797f73750d00695ef9ad916f9f9'
+# HAProxy 3.2.26 on Alpine, the index digest from
+# `docker buildx imagetools inspect haproxy:3.2.26-alpine`.
+readonly PROXY_IMAGE='haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c67f33777c1b6a9dc0d4b28bcba7171460122'
 readonly AVD="${TOKKL_TEST_AVD:-tokkl-api36}"
 readonly EMAIL='instrumented-tests@example.com'
 readonly RUNNER_ARGS='android.testInstrumentationRunnerArguments'
 
 cd "$(dirname "$0")/.."
 
-for tool in docker adb curl jq; do
+for tool in docker adb curl jq openssl; do
     command -v "$tool" >/dev/null || { echo "$0: $tool is not on PATH" >&2; exit 1; }
 done
 
 work_dir=$(mktemp -d)
 container=''
+proxy=''
 emulator_pid=''
 emulator_serial=''
 emulator_unit=''
@@ -82,6 +91,10 @@ report_emulator_exit() {
 # shellcheck disable=SC2329
 cleanup() {
     local status=$?
+    if [ -n "$proxy" ]; then
+        docker rm --force --volumes "$proxy" >/dev/null 2>&1 ||
+            echo "$0: could not remove container $proxy" >&2
+    fi
     if [ -n "$container" ]; then
         docker rm --force --volumes "$container" >/dev/null 2>&1 ||
             echo "$0: could not remove container $container" >&2
@@ -169,17 +182,71 @@ container="tokkl-android-tests-$(random_hex 4)"
 
 echo "Starting $IMAGE as $container"
 # The image runs as an unprivileged user, so the tmpfs must be writable by any
-# UID. --env without a value reads the setup code from the environment.
+# UID. --env without a value reads the setup code from the environment. The
+# TLS proxy joins this container's network namespace, so its port 8443 is
+# published here too.
 TOKKL_SETUP_CODE="$setup_code" docker run --detach --name "$container" \
-    --env TOKKL_SETUP_CODE --tmpfs /data:mode=1777 --publish 127.0.0.1::8080 "$IMAGE" >/dev/null
+    --env TOKKL_SETUP_CODE --tmpfs /data:mode=1777 \
+    --publish 127.0.0.1::8080 --publish 127.0.0.1::8443 "$IMAGE" >/dev/null
 host_port=$(docker port "$container" 8080/tcp | head -n 1)
 host_port=${host_port##*:}
+tls_port=$(docker port "$container" 8443/tcp | head -n 1)
+tls_port=${tls_port##*:}
 server="http://127.0.0.1:$host_port"
 
 if ! curl --silent --fail --output /dev/null \
     --retry 30 --retry-delay 1 --retry-all-errors "$server/healthz"; then
     echo "$0: Tokkl did not answer on $server/healthz. Last server output:" >&2
     docker logs "$container" 2>&1 | grep -v 'setup code' | tail -n 20 >&2
+    exit 1
+fi
+
+# The proxy's certificate and key, made for this run. HAProxy reads both from
+# one file, as an unprivileged user in its container, so the file is readable
+# by every user. Only this user can enter $work_dir, which holds it, and the
+# cleanup deletes it. The tests get the certificate's fingerprint, never the
+# key.
+proxy_dir="$work_dir/proxy"
+mkdir -m 755 "$proxy_dir"
+(
+    umask 077
+    openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 2 \
+        -subj '/CN=Tokkl instrumented tests' -addext 'subjectAltName=IP:10.0.2.2,IP:127.0.0.1' \
+        -keyout "$work_dir/proxy-key.pem" -out "$proxy_dir/cert.pem" 2>/dev/null
+)
+cat "$proxy_dir/cert.pem" "$work_dir/proxy-key.pem" >"$proxy_dir/server.pem"
+rm -f "$work_dir/proxy-key.pem"
+chmod 644 "$proxy_dir/cert.pem" "$proxy_dir/server.pem"
+tls_fingerprint=$(openssl x509 -in "$proxy_dir/cert.pem" -noout -fingerprint -sha256)
+tls_fingerprint=${tls_fingerprint#*=}
+cat >"$proxy_dir/haproxy.cfg" <<'CONFIG'
+global
+    log stdout format raw local0 warning
+
+defaults
+    mode http
+    log global
+    timeout connect 5s
+    timeout client 30s
+    timeout server 30s
+
+frontend tls
+    bind :8443 ssl crt /usr/local/etc/haproxy/server.pem
+    default_backend tokkl
+
+backend tokkl
+    server tokkl 127.0.0.1:8080
+CONFIG
+chmod 644 "$proxy_dir/haproxy.cfg"
+proxy="$container-tls"
+echo "Starting $PROXY_IMAGE as $proxy"
+docker run --detach --name "$proxy" --network "container:$container" \
+    --volume "$proxy_dir:/usr/local/etc/haproxy:ro" "$PROXY_IMAGE" >/dev/null
+# --cacert trusts this run's certificate alone, so curl checks it as the app does.
+if ! curl --silent --fail --output /dev/null --cacert "$proxy_dir/cert.pem" \
+    --retry 30 --retry-delay 1 --retry-all-errors "https://127.0.0.1:$tls_port/healthz"; then
+    echo "$0: the TLS proxy did not answer on https://127.0.0.1:$tls_port/healthz. Last proxy output:" >&2
+    docker logs "$proxy" 2>&1 | tail -n 20 >&2
     exit 1
 fi
 
@@ -217,9 +284,12 @@ for device in "${devices[@]}"; do
 done
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
+echo "The TLS proxy is ready on https://127.0.0.1:$tls_port, with certificate SHA-256 $tls_fingerprint"
 gradle_status=0
 ./gradlew --no-daemon connectedDebugAndroidTest \
     "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
+    "-P$RUNNER_ARGS.tokklTlsBaseUrl=https://10.0.2.2:$tls_port" \
+    "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
     "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
     "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
     "$@" || gradle_status=$?

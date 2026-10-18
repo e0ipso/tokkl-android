@@ -21,6 +21,20 @@ object TokklTestServer {
         ServerUrl.parse(url) ?: error("tokklBaseUrl is not an http or https URL: $url")
     }
 
+    /**
+     * The same server behind a TLS proxy with a self-signed certificate that
+     * the script makes for each run, such as `https://10.0.2.2:32769`. The
+     * certificate names 10.0.2.2 as an IP address, so the host name check
+     * passes once the certificate is pinned.
+     */
+    val tlsUrl: ServerUrl by lazy {
+        val url = argument("tokklTlsBaseUrl")
+        ServerUrl.parse(url) ?: error("tokklTlsBaseUrl is not an https URL: $url")
+    }
+
+    /** The proxy certificate's SHA-256 fingerprint, as `openssl x509 -noout -fingerprint -sha256` prints it. */
+    val tlsFingerprint: String by lazy { argument("tokklTlsFingerprint") }
+
     val email: String by lazy { argument("tokklEmail") }
 
     val password: String by lazy { credential("tokklPassword") }

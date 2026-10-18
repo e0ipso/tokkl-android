@@ -4,16 +4,15 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ConfiguredServer
+import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.UntrustedCertificateException
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Me
 import java.io.IOException
 import java.security.GeneralSecurityException
-import java.security.cert.CertPathValidatorException
-import java.security.cert.CertificateException
-import javax.net.ssl.SSLHandshakeException
 import okhttp3.OkHttpClient
 
 /** What the user entered to sign in. `toString` never prints a secret. */
@@ -43,11 +42,12 @@ sealed interface SignInResult {
 
     /**
      * The TLS handshake failed because no system or user CA trusts the
-     * server's certificate. No request was sent, so no credential left the
-     * phone. TKA-0021 turns this into the prompt to trust a self-signed
-     * certificate by its fingerprint.
+     * server's [certificate], and the user has not pinned it. [changed] is
+     * true when the user pinned another certificate for that server. No
+     * request was sent, so no credential left the phone. The screen asks
+     * whether to trust the certificate by its fingerprint.
      */
-    data object UntrustedCertificate : SignInResult
+    data class UntrustedCertificate(val certificate: ServerCertificate, val changed: Boolean) : SignInResult
 
     /**
      * The server redirected to [origin] (`scheme://host:port`), and the app
@@ -141,17 +141,18 @@ private fun ApiError.toSignInResult(): SignInResult =
         is ApiError.InvalidResponse -> SignInResult.NotTokkl
         is ApiError.HostNotAllowed -> SignInResult.HostNotAllowed(origin)
         is ApiError.CleartextNotConfirmed -> SignInResult.CleartextNotConfirmed(server)
-        is ApiError.Network -> if (cause.isUntrustedCertificate()) SignInResult.UntrustedCertificate else SignInResult.Unreachable
+        is ApiError.Network -> cause.untrustedCertificate()
+            ?.let { SignInResult.UntrustedCertificate(it.certificate, changed = it.pinChanged) }
+            ?: SignInResult.Unreachable
     }
 
 /**
- * Android reports a chain no trusted CA signed as an [SSLHandshakeException]
- * caused by a [CertificateException] or [CertPathValidatorException]
- * ("Trust anchor for certification path not found").
+ * The shared client's trust manager refused the server's certificate. The TLS
+ * stack reports that as an `SSLHandshakeException` whose causes hold the
+ * trust manager's [UntrustedCertificateException].
  */
-internal fun IOException.isUntrustedCertificate(): Boolean =
-    this is SSLHandshakeException &&
-        generateSequence(cause) { it.cause }.take(MAX_CAUSES).any { it is CertificateException || it is CertPathValidatorException }
+internal fun IOException.untrustedCertificate(): UntrustedCertificateException? =
+    generateSequence<Throwable>(this) { it.cause }.take(MAX_CAUSES).filterIsInstance<UntrustedCertificateException>().firstOrNull()
 
 /** Enough for Android's TLS errors, and an end to a cycle of causes. */
 private const val MAX_CAUSES = 8

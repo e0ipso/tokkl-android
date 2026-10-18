@@ -38,6 +38,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -47,10 +48,12 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import kotlinx.coroutines.delay
 
@@ -85,10 +88,22 @@ fun SignInScreen(model: SignInModel, onSignedIn: () -> Unit, modifier: Modifier 
         onSubmit = model::submit,
         modifier = modifier,
     )
-    when (val failure = state.failure) {
+    val keyboard = LocalSoftwareKeyboardController.current
+    val failure = state.failure
+    if (failure is SignInResult.CleartextNotConfirmed || failure is SignInResult.UntrustedCertificate) {
+        // The keyboard would leave the dialog little room.
+        LaunchedEffect(failure) { keyboard?.hide() }
+    }
+    when (failure) {
         is SignInResult.CleartextNotConfirmed -> CleartextWarning(
             server = failure.server,
             onConfirm = model::confirmCleartext,
+            onCancel = model::dismissPrompt,
+        )
+        is SignInResult.UntrustedCertificate -> CertificatePrompt(
+            certificate = failure.certificate,
+            changed = failure.changed,
+            onTrust = model::trustCertificate,
             onCancel = model::dismissPrompt,
         )
         else -> Unit
@@ -313,6 +328,48 @@ private fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel:
     )
 }
 
+/**
+ * Asks whether to trust a certificate that no system or user CA signed, and
+ * shows its SHA-256 fingerprint and subject so the user can compare them with
+ * the server's. [changed] says the user had trusted another certificate for
+ * this server. A tap outside or Back cancels, which trusts nothing.
+ */
+@Composable
+private fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust: () -> Unit, onCancel: () -> Unit) {
+    val server = if (':' in certificate.host) "[${certificate.host}]:${certificate.port}" else "${certificate.host}:${certificate.port}"
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = {
+            Text(
+                text = stringResource(if (changed) R.string.sign_in_certificate_changed_title else R.string.sign_in_certificate_title),
+                modifier = Modifier.semantics { heading() },
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(stringResource(if (changed) R.string.sign_in_certificate_changed_body else R.string.sign_in_certificate_body, server))
+                Text(stringResource(R.string.sign_in_certificate_fingerprint), style = MaterialTheme.typography.titleSmall)
+                Text(certificate.displaySha256, fontFamily = FontFamily.Monospace)
+                Text(stringResource(R.string.sign_in_certificate_subject), style = MaterialTheme.typography.titleSmall)
+                Text(certificate.subject)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onTrust) {
+                Text(stringResource(R.string.sign_in_certificate_trust))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text(stringResource(R.string.sign_in_warning_cancel))
+            }
+        },
+    )
+}
+
 /** The message under the form, or null for a result that the screen shows in a dialog or not at all. */
 @Composable
 private fun failureMessage(failure: SignInResult, method: SignInMethod): String? =
@@ -321,8 +378,6 @@ private fun failureMessage(failure: SignInResult, method: SignInMethod): String?
             if (method == SignInMethod.API_TOKEN) R.string.sign_in_error_wrong_api_token else R.string.sign_in_error_wrong_password,
         )
         is SignInResult.RateLimited -> stringResource(R.string.sign_in_error_rate_limited)
-        // TKA-0021 replaces this message with the prompt to trust the certificate by its fingerprint.
-        SignInResult.UntrustedCertificate -> stringResource(R.string.sign_in_error_untrusted_certificate)
         SignInResult.Unreachable -> stringResource(R.string.sign_in_error_unreachable)
         is SignInResult.UnexpectedStatus -> stringResource(R.string.sign_in_error_unexpected_status, failure.status)
         SignInResult.NotTokkl -> stringResource(R.string.sign_in_error_not_tokkl)
@@ -330,7 +385,7 @@ private fun failureMessage(failure: SignInResult, method: SignInMethod): String?
         SignInResult.NoApiToken -> stringResource(R.string.sign_in_error_no_api_token)
         SignInResult.StorageFailed -> stringResource(R.string.sign_in_error_storage)
         SignInResult.AnswerNotStored -> stringResource(R.string.sign_in_error_answer_not_stored)
-        is SignInResult.CleartextNotConfirmed, SignInResult.SignedIn -> null
+        is SignInResult.CleartextNotConfirmed, is SignInResult.UntrustedCertificate, SignInResult.SignedIn -> null
     }
 
 private val METHOD_LABELS = listOf(

@@ -41,7 +41,6 @@
     <string name="sign_in_error_wrong_api_token">Wrong API token. Check it and try again.</string>
     <string name="sign_in_error_wrong_password">Wrong email or password. Check them and try again.</string>
     <string name="sign_in_error_rate_limited">Too many failed attempts. Wait for the countdown before you try again.</string>
-    <string name="sign_in_error_untrusted_certificate">This phone doesn\'t trust the server\'s certificate, so the app sent nothing.</string>
     <string name="sign_in_error_unreachable">Can\'t reach the server. Check the URL and your connection.</string>
     <string name="sign_in_error_unexpected_status">The server answered with HTTP %d. Check the URL.</string>
     <string name="sign_in_error_not_tokkl">That URL doesn\'t answer like a Tokkl server. Check it.</string>
@@ -55,4 +54,11 @@
     <string name="sign_in_http_warning_body">%1$s uses plain http. Your API token or password would travel unencrypted, so anyone on the network between this phone and the server could read it. Continue only if the network encrypts the traffic, as Tailscale does.</string>
     <string name="sign_in_http_warning_understood">I understand that my API token or password travels unencrypted</string>
     <string name="sign_in_http_warning_continue">Continue without encryption</string>
+    <string name="sign_in_certificate_title">Trust this certificate?</string>
+    <string name="sign_in_certificate_changed_title">The server\'s certificate changed</string>
+    <string name="sign_in_certificate_body">No certificate authority on this phone vouches for %1$s, so the app sent nothing. Trust the certificate only if its fingerprint matches the one on your server. The app will then accept this certificate, and no other, from that server.</string>
+    <string name="sign_in_certificate_changed_body">%1$s presents a different certificate from the one you trusted, so the app sent nothing. If you didn\'t replace it, someone may be intercepting the connection. Trust the new certificate only if its fingerprint matches the one on your server.</string>
+    <string name="sign_in_certificate_fingerprint">SHA-256 fingerprint</string>
+    <string name="sign_in_certificate_subject">Subject</string>
+    <string name="sign_in_certificate_trust">Trust this certificate</string>
 </resources>

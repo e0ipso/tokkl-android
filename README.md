@@ -129,13 +129,13 @@ Build the debug APK, run lint and run the JVM unit tests:
 
 `./gradlew check` runs the same lint and unit tests, plus `:app:checkDeniedDependencies`. That task fails when the release runtime classpath holds a module from a group listed in `gradle/denied-dependency-groups.txt`, such as Google Play Services, Firebase or an analytics SDK. The failure names each module and the dependencies that pulled it in.
 
-The instrumented tests, including the Compose UI tests, run against a real Tokkl server, never a fake one. One command runs them. It needs Docker, `curl` and `jq`:
+The instrumented tests, including the Compose UI tests, run against a real Tokkl server, never a fake one. One command runs them. It needs Docker, `curl`, `jq` and `openssl`:
 
 ```sh
 scripts/instrumented-tests.sh
 ```
 
-The script starts `ghcr.io/e0ipso/tokkl`, pinned by digest, on a free port of `127.0.0.1` with its database on a tmpfs. It creates an account with a random password and reads the account's API token. The password and the token go to each test device in a file under `/data/local/tmp` that only the shell user can read, and the tests read that file through UiAutomation. As instrumentation arguments they would show in `ps` on the build machine, in the arguments of the adb process that starts the tests. `./gradlew connectedDebugAndroidTest` gets the server URL, the email and the file's path as instrumentation arguments. The URL is `http://10.0.2.2:<port>`, the address under which the emulator reaches the host. The script removes the container and the file when it finishes, also when a test fails. It also fails when a test device goes away during the run, because Gradle can report success without running every test.
+The script starts `ghcr.io/e0ipso/tokkl`, pinned by digest, on a free port of `127.0.0.1` with its database on a tmpfs. It creates an account with a random password and reads the account's API token. The password and the token go to each test device in a file under `/data/local/tmp` that only the shell user can read, and the tests read that file through UiAutomation. As instrumentation arguments they would show in `ps` on the build machine, in the arguments of the adb process that starts the tests. The script also puts `haproxy`, pinned by digest, in front of the same server as a TLS proxy, so the tests can trust a self-signed certificate by its fingerprint. It makes that certificate for each run with `openssl`. The certificate names `10.0.2.2` as an IP address, so the app's host name check stays on and passes. Its private key stays in the script's temporary directory, which only you can read. `./gradlew connectedDebugAndroidTest` gets both server URLs, the certificate's SHA-256 fingerprint, the email and the file's path as instrumentation arguments. The URLs are `http://10.0.2.2:<port>` and `https://10.0.2.2:<port>`, at the address under which the emulator reaches the host. The script removes both containers, the key and the file when it finishes, also when a test fails. It also fails when a test device goes away during the run, because Gradle can report success without running every test.
 
 If no device is attached, the script boots `tokkl-api36` as in the previous section, with 2 GB of guest RAM, and stops it and the adb server at the end. When your systemd user manager is running, the emulator runs in a scope of its own with `OOMPolicy=continue`. If the kernel's OOM killer ends qemu, the script fails and says so, and systemd leaves the session that started it alone. On an emulator it boots, the script also turns on `hide_error_dialogs` and closes open system dialogs, because a fresh headless boot often leaves "System UI isn't responding" in front of the app. It changes no setting on an emulator that was already running, and that emulator keeps running. Arguments go to Gradle, so one class runs with:
 
@@ -144,7 +144,7 @@ scripts/instrumented-tests.sh \
   -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest
 ```
 
-Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that need the server. To move to a newer Tokkl, put the digest from `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>` into `IMAGE` in the script.
+Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that need the server. To move to a newer Tokkl, put the digest from `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>` into `IMAGE` in the script. `PROXY_IMAGE` takes the digest of `haproxy:<version>-alpine` the same way.
 
 `gradle.properties` caps the Gradle heap at 2 GB and compiles Kotlin inside the Gradle daemon, so no separate Kotlin daemon starts. The Gradle daemon itself stays in memory after the build. Stop it when you finish:
 
