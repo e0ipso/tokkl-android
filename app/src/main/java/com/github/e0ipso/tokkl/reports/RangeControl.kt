@@ -245,11 +245,12 @@ private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (
 
 /**
  * Makes the dialog's window as tall as the screen instead of as tall as its content. Compose
- * leaves a full-width dialog's window at WRAP_CONTENT height, and Android 11 then measures it in
+ * leaves a full-width dialog's window at WRAP_CONTENT height, and Android 11 then measured it in
  * every layout pass twice: at the width of `screenWidthDp`, which rounds to 1079 px on a 1080 px
  * screen, and again at the window's 1080 px. With the date range picker's month list inside,
  * that never settled: the dialog laid itself out on every frame and the main thread never went
- * idle. The Surface inside already fills the window, so the window keeps its size.
+ * idle. Without this, Android 12 (API 31) still never went idle there. The Surface inside
+ * already fills the window, so the window keeps its size.
  */
 @Composable
 private fun FillScreenWindow() {

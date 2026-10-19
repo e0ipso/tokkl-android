@@ -16,11 +16,11 @@ These steps prepare a Linux x86_64 machine to build and test the app. Everything
 | Android SDK Platform | `platforms;android-37.0`, revision 2 | `~/Android/Sdk/platforms/android-37.0` |
 | Android SDK Build-Tools | 36.0.0 | `~/Android/Sdk/build-tools/36.0.0` |
 | Android Emulator | 37.2.12 | `~/Android/Sdk/emulator` |
-| System images | `system-images;android-36;default;x86_64`, revision 2, and `system-images;android-30;default;x86_64`, revision 11 | `~/Android/Sdk/system-images` |
+| System images | `system-images;android-36;default;x86_64`, revision 2, and `system-images;android-31;default;x86_64`, revision 5 | `~/Android/Sdk/system-images` |
 
 The Gradle wrapper downloads Gradle 9.8.1 and checks it against the SHA-256 sum in `gradle/wrapper/gradle-wrapper.properties`. `gradle/libs.versions.toml` sets Android Gradle Plugin 9.4.1, Kotlin 2.4.21 and Compose BOM 2026.09.00. The app compiles against API 37, which Compose UI 1.12 and androidx.core 1.19 require. It targets API 36, the API level of the main test emulator. `app/build.gradle.kts` pins Build-Tools 36.0.0, which is also the default and the minimum of Android Gradle Plugin 9.4.1.
 
-Android Gradle Plugin 9.4 needs JDK 17 or later, and JDK 21 is an LTS release above that floor. The system images are the plain AOSP builds of Android 16 (API 36) and Android 11 (API 30), not Google APIs or Play Store builds. They keep SystemUI and the launcher, which tests of the notification, the Quick Settings tile and the widget need. The smaller Automated Test Device images remove both. "Run the emulator" says why each image is there.
+Android Gradle Plugin 9.4 needs JDK 17 or later, and JDK 21 is an LTS release above that floor. The system images are the plain AOSP builds of Android 16 (API 36) and Android 12 (API 31), not Google APIs or Play Store builds. They keep SystemUI and the launcher, which tests of the notification, the Quick Settings tile and the widget need. The smaller Automated Test Device images remove both. "Run the emulator" says why each image is there.
 
 ### Install the JDK
 
@@ -49,7 +49,7 @@ export JAVA_HOME=~/.local/share/jdk/21
 "$tmp/cmdline-tools/bin/sdkmanager" --sdk_root="$HOME/Android/Sdk" --licenses
 "$tmp/cmdline-tools/bin/sdkmanager" --sdk_root="$HOME/Android/Sdk" \
   'cmdline-tools;latest' platform-tools emulator 'system-images;android-36;default;x86_64' \
-  'system-images;android-30;default;x86_64' 'system-images;android-26;default;x86_64' \
+  'system-images;android-31;default;x86_64' \
   'platforms;android-37.0' 'build-tools;36.0.0'
 rm -rf "$tmp"
 ```
@@ -103,15 +103,13 @@ The emulator needs KVM, which usually means your user is in the `kvm` group. `em
 ```sh
 avdmanager create avd -n tokkl-api36 -d medium_phone \
   -k 'system-images;android-36;default;x86_64'
-avdmanager create avd -n tokkl-api30 -d medium_phone \
-  -k 'system-images;android-30;default;x86_64'
-avdmanager create avd -n tokkl-api26 -d medium_phone \
-  -k 'system-images;android-26;default;x86_64'
+avdmanager create avd -n tokkl-api31 -d medium_phone \
+  -k 'system-images;android-31;default;x86_64'
 ```
 
-`tokkl-api36` runs Android 16, the version the app targets, and the screenshot references come from it. The app supports Android 12 (API 31) and later and has no code for older versions, so it does not install on `tokkl-api30` (Android 11) or `tokkl-api26` (Android 8.0).
+`tokkl-api36` runs Android 16, the version the app targets, and the screenshot references come from it. `tokkl-api31` runs Android 12, the oldest version the app supports, so it catches a call to an API newer than the device. The app has no code for older versions. A full run on `tokkl-api31` took 15 minutes, and qemu peaked at 4.0 GB.
 
-Below Android 12 apps draw with OpenGL, and qemu keeps memory after every test, up to about 110 MB on API 26. A full run on one emulator took qemu to 5.5 GB on API 30, close to the 6 GB the script gives the emulator, and would outgrow it on API 26, so the script runs a full run there in batches (see "Build and test"). There is no API 28 AVD: on API 28 the `swiftshader` and `host` renderers reached 6 GB within 20 tests, and `lavapipe` crashed after about 20. The SDK repository has no plain AOSP image for API 36.1 or later, only Google APIs, Play Store and Wear OS ones, so no emulator here runs the `cross-platform-transfer` rules in `data_extraction_rules.xml`.
+The SDK repository has no plain AOSP image for API 36.1 or later, only Google APIs, Play Store and Wear OS ones, so no emulator here runs the `cross-platform-transfer` rules in `data_extraction_rules.xml`.
 
 Boot it without a window and wait until Android finishes starting:
 
@@ -146,23 +144,20 @@ scripts/instrumented-tests.sh
 
 The script starts `ghcr.io/e0ipso/tokkl`, pinned by digest, on a free port of `127.0.0.1` with its database on a tmpfs. It creates an account with a random password and reads the account's API token. The password and the token go to each test device in a file under `/data/local/tmp` that only the shell user can read, and the tests read that file through UiAutomation. As instrumentation arguments they would show in `ps` on the build machine, in the arguments of the adb process that starts the tests. The script also puts `haproxy`, pinned by digest, in front of the same server as a TLS proxy, so the tests can trust a self-signed certificate by its fingerprint. It makes that certificate for each run with `openssl`. The certificate names `10.0.2.2` as an IP address, so the app's host name check stays on and passes. Its private key stays in the script's temporary directory, which only you can read. On a port of its own, the same proxy serves Tokkl over http under the path prefix `/tokkl`, as a reverse proxy serves it beside other sites, and answers 404 to every other path there, so a client that drops the prefix fails. `./gradlew connectedDebugAndroidTest` gets the three server URLs, the certificate's SHA-256 fingerprint, the email and the file's path as instrumentation arguments. The URLs are `http://10.0.2.2:<port>`, `https://10.0.2.2:<port>` and `http://10.0.2.2:<port>/tokkl`, at the address under which the emulator reaches the host. The script removes both containers, the key and the file when it finishes, also when a test fails. A run killed before its cleanup leaves its file behind, so before it copies its own, the script deletes the ones more than six hours old. It also fails when a test device goes away during the run, because Gradle can report success without running every test. Runs take turns: each holds a lock in `$XDG_RUNTIME_DIR` until its cleanup ends, and a run started meanwhile names the run that holds it and waits. Otherwise a second run would test on the first run's emulator, which the first run's cleanup stops.
 
-If no device is attached, the script boots `tokkl-api36` as in the previous section, or the AVD that `TOKKL_TEST_AVD` names, with 2.5 GB of guest RAM, 4 cores and the `lavapipe` renderer, and stops it and the adb server at the end. When your systemd user manager is running, the emulator runs in a scope of its own with `OOMPolicy=continue` and at most 6 GB of memory. If the kernel's OOM killer ends qemu, the script fails and says so, and systemd leaves the session that started it alone. On an emulator it boots, the script also turns on `hide_error_dialogs` and closes open system dialogs, because a fresh headless boot often leaves "System UI isn't responding" in front of the app. It also sets the font scale to 1.0, because the AVD keeps the last scale a test set across boots. It turns on `show_ime_with_hard_keyboard` too, since otherwise the soft keyboard never opens on the headless emulator. On Android 12 and later it sets `debug.hwui.renderer` to `skiavk`, so apps draw with Vulkan: qemu kept about 100 MB after every app process that drew with OpenGL, and the test orchestrator starts one per test, so a full run took qemu to 11 GB instead of 3.5 GB. Below Android 12 HWUI aborted every app at its first frame with `skiavk`, so apps there draw with OpenGL. It changes no setting on an emulator that was already running, and that emulator keeps running. Arguments go to Gradle, so one class runs with:
+If no device is attached, the script boots `tokkl-api36` as in the previous section, or the AVD that `TOKKL_TEST_AVD` names, with 2.5 GB of guest RAM, 4 cores and the `lavapipe` renderer, or `swiftshader_indirect` for an image older than API 36, and stops it and the adb server at the end. It refuses an AVD older than Android 12, where the app does not install. When your systemd user manager is running, the emulator runs in a scope of its own with `OOMPolicy=continue` and at most 6 GB of memory. If the kernel's OOM killer ends qemu, the script fails and says so, and systemd leaves the session that started it alone. On an emulator it boots, the script also turns on `hide_error_dialogs` and closes open system dialogs, because a fresh headless boot often leaves "System UI isn't responding" in front of the app. It also sets the font scale to 1.0, because the AVD keeps the last scale a test set across boots. It turns on `show_ime_with_hard_keyboard` too, since otherwise the soft keyboard never opens on the headless emulator. It sets `debug.hwui.renderer` to `skiavk`, so apps draw with Vulkan: qemu kept about 100 MB after every app process that drew with OpenGL, and the test orchestrator starts one per test, so a full run took qemu to 11 GB instead of 3.5 GB. On API 31 `lavapipe`'s Vulkan lacks `VK_KHR_external_semaphore_fd`, and HWUI aborted every app at its first frame without it. SwiftShader's Vulkan has it, so `tokkl-api31` boots with `swiftshader_indirect`. It changes no setting on an emulator that was already running, and that emulator keeps running. Arguments go to Gradle, so one class runs with:
 
 ```sh
 scripts/instrumented-tests.sh \
   -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest
 ```
 
-Run the suite on `tokkl-api30` or `tokkl-api26` with:
+Run the suite on `tokkl-api31` with:
 
 ```sh
-TOKKL_TEST_AVD=tokkl-api30 scripts/instrumented-tests.sh
-TOKKL_TEST_AVD=tokkl-api26 scripts/instrumented-tests.sh
+TOKKL_TEST_AVD=tokkl-api31 scripts/instrumented-tests.sh
 ```
 
 A second run waits for the first one's lock, so the two emulators never run at once.
-
-Below Android 12, a run with no test filter on an emulator the script boots goes in batches, so qemu never holds a whole run's memory. The script first installs the app and the tests and has the runner list the tests without running them, which leaves out what `@SdkSuppress` leaves out. Then it runs whole classes, at most 20 tests at a time, each batch on a freshly booted emulator against the same server. The steps of each `*RestartTest` belong to one class, so they run in order on one emulator. qemu peaked at 3.4 GB on `tokkl-api30` and 3.7 GB on `tokkl-api26`, and a whole run took about 15 minutes on either. The script prints each batch's totals and then the run's, and keeps each batch's results and HTML report in `app/build/outputs/androidTest-results/batches/<batch>/`, since every batch's Gradle run replaces the previous one's. It fails when a batch fails, and when a batch ran a different number of tests than the runner listed for it: on API 26, Gradle once passed a batch whose APK it could not install, with none of its tests run. A run with a test filter, or on a device the script did not boot, runs as one.
 
 No test may skip itself with a JUnit assumption. The Android Gradle plugin 9.4.1 runs the tests through its test engine 1.0.1, which records every result but a pass as a failure, so a failed assumption shows as a failed test in the JUnit XML and the HTML report, even though the Gradle task passes. Engine 1.0.7, which AGP 9.5.0-alpha08 and later bring, records it as skipped. To leave a test out on some Android versions, use `@SdkSuppress`. When a test needs a device setting, it sets the setting and puts it back afterwards, as `SystemFontScale` does for the font scale and `SystemNightMode` for the night mode.
 

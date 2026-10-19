@@ -30,32 +30,27 @@
 #
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
 # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
-# tokkl-api36; tokkl-api30 runs Android 11, tokkl-api26 Android 8.0) without a
-# window, with 2.5 GB of guest RAM, 4 cores and the lavapipe renderer, turns
-# off error dialogs on it, sets its font scale to 1.0, lets its soft keyboard
-# open, makes apps draw with Vulkan on Android 12 and later, and stops it at
-# the end. It changes no setting on a device it did not boot. It also stops
-# the adb server if that was not running before.
-#
-# Below Android 12, a run with no test runner argument on an emulator the
-# script boots goes in batches of whole test classes, each on a fresh
-# emulator, so qemu never holds a full run's memory (see run_in_batches). The
-# run prints each batch's totals and then the whole run's, and keeps each
-# batch's results in app/build/outputs/androidTest-results/batches/.
+# tokkl-api36; tokkl-api31 runs Android 12, the oldest version the app
+# supports) without a window, with 2.5 GB of guest RAM, 4 cores and the
+# lavapipe renderer, or SwiftShader below API 36, turns off error dialogs on
+# it, sets its font scale to 1.0, lets its soft keyboard open, makes apps draw
+# with Vulkan, and stops it at the end. It refuses an AVD older than Android
+# 12, where the app does not install. It changes no setting on a device it did
+# not boot. It also stops the adb server if that was not running before.
 #
 # Runs take turns. Each run locks a file in $XDG_RUNTIME_DIR from its start
 # until its cleanup ends. A run that starts meanwhile prints the PID, start
 # time and directory of the run holding the lock, and waits for it to end.
 #
-# qemu peaks at about 3.5 GB in a full run on tokkl-api36 and below 4 GB in
-# each batch on tokkl-api30 and tokkl-api26. Its oom_score_adj of 800 makes it
-# the kernel OOM killer's first pick. When the user's systemd manager is
-# reachable, the emulator runs in a scope of its own with OOMPolicy=continue
-# and at most EMULATOR_MEMORY_MAX of memory, so an OOM kill ends only qemu and
-# this script, not the caller's scope with everything else in it, such as an
-# agent session. The scope is PartOf the caller's unit, so stopping the caller
-# still stops the emulator. Without a user manager, as in CI, the emulator
-# starts as a plain child process with no memory limit.
+# qemu peaks at about 3.5 GB in a full run on tokkl-api36 and at about 4 GB on
+# tokkl-api31. Its oom_score_adj of 800 makes it the kernel OOM killer's first
+# pick. When the user's systemd manager is reachable, the emulator runs in a
+# scope of its own with OOMPolicy=continue and at most EMULATOR_MEMORY_MAX of
+# memory, so an OOM kill ends only qemu and this script, not the caller's
+# scope with everything else in it, such as an agent session. The scope is
+# PartOf the caller's unit, so stopping the caller still stops the emulator.
+# Without a user manager, as in CI, the emulator starts as a plain child
+# process with no memory limit.
 #
 # Arguments go to Gradle, for example to run one class:
 #   scripts/instrumented-tests.sh \
@@ -98,21 +93,8 @@ readonly FILTER_PREFIX='tokkl-test-filter-'
 # run that ended without its cleanup, never to one still reading it.
 readonly STALE_CREDENTIALS_HOURS=6
 # The most memory the emulator's scope may use, swap included. A full run
-# peaks below 4 GB on tokkl-api36. On tokkl-api30, where apps draw with OpenGL
-# (see boot_emulator), it reached 5.5 GB on one emulator, and each batch now
-# stays below 4 GB.
+# peaks below 4 GB on tokkl-api36.
 readonly EMULATOR_MEMORY_MAX=6G
-# Below Android 12 qemu keeps memory after every test (see boot_emulator), up
-# to about 110 MB on API 26, so a full run on an emulator the script boots
-# there goes in batches of whole test classes, each on a fresh emulator. A
-# batch holds at most this many tests, unless one class has more. With 20, qemu
-# peaked below 4 GB on tokkl-api30 and tokkl-api26.
-readonly BATCH_TESTS=20
-# Where Gradle puts the results and the report of a run, which every run
-# replaces, and where the script keeps each batch's.
-readonly RESULTS='app/build/outputs/androidTest-results/connected/debug'
-readonly REPORT='app/build/reports/androidTests/connected/debug'
-readonly BATCH_RESULTS='app/build/outputs/androidTest-results/batches'
 
 cd "$(dirname "$0")/.."
 
@@ -150,13 +132,6 @@ if [ "${#test_filter[@]}" -gt 0 ]; then
         esac
     done
 fi
-# A run with no test runner argument runs every test, which below Android 12
-# goes in batches (see run_in_batches).
-full_run=true
-for arg in "$@"; do
-    case $arg in *"$RUNNER_ARGS."*) full_run=false ;; esac
-done
-
 # Runs take turns. A second run would test on the first one's emulator, which
 # the first one's cleanup then stops, along with an adb server it started. So
 # each run locks this file until it exits, after its cleanup, and a run that
@@ -181,7 +156,6 @@ proxy=''
 emulator_pid=''
 emulator_serial=''
 emulator_unit=''
-emulator_sdk=''
 credentials_on_device=''
 filter_on_device=''
 devices_with_credentials=()
@@ -286,13 +260,21 @@ remove_stale_credentials() {
     fi
 }
 
+# Prints the API level of the system image of the AVD named AVD, from its
+# config.ini, or nothing when that file does not say.
+avd_api_level() {
+    local avd_home=${ANDROID_AVD_HOME:-${ANDROID_USER_HOME:-$HOME/.android}/avd} dir
+    dir=$(sed -n 's/^path=//p' "$avd_home/$AVD.ini" 2>/dev/null)
+    sed -n 's|^image\.sysdir\.1=system-images/android-\([0-9]*\)/.*|\1|p' "${dir:-$avd_home/$AVD.avd}/config.ini" 2>/dev/null
+}
+
 attached_devices() {
     adb devices | awk 'NR > 1 && $2 == "device" { print $1 }'
 }
 
 boot_emulator() {
     command -v emulator >/dev/null || { echo "$0: no device attached and emulator is not on PATH" >&2; exit 1; }
-    local port=5554 log="$work_dir/emulator.log" deadline=$((SECONDS + 300)) caller
+    local port=5554 log="$work_dir/emulator.log" deadline=$((SECONDS + 300)) caller emulator_sdk gpu=lavapipe level
     local -a launch=()
     while adb devices | grep -q "^emulator-${port}[[:space:]]"; do port=$((port + 2)); done
     emulator_serial="emulator-$port"
@@ -303,11 +285,17 @@ boot_emulator() {
         if caller=$(systemctl --user whoami 2>/dev/null); then launch+=(-p "PartOf=$caller"); fi
         launch+=(--)
     fi
-    echo "Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit}"
+    # lavapipe is the renderer the emulator picked on its own for API 36, which
+    # drew the screenshot references. On the API 31 image its Vulkan lacks
+    # VK_KHR_external_semaphore_fd, which HWUI needs to draw with Vulkan (see
+    # below), and SwiftShader's Vulkan has it. So images older than the
+    # references' use SwiftShader.
+    level=$(avd_api_level)
+    if [[ $level =~ ^[0-9]+$ ]] && [ "$level" -lt 36 ]; then gpu=swiftshader_indirect; fi
+    echo "Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit} with the $gpu renderer"
     # The emulator raises any smaller -memory to 2560 MB for an API 34 or later
-    # image. lavapipe is the renderer it picked on its own, which drew the
-    # screenshot references.
-    "${launch[@]}" emulator -avd "$AVD" -port "$port" -memory 2560 -cores 4 -gpu lavapipe \
+    # image.
+    "${launch[@]}" emulator -avd "$AVD" -port "$port" -memory 2560 -cores 4 -gpu "$gpu" \
         -no-window -no-audio -no-boot-anim -no-snapshot -accel on {lock_fd}>&- >"$log" 2>&1 &
     emulator_pid=$!
     export ANDROID_SERIAL="$emulator_serial"
@@ -337,18 +325,9 @@ boot_emulator() {
     # emulator, so no test saw a screen with the keyboard open. With this
     # setting, which shows it alongside a hardware keyboard, it opens.
     adb -s "$emulator_serial" shell settings put secure show_ime_with_hard_keyboard 1
-    # qemu kept about 100 MB each time an app process that drew with OpenGL
-    # ended, with lavapipe and with swiftshader, and the test orchestrator
-    # starts a process for every test, so one full run took qemu to 11 GB. A
-    # process that draws with Vulkan leaves about 5 MB. HWUI reads this when a
-    # process starts, so it applies to every test. Below Android 12 HWUI
-    # aborted every app at its first frame with it: the API 28 image offers no
-    # Vulkan, and the API 30 image's Vulkan lacks VK_KHR_external_semaphore_fd,
-    # which HWUI needs. Apps there draw with OpenGL, and a full run there goes
-    # in batches (see run_in_batches).
-    # With pipefail, one failed adb call here would end the run without a
-    # message, so this asks again until it gets a number, within the boot's
-    # deadline.
+    # The app needs Android 12 (API 31). With pipefail, one failed adb call
+    # here would end the run without a message, so this asks again until it
+    # gets a number, within the boot's deadline.
     emulator_sdk=$(adb -s "$emulator_serial" shell getprop ro.build.version.sdk | tr -d '\r') || true
     until [[ $emulator_sdk =~ ^[0-9]+$ ]]; do
         if [ "$SECONDS" -ge "$deadline" ]; then
@@ -358,11 +337,18 @@ boot_emulator() {
         sleep 2
         emulator_sdk=$(adb -s "$emulator_serial" shell getprop ro.build.version.sdk | tr -d '\r') || true
     done
-    if [ "$emulator_sdk" -ge 31 ]; then
-        adb -s "$emulator_serial" shell setprop debug.hwui.renderer skiavk
-    else
-        echo "$AVD runs Android 11 or earlier, so apps on it draw with OpenGL"
+    if [ "$emulator_sdk" -lt 31 ]; then
+        echo "$0: $AVD runs API $emulator_sdk, but the app needs Android 12 (API 31) or later." >&2
+        exit 1
     fi
+    # qemu kept about 100 MB each time an app process that drew with OpenGL
+    # ended, with lavapipe and with swiftshader, and the test orchestrator
+    # starts a process for every test, so one full run took qemu to 11 GB. A
+    # process that draws with Vulkan leaves about 5 MB. HWUI reads this when a
+    # process starts, so it applies to every test. With lavapipe on API 31,
+    # HWUI aborted every app at its first frame, missing
+    # VK_KHR_external_semaphore_fd.
+    adb -s "$emulator_serial" shell setprop debug.hwui.renderer skiavk
 }
 
 if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then
@@ -516,8 +502,8 @@ push_to_devices() {
     done
 }
 
-# Runs the tests once on every test device, with any further Gradle arguments
-# given. Fails when Gradle fails or a test device went away during the run.
+# Runs the tests once on every test device. Fails when Gradle fails or a test
+# device went away during the run.
 run_tests() {
     local status=0 device
     local -a gone=()
@@ -528,7 +514,7 @@ run_tests() {
         "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
         "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
         "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
-        "${gradle_args[@]}" "$@" || status=$?
+        "${gradle_args[@]}" || status=$?
     # AGP's test task can pass when a device dies between two tests. With the
     # emulator killed a second into the run, Gradle printed BUILD SUCCESSFUL
     # and had run none of the 32 tests. So every test device must still be
@@ -543,135 +529,13 @@ run_tests() {
     return "$status"
 }
 
-# Prints the numbers of tests, failures, errors and skipped tests in the JUnit
-# XML report of a run on one device, in directory $1, on one line. A run that
-# left no report counts as 0 0 0 0.
-report_totals() {
-    local xml attribute value
-    local -a totals=()
-    xml=$(find "$1" -maxdepth 1 -name 'TEST-*.xml' -print -quit)
-    for attribute in tests failures errors skipped; do
-        value=''
-        if [ -n "$xml" ]; then
-            value=$(sed -n "s/^<testsuites [^>]*\b$attribute=\"\([0-9]*\)\".*/\1/p" "$xml" | head -n 1)
-        fi
-        totals+=("${value:-0}")
-    done
-    echo "${totals[*]}"
-}
-
-# Below Android 12 qemu keeps memory after each test, so a full run on an
-# emulator this script booted there goes in batches of whole test classes, at
-# most BATCH_TESTS tests each, and every batch gets a fresh emulator. The tests
-# of one class stay in one batch, so the steps of each *RestartTest still run
-# in order on one device. The runner lists the tests without running them
-# first, so the batches leave out what @SdkSuppress leaves out. All batches
-# use the same server. The run fails when a batch fails, and when the batches
-# ran a different number of tests than the runner listed.
-run_in_batches() {
-    local instrumentation listing count class batch='' size=0 listed=0 ran=0 failures=0 skipped=0
-    local i n status tests failed errors skips dir
-    local -a classes=() counts=() batches=() sizes=() failed_batches=()
-    echo "Listing the tests on $emulator_serial to run them in batches of at most $BATCH_TESTS"
-    ./gradlew --no-daemon --quiet installDebug installDebugAndroidTest "${gradle_args[@]}"
-    instrumentation=$(adb -s "$emulator_serial" shell pm list instrumentation | tr -d '\r' |
-        sed -n 's/^instrumentation:\([^ ]*\) (target=com\.github\.e0ipso\.tokkl)$/\1/p')
-    listing=$(adb -s "$emulator_serial" shell am instrument -r -w -e log true "$instrumentation" | tr -d '\r')
-    if ! grep -qx 'INSTRUMENTATION_CODE: -1' <<<"$listing"; then
-        echo "$0: the runner could not list the tests. Its last output:" >&2
-        tail -n 20 <<<"$listing" >&2
-        return 1
-    fi
-    # Both APKs go again. On API 26, AGP's test task failed to install the
-    # app over the copy left here (INSTALL_FAILED_ALREADY_EXISTS), ran none of
-    # the batch's tests and still passed.
-    adb -s "$emulator_serial" uninstall "${instrumentation%%/*}" >/dev/null
-    adb -s "$emulator_serial" uninstall com.github.e0ipso.tokkl >/dev/null
-    # Each test's start is a status block that names its class and ends in
-    # code 1. This prints each class with its number of tests, in the
-    # runner's order.
-    while read -r count class; do
-        classes+=("$class")
-        counts+=("$count")
-    done < <(awk '
-        /^INSTRUMENTATION_STATUS: class=/ { class = $0; sub(/^INSTRUMENTATION_STATUS: class=/, "", class) }
-        /^INSTRUMENTATION_STATUS_CODE: 1$/ { if (!(class in tests)) order[++classes] = class; tests[class]++ }
-        END { for (i = 1; i <= classes; i++) print tests[order[i]], order[i] }' <<<"$listing")
-    for i in "${!classes[@]}"; do
-        if [ -n "$batch" ] && [ $((size + counts[i])) -gt "$BATCH_TESTS" ]; then
-            batches+=("$batch")
-            sizes+=("$size")
-            batch=''
-            size=0
-        fi
-        batch+="${classes[i]}"$'\n'
-        size=$((size + counts[i]))
-        listed=$((listed + counts[i]))
-    done
-    if [ "$listed" -eq 0 ]; then
-        echo "$0: the runner listed no tests" >&2
-        return 1
-    fi
-    batches+=("$batch")
-    sizes+=("$size")
-    echo "The runner listed $listed tests in ${#classes[@]} classes: ${#batches[@]} batches"
-
-    rm -rf "$BATCH_RESULTS"
-    for i in "${!batches[@]}"; do
-        n=$((i + 1))
-        if [ "$i" -gt 0 ]; then
-            boot_emulator
-            devices=("$emulator_serial")
-        fi
-        printf '%s' "${batches[i]}" >"$filter"
-        filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
-        push_to_devices
-        echo "Batch $n of ${#batches[@]}: ${sizes[i]} tests in $(grep -c . "$filter") classes on $emulator_serial"
-        # A batch whose Gradle run stops before the tests must not count the
-        # previous batch's results.
-        rm -rf "$RESULTS" "$REPORT"
-        status=0
-        run_tests "-P$RUNNER_ARGS.testFile=$filter_on_device" || status=$?
-        remove_device_files
-        stop_emulator || status=1
-        dir="$BATCH_RESULTS/$n"
-        mkdir -p "$dir"
-        if [ -d "$RESULTS" ]; then cp -R "$RESULTS/." "$dir/"; fi
-        if [ -d "$REPORT" ]; then cp -R "$REPORT" "$dir/report"; fi
-        read -r tests failed errors skips < <(report_totals "$dir")
-        ran=$((ran + tests))
-        failures=$((failures + failed + errors))
-        skipped=$((skipped + skips))
-        echo "Batch $n: $tests of its ${sizes[i]} tests ran, $((failed + errors)) failed, $skips skipped"
-        # Gradle can pass a batch without running its tests (see above).
-        if [ "$tests" -ne "${sizes[i]}" ]; then status=1; fi
-        if [ "$status" -ne 0 ]; then failed_batches+=("$n"); fi
-    done
-
-    echo "All ${#batches[@]} batches: $ran of the $listed listed tests ran, $failures failed, $skipped skipped. Each batch's results and report are in $BATCH_RESULTS/<batch>."
-    if [ "$ran" -ne "$listed" ]; then
-        echo "$0: the batches ran $ran tests, but the runner listed $listed." >&2
-        return 1
-    fi
-    if [ "${#failed_batches[@]}" -gt 0 ]; then
-        echo "$0: batch ${failed_batches[*]} failed." >&2
-        return 1
-    fi
-}
-
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
 echo "The TLS proxy is ready on https://127.0.0.1:$tls_port, with certificate SHA-256 $tls_fingerprint"
 echo "The proxy serves Tokkl under $prefixed, which the emulator reaches as http://10.0.2.2:$prefix_port/tokkl"
-# Neither function runs with || after it, so set -e still stops either at its
-# first failing command.
-if [ -n "$emulator_pid" ] && [ "$emulator_sdk" -lt 31 ] && [ "$full_run" = true ]; then
-    run_in_batches
-else
-    if [ "${#test_filter[@]}" -gt 0 ]; then
-        printf '%s\n' "${test_filter[@]}" >"$filter"
-        filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
-        gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
-    fi
-    push_to_devices
-    run_tests
+if [ "${#test_filter[@]}" -gt 0 ]; then
+    printf '%s\n' "${test_filter[@]}" >"$filter"
+    filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
+    gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
 fi
+push_to_devices
+run_tests

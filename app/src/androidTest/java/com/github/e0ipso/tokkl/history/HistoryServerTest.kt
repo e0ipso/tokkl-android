@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -113,8 +114,8 @@ class HistoryServerTest {
         val forty = now.minus(40, ChronoUnit.DAYS).let { account.createEntry("Forty days ago", it, it.plusSeconds(5400)) }
         refresh()
         val stored = account.entry(snapped)
-        val start = Instant.parse(stored.getValue("start").jsonPrimitive.content)
-        val stop = Instant.parse(stored.getValue("stop").jsonPrimitive.content)
+        val start = stored.instant("start")
+        val stop = stored.instant("stop")
         assertNotEquals("the server snapped the start", sentStart, start)
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -190,12 +191,18 @@ class HistoryServerTest {
 
             val stored = direct.get(direct.server.api("me", "time_entries", runBlocking { app.changes.currentId(id) }.toString()), JsonObject.serializer())
                 .orFail("GET /api/v9/me/time_entries/<id>")
-            assertEquals(snapped.start, Instant.parse(stored.getValue("start").jsonPrimitive.content))
-            assertEquals(snapped.stop, Instant.parse(stored.getValue("stop").jsonPrimitive.content))
+            assertEquals(snapped.start, stored.instant("start"))
+            assertEquals(snapped.stop, stored.instant("stop"))
             composeRule.waitUntil("the mark goes", LOAD_TIMEOUT_MS) { !exists(unsent) }
             awaitText(range)
         }
     }
+
+    /**
+     * Tokkl writes times with an offset, such as +00:00. Instant.parse refused that on API 31 and
+     * took only a Z, so the offset goes through OffsetDateTime, as in the app's ServerReader.
+     */
+    private fun JsonObject.instant(key: String): Instant = OffsetDateTime.parse(getValue(key).jsonPrimitive.content).toInstant()
 
     private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
 

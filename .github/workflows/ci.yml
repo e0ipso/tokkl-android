@@ -60,14 +60,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
       - run: scripts/reproducible-release.sh
 
-  # The instrumented tests on an API 36 and an API 30 emulator, against the
+  # The instrumented tests on an API 36 and an API 31 emulator, against the
   # Tokkl image that scripts/instrumented-tests.sh pins by digest.
   # android-emulator-runner boots the emulator; the script sees an attached
   # device, so it starts and seeds the server and runs the tests without
-  # booting one of its own. API 30 runs the code for Android 11 and earlier:
-  # the night mode Android keeps for the system, no wallpaper colours, and
-  # backup off through android:allowBackup alone. The screenshot tests do not
-  # run there, since their references come from API 36.
+  # booting one of its own. API 31 is Android 12, the oldest version the app
+  # supports, so it catches a call to an API newer than the device. The
+  # screenshot tests do not run there, since their references come from API 36.
   instrumented-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -76,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [36, 30]
+        api-level: [36, 31]
     name: instrumented-tests (API ${{ matrix.api-level }})
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -97,18 +96,16 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      # The AVD follows tokkl-api36 and tokkl-api30: the plain AOSP image,
+      # The AVD follows tokkl-api36 and tokkl-api31: the plain AOSP image,
       # which keeps SystemUI and the launcher, on a medium phone with 2 GB of
       # RAM. -accel on and disable-linux-hw-accel: false make the job fail
       # without KVM instead of falling back to software emulation. Animations
       # stay on, as they do locally. The runner runs each script line on its
       # own with sh -c. The first two turn off error dialogs, the third lets
-      # the soft keyboard open and the fourth makes apps draw with Vulkan on
-      # Android 12 and later, as the script does on an emulator it boots
-      # itself. qemu kept about 100 MB after every app process that drew with
-      # OpenGL, and the test orchestrator starts one per test, so a full run
-      # grew it by about 10 GB. On API 30 HWUI aborted every app with Vulkan,
-      # so apps there draw with OpenGL.
+      # the soft keyboard open and the fourth makes apps draw with Vulkan, as
+      # the script does on an emulator it boots itself. qemu kept about 100 MB
+      # after every app process that drew with OpenGL, and the test
+      # orchestrator starts one per test, so a full run grew it by about 10 GB.
       - uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api-level }}
@@ -123,7 +120,7 @@ jobs:
             adb shell settings put global hide_error_dialogs 1
             adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS
             adb shell settings put secure show_ime_with_hard_keyboard 1
-            if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 31 ]; then adb shell setprop debug.hwui.renderer skiavk; fi
+            adb shell setprop debug.hwui.renderer skiavk
             scripts/instrumented-tests.sh
 
   # Lints the commit messages and runs the tests of the commitlint rules. The
