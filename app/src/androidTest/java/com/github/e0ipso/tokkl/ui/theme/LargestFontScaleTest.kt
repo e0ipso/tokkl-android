@@ -85,8 +85,10 @@ class LargestFontScaleTest {
     fun timerPageFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitTimerPage()
+        // The test account has no entries, so the history says so once the cache has loaded.
+        composeRule.awaitText(string(R.string.history_empty_title), NETWORK_TIMEOUT_MS)
 
-        assertFitWithoutOverlap(*timerPageParts().toTypedArray())
+        assertFitWithoutOverlap(*timerPageParts().toTypedArray(), text(R.string.history_empty_title))
         assertLabelsWhole()
     }
 
@@ -558,8 +560,9 @@ class LargestFontScaleTest {
         composeRule.onNode(hasText(string(label)) and hasClickAction())
 
     /**
-     * The Timer page's parts that stack, and the bottom bar's items, which must not overlap. The
-     * List and Calendar segments share their border, so the switch counts as one part.
+     * The Timer page's parts that stack above its history, and the bottom bar's items, which must
+     * not overlap. The List and Calendar segments share their border, so the switch counts as one
+     * part.
      */
     private fun timerPageParts(): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
@@ -568,7 +571,6 @@ class LargestFontScaleTest {
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup) and
                     hasAnyDescendant(hasText(string(R.string.timer_view_list))),
             ),
-            text(R.string.timer_list_later),
         ) + BAR_LABELS.map { label -> "${string(label)} item" to button(label) }
 
     /** Each segment's and each bar item's label shows in full, inside its control. */

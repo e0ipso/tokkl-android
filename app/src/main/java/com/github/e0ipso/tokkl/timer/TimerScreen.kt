@@ -44,16 +44,16 @@ enum class TimerView(@StringRes val label: Int) {
  * lays it out: the timer, then the List and Calendar switch, then the entries in the chosen [view]. The timer
  * (TKA-0039) is not built yet, so the brand stands in its place.
  *
- * [listContent] and [calendarContent] fill the rest of the page under the switch, with a bounded
- * height, so the history list (TKA-0029) and the week view (TKA-0030) can scroll on their own.
- * Until then each says what it will show.
+ * [listContent], the history, and [calendarContent] fill the rest of the page under the switch,
+ * with a bounded height, so each scrolls on its own. Until the week view (TKA-0030) exists, the
+ * calendar says what it will show.
  */
 @Composable
 fun TimerScreen(
     view: TimerView,
     onViewChange: (TimerView) -> Unit,
+    listContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    listContent: @Composable () -> Unit = { ComesLater(R.string.timer_list_later) },
     calendarContent: @Composable () -> Unit = { ComesLater(R.string.timer_calendar_later) },
 ) {
     Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->

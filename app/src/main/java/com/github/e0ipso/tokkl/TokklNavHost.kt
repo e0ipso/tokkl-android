@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.history.HistoryList
+import com.github.e0ipso.tokkl.history.HistoryModel
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
 import com.github.e0ipso.tokkl.navigation.PlaceholderScreen
@@ -63,6 +66,7 @@ fun TokklNavHost(
     themeSettings: ThemeSettingsModel,
     sessionTrust: SessionTrustModel,
     reports: ReportsModel,
+    history: HistoryModel,
 ) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
@@ -88,10 +92,21 @@ fun TokklNavHost(
         )
         return
     }
-    // The bar's height, system navigation bar included, is padding the screens consume, so
-    // their own navigation bar padding adds nothing above the bar.
+    SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open) {
+        Screen(destination, backStack, themeSettings, reports, history, timerView, onTimerViewChange = { timerView = it })
+        SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+/**
+ * A signed-in screen, [content], above the bottom bar, which marks [current] and opens pages with
+ * [onOpen]. The bar's height, system navigation bar included, is padding the screens consume, so
+ * their own navigation bar padding adds nothing above the bar.
+ */
+@Composable
+internal fun SignedInFrame(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, content: @Composable BoxScope.() -> Unit) {
     Scaffold(
-        bottomBar = { AppNavigationBar(current = backStack.currentPage(), onOpen = backStack::open) },
+        bottomBar = { AppNavigationBar(current = current, onOpen = onOpen) },
         contentWindowInsets = WindowInsets(0),
     ) { innerPadding ->
         Box(
@@ -99,10 +114,8 @@ fun TokklNavHost(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding),
-        ) {
-            Screen(destination, backStack, themeSettings, reports, timerView, onTimerViewChange = { timerView = it })
-            SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
-        }
+            content = content,
+        )
     }
 }
 
@@ -112,13 +125,18 @@ private fun Screen(
     backStack: SnapshotStateList<Destination>,
     themeSettings: ThemeSettingsModel,
     reports: ReportsModel,
+    history: HistoryModel,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
 ) {
     when (destination) {
         // TokklNavHost draws sign-in on its own, without the bar.
         Destination.SIGN_IN -> Unit
-        Destination.TIMER -> TimerScreen(view = timerView, onViewChange = onTimerViewChange)
+        Destination.TIMER -> TimerScreen(
+            view = timerView,
+            onViewChange = onTimerViewChange,
+            listContent = { HistoryList(history) },
+        )
         Destination.REPORTS -> ReportsScreen(model = reports)
         Destination.PROJECTS -> PlaceholderScreen(title = R.string.nav_projects, message = R.string.projects_later)
         Destination.CLIENTS -> PlaceholderScreen(title = R.string.nav_clients, message = R.string.clients_later)

@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
+import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity() {
 
     private val signInViewModel: SignInViewModel by viewModels()
     private val reportsViewModel: ReportsViewModel by viewModels()
+    private val historyViewModel: HistoryViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +48,7 @@ class MainActivity : ComponentActivity() {
                     themeSettings = themeSettings,
                     sessionTrust = (application as TokklApplication).sessionTrust,
                     reports = reportsViewModel.model,
+                    history = historyViewModel.model,
                 )
             }
         }

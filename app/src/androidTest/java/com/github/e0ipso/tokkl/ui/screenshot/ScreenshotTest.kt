@@ -21,12 +21,19 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.SignedInFrame
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.history.HistoryContent
+import com.github.e0ipso.tokkl.history.HistoryDay
+import com.github.e0ipso.tokkl.history.HistoryEntry
+import com.github.e0ipso.tokkl.history.HistoryState
+import com.github.e0ipso.tokkl.history.OlderDays
+import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.RangeSelection
 import com.github.e0ipso.tokkl.reports.ReportEntry
@@ -41,6 +48,8 @@ import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.applicationNightMode
 import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
 import com.github.e0ipso.tokkl.settings.systemIsDark
+import com.github.e0ipso.tokkl.timer.TimerScreen
+import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -50,6 +59,7 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.Locale
 import kotlin.math.roundToInt
 import org.junit.Rule
 import org.junit.Test
@@ -59,10 +69,11 @@ import org.junit.rules.RuleChain
 /**
  * Screenshots of every screen and trust prompt, compared with reference images by
  * [ReferenceImages]. The four classes below run them in the light and the dark theme, at font
- * scale 1.0 and at the largest, 2.0. Sign-in, Timer, Settings and Licences show in the real
- * activity, with the bottom bar. The reports screen shows a fixed summary for a fixed day, and each prompt fixed text,
- * so no capture depends on the date, the server's port or its certificate. A capture holds the
- * app's window or the dialog's, never the status bar.
+ * scale 1.0 and at the largest, 2.0. Sign-in, Settings and Licences show in the real activity,
+ * with the bottom bar. The Timer page shows above the same bar with a fixed history for a fixed
+ * day, the reports screen a fixed summary for a fixed day, and each prompt fixed text, so no
+ * capture depends on the date, the server's data, its port or its certificate. A capture holds
+ * the app's window or the dialog's, never the status bar.
  *
  * The references are in app/src/androidTest/assets/screenshots, recorded on tokkl-api36, since
  * density and system fonts change the pixels. A change to how a screen looks updates its
@@ -114,10 +125,20 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
+    @SignedOut
     @Test
     fun timer() {
-        launchApp {
+        show({
+            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+                TimerScreen(
+                    view = TimerView.LIST,
+                    onViewChange = {},
+                    listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
+                )
+            }
+        }) {
             composeRule.awaitTimerPage()
+            composeRule.awaitText(string(R.string.history_today).uppercase(Locale.ROOT))
             assertScreen("timer")
         }
     }
@@ -253,6 +274,37 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             DayOfWeek.MONDAY,
         )
 
+        /**
+         * Three days of history on [TODAY]: projects with and without a task, an entry without a
+         * description or project, a billable one, tags, and one the server has not received.
+         */
+        val HISTORY = HistoryState.Shown(
+            days = listOf(
+                HistoryDay(
+                    LocalDate.of(2026, 10, 15),
+                    listOf(
+                        historyEntry(1, "Code review", WALL, task = null, "10:45", "11:50", tags = listOf("review"), unsent = true),
+                        historyEntry(2, "Write the history list", APP, task = "Design", "09:00", "10:30", billable = true),
+                    ),
+                ),
+                HistoryDay(
+                    LocalDate.of(2026, 10, 14),
+                    listOf(
+                        historyEntry(3, "", project = null, task = null, "14:00", "17:15", day = 14),
+                        historyEntry(4, "Sprint planning", APP, task = null, "08:30", "12:00", day = 14),
+                    ),
+                ),
+                HistoryDay(
+                    LocalDate.of(2026, 10, 12),
+                    listOf(historyEntry(5, "Paint the mural", WALL, task = null, "09:00", "12:30", day = 12, billable = true)),
+                ),
+            ),
+            today = LocalDate.of(2026, 10, 15),
+            zone = ZoneOffset.UTC,
+            settings = ACCOUNT,
+            older = OlderDays.End,
+        )
+
         val HTTP_SERVER: ServerUrl = checkNotNull(ServerUrl.parse("http://10.0.2.2:8080"))
 
         val CERTIFICATE = ServerCertificate(
@@ -260,6 +312,31 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             port = 8443,
             sha256 = "4f1d7c2a9b3e8d6f0a5c1e7b2d9f4a6c8e3b0d5f7a2c9e1b4d6f8a0c3e5b7d9f",
             subject = "CN=Tokkl instrumented tests",
+        )
+
+        /** A stopped entry of [HISTORY] on October [day], from [start] to [stop] in UTC. */
+        private fun historyEntry(
+            id: Long,
+            description: String,
+            project: Project?,
+            task: String?,
+            start: String,
+            stop: String,
+            day: Int = 15,
+            tags: List<String> = emptyList(),
+            billable: Boolean = false,
+            unsent: Boolean = false,
+        ) = HistoryEntry(
+            id = id,
+            description = description,
+            project = project?.name,
+            projectColor = project?.colour,
+            task = task,
+            tags = tags,
+            billable = billable,
+            start = Instant.parse("2026-10-${day}T$start:00Z"),
+            stop = Instant.parse("2026-10-${day}T$stop:00Z"),
+            unsent = unsent,
         )
 
         /** An entry in [WEEK], billed at 80 EUR an hour when [billable]. */

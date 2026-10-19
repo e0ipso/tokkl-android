@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The history on the Timer page's List view (docs/PRD.md H1). -->
+<resources>
+    <string name="history_today">Today</string>
+    <string name="history_yesterday">Yesterday</string>
+    <!-- A day's header, as the web app's dayLabel: Mon, 13 Oct -->
+    <string name="history_day">%1$s, %2$s</string>
+    <!-- What TalkBack reads for a day's header: Today, 3 hours, 20 minutes in total -->
+    <string name="history_day_spoken">%1$s, %2$s in total</string>
+    <string name="history_no_description">No description</string>
+    <!-- A project and one of its tasks: Tokkl for Android · Design -->
+    <string name="history_project_task">%1$s · %2$s</string>
+    <!-- An entry's start and stop: 09:00 – 10:30 -->
+    <string name="history_time_range">%1$s – %2$s</string>
+    <!-- What TalkBack reads for an entry's start and stop: from 09:00 to 10:30 -->
+    <string name="history_time_range_spoken">from %1$s to %2$s</string>
+    <string name="history_billable">Billable</string>
+    <!-- On an entry with a change the server hasn't received yet. -->
+    <string name="history_unsent">Not sent</string>
+    <string name="history_empty_title">No time entries in this period</string>
+    <string name="history_empty_message">Entries you track show here, grouped by day.</string>
+    <string name="history_load_older">Show older days</string>
+    <string name="history_loading_older">Loading older days…</string>
+    <string name="history_no_older">No older entries.</string>
+    <string name="history_offline_title">Older days need the server</string>
+    <string name="history_offline_message">This phone keeps the last two weeks. Older days load from the server once it can be reached.</string>
+    <string name="history_error_auth">The server didn\'t accept this phone\'s API token, so older days can\'t load. Sign in again.</string>
+    <string name="history_error_trust">The app sends nothing to the server until you review its connection, so older days can\'t load.</string>
+    <string name="history_error_status">The server answered with HTTP %d, so older days can\'t load.</string>
+    <string name="history_error_unreadable">The server\'s answer wasn\'t a list of time entries the app can read.</string>
+    <string name="history_retry">Try again</string>
+    <string name="history_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t group entries by day.</string>
+</resources>
