@@ -2,15 +2,31 @@ package com.github.e0ipso.tokkl.ui.screenshot
 
 import android.app.UiModeManager
 import android.os.Build
+import android.view.PixelCopy
+import android.view.View
+import android.view.WindowManager
+import android.view.inspector.WindowInspector
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onRoot
@@ -22,8 +38,8 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.SignedInFrame
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.SignedInFrame
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
@@ -33,12 +49,19 @@ import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.calendar.CalendarEntry
 import com.github.e0ipso.tokkl.calendar.CalendarState
 import com.github.e0ipso.tokkl.calendar.WeekSource
+import com.github.e0ipso.tokkl.catalog.CatalogSamples
+import com.github.e0ipso.tokkl.clients.ClientsActions
+import com.github.e0ipso.tokkl.clients.ClientsContent
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.history.HistoryDay
 import com.github.e0ipso.tokkl.history.HistoryEntry
 import com.github.e0ipso.tokkl.history.HistoryState
 import com.github.e0ipso.tokkl.history.OlderDays
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.projects.ProjectsActions
+import com.github.e0ipso.tokkl.projects.ProjectsContent
+import com.github.e0ipso.tokkl.reports.DetailedEntry
+import com.github.e0ipso.tokkl.reports.DetailedReport
 import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.RangeSelection
 import com.github.e0ipso.tokkl.reports.ReportEntry
@@ -47,6 +70,8 @@ import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsContent
 import com.github.e0ipso.tokkl.reports.ReportsState
 import com.github.e0ipso.tokkl.reports.SummaryReport
+import com.github.e0ipso.tokkl.reports.WeeklyReport
+import com.github.e0ipso.tokkl.reports.WeeklyRow
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.settings.ThemeMode
 import com.github.e0ipso.tokkl.settings.ThemeSettings
@@ -54,10 +79,14 @@ import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.applicationNightMode
 import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
 import com.github.e0ipso.tokkl.settings.systemIsDark
+import com.github.e0ipso.tokkl.tags.TagsActions
+import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
+import com.github.e0ipso.tokkl.ui.Brand
+import com.github.e0ipso.tokkl.ui.BrandSize
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
@@ -65,7 +94,10 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.Locale
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 import org.junit.Rule
 import org.junit.Test
@@ -77,9 +109,10 @@ import org.junit.rules.RuleChain
  * [ReferenceImages]. The four classes below run them in the light and the dark theme, at font
  * scale 1.0 and at the largest, 2.0. Sign-in, Settings and Licences show in the real activity,
  * with the bottom bar. The Timer page shows above the same bar with a fixed history for a fixed
- * day, the reports screen a fixed summary for a fixed day, and each prompt fixed text, so no
- * capture depends on the date, the server's data, its port or its certificate. A capture holds
- * the app's window or the dialog's, never the status bar.
+ * day, the reports screen's three tabs fixed reports for a fixed day, the Projects, Clients and
+ * Tags pages fixed lists, and each prompt fixed text, so no capture depends on the date, the
+ * server's data, its port or its certificate. A capture holds the app's window, the dialog's or
+ * the More sheet's, never the status bar.
  *
  * The references are in app/src/androidTest/assets/screenshots, recorded on tokkl-api36, since
  * density and system fonts change the pixels. They run only on its Android version, API 36: every
@@ -217,6 +250,111 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
+    /** The Detailed tab: entries newest first with their day, times and durations, and more to load. */
+    @SignedOut
+    @Test
+    fun detailedReport() {
+        show({ ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), DETAILED), ReportTab.DETAILED) }) {
+            composeRule.awaitText("Write the detailed report")
+            assertScreen("reports-detailed")
+        }
+    }
+
+    /** The Weekly tab: each project's time on each day of [WEEK], time without a project last. */
+    @SignedOut
+    @Test
+    fun weeklyReport() {
+        show({ ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), WEEKLY), ReportTab.WEEKLY) }) {
+            composeRule.awaitText("Graffiti wall maintenance")
+            assertScreen("reports-weekly")
+        }
+    }
+
+    /** The Projects page above the bottom bar: clients, a billable project, a name that wraps and an archived project. */
+    @SignedOut
+    @Test
+    fun projects() {
+        show({
+            SignedInFrame(current = TopLevelPage.PROJECTS, onOpen = {}) {
+                ProjectsContent(CatalogSamples.PROJECTS_LOADED, offline = false, cachedProjects = emptyList(), clients = CatalogSamples.CACHED_CLIENTS, actions = ProjectsActions())
+            }
+        }) {
+            composeRule.awaitText(CatalogSamples.PROJECTS.first().name)
+            assertScreen("projects")
+        }
+    }
+
+    /** The Clients page from the More sheet: a client's notes, project counts and an archived client. */
+    @SignedOut
+    @Test
+    fun clients() {
+        show({
+            SignedInFrame(current = TopLevelPage.CLIENTS, onOpen = {}) {
+                ClientsContent(CatalogSamples.CLIENTS_LOADED, offline = false, cachedClients = emptyList(), actions = ClientsActions())
+            }
+        }) {
+            composeRule.awaitText(CatalogSamples.CLIENTS.first().name)
+            assertScreen("clients")
+        }
+    }
+
+    /** The Tags page from the More sheet, with a name long enough to wrap. */
+    @SignedOut
+    @Test
+    fun tags() {
+        show({
+            SignedInFrame(current = TopLevelPage.TAGS, onOpen = {}) {
+                TagsContent(CatalogSamples.TAGS_LOADED, offline = false, cachedTags = emptyList(), actions = TagsActions())
+            }
+        }) {
+            composeRule.awaitText(CatalogSamples.TAGS.first().name)
+            assertScreen("tags")
+        }
+    }
+
+    /**
+     * The bar's More sheet over the Tags page, which it marks. The sheet has a window of its own,
+     * which a capture of a compose node leaves out, so this copies that window.
+     */
+    @SignedOut
+    @Test
+    fun moreSheet() {
+        show({ SignedInFrame(current = TopLevelPage.TAGS, onOpen = {}) {} }) {
+            composeRule.onNode(hasText(string(R.string.nav_more)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.waitUntil("the More sheet shows", TIMEOUT_MS) {
+                composeRule.onAllNodes(hasText(string(R.string.nav_more)) and isHeading()).fetchSemanticsNodes().isNotEmpty()
+            }
+            composeRule.waitForIdle()
+            check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { "PixelCopy copies a window from Android 14 on" }
+            ReferenceImages.assertMatches("more-sheet-$variant", copyTheWindowOverTheActivity())
+        }
+    }
+
+    /**
+     * The brand's two smaller sizes, for a header strip and beside a navigation column, each with
+     * its own image. Sign-in shows the large one.
+     */
+    @SignedOut
+    @Test
+    fun brandSizes() {
+        show({
+            Column(
+                verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .safeDrawingPadding()
+                    .padding(TokklTheme.spacing.space4),
+            ) {
+                Brand(BrandSize.SMALL)
+                Brand(BrandSize.MEDIUM)
+            }
+        }) {
+            composeRule.waitForIdle()
+            assertScreen("brand-sizes")
+        }
+    }
+
     @SignedOut
     @Test
     fun httpWarning() {
@@ -269,6 +407,44 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             }
             steps()
         }
+    }
+
+    /** The reports screen with [state] on [tab], on [TODAY]. */
+    @Composable
+    private fun ReportsTab(state: ReportsState, tab: ReportTab) {
+        ReportsContent(
+            state = state,
+            tab = tab,
+            settings = ACCOUNT,
+            time = ACCOUNT.time(TODAY),
+            onTab = {},
+            onShift = {},
+            onPreset = {},
+            onCustom = {},
+            onRetry = {},
+            onLoadMore = {},
+        )
+    }
+
+    /**
+     * The one window over the activity's, as PixelCopy copies it. captureToImage copies a node
+     * from the activity's window unless the node is in a dialog, and a bottom sheet's window is
+     * not one.
+     */
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun copyTheWindowOverTheActivity(): ImageBitmap {
+        var found: View? = null
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            found = WindowInspector.getGlobalWindowViews().singleOrNull { root ->
+                root.isShown && (root.layoutParams as? WindowManager.LayoutParams)?.type != WindowManager.LayoutParams.TYPE_BASE_APPLICATION
+            }
+        }
+        val window = checkNotNull(found) { "no single window over the activity's" }
+        val copied = CompletableFuture<PixelCopy.Result>()
+        PixelCopy.request(PixelCopy.Request.Builder.ofWindow(window).build(), { it.run() }, copied::complete)
+        val result = copied.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        check(result.status == PixelCopy.SUCCESS) { "PixelCopy failed with status ${result.status}" }
+        return result.bitmap.asImageBitmap()
     }
 
     private fun assertScreen(name: String) {
@@ -362,6 +538,29 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             week = WeekSource.Cached,
         )
 
+        /** A page of [WEEK]'s entries, newest first, one across midnight, with a next page to load. */
+        val DETAILED = DetailedReport(
+            entries = listOf(
+                detailedEntry(6, "Write the detailed report", APP, task = "Reports", 15, "09:00", 15, "11:00"),
+                detailedEntry(5, "", project = null, task = null, 15, "08:15", 15, "09:00"),
+                detailedEntry(4, "Paint the north side", WALL, task = null, 14, "13:30", 14, "17:30"),
+                detailedEntry(3, "Code review", APP, task = null, 13, "23:30", 14, "00:45"),
+                detailedEntry(2, "Sketches", WALL, task = null, 13, "10:00", 13, "11:15"),
+                detailedEntry(1, "Plan the week", APP, task = "Design", 12, "09:00", 12, "12:00"),
+            ),
+            nextRow = 51,
+        )
+
+        /** [WEEK] by project, with a long project name and time without a project. */
+        val WEEKLY: WeeklyReport = WeeklyReport.of(
+            WEEK.from,
+            listOf(
+                WeeklyRow(APP.id, APP.name, APP.colour, listOf(10_800L, 9_000, 14_400, 7_200, 0, 0, 0)),
+                WeeklyRow(WALL.id, "Graffiti wall maintenance", WALL.colour, listOf(0L, 4_500, 0, 7_200, 0, 0, 0)),
+                WeeklyRow(null, "", null, listOf(0L, 0, 0, 2_700, 0, 0, 0)),
+            ),
+        )
+
         val HTTP_SERVER: ServerUrl = checkNotNull(ServerUrl.parse("http://10.0.2.2:8080"))
 
         val CERTIFICATE = ServerCertificate(
@@ -415,6 +614,22 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             stop = stop?.let { Instant.parse("$it:00Z") },
             unsent = unsent,
         )
+
+        /** An entry of [DETAILED] from October [startDay] at [start] to [stopDay] at [stop], in UTC. */
+        private fun detailedEntry(
+            id: Long,
+            description: String,
+            project: Project?,
+            task: String?,
+            startDay: Int,
+            start: String,
+            stopDay: Int,
+            stop: String,
+        ): DetailedEntry {
+            val from = ZonedDateTime.parse("2026-10-${startDay}T$start:00Z")
+            val to = ZonedDateTime.parse("2026-10-${stopDay}T$stop:00Z")
+            return DetailedEntry(id, description, project?.name, project?.colour, task, from, to, to.toEpochSecond() - from.toEpochSecond())
+        }
 
         /** An entry in [WEEK], billed at 80 EUR an hour when [billable]. */
         private fun entry(day: Int, hours: Double, billable: Boolean, project: Project?): ReportEntry {
