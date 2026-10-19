@@ -6,11 +6,13 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import java.security.SecureRandom
+import java.time.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -27,6 +29,38 @@ object TestAccounts {
     /** `toString` leaves out the token. */
     class Account(val id: Long, val email: String, val apiToken: String) {
         val client: TogglApiClient get() = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(apiToken))
+
+        /** The account's default workspace, where [createEntry] puts entries. */
+        val workspaceId: Long by lazy {
+            client.get(client.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+                .getValue("default_workspace_id").jsonPrimitive.long
+        }
+
+        /** Creates an entry from [start] to [stop], or a running one without [stop], and returns its id. */
+        fun createEntry(description: String, start: Instant, stop: Instant? = null): Long {
+            val body = buildJsonObject {
+                put("workspace_id", workspaceId)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                put("start", start.toString())
+                if (stop == null) put("duration", -1) else put("stop", stop.toString())
+            }
+            return client.send("POST", entries(), body, JsonObject.serializer())
+                .orFail("POST /api/v9/workspaces/<id>/time_entries")
+                .getValue("id").jsonPrimitive.long
+        }
+
+        /** The entry [id] as the server keeps it. */
+        fun entry(id: Long): JsonObject =
+            client.get(client.server.api("me", "time_entries", id.toString()), JsonObject.serializer())
+                .orFail("GET /api/v9/me/time_entries/<id>")
+
+        fun deleteEntry(id: Long) {
+            client.sendNoContent("DELETE", entries(id.toString())).orFail("DELETE /api/v9/workspaces/<id>/time_entries/<id>")
+        }
+
+        private fun entries(vararg path: String) =
+            client.server.api("workspaces", workspaceId.toString(), "time_entries", *path)
 
         override fun toString(): String = "Account($id)"
     }

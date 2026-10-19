@@ -114,6 +114,17 @@ class ReportsServerTest {
         assertEquals(1, server.requestCount)
     }
 
+    /** A Detailed page from row 3 whose next row is 3 again would load the same page forever. */
+    @Test
+    fun aDetailedPageWhoseNextRowDoesNotMoveForwardIsRefused() {
+        server.enqueue(json("[]", NEXT_ROW to "3"))
+
+        val answer = reports.detailedPage(ReportWorkspace(7, 0, 0), oneDay(), ZoneId.of("UTC"), firstRow = 3)
+
+        assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
+        assertEquals(1, server.requestCount)
+    }
+
     @Test
     fun aStartThatIsNotADateAndTimeIsAnInvalidResponse() {
         server.enqueue(json("""[{"billable":false,"currency":"EUR","time_entries":[{"seconds":1,"start":"yesterday"}]}]"""))
