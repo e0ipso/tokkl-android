@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.time
 
 import java.math.BigDecimal
+import java.math.MathContext
 import java.math.RoundingMode
 import kotlin.math.floor
 
@@ -38,4 +39,31 @@ internal fun jsRound(x: Double): Double {
 internal fun jsToFixed(x: Double, digits: Int): String {
     require(x >= 0 && x < 1e21) { "jsToFixed takes 0 <= x < 1e21, not $x" }
     return BigDecimal(x).setScale(digits, RoundingMode.HALF_UP).toPlainString()
+}
+
+/**
+ * The decimal whose digits JavaScript's `String(x)` writes for a finite [x]. It has the fewest
+ * significant digits that read back as [x], and is the nearest to [x] if several do. For
+ * 15300 / 600000 * 100, stored as 2.54999999999999982..., it is 2.55. Intl.NumberFormat rounds
+ * this decimal, while toFixed rounds the double's exact value.
+ *
+ * Java promises the shortest decimal from Double.toString only from Java 19 on, so this does not
+ * use it. It tries each digit count and reads each candidate back with parseDouble, which Java
+ * specifies to round correctly.
+ */
+internal fun jsShortestDecimal(x: Double): BigDecimal {
+    require(x.isFinite()) { "jsShortestDecimal takes a finite number, not $x" }
+    if (x == 0.0) return BigDecimal.ZERO
+    val exact = BigDecimal(x)
+    fun readsBack(candidate: BigDecimal) = candidate.toString().toDouble() == x
+    for (digits in 1..17) {
+        val nearest = exact.round(MathContext(digits, RoundingMode.HALF_EVEN))
+        if (readsBack(nearest)) return nearest
+        // Next to a power of two, the double below is nearer than the one above. A decimal on the
+        // far side can then read back where the nearest one does not.
+        val across = if (nearest < exact) RoundingMode.CEILING else RoundingMode.FLOOR
+        val other = exact.round(MathContext(digits, across))
+        if (readsBack(other)) return other
+    }
+    return exact // Not reached: 17 significant digits always read back.
 }

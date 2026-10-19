@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import android.content.res.Resources
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.time.jsToFixed
+import com.github.e0ipso.tokkl.time.jsShortestDecimal
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.NumberFormat
@@ -15,11 +15,14 @@ import java.util.Locale
 // date patterns come from string resources.
 
 /**
- * [part] as a percentage of [whole] with one decimal, as formatPercent(percent(part, whole)):
- * halves rounded up on the double's exact value, as Intl.NumberFormat does. Zero when [whole] is.
+ * [part] as a percentage of [whole] with one decimal, as formatPercent(percent(part, whole)).
+ * Intl.NumberFormat rounds the shortest decimal that reads back as the double, with halves away
+ * from zero, so 15300 of 600000 gives 2.6 where toFixed gives 2.5. Zero when [whole] is.
  */
-internal fun sharePercent(part: Long, whole: Long): String =
-    jsToFixed(if (whole > 0) part.toDouble() / whole * 100 else 0.0, 1)
+internal fun sharePercent(part: Long, whole: Long): String {
+    val percent = if (whole > 0) part.toDouble() / whole * 100 else 0.0
+    return jsShortestDecimal(percent).setScale(1, RoundingMode.HALF_UP).toPlainString()
+}
 
 /**
  * [cents] of [currency] in [locale]'s currency format with the currency's own decimals, as
