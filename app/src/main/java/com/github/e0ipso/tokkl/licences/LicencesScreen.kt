@@ -66,7 +66,7 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             Text(
                 text = stringResource(R.string.licence_anybody_title),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.semantics { heading() },
             )
             Text(

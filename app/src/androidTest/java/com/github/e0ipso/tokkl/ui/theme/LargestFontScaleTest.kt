@@ -138,7 +138,7 @@ class LargestFontScaleTest {
         assertFitWithoutOverlap(
             "Back button" to composeRule.onNodeWithContentDescription(string(R.string.back)),
             text(R.string.licences),
-            text(R.string.licence_anybody_title),
+            heading(R.string.licence_anybody_title),
             text(R.string.licence_anybody_licence),
         )
     }
@@ -334,7 +334,7 @@ class LargestFontScaleTest {
             brand(),
             "heading" to composeRule.onNode(hasText(string(R.string.sign_in_title)) and isHeading()),
             "server URL field" to field(R.string.sign_in_server_url),
-            text(R.string.sign_in_method),
+            heading(R.string.sign_in_method),
             "API token choice" to choice(R.string.sign_in_method_api_token),
             "email and password choice" to choice(R.string.sign_in_method_email_password),
         ) + credentialFields + listOf(
@@ -612,6 +612,10 @@ class LargestFontScaleTest {
     /** The text node itself, not the button it may sit in, so its layout result is reachable. */
     private fun text(@StringRes id: Int): Pair<String, SemanticsNodeInteraction> =
         string(id).let { it to composeRule.onNodeWithText(it, useUnmergedTree = true) }
+
+    /** A text node that TalkBack announces as a heading. */
+    private fun heading(@StringRes id: Int): Pair<String, SemanticsNodeInteraction> =
+        string(id).let { "$it heading" to composeRule.onNode(hasText(it) and isHeading(), useUnmergedTree = true) }
 
     /**
      * The layout result that semantics hands out is laid out again at the full available width,
