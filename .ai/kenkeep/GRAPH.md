@@ -1,25 +1,25 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:34ad6e994356df28370135ceb135ae92e5dd5d3a5e629906c7aae93384afb487'
-node_count: 34
+nodes_hash: 'sha256:3c52db25ea285b4b657cd6863522a75b5041367c7348bc966e8dccd4cd46cc2b'
+node_count: 40
 ---
 # kenkeep Graph
 
-Total nodes: 34
+Total nodes: 40
 
 ## map-account-cache-and-capabilities
 
 - **kind:** map
 - **title:** Offline cache and capabilities: AccountCache, HistoryWindow, CapabilitiesSource
-- **path:** map-account-cache-and-capabilities.md
+- **path:** data-and-offline/map-account-cache-and-capabilities.md
 - **tags:** offline, cache, room, api, compatibility
-- **relates_to:** map-account-settings-source-and-account-time, practice-check-capabilities-not-server-version, practice-never-wait-for-server-on-start-stop, map-signin-session-settings-and-navigation-host
+- **relates_to:** map-account-settings-source-and-account-time, practice-check-capabilities-not-server-version, practice-never-wait-for-server-on-start-stop, map-signin-session-settings-and-navigation-host, map-change-queue-sends-entry-changes-in-order
 
 ## map-account-settings-source-and-account-time
 
 - **kind:** map
 - **title:** Account settings: AccountSettingsSource, AccountTime and NoDeviceZoneTest
-- **path:** map-account-settings-source-and-account-time.md
+- **path:** data-and-offline/map-account-settings-source-and-account-time.md
 - **tags:** time, api, android, settings
 - **relates_to:** practice-match-web-app-behavior-account-timezone, map-signin-session-settings-and-navigation-host, map-connection-trust-store-pinning-and-prompts, practice-refresh-on-events-no-polling, map-account-cache-and-capabilities
 
@@ -27,7 +27,7 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError
-- **path:** map-api-client-shared-okhttp-serverurl-and-errors.md
+- **path:** api-and-security/map-api-client-shared-okhttp-serverurl-and-errors.md
 - **tags:** api, network, okhttp
 - **relates_to:** map-tokkl-toggl-api, practice-talk-only-to-configured-server, practice-pin-self-signed-certs-warn-on-http, map-connection-trust-store-pinning-and-prompts
 
@@ -35,7 +35,7 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** API token store and the rules that keep app data out of backups
-- **path:** map-api-token-store-and-backup-exclusion.md
+- **path:** api-and-security/map-api-token-store-and-backup-exclusion.md
 - **tags:** security, credentials, backup
 - **relates_to:** practice-pin-self-signed-certs-warn-on-http, practice-talk-only-to-configured-server
 
@@ -43,15 +43,32 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** Application ID, license and supported Android versions
-- **path:** map-app-id-license-android-versions.md
+- **path:** release/map-app-id-license-android-versions.md
 - **tags:** release, fdroid, android
+- **relates_to:** map-fdroid-metadata-release-artifacts, practice-own-version-from-v0-1-0-tag
 - **derived_from:** docs/PRD.md
+
+## map-catalog-pages-projects-clients-tags
+
+- **kind:** map
+- **title:** Catalog pages: projects, clients and tags changed on the server at once
+- **path:** screens/map-catalog-pages-projects-clients-tags.md
+- **tags:** ui, api, catalog
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-account-cache-and-capabilities, map-change-queue-sends-entry-changes-in-order
+
+## map-change-queue-sends-entry-changes-in-order
+
+- **kind:** map
+- **title:** Change queue: ChangeQueue, ChangeSender, PendingChange and the offline picker
+- **path:** data-and-offline/map-change-queue-sends-entry-changes-in-order.md
+- **tags:** offline, cache, room, api, queue
+- **relates_to:** practice-never-wait-for-server-on-start-stop, map-account-cache-and-capabilities, map-tokkl-toggl-api, practice-refresh-on-events-no-polling
 
 ## map-connection-trust-store-pinning-and-prompts
 
 - **kind:** map
 - **title:** Connection trust: ServerTrustStore, PinningTrustManager and the trust prompts
-- **path:** map-connection-trust-store-pinning-and-prompts.md
+- **path:** api-and-security/map-connection-trust-store-pinning-and-prompts.md
 - **tags:** security, network, ui, dialogs
 - **relates_to:** practice-pin-self-signed-certs-warn-on-http, map-api-client-shared-okhttp-serverurl-and-errors, map-signin-session-settings-and-navigation-host, map-account-settings-source-and-account-time
 
@@ -59,7 +76,7 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** Design foundation: spacing, shapes, type roles, option rows, brand and insets
-- **path:** map-design-foundation-spacing-shapes-type-brand.md
+- **path:** design/map-design-foundation-spacing-shapes-type-brand.md
 - **tags:** ui, theme, accessibility, android
 - **relates_to:** map-tokkl-colour-tokens-and-font, practice-tokkl-palette-wcag-english-strings
 
@@ -67,7 +84,7 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** F-Droid metadata layout and release artifacts
-- **path:** map-fdroid-metadata-release-artifacts.md
+- **path:** release/map-fdroid-metadata-release-artifacts.md
 - **tags:** fdroid, release
 - **derived_from:** docs/PRD.md
 
@@ -75,7 +92,7 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** Gradle build settings: SDK levels, Kotlin version source and memory
-- **path:** map-gradle-build-sdk-levels-kotlin-and-memory.md
+- **path:** build-and-tooling/map-gradle-build-sdk-levels-kotlin-and-memory.md
 - **tags:** android, build, gradle
 - **relates_to:** map-planned-android-stack, practice-emulator-plain-aosp-image-headless, map-jdk-android-sdk-and-agent-shells
 
@@ -83,30 +100,30 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** JDK and Android SDK on this machine, and how agent shells reach them
-- **path:** map-jdk-android-sdk-and-agent-shells.md
+- **path:** build-and-tooling/map-jdk-android-sdk-and-agent-shells.md
 - **tags:** android, tooling, agents, build
 
 ## map-oom-kill-ends-agent-session
 
 - **kind:** map
 - **title:** An OOM kill inside an agent session's scope ends the whole session
-- **path:** map-oom-kill-ends-agent-session.md
+- **path:** build-and-tooling/map-oom-kill-ends-agent-session.md
 - **tags:** agents, machine, memory, emulator
 - **relates_to:** map-t3-daily-restart-stops-agent-sessions, practice-emulator-plain-aosp-image-headless
 
 ## map-planned-android-stack
 
 - **kind:** map
-- **title:** Planned stack: Compose, Glance, TileService, Room, WorkManager, OkHttp
-- **path:** map-planned-android-stack.md
+- **title:** Android stack: Compose, Room and OkHttp built; Glance, tile and WorkManager next
+- **path:** build-and-tooling/map-planned-android-stack.md
 - **tags:** architecture, android, offline
 - **derived_from:** docs/PRD.md
 
 ## map-reports-summary-from-detailed-search
 
 - **kind:** map
-- **title:** Reports: the summary summed on the phone from the detailed search
-- **path:** map-reports-summary-from-detailed-search.md
+- **title:** Reports: Summary summed on the phone, Detailed paged, Weekly from v3
+- **path:** screens/map-reports-summary-from-detailed-search.md
 - **tags:** reports, api, toggl, ui
 - **relates_to:** map-tokkl-toggl-api, practice-match-web-app-behavior-account-timezone, practice-refresh-on-events-no-polling, practice-port-tokkl-typescript-with-javascript-semantics
 
@@ -114,7 +131,7 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** Sign-in, the stored session, theme settings and the navigation host
-- **path:** map-signin-session-settings-and-navigation-host.md
+- **path:** screens/map-signin-session-settings-and-navigation-host.md
 - **tags:** android, ui, credentials, navigation
 - **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-api-token-store-and-backup-exclusion, map-tokkl-colour-tokens-and-font, map-account-settings-source-and-account-time, map-connection-trust-store-pinning-and-prompts, map-account-cache-and-capabilities, map-reports-summary-from-detailed-search
 
@@ -122,15 +139,23 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** T3 restarts daily and ends running agent sessions
-- **path:** map-t3-daily-restart-stops-agent-sessions.md
+- **path:** build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md
 - **tags:** agents, tooling, machine
 - **relates_to:** map-oom-kill-ends-agent-session, map-jdk-android-sdk-and-agent-shells
+
+## map-timer-page-history-calendar-and-timer-view
+
+- **kind:** map
+- **title:** Timer page: the List history, the Calendar week and the timerView choice
+- **path:** screens/map-timer-page-history-calendar-and-timer-view.md
+- **tags:** ui, history, calendar, offline, api
+- **relates_to:** map-account-cache-and-capabilities, map-change-queue-sends-entry-changes-in-order, practice-check-capabilities-not-server-version, map-account-settings-source-and-account-time
 
 ## map-tokkl-colour-tokens-and-font
 
 - **kind:** map
 - **title:** Tokkl colour tokens and Anybody font in ../tokkl
-- **path:** map-tokkl-colour-tokens-and-font.md
+- **path:** design/map-tokkl-colour-tokens-and-font.md
 - **tags:** ui, tokkl
 - **relates_to:** practice-tokkl-palette-wcag-english-strings, map-design-foundation-spacing-shapes-type-brand
 - **derived_from:** docs/PRD.md
@@ -139,15 +164,23 @@ Total nodes: 34
 
 - **kind:** map
 - **title:** Tokkl and Toggl API endpoints, auth and Tokkl-only extensions
-- **path:** map-tokkl-toggl-api.md
+- **path:** api-and-security/map-tokkl-toggl-api.md
 - **tags:** api, toggl, network
 - **derived_from:** docs/PRD.md
+
+## map-ui-components-and-compose-layout-gotchas
+
+- **kind:** map
+- **title:** UI components: ErrorBanner, Scene, ScrollAwayColumn, and Compose layout gotchas
+- **path:** design/map-ui-components-and-compose-layout-gotchas.md
+- **tags:** ui, android, accessibility, compose
+- **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-signin-session-settings-and-navigation-host
 
 ## practice-check-capabilities-not-server-version
 
 - **kind:** practice
 - **title:** Check server capabilities instead of requiring a server version
-- **path:** practice-check-capabilities-not-server-version.md
+- **path:** api-and-security/practice-check-capabilities-not-server-version.md
 - **tags:** api, toggl, compatibility
 - **relates_to:** map-account-cache-and-capabilities
 - **derived_from:** docs/PRD.md
@@ -155,24 +188,33 @@ Total nodes: 34
 ## practice-emulator-plain-aosp-image-headless
 
 - **kind:** practice
-- **title:** Test on the plain AOSP API 36 emulator, headless, and stop it afterwards
-- **path:** practice-emulator-plain-aosp-image-headless.md
-- **tags:** testing, android, emulator, energy
+- **title:** Test on plain AOSP emulators, headless, and stop them afterwards
+- **path:** testing/practice-emulator-plain-aosp-image-headless.md
+- **tags:** testing, android, emulator, energy, memory
 - **relates_to:** map-oom-kill-ends-agent-session, practice-test-real-tokkl-server-speed-regressions, map-jdk-android-sdk-and-agent-shells, practice-run-instrumented-tests-only-through-the-script
+- **derived_from:** scripts/instrumented-tests.sh, README.md
 
 ## practice-gradle-no-daemon-in-parallel-worktrees
 
 - **kind:** practice
 - **title:** Build with --no-daemon in parallel worktrees and never run --stop
-- **path:** practice-gradle-no-daemon-in-parallel-worktrees.md
+- **path:** build-and-tooling/practice-gradle-no-daemon-in-parallel-worktrees.md
 - **tags:** build, gradle, agents, worktrees
 - **relates_to:** map-jdk-android-sdk-and-agent-shells, practice-run-npm-install-in-every-clone-and-worktree
+
+## practice-instrumented-tests-on-every-api-level
+
+- **kind:** practice
+- **title:** Write instrumented tests that hold from API 26 to 36, with the shared helpers
+- **path:** testing/practice-instrumented-tests-on-every-api-level.md
+- **tags:** testing, android, emulator
+- **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-emulator-plain-aosp-image-headless, practice-screenshot-references-on-tokkl-api36
 
 ## practice-match-web-app-behavior-account-timezone
 
 - **kind:** practice
 - **title:** Match Tokkl web app behavior in the account timezone
-- **path:** practice-match-web-app-behavior-account-timezone.md
+- **path:** data-and-offline/practice-match-web-app-behavior-account-timezone.md
 - **tags:** api, ui, time
 - **relates_to:** practice-port-tokkl-typescript-with-javascript-semantics, map-account-settings-source-and-account-time
 - **derived_from:** docs/PRD.md
@@ -181,15 +223,16 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Never make Start or Stop wait for the server
-- **path:** practice-never-wait-for-server-on-start-stop.md
+- **path:** data-and-offline/practice-never-wait-for-server-on-start-stop.md
 - **tags:** offline, network, api
+- **relates_to:** map-change-queue-sends-entry-changes-in-order
 - **derived_from:** docs/PRD.md
 
 ## practice-opt-sdk-tools-out-of-usage-metrics
 
 - **kind:** practice
 - **title:** Opt the Android SDK tools out of usage metrics with ~/.androidrc
-- **path:** practice-opt-sdk-tools-out-of-usage-metrics.md
+- **path:** build-and-tooling/practice-opt-sdk-tools-out-of-usage-metrics.md
 - **tags:** privacy, tooling, android
 - **relates_to:** practice-talk-only-to-configured-server, map-jdk-android-sdk-and-agent-shells
 
@@ -197,7 +240,7 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Version the app on its own, starting from a hand-made v0.1.0 tag
-- **path:** practice-own-version-from-v0-1-0-tag.md
+- **path:** release/practice-own-version-from-v0-1-0-tag.md
 - **tags:** release, versioning
 - **relates_to:** map-fdroid-metadata-release-artifacts
 - **derived_from:** docs/PRD.md
@@ -206,7 +249,7 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Pin self-signed certificates by fingerprint and warn before plain HTTP
-- **path:** practice-pin-self-signed-certs-warn-on-http.md
+- **path:** api-and-security/practice-pin-self-signed-certs-warn-on-http.md
 - **tags:** security, network
 - **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-connection-trust-store-pinning-and-prompts
 - **derived_from:** docs/PRD.md
@@ -215,7 +258,7 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Port Tokkl's TypeScript with JavaScript semantics and verbatim test cases
-- **path:** practice-port-tokkl-typescript-with-javascript-semantics.md
+- **path:** data-and-offline/practice-port-tokkl-typescript-with-javascript-semantics.md
 - **tags:** time, parsing, testing, tokkl
 - **relates_to:** practice-match-web-app-behavior-account-timezone
 
@@ -223,7 +266,7 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Refresh on events, never on a short polling timer
-- **path:** practice-refresh-on-events-no-polling.md
+- **path:** api-and-security/practice-refresh-on-events-no-polling.md
 - **tags:** network, toggl, battery
 - **derived_from:** docs/PRD.md
 
@@ -231,7 +274,7 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Keep release builds reproducible and signed with the project key
-- **path:** practice-reproducible-builds-project-key.md
+- **path:** release/practice-reproducible-builds-project-key.md
 - **tags:** release, fdroid, security, ci
 - **relates_to:** map-fdroid-metadata-release-artifacts, practice-own-version-from-v0-1-0-tag, practice-run-instrumented-tests-only-through-the-script
 - **derived_from:** docs/PRD.md
@@ -240,22 +283,23 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Run instrumented tests only through scripts/instrumented-tests.sh
-- **path:** practice-run-instrumented-tests-only-through-the-script.md
+- **path:** testing/practice-run-instrumented-tests-only-through-the-script.md
 - **tags:** testing, android, emulator, docker
 - **relates_to:** practice-test-real-tokkl-server-speed-regressions, practice-emulator-plain-aosp-image-headless, practice-gradle-no-daemon-in-parallel-worktrees, practice-screenshot-references-on-tokkl-api36
+- **derived_from:** scripts/instrumented-tests.sh
 
 ## practice-run-npm-install-in-every-clone-and-worktree
 
 - **kind:** practice
 - **title:** Run npm install in every new clone or worktree to turn on the commit hook
-- **path:** practice-run-npm-install-in-every-clone-and-worktree.md
+- **path:** build-and-tooling/practice-run-npm-install-in-every-clone-and-worktree.md
 - **tags:** git, commits, tooling
 
 ## practice-screenshot-references-on-tokkl-api36
 
 - **kind:** practice
 - **title:** Record screenshot references on tokkl-api36, in the commit that changes the look
-- **path:** practice-screenshot-references-on-tokkl-api36.md
+- **path:** testing/practice-screenshot-references-on-tokkl-api36.md
 - **tags:** testing, android, emulator, ui
 - **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-emulator-plain-aosp-image-headless, map-design-foundation-spacing-shapes-type-brand
 
@@ -263,7 +307,7 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Talk only to the configured server and use only free software
-- **path:** practice-talk-only-to-configured-server.md
+- **path:** api-and-security/practice-talk-only-to-configured-server.md
 - **tags:** privacy, network, fdroid, security
 - **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors
 - **derived_from:** docs/PRD.md
@@ -272,7 +316,7 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Test against a real Tokkl server and catch speed regressions in CI
-- **path:** practice-test-real-tokkl-server-speed-regressions.md
+- **path:** testing/practice-test-real-tokkl-server-speed-regressions.md
 - **tags:** testing, ci, performance
 - **relates_to:** practice-run-instrumented-tests-only-through-the-script
 - **derived_from:** docs/PRD.md
@@ -281,7 +325,15 @@ Total nodes: 34
 
 - **kind:** practice
 - **title:** Use Tokkl's palette, WCAG AA contrast and English string resources
-- **path:** practice-tokkl-palette-wcag-english-strings.md
+- **path:** design/practice-tokkl-palette-wcag-english-strings.md
 - **tags:** ui, accessibility, i18n
 - **relates_to:** map-tokkl-colour-tokens-and-font, map-design-foundation-spacing-shapes-type-brand
 - **derived_from:** docs/PRD.md
+
+## practice-wordmark-only-on-sign-in-and-splash
+
+- **kind:** practice
+- **title:** Show the wordmark only on sign-in and the launch splash, never in a header
+- **path:** design/practice-wordmark-only-on-sign-in-and-splash.md
+- **tags:** ui, brand, design
+- **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-tokkl-colour-tokens-and-font, map-timer-page-history-calendar-and-timer-view

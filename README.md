@@ -2,7 +2,7 @@
 
 A native Android client for [Tokkl](https://github.com/e0ipso/tokkl) and Toggl Track.
 
-The app is a Gradle project with a sign-in screen and, behind a bottom navigation bar like the web app's on phones, a Timer page that shows the brand until the timer exists, a reports screen with the summary report, Projects and Clients pages that create, edit, archive and restore projects and clients on the server, a Tags page that creates, renames and deletes tags, a placeholder page for the trash, a settings screen and a Licences screen so far, joined by a navigation host. The product requirements live in [docs/PRD.md](docs/PRD.md).
+The app is a Gradle project with a sign-in screen and, behind a bottom navigation bar like the web app's on phones, a Timer page that lists past entries by day or shows them on a week calendar, with the brand where the timer will go, a reports screen with the summary, detailed and weekly reports, Projects and Clients pages that create, edit, archive and restore projects and clients on the server, a Tags page that creates, renames and deletes tags, a placeholder page for the trash, a settings screen and a Licences screen so far, joined by a navigation host. The product requirements live in [docs/PRD.md](docs/PRD.md).
 
 ## Building
 
@@ -176,7 +176,7 @@ Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that n
 
 ### Screenshot tests
 
-`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/` captures sign-in with each method, the Timer page with its List and Calendar views, Settings, Licences, Reports, the http warning and the certificate prompt, in the light and the dark theme, at font scale 1.0 and 2.0. Each capture shrinks to a third in each direction and is compared with its reference image in `app/src/androidTest/assets/screenshots/`. The references come from `tokkl-api36`, because density and system fonts change the pixels. Each class carries `@SdkSuppress` for API 36, so on any other version the runner leaves the screenshot tests out. An assumption would not do, because the Android Gradle plugin reports a failed assumption as a failed test. Run all four classes with:
+`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/` captures sign-in with each method, the Timer page with its List and Calendar views, Settings, Licences, the Summary, Detailed and Weekly report tabs, Projects, Clients, Tags, the More sheet, the brand's small and medium sizes, the http warning and the certificate prompt, in the light and the dark theme, at font scale 1.0 and 2.0. That is 16 screens and 64 reference images. The More sheet has a window of its own, which a capture of a compose node leaves out, so its test copies that window with `PixelCopy`. Each capture shrinks to a third in each direction and is compared with its reference image in `app/src/androidTest/assets/screenshots/`. The references come from `tokkl-api36`, because density and system fonts change the pixels. Each class carries `@SdkSuppress` for API 36, so on any other version the runner leaves the screenshot tests out. An assumption would not do, because the Android Gradle plugin reports a failed assumption as a failed test. Run all four classes with:
 
 ```sh
 scripts/instrumented-tests.sh \
