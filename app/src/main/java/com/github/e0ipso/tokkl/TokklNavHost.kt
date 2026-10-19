@@ -42,6 +42,8 @@ import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import com.github.e0ipso.tokkl.trust.TrustPrompt
 import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 
 /** The app's screens. */
@@ -55,7 +57,8 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * Every signed-in screen has the bottom bar ([AppNavigationBar]). Opening a page from it puts
  * that page right above Timer, so Back from any page in the bar or the More sheet goes to Timer,
  * and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a page, such as Licences from
- * Settings, stacks above that page, and the bar keeps marking the page.
+ * Settings, stacks above that page, and the bar keeps marking the page. While [timerRunning] says
+ * a time entry runs, the bar's Timer item carries a dot.
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -70,6 +73,7 @@ fun TokklNavHost(
     history: HistoryModel,
     calendar: CalendarModel,
     timerView: TimerViewSetting,
+    timerRunning: Flow<Boolean> = flowOf(false),
 ) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
@@ -95,7 +99,8 @@ fun TokklNavHost(
         return
     }
     val view by timerView.view.collectAsState()
-    SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open) {
+    val running by timerRunning.collectAsState(initial = false)
+    SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open, timerRunning = running) {
         Screen(destination, backStack, themeSettings, reports, history, calendar, view, onTimerViewChange = timerView::choose)
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
@@ -103,13 +108,19 @@ fun TokklNavHost(
 
 /**
  * A signed-in screen, [content], above the bottom bar, which marks [current] and opens pages with
- * [onOpen]. The bar's height, system navigation bar included, is padding the screens consume, so
- * their own navigation bar padding adds nothing above the bar.
+ * [onOpen], and puts a dot on Timer while [timerRunning]. The bar's height, system navigation bar
+ * included, is padding the screens consume, so their own navigation bar padding adds nothing
+ * above the bar.
  */
 @Composable
-internal fun SignedInFrame(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, content: @Composable BoxScope.() -> Unit) {
+internal fun SignedInFrame(
+    current: TopLevelPage,
+    onOpen: (TopLevelPage) -> Unit,
+    timerRunning: Boolean = false,
+    content: @Composable BoxScope.() -> Unit,
+) {
     Scaffold(
-        bottomBar = { AppNavigationBar(current = current, onOpen = onOpen) },
+        bottomBar = { AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning) },
         contentWindowInsets = WindowInsets(0),
     ) { innerPadding ->
         Box(

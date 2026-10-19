@@ -8,6 +8,8 @@
     <string name="nav_tags">Tags</string>
     <string name="nav_trash">Trash</string>
     <string name="nav_more_close">Close</string>
+    <!-- What TalkBack reads as the Timer item's state while a time entry runs, as the web app's running dot says. -->
+    <string name="nav_timer_running">Timer running</string>
 
     <string name="timer_view_list">List</string>
     <string name="timer_view_calendar">Calendar</string>

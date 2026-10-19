@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -30,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.TokklNavigationBarDefaults
@@ -69,23 +72,39 @@ enum class TopLevelPage(
  * [current] marked. More opens a sheet with the other pages, and is marked while one of them
  * shows. [onOpen] opens a page. A 1dp line in the border colour sits above the bar, as the web
  * app draws it.
+ *
+ * While [timerRunning] is true, because a time entry runs, the Timer item carries a dot, as the
+ * web app's `.running-dot`, and TalkBack reads "Timer running" as its state, so the dot is not
+ * the only sign.
  */
 @Composable
-fun AppNavigationBar(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, modifier: Modifier = Modifier) {
+fun AppNavigationBar(
+    current: TopLevelPage,
+    onOpen: (TopLevelPage) -> Unit,
+    modifier: Modifier = Modifier,
+    timerRunning: Boolean = false,
+) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
     val pages = TopLevelPage.entries.filterNot { it.inMore }
     val more = stringResource(R.string.nav_more)
     val labels = pages.map { stringResource(it.label) } + more
+    val running = stringResource(R.string.nav_timer_running)
     Column(modifier) {
         HorizontalDivider()
         NavigationBar {
             for ((page, label) in pages.zip(labels)) {
+                val selected = page == current
+                val dot = timerRunning && page == TopLevelPage.TIMER
                 TokklNavigationBarItem(
-                    selected = page == current,
+                    selected = selected,
                     onClick = { onOpen(page) },
-                    icon = { Icon(painterResource(page.icon), contentDescription = null) },
+                    icon = {
+                        val icon = @Composable { Icon(painterResource(page.icon), contentDescription = null) }
+                        if (dot) BadgedBox(badge = { RunningDot(selected) }, content = { icon() }) else icon()
+                    },
                     label = label,
                     barLabels = labels,
+                    modifier = if (dot) Modifier.semantics { stateDescription = running } else Modifier,
                 )
             }
             TokklNavigationBarItem(
@@ -100,6 +119,15 @@ fun AppNavigationBar(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, modi
     if (moreOpen) {
         MoreSheet(current = current, onOpen = onOpen, onClose = { moreOpen = false })
     }
+}
+
+/**
+ * The running dot, in the running colour, or in on-primary on the selected item's primary
+ * indicator, where the running colour would not read, as `.nav-link.active .running-dot`.
+ */
+@Composable
+private fun RunningDot(selected: Boolean) {
+    Badge(containerColor = if (selected) MaterialTheme.colorScheme.onPrimary else TokklTheme.extraColors.running)
 }
 
 /**

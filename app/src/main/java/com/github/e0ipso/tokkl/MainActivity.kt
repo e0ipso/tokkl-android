@@ -20,6 +20,7 @@ import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -31,6 +32,11 @@ class MainActivity : ComponentActivity() {
     private val reportsViewModel: ReportsViewModel by viewModels()
     private val historyViewModel: HistoryViewModel by viewModels()
     private val calendarViewModel: CalendarViewModel by viewModels()
+
+    /** Whether a time entry runs, from the phone's cache, which the bottom bar marks on Timer. */
+    private val timerRunning: Flow<Boolean> by lazy {
+        (application as TokklApplication).cache.running.map { it != null }.distinctUntilChanged()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +59,7 @@ class MainActivity : ComponentActivity() {
                     history = historyViewModel.model,
                     calendar = calendarViewModel.model,
                     timerView = (application as TokklApplication).timerView,
+                    timerRunning = timerRunning,
                 )
             }
         }

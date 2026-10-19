@@ -151,12 +151,15 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
-    /** The Calendar view at noon on [TODAY], one day on this upright phone, with a running entry. */
+    /**
+     * The Calendar view at noon on [TODAY], one day on this upright phone, with a running entry,
+     * which the bar marks on Timer.
+     */
     @SignedOut
     @Test
     fun calendar() {
         show({
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, timerRunning = true) {
                 TimerScreen(
                     view = TimerView.CALENDAR,
                     onViewChange = {},
