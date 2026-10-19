@@ -70,7 +70,8 @@ import java.util.Locale
  * estimated hours and billable by default. The client list comes from the clients on the phone;
  * an archived client shows only when the project has it. Save checks the fields, marks each
  * mistake under its field with the web app's message and moves focus to the first one. While
- * nothing can be changed, Save is off and the form says why.
+ * nothing can be changed, Save is off and the form says why. Under the form of a project the
+ * server has come its [tasks].
  */
 @Composable
 internal fun ProjectFormContent(
@@ -85,11 +86,12 @@ internal fun ProjectFormContent(
     onRetry: () -> Unit,
     onSave: (ProjectFields) -> Unit,
     onCancel: () -> Unit,
+    tasks: @Composable (Project) -> Unit = {},
 ) {
     val project = (form as? ProjectForm.Edit)?.project
     // A new form starts from its own values, not from the last one's.
     key(project?.id ?: NEW_FORM) {
-        FormFields(project, projectCount, clients, defaults, canSave, sending, problem, serverNeeded, onRetry, onSave, onCancel)
+        FormFields(project, projectCount, clients, defaults, canSave, sending, problem, serverNeeded, onRetry, onSave, onCancel, tasks)
     }
 }
 
@@ -107,6 +109,7 @@ private fun FormFields(
     onRetry: () -> Unit,
     onSave: (ProjectFields) -> Unit,
     onCancel: () -> Unit,
+    tasks: @Composable (Project) -> Unit,
 ) {
     val initial = remember { ProjectDraft.of(project, ProjectPalette.forNewProject(projectCount)) }
     var name by rememberSaveable { mutableStateOf(initial.name) }
@@ -243,6 +246,7 @@ private fun FormFields(
                 Text(stringResource(if (project == null) R.string.project_create else R.string.project_save))
             }
         }
+        if (project != null) tasks(project)
     }
 }
 

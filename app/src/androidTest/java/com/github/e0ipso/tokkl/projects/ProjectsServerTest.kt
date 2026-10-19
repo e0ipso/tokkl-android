@@ -14,10 +14,12 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -37,6 +39,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.CachedProject
+import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -65,8 +68,9 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 
 /**
- * The projects page against the real Tokkl container, wired as ProjectsViewModel wires it, on an
- * account of its own with the client Acme and the archived client Gone.
+ * The projects page and the task list in a project's form against the real Tokkl container, wired
+ * as ProjectsViewModel wires them, on an account of its own with the client Acme and the archived
+ * client Gone.
  */
 class ProjectsServerTest {
 
@@ -253,6 +257,99 @@ class ProjectsServerTest {
     }
 
     @Test
+    fun createEditAndDeleteATaskAndTheCacheFollowsEachChange() {
+        val project = create("projects", buildJsonObject { put("name", "Website") })
+        show()
+        composeRule.awaitText("Website")
+        row("Website").tap(scroll = false)
+        composeRule.awaitText(string(R.string.project_tasks_empty))
+
+        field(R.string.project_tasks_new_name).type("Design")
+        button(R.string.project_tasks_add).tap()
+
+        composeRule.awaitText(string(R.string.catalog_created, "Design"))
+        awaitMessageGone(string(R.string.catalog_created, "Design"))
+        val id = tasks(project).single { it.string("name") == "Design" }.id()
+        assertEquals("true", tasks(project).single().getValue("active").jsonPrimitive.content)
+        awaitTasksCache("the cache holds the new task") { cached -> cached.any { it.id == id && it.projectId == project && it.name == "Design" && it.active } }
+        assertEveryControlHasALabel()
+
+        row("Design").tap()
+        composeRule.awaitText(string(R.string.project_task_edit_title, "Design"))
+        assertEveryControlHasALabel()
+        field(R.string.project_task_name).clear()
+        field(R.string.project_task_name).type("Wireframes")
+        dialogButton(R.string.project_task_save).tap(scroll = false)
+
+        composeRule.awaitText(string(R.string.catalog_saved, "Wireframes"))
+        awaitMessageGone(string(R.string.catalog_saved, "Wireframes"))
+        var saved = tasks(project).single()
+        assertEquals(id, saved.id())
+        assertEquals("Wireframes", saved.string("name"))
+        assertEquals("true", saved.getValue("active").jsonPrimitive.content)
+        awaitTasksCache("the cache holds the renamed task") { cached -> cached.any { it.id == id && it.name == "Wireframes" && it.active } }
+
+        row("Wireframes").tap()
+        composeRule.awaitText(string(R.string.project_task_edit_title, "Wireframes"))
+        composeRule.onNode(hasText(string(R.string.project_task_done)) and hasClickAction() and inDialog()).tap()
+        dialogButton(R.string.project_task_save).tap(scroll = false)
+
+        composeRule.awaitText(string(R.string.catalog_saved, "Wireframes"))
+        awaitMessageGone(string(R.string.catalog_saved, "Wireframes"))
+        saved = tasks(project).single()
+        assertEquals("false", saved.getValue("active").jsonPrimitive.content)
+        // The cache keeps a done task only while an entry uses it, so the picker stops offering it.
+        awaitTasksCache("the cache drops the done task") { cached -> cached.none { it.id == id } }
+        composeRule.onNode(hasText(string(R.string.project_task_done))).assertExists()
+
+        val delete = composeRule.onNode(hasContentDescription(string(R.string.project_task_delete_named, "Wireframes")))
+        delete.tap()
+        composeRule.awaitText(string(R.string.project_task_delete_title, "Wireframes"))
+        dialogButton(R.string.catalog_cancel).tap(scroll = false)
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            composeRule.onAllNodesWithText(string(R.string.project_task_delete_title, "Wireframes")).fetchSemanticsNodes().isEmpty()
+        }
+        assertEquals("cancelling keeps the task", listOf(id), tasks(project).map { it.id() })
+
+        delete.tap()
+        composeRule.awaitText(string(R.string.project_task_delete_title, "Wireframes"))
+        dialogButton(R.string.project_task_delete_confirm).tap(scroll = false)
+
+        composeRule.awaitText(string(R.string.catalog_deleted, "Wireframes"))
+        assertEquals(emptyList<JsonObject>(), tasks(project))
+        awaitTasksCache("the cache no longer has the deleted task") { cached -> cached.none { it.id == id } }
+        composeRule.awaitText(string(R.string.project_tasks_empty))
+    }
+
+    @Test
+    fun offlineEveryTaskActionIsOffAndTheListSaysTheyNeedTheServer() {
+        val project = create("projects", buildJsonObject { put("name", "Website") })
+        account.client.send("POST", url("projects", project.toString(), "tasks"), buildJsonObject { put("name", "Design") }, JsonObject.serializer())
+            .orFail("POST tasks")
+        show()
+        composeRule.awaitText("Website")
+        row("Website").tap(scroll = false)
+        composeRule.awaitText("Design")
+        button(R.string.project_tasks_add).assertIsEnabled()
+
+        AirplaneMode.set(true, account.client)
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            composeRule.onAllNodesWithText(string(R.string.project_tasks_server_needed_message)).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(hasText(string(R.string.project_tasks_new_name))).assertIsNotEnabled()
+        button(R.string.project_tasks_add).assertIsNotEnabled()
+        row("Design").assertIsNotEnabled()
+        composeRule.onNode(hasContentDescription(string(R.string.project_task_delete_named, "Design"))).assertIsNotEnabled()
+
+        AirplaneMode.set(false, account.client)
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            composeRule.onAllNodesWithText(string(R.string.project_tasks_server_needed_message)).fetchSemanticsNodes().isEmpty()
+        }
+        button(R.string.project_tasks_add).assertIsEnabled()
+        row("Design").assertIsEnabled()
+    }
+
+    @Test
     fun everyControlHasALabel() {
         create("projects", buildJsonObject { put("name", "Internal") })
         show()
@@ -343,6 +440,29 @@ class ProjectsServerTest {
 
     private fun row(name: String) = composeRule.onNode(hasText(name) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
 
+    /**
+     * Waits until the snackbar that says [text] has gone, as it does after four seconds, so that it
+     * covers no control a later tap aims at.
+     */
+    private fun awaitMessageGone(text: String) {
+        composeRule.mainClock.advanceTimeBy(SNACKBAR_MS)
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
+    }
+
+    /** A button in a dialog, which the form under it may share a label with. */
+    private fun dialogButton(id: Int) = composeRule.onNode(hasText(string(id)) and hasClickAction() and inDialog())
+
+    private fun inDialog(): SemanticsMatcher = hasAnyAncestor(isDialog())
+
+    /** The project's tasks on the server. */
+    private fun tasks(project: Long): List<JsonObject> =
+        account.client.get(url("projects", project.toString(), "tasks"), ListSerializer(JsonObject.serializer())).orFail("GET tasks")
+
+    private fun awaitTasksCache(message: String, check: (List<CachedTask>) -> Boolean) {
+        runBlocking { refreshes.forEach { it.join() } }
+        assertTrue(message, check(runBlocking { app.cache.tasks.first() }))
+    }
+
     private fun awaitCache(message: String, check: (List<CachedProject>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
         assertTrue(message, check(runBlocking { app.cache.projects.first() }))
@@ -374,6 +494,9 @@ class ProjectsServerTest {
 
     private companion object {
         val NETWORK_TIMEOUT: Duration = Duration.ofSeconds(30)
+
+        /** Longer than a snackbar stays, SnackbarDuration.Short, with its exit. */
+        const val SNACKBAR_MS = 5_000L
 
         /** How long a control keeps still before a tap, longer than the keyboard takes to slide. */
         const val STILL_MS = 500L

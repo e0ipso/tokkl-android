@@ -36,7 +36,7 @@ typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
 /**
  * The projects page's state (docs/PRD.md P2): the workspace's projects from the server, loaded
  * each time the page opens or the app comes back to it, and the changes the page sends at once,
- * as [CatalogModel] describes.
+ * as [CatalogModel] describes. The form of a project the server sent lists its [tasks] (P5).
  *
  * @param cachedProjects the projects on the phone, which the page lists while the server's do not
  *   load.
@@ -54,6 +54,9 @@ class ProjectsModel(
 
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(client, workspaceId, refreshCache, scope, io, ::read)
 
+    /** The task list of the project the form edits. */
+    val tasks = TasksModel(client, workspaceId, refreshCache, scope, io)
+
     val state: StateFlow<ProjectsState> = catalog.state
 
     fun workspace(): Long? = catalog.workspace()
@@ -62,13 +65,25 @@ class ProjectsModel(
 
     fun retry() = catalog.retry()
 
-    override fun reconnected() = catalog.reconnected()
+    override fun reconnected() {
+        catalog.reconnected()
+        tasks.reconnected()
+    }
 
-    override fun close() = catalog.close()
+    override fun close() {
+        catalog.close()
+        tasks.close()
+    }
 
-    override fun wentToBackground() = catalog.wentToBackground()
+    override fun wentToBackground() {
+        catalog.wentToBackground()
+        tasks.wentToBackground()
+    }
 
-    override fun cameToForeground() = catalog.cameToForeground()
+    override fun cameToForeground() {
+        catalog.cameToForeground()
+        tasks.cameToForeground()
+    }
 
     fun doneShown() = catalog.doneShown()
 

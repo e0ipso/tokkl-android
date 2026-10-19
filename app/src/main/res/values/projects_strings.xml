@@ -59,4 +59,30 @@
     <string name="project_defaults_hint">Leave the rate or currency empty to use the workspace defaults.</string>
     <string name="project_save">Save</string>
     <string name="project_create">Create project</string>
+
+    <!-- The task list in the form of a project the server has (docs/PRD.md P5). -->
+    <string name="project_tasks">Tasks</string>
+    <string name="project_tasks_new_name">New task</string>
+    <string name="project_tasks_add">Add task</string>
+    <string name="project_tasks_archived">Restore the project to add tasks.</string>
+    <string name="project_tasks_loading">Loading tasks…</string>
+    <string name="project_tasks_empty">No tasks yet.</string>
+    <string name="project_tasks_server_needed_title">Tasks need the server</string>
+    <string name="project_tasks_server_needed_message">The server can\'t be reached. Adding, editing and deleting tasks needs the server.</string>
+    <!-- The marker on a task that is done, and the choice in its form. -->
+    <string name="project_task_done">Done</string>
+    <!-- What TalkBack says a tap on a task does. -->
+    <string name="project_task_edit">Edit</string>
+    <!-- Edit Design -->
+    <string name="project_task_edit_title">Edit %1$s</string>
+    <string name="project_task_name">Task name</string>
+    <string name="project_task_name_missing">Enter a task name</string>
+    <string name="project_task_save">Save</string>
+    <string name="project_task_delete">Delete</string>
+    <!-- Delete task Design -->
+    <string name="project_task_delete_named">Delete task %1$s</string>
+    <!-- Delete task Design? -->
+    <string name="project_task_delete_title">Delete task %1$s?</string>
+    <string name="project_task_delete_message">The task comes off every time entry that has it. The entries stay. You can\'t undo this.</string>
+    <string name="project_task_delete_confirm">Delete task</string>
 </resources>

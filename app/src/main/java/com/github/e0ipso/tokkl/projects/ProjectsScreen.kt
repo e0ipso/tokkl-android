@@ -48,9 +48,10 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 /**
  * The projects page (docs/PRD.md P2): the workspace's projects from the server, archived ones in a
  * section of their own, with New project, and Archive or Restore on each row. A tap on a row opens
- * its form. Each change goes to the server at once. While the phone is offline or the server out
- * of reach, the page lists the projects on the phone and says that changing them needs the server,
- * with every action off. Coming back online, or to the foreground, loads the projects again.
+ * its form, which lists the project's tasks (P5). Each change goes to the server at once. While
+ * the phone is offline or the server out of reach, the page lists the projects on the phone and
+ * says that changing them needs the server, with every action off. Coming back online, or to the
+ * foreground, loads the projects again.
  */
 @Composable
 fun ProjectsScreen(model: ProjectsModel, modifier: Modifier = Modifier) {
@@ -59,6 +60,8 @@ fun ProjectsScreen(model: ProjectsModel, modifier: Modifier = Modifier) {
     val state by model.state.collectAsState()
     val cachedProjects by model.cachedProjects.collectAsState(initial = emptyList())
     val cachedClients by model.cachedClients.collectAsState(initial = emptyList())
+    val tasks by model.tasks.state.collectAsState()
+    TaskListEffect(model.tasks, (state.overlay as? ProjectForm.Edit)?.project?.id)
     val workspace = model.workspace()
     BackHandler(enabled = state.overlay != null) { model.closeForm() }
     ProjectsContent(
@@ -74,6 +77,17 @@ fun ProjectsScreen(model: ProjectsModel, modifier: Modifier = Modifier) {
             onSave = model::save,
             onCloseForm = model::closeForm,
             onDoneShown = model::doneShown,
+        ),
+        tasks = tasks,
+        taskActions = TaskActions(
+            onRetry = model.tasks::retry,
+            onCreate = model.tasks::create,
+            onAskToEdit = model.tasks::askToEdit,
+            onSave = model.tasks::save,
+            onAskToDelete = model.tasks::askToDelete,
+            onDelete = model.tasks::delete,
+            onDismiss = model.tasks::dismiss,
+            onDoneShown = model.tasks::doneShown,
         ),
         modifier = modifier,
     )
@@ -99,10 +113,17 @@ internal fun ProjectsContent(
     clients: List<CachedClient>,
     actions: ProjectsActions,
     modifier: Modifier = Modifier,
+    tasks: TasksState = TasksState(),
+    taskActions: TaskActions = TaskActions(),
 ) {
     val serverNeeded = offline || state.loadProblem == ServerProblem.Unreachable
     val canChange = state.canChange && !offline
-    CatalogPage(done = state.done?.let { changeText(it) }, onDoneShown = actions.onDoneShown, modifier = modifier) {
+    val done = tasks.done ?: state.done
+    val doneShown = {
+        actions.onDoneShown()
+        taskActions.onDoneShown()
+    }
+    CatalogPage(done = done?.let { changeText(it) }, onDoneShown = doneShown, modifier = modifier) {
         val form = state.overlay
         if (form != null) {
             ProjectFormContent(
@@ -117,6 +138,7 @@ internal fun ProjectsContent(
                 onRetry = actions.onRetry,
                 onSave = actions.onSave,
                 onCancel = actions.onCloseForm,
+                tasks = { project -> ProjectTasks(tasks, project, offline, taskActions) },
             )
         } else {
             ProjectList(

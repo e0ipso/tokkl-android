@@ -5,7 +5,10 @@ import com.github.e0ipso.tokkl.clients.Client
 import com.github.e0ipso.tokkl.clients.ClientsData
 import com.github.e0ipso.tokkl.clients.ClientsOverlay
 import com.github.e0ipso.tokkl.projects.ProjectForm
+import com.github.e0ipso.tokkl.projects.ProjectTask
 import com.github.e0ipso.tokkl.projects.ProjectsData
+import com.github.e0ipso.tokkl.projects.TaskOverlay
+import com.github.e0ipso.tokkl.projects.TasksData
 import com.github.e0ipso.tokkl.projects.WorkspaceDefaults
 import com.github.e0ipso.tokkl.tags.Tag
 import com.github.e0ipso.tokkl.tags.TagsData
@@ -29,6 +32,15 @@ object CatalogSamples {
     )
 
     val PROJECTS_LOADED = CatalogState<ProjectsData, ProjectForm>(data = ProjectsData(PROJECTS, WorkspaceDefaults("EUR", 50.0)))
+
+    /** Tasks of the first project: an open one, one with a name long enough to wrap, and a done one. */
+    val TASKS = listOf(
+        ProjectTask(21, 11, "Design"),
+        ProjectTask(22, 11, "Write the store listing and a caption for every screenshot"),
+        ProjectTask(23, 11, "Release 1.0", active = false),
+    )
+
+    val TASKS_LOADED = CatalogState<TasksData, TaskOverlay>(data = TasksData(TASKS))
 
     val CLIENTS = listOf(
         Client(1, 7, "Acme", notes = "Pays late, so send the invoice on the first of the month and chase it on the tenth."),

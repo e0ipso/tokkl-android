@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performScrollTo
@@ -24,12 +25,15 @@ import com.github.e0ipso.tokkl.catalog.CatalogSamples.PROJECTS
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.PROJECTS_LOADED
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.TAGS
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.TAGS_LOADED
+import com.github.e0ipso.tokkl.catalog.CatalogSamples.TASKS
+import com.github.e0ipso.tokkl.catalog.CatalogSamples.TASKS_LOADED
 import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsContent
 import com.github.e0ipso.tokkl.clients.ClientsOverlay
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
+import com.github.e0ipso.tokkl.projects.TaskOverlay
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.tags.TagsOverlay
@@ -85,6 +89,40 @@ abstract class CatalogFitTest(private val fontScale: Float) {
         composeRule.onNode(hasText(string(R.string.project_name_missing)), useUnmergedTree = true).performScrollTo()
 
         assertNoTextCutOff("the new project form with its mistakes")
+    }
+
+    @Test
+    fun projectFormWithTasks() {
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        show { ProjectsContent(editing, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions(), tasks = TASKS_LOADED) }
+        composeRule.onNode(hasContentDescription(string(R.string.project_task_delete_named, TASKS.last().name))).performScrollTo()
+
+        assertNoTextCutOff("the tasks under the project form")
+    }
+
+    @Test
+    fun projectFormWithTasksOffline() {
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        show { ProjectsContent(editing, offline = true, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions(), tasks = TASKS_LOADED) }
+        composeRule.onNode(hasText(string(R.string.project_tasks_server_needed_message))).performScrollTo()
+
+        assertNoTextCutOff("the tasks under the project form offline")
+    }
+
+    @Test
+    fun taskForm() {
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        val tasks = TASKS_LOADED.copy(overlay = TaskOverlay.Edit(TASKS[1]))
+        show { ProjectsContent(editing, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions(), tasks = tasks) }
+        assertNoTextCutOff("the form that edits a task")
+    }
+
+    @Test
+    fun taskDeleteQuestion() {
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        val tasks = TASKS_LOADED.copy(overlay = TaskOverlay.ConfirmDelete(TASKS[1]))
+        show { ProjectsContent(editing, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions(), tasks = tasks) }
+        assertNoTextCutOff("the question before deleting a task")
     }
 
     @Test
@@ -161,7 +199,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
         }
     }
 
-    private fun string(@StringRes id: Int): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
+    private fun string(@StringRes id: Int, vararg args: Any): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 }
 
 class UsualFontCatalogFitTest : CatalogFitTest(fontScale = 1f)
