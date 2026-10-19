@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.HangingRelay
+import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -12,6 +13,7 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -19,6 +21,7 @@ import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -258,6 +261,114 @@ class ChangeQueueServerTest {
         assertFalse(row.unsent)
     }
 
+    @Test
+    fun aQueuedStartEndsWhereALaterTimerOnTheServerStartsAndThatTimerKeepsRunning() {
+        val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        val queued = runBlocking { app.cache.running.first() }!!.entry
+        // Half an hour after the phone's start, which still waits in the queue, the laptop starts a timer.
+        val laterStart = queued.start.plus(Duration.ofMinutes(30)).truncatedTo(ChronoUnit.SECONDS)
+        val laptop = startOnTheWeb("Started on the laptop", laterStart)
+
+        val reads = drainCountingRunningEntryReads()
+
+        val later = serverEntry(laptop)
+        assertTrue("the later timer still runs: $later", later["stop"] is JsonNull)
+        assertEquals(laterStart, later.instant("start"))
+        val phone = serverEntry(serverId(id))
+        val snapped = time().snapUnsent(queued.start, laterStart)
+        assertEquals(snapped.start, phone.instant("start"))
+        assertEquals("the phone's entry ends where the later timer starts: $phone", snapped.stop, phone.instant("stop"))
+        assertEquals(
+            "the phone shows the server's running entry without waiting for a refresh",
+            laptop,
+            runBlocking { app.cache.running.first() }?.entry?.id,
+        )
+        assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)
+    }
+
+    @Test
+    fun aQueuedStartRunsWhenNoTimerRunsOnTheServer() {
+        val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        val queued = runBlocking { app.cache.running.first() }!!.entry
+
+        val reads = drainCountingRunningEntryReads()
+
+        val phone = serverEntry(serverId(id))
+        assertTrue("the queued start runs", phone["stop"] is JsonNull)
+        assertEquals(queued.start.truncatedTo(ChronoUnit.SECONDS), phone.instant("start"))
+        assertEquals(serverId(id), runningOnServer()?.getValue("id")?.jsonPrimitive?.long)
+        assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)
+    }
+
+    @Test
+    fun aQueuedStartRunsAndTheServerStopsAnEarlierTimer() {
+        val earlierStart = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS)
+        val laptop = startOnTheWeb("Started on the laptop", earlierStart)
+        // The phone has not seen the laptop's timer, so its start queues no stop for it.
+        val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        val queued = runBlocking { app.cache.running.first() }!!.entry
+
+        val reads = drainCountingRunningEntryReads()
+
+        val phone = serverEntry(serverId(id))
+        assertTrue("the queued start runs", phone["stop"] is JsonNull)
+        assertEquals(serverId(id), runningOnServer()?.getValue("id")?.jsonPrimitive?.long)
+        // Tokkl 1.3.1 snaps the span from the earlier start to the queued start as it snaps a
+        // stopped entry it receives: the start to the nearest grid point, the duration up.
+        val earlier = serverEntry(laptop)
+        assertEquals(
+            "the server stopped the earlier timer at the queued start: $earlier",
+            time().snapUnsent(earlierStart, queued.start).stop,
+            earlier.instant("stop"),
+        )
+        assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)
+    }
+
+    /**
+     * Queues [change] with no route to the server, as with no network, and waits until the drain
+     * it starts has failed. The app is signed in through no relay afterwards: sign it in again.
+     */
+    private fun <T> queueWithNoRoute(change: suspend () -> T): T {
+        signIn(NO_ROUTE, account.apiToken)
+        val result = runBlocking { change() }
+        runBlocking { app.sender.send().join() }
+        assertTrue("the change stays queued", unsentCount() > 0)
+        return result
+    }
+
+    /**
+     * Sends the queue once, with no refresh after, through a counter of the app's reads of the
+     * running entry, and returns how many it made.
+     */
+    private fun drainCountingRunningEntryReads(): Int =
+        RequestCounter(TokklTestServer.url, RUNNING_ENTRY).use { counter ->
+            signIn(counter.url, account.apiToken)
+            val outcome = app.sender.drain()
+            assertTrue("the queue is sent: $outcome", outcome is ChangeSender.Outcome.Empty && outcome.sent > 0)
+            assertEquals(emptyList<String>(), counter.failures)
+            counter.count
+        }
+
+    /** A timer the web app starts at [start], which may be in the future. */
+    private fun startOnTheWeb(description: String, start: Instant): Long =
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                put("start", start.toString())
+                put("duration", -1)
+            },
+            JsonObject.serializer(),
+        ).orFail("POST a running time entry").getValue("id").jsonPrimitive.long
+
+    private fun runningOnServer(): JsonObject? =
+        web.get(web.server.api("me", "time_entries", "current"), JsonObject.serializer().nullable).orFail("GET the running entry")
+
+    private fun time(): AccountTime = checkNotNull(app.accountSettings.state.value?.time()) { "no account time" }
+
     private fun editOnTheWeb(entry: Long, description: String, billable: Boolean) {
         web.send(
             "PUT",
@@ -324,5 +435,11 @@ class ChangeQueueServerTest {
 
         /** The start of the cache refresh's request for the history window's entries. */
         const val TIME_ENTRIES = "GET /api/v9/me/time_entries?"
+
+        /** The end of the request line of a read of the running entry. */
+        const val RUNNING_ENTRY = "/api/v9/me/time_entries/current HTTP/1.1"
+
+        /** Nothing listens on this port, so every request fails for want of a route. */
+        val NO_ROUTE: ServerUrl = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
     }
 }

@@ -26,6 +26,10 @@ abstract class ChangeDao {
     @Query("SELECT COUNT(*) FROM pending_changes WHERE entryId = :entryId")
     abstract fun countFor(entryId: Long): Int
 
+    /** The queued changes to the entry [entryId], oldest first. */
+    @Query("SELECT * FROM pending_changes WHERE entryId = :entryId ORDER BY sequence")
+    abstract fun changesFor(entryId: Long): List<PendingChange>
+
     @Insert
     abstract fun insert(change: PendingChange): Long
 

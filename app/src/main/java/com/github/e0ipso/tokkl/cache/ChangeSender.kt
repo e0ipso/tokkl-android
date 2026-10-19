@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -30,6 +31,13 @@ import okhttp3.HttpUrl
  * 5xx, a 429 and, until the queue learns what each means (TKA-0073), any other failure. After a
  * 429 the next try waits for `Retry-After`, or [DEFAULT_RETRY_AFTER] when the header is missing.
  * The wait is kept in memory, and the queue itself on disk.
+ *
+ * A queued start is the exception to "the change that reaches the server last wins" (O3), because
+ * Tokkl stops the running entry when a new one starts. Before posting it, the sender reads the
+ * running entry, one GET per start. When that entry started after the queued start, the start goes
+ * as an entry stopped where the later timer starts, and the later timer keeps running (see
+ * [ChangeStore.endBefore]). Otherwise the start goes as queued, and the server stops an earlier
+ * timer itself.
  *
  * [send] runs when a change is queued and after each refresh, and once more when a 429's wait
  * ends. Background sending when the network returns comes with WorkManager (TKA-0037).
@@ -134,11 +142,11 @@ class ChangeSender(
                 if (clock.instant().isBefore(wait)) return Outcome.Waiting(sent, wait)
                 retryAt = null
             }
-            val change = store.first() ?: return Outcome.Empty(sent)
+            val queued = store.first() ?: return Outcome.Empty(sent)
             val api = client() ?: return Outcome.SignedOut(sent)
-            when (val result = send(api, change)) {
+            when (val result = send(api, queued)) {
                 is ApiResult.Success -> {
-                    store.sent(change, result.value.serverId, result.value.entry)
+                    store.sent(result.value.change, result.value.serverId, result.value.entry)
                     sent++
                 }
                 is ApiResult.Failure -> {
@@ -165,22 +173,45 @@ class ChangeSender(
         }
     }
 
-    private fun send(api: TogglApiClient, change: PendingChange): ApiResult<Sent> {
+    private fun send(api: TogglApiClient, queued: PendingChange): ApiResult<Sent> {
+        val change = if (queued.kind == ChangeKind.CREATE && queued.stop == null) {
+            when (val result = endBeforeALaterTimer(api, queued)) {
+                is ApiResult.Success -> result.value
+                is ApiResult.Failure -> return result
+            }
+        } else {
+            queued
+        }
         val request = change.request(api.server)
         if (change.kind == ChangeKind.DELETE) {
             return when (val result = api.sendNoContent(request.method, request.url, request.body)) {
-                is ApiResult.Success -> ApiResult.Success(Sent(change.entryId, entry = null))
+                is ApiResult.Success -> ApiResult.Success(Sent(change, change.entryId, entry = null))
                 is ApiResult.Failure -> result
             }
         }
         return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer())) {
-            is ApiResult.Success -> ApiResult.Success(Sent(result.value.id, result.value.toCached()))
+            is ApiResult.Success -> ApiResult.Success(Sent(change, result.value.id, result.value.toCached()))
             is ApiResult.Failure -> result
         }
     }
 
-    /** The server's id for the change's entry, and the entry as the server stored it. */
-    private class Sent(val serverId: Long, val entry: CachedTimeEntry?)
+    /**
+     * The queued [start] as it goes to the server: as queued while nothing runs there or the
+     * running entry started at the same time or earlier, or ended where the running entry started
+     * when that came later (docs/PRD.md O3).
+     */
+    private fun endBeforeALaterTimer(api: TogglApiClient, start: PendingChange): ApiResult<PendingChange> {
+        val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
+        val running = when (current) {
+            is ApiResult.Success -> current.value?.toCached()
+            is ApiResult.Failure -> return current
+        }
+        val later = running?.takeIf { it.stop == null && it.start.isAfter(start.start.truncatedTo(ChronoUnit.SECONDS)) }
+        return ApiResult.Success(if (later == null) start else store.endBefore(start, later))
+    }
+
+    /** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */
+    private class Sent(val change: PendingChange, val serverId: Long, val entry: CachedTimeEntry?)
 
     companion object {
         /** How long to wait after a 429 that names no whole number of seconds. */
