@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,7 +38,6 @@ import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.picker.rememberOffline
-import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -123,8 +120,19 @@ internal fun ProjectsContent(
         actions.onDoneShown()
         taskActions.onDoneShown()
     }
-    CatalogPage(done = done?.let { changeText(it) }, onDoneShown = doneShown, modifier = modifier) {
-        val form = state.overlay
+    val form = state.overlay
+    val title = when (form) {
+        null -> R.string.nav_projects
+        ProjectForm.New -> R.string.project_form_new
+        is ProjectForm.Edit -> R.string.project_form_edit
+    }
+    CatalogPage(
+        title = stringResource(title),
+        done = done?.let { changeText(it) },
+        onDoneShown = doneShown,
+        modifier = modifier,
+        onBack = if (form != null) actions.onCloseForm else null,
+    ) {
         if (form != null) {
             ProjectFormContent(
                 form = form,
@@ -179,8 +187,6 @@ private fun ProjectList(
     rows: List<ProjectRow>,
     actions: ProjectsActions,
 ) {
-    PageTitle(stringResource(R.string.nav_projects))
-    Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
     TokklButton(onClick = actions.onNew, enabled = canChange) { Text(stringResource(R.string.projects_new)) }
     Column(
         modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),

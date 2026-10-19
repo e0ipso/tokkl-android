@@ -44,7 +44,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
-import com.github.e0ipso.tokkl.ui.PageTitle
+import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -120,7 +120,11 @@ internal fun ReportsContent(
         Header(state, tab, time, onTab, onShift, onPreset, onCustom)
     }
     val detailed = (state as? ReportsState.Loaded)?.report as? DetailedReport
-    Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = { TokklTopBar(stringResource(R.string.reports)) },
+        contentWindowInsets = ScrollingScreenInsets,
+    ) { innerPadding ->
         if (detailed != null && detailed.entries.isNotEmpty() && settings != null && time != null) {
             DetailedContent(
                 report = detailed,
@@ -142,7 +146,7 @@ internal fun ReportsContent(
                     .verticalScroll(rememberScrollState())
                     .navigationBarsPadding()
                     .screenContent()
-                    .padding(vertical = TokklTheme.spacing.space2),
+                    .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
             ) {
                 header()
                 Body(state, settings, onRetry)
@@ -151,7 +155,7 @@ internal fun ReportsContent(
     }
 }
 
-/** The page title, the tabs and the range, above every tab's report. */
+/** The tabs and the range, above every tab's report. */
 @Composable
 private fun Header(
     state: ReportsState,
@@ -162,8 +166,6 @@ private fun Header(
     onPreset: (RangePreset) -> Unit,
     onCustom: (ReportRange) -> Unit,
 ) {
-    PageTitle(stringResource(R.string.reports))
-    Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
     ReportTabs(tab, onTab)
     Spacer(Modifier.height(TokklTheme.spacing.space4))
     RangeControl(

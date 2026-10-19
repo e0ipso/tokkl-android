@@ -105,9 +105,11 @@ class LargestFontScaleTest {
         }
 
         assertFitWhenScrolledTo(
-            blocks = listOf(
+            pinned = listOf(
                 "back button" to composeRule.onNode(hasContentDescription(string(R.string.back)) and hasClickAction()),
                 "heading" to composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()),
+            ),
+            blocks = listOf(
                 "description field" to field(R.string.entry_description),
                 "project button" to composeRule.onNode(hasContentDescription(string(R.string.entry_no_project_spoken)) and hasClickAction()),
                 "tags button" to composeRule.onNode(hasContentDescription(string(R.string.entry_no_tags_spoken)) and hasClickAction()),
@@ -141,8 +143,8 @@ class LargestFontScaleTest {
         composeRule.awaitText(string(R.string.settings_theme))
 
         assertFitWhenScrolledTo(
+            pinned = listOf("heading" to composeRule.onNode(hasText(string(R.string.settings)) and isHeading())),
             blocks = listOf(
-                "heading" to composeRule.onNode(hasText(string(R.string.settings)) and isHeading()),
                 "theme heading" to composeRule.onNode(hasText(string(R.string.settings_theme)) and isHeading()),
                 "follow the system choice" to choice(R.string.settings_theme_system),
                 "light choice" to choice(R.string.settings_theme_light),
@@ -486,13 +488,17 @@ class LargestFontScaleTest {
         string(id).let { "$it text" to composeRule.onNode(hasText(it) and hasAnyAncestor(control), useUnmergedTree = true) }
 
     /**
-     * Scrolls to each node in turn, which then has to show in full: inside the screen and, for
-     * text, not cut off. Then no two [blocks] overlap.
+     * The [pinned] nodes, the top bar's, show in full without a scroll and do not overlap. Then
+     * scrolls to each other node in turn, which then has to show in full: inside the screen, clear
+     * of the [pinned] nodes and, for text, not cut off. Then no two [blocks] overlap.
      */
     private fun assertFitWhenScrolledTo(
         blocks: List<Pair<String, SemanticsNodeInteraction>>,
         texts: List<Pair<String, SemanticsNodeInteraction>>,
+        pinned: List<Pair<String, SemanticsNodeInteraction>> = emptyList(),
     ) {
+        assertFitWithoutOverlap(*pinned.toTypedArray())
+        val bar = pinned.map { (name, node) -> name to node.getBoundsInRoot() }
         val screen = composeRule.onRoot().getBoundsInRoot()
         for ((name, node) in blocks + texts) {
             node.performScrollTo()
@@ -502,6 +508,7 @@ class LargestFontScaleTest {
             val inside = box.left >= screen.left && box.top >= screen.top &&
                 box.right <= screen.right && box.bottom <= screen.bottom
             assertTrue("does not fit on the screen: $name", inside)
+            for ((barName, barBox) in bar) assertFalse("$name is under $barName", box.overlaps(barBox))
         }
         // Unclipped bounds share one scroll position, so they compare even off screen.
         val bounds = blocks.map { (name, node) -> name to node.getUnclippedBoundsInRoot() }

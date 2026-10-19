@@ -5,9 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
@@ -37,7 +35,6 @@ import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.picker.rememberOffline
-import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -102,7 +99,19 @@ internal fun ClientsContent(
 ) {
     val serverNeeded = offline || state.loadProblem == ServerProblem.Unreachable
     val canChange = state.canChange && !offline
-    CatalogPage(done = state.done?.let { clientChangeText(it) }, onDoneShown = actions.onDoneShown, modifier = modifier) {
+    val formOpen = state.overlay is ClientsOverlay.New || state.overlay is ClientsOverlay.Edit
+    val title = when (state.overlay) {
+        ClientsOverlay.New -> R.string.client_form_new
+        is ClientsOverlay.Edit -> R.string.client_form_edit
+        is ClientsOverlay.ConfirmArchive, null -> R.string.nav_clients
+    }
+    CatalogPage(
+        title = stringResource(title),
+        done = state.done?.let { clientChangeText(it) },
+        onDoneShown = actions.onDoneShown,
+        modifier = modifier,
+        onBack = if (formOpen) actions.onDismiss else null,
+    ) {
         when (val overlay = state.overlay) {
             ClientsOverlay.New, is ClientsOverlay.Edit -> ClientFormContent(
                 client = (overlay as? ClientsOverlay.Edit)?.client,
@@ -159,8 +168,6 @@ private fun ClientList(
     rows: List<ClientRow>,
     actions: ClientsActions,
 ) {
-    PageTitle(stringResource(R.string.nav_clients))
-    Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
     TokklButton(onClick = actions.onNew, enabled = canChange) { Text(stringResource(R.string.clients_new)) }
     Column(
         modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),

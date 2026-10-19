@@ -66,7 +66,7 @@ internal fun DetailedContent(
     val words = DateWords(LocalResources.current)
     LazyColumn(
         state = listState,
-        contentPadding = PaddingValues(vertical = TokklTheme.spacing.space2),
+        contentPadding = PaddingValues(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
         modifier = modifier,
     ) {
         item(key = HEADER_KEY) {

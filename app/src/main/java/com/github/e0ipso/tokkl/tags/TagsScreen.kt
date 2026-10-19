@@ -4,9 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -50,7 +48,6 @@ import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.ErrorBanner
-import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -115,9 +112,12 @@ internal fun TagsContent(
     LaunchedEffect(state.done) {
         if (state.done is CatalogChange.Created) newName = ""
     }
-    CatalogPage(done = state.done?.let { changeText(it) }, onDoneShown = actions.onDoneShown, modifier = modifier) {
-        PageTitle(stringResource(R.string.nav_tags))
-        Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
+    CatalogPage(
+        title = stringResource(R.string.nav_tags),
+        done = state.done?.let { changeText(it) },
+        onDoneShown = actions.onDoneShown,
+        modifier = modifier,
+    ) {
         NewTagField(
             name = newName,
             nameMissing = nameMissing,

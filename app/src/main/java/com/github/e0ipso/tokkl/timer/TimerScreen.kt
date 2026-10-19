@@ -1,7 +1,10 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.ScrollAwayColumn
+import com.github.e0ipso.tokkl.ui.TokklTopBar
+import com.github.e0ipso.tokkl.ui.TopBarStatusBand
+import com.github.e0ipso.tokkl.ui.compactHeightWindow
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -37,14 +42,14 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
 /**
  * The Timer page, the first page after sign-in (docs/PRD.md B2), as the web app's TimerPage.tsx
  * lays it out: the [timer], then the List and Calendar switch, then the entries in the chosen
- * [view]. The page starts with its title, as the other top-level pages do, and never with the
- * wordmark, which stays out of page headers (docs/PRD.md, Wordmark).
+ * [view], under the top bar with the page's title, as on the other top-level pages. The bar never
+ * carries the wordmark, which stays out of page headers (docs/PRD.md, Wordmark).
  *
  * [listContent], the history, and [calendarContent], the calendar, fill the rest of the page
  * under the switch, with a bounded height, so each scrolls on its own. On a window of compact
- * height, such as a phone held sideways or upright at the largest font scale, the title, the
- * timer and the switch scroll away as the entries scroll on, so the entries get the page's whole
- * height ([ScrollAwayColumn]).
+ * height, such as a phone held sideways or upright at the largest font scale, the bar, the timer
+ * and the switch scroll away as the entries scroll on, so the entries get the page's whole
+ * height ([ScrollAwayColumn]). A bar pinned there would leave the week grid too little room.
  */
 @Composable
 fun TimerScreen(
@@ -55,26 +60,39 @@ fun TimerScreen(
     calendarContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
+    val title = stringResource(R.string.nav_timer)
+    val scrollAway = compactHeightWindow()
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = { if (scrollAway) TopBarStatusBand() else TokklTopBar(title) },
+        contentWindowInsets = ScrollingScreenInsets,
+    ) { innerPadding ->
         ScrollAwayColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                .screenContent(),
+                .consumeWindowInsets(innerPadding),
+            scrollAway = scrollAway,
             top = {
-                Spacer(Modifier.height(TokklTheme.spacing.space2))
-                PageTitle(stringResource(R.string.nav_timer))
-                Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
-                timer()
-                Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
-                ViewSwitch(view, onViewChange)
-                Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+                if (scrollAway) TokklTopBar(title, windowInsets = WindowInsets(0))
+                Column(Modifier.screenContent()) {
+                    Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
+                    timer()
+                    Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+                    ViewSwitch(view, onViewChange)
+                    Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+                }
             },
         ) {
-            when (view) {
-                TimerView.LIST -> listContent()
-                TimerView.CALENDAR -> calendarContent()
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .screenContent(),
+            ) {
+                when (view) {
+                    TimerView.LIST -> listContent()
+                    TimerView.CALENDAR -> calendarContent()
+                }
             }
         }
     }

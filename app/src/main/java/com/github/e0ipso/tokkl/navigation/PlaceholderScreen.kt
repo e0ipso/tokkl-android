@@ -2,10 +2,8 @@ package com.github.e0ipso.tokkl.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -16,7 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.github.e0ipso.tokkl.ui.PageTitle
+import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -28,7 +26,11 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
  */
 @Composable
 fun PlaceholderScreen(@StringRes title: Int, @StringRes message: Int, modifier: Modifier = Modifier) {
-    Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = { TokklTopBar(stringResource(title)) },
+        contentWindowInsets = ScrollingScreenInsets,
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -37,10 +39,8 @@ fun PlaceholderScreen(@StringRes title: Int, @StringRes message: Int, modifier: 
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .screenContent()
-                .padding(vertical = TokklTheme.spacing.space2),
+                .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
         ) {
-            PageTitle(stringResource(title))
-            Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             Text(text = stringResource(message), style = MaterialTheme.typography.bodyLarge)
         }
     }

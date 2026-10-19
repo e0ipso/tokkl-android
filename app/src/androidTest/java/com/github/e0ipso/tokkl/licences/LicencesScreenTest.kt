@@ -4,7 +4,10 @@ import android.view.KeyEvent
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -12,6 +15,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
@@ -19,6 +25,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.settings.openSettings
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -53,6 +60,24 @@ class LicencesScreenTest {
         composeRule.onNodeWithContentDescription(string(R.string.back)).performClick()
 
         settingsHeading().assertIsDisplayed()
+    }
+
+    /** The top bar, with the title and the back button, stays put while the licence text scrolls under it. */
+    @Test
+    fun theBarStaysWhileTheTextScrolls() {
+        openLicences()
+        val text = composeRule.onNode(hasText(OFL_TITLE, substring = true))
+        val textBefore = text.getUnclippedBoundsInRoot().top
+        val headingBefore = licencesHeading().getBoundsInRoot()
+        val backBefore = composeRule.onNodeWithContentDescription(string(R.string.back)).getBoundsInRoot()
+
+        composeRule.onNode(hasScrollAction()).performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+
+        val textAfter = text.getUnclippedBoundsInRoot().top
+        assertTrue("the text scrolls: its top moved from $textBefore to $textAfter", textAfter < textBefore - MIN_SCROLL)
+        assertEquals(headingBefore, licencesHeading().assertIsDisplayed().getBoundsInRoot())
+        assertEquals(backBefore, composeRule.onNodeWithContentDescription(string(R.string.back)).assertIsDisplayed().getBoundsInRoot())
     }
 
     /** System back goes to Settings, and from there to the Timer page, instead of closing the app. */
@@ -97,5 +122,8 @@ class LicencesScreenTest {
     private companion object {
         const val OFL_TITLE = "SIL OPEN FONT LICENSE Version 1.1"
         const val FOCUS_TIMEOUT_MS = 10_000L
+
+        /** Far less than one swipe scrolls the text. */
+        val MIN_SCROLL = 100.dp
     }
 }

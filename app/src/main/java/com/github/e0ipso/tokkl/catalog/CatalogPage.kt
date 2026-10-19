@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -60,12 +61,20 @@ fun CatalogPageEffects(model: CatalogPageModel, offline: Boolean) {
 }
 
 /**
- * The frame of a page that manages projects, clients or tags: one scrolling column in the screen's
- * margins that makes room for the keyboard, and a snackbar that says [done], the text of the
- * change the server last accepted, then calls [onDoneShown].
+ * The frame of a page that manages projects, clients or tags: the top bar with [title], and the
+ * back button when [onBack] is given, as for a form; under it one scrolling column in the
+ * screen's margins that makes room for the keyboard; and a snackbar that says [done], the text of
+ * the change the server last accepted, then calls [onDoneShown].
  */
 @Composable
-fun CatalogPage(done: String?, onDoneShown: () -> Unit, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun CatalogPage(
+    title: String,
+    done: String?,
+    onDoneShown: () -> Unit,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     LaunchedEffect(done) {
@@ -77,6 +86,7 @@ fun CatalogPage(done: String?, onDoneShown: () -> Unit, modifier: Modifier = Mod
     }
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        topBar = { TokklTopBar(title, onBack = onBack) },
         contentWindowInsets = ScrollingScreenInsets,
         snackbarHost = { SnackbarHost(snackbar) },
     ) { innerPadding ->
@@ -91,7 +101,7 @@ fun CatalogPage(done: String?, onDoneShown: () -> Unit, modifier: Modifier = Mod
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .screenContent()
-                .padding(vertical = TokklTheme.spacing.space2),
+                .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
             content = content,
         )
     }

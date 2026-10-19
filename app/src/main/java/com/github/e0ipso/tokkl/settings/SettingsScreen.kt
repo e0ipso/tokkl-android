@@ -31,8 +31,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
+import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -67,7 +67,11 @@ internal fun SettingsContent(
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = { TokklTopBar(stringResource(R.string.settings)) },
+        contentWindowInsets = ScrollingScreenInsets,
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -76,10 +80,8 @@ internal fun SettingsContent(
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .screenContent()
-                .padding(vertical = TokklTheme.spacing.space2),
+                .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
         ) {
-            PageTitle(stringResource(R.string.settings))
-            Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             ThemeSection(settings, onModeChange, onDynamicColorChange)
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
             AboutSection(onOpenLicences)

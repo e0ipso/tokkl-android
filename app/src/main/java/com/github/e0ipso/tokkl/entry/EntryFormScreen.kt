@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,9 +61,9 @@ import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
-import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
+import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -128,13 +127,20 @@ internal class EntryFormActions(
 )
 
 /**
- * [EntryFormScreen] without its model: a back arrow and the title, then the fields as the web
- * app's EntryEditor.tsx lists them, then Cancel and Save. It scrolls, and makes room for the
- * keyboard, so every field can be reached at the largest font scale.
+ * [EntryFormScreen] without its model: the top bar with the back button and the title, then the
+ * fields as the web app's EntryEditor.tsx lists them, then Cancel and Save. It scrolls under the
+ * bar, and makes room for the keyboard, so every field can be reached at the largest font scale.
  */
 @Composable
 internal fun EntryFormContent(state: EntryFormState, actions: EntryFormActions, picker: EntryFormPicker, modifier: Modifier = Modifier) {
-    Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
+    val editing = (state as? EntryFormState.Open)?.editing ?: true
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TokklTopBar(stringResource(if (editing) R.string.entry_form_edit else R.string.entry_form_new), onBack = actions.onClose)
+        },
+        contentWindowInsets = ScrollingScreenInsets,
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -146,16 +152,8 @@ internal fun EntryFormContent(state: EntryFormState, actions: EntryFormActions, 
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .screenContent()
-                .padding(vertical = TokklTheme.spacing.space2),
+                .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = actions.onClose) {
-                    Icon(painter = painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.back))
-                }
-                val editing = (state as? EntryFormState.Open)?.editing ?: true
-                PageTitle(stringResource(if (editing) R.string.entry_form_edit else R.string.entry_form_new))
-            }
-            Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             when (state) {
                 EntryFormState.Closed, EntryFormState.Loading, EntryFormState.Saved -> Unit
                 EntryFormState.Missing -> Notice(stringResource(R.string.entry_form_missing))

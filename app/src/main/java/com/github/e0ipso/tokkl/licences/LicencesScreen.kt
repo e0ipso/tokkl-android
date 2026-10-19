@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.licences
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,17 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
@@ -29,7 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.ui.PageTitle
+import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -43,7 +38,11 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         resources.openRawResource(R.raw.anybody_ofl).bufferedReader().use { it.readText() }
             .replace("\r\n", "\n")
     }
-    Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = { TokklTopBar(stringResource(R.string.licences), onBack = onBack) },
+        contentWindowInsets = ScrollingScreenInsets,
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -52,18 +51,8 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .screenContent()
-                .padding(vertical = TokklTheme.spacing.space2),
+                .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.back),
-                    )
-                }
-                PageTitle(stringResource(R.string.licences))
-            }
-            Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             Text(
                 text = stringResource(R.string.licence_anybody_title),
                 style = MaterialTheme.typography.titleMedium,
