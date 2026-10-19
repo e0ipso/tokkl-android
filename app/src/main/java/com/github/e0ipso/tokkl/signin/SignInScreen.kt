@@ -14,7 +14,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -43,6 +42,7 @@ import com.github.e0ipso.tokkl.ui.Brand
 import com.github.e0ipso.tokkl.ui.BrandSize
 import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
+import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -211,7 +211,7 @@ private fun SignInForm(
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
-            Button(onClick = onSubmit, enabled = canSubmit, modifier = Modifier.fillMaxWidth()) {
+            TokklButton(onClick = onSubmit, enabled = canSubmit, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(if (state.submitting) R.string.sign_in_submitting else R.string.sign_in_submit))
             }
         }

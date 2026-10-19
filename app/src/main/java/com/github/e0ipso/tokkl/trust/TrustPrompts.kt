@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
+import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
@@ -180,16 +181,16 @@ fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust:
  * The two actions of a trust prompt in one slot, stacked full width, so they
  * cannot overlap at any font scale. AlertDialog's own button row in material3
  * 1.4.0 placed Cancel over a Continue that wrapped to two lines at 200%. Cancel
- * comes first. Neither button is filled, so the risky action is never the
- * call to action.
+ * comes first. Both are ghost buttons, so the risky action is never the call
+ * to action.
  */
 @Composable
 private fun TrustActions(@StringRes risky: Int, riskyEnabled: Boolean, onRisky: () -> Unit, onCancel: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-        TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+        TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.sign_in_warning_cancel), textAlign = TextAlign.Center)
         }
-        TextButton(onClick = onRisky, enabled = riskyEnabled, modifier = Modifier.fillMaxWidth()) {
+        TokklGhostButton(onClick = onRisky, enabled = riskyEnabled, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(risky), textAlign = TextAlign.Center)
         }
     }
