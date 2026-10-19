@@ -49,6 +49,7 @@ class MainActivity : ComponentActivity() {
                     sessionTrust = (application as TokklApplication).sessionTrust,
                     reports = reportsViewModel.model,
                     history = historyViewModel.model,
+                    timerView = (application as TokklApplication).timerView,
                 )
             }
         }

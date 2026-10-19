@@ -12,10 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -37,6 +35,7 @@ import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerView
+import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import com.github.e0ipso.tokkl.trust.TrustPrompt
 import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
@@ -67,10 +66,10 @@ fun TokklNavHost(
     sessionTrust: SessionTrustModel,
     reports: ReportsModel,
     history: HistoryModel,
+    timerView: TimerViewSetting,
 ) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
-    var timerView by rememberSaveable { mutableStateOf(TimerView.LIST) }
     if (backStack.isEmpty()) {
         // Shows the window background, which matches the theme, while the
         // stores are read off the main thread.
@@ -92,8 +91,9 @@ fun TokklNavHost(
         )
         return
     }
+    val view by timerView.view.collectAsState()
     SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open) {
-        Screen(destination, backStack, themeSettings, reports, history, timerView, onTimerViewChange = { timerView = it })
+        Screen(destination, backStack, themeSettings, reports, history, view, onTimerViewChange = timerView::choose)
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }

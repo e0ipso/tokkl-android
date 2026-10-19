@@ -15,7 +15,8 @@ import kotlinx.serialization.json.JsonArray
  * @property restore undo of a delete, `POST /api/app/time_entries/{id}/restore`. It lives in the
  *   same router as the trash, so the trash probe decides it too, and nothing probes it.
  * @property favorites `GET /api/v9/me` carries Tokkl's `role`. On Tokkl a missing `favorites` key
- *   in `/me/preferences` means no favorites yet, not missing support.
+ *   in `/me/preferences` means no favorites yet, not missing support. Tokkl's other preference
+ *   keys that the app reads and writes, such as `timerView`, follow this flag too.
  * @property timeResolution `GET /api/v9/me` carries `time_resolution_minutes`.
  */
 data class Capabilities(

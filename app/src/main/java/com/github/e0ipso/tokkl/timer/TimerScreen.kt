@@ -30,13 +30,16 @@ import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
-/** How the Timer page shows time entries, as the web app's view switch does. */
-enum class TimerView(@StringRes val label: Int) {
+/**
+ * How the Timer page shows time entries, as the web app's view switch does. [preferenceValue] is
+ * the view's value in Tokkl's `timerView` preference.
+ */
+enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
     /** The entries, a day at a time. */
-    LIST(R.string.timer_view_list),
+    LIST(R.string.timer_view_list, "list"),
 
     /** The week calendar. */
-    CALENDAR(R.string.timer_view_calendar),
+    CALENDAR(R.string.timer_view_calendar, "calendar"),
 }
 
 /**

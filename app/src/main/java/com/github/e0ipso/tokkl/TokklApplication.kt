@@ -18,6 +18,8 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
+import com.github.e0ipso.tokkl.timer.TimerViewSetting
+import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -42,8 +44,9 @@ class TokklApplication : Application() {
      * Loaded on first use, which reads the stored settings from disk. That is usually
      * MainActivity's onStart on the main thread, and the file holds five short values. Each
      * refresh refreshes the [capabilities] and the [cache] too, with the same `GET /api/v9/me`,
-     * and the cache takes the favorites from the settings' `GET /api/v9/me/preferences`. Then the
-     * [sender] sends the queue, since the server has just answered.
+     * and the cache takes the favorites, and the [timerView] its view, from the settings'
+     * `GET /api/v9/me/preferences`. Then the [sender] sends the queue, since the server has just
+     * answered.
      */
     val accountSettings: AccountSettingsSource by lazy {
         val store = AccountSettingsStore(this)
@@ -54,7 +57,9 @@ class TokklApplication : Application() {
             scope = MainScope(),
             io = Dispatchers.IO,
             onRefresh = { api, me, preferences ->
-                cache.refresh(api, me, preferences, capabilities.refresh(api, me))
+                val flags = capabilities.refresh(api, me)
+                cache.refresh(api, me, preferences, flags)
+                timerView.refreshed(preferences, keepsTimerView = flags.favorites)
                 sender.send()
             },
         )
@@ -64,6 +69,22 @@ class TokklApplication : Application() {
     val capabilities: CapabilitiesSource by lazy {
         val store = CapabilitiesStore(this)
         CapabilitiesSource(initial = store.load(), save = store::save)
+    }
+
+    /**
+     * The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. Loaded on
+     * first use, which reads a file of two values: the Timer page's first frame on the main thread.
+     */
+    val timerView: TimerViewSetting by lazy {
+        val store = TimerViewStore(this)
+        TimerViewSetting(
+            initial = store.load(),
+            save = store::save,
+            client = Session(this)::client,
+            keepsTimerView = { capabilities.state.value.favorites },
+            scope = MainScope(),
+            io = Dispatchers.IO,
+        )
     }
 
     /** The file of the [cache] and the queue. It opens on the first query, which Room keeps off the main thread. */

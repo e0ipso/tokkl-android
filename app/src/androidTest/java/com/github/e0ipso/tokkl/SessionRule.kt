@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
+import com.github.e0ipso.tokkl.timer.TimerViewStore
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -46,7 +47,8 @@ class SessionRule : TestRule {
 
         /**
          * Deletes the stored server, the token, its Keystore key, the account settings, the
-         * server's capabilities, the offline cache, the trust decisions and the sign-in cooldowns.
+         * server's capabilities, the offline cache, the Timer page's view, the trust decisions and
+         * the sign-in cooldowns.
          * A cooldown is kept by server origin, and every test signs in to the same few, so one
          * left by a test that ended early would block sign-in in every later test of the run.
          */
@@ -56,6 +58,7 @@ class SessionRule : TestRule {
             AccountSettingsStore(context).clear()
             CapabilitiesStore(context).clear()
             (context.applicationContext as TokklApplication).cache.clear()
+            TimerViewStore(context).clear()
             ServerTrustStore(context).clear()
             SignInCooldownStore(context).run { load().keys.forEach(::clear) }
         }
