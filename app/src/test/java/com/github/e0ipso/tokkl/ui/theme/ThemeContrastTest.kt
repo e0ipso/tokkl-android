@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.reports.projectMark
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -32,6 +33,25 @@ class ThemeContrastTest {
         // The contrast table at the top of styles.css records "text on bg" in light as 13.94,
         // rounded down.
         assertRatio(13.94, Color(0xFF1C1A2B), Color(0xFFF4E7CF))
+    }
+
+    /**
+     * The scene overlap's worst cases match the rows of styles.css's contrast table, which rounds
+     * down: text on the overlap, the halo on it in dark, the wordmark's outline on it in light and
+     * the outline on the halo in dark.
+     */
+    @Test
+    fun sceneOverlapMatchesStylesCss() {
+        val light = sceneCorners(TokklLightColorScheme, TokklLightExtraColors)
+        val dark = sceneCorners(TokklDarkColorScheme, TokklDarkExtraColors)
+
+        assertEquals("each channel's lowest of bg and the light scene", Color(0xFFB9B698), light.darkest)
+        assertEquals("each channel's highest of bg and the dark scene", Color(0xFF4F4354), dark.lightest)
+        assertRatio(8.28, TokklLightColorScheme.onSurface, light.darkest)
+        assertRatio(8.32, TokklDarkColorScheme.onSurface, dark.lightest)
+        assertRatio(4.36, TokklDarkExtraColors.wordmarkHalo, dark.lightest)
+        assertRatio(10.11, WORDMARK_OUTLINE, light.darkest)
+        assertRatio(9.77, WORDMARK_OUTLINE, TokklDarkExtraColors.wordmarkHalo)
     }
 
     private enum class Kind(val minimum: Double) { TEXT(4.5), NON_TEXT(3.0) }
@@ -92,7 +112,7 @@ class ThemeContrastTest {
             Pair("onTertiaryFixed on tertiaryFixedDim", s.onTertiaryFixed, s.tertiaryFixedDim, Kind.TEXT),
             Pair("onTertiaryFixedVariant on tertiaryFixed", s.onTertiaryFixedVariant, s.tertiaryFixed, Kind.TEXT),
         )
-        return surfacePairs + fills + navigationBarPairs(s) + texturePairs(s, x) + reportPairs(s, x)
+        return surfacePairs + fills + navigationBarPairs(s) + texturePairs(s, x) + sceneOverlapPairs(s, x) + reportPairs(s, x)
     }
 
     /**
@@ -114,7 +134,7 @@ class ThemeContrastTest {
      * The pairs styles.css lists for the gradients behind the top bar strip and the sign-in
      * scene: text and muted text on each texture colour, text on each scene colour, and the
      * wordmark halo on the surfaces the wordmark sits on. Light draws no halo, so it has no halo
-     * pairs. The pairs where gradients overlap are a drawing ticket's check.
+     * pairs. sceneOverlapPairs has the pairs where the scene's gradients overlap.
      */
     private fun texturePairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
         val texture = listOf("textureGlow" to x.textureGlow, "textureSwell" to x.textureSwell, "textureStripe" to x.textureStripe)
@@ -133,6 +153,49 @@ class ThemeContrastTest {
             emptyList()
         }
         return text + halo
+    }
+
+    /**
+     * The pairs where the sign-in scene's gradients overlap. There every channel stays between its
+     * lowest and its highest value in bg and the three scene colours (Scene.kt), so a foreground
+     * darker than the [Corners.darkest] corner has its worst case there, and one lighter than the
+     * [Corners.lightest] corner there. A foreground between the two could meet an overlap of its
+     * own luminance, so its pair fails. On the scene sit only the wordmark and, for the overlap
+     * row of styles.css, text. In light the wordmark's outline draws the letters' edge; in dark it
+     * matches bg, so the halo traces the edge and the outline separates the halo from the letters.
+     */
+    private fun sceneOverlapPairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
+        val corners = sceneCorners(s, x)
+        val haloDrawn = x.wordmarkHalo.alpha > 0f
+        val onScene = listOfNotNull(
+            overlapPair("onSurface", s.onSurface, Kind.TEXT, corners),
+            overlapPair("wordmarkHalo", x.wordmarkHalo, Kind.NON_TEXT, corners).takeIf { haloDrawn },
+            overlapPair("the wordmark's outline", WORDMARK_OUTLINE, Kind.NON_TEXT, corners).takeUnless { haloDrawn },
+        )
+        val outlineOnHalo = Pair("the wordmark's outline on wordmarkHalo", WORDMARK_OUTLINE, x.wordmarkHalo, Kind.NON_TEXT)
+        return onScene + listOfNotNull(outlineOnHalo.takeIf { haloDrawn })
+    }
+
+    /** The scene overlap's corners: each channel's lowest, and highest, value in bg and the scene colours. */
+    private class Corners(val darkest: Color, val lightest: Color)
+
+    private fun sceneCorners(s: ColorScheme, x: TokklExtraColors): Corners {
+        val argb = listOf(s.background, x.sceneGlow, x.sceneSwell, x.sceneStripe).map { it.toArgb() }
+        fun corner(pick: (List<Int>) -> Int) = Color(
+            red = pick(argb.map { (it shr 16) and 0xFF }),
+            green = pick(argb.map { (it shr 8) and 0xFF }),
+            blue = pick(argb.map { it and 0xFF }),
+        )
+        return Corners(darkest = corner { it.min() }, lightest = corner { it.max() })
+    }
+
+    private fun overlapPair(name: String, colour: Color, kind: Kind, corners: Corners): Pair {
+        val own = luminance(colour)
+        return when {
+            own <= luminance(corners.darkest) -> Pair("$name on the scene overlap's darkest corner", colour, corners.darkest, kind)
+            own >= luminance(corners.lightest) -> Pair("$name on the scene overlap's lightest corner", colour, corners.lightest, kind)
+            else -> Pair("$name, which some scene overlap matches", colour, colour, kind)
+        }
     }
 
     /**
@@ -191,6 +254,9 @@ class ThemeContrastTest {
     }
 
     private companion object {
+        /** The near-black navy outline of the wordmark artwork, which styles.css names; not a token. */
+        val WORDMARK_OUTLINE = Color(0xFF000013)
+
         /** Tokkl's project palette, PROJECT_COLORS in ../tokkl/packages/common/colors.ts. */
         val PROJECT_COLOURS = listOf(
             "#0b83d9", "#9e5bd9", "#d94182", "#e36a00", "#bf7000", "#c7af14", "#d92b2b",

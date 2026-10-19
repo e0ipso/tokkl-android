@@ -14,8 +14,10 @@ import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -28,6 +30,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -282,6 +285,59 @@ class ChangeSenderTest {
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
         assertNull(store.first())
+    }
+
+    /**
+     * A send() call during a drain joins it and makes it drain once more. Here the first pass sends
+     * one change and stops at a 503, and the second pass sends the rest, so the job takes two
+     * passes. onSent runs once for the job, after the second pass has sent its change.
+     */
+    @Test
+    fun onSentRunsOncePerDrainJobAfterItsLastPass() {
+        val calls = mutableListOf<String>()
+        lateinit var withOnSent: ChangeSender
+        withOnSent = ChangeSender(
+            store,
+            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            scope = scope,
+            io = Dispatchers.IO,
+            onSent = { synchronized(calls) { calls += "onSent after ${server.requestCount} requests, ${store.changes.size} queued" } },
+            clock = clock,
+        )
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "First")
+        store.queue(ChangeKind.CREATE, -2, TAP, stop = null, description = "Second")
+        server.enqueue(entry(101, "First", stop = null))
+        server.enqueue(MockResponse.Builder().code(503).build())
+        server.enqueue(entry(102, "Second", stop = null))
+        var joined: Job? = null
+        store.onFirstSent = { joined = withOnSent.send() }
+
+        val job = withOnSent.send()
+        runBlocking { job.join() }
+
+        assertSame("the call during the drain joined it", job, joined)
+        assertEquals(listOf("onSent after 3 requests, 0 queued"), synchronized(calls) { calls.toList() })
+        assertTrue(store.changes.isEmpty())
+    }
+
+    @Test
+    fun aDrainThatSendsNothingDoesNotRunOnSent() {
+        var calls = 0
+        val withOnSent = ChangeSender(
+            store,
+            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            scope = scope,
+            io = Dispatchers.IO,
+            onSent = { calls++ },
+            clock = clock,
+        )
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "First")
+        server.enqueue(MockResponse.Builder().code(503).build())
+
+        runBlocking { withOnSent.send().join() }
+
+        assertEquals(0, calls)
+        assertEquals(1, store.changes.size)
     }
 
     private fun waitUntil(condition: () -> Boolean) {

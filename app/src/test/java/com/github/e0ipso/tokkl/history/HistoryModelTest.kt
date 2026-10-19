@@ -31,12 +31,14 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
+import mockwebserver3.SocketEffect
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -44,8 +46,9 @@ import org.junit.Test
 
 /**
  * The history's older days against a MockWebServer that answers `GET /api/app/bounds` and
- * `GET /api/v9/me/time_entries` from one entry a day, with a clock the test moves on a day while
- * the model lives, as when the app stays open past midnight.
+ * `GET /api/v9/me/time_entries` from one entry a day, unless a test sets [boundsAnswer] or
+ * [entriesAnswer], with a clock the test can move on a day while the model lives, as when the app
+ * stays open past midnight.
  */
 class HistoryModelTest {
 
@@ -61,6 +64,17 @@ class HistoryModelTest {
     /** The day the account's first entry starts on, as `GET /api/app/bounds` says. */
     private var firstDay = LocalDate.parse("2026-01-01")
 
+    /** What `GET /api/app/bounds` answers instead of [firstDay], when set. */
+    @Volatile
+    private var boundsAnswer: MockResponse? = null
+
+    /** What `GET /api/v9/me/time_entries` answers instead of the entries from [firstDay] on, when set. */
+    @Volatile
+    private var entriesAnswer: MockResponse? = null
+
+    /** The `start_date` and `end_date` of each `GET /api/v9/me/time_entries`. */
+    private val pages = CopyOnWriteArrayList<String>()
+
     /** One entry a day on the server, from [firstDay] on. */
     private val serverEntries: List<CachedTimeEntry>
         get() = generateSequence(firstDay) { it.plusDays(1) }.takeWhile { it <= LAST_DAY }.map(::entryOn).toList()
@@ -71,8 +85,10 @@ class HistoryModelTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 requests += request.url.encodedPath
                 return when (request.url.encodedPath) {
-                    "/api/app/bounds" -> json("""{"first_date":"$firstDay"}""")
+                    "/api/app/bounds" -> boundsAnswer ?: json("""{"first_date":"$firstDay"}""")
                     "/api/v9/me/time_entries" -> {
+                        pages += "${request.url.queryParameter("start_date")} ${request.url.queryParameter("end_date")}"
+                        entriesAnswer?.let { return it }
                         val start = Instant.parse(request.url.queryParameter("start_date"))
                         val end = Instant.parse(request.url.queryParameter("end_date"))
                         json(serverEntries.filter { it.start >= start && it.start < end }.joinToString(",", "[", "]") { it.json() })
@@ -141,6 +157,99 @@ class HistoryModelTest {
         assertEquals(listOf("/api/app/bounds"), requests)
     }
 
+    /**
+     * Each page is the 14 days before the oldest day shown, from midnight in Madrid, and the one
+     * that reaches the account's first day, as the bounds say, ends the list. Nothing more loads
+     * after that.
+     */
+    @Test
+    fun olderDaysLoadFourteenAtATimeUntilTheAccountsFirstDay() {
+        firstDay = LocalDate.parse("2026-09-10")
+        cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+        assertEquals("nothing loads before the list's end shows", emptyList<String>(), requests)
+
+        onMain { model.loadOlder() }
+        val first = awaitShown(model) { it.older != OlderDays.Loading && it.days.size > 14 }
+        assertEquals(OlderDays.More(auto = true), first.older)
+        assertEquals(days("2026-10-19", "2026-09-22"), first.days.map { it.date })
+        assertEquals(listOf("2026-09-21T22:00:00Z 2026-10-05T22:00:00Z"), pages)
+
+        onMain { model.loadOlder() }
+        val last = awaitShown(model) { it.older == OlderDays.End }
+        assertEquals(days("2026-10-19", "2026-09-10"), last.days.map { it.date })
+        assertEquals("2026-09-07T22:00:00Z 2026-09-21T22:00:00Z", pages.last())
+
+        onMain { model.loadOlder() }
+        assertEquals("the bounds once, and two pages", listOf("/api/app/bounds", PAGE, PAGE), requests)
+    }
+
+    /**
+     * A server without the bounds, such as Toggl Track, gets pages until one comes back empty.
+     * After that only a tap loads more, so scrolling never walks back through empty weeks.
+     */
+    @Test
+    fun withoutBoundsAnEmptyPageWaitsForATap() {
+        boundsAnswer = MockResponse.Builder().code(404).build()
+        entriesAnswer = json("[]")
+        cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+
+        onMain { model.loadOlder() }
+        assertEquals(OlderDays.More(auto = false), awaitShown(model) { it.older.settled() }.older)
+
+        entriesAnswer = null
+        onMain { model.loadOlder() }
+        val tapped = awaitShown(model) { it.older == OlderDays.More(auto = true) }
+        assertEquals(OlderDays.More(auto = true), tapped.older)
+        assertEquals("the tap loads the 14 days before the empty page", "2026-09-07T22:00:00Z 2026-09-21T22:00:00Z", pages.last())
+        assertEquals(days("2026-10-19", "2026-10-06") + days("2026-09-21", "2026-09-08"), tapped.days.map { it.date })
+    }
+
+    @Test
+    fun boundsWithNoEntriesEndTheListWithoutAPage() {
+        boundsAnswer = json("""{"first_date":null,"last_date":null}""")
+        val model = model()
+
+        onMain { model.loadOlder() }
+
+        assertEquals(OlderDays.End, awaitShown(model) { it.older.settled() }.older)
+        assertEquals(listOf("/api/app/bounds"), requests)
+    }
+
+    @Test
+    fun offlineTheOlderDaysAreUnreachableAndTheNextTryLoadsThem() {
+        // The connection drops before any answer, as when the phone has no network. A dispatcher's
+        // answer cannot act at the request's start, which only queued answers can.
+        boundsAnswer = MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build()
+        cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+
+        onMain { model.loadOlder() }
+        val offline = awaitShown(model) { it.older.settled() }
+        assertEquals(OlderDays.Unreachable, offline.older)
+        assertEquals(14, offline.days.size)
+
+        boundsAnswer = null
+        onMain { model.loadOlder() }
+        val loaded = awaitShown(model) { it.older != OlderDays.Loading && it.days.size > 14 }
+        assertEquals(days("2026-10-19", "2026-09-22"), loaded.days.map { it.date })
+    }
+
+    /** A reverse proxy answers 502, 503 or 504 while the server behind it is down. */
+    @Test
+    fun aProxyThatCannotReachTheServerIsUnreachable() {
+        entriesAnswer = MockResponse.Builder().code(503).build()
+        val model = model()
+
+        onMain { model.loadOlder() }
+
+        assertEquals(OlderDays.Unreachable, awaitShown(model) { it.older.settled() }.older)
+    }
+
     private fun model() = HistoryModel(
         entries = cached,
         projects = MutableStateFlow(emptyList<CachedProject>()),
@@ -152,11 +261,24 @@ class HistoryModelTest {
         clock = MovableClock(now),
     )
 
+    /**
+     * The page has come back with anything but more days to load on scroll, the state before
+     * the first loadOlder() too.
+     */
+    private fun OlderDays.settled(): Boolean = this != OlderDays.Loading && this != OlderDays.More(auto = true)
+
     /** loadOlder() runs on the main thread, which [scope] stands in for. */
     private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
 
-    private fun awaitShown(model: HistoryModel, condition: (HistoryState.Shown) -> Boolean): HistoryState.Shown =
-        runBlocking { withTimeout(TIMEOUT_MS) { model.state.filterIsInstance<HistoryState.Shown>().first(condition) } }
+    /** Fails with the last state shown and the requests sent when [condition] never holds. */
+    private fun awaitShown(model: HistoryModel, condition: (HistoryState.Shown) -> Boolean): HistoryState.Shown {
+        var last: HistoryState.Shown? = null
+        return runBlocking {
+            withTimeoutOrNull(TIMEOUT_MS) { model.state.filterIsInstance<HistoryState.Shown>().onEach { last = it }.first(condition) }
+        } ?: throw AssertionError(
+            "timed out; the last state had ${last?.days?.size} days and ${last?.older} at the end, after the requests $requests",
+        )
+    }
 
     private fun cachedDays(first: LocalDate, last: LocalDate): List<EntryWithSendState> =
         generateSequence(first) { it.plusDays(1) }.takeWhile { it <= last }.map { EntryWithSendState(entryOn(it), unsent = false) }.toList()
@@ -182,6 +304,7 @@ class HistoryModelTest {
 
     private companion object {
         const val TIMEOUT_MS = 5_000L
+        const val PAGE = "/api/v9/me/time_entries"
         val MADRID: ZoneId = ZoneId.of("Europe/Madrid")
         val SETTINGS = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, timeResolutionMinutes = null)
 

@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.ZoneId
 import java.util.concurrent.Executor
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -184,6 +185,94 @@ class AccountSettingsSourceTest {
         assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
     }
 
+    @Test
+    fun aRefreshStoresTheDefaultWorkspace() {
+        server.enqueue(json(MADRID_MONDAY_IN_42))
+        server.enqueue(json(IMPROVED))
+        val source = source(initial = null)
+
+        source.refresh()
+
+        assertEquals(42L, source.state.value!!.defaultWorkspaceId)
+        assertEquals(listOf(42L), saved.map { it.defaultWorkspaceId })
+    }
+
+    /** A `/me` that leaves the field out, or sends it as null, says nothing about the workspace. */
+    @Test
+    fun aMeWithoutTheDefaultWorkspaceKeepsTheStoredOne() {
+        val stored = AccountSettings("UTC", DayOfWeek.SUNDAY, timeResolutionMinutes = null, defaultWorkspaceId = 42)
+        for (me in listOf(MADRID_MONDAY, MADRID_MONDAY.replace("}", ""","default_workspace_id":null}"""))) {
+            saved.clear()
+            server.enqueue(json(me))
+            server.enqueue(json(IMPROVED))
+            val source = source(initial = stored)
+
+            source.refresh()
+
+            val expected = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = 42)
+            assertEquals(me, expected, source.state.value)
+            assertEquals(me, listOf(expected), saved)
+        }
+    }
+
+    @Test
+    fun aNewDefaultWorkspaceReplacesTheStoredOne() {
+        server.enqueue(json(MADRID_MONDAY_IN_42.replace("42", "43")))
+        server.enqueue(json(IMPROVED))
+        val source = source(initial = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = 42))
+
+        source.refresh()
+
+        assertEquals(43L, source.state.value!!.defaultWorkspaceId)
+    }
+
+    @Test
+    fun aFailedMeKeepsTheStoredDefaultWorkspace() {
+        server.enqueue(MockResponse.Builder().code(503).build())
+        val stored = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = 42)
+        val source = source(initial = stored)
+
+        source.refresh()
+
+        assertEquals(stored, source.state.value)
+        assertTrue("nothing written", saved.isEmpty())
+    }
+
+    /** As the web app's `/a/i` test of `timeofday_format`. */
+    @Test
+    fun theClockFormatComesFromThePreferences() {
+        val cases = listOf(
+            """{"timeofday_format":"h:mm A"}""" to true,
+            """{"timeofday_format":"h:mm a"}""" to true,
+            """{"timeofday_format":"H:mm"}""" to false,
+            """{"timeofday_format":null}""" to false,
+            """{"timeofday_format":12}""" to false,
+            """{}""" to false,
+        )
+        for ((preferences, twelveHour) in cases) {
+            server.enqueue(json(MADRID_MONDAY))
+            server.enqueue(json(preferences))
+            val source = source(initial = MADRID_MONDAY_SETTINGS.copy(twelveHour = !twelveHour))
+
+            source.refresh()
+
+            assertEquals(preferences, twelveHour, source.state.value!!.twelveHour)
+            val noon = Instant.parse("2026-10-19T10:00:00Z")
+            assertEquals(preferences, if (twelveHour) "12:00 PM" else "12:00", source.state.value!!.formatTime(noon, ZoneId.of("Europe/Madrid")))
+        }
+    }
+
+    @Test
+    fun failedPreferencesKeepTheStoredClockFormat() {
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(MockResponse.Builder().code(500).build())
+        val source = source(initial = AccountSettings("UTC", DayOfWeek.SUNDAY, timeResolutionMinutes = null, twelveHour = true))
+
+        source.refresh()
+
+        assertEquals(MADRID_MONDAY_SETTINGS.copy(twelveHour = true), source.state.value)
+    }
+
     /** Unconfined runs the refresh to the end inside refresh() unless [io] holds it. */
     private fun source(initial: AccountSettings?, io: CoroutineContext = Dispatchers.Unconfined) =
         AccountSettingsSource(
@@ -202,6 +291,8 @@ class AccountSettingsSourceTest {
 
     private companion object {
         const val MADRID_MONDAY = """{"id":7,"email":"ana@example.com","timezone":"Europe/Madrid","beginning_of_week":1}"""
+        const val MADRID_MONDAY_IN_42 =
+            """{"id":7,"email":"ana@example.com","timezone":"Europe/Madrid","beginning_of_week":1,"default_workspace_id":42}"""
         val MADRID_MONDAY_SETTINGS = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, timeResolutionMinutes = null)
         const val IMPROVED = """{"duration_format":"improved"}"""
         const val CLASSIC = """{"duration_format":"classic"}"""

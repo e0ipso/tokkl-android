@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.time.DurationFormat
 import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -44,6 +45,34 @@ class AccountSettingsStoreTest {
 
         assertEquals(AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null), store.load())
         assertEquals(DurationFormat.IMPROVED, store.load()!!.durationFormat)
+    }
+
+    /** A workspace id above 2^53, which a JavaScript number could not hold, reads back whole. */
+    @Test
+    fun theDefaultWorkspaceReadsBackAsSavedAndGoesWhenNull() {
+        val big = 9_007_199_254_740_993L
+        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = big)
+
+        store.save(settings)
+
+        assertEquals(big, file.all["default_workspace_id"])
+        assertEquals(settings, store.load())
+
+        store.save(settings.copy(defaultWorkspaceId = null))
+
+        assertFalse("no stale workspace stays", file.contains("default_workspace_id"))
+        assertNull(store.load()!!.defaultWorkspaceId)
+    }
+
+    @Test
+    fun theClockFormatReadsBackAsSaved() {
+        for (twelveHour in listOf(true, false)) {
+            val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null, twelveHour = twelveHour)
+
+            store.save(settings)
+
+            assertEquals(settings, store.load())
+        }
     }
 
     @Test
