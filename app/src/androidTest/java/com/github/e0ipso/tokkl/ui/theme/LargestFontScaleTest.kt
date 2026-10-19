@@ -12,6 +12,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -62,11 +63,11 @@ import org.junit.runners.model.Statement
  * The Anybody headlines and the text around them at Android's largest font scale, 200%: no
  * text is cut off, leaves the screen or overlaps another. The sign-in form and the settings
  * scroll, so each of their parts has to fit once scrolled into view. So do the trust prompts,
- * from sign-in and over the Timer page, and the notice left after cancelling one. The bottom
- * bar's five items fit side by side, each label whole. With the
- * keyboard open, the sign-in field being typed in stays above it.
+ * from sign-in and over the Timer page, and the notice left after cancelling one. The Timer
+ * page's idle timer fits above its history. The bottom bar's five items fit side by side, each
+ * label whole. With the keyboard open, the sign-in field being typed in stays above it.
  *
- * The clock and totals styles have no screen yet; ClockAndTotalStylesFitTest covers them.
+ * ClockAndTotalStylesFitTest covers the clock and totals styles in wrapping text.
  */
 class LargestFontScaleTest {
     private val composeRule = createAndroidComposeRule<MainActivity>()
@@ -627,21 +628,39 @@ class LargestFontScaleTest {
         composeRule.onNode(hasText(string(label)) and hasClickAction())
 
     /**
-     * The Timer page's parts that stack above its history, and the bottom bar's items, which must
-     * not overlap. The List and Calendar segments share their border, so the switch counts as one
-     * part.
+     * The Timer page's parts that stack above its history, the idle timer's controls among them,
+     * and the bottom bar's items, which must not overlap. The List and Calendar segments share
+     * their border, so the switch counts as one part.
      */
     private fun timerPageParts(): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
             heading(R.string.nav_timer),
+            // By its label alone: the field is disabled until the account settings load, and a
+            // set-text matcher found no node then.
+            "description field" to composeRule.onNode(hasText(string(R.string.entry_description))),
+            "project button" to composeRule.onNode(hasContentDescription(string(R.string.entry_no_project_spoken)) and hasClickAction()),
+            "tags button" to composeRule.onNode(hasContentDescription(string(R.string.entry_no_tags_spoken)) and hasClickAction()),
+            "billable" to composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable()),
+            "start button" to composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()),
             "view switch" to composeRule.onNode(
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup) and
                     hasAnyDescendant(hasText(string(R.string.timer_view_list))),
             ),
         ) + BAR_LABELS.map { label -> "${string(label)} item" to button(label) }
 
-    /** Each segment's and each bar item's label shows in full, inside its control. */
+    /** Each timer control's, each segment's and each bar item's label shows in full, inside its control. */
     private fun assertLabelsWhole() {
+        for ((label, control) in listOf(
+            R.string.entry_project to hasClickAction(),
+            R.string.entry_tags to hasClickAction(),
+            R.string.entry_billable to isToggleable(),
+            R.string.timer_start to hasClickAction(),
+        )) {
+            val (name, text) = inside(label, control)
+            text.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
+            val box = composeRule.onNode(hasText(string(label)) and control).getBoundsInRoot()
+            assertTrue("$name leaves its control", text.getBoundsInRoot().inside(box))
+        }
         for (label in listOf(R.string.timer_view_list, R.string.timer_view_calendar)) {
             val (name, text) = inside(label, isSelectable())
             text.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }

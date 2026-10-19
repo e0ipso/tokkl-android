@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
 import com.github.e0ipso.tokkl.clients.ClientsModel
@@ -41,6 +42,8 @@ import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
 import com.github.e0ipso.tokkl.tags.TagsModel
 import com.github.e0ipso.tokkl.tags.TagsScreen
+import com.github.e0ipso.tokkl.timer.TimerBar
+import com.github.e0ipso.tokkl.timer.TimerModel
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
@@ -64,7 +67,8 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * that page right above Timer, so Back from any page in the bar or the More sheet goes to Timer,
  * and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a page, such as Licences from
  * Settings, stacks above that page, and the bar keeps marking the page. While [timerRunning] says
- * a time entry runs, the bar's Timer item carries a dot.
+ * a time entry runs, the bar's Timer item carries a dot. The Timer page's [timer] picks projects,
+ * tasks and tags from [cache].
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -82,6 +86,8 @@ fun TokklNavHost(
     clients: ClientsModel,
     tags: TagsModel,
     timerView: TimerViewSetting,
+    timer: TimerModel,
+    cache: AccountCache,
     timerRunning: Flow<Boolean> = flowOf(false),
 ) {
     val appContext = LocalContext.current.applicationContext
@@ -110,7 +116,9 @@ fun TokklNavHost(
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
     SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open, timerRunning = running) {
-        Screen(destination, backStack, themeSettings, reports, history, calendar, projects, clients, tags, view, onTimerViewChange = timerView::choose)
+        Screen(destination, backStack, themeSettings, reports, history, calendar, projects, clients, tags, view, onTimerViewChange = timerView::choose) {
+            TimerBar(timer, cache)
+        }
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -155,6 +163,7 @@ private fun Screen(
     tags: TagsModel,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
+    timer: @Composable () -> Unit,
 ) {
     when (destination) {
         // TokklNavHost draws sign-in on its own, without the bar.
@@ -162,6 +171,7 @@ private fun Screen(
         Destination.TIMER -> TimerScreen(
             view = timerView,
             onViewChange = onTimerViewChange,
+            timer = timer,
             listContent = { HistoryList(history) },
             calendarContent = { WeekCalendar(calendar) },
         )

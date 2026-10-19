@@ -45,6 +45,7 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.calendar.CalendarEntry
 import com.github.e0ipso.tokkl.calendar.CalendarState
@@ -52,12 +53,14 @@ import com.github.e0ipso.tokkl.calendar.WeekSource
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsContent
+import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.history.HistoryDay
 import com.github.e0ipso.tokkl.history.HistoryEntry
 import com.github.e0ipso.tokkl.history.HistoryState
 import com.github.e0ipso.tokkl.history.OlderDays
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
 import com.github.e0ipso.tokkl.reports.DetailedEntry
@@ -81,7 +84,9 @@ import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
+import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
+import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
@@ -174,6 +179,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 TimerScreen(
                     view = TimerView.LIST,
                     onViewChange = {},
+                    timer = { Timer(IDLE_TIMER, elapsedSeconds = 0) },
                     listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
                     calendarContent = {},
                 )
@@ -187,7 +193,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
     /**
      * The Calendar view at noon on [TODAY], one day on this upright phone, with a running entry,
-     * which the bar marks on Timer.
+     * which the timer shows and the bar marks on Timer.
      */
     @SignedOut
     @Test
@@ -197,6 +203,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 TimerScreen(
                     view = TimerView.CALENDAR,
                     onViewChange = {},
+                    timer = { Timer(RUNNING_TIMER, elapsedSeconds = RUNNING_SECONDS) },
                     listContent = {},
                     calendarContent = { CalendarContent(state = CALENDAR, now = TODAY.instant(), onStep = {}, onToday = {}, onRetry = {}) },
                 )
@@ -409,6 +416,22 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
+    /** The timer in [state], its clock at [elapsedSeconds], with no picker to open. */
+    @Composable
+    private fun Timer(state: TimerState, elapsedSeconds: Long) {
+        TimerBarContent(
+            state = state,
+            elapsedSeconds = elapsedSeconds,
+            onDescriptionChange = {},
+            onDescriptionDone = {},
+            onPick = {},
+            onBillableChange = {},
+            onStart = {},
+            onStop = {},
+            picker = { _, _, _, _, _ -> },
+        )
+    }
+
     /** The reports screen with [state] on [tab], on [TODAY]. */
     @Composable
     private fun ReportsTab(state: ReportsState, tab: ReportTab) {
@@ -537,6 +560,23 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             ),
             week = WeekSource.Cached,
         )
+
+        /** The timer with nothing running, in the account's workspace. */
+        val IDLE_TIMER = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1)
+
+        /** The running entry of [CALENDAR], "Calendar grid" since 11:15, at noon on [TODAY]. */
+        val RUNNING_TIMER = TimerState.Running(
+            entryId = 7,
+            workspaceId = 1,
+            start = Instant.parse("2026-10-15T11:15:00Z"),
+            fields = EntryFields(description = "Calendar grid", projectId = APP.id),
+            labels = EntryLabels(project = APP.name, projectColor = APP.colour),
+            original = Picked(projectId = APP.id),
+            unsent = false,
+        )
+
+        /** From 11:15 to noon. */
+        const val RUNNING_SECONDS = 45 * 60L
 
         /** A page of [WEEK]'s entries, newest first, one across midnight, with a next page to load. */
         val DETAILED = DetailedReport(

@@ -2,8 +2,10 @@ package com.github.e0ipso.tokkl.history
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToKeyAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performScrollToKey
@@ -123,7 +125,11 @@ class HistoryServerTest {
             val settings = app.accountSettings.state.value!!
             awaitText(context.getString(R.string.history_time_range, settings.formatTime(start, zone), settings.formatTime(stop, zone)))
             awaitText(settings.formatDuration(stop.epochSecond - start.epochSecond))
-            assertTrue("the running entry stays out", !exists("Running now"))
+            // The timer above the list shows the running entry, and the list leaves it out.
+            composeRule.waitUntil("the timer shows the running entry", LOAD_TIMEOUT_MS) {
+                composeRule.onAllNodes(hasText("Running now") and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty()
+            }
+            assertTrue("the running entry stays out of the list", !inList("Running now"))
             assertTrue("no older day before the end shows", !exists("Twenty days ago"))
 
             list().performScrollToKey(OLDER_KEY)
@@ -223,6 +229,9 @@ class HistoryServerTest {
     private fun list() = composeRule.onNode(hasScrollToKeyAction())
 
     private fun exists(text: String) = composeRule.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+
+    private fun inList(text: String) =
+        composeRule.onAllNodes(hasText(text) and hasAnyAncestor(hasScrollToKeyAction()), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun awaitText(text: String) = composeRule.waitUntil("\"$text\" shows", LOAD_TIMEOUT_MS) { exists(text) }
 

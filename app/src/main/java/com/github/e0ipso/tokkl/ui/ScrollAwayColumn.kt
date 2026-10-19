@@ -24,8 +24,9 @@ import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 
 /**
  * [top] over [body], which takes the rest of the height. On a window of compact height, such as
- * a phone held sideways, [top] would leave [body] little room, so there it scrolls away as soon
- * as [body] scrolls on, before [body] moves, and [body] then has the whole height. It comes back
+ * a phone held sideways or upright at the largest font scale ([compactHeightWindow]), [top]
+ * would leave [body] little room, so there it scrolls away as soon as [body] scrolls on, before
+ * [body] moves, and [body] then has the whole height. It comes back
  * once [body] has scrolled back to its start, as Material's exitUntilCollapsed top app bar does,
  * or when dragged itself. The column scrolls for TalkBack, which reaches everything in [top].
  * Put one in [body] for a second [top] that goes after this one and comes back before it.
@@ -70,11 +71,16 @@ fun ScrollAwayColumn(
     }
 }
 
-/** Whether the window has a compact height, such as a phone held sideways, by Material's window size classes. */
+/**
+ * Whether the window has a compact height for the text it holds, such as a phone held sideways,
+ * by Material's window size classes. The height counts in steps of the font scale, so at the
+ * largest font scale, where text takes twice the room, a phone held upright counts too.
+ */
 @Composable
 fun compactHeightWindow(): Boolean {
-    val height = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() }
-    return TokklSpacing.isCompactHeight(height)
+    val density = LocalDensity.current
+    val height = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
+    return TokklSpacing.isCompactHeight(height / density.fontScale)
 }
 
 /**

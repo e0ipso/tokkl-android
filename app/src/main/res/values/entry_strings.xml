@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The fields of a time entry that the timer, manual entry and the edit screen share (docs/PRD.md T1, H2). -->
+<resources>
+    <string name="entry_description">Description</string>
+    <string name="entry_project">Project</string>
+    <!-- A project and one of its tasks: Tokkl for Android · Design -->
+    <string name="entry_project_task">%1$s · %2$s</string>
+    <!-- What TalkBack reads for the project button: Project: Tokkl for Android · Design -->
+    <string name="entry_project_spoken">Project: %1$s</string>
+    <string name="entry_no_project_spoken">Project: none</string>
+    <!-- The project button of an entry whose project this phone has not loaded. -->
+    <string name="entry_unknown_project">Unknown project</string>
+    <string name="entry_tags">Tags</string>
+    <!-- What TalkBack reads for the tags button: Tags: client call, research -->
+    <string name="entry_tags_spoken">Tags: %1$s</string>
+    <string name="entry_no_tags_spoken">Tags: none</string>
+    <string name="entry_billable">Billable</string>
+    <string name="entry_picker_title">Project and tags</string>
+    <string name="entry_picker_done">Done</string>
+</resources>

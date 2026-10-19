@@ -17,6 +17,23 @@ data class EntryFields(
 )
 
 /**
+ * The changes screens make to time entries, as [ChangeQueue] makes them: on the phone at once,
+ * then queued for the server. A screen's model takes this, so a JVM test can stand in for the
+ * database. See [ChangeQueue] for what each call does.
+ */
+interface EntryChanges {
+    suspend fun start(workspaceId: Long, fields: EntryFields): Long
+
+    suspend fun stop(entryId: Long, fields: EntryFields? = null): Boolean
+
+    suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long
+
+    suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean
+
+    suspend fun delete(entryId: Long): Boolean
+}
+
+/**
  * Starts, stops, creates, edits and deletes time entries on the phone (docs/PRD.md O1). Each call
  * changes the cached entry at once and queues the change, in one transaction, then asks [onQueued]
  * to send the queue. No call waits for the network. The cache marks the entry unsent until the
@@ -37,7 +54,7 @@ class ChangeQueue(
     private val io: CoroutineContext,
     private val onQueued: () -> Unit,
     private val clock: Clock = Clock.systemUTC(),
-) {
+) : EntryChanges {
 
     private val dao = database.changes()
 
@@ -50,7 +67,7 @@ class ChangeQueue(
      * local id. Pass the account's `AccountSettings.defaultWorkspaceId`, which the phone keeps,
      * so it is there offline too.
      */
-    suspend fun start(workspaceId: Long, fields: EntryFields): Long {
+    override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
         val at = clock.instant()
         return queue {
             dao.runningEntries().forEach { running -> stopAt(running, at) }
@@ -60,13 +77,15 @@ class ChangeQueue(
 
     /**
      * Stops the running entry [entryId] at the tap time, or at its start if the tap came earlier.
-     * Returns false when the entry is not cached or not running.
+     * With [fields], the stop also sets them, in the same change, such as a description still
+     * being typed when Stop was tapped. Returns false when the entry is not cached or not running.
      */
-    suspend fun stop(entryId: Long): Boolean {
+    override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
         val at = clock.instant()
         return queue {
             val running = dao.entry(resolve(entryId))?.takeIf { it.stop == null } ?: return@queue false
-            stopAt(running, at)
+            val stopped = if (fields == null) running else entry(running.id, running.workspaceId, fields, running.start, stop = null)
+            stopAt(stopped, at)
             true
         }
     }
@@ -75,7 +94,7 @@ class ChangeQueue(
      * Creates a stopped entry in [workspaceId], as a manual entry does. Returns its local id. Pass
      * the account's `AccountSettings.defaultWorkspaceId`, as for [start].
      */
-    suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+    override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
         require(!stop.isBefore(start)) { "The stop comes before the start." }
         return queue { queueCreate(workspaceId, fields, start, stop) }
     }
@@ -84,7 +103,7 @@ class ChangeQueue(
      * Sets every field of the cached entry [entryId]. A null [stop] makes it run. Returns false
      * when the entry is not cached.
      */
-    suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+    override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
         require(stop == null || !stop.isBefore(start)) { "The stop comes before the start." }
         return queue {
             val current = dao.entry(resolve(entryId)) ?: return@queue false
@@ -100,7 +119,7 @@ class ChangeQueue(
     suspend fun currentId(entryId: Long): Long = withContext(io) { resolve(entryId) }
 
     /** Deletes the cached entry [entryId]. Returns false when the entry is not cached. */
-    suspend fun delete(entryId: Long): Boolean =
+    override suspend fun delete(entryId: Long): Boolean =
         queue {
             val current = dao.entry(resolve(entryId)) ?: return@queue false
             enqueue(ChangeKind.DELETE, current)

@@ -36,19 +36,21 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
 
 /**
  * The Timer page, the first page after sign-in (docs/PRD.md B2), as the web app's TimerPage.tsx
- * lays it out: the timer, then the List and Calendar switch, then the entries in the chosen [view]. The timer
- * (TKA-0039) is not built yet. The page starts with its title, as the other top-level pages do,
- * and never with the wordmark, which stays out of page headers (docs/PRD.md, Wordmark).
+ * lays it out: the [timer], then the List and Calendar switch, then the entries in the chosen
+ * [view]. The page starts with its title, as the other top-level pages do, and never with the
+ * wordmark, which stays out of page headers (docs/PRD.md, Wordmark).
  *
  * [listContent], the history, and [calendarContent], the calendar, fill the rest of the page
  * under the switch, with a bounded height, so each scrolls on its own. On a window of compact
- * height, such as a phone held sideways, the title and the switch scroll away as the entries
- * scroll on, so the entries get the page's whole height ([ScrollAwayColumn]).
+ * height, such as a phone held sideways or upright at the largest font scale, the title, the
+ * timer and the switch scroll away as the entries scroll on, so the entries get the page's whole
+ * height ([ScrollAwayColumn]).
  */
 @Composable
 fun TimerScreen(
     view: TimerView,
     onViewChange: (TimerView) -> Unit,
+    timer: @Composable () -> Unit,
     listContent: @Composable () -> Unit,
     calendarContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -64,6 +66,8 @@ fun TimerScreen(
                 Spacer(Modifier.height(TokklTheme.spacing.space2))
                 PageTitle(stringResource(R.string.nav_timer))
                 Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
+                timer()
+                Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
                 ViewSwitch(view, onViewChange)
                 Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
             },

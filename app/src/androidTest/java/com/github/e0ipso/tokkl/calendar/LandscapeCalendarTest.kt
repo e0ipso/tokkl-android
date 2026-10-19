@@ -31,9 +31,13 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedInFrame
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
+import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
@@ -50,12 +54,17 @@ import org.junit.rules.RuleChain
 
 /**
  * The Timer page's Calendar view on a phone held sideways, a window of compact height (docs/PRD.md
- * K1). Once the calendar scrolls on, the page title, the view switch and the toolbar have
+ * K1), or upright at the largest font scale, where the height is compact for the text it holds.
+ * Once the calendar scrolls on, the page title, the timer, the view switch and the toolbar have
  * scrolled away, and the grid shows at least [hourRows] whole hour rows under the day heads,
  * which stay in the window. The view switch and every toolbar control scroll back into the window
  * whole, as TalkBack scrolls to them.
  */
-abstract class LandscapeCalendarTest(fontScale: Float, private val hourRows: Int) {
+abstract class LandscapeCalendarTest(
+    private val fontScale: Float,
+    private val hourRows: Int,
+    private val landscape: Boolean = true,
+) {
     private val composeRule = createEmptyComposeRule()
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
@@ -64,23 +73,42 @@ abstract class LandscapeCalendarTest(fontScale: Float, private val hourRows: Int
         .around(SystemFontScale(fontScale))
         .around(composeRule)
 
+    /** A phone held sideways shows the week, and one held upright the chosen day, today. */
+    private val thisWeek = if (landscape) R.string.calendar_this_week else R.string.calendar_today
+    private val arrowLabels = if (landscape) {
+        listOf(R.string.calendar_previous_week, R.string.calendar_next_week)
+    } else {
+        listOf(R.string.calendar_previous_day, R.string.calendar_next_day)
+    }
+
+    /** How TalkBack reads a day head: Monday's, a day that is not today, or today's alone. */
+    private val headLabel get() = if (landscape) MONDAY else string(R.string.history_today)
+
     @SignedOut
     @Test
     fun theGridGetsTheRoom() {
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
-            scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
-            composeRule.waitUntil("the activity runs in landscape", TIMEOUT_MS) {
-                var landscape = false
-                scenario.onActivity { landscape = it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
-                landscape
+            val (requested, orientation) = if (landscape) {
+                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE to Configuration.ORIENTATION_LANDSCAPE
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT to Configuration.ORIENTATION_PORTRAIT
+            }
+            scenario.onActivity { it.requestedOrientation = requested }
+            composeRule.waitUntil("the activity runs in the orientation", TIMEOUT_MS) {
+                var turned = false
+                scenario.onActivity { turned = it.resources.configuration.orientation == orientation }
+                turned
             }
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
                 activity.setContent { TokklTheme(darkTheme = false) { CalendarPage() } }
             }
-            composeRule.awaitText(string(R.string.calendar_this_week))
+            composeRule.awaitText(string(thisWeek))
             val window = composeRule.onRoot().getBoundsInRoot()
-            assertTrue("the window has a compact height: ${window.height()}", TokklSpacing.isCompactHeight(window.height()))
+            assertTrue(
+                "the window has a compact height for its text: ${window.height()} at font scale $fontScale",
+                TokklSpacing.isCompactHeight(window.height() / fontScale),
+            )
 
             val grid = composeRule.onNode(
                 hasScrollAction() and hasAnyDescendant(hasContentDescription(STAND_UP, substring = true)) and
@@ -101,7 +129,7 @@ abstract class LandscapeCalendarTest(fontScale: Float, private val hourRows: Int
                 "the grid shows $hourRows whole hour rows: ${shown.height()} tall after the scroll, ${before.height()} before",
                 shown.height() >= HOUR_ROW * hourRows,
             )
-            val head = composeRule.onNode(isHeading() and hasContentDescription(MONDAY, substring = true))
+            val head = composeRule.onNode(isHeading() and hasContentDescription(headLabel, substring = true))
             assertTrue("the day heads show whole", shownWhole(head))
             assertTrue("the day heads stay above the grid", head.getBoundsInRoot().bottom <= shown.top)
 
@@ -118,11 +146,11 @@ abstract class LandscapeCalendarTest(fontScale: Float, private val hourRows: Int
         val segments = listOf(R.string.timer_view_list, R.string.timer_view_calendar).map { label ->
             string(label) to composeRule.onNode(hasText(string(label)) and isSelectable())
         }
-        val arrows = listOf(R.string.calendar_previous_week, R.string.calendar_next_week).map { label ->
+        val arrows = arrowLabels.map { label ->
             string(label) to composeRule.onNode(hasContentDescription(string(label)) and hasClickAction())
         }
-        val thisWeek = string(R.string.calendar_this_week).let { it to composeRule.onNode(hasText(it) and hasClickAction()) }
-        return segments + arrows + thisWeek
+        val current = string(thisWeek).let { it to composeRule.onNode(hasText(it) and hasClickAction()) }
+        return segments + arrows + current
     }
 
     /** Whether nothing clips [node]: its bounds in the window are its whole size. */
@@ -157,13 +185,36 @@ class UsualFontLandscapeCalendarTest : LandscapeCalendarTest(fontScale = 1f, hou
 /** At the largest font scale, the grid still shows a whole hour row. */
 class LargestFontLandscapeCalendarTest : LandscapeCalendarTest(fontScale = SystemFontScale.LARGEST, hourRows = 1)
 
-/** The Timer page in the Calendar view, above the bottom bar, at noon on the Thursday of [WEEK]. */
+/**
+ * On a phone held upright at the largest font scale, text takes the room it takes on a phone held
+ * sideways, so the title, the timer, the switch and the toolbar scroll away there too, and the grid
+ * shows eight hour rows.
+ */
+class LargestFontUprightCalendarTest : LandscapeCalendarTest(fontScale = SystemFontScale.LARGEST, hourRows = 8, landscape = false)
+
+/**
+ * The Timer page in the Calendar view, with the idle timer, above the bottom bar, at noon on the
+ * Thursday of [WEEK].
+ */
 @Composable
 private fun CalendarPage() {
     SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
         TimerScreen(
             view = TimerView.CALENDAR,
             onViewChange = {},
+            timer = {
+                TimerBarContent(
+                    state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1),
+                    elapsedSeconds = 0,
+                    onDescriptionChange = {},
+                    onDescriptionDone = {},
+                    onPick = {},
+                    onBillableChange = {},
+                    onStart = {},
+                    onStop = {},
+                    picker = { _, _, _, _, _ -> },
+                )
+            },
             listContent = {},
             calendarContent = { CalendarContent(state = WEEK, now = NOON, onStep = {}, onToday = {}, onRetry = {}) },
         )

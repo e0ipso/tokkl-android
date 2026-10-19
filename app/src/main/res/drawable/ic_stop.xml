@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    A square, on the timer's Stop button. It is Tokkl's "stop" icon from
+    packages/web/src/components/Icon.tsx (github.com/e0ipso/tokkl, MIT), drawn the way that
+    component draws it: filled, with no stroke.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7 7h10v10H7z" />
+</vector>

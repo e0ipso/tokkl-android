@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The timer on the Timer page (docs/PRD.md T1). -->
+<resources>
+    <!-- The description field's hint while no timer runs, as in the web app. -->
+    <string name="timer_description_idle">What are you working on?</string>
+    <!-- The description field's hint while a timer without a description runs, as in the web app. -->
+    <string name="timer_description_running">Add a description</string>
+    <string name="timer_start">Start</string>
+    <string name="timer_stop">Stop</string>
+    <string name="timer_start_spoken">Start timer</string>
+    <string name="timer_stop_spoken">Stop timer</string>
+    <!-- Beside the clock while a timer runs, so colour is not the only sign. -->
+    <string name="timer_running">Running</string>
+    <!-- What TalkBack reads for the running clock: 1 hour, 5 minutes elapsed -->
+    <string name="timer_elapsed_spoken">%1$s elapsed</string>
+</resources>
