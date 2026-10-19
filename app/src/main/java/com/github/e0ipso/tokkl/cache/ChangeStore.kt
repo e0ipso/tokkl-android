@@ -28,6 +28,12 @@ interface ChangeStore {
      * I/O.
      */
     fun endBefore(start: PendingChange, later: CachedTimeEntry): PendingChange
+
+    /** Records [PendingChange.maybeSent] for the queued create [change]. Blocks on disk I/O. */
+    fun maybeSent(change: PendingChange, maybeSent: Boolean)
+
+    /** True when a create from the phone already maps to the server's entry [serverId]. Blocks on disk I/O. */
+    fun isMapped(serverId: Long): Boolean
 }
 
 /** The queue in [database]. */
@@ -62,6 +68,10 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
             if (dao.countFor(later.id) == 0) dao.upsertEntry(later)
             ended
         }
+
+    override fun maybeSent(change: PendingChange, maybeSent: Boolean) = dao.setMaybeSent(change.sequence, maybeSent)
+
+    override fun isMapped(serverId: Long): Boolean = dao.isMapped(serverId)
 }
 
 /**

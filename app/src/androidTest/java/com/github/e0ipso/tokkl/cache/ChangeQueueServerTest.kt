@@ -324,6 +324,51 @@ class ChangeQueueServerTest {
         assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)
     }
 
+    @Test
+    fun aCreateWhoseAnswerWasLostIsStoredOnceAndLaterChangesApplyToIt() {
+        val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
+        relay.holdAnswerTo(CREATE)
+        val id = runBlocking {
+            app.changes.create(workspace, EntryFields(description = "Answer lost"), start, start.plus(Duration.ofMinutes(30)))
+        }
+        waitUntil("the server stored the entry and its answer is held") { relay.holdsAnswer }
+        // The connection drops before the answer reaches the phone.
+        relay.hang()
+        val edited = EntryFields(description = "Edited after the lost answer")
+        assertTrue(runBlocking { app.changes.update(id, edited, start, start.plus(Duration.ofMinutes(45))) })
+        waitUntil("the sender's next request hangs in the network") { relay.hungConnections > 0 }
+        relay.releaseAnswer()
+        relay.release()
+        drainUntilEmpty()
+
+        val copies = serverEntriesAround(start)
+        assertEquals("one copy on the server: $copies", 1, copies.size)
+        val copy = copies.single()
+        assertEquals(serverId(id), copy.getValue("id").jsonPrimitive.long)
+        assertEquals("the queued edit reached that copy", "Edited after the lost answer", copy.string("description"))
+        assertEquals(start.plus(Duration.ofMinutes(45)), copy.instant("stop"))
+    }
+
+    @Test
+    fun aCreateThatNeverReachedTheServerIsPostedOnce() {
+        val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
+        relay.hang()
+        val id = runBlocking {
+            app.changes.create(workspace, EntryFields(description = "Never reached"), start, start.plus(Duration.ofMinutes(30)))
+        }
+        // The relay drops the create on a connection it cut, or holds it on a new one until the
+        // read times out. Either way the phone cannot tell whether the server stored it.
+        runBlocking { app.sender.send().join() }
+        assertEquals("the create stays queued", 1, unsentCount())
+        relay.release()
+        drainUntilEmpty()
+
+        val copies = serverEntriesAround(start)
+        assertEquals("one copy on the server: $copies", 1, copies.size)
+        assertEquals(serverId(id), copies.single().getValue("id").jsonPrimitive.long)
+        assertEquals("Never reached", copies.single().string("description"))
+    }
+
     /**
      * Queues [change] with no route to the server, as with no network, and waits until the drain
      * it starts has failed. The app is signed in through no relay afterwards: sign it in again.
@@ -366,6 +411,15 @@ class ChangeQueueServerTest {
 
     private fun runningOnServer(): JsonObject? =
         web.get(web.server.api("me", "time_entries", "current"), JsonObject.serializer().nullable).orFail("GET the running entry")
+
+    /** The server's entries that start within a day of [start]. */
+    private fun serverEntriesAround(start: Instant): List<JsonObject> {
+        val url = web.server.api("me", "time_entries").newBuilder()
+            .addQueryParameter("start_date", start.minus(Duration.ofDays(1)).toString())
+            .addQueryParameter("end_date", start.plus(Duration.ofDays(1)).toString())
+            .build()
+        return web.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+    }
 
     private fun time(): AccountTime = checkNotNull(app.accountSettings.state.value?.time()) { "no account time" }
 
@@ -435,6 +489,9 @@ class ChangeQueueServerTest {
 
         /** The start of the cache refresh's request for the history window's entries. */
         const val TIME_ENTRIES = "GET /api/v9/me/time_entries?"
+
+        /** The start of a create's request. */
+        const val CREATE = "POST /api/v9/workspaces/"
 
         /** The end of the request line of a read of the running entry. */
         const val RUNNING_ENTRY = "/api/v9/me/time_entries/current HTTP/1.1"

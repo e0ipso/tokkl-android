@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
@@ -37,6 +38,10 @@ enum class ChangeKind {
  * @property stop the stop the user gave or the tap time of Stop, or null while the entry runs.
  * @property tags tag names. The server creates any it does not know.
  * @property tagIds the cached ids of [tags], for the cache row only. The server gets the names.
+ * @property maybeSent the sender posted this create and the server may have stored it, because
+ *   no answer came back that rules it out: the connection dropped, the read timed out, the app
+ *   died mid-request, the server answered 5xx or the phone could not read its 2xx. Before posting
+ *   it again the sender looks for the entry that post made. Only a create sets it.
  */
 @Entity(tableName = "pending_changes", indices = [Index("entryId")])
 data class PendingChange(
@@ -52,6 +57,7 @@ data class PendingChange(
     val billable: Boolean,
     val tags: List<String>,
     val tagIds: List<Long>,
+    @ColumnInfo(defaultValue = "0") val maybeSent: Boolean = false,
 ) {
 
     /** The cache row this change leaves, or null for a delete. */

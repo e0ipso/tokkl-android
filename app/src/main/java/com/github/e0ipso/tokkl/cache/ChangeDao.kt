@@ -46,6 +46,13 @@ abstract class ChangeDao {
     @Query("SELECT serverId FROM entry_ids WHERE localId = :localId")
     abstract fun serverId(localId: Long): Long?
 
+    /** True when a create from the phone already maps to the server's entry [serverId]. */
+    @Query("SELECT EXISTS(SELECT 1 FROM entry_ids WHERE serverId = :serverId)")
+    abstract fun isMapped(serverId: Long): Boolean
+
+    @Query("UPDATE pending_changes SET maybeSent = :maybeSent WHERE sequence = :sequence")
+    abstract fun setMaybeSent(sequence: Long, maybeSent: Boolean)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract fun insertMapping(mapping: EntryIdMapping)
 

@@ -14,7 +14,8 @@ import androidx.room.TypeConverters
  * from it. Every version migrates from the one before and never drops the file, because that
  * would lose the queued changes.
  *
- * Version 2 adds the queue: `pending_changes` and `entry_ids`.
+ * Version 2 adds the queue: `pending_changes` and `entry_ids`. Version 3 adds
+ * `pending_changes.maybeSent`.
  */
 @Database(
     entities = [
@@ -27,9 +28,9 @@ import androidx.room.TypeConverters
         PendingChange::class,
         EntryIdMapping::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @TypeConverters(CacheConverters::class)
 abstract class CacheDatabase : RoomDatabase() {

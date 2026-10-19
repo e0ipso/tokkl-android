@@ -6,11 +6,14 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okio.BufferedSink
 
 /**
  * Client for the Toggl Track API v9 and Reports API v3, as served by Tokkl or
@@ -33,13 +36,19 @@ class TogglApiClient(
      * response body. An empty body does not decode, so use [sendNoContent]
      * for calls that answer without one. OkHttp refuses a null body for POST,
      * PUT and PATCH.
+     *
+     * When a connection that OkHttp reused fails after the request went out,
+     * OkHttp sends the request again on a new one, so a POST whose answer was
+     * lost can create its object twice. With [resend] false OkHttp sends
+     * [body] once and the caller gets the failure.
      */
     fun <T> send(
         method: String,
         url: HttpUrl,
         body: JsonElement?,
         deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = execute(method, url, body) { decode(it.body.string(), deserializer) }
+        resend: Boolean = true,
+    ): ApiResult<T> = execute(method, url, body, resend) { decode(it.body.string(), deserializer) }
 
     /**
      * Like [send], and keeps the response's headers too, for calls that put
@@ -51,7 +60,7 @@ class TogglApiClient(
         url: HttpUrl,
         body: JsonElement?,
         deserializer: DeserializationStrategy<T>,
-    ): ApiResult<WithHeaders<T>> = execute(method, url, body) { response ->
+    ): ApiResult<WithHeaders<T>> = execute(method, url, body, resend = true) { response ->
         when (val decoded = decode(response.body.string(), deserializer)) {
             is ApiResult.Success -> ApiResult.Success(WithHeaders(decoded.value, response.headers))
             is ApiResult.Failure -> decoded
@@ -65,18 +74,20 @@ class TogglApiClient(
      * project id as JSON, which this method ignores too. Any 2xx is a success.
      */
     fun sendNoContent(method: String, url: HttpUrl, body: JsonElement? = null): ApiResult<Unit> =
-        execute(method, url, body) { ApiResult.Success(Unit) }
+        execute(method, url, body, resend = true) { ApiResult.Success(Unit) }
 
     private fun <T> execute(
         method: String,
         url: HttpUrl,
         body: JsonElement?,
+        resend: Boolean,
         onSuccess: (Response) -> ApiResult<T>,
     ): ApiResult<T> {
+        val json = body?.let { ApiJson.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) }
         val request = Request.Builder()
             .url(url)
             .header("Authorization", credentials.authorizationHeader)
-            .method(method, body?.let { ApiJson.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) })
+            .method(method, if (resend || json == null) json else SentOnce(json))
             .build()
         return try {
             httpClient.newCall(request).execute().use { response ->
@@ -137,6 +148,21 @@ class TogglApiClient(
             // kotlinx.serialization's SerializationException is an IllegalArgumentException.
             ApiResult.Failure(ApiError.InvalidResponse(e))
         }
+
+    /**
+     * [body], marked one-shot: OkHttp sends a one-shot body again only when
+     * the request never left the phone, such as when a connection fails to
+     * open.
+     */
+    private class SentOnce(private val body: RequestBody) : RequestBody() {
+        override fun contentType(): MediaType? = body.contentType()
+
+        override fun contentLength(): Long = body.contentLength()
+
+        override fun writeTo(sink: BufferedSink) = body.writeTo(sink)
+
+        override fun isOneShot(): Boolean = true
+    }
 
     private companion object {
         val JSON = "application/json; charset=utf-8".toMediaType()

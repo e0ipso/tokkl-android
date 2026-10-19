@@ -12,8 +12,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * A cache written by version 1, before the queue, opens under the current version through Room's
- * migration, keeps its rows and takes queued changes. Room checks the migrated tables against the
+ * A cache written by version 1, before the queue, or by version 2, before
+ * `pending_changes.maybeSent`, opens under the current version through Room's migrations, keeps
+ * its rows and its queue, and takes queued changes. Room checks the migrated tables against the
  * exported schema when it opens the file, so a migration that left them wrong fails here.
  */
 class CacheDatabaseMigrationTest {
@@ -53,6 +54,39 @@ class CacheDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun version2MigratesAndKeepsTheQueue() {
+        context.deleteDatabase(FILE)
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+            VERSION_2.forEach(db::execSQL)
+            db.execSQL(
+                "INSERT INTO time_entries VALUES " +
+                    "(-1, 7, NULL, NULL, 'Queued before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]')",
+            )
+            db.execSQL(
+                "INSERT INTO pending_changes VALUES " +
+                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Queued before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]')",
+            )
+            db.execSQL("INSERT INTO entry_ids VALUES (-9, 99)")
+            db.version = 2
+        }
+
+        val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            val store = RoomChangeStore(database)
+            val queued = PendingChange(1, ChangeKind.CREATE, -1, 7, null, null, "Queued before the update", START, null, false, emptyList(), emptyList())
+            assertEquals("the queued create survived, not marked as maybe sent", queued, store.first())
+            assertTrue("the mapping survived", store.isMapped(99))
+
+            store.maybeSent(queued, true)
+            assertTrue(store.first()!!.maybeSent)
+            assertEquals(1, runBlocking { database.changes().count().first() })
+        } finally {
+            database.close()
+            context.deleteDatabase(FILE)
+        }
+    }
+
     private companion object {
         const val FILE = "cache-migration-test.db"
         val START: Instant = Instant.parse("2026-10-19T08:00:00Z")
@@ -77,6 +111,20 @@ class CacheDatabaseMigrationTest {
                 "PRIMARY KEY(`position`))",
             "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
             "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8107a6946224f42e71b1e5b586a3e59c')",
+        )
+
+        /**
+         * The tables of version 2, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/2.json:
+         * those of version 1 and the queue's.
+         */
+        val VERSION_2 = VERSION_1.dropLast(1) + listOf(
+            "CREATE TABLE IF NOT EXISTS `pending_changes` (`sequence` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` INTEGER, " +
+                "`taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, `stop` INTEGER, " +
+                "`billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL)",
+            "CREATE INDEX IF NOT EXISTS `index_pending_changes_entryId` ON `pending_changes` (`entryId`)",
+            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '885651807ba8ad3b390113ed5f804c2f')",
         )
     }
 }

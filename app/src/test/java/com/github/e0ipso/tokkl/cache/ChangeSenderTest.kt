@@ -30,6 +30,7 @@ import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -203,6 +204,8 @@ class ChangeSenderTest {
         assertEquals("nothing after the failed change was sent", 2, server.requestCount)
         assertEquals(listOf(LOCAL, -2L), store.changes.map { it.entryId })
 
+        // A 503 may come after the server stored the create, so the next drain looks for it first.
+        server.enqueue(entries())
         server.enqueue(nothingRuns())
         server.enqueue(entry(101, "First", stop = null))
         server.enqueue(nothingRuns())
@@ -211,7 +214,7 @@ class ChangeSenderTest {
         List(2) { server.takeRequest() }
         assertEquals(
             listOf("First", "Second"),
-            List(4) { server.takeRequest() }.filter { it.method == "POST" }.map { it.json()!!.string("description") },
+            List(5) { server.takeRequest() }.filter { it.method == "POST" }.map { it.json()!!.string("description") },
         )
     }
 
@@ -336,6 +339,7 @@ class ChangeSenderTest {
         server.enqueue(entry(101, "First", stop = null))
         server.enqueue(nothingRuns())
         server.enqueue(MockResponse.Builder().code(503).build())
+        server.enqueue(entries())
         server.enqueue(nothingRuns())
         server.enqueue(entry(102, "Second", stop = null))
         var joined: Job? = null
@@ -345,7 +349,7 @@ class ChangeSenderTest {
         runBlocking { job.join() }
 
         assertSame("the call during the drain joined it", job, joined)
-        assertEquals(listOf("onSent after 6 requests, 0 queued"), synchronized(calls) { calls.toList() })
+        assertEquals(listOf("onSent after 7 requests, 0 queued"), synchronized(calls) { calls.toList() })
         assertTrue(store.changes.isEmpty())
     }
 
@@ -483,6 +487,142 @@ class ChangeSenderTest {
         assertEquals(1, server.requestCount)
     }
 
+    @Test
+    fun aCreateWhoseAnswerIsLostStaysMarkedAndOkHttpDoesNotPostItAgain() {
+        // The update leaves a connection in OkHttp's pool, which the create then reuses.
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual")
+        server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
+        // The server reads the create, then the connection drops before the answer.
+        server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
+        server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:01:00+00:00"))
+
+        val outcome = sender.drain()
+
+        assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
+        assertEquals("the create went out once", listOf("PUT", "POST"), remainingRequests().map { it.method })
+        assertTrue("the server may hold it", store.changes.single().maybeSent)
+    }
+
+    @Test
+    fun theNextDrainTakesTheEntryALostCreateMadeAndSendsLaterChangesToIt() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual", maybeSent = true)
+        store.queue(ChangeKind.UPDATE, LOCAL, TAP, stop = TAP.plusSeconds(120), description = "Edited")
+        server.enqueue(entries(listed(100, "Manual", start = "2026-10-19T08:00:00+00:00", project = 4), listed(101, "Manual", start = "2026-10-19T08:00:00+00:00")))
+        server.enqueue(entry(101, "Edited", stop = "2026-10-19T08:02:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+
+        val (lookup, edit) = List(2) { server.takeRequest() }
+        assertEquals("GET /api/v9/me/time_entries", "${lookup.method} ${lookup.url.encodedPath}")
+        assertEquals("2026-10-19T07:00:00Z", lookup.url.queryParameter("start_date"))
+        assertEquals("2026-10-19T09:00:00Z", lookup.url.queryParameter("end_date"))
+        assertEquals("PUT /api/v9/workspaces/7/time_entries/101", "${edit.method} ${edit.url.encodedPath}")
+        assertEquals("the matching entry, not the one in another project", listOf(LOCAL to 101L), store.mapped)
+        assertEquals(2, server.requestCount)
+    }
+
+    @Test
+    fun aLostCreateMatchesTheStartWhereTheServerSnappedIt() {
+        val snapping = ChangeSender(
+            store,
+            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            scope = scope,
+            io = Dispatchers.IO,
+            clock = clock,
+            serverStart = { it.truncatedTo(java.time.temporal.ChronoUnit.HOURS) },
+        )
+        store.queue(ChangeKind.CREATE, LOCAL, TAP.plusSeconds(120).plusMillis(300), stop = TAP.plusSeconds(600), description = "Manual", maybeSent = true)
+        server.enqueue(entries(listed(101, "Manual", start = "2026-10-19T08:00:00+00:00")))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), snapping.drain())
+
+        assertEquals(listOf(LOCAL to 101L), store.mapped)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun aLostCreateIsPostedWhenNoUnmappedEntryMatchesIt() {
+        store.mapped += -5L to 101L
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual", maybeSent = true)
+        server.enqueue(
+            entries(
+                listed(101, "Manual", start = "2026-10-19T08:00:00+00:00"),
+                listed(102, "Other", start = "2026-10-19T08:00:00+00:00"),
+                listed(103, "Manual", start = "2026-10-19T08:00:01+00:00"),
+                listed(104, "Manual", start = "2026-10-19T08:00:00+00:00", tags = """["focus"]"""),
+            ),
+        )
+        server.enqueue(entry(105, "Manual", stop = "2026-10-19T08:01:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+
+        assertEquals(listOf("GET", "POST"), List(2) { server.takeRequest().method })
+        assertEquals(LOCAL to 105L, store.mapped.last())
+    }
+
+    @Test
+    fun aStartWhoseAnswerWasLostIsLookedUpBeforeTheRunningEntry() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "Phone", maybeSent = true)
+        server.enqueue(entries(listed(101, "Phone", start = "2026-10-19T08:00:00+00:00", stop = null)))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+
+        assertEquals("/api/v9/me/time_entries", server.takeRequest().url.encodedPath)
+        assertEquals("no read of the running entry and no post", 1, server.requestCount)
+        assertEquals(listOf(LOCAL to 101L), store.mapped)
+    }
+
+    @Test
+    fun aRefusedCreateIsNotMarkedAndGoesWithoutALookupNextTime() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual")
+        server.enqueue(MockResponse.Builder().code(400).build())
+
+        assertEquals(ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(400)), sender.drain())
+        assertFalse(store.changes.single().maybeSent)
+
+        server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:01:00+00:00"))
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(listOf("POST", "POST"), List(2) { server.takeRequest().method })
+    }
+
+    @Test
+    fun aCreateAnswered5xxOrUnreadableStaysMarked() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual")
+        server.enqueue(MockResponse.Builder().code(502).build())
+        sender.drain()
+        assertTrue("a proxy's 502 may come after the server stored it", store.changes.single().maybeSent)
+
+        store.changes.replaceAll { it.copy(maybeSent = false) }
+        server.enqueue(MockResponse.Builder().code(201).body("not json").build())
+        val outcome = sender.drain()
+        assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.InvalidResponse)
+        assertTrue("the server answered 2xx, so it stored the entry", store.changes.single().maybeSent)
+    }
+
+    @Test
+    fun onlyRefusalsAndRequestsThatNeverLeftThePhoneLeaveNothingOnTheServer() {
+        val nothing = listOf(
+            ApiError.UnexpectedStatus(400),
+            ApiError.UnexpectedStatus(404),
+            ApiError.AuthFailed,
+            ApiError.RateLimited(30),
+            ApiError.Network(java.net.ConnectException("refused")),
+            ApiError.Network(java.net.UnknownHostException("tokkl.example")),
+            ApiError.Network(java.net.NoRouteToHostException("no route")),
+            ApiError.HostNotAllowed("https://elsewhere.example"),
+        )
+        val maybe = listOf(
+            ApiError.UnexpectedStatus(500),
+            ApiError.UnexpectedStatus(504),
+            ApiError.Network(java.net.SocketTimeoutException("timeout")),
+            ApiError.Network(java.io.IOException("unexpected end of stream")),
+            ApiError.InvalidResponse(IllegalArgumentException("not json")),
+        )
+        assertEquals(nothing.map { true }, nothing.map { it.leftNothingOnTheServer() })
+        assertEquals(maybe.map { false }, maybe.map { it.leftNothingOnTheServer() })
+    }
+
     private fun waitUntil(condition: () -> Boolean) {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
         while (!condition()) {
@@ -500,6 +640,20 @@ class ChangeSenderTest {
                 """"billable":true,"tags":[],"tag_ids":[]}""",
         )
         .build()
+
+    private fun entries(vararg json: String) =
+        MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body(json.joinToString(",", "[", "]")).build()
+
+    /** One entry in a GET /me/time_entries answer, as Tokkl lists it, in workspace 7. */
+    private fun listed(
+        id: Long,
+        description: String,
+        start: String,
+        stop: String? = "2026-10-19T08:30:00+00:00",
+        project: Long = 3,
+        tags: String = "[]",
+    ) = """{"id":$id,"workspace_id":7,"project_id":$project,"task_id":null,"description":"$description",""" +
+        """"start":"$start","stop":${stop?.let { "\"$it\"" } ?: "null"},"billable":false,"tags":$tags,"tag_ids":[]}"""
 
     private fun nothingRuns() = MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("null").build()
 
@@ -546,6 +700,7 @@ class ChangeSenderTest {
             stop: Instant?,
             description: String,
             tags: List<String> = emptyList(),
+            maybeSent: Boolean = false,
         ) {
             changes += PendingChange(
                 sequence = ++sequence,
@@ -560,6 +715,7 @@ class ChangeSenderTest {
                 billable = true,
                 tags = tags,
                 tagIds = emptyList(),
+                maybeSent = maybeSent,
             )
         }
 
@@ -592,6 +748,14 @@ class ChangeSenderTest {
             this.later += later
             return ended
         }
+
+        @Synchronized
+        override fun maybeSent(change: PendingChange, maybeSent: Boolean) {
+            changes.replaceAll { if (it.sequence == change.sequence) it.copy(maybeSent = maybeSent) else it }
+        }
+
+        @Synchronized
+        override fun isMapped(serverId: Long): Boolean = mapped.any { it.second == serverId }
     }
 
     private companion object {

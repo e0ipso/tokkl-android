@@ -108,6 +108,7 @@ class TokklApplication : Application() {
             scope = MainScope(),
             io = Dispatchers.IO,
             onSent = { accountSettings.refreshAfterChange() },
+            serverStart = { start -> accountSettings.state.value?.time()?.snapUnsent(start, start)?.start ?: start },
         )
     }
 
