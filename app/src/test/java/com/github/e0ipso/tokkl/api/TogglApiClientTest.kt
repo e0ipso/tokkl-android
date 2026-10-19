@@ -149,7 +149,8 @@ class TogglApiClientTest {
 
         assertEquals(ApiError.AuthFailed, failure(client.sendNoContent("DELETE", url)))
         assertEquals(ApiError.RateLimited(5), failure(client.sendNoContent("DELETE", url)))
-        assertEquals(ApiError.UnexpectedStatus(404), failure(client.sendNoContent("DELETE", url)))
+        // The body is a JSON string, so the error carries it as the server's reason.
+        assertEquals(ApiError.UnexpectedStatus(404, "Not found"), failure(client.sendNoContent("DELETE", url)))
     }
 
     @Test

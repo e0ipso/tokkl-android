@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the projects, clients and tags pages share: their changes go to the server at once and are never queued. -->
+<resources>
+    <string name="catalog_retry">Try again</string>
+    <string name="catalog_cancel">Cancel</string>
+    <!-- Between an item's details, such as its client and the word Archived. -->
+    <string name="catalog_detail_separator">·</string>
+    <!-- The message after the server accepted a change: Created Website -->
+    <string name="catalog_created">Created %1$s</string>
+    <string name="catalog_saved">Saved %1$s</string>
+    <string name="catalog_archived">Archived %1$s</string>
+    <string name="catalog_restored">Restored %1$s</string>
+    <string name="catalog_error_unreachable">The server can\'t be reached, so nothing changed. Check the connection and try again.</string>
+    <string name="catalog_error_auth">The server didn\'t accept this phone\'s API token. Sign in again.</string>
+    <string name="catalog_error_trust">The app sends nothing to the server until you review its connection.</string>
+    <string name="catalog_error_status">The server answered with HTTP %d, so nothing changed.</string>
+    <string name="catalog_error_unreadable">The server\'s answer wasn\'t one the app can read.</string>
+</resources>

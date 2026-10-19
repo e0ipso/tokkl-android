@@ -81,6 +81,18 @@ class AccountSettingsSource(
         return job
     }
 
+    /**
+     * A [refresh] that reads the server after a change the caller has just sent, such as a new
+     * project, so the cache ends up with the server's state after it. A refresh that is running
+     * may have read the server before the change, so this waits for it and then starts a new one,
+     * or joins one that another call started meanwhile. Returns the job that ends with that
+     * refresh.
+     */
+    fun refreshAfterChange(): Job = scope.launch(io) {
+        synchronized(lock) { refreshing }?.join()
+        refresh().join()
+    }
+
     private fun refreshNow() {
         val writesBefore = synchronized(lock) { writes }
         val api = client() ?: return

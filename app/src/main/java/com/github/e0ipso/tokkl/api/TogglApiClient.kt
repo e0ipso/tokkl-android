@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.api
 import java.io.IOException
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -106,8 +107,28 @@ class TogglApiClient(
         when (response.code) {
             403 -> ApiError.AuthFailed
             429 -> ApiError.RateLimited(retryAfterSeconds(response.header("Retry-After")))
-            else -> ApiError.UnexpectedStatus(response.code)
+            else -> ApiError.UnexpectedStatus(response.code, reason(response))
         }
+
+    /**
+     * The error body when it is one JSON string, as Tokkl's errors are, read up to
+     * [MAX_REASON_BYTES]. Null for any other body, such as a proxy's HTML page, which is cut
+     * there and so never parses.
+     */
+    private fun reason(response: Response): String? {
+        val text = try {
+            response.peekBody(MAX_REASON_BYTES).string()
+        } catch (e: IOException) {
+            return null
+        }
+        val element = try {
+            ApiJson.parseToJsonElement(text)
+        } catch (e: IllegalArgumentException) {
+            // kotlinx.serialization's SerializationException is an IllegalArgumentException.
+            return null
+        }
+        return (element as? JsonPrimitive)?.takeIf { it.isString }?.content?.trim()?.takeIf { it.isNotEmpty() }
+    }
 
     private fun <T> decode(text: String, deserializer: DeserializationStrategy<T>): ApiResult<T> =
         try {
@@ -119,6 +140,9 @@ class TogglApiClient(
 
     private companion object {
         val JSON = "application/json; charset=utf-8".toMediaType()
+
+        /** Tokkl's reasons are one short sentence. */
+        const val MAX_REASON_BYTES = 2048L
 
         /** Tokkl sends whole seconds. An HTTP date or a negative number counts as missing. */
         fun retryAfterSeconds(value: String?): Long? = value?.trim()?.toLongOrNull()?.takeIf { it >= 0 }

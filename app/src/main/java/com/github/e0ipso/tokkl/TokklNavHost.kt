@@ -28,6 +28,8 @@ import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
 import com.github.e0ipso.tokkl.navigation.PlaceholderScreen
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.projects.ProjectsModel
+import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reports.ReportsModel
 import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.session.Session
@@ -72,6 +74,7 @@ fun TokklNavHost(
     reports: ReportsModel,
     history: HistoryModel,
     calendar: CalendarModel,
+    projects: ProjectsModel,
     timerView: TimerViewSetting,
     timerRunning: Flow<Boolean> = flowOf(false),
 ) {
@@ -101,7 +104,7 @@ fun TokklNavHost(
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
     SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open, timerRunning = running) {
-        Screen(destination, backStack, themeSettings, reports, history, calendar, view, onTimerViewChange = timerView::choose)
+        Screen(destination, backStack, themeSettings, reports, history, calendar, projects, view, onTimerViewChange = timerView::choose)
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -141,6 +144,7 @@ private fun Screen(
     reports: ReportsModel,
     history: HistoryModel,
     calendar: CalendarModel,
+    projects: ProjectsModel,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
 ) {
@@ -154,7 +158,7 @@ private fun Screen(
             calendarContent = { WeekCalendar(calendar) },
         )
         Destination.REPORTS -> ReportsScreen(model = reports)
-        Destination.PROJECTS -> PlaceholderScreen(title = R.string.nav_projects, message = R.string.projects_later)
+        Destination.PROJECTS -> ProjectsScreen(model = projects)
         Destination.CLIENTS -> PlaceholderScreen(title = R.string.nav_clients, message = R.string.clients_later)
         Destination.TAGS -> PlaceholderScreen(title = R.string.nav_tags, message = R.string.tags_later)
         Destination.TRASH -> PlaceholderScreen(title = R.string.nav_trash, message = R.string.trash_later)

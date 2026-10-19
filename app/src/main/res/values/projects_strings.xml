@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The projects page and its form (docs/PRD.md P2), in the web app's words. -->
+<resources>
+    <string name="projects_new">New project</string>
+    <string name="projects_loading">Loading projects…</string>
+    <string name="projects_server_needed_title">Projects need the server</string>
+    <string name="projects_server_needed_message">The server can\'t be reached, so these are the projects on this phone. Creating, editing, archiving and restoring them needs the server.</string>
+    <string name="projects_empty_title">No projects yet</string>
+    <string name="projects_empty_message">Create one with New project to group your time entries.</string>
+    <!-- The heading over the archived projects, and the marker on each of them. -->
+    <string name="projects_archived">Archived</string>
+    <string name="projects_billable">Billable</string>
+    <string name="projects_no_client">No client</string>
+    <!-- What TalkBack says a tap on a project's row does. -->
+    <string name="projects_edit">Edit</string>
+    <string name="projects_archive">Archive</string>
+    <!-- Archive Website -->
+    <string name="projects_archive_named">Archive %1$s</string>
+    <string name="projects_restore">Restore</string>
+    <!-- Restore Website -->
+    <string name="projects_restore_named">Restore %1$s</string>
+
+    <string name="project_form_new">New project</string>
+    <string name="project_form_edit">Edit project</string>
+    <string name="project_name">Name</string>
+    <string name="project_name_missing">Enter a project name</string>
+    <string name="project_colour">Colour</string>
+    <string name="project_colour_custom">Custom</string>
+    <string name="project_colour_custom_field">Custom colour</string>
+    <string name="project_colour_invalid">Colour must be a hex code, like #0b83d9</string>
+    <string name="project_colour_blue">Blue</string>
+    <string name="project_colour_purple">Purple</string>
+    <string name="project_colour_pink">Pink</string>
+    <string name="project_colour_orange">Orange</string>
+    <string name="project_colour_amber">Amber</string>
+    <string name="project_colour_yellow">Yellow</string>
+    <string name="project_colour_red">Red</string>
+    <string name="project_colour_green">Green</string>
+    <string name="project_colour_teal">Teal</string>
+    <string name="project_colour_salmon">Salmon</string>
+    <string name="project_colour_indigo">Indigo</string>
+    <string name="project_colour_magenta">Magenta</string>
+    <string name="project_colour_olive">Olive</string>
+    <string name="project_colour_slate">Slate</string>
+    <string name="project_client">Client</string>
+    <!-- A client that is archived, offered only to the project that already has it: Acme (archived) -->
+    <string name="project_client_archived">%1$s (archived)</string>
+    <string name="project_rate">Hourly rate</string>
+    <!-- Workspace rate: 50 -->
+    <string name="project_rate_workspace">Workspace rate: %1$s</string>
+    <string name="project_rate_none">No rate</string>
+    <string name="project_rate_invalid">Hourly rate must be a number of 0 or more</string>
+    <string name="project_currency">Currency</string>
+    <string name="project_currency_invalid">Currency must be a 3-letter code, like EUR</string>
+    <string name="project_estimate">Estimated hours</string>
+    <string name="project_estimate_none">No estimate</string>
+    <string name="project_estimate_invalid">Estimated hours must be a number of 0 or more</string>
+    <string name="project_billable_default">Billable by default</string>
+    <string name="project_defaults_hint">Leave the rate or currency empty to use the workspace defaults.</string>
+    <string name="project_save">Save</string>
+    <string name="project_create">Create project</string>
+</resources>

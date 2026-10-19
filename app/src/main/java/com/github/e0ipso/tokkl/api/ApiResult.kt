@@ -31,8 +31,12 @@ sealed interface ApiError {
         override val status: Int get() = 429
     }
 
-    /** Any other status outside 2xx. */
-    data class UnexpectedStatus(override val status: Int) : Http
+    /**
+     * Any other status outside 2xx. [message] is the server's reason when the body is a JSON
+     * string, as Tokkl sends for a change it refuses, such as "Name has already been taken", and
+     * null for any other body.
+     */
+    data class UnexpectedStatus(override val status: Int, val message: String? = null) : Http
 
     /**
      * No HTTP response arrived: no route, DNS failure, refused connection,

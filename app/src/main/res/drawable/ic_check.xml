@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    A check mark, for the chosen option of a choice drawn as swatches. It is Tokkl's "check" icon
+    from packages/web/src/components/Icon.tsx (github.com/e0ipso/tokkl, MIT), drawn the way that
+    component draws it: a 2-unit stroke with round caps and joins, and no fill.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M5,12l5,5 9,-10" />
+</vector>
