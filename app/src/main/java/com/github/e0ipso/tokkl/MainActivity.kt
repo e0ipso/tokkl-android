@@ -76,11 +76,22 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Coming to the foreground reads the account settings again (docs/PRD.md S7) and refreshes the
-     * offline cache with the same `GET /api/v9/me` (O2). Nothing refreshes on a timer.
+     * offline cache with the same `GET /api/v9/me` (O2). After a trip to the background, the
+     * calendar loads its weeks from the server again. Nothing refreshes on a timer.
      */
     override fun onStart() {
         super.onStart()
         (application as TokklApplication).accountSettings.refresh()
+        calendarViewModel.model.cameToForeground()
+    }
+
+    /**
+     * Going to the background, which a configuration change is not. The calendar's weeks live in
+     * its view model whichever page shows, so the activity tells it rather than the calendar.
+     */
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) calendarViewModel.model.wentToBackground()
     }
 
     /** A sign-in loads the account settings and the cache, as coming to the foreground does. */

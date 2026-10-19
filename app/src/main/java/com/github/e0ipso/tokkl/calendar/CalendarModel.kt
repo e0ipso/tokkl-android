@@ -105,7 +105,13 @@ sealed interface WeekSource {
  * memory while the model does, and nothing of it is written to the phone. Nothing loads on a
  * timer.
  *
- * Call [step], [showToday] and [loadWeek] on the main thread.
+ * Anything may change on the server while the app is in the background, so coming back to the
+ * foreground makes every loaded week load again the next time it shows, and [foregrounds] tells
+ * the calendar on screen to load its week at once. The old entries show until the new ones come,
+ * and stay when the phone is offline.
+ *
+ * Call [step], [showToday], [loadWeek], [wentToBackground] and [cameToForeground] on the main
+ * thread.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
@@ -129,6 +135,14 @@ class CalendarModel(
     private val loaded = MutableStateFlow<Map<Span, ServerWeek>>(emptyMap())
 
     private val choice = combine(selected, loaded) { day, weeks -> day to weeks }
+
+    /** The app went to the background, and has not come back yet. */
+    private var backgrounded = false
+
+    private val foregroundCount = MutableStateFlow(0)
+
+    /** How many times the app came back to the foreground; the calendar on screen loads its week again on each. */
+    val foregrounds: StateFlow<Int> = foregroundCount
 
     val state: StateFlow<CalendarState> = combine(entries, projects, tasks, accountSettings, choice) { cached, projectRows, taskRows, settings, (day, weeks) ->
         val time = settings?.time(clock)
@@ -167,21 +181,46 @@ class CalendarModel(
     }
 
     /**
-     * Loads the server's part of the week from [weekStart], unless it has loaded or is loading:
-     * the whole week outside the cache, or the entries from before the cache for a cached week.
-     * Showing a week is the event that loads it, and so is Try again after a failure. A week that
-     * failed loads again the next time it shows.
+     * Loads the server's part of the week from [weekStart], unless it is loading or has loaded
+     * since the app last came to the foreground: the whole week outside the cache, or the entries
+     * from before the cache for a cached week. Showing a week is the event that loads it, and so
+     * are Try again after a failure and coming back to the foreground. A week that failed loads
+     * again the next time it shows. A week that loaded before keeps its entries on screen while
+     * they load again, and keeps them, to load again the next time, when the server is out of
+     * reach.
      */
     fun loadWeek(weekStart: LocalDate) {
         val time = accountSettings.value?.time(clock) ?: return
         val span = spanOf(time, weekStart, time.today())
-        val status = loaded.value[span]?.status
-        if (status == WeekSource.Loading || status == WeekSource.Loaded) return
-        loaded.update { it + (span to ServerWeek(emptyList(), WeekSource.Loading)) }
+        val known = loaded.value[span]
+        if (known != null && (known.status == WeekSource.Loading || known.status == WeekSource.Loaded && !known.stale)) return
+        val before = known?.takeIf { it.status == WeekSource.Loaded }
+        loaded.update { it + (span to (before?.copy(stale = false) ?: ServerWeek(emptyList(), WeekSource.Loading))) }
         scope.launch {
             val week = withContext(io) { fetch(span) }
-            loaded.update { it + (span to week) }
+            val kept = before?.takeIf { week.status == WeekSource.Unreachable }?.copy(stale = true)
+            loaded.update { it + (span to (kept ?: week)) }
         }
+    }
+
+    /**
+     * The app went to the background. Call it when the activity stops, but not for a
+     * configuration change, which is no trip to the background.
+     */
+    fun wentToBackground() {
+        backgrounded = true
+    }
+
+    /**
+     * The app came back to the foreground. After [wentToBackground], every loaded week loads
+     * again the next time it shows, and [foregrounds] counts up so the calendar on screen loads
+     * its week at once.
+     */
+    fun cameToForeground() {
+        if (!backgrounded) return
+        backgrounded = false
+        loaded.update { weeks -> weeks.mapValues { (_, week) -> if (week.status == WeekSource.Loaded) week.copy(stale = true) else week } }
+        foregroundCount.update { it + 1 }
     }
 
     /**
@@ -227,8 +266,11 @@ class CalendarModel(
     /** The entries that start before [to] and run past [from], or still run. */
     private data class Span(val from: Instant, val to: Instant)
 
-    /** A span from the server: its [entries] once loaded, and how its load went. */
-    private data class ServerWeek(val entries: List<CachedTimeEntry>, val status: WeekSource)
+    /**
+     * A span from the server: its [entries] once loaded, how its load went, and whether it is
+     * [stale], loaded before the app last came back to the foreground and due to load again.
+     */
+    private data class ServerWeek(val entries: List<CachedTimeEntry>, val status: WeekSource, val stale: Boolean = false)
 
     companion object {
         /** Bad gateway, service unavailable and gateway timeout. */

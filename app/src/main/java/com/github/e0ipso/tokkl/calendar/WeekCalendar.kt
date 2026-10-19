@@ -121,8 +121,10 @@ fun WeekCalendar(model: CalendarModel, modifier: Modifier = Modifier, clock: Clo
             Text(stringResource(R.string.calendar_unknown_time_zone, current.timeZone), style = MaterialTheme.typography.bodyLarge)
         }
         is CalendarState.Shown -> {
-            // Showing a week is the event that loads it, when the phone does not keep it.
-            LaunchedEffect(current.weekStart) { model.loadWeek(current.weekStart) }
+            val foregrounds by model.foregrounds.collectAsState()
+            // Showing a week is the event that loads what the phone does not keep, and so is
+            // coming back to the foreground with the week on screen.
+            LaunchedEffect(current.weekStart, foregrounds) { model.loadWeek(current.weekStart) }
             val ticking = current.entries.any { it.running } || current.today in current.weekDays
             CalendarContent(
                 state = current,
