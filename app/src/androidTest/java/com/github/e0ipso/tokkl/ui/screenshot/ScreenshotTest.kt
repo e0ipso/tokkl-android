@@ -331,8 +331,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     }
 
     /**
-     * The brand's two smaller sizes, for a header strip and beside a navigation column, each with
-     * its own image. Sign-in shows the large one.
+     * The brand's two smaller sizes, each with its own image. No screen shows them, since the
+     * wordmark stays out of page headers and top bars. Sign-in shows the large one.
      */
     @SignedOut
     @Test

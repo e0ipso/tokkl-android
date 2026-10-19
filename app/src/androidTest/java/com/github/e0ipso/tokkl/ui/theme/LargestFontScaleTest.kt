@@ -642,7 +642,7 @@ class LargestFontScaleTest {
      */
     private fun timerPageParts(): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
-            brand(),
+            heading(R.string.nav_timer),
             "view switch" to composeRule.onNode(
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup) and
                     hasAnyDescendant(hasText(string(R.string.timer_view_list))),

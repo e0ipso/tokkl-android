@@ -31,10 +31,10 @@ enum class BrandSize(
     internal val wordmarkWidth: Dp,
     @DrawableRes internal val wordmark: Int,
 ) {
-    /** A header strip. */
+    /** Tokkl's sm. No screen shows it: the wordmark never sits in a page header or a top bar. */
     SMALL(84.dp, R.drawable.tokkl_wordmark_sm),
 
-    /** Beside a column of navigation. */
+    /** Tokkl's md. No screen shows it either. */
     MEDIUM(130.dp, R.drawable.tokkl_wordmark_md),
 
     /** On its own above a screen's content, as on sign-in. */

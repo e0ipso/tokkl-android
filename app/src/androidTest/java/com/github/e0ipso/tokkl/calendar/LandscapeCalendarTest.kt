@@ -50,10 +50,10 @@ import org.junit.rules.RuleChain
 
 /**
  * The Timer page's Calendar view on a phone held sideways, a window of compact height (docs/PRD.md
- * K1). Once the calendar scrolls on, the brand, the view switch and the toolbar have scrolled
- * away, and the grid shows at least [hourRows] whole hour rows under the day heads, which stay in
- * the window. The view switch and every toolbar control scroll back into the window whole, as
- * TalkBack scrolls to them.
+ * K1). Once the calendar scrolls on, the page title, the view switch and the toolbar have
+ * scrolled away, and the grid shows at least [hourRows] whole hour rows under the day heads,
+ * which stay in the window. The view switch and every toolbar control scroll back into the window
+ * whole, as TalkBack scrolls to them.
  */
 abstract class LandscapeCalendarTest(fontScale: Float, private val hourRows: Int) {
     private val composeRule = createEmptyComposeRule()
