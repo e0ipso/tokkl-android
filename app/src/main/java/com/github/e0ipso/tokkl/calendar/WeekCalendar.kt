@@ -88,6 +88,7 @@ import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.reports.projectMark
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.ui.ScrollAwayColumn
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SmallCorner
 import com.github.e0ipso.tokkl.ui.theme.SmallCornerShape
@@ -105,9 +106,10 @@ import kotlinx.coroutines.delay
  * The calendar in the Timer page's Calendar view (docs/PRD.md K1): the week from the account's
  * first day of the week, with an hour row for each hour of the day, and each entry as a block as
  * long as it lasts, in the account's timezone. On a compact window, a phone held upright, it
- * shows the chosen day alone, and the arrows and a swipe move a day instead of a week. The
- * running entry's block grows with the phone's clock, once a minute while the page shows, and
- * sends no request.
+ * shows the chosen day alone, and the arrows and a swipe move a day instead of a week. On a
+ * window of compact height, a phone held sideways, the toolbar scrolls away as the grid scrolls
+ * on, after the Timer page's brand and switch, and the day heads stay. The running entry's block
+ * grows with the phone's clock, once a minute while the page shows, and sends no request.
  */
 @Composable
 fun WeekCalendar(model: CalendarModel, modifier: Modifier = Modifier, clock: Clock = Clock.systemUTC()) {
@@ -157,18 +159,24 @@ internal fun CalendarContent(
     val labelStyle = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum")
     val gutter = rememberGutterWidth(labels, labelStyle)
     val swipe by rememberUpdatedState<(Long) -> Unit> { onStep(it * stepDays) }
-    Column(modifier.fillMaxSize()) {
-        Toolbar(state, dayMode, now, onStep = { onStep(it * stepDays) }, onToday = onToday)
-        Spacer(Modifier.height(TokklTheme.spacing.inGroup))
-        DayHeads(days, today, state, now, gutter)
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .pointerInput(Unit) { detectSwipes { swipe(it) } },
-        ) {
-            Grid(days, today, blocks, state.settings, state.zone, now, labels, labelStyle, gutter)
-            if (!state.week.shows) WeekProblem(state.week, onRetry, Modifier.matchParentSize())
+    ScrollAwayColumn(
+        modifier = modifier.fillMaxSize(),
+        top = {
+            Toolbar(state, dayMode, now, onStep = { onStep(it * stepDays) }, onToday = onToday)
+            Spacer(Modifier.height(TokklTheme.spacing.inGroup))
+        },
+    ) {
+        Column(Modifier.fillMaxSize()) {
+            DayHeads(days, today, state, now, gutter)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .pointerInput(Unit) { detectSwipes { swipe(it) } },
+            ) {
+                Grid(days, today, blocks, state.settings, state.zone, now, labels, labelStyle, gutter)
+                if (!state.week.shows) WeekProblem(state.week, onRetry, Modifier.matchParentSize())
+            }
         }
     }
 }

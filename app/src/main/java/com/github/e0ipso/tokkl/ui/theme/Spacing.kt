@@ -45,8 +45,14 @@ object TokklSpacing {
     /** Whether [width] is a compact width, a phone held upright, by Material's window size classes. */
     fun isCompact(width: Dp): Boolean = width < MEDIUM_WIDTH
 
+    /** Whether [height] is a compact height, such as a phone held sideways, by Material's window size classes. */
+    fun isCompactHeight(height: Dp): Boolean = height < MEDIUM_HEIGHT
+
     /** Where Material's window size classes start medium widths. */
     private val MEDIUM_WIDTH = 600.dp
+
+    /** Where Material's window size classes start medium heights. */
+    private val MEDIUM_HEIGHT = 480.dp
 }
 
 /**

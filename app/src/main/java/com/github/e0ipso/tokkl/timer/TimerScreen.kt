@@ -1,8 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +20,7 @@ import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.Brand
 import com.github.e0ipso.tokkl.ui.BrandSize
+import com.github.e0ipso.tokkl.ui.ScrollAwayColumn
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -44,7 +43,9 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
  * (TKA-0039) is not built yet, so the brand stands in its place.
  *
  * [listContent], the history, and [calendarContent], the calendar, fill the rest of the page
- * under the switch, with a bounded height, so each scrolls on its own.
+ * under the switch, with a bounded height, so each scrolls on its own. On a window of compact
+ * height, such as a phone held sideways, the brand and the switch scroll away as the entries
+ * scroll on, so the entries get the page's whole height ([ScrollAwayColumn]).
  */
 @Composable
 fun TimerScreen(
@@ -55,27 +56,23 @@ fun TimerScreen(
     modifier: Modifier = Modifier,
 ) {
     Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
-        Column(
+        ScrollAwayColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
-                .screenContent()
-                .padding(top = TokklTheme.spacing.space2),
+                .screenContent(),
+            top = {
+                Spacer(Modifier.height(TokklTheme.spacing.space2))
+                Brand(BrandSize.MEDIUM, Modifier.semantics { heading() })
+                Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
+                ViewSwitch(view, onViewChange)
+                Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+            },
         ) {
-            Brand(BrandSize.MEDIUM, Modifier.semantics { heading() })
-            Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
-            ViewSwitch(view, onViewChange)
-            Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                when (view) {
-                    TimerView.LIST -> listContent()
-                    TimerView.CALENDAR -> calendarContent()
-                }
+            when (view) {
+                TimerView.LIST -> listContent()
+                TimerView.CALENDAR -> calendarContent()
             }
         }
     }
