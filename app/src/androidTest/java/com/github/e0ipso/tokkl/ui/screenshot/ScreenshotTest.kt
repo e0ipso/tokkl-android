@@ -660,9 +660,7 @@ private class ThemeRule(private val dark: Boolean) : ExternalResource() {
     override fun before() {
         val mode = if (dark) ThemeMode.DARK else ThemeMode.LIGHT
         ThemeSettingsStore(context).save(ThemeSettings(mode = mode))
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            context.getSystemService(UiModeManager::class.java).setApplicationNightMode(mode.applicationNightMode)
-        }
+        context.getSystemService(UiModeManager::class.java).setApplicationNightMode(mode.applicationNightMode)
     }
 
     override fun after() {

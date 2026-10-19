@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The launcher icon: the clock O logo on plum. minSdk is 26, so this one adaptive icon covers
+    The launcher icon: the clock O logo on plum. minSdk is 31, so this one adaptive icon covers
     every supported release and the app needs no legacy PNG mipmaps.
 
     Source: Tokkl's icon pack, ../tokkl/docs/brand/icon-pack (github.com/e0ipso/tokkl at

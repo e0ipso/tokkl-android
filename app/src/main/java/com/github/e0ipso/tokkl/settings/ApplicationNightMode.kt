@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.settings
 
 import android.app.UiModeManager
 import android.content.Context
-import android.os.Build
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -28,12 +27,8 @@ val ThemeMode.applicationNightMode: Int
  * The setting stays the source of truth, so this runs on every start too and repairs a night mode
  * that went out of step. Each call is a binder call, so it runs on [io]. MainActivity handles the
  * configuration change itself, so a change keeps the activity and the screen it shows.
- *
- * Android added the app's night mode in 12 (API 31). Below that the starting window follows the
- * system's mode and this does nothing.
  */
 fun syncApplicationNightMode(context: Context, modes: Flow<ThemeMode>, scope: CoroutineScope, io: CoroutineContext) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
     val uiModeManager = context.getSystemService(UiModeManager::class.java)
     modes.distinctUntilChanged()
         .onEach { uiModeManager.setApplicationNightMode(it.applicationNightMode) }

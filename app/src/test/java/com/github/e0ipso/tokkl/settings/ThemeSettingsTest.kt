@@ -20,11 +20,4 @@ class ThemeSettingsTest {
             assertEquals(systemIsDark, ThemeMode.SYSTEM.isDark(systemIsDark))
         }
     }
-
-    /** API 31 is Android 12, the first with wallpaper colours. The app supports API 26 and up. */
-    @Test
-    fun wallpaperColoursAreOfferedFromAndroid12() {
-        for (sdkInt in 26..30) assertFalse("API $sdkInt", dynamicColorAvailable(sdkInt))
-        for (sdkInt in 31..37) assertTrue("API $sdkInt", dynamicColorAvailable(sdkInt))
-    }
 }

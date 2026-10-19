@@ -231,7 +231,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 | Area | Requirement |
 |---|---|
 | Speed | A tap on Start or Stop in the app, notification, widget or tile changes the state on the phone without waiting for the server. Tests prove it with a network that never answers. Jetpack Macrobenchmark runs cold start (`StartupTimingMetric`) and tap-to-state (`TraceSectionMetric`) on the CI emulator and fails a build that is slower than the previous one. The goals are 200 ms from tap to new state and 1.5 s cold start on a mid-range phone; no real phone checks them, so they guide design but do not gate releases. |
-| Compatibility | Android 8.0 (API 26) and later. Phones first; tablets and foldables get adaptive layouts. |
+| Compatibility | Android 12 (API 31) and later. Phones first; tablets and foldables get adaptive layouts. |
 | Privacy | No network traffic to any host but the configured server. |
 | Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. While a timer runs, one check every 15 minutes (section 6.3). |
 | Accessibility | WCAG AA contrast, TalkBack labels on every control, colour never the only signal, layouts that survive the largest font scale. |

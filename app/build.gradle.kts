@@ -95,7 +95,8 @@ android {
 
     defaultConfig {
         applicationId = "com.github.e0ipso.tokkl"
-        minSdk = 26
+        // Android 12 (docs/PRD.md, Compatibility).
+        minSdk = 31
         // The API level of the test emulator.
         targetSdk = 36
         versionCode = appVersionCode

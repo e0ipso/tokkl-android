@@ -68,7 +68,6 @@ class ScreenContentTest {
     private fun showSettings(width: Int) = show(width) {
         SettingsContent(
             settings = ThemeSettings(),
-            showDynamicColor = false,
             onModeChange = {},
             onDynamicColorChange = {},
             onOpenLicences = {},

@@ -10,7 +10,7 @@ import org.w3c.dom.Element
 /**
  * No app data may leave the phone through Android backup or device transfer
  * (docs/PRD.md S8). Reads the manifest that the Android Gradle plugin merged
- * for this variant and the backup rule files it points at.
+ * for this variant and the data extraction rules it points at.
  */
 class BackupRulesTest {
 
@@ -28,13 +28,6 @@ class BackupRulesTest {
             assertEquals("<$mode> sections", 1, sections.size)
             assertExcludesEveryDomain("<$mode>", sections.single())
         }
-    }
-
-    @Test
-    fun fullBackupContentExcludesEveryDomainForApi26To30() {
-        val rules = xmlResource(application().androidAttribute("fullBackupContent"))
-        assertEquals("full-backup-content", rules.tagName)
-        assertExcludesEveryDomain("<full-backup-content>", rules)
     }
 
     private fun assertExcludesEveryDomain(where: String, section: Element) {

@@ -6,9 +6,8 @@ import org.junit.Test
 
 /**
  * Android's backup manager refuses to back up the app, because the manifest sets
- * android:allowBackup="false" (docs/PRD.md S8). On Android 11 and earlier that flag alone keeps
- * the app out of backup. The rules in res/xml/backup_rules.xml only matter if it is ever turned
- * on, so BackupRulesTest checks them on the JVM.
+ * android:allowBackup="false" (docs/PRD.md S8). The data extraction rules, which also cover
+ * device transfer, keep every domain out as well, and BackupRulesTest checks them on the JVM.
  *
  * The backup manager judges each package only while backup is on. While it is off it refuses
  * every request without naming a package. So the test turns backup on for the request, and back

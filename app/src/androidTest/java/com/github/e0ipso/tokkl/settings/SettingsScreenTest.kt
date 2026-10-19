@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.settings
 
-import android.os.Build
 import android.view.KeyEvent
 import androidx.annotation.StringRes
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -26,7 +25,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
-import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
@@ -59,14 +57,14 @@ class SettingsScreenTest {
         mode(R.string.settings_theme_system).assertIsSelected()
         mode(R.string.settings_theme_light).assertIsNotSelected()
         mode(R.string.settings_theme_dark).assertIsNotSelected()
-        if (dynamicColorAvailable()) wallpaperColours().assertIsDisplayed().assertIsOff()
+        wallpaperColours().assertIsDisplayed().assertIsOff()
         val activity = composeRule.activity
         assertEquals(tokklTheme(dark = systemIsDark(activity)), composeRule.shownTheme(activity))
     }
 
     /**
      * Every choice shows at once, in the same activity, without leaving the settings screen. Going
-     * back to the system's mode on Android 12 and later waits for Android to hand it back.
+     * back to the system's mode waits for Android to hand it back.
      */
     @Test
     fun eachThemeModeAppliesAtOnce() {
@@ -87,7 +85,6 @@ class SettingsScreenTest {
     }
 
     /** With the switch on, the chosen mode takes the wallpaper's colours instead of Tokkl's. */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     fun wallpaperColoursReplaceTokklsPaletteUntilTurnedOff() {
         composeRule.openSettings()
@@ -120,11 +117,10 @@ class SettingsScreenTest {
             ).joinToString(" ")
         }
         assertTrue("a control without a label among $labels", labels.none { it.isBlank() })
-        val switches = if (dynamicColorAvailable()) 1 else 0
         // Three theme modes, the wallpaper colours switch, Licences and the bottom bar's five items.
-        assertEquals(labels.toString(), 3 + switches + 1 + 5, controls.size)
+        assertEquals(labels.toString(), 3 + 1 + 1 + 5, controls.size)
         assertEquals(3, composeRule.onAllNodes(hasRole(Role.RadioButton)).fetchSemanticsNodes().size)
-        assertEquals(switches, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
+        assertEquals(1, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
     }
 
     /**

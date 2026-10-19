@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.ui.theme
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.text.TextRunShaper
-import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.ui.platform.LocalFontFamilyResolver
@@ -13,7 +12,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import androidx.test.filters.SdkSuppress
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Rule
@@ -63,7 +61,6 @@ class TypeScaleTest {
         assertEquals("body sizes", listOf(16.sp, 14.sp, 12.sp), listOf(typography.bodyLarge, typography.bodyMedium, typography.bodySmall).map { it.fontSize })
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     fun anybodyRolesDrawAtTheirWeightAndWidth85() {
         val drawn = mutableMapOf<String, Map<String, Float>>()
@@ -96,7 +93,6 @@ class TypeScaleTest {
     }
 
     /** The variation axes of the font that draws "A" in [typeface]. */
-    @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
     private fun axesOf(typeface: Typeface): Map<String, Float> {
         val paint = Paint().apply { this.typeface = typeface }
         val glyphs = TextRunShaper.shapeTextRun("A", 0, 1, 0, 1, 0f, 0f, false, paint)

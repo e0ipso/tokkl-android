@@ -47,7 +47,6 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.settings.dynamicColorAvailable
 import com.github.e0ipso.tokkl.signin.assertFieldErrorsLeaveTheFormInPlace
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -101,7 +100,6 @@ class LargestFontScaleTest {
         composeRule.onNodeWithText(string(R.string.settings)).performClick()
         composeRule.awaitText(string(R.string.settings_theme))
 
-        val wallpaperColours = dynamicColorAvailable()
         assertFitWhenScrolledTo(
             blocks = listOf(
                 "heading" to composeRule.onNode(hasText(string(R.string.settings)) and isHeading()),
@@ -109,9 +107,7 @@ class LargestFontScaleTest {
                 "follow the system choice" to choice(R.string.settings_theme_system),
                 "light choice" to choice(R.string.settings_theme_light),
                 "dark choice" to choice(R.string.settings_theme_dark),
-            ) + listOfNotNull(
-                ("wallpaper colours switch" to switch(R.string.settings_dynamic_colour)).takeIf { wallpaperColours },
-            ) + listOf(
+                "wallpaper colours switch" to switch(R.string.settings_dynamic_colour),
                 "About heading" to composeRule.onNode(hasText(string(R.string.settings_about)) and isHeading()),
                 "Licences row" to button(R.string.licences),
             ),
@@ -120,14 +116,9 @@ class LargestFontScaleTest {
                 inside(R.string.settings_theme_light, isSelectable()),
                 inside(R.string.settings_theme_dark, isSelectable()),
                 inside(R.string.licences, hasClickAction()),
-            ) + if (wallpaperColours) {
-                listOf(
-                    inside(R.string.settings_dynamic_colour, isToggleable()),
-                    inside(R.string.settings_dynamic_colour_summary, isToggleable()),
-                )
-            } else {
-                emptyList()
-            },
+                inside(R.string.settings_dynamic_colour, isToggleable()),
+                inside(R.string.settings_dynamic_colour_summary, isToggleable()),
+            ),
         )
     }
 

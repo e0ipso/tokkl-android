@@ -52,7 +52,6 @@ fun SettingsScreen(
     val settings by model.state.collectAsState()
     SettingsContent(
         settings = settings,
-        showDynamicColor = dynamicColorAvailable(),
         onModeChange = model::onModeChange,
         onDynamicColorChange = model::onDynamicColorChange,
         onOpenLicences = onOpenLicences,
@@ -60,11 +59,10 @@ fun SettingsScreen(
     )
 }
 
-/** [SettingsScreen] without its model. [showDynamicColor] is false below Android 12. */
+/** [SettingsScreen] without its model. */
 @Composable
 internal fun SettingsContent(
     settings: ThemeSettings,
-    showDynamicColor: Boolean,
     onModeChange: (ThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
     onOpenLicences: () -> Unit,
@@ -83,7 +81,7 @@ internal fun SettingsContent(
         ) {
             PageTitle(stringResource(R.string.settings))
             Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
-            ThemeSection(settings, showDynamicColor, onModeChange, onDynamicColorChange)
+            ThemeSection(settings, onModeChange, onDynamicColorChange)
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
             AboutSection(onOpenLicences)
         }
@@ -93,7 +91,6 @@ internal fun SettingsContent(
 @Composable
 private fun ThemeSection(
     settings: ThemeSettings,
-    showDynamicColor: Boolean,
     onModeChange: (ThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
 ) {
@@ -113,26 +110,24 @@ private fun ThemeSection(
             )
         }
     }
-    if (showDynamicColor) {
-        Spacer(Modifier.height(TokklTheme.spacing.inGroup))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .toggleable(value = settings.dynamicColor, role = Role.Switch, onValueChange = onDynamicColorChange),
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(text = stringResource(R.string.settings_dynamic_colour), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    text = stringResource(R.string.settings_dynamic_colour_summary),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.width(TokklTheme.spacing.space3))
-            Switch(checked = settings.dynamicColor, onCheckedChange = null)
+    Spacer(Modifier.height(TokklTheme.spacing.inGroup))
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .toggleable(value = settings.dynamicColor, role = Role.Switch, onValueChange = onDynamicColorChange),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(text = stringResource(R.string.settings_dynamic_colour), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = stringResource(R.string.settings_dynamic_colour_summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
+        Spacer(Modifier.width(TokklTheme.spacing.space3))
+        Switch(checked = settings.dynamicColor, onCheckedChange = null)
     }
 }
 

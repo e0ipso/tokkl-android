@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -17,9 +16,9 @@ private val LocalTokklExtraColors = staticCompositionLocalOf { TokklLightExtraCo
 /**
  * Material 3 with Tokkl's palette, light or dark.
  *
- * [dynamicColor] takes the Material roles from the wallpaper instead, on Android 12 and later.
- * It stays off unless the user turns on the opt-in setting (docs/PRD.md, Visual direction,
- * Colour). The running and billable colours stay Tokkl's either way.
+ * [dynamicColor] takes the Material roles from the wallpaper instead. It stays off unless the
+ * user turns on the opt-in setting (docs/PRD.md, Visual direction, Colour). The running and
+ * billable colours stay Tokkl's either way.
  */
 @Composable
 fun TokklTheme(
@@ -28,7 +27,7 @@ fun TokklTheme(
     content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        dynamicColor -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
