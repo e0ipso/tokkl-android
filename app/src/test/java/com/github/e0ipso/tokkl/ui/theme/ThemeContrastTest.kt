@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.ui.theme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.github.e0ipso.tokkl.projects.ProjectPalette
 import com.github.e0ipso.tokkl.reports.projectMark
 import kotlin.math.max
 import kotlin.math.min
@@ -203,8 +204,8 @@ class ThemeContrastTest {
      * surface and on the bar track, which is chartBand. A bar's billable part is solid
      * chartBillable, and the chartOther stripes draw a non-billable part's edge; the stripes on
      * their wash are texture inside one part and need no ratio. A project's dot is its colour mixed
-     * with projectMix, as the reports screen draws it, for every colour of Tokkl's project palette
-     * and for the muted dot of a project without one.
+     * with projectMix, as the reports screen draws it, for every colour of [ProjectPalette], the
+     * palette the project form offers, and for the muted dot of a project without one.
      */
     private fun reportPairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
         val marks = listOf(
@@ -213,7 +214,7 @@ class ThemeContrastTest {
             Pair("chartBillable on the bar track, chartBand", x.chartBillable, x.chartBand, Kind.NON_TEXT),
             Pair("chartOther on the bar track, chartBand", x.chartOther, x.chartBand, Kind.NON_TEXT),
         )
-        val dots = (PROJECT_COLOURS + null).map { hex ->
+        val dots = (ProjectPalette.entries.map { it.hex } + null).map { hex ->
             val dot = projectMark(hex, x.projectMix, s.onSurfaceVariant)
             Pair("project dot ${hex ?: "without a colour"} on surface", dot, s.surface, Kind.NON_TEXT)
         }
@@ -256,11 +257,5 @@ class ThemeContrastTest {
     private companion object {
         /** The near-black navy outline of the wordmark artwork, which styles.css names; not a token. */
         val WORDMARK_OUTLINE = Color(0xFF000013)
-
-        /** Tokkl's project palette, PROJECT_COLORS in ../tokkl/packages/common/colors.ts. */
-        val PROJECT_COLOURS = listOf(
-            "#0b83d9", "#9e5bd9", "#d94182", "#e36a00", "#bf7000", "#c7af14", "#d92b2b",
-            "#2da608", "#06a893", "#c9806b", "#465bb3", "#990099", "#566614", "#525266",
-        )
     }
 }
