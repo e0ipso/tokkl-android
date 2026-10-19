@@ -30,20 +30,22 @@
 #
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
 # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
-# tokkl-api36) without a window, with 2.5 GB of guest RAM, 4 cores and the
-# lavapipe renderer, turns off error dialogs on it, sets its font scale to 1.0,
-# lets its soft keyboard open, makes apps draw with Vulkan, and stops it at the
-# end. It changes no setting on a device it did not boot. It also stops the adb
-# server if that was not running before.
+# tokkl-api36; tokkl-api30 runs Android 11) without a window, with 2.5 GB of
+# guest RAM, 4 cores and the lavapipe renderer, turns off error dialogs on it,
+# sets its font scale to 1.0, lets its soft keyboard open, makes apps draw with
+# Vulkan on Android 12 and later, and stops it at the end. It changes no
+# setting on a device it did not boot. It also stops the adb server if that was
+# not running before.
 #
 # Runs take turns. Each run locks a file in $XDG_RUNTIME_DIR from its start
 # until its cleanup ends. A run that starts meanwhile prints the PID, start
 # time and directory of the run holding the lock, and waits for it to end.
 #
-# qemu peaks at about 3.5 GB in a full run, and its oom_score_adj of 800 makes
-# it the kernel OOM killer's first pick. When the user's systemd manager is
-# reachable, the emulator runs in a scope of its own with OOMPolicy=continue
-# and at most EMULATOR_MEMORY_MAX of memory, so an OOM kill ends only qemu and
+# qemu peaks at about 3.5 GB in a full run on tokkl-api36 and at 5.5 GB on
+# tokkl-api30, and its oom_score_adj of 800 makes it the kernel OOM killer's
+# first pick. When the user's systemd manager is reachable, the emulator runs
+# in a scope of its own with OOMPolicy=continue and at most
+# EMULATOR_MEMORY_MAX of memory, so an OOM kill ends only qemu and
 # this script, not the caller's scope with everything else in it, such as an
 # agent session. The scope is PartOf the caller's unit, so stopping the caller
 # still stops the emulator. Without a user manager, as in CI, the emulator
@@ -90,7 +92,8 @@ readonly FILTER_PREFIX='tokkl-test-filter-'
 # run that ended without its cleanup, never to one still reading it.
 readonly STALE_CREDENTIALS_HOURS=6
 # The most memory the emulator's scope may use, swap included. A full run
-# peaks below 4 GB.
+# peaks below 4 GB on tokkl-api36 and at 5.5 GB on tokkl-api30, where apps
+# draw with OpenGL (see boot_emulator).
 readonly EMULATOR_MEMORY_MAX=6G
 
 cd "$(dirname "$0")/.."
@@ -297,8 +300,16 @@ boot_emulator() {
     # ended, with lavapipe and with swiftshader, and the test orchestrator
     # starts a process for every test, so one full run took qemu to 11 GB. A
     # process that draws with Vulkan leaves about 5 MB. HWUI reads this when a
-    # process starts, so it applies to every test.
-    adb -s "$emulator_serial" shell setprop debug.hwui.renderer skiavk
+    # process starts, so it applies to every test. Below Android 12 HWUI
+    # aborted every app at its first frame with it: the API 28 image offers no
+    # Vulkan, and the API 30 image's Vulkan lacks VK_KHR_external_semaphore_fd,
+    # which HWUI needs. Apps there draw with OpenGL, and a full run on
+    # tokkl-api30 takes qemu to 5.5 GB.
+    if [ "$(adb -s "$emulator_serial" shell getprop ro.build.version.sdk | tr -d '\r')" -ge 31 ]; then
+        adb -s "$emulator_serial" shell setprop debug.hwui.renderer skiavk
+    else
+        echo "$AVD runs Android 11 or earlier, so apps on it draw with OpenGL"
+    fi
 }
 
 if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then

@@ -132,7 +132,8 @@ class SignInScreenTest {
         val message = hasText(string(R.string.sign_in_error_wrong_api_token))
         composeRule.waitUntil("the wrong token message shows", NETWORK_TIMEOUT_MS) { exists(message) }
         composeRule.onNode(message).assertIsDisplayed()
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).assertIsDisplayed()
+        // Still there for another try. With the keyboard open it can sit below the keyboard's edge.
+        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().assertIsDisplayed()
         assertNull(ServerConfigStore(context).load())
         assertNull(ApiTokenStore(context).load())
     }

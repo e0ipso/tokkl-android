@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Duration
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -110,7 +111,7 @@ class ChangeQueueServerTest {
         assertEquals(
             "the server keeps the tap time as the start",
             running.entry.start.truncatedTo(ChronoUnit.SECONDS),
-            Instant.parse(sent.string("start")),
+            sent.instant("start"),
         )
         assertTrue("a running entry has no stop", sent["stop"] is JsonNull)
         assertFalse("sent", runBlocking { app.cache.running.first() }!!.unsent)
@@ -131,8 +132,8 @@ class ChangeQueueServerTest {
         drainUntilEmpty()
         val snapped = app.accountSettings.state.value!!.time()!!.snapUnsent(row.entry.start, row.entry.stop)
         val stoppedOnServer = serverEntry(serverId(id))
-        assertEquals(snapped.start, Instant.parse(stoppedOnServer.string("start")))
-        assertEquals("the server snapped the tap time of the stop", snapped.stop, Instant.parse(stoppedOnServer.string("stop")))
+        assertEquals(snapped.start, stoppedOnServer.instant("start"))
+        assertEquals("the server snapped the tap time of the stop", snapped.stop, stoppedOnServer.instant("stop"))
     }
 
     @Test
@@ -168,7 +169,7 @@ class ChangeQueueServerTest {
         val made = serverEntry(serverId(manual))
         assertEquals("Made by hand", made.string("description"))
         assertEquals(listOf("typed offline"), made.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
-        assertEquals(manualStart, Instant.parse(made.string("start")))
+        assertEquals(manualStart, made.instant("start"))
         val tags = web.get(web.server.api("me", "tags"), ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/tags")
         assertEquals("Tokkl made the tag typed offline", listOf("typed offline"), tags.map { it.string("name") })
 
@@ -258,6 +259,12 @@ class ChangeQueueServerTest {
         web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET a time entry")
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
+
+    /**
+     * Tokkl writes times with an offset, such as +00:00. On API 30 Instant.parse refused that and
+     * took only a Z, so the offset goes through OffsetDateTime, as in the app's ServerReader.
+     */
+    private fun JsonObject.instant(key: String): Instant = OffsetDateTime.parse(string(key)).toInstant()
 
     private fun <T> timed(block: () -> T): Pair<T, Duration> {
         val started = System.nanoTime()

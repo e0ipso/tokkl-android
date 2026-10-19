@@ -35,9 +35,9 @@ import org.junit.Test
  * Android draws the starting window before the app runs, from the manifest theme and the night
  * mode it keeps for the app, which the app sets from the theme setting. That needs Android 12.
  * So each test launches twice. The first launch hands the mode to Android. The second has to
- * start in it, in the same configuration Android draws a cold start's starting window in.
+ * start in it, in the same configuration Android draws a cold start's starting window in. Below
+ * Android 12 the app hands Android nothing, and one test checks that instead.
  */
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class WindowBackgroundTest {
     /** Signed in, so the Timer page shows. */
     @get:Rule(order = 0)
@@ -52,19 +52,43 @@ class WindowBackgroundTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     fun lightLaunchShowsTheLightSchemeBackground() {
         assertLaunches(ThemeMode.LIGHT, dark = false)
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     fun darkLaunchShowsTheDarkSchemeBackground() {
         assertLaunches(ThemeMode.DARK, dark = true)
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     fun followingTheSystemLaunchShowsTheSystemsSchemeBackground() {
         assertLaunches(ThemeMode.SYSTEM, dark = systemSettingIsDark())
+    }
+
+    /**
+     * Below Android 12 the app has no night mode of its own to hand Android, so every launch, and
+     * the starting window Android draws before it, keeps the system's mode. Once the activity
+     * starts, the window and the content still take the chosen scheme's background.
+     */
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.R)
+    @Test
+    fun belowAndroid12LaunchesKeepTheSystemsNightModeAndShowTheChosenBackground() {
+        val systemDark = systemSettingIsDark()
+        val mode = if (systemDark) ThemeMode.LIGHT else ThemeMode.DARK
+        ThemeSettingsStore(context).save(ThemeSettings(mode = mode))
+        val background = if (systemDark) TokklLightColorScheme.background else TokklDarkColorScheme.background
+
+        for (which in listOf("first launch", "next launch")) {
+            launch { activity ->
+                assertEquals("night mode of the $which", systemDark, systemIsDark(activity))
+                assertBackgrounds(which, activity, background)
+            }
+        }
     }
 
     private fun assertLaunches(mode: ThemeMode, dark: Boolean) {

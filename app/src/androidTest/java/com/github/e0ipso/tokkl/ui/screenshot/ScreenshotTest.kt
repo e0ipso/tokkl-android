@@ -18,6 +18,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
+import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
@@ -76,8 +77,10 @@ import org.junit.rules.RuleChain
  * the app's window or the dialog's, never the status bar.
  *
  * The references are in app/src/androidTest/assets/screenshots, recorded on tokkl-api36, since
- * density and system fonts change the pixels. A change to how a screen looks updates its
- * references in the same commit:
+ * density and system fonts change the pixels. They run only on its Android version, API 36: every
+ * other version draws text and shapes differently, so each comparison there would fail without
+ * saying anything about the app. A change to how a screen looks updates its references in the same
+ * commit:
  *
  * 1. Run the four classes, which share this package, through scripts/instrumented-tests.sh with
  *    `-Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.ui.screenshot`.
@@ -379,10 +382,21 @@ private class ThemeRule(private val dark: Boolean) : ExternalResource() {
     }
 }
 
+// The references come from API 36 on tokkl-api36, so each class runs only there. The test runner
+// reads SdkSuppress from the class it runs, not from ScreenshotTest. An assumption would not do:
+// the Android Gradle plugin reports a failed assumption as a failed test.
+
+@SdkSuppress(minSdkVersion = REFERENCE_SDK, maxSdkVersion = REFERENCE_SDK)
 class LightScreenshotTest : ScreenshotTest(dark = false, fontScale = 1f)
 
+@SdkSuppress(minSdkVersion = REFERENCE_SDK, maxSdkVersion = REFERENCE_SDK)
 class DarkScreenshotTest : ScreenshotTest(dark = true, fontScale = 1f)
 
+@SdkSuppress(minSdkVersion = REFERENCE_SDK, maxSdkVersion = REFERENCE_SDK)
 class LightLargestFontScreenshotTest : ScreenshotTest(dark = false, fontScale = SystemFontScale.LARGEST)
 
+@SdkSuppress(minSdkVersion = REFERENCE_SDK, maxSdkVersion = REFERENCE_SDK)
 class DarkLargestFontScreenshotTest : ScreenshotTest(dark = true, fontScale = SystemFontScale.LARGEST)
+
+/** The Android version of tokkl-api36, where the references were recorded. */
+private const val REFERENCE_SDK = Build.VERSION_CODES.BAKLAVA

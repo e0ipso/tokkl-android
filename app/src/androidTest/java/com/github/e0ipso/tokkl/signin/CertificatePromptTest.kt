@@ -123,7 +123,8 @@ class CertificatePromptTest {
             .performTextInput(TokklTestServer.tlsUrl.toString())
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.sign_in_api_token)))
             .performTextInput(TokklTestServer.apiToken)
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performClick()
+        // The brand above the form can push the button below the screen's or the keyboard's edge.
+        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
     }
 
     private fun awaitPrompt(@StringRes title: Int) {

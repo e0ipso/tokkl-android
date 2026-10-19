@@ -11,7 +11,7 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.io.File
-import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.Properties
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -91,8 +91,9 @@ class ChangeQueueRestartTest {
                 .orFail("GET the entry")
             assertEquals("Edited before the restart", sent.getValue("description").jsonPrimitive.content)
             val snapped = app.accountSettings.state.value!!.time()!!.snapUnsent(row.entry.start, row.entry.stop!!)
-            assertEquals(snapped.start, Instant.parse(sent.getValue("start").jsonPrimitive.content))
-            assertEquals(snapped.stop, Instant.parse(sent.getValue("stop").jsonPrimitive.content))
+            // Tokkl writes an offset, +00:00, which Instant.parse refused on API 30.
+            assertEquals(snapped.start, OffsetDateTime.parse(sent.getValue("start").jsonPrimitive.content).toInstant())
+            assertEquals(snapped.stop, OffsetDateTime.parse(sent.getValue("stop").jsonPrimitive.content).toInstant())
         } finally {
             try {
                 signIn(TokklTestServer.url, TokklTestServer.apiToken)

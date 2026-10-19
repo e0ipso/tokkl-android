@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.ui.theme
 
 import android.os.SystemClock
-import android.view.WindowInsets
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -33,6 +32,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
@@ -439,7 +440,7 @@ class LargestFontScaleTest {
         composeRule.waitUntil("the keyboard hides", NETWORK_TIMEOUT_MS) {
             var shown = true
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                shown = decor.rootWindowInsets?.isVisible(WindowInsets.Type.ime()) == true
+                shown = ViewCompat.getRootWindowInsets(decor)?.isVisible(WindowInsetsCompat.Type.ime()) == true
             }
             !shown
         }
@@ -457,7 +458,7 @@ class LargestFontScaleTest {
         var top = 0
         composeRule.waitUntil("the keyboard shows", KEYBOARD_TIMEOUT_MS) {
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                height = decor.rootWindowInsets?.getInsets(WindowInsets.Type.ime())?.bottom ?: 0
+                height = ViewCompat.getRootWindowInsets(decor)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
                 top = decor.height - height
             }
             height > 0
