@@ -297,7 +297,7 @@ class ReportsScreenTest {
         val state = modelState()
         assertTrue("a report loads: $state", state is ReportsState.Loaded)
         compose.waitForIdle()
-        return (state as ReportsState.Loaded).report
+        return (state as ReportsState.Loaded).report as SummaryReport
     }
 
     private fun modelState(): ReportsState {

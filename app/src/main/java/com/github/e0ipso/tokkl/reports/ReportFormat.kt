@@ -75,6 +75,10 @@ internal class DateWords(private val resources: Resources) {
         return resources.getString(R.string.reports_range, label(range.from, !sameYear), label(range.to, showYear))
     }
 
+    /** `Mon 13 Oct`, or `Mon 13 Oct 2025` when [date] lies in another year than [today]. */
+    fun day(date: LocalDate, today: LocalDate): String =
+        resources.getString(R.string.reports_bucket_day, weekday(date), if (date.year == today.year) short(date) else shortWithYear(date))
+
     /** A bar's label: `Mon 13 Oct` for a day, `Week of 13 Oct` for a week, `Oct 2026` for a month. */
     fun bucket(start: LocalDate, resolution: Resolution): String = when (resolution) {
         Resolution.DAY -> resources.getString(R.string.reports_bucket_day, weekday(start), short(start))

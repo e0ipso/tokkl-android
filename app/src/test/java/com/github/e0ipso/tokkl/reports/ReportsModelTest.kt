@@ -97,7 +97,7 @@ class ReportsModelTest {
 
         val loaded = loaded()
         assertEquals(thisWeek, loaded.selection)
-        assertEquals(3600L, loaded.report.totals.seconds)
+        assertEquals(3600L, (loaded.report as SummaryReport).totals.seconds)
         assertSearched("2026-10-21", "2026-10-27")
     }
 

@@ -46,12 +46,12 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The reports screen (docs/PRD.md R1 and R5): a tab per report, so far the summary, under the
- * range they share. Opening the screen asks the server for this week, and coming back to the
- * foreground asks again for the range on screen; leaving it forgets the report, while a
- * configuration change keeps it and asks nothing. Offline, it says that reports need the server
- * and shows no numbers. The detailed (TKA-0034) and weekly (TKA-0035) reports add their tabs here.
- * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
+ * The reports screen (docs/PRD.md R1, R2 and R5): a tab per report, the summary and the detailed
+ * list, under the range they share. Opening the screen asks the server for this week, and coming
+ * back to the foreground asks again for the range on screen; leaving it forgets the report, while
+ * a configuration change keeps it and asks nothing. Offline, it says that reports need the server
+ * and shows no numbers or entries. The weekly report (TKA-0035) adds its tab here. It is a page
+ * of the bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable
 fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
@@ -74,67 +74,126 @@ fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
         onDispose { lifecycle.removeObserver(observer) }
     }
     val state by model.state.collectAsState()
+    val tab by model.tab.collectAsState()
     val settings by model.accountSettings.collectAsState()
     val time = remember(settings) { model.accountTime() }
     ReportsContent(
         state = state,
+        tab = tab,
         settings = settings,
         time = time,
+        onTab = model::selectTab,
         onShift = model::shift,
         onPreset = model::select,
         onCustom = model::selectCustom,
         onRetry = model::retry,
+        onLoadMore = model::loadMore,
         modifier = modifier,
     )
 }
 
-/** [ReportsScreen] without its model. [time] is null when the phone cannot resolve the account's timezone. */
+/**
+ * [ReportsScreen] without its model. [time] is null when the phone cannot resolve the account's
+ * timezone. A detailed report with entries scrolls as a lazy list, so a long range composes only
+ * the rows in view; everything else scrolls as one column.
+ */
 @Composable
 internal fun ReportsContent(
     state: ReportsState,
+    tab: ReportTab,
     settings: AccountSettings?,
     time: AccountTime?,
+    onTab: (ReportTab) -> Unit,
     onShift: (Int) -> Unit,
     onPreset: (RangePreset) -> Unit,
     onCustom: (ReportRange) -> Unit,
     onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val header: @Composable () -> Unit = {
+        Header(state, tab, time, onTab, onShift, onPreset, onCustom)
+    }
+    val detailed = (state as? ReportsState.Loaded)?.report as? DetailedReport
     Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .screenContent()
-                .padding(vertical = TokklTheme.spacing.space2),
-        ) {
-            PageTitle(stringResource(R.string.reports))
-            Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
-            ReportTabs()
-            Spacer(Modifier.height(TokklTheme.spacing.space4))
-            RangeControl(
-                selection = state.selection(),
-                time = time,
-                onShift = onShift,
-                onPreset = onPreset,
-                onCustom = onCustom,
+        if (detailed != null && detailed.entries.isNotEmpty() && settings != null && time != null) {
+            DetailedContent(
+                report = detailed,
+                settings = settings,
+                today = time.today(),
+                header = header,
+                onLoadMore = onLoadMore,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding),
             )
-            Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
-            Body(state, settings, onRetry)
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .navigationBarsPadding()
+                    .screenContent()
+                    .padding(vertical = TokklTheme.spacing.space2),
+            ) {
+                header()
+                Body(state, settings, onRetry)
+            }
         }
     }
 }
 
-/** The report types. Only the summary exists so far. */
+/** The page title, the tabs and the range, above every tab's report. */
 @Composable
-private fun ReportTabs() {
-    PrimaryTabRow(selectedTabIndex = 0, containerColor = MaterialTheme.colorScheme.background) {
-        Tab(selected = true, onClick = {}, text = { Text(stringResource(R.string.reports_tab_summary)) })
+private fun Header(
+    state: ReportsState,
+    tab: ReportTab,
+    time: AccountTime?,
+    onTab: (ReportTab) -> Unit,
+    onShift: (Int) -> Unit,
+    onPreset: (RangePreset) -> Unit,
+    onCustom: (ReportRange) -> Unit,
+) {
+    PageTitle(stringResource(R.string.reports))
+    Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
+    ReportTabs(tab, onTab)
+    Spacer(Modifier.height(TokklTheme.spacing.space4))
+    RangeControl(
+        selection = state.selection(),
+        time = time,
+        onShift = onShift,
+        onPreset = onPreset,
+        onCustom = onCustom,
+    )
+    Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+}
+
+/**
+ * The report types, in the web app's order. The tabs not shown are muted, as in the web app, and
+ * the indicator under the one shown marks it by shape too.
+ */
+@Composable
+private fun ReportTabs(selected: ReportTab, onTab: (ReportTab) -> Unit) {
+    PrimaryTabRow(selectedTabIndex = selected.ordinal, containerColor = MaterialTheme.colorScheme.background) {
+        for (tab in ReportTab.entries) {
+            Tab(
+                selected = tab == selected,
+                onClick = { onTab(tab) },
+                text = { Text(stringResource(TAB_LABELS.getValue(tab))) },
+                selectedContentColor = MaterialTheme.colorScheme.primary,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
+
+private val TAB_LABELS = mapOf(
+    ReportTab.SUMMARY to R.string.reports_tab_summary,
+    ReportTab.DETAILED to R.string.reports_tab_detailed,
+)
 
 @Composable
 private fun Body(state: ReportsState, settings: AccountSettings?, onRetry: () -> Unit) {
@@ -150,23 +209,28 @@ private fun Body(state: ReportsState, settings: AccountSettings?, onRetry: () ->
             onRetry = onRetry,
         )
         is ReportsState.Failed -> Failure(state.failure, onRetry)
-        is ReportsState.Loaded -> when {
-            settings == null -> Loading()
-            state.report.totals.entryCount == 0 -> Empty()
-            else -> SummaryContent(state.report, settings)
+        is ReportsState.Loaded -> when (val report = state.report) {
+            is SummaryReport -> when {
+                settings == null -> Loading()
+                report.totals.entryCount == 0 -> Empty()
+                else -> SummaryContent(report, settings)
+            }
+            // A detailed report with entries shows as a list, once the settings and the zone are known.
+            is DetailedReport -> if (report.entries.isEmpty()) Empty() else Loading()
         }
     }
 }
 
+/** A spinner beside [text], which TalkBack reads when it shows. */
 @Composable
-private fun Loading() {
+internal fun Loading(text: String = stringResource(R.string.reports_loading)) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
     ) {
         CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp)
         Spacer(Modifier.width(TokklTheme.spacing.space3))
-        Text(stringResource(R.string.reports_loading), style = MaterialTheme.typography.bodyLarge)
+        Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
 

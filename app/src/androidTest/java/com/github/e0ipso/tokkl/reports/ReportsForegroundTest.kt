@@ -108,7 +108,7 @@ class ReportsForegroundTest {
     fun offlineAfterTheBackgroundShowsTheMessageAndNoNumbers() {
         val model = openReports()
         val loaded = awaitLoaded(model, after = null)
-        val report = loaded.report
+        val report = loaded.report as SummaryReport
         val total = settings().formatDuration(report.totals.seconds)
         assertTrue("the seeded time shows: $report", report.totals.seconds > 0)
         assertTrue("the total $total shows", hasNode(total))

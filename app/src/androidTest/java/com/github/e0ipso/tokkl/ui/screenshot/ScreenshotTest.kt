@@ -43,6 +43,7 @@ import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.RangeSelection
 import com.github.e0ipso.tokkl.reports.ReportEntry
 import com.github.e0ipso.tokkl.reports.ReportRange
+import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsContent
 import com.github.e0ipso.tokkl.reports.ReportsState
 import com.github.e0ipso.tokkl.reports.SummaryReport
@@ -200,12 +201,15 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             ReportsContent(
                 state = ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), REPORT),
+                tab = ReportTab.SUMMARY,
                 settings = ACCOUNT,
                 time = ACCOUNT.time(TODAY),
+                onTab = {},
                 onShift = {},
                 onPreset = {},
                 onCustom = {},
                 onRetry = {},
+                onLoadMore = {},
             )
         }) {
             composeRule.awaitText(string(R.string.reports_projects))

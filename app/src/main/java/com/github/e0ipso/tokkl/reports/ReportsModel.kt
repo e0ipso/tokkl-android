@@ -18,6 +18,15 @@ import kotlinx.coroutines.withContext
 /** A range and the preset it came from, null for a custom range or one stepped to. */
 data class RangeSelection(val range: ReportRange, val preset: RangePreset?)
 
+/** The reports, one tab each, in the web app's order. */
+enum class ReportTab {
+    SUMMARY,
+    DETAILED,
+}
+
+/** What one tab shows once the server answers: a [SummaryReport] or a [DetailedReport]. */
+sealed interface Report
+
 /** What the reports screen shows. No state carries numbers from another range or an earlier answer. */
 sealed interface ReportsState {
 
@@ -32,7 +41,7 @@ sealed interface ReportsState {
 
     data class Loading(val selection: RangeSelection) : ReportsState
 
-    data class Loaded(val selection: RangeSelection, val report: SummaryReport) : ReportsState
+    data class Loaded(val selection: RangeSelection, val report: Report) : ReportsState
 
     data class Failed(val selection: RangeSelection, val failure: ReportFailure) : ReportsState
 }
@@ -62,10 +71,12 @@ sealed interface ReportFailure {
 }
 
 /**
- * The reports screen's state. Each time the screen opens, the range changes or the app comes
- * back to the foreground, it asks the configured server for the report, and it never asks on a
- * timer. Reports live in memory while the screen is open; [close] drops them, and nothing is
- * written to the phone. When a request fails, the screen shows why and no numbers.
+ * The reports screen's state. Each time the screen opens, the tab or the range changes or the app
+ * comes back to the foreground, it asks the configured server for the report, and it never asks
+ * on a timer. The detailed tab asks for its next page when the list nears its end. Reports live
+ * in memory while the screen is open; [close] drops them, and nothing is written to the phone.
+ * When a request fails, the screen shows why and no numbers or entries, even those of pages that
+ * loaded before.
  *
  * Call every function on the main thread.
  *
@@ -83,6 +94,11 @@ class ReportsModel(
 
     private val mutableState = MutableStateFlow<ReportsState>(ReportsState.Closed)
     val state: StateFlow<ReportsState> = mutableState.asStateFlow()
+
+    private val mutableTab = MutableStateFlow(ReportTab.SUMMARY)
+
+    /** The tab on screen. It stays when the screen closes and opens again. */
+    val tab: StateFlow<ReportTab> = mutableTab.asStateFlow()
 
     /** The account's workspace and rounding, read once each time the screen opens. */
     private var workspace: ReportWorkspace? = null
@@ -116,6 +132,30 @@ class ReportsModel(
     fun shift(direction: Int) {
         val current = selection() ?: return
         load(RangeSelection(current.range.shift(direction), preset = null))
+    }
+
+    /** Shows [tab] and asks for its report of the range on screen. */
+    fun selectTab(tab: ReportTab) {
+        if (tab == mutableTab.value) return
+        mutableTab.value = tab
+        selection()?.let(::load)
+    }
+
+    /**
+     * Asks for the detailed report's next page, at the row the server named for it. Does nothing
+     * while a page is on its way, after the last page, or on another tab.
+     */
+    fun loadMore() {
+        val shown = state.value as? ReportsState.Loaded ?: return
+        val report = shown.report as? DetailedReport ?: return
+        val next = report.nextRow ?: return
+        val known = workspace ?: return
+        if (report.loadingMore) return
+        mutableState.value = shown.copy(report = report.copy(loadingMore = true))
+        loading = scope.launch {
+            // A cancelled page drops its answer, as a cancelled load does.
+            mutableState.value = withContext(io) { nextPage(shown.selection, known, report, next) }
+        }
     }
 
     /** Asks for the current range again, or for this week when the account's timezone was unknown. */
@@ -166,16 +206,17 @@ class ReportsModel(
         loading?.cancel()
         mutableState.value = ReportsState.Loading(selection)
         val known = workspace
+        val tab = mutableTab.value
         loading = scope.launch {
             // A cancelled load drops its answer: withContext throws once it returns.
-            val (shown, read) = withContext(io) { fetch(selection, known) }
+            val (shown, read) = withContext(io) { fetch(selection, known, tab) }
             workspace = read
             mutableState.value = shown
         }
     }
 
-    /** What to show for [selection], and the workspace, [known] or read from the server when null. */
-    private fun fetch(selection: RangeSelection, known: ReportWorkspace?): Pair<ReportsState, ReportWorkspace?> {
+    /** What [tab] shows for [selection], and the workspace, [known] or read from the server when null. */
+    private fun fetch(selection: RangeSelection, known: ReportWorkspace?, tab: ReportTab): Pair<ReportsState, ReportWorkspace?> {
         val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone) to known
         val api = client() ?: return ReportsState.Failed(selection, ReportFailure.AuthFailed) to known
         val server = ReportsServer(api)
@@ -183,11 +224,27 @@ class ReportsModel(
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return ReportsState.Failed(selection, failureOf(answer.error)) to null
         }
-        val shown = when (val answer = server.entries(workspace, selection.range, time.zone)) {
-            is ApiResult.Success -> ReportsState.Loaded(selection, SummaryReport.of(answer.value, selection.range, time.firstDayOfWeek))
-            is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
+        val shown = when (tab) {
+            ReportTab.SUMMARY -> when (val answer = server.entries(workspace, selection.range, time.zone)) {
+                is ApiResult.Success -> ReportsState.Loaded(selection, SummaryReport.of(answer.value, selection.range, time.firstDayOfWeek))
+                is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
+            }
+            ReportTab.DETAILED -> when (val answer = server.detailedPage(workspace, selection.range, time.zone, firstRow = 1)) {
+                is ApiResult.Success -> ReportsState.Loaded(selection, DetailedReport(answer.value.entries, answer.value.nextRow))
+                is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
+            }
         }
         return shown to workspace
+    }
+
+    /** [report] with the page that starts at [next] added, or why there is none. */
+    private fun nextPage(selection: RangeSelection, workspace: ReportWorkspace, report: DetailedReport, next: Int): ReportsState {
+        val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone)
+        val api = client() ?: return ReportsState.Failed(selection, ReportFailure.AuthFailed)
+        return when (val answer = ReportsServer(api).detailedPage(workspace, selection.range, time.zone, next)) {
+            is ApiResult.Success -> ReportsState.Loaded(selection, DetailedReport(report.entries + answer.value.entries, answer.value.nextRow))
+            is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
+        }
     }
 
     private fun failureOf(error: ApiError): ReportFailure = when (error) {

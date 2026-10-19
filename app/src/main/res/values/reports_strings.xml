@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The detailed report's words. The rest of the reports screen's are in strings.xml. -->
+<resources>
+    <string name="reports_tab_detailed">Detailed</string>
+    <string name="reports_loading_more">Loading more entries…</string>
+    <string name="reports_no_description">No description</string>
+    <!-- A project and its task, as the web app's detailed report writes them: "Website: Design". -->
+    <string name="reports_project_task">%1$s: %2$s</string>
+    <!-- 09:00 – 10:30 -->
+    <string name="reports_time_range">%1$s – %2$s</string>
+    <!-- What TalkBack reads for reports_time_range. -->
+    <string name="reports_time_range_spoken">from %1$s to %2$s</string>
+</resources>

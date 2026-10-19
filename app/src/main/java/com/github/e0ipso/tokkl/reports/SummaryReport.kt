@@ -54,7 +54,7 @@ data class SummaryReport(
     val totals: ReportTotals,
     val series: List<SeriesPoint>,
     val projects: List<ProjectShare>,
-) {
+) : Report {
 
     /** The one currency of the amounts, or null with none or several. Port of reportCurrency. */
     val currency: String? get() = totals.amounts.singleOrNull()?.currency
