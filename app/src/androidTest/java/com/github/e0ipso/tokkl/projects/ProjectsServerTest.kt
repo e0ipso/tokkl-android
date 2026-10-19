@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.projects
 
+import android.os.SystemClock
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -16,12 +20,15 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.R
@@ -63,7 +70,7 @@ import org.junit.rules.RuleChain
  */
 class ProjectsServerTest {
 
-    private val composeRule = createComposeRule()
+    private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(composeRule)
@@ -117,18 +124,18 @@ class ProjectsServerTest {
 
         button(R.string.projects_new).performClick()
         composeRule.awaitText(string(R.string.project_form_new))
-        field(R.string.project_name).performTextInput("Website")
-        colour(R.string.project_colour_green).performScrollTo().performClick()
+        field(R.string.project_name).type("Website")
+        colour(R.string.project_colour_green).tap()
         colour(R.string.project_colour_green).assertIsSelected()
         colour(R.string.project_colour_blue).assertIsNotSelected()
-        composeRule.onNode(hasText(string(R.string.project_client))).performScrollTo().performClick()
-        composeRule.onNode(hasText("Acme") and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(R.string.project_client))).tap()
+        composeRule.onNode(hasText("Acme") and hasClickAction()).tap(scroll = false)
         assertEquals("an archived client is not offered", 0, composeRule.onAllNodesWithText("Gone", substring = true).fetchSemanticsNodes().size)
-        field(R.string.project_rate).performScrollTo().performTextInput("50")
-        field(R.string.project_currency).performScrollTo().performTextInput("usd")
-        field(R.string.project_estimate).performScrollTo().performTextInput("12,5")
-        composeRule.onNode(hasText(string(R.string.project_billable_default)) and hasClickAction()).performScrollTo().performClick()
-        button(R.string.project_create).performScrollTo().performClick()
+        field(R.string.project_rate).type("50")
+        field(R.string.project_currency).type("usd")
+        field(R.string.project_estimate).type("12,5")
+        composeRule.onNode(hasText(string(R.string.project_billable_default)) and hasClickAction()).tap()
+        button(R.string.project_create).tap()
 
         composeRule.awaitText(string(R.string.catalog_created, "Website"))
         var server = project("Website")
@@ -143,22 +150,22 @@ class ProjectsServerTest {
         }
         val id = server.id()
 
-        row("Website").performClick()
+        row("Website").tap(scroll = false)
         composeRule.awaitText(string(R.string.project_form_edit))
         field(R.string.project_rate).assert(hasText("50"))
         field(R.string.project_estimate).assert(hasText("12.5"))
-        field(R.string.project_name).performTextClearance()
-        field(R.string.project_name).performTextInput("Web site")
-        colour(R.string.project_colour_custom).performScrollTo().performClick()
-        field(R.string.project_colour_custom_field).performTextClearance()
-        field(R.string.project_colour_custom_field).performTextInput("#123456")
-        composeRule.onNode(hasText(string(R.string.project_client))).performScrollTo().performClick()
-        composeRule.onNode(hasText(string(R.string.projects_no_client)) and hasClickAction()).performClick()
-        field(R.string.project_rate).performScrollTo().performTextClearance()
-        field(R.string.project_currency).performScrollTo().performTextClearance()
-        field(R.string.project_estimate).performScrollTo().performTextClearance()
-        composeRule.onNode(hasText(string(R.string.project_billable_default)) and hasClickAction()).performScrollTo().performClick()
-        button(R.string.project_save).performScrollTo().performClick()
+        field(R.string.project_name).clear()
+        field(R.string.project_name).type("Web site")
+        colour(R.string.project_colour_custom).tap()
+        field(R.string.project_colour_custom_field).clear()
+        field(R.string.project_colour_custom_field).type("#123456")
+        composeRule.onNode(hasText(string(R.string.project_client))).tap()
+        composeRule.onNode(hasText(string(R.string.projects_no_client)) and hasClickAction()).tap(scroll = false)
+        field(R.string.project_rate).clear()
+        field(R.string.project_currency).clear()
+        field(R.string.project_estimate).clear()
+        composeRule.onNode(hasText(string(R.string.project_billable_default)) and hasClickAction()).tap()
+        button(R.string.project_save).tap()
 
         composeRule.awaitText(string(R.string.catalog_saved, "Web site"))
         server = project("Web site")
@@ -173,13 +180,13 @@ class ProjectsServerTest {
             cached.any { it.id == id && it.name == "Web site" && it.color == "#123456" && it.clientId == null && !it.billable }
         }
 
-        composeRule.onNode(hasContentDescription(string(R.string.projects_archive_named, "Web site"))).performScrollTo().performClick()
+        composeRule.onNode(hasContentDescription(string(R.string.projects_archive_named, "Web site"))).tap()
         composeRule.awaitText(string(R.string.catalog_archived, "Web site"))
         assertEquals("false", project("Web site").getValue("active").jsonPrimitive.content)
         composeRule.onNode(hasText(string(R.string.projects_archived)) and isHeading()).assertExists()
         awaitCache("the cache no longer offers the archived project") { cached -> cached.none { it.id == id && it.active } }
 
-        composeRule.onNode(hasContentDescription(string(R.string.projects_restore_named, "Web site"))).performScrollTo().performClick()
+        composeRule.onNode(hasContentDescription(string(R.string.projects_restore_named, "Web site"))).tap()
         composeRule.awaitText(string(R.string.catalog_restored, "Web site"))
         assertEquals("true", project("Web site").getValue("active").jsonPrimitive.content)
         awaitCache("the cache offers the restored project") { cached -> cached.any { it.id == id && it.active } }
@@ -192,8 +199,8 @@ class ProjectsServerTest {
         composeRule.awaitText("Taken")
 
         button(R.string.projects_new).performClick()
-        field(R.string.project_name).performTextInput("Taken")
-        button(R.string.project_create).performScrollTo().performClick()
+        field(R.string.project_name).type("Taken")
+        button(R.string.project_create).tap()
 
         composeRule.awaitText("Name has already been taken")
         composeRule.onNode(hasText(string(R.string.project_form_new))).assertExists()
@@ -203,8 +210,8 @@ class ProjectsServerTest {
     fun anEmptyNameIsAMistakeUnderTheField() {
         show()
         button(R.string.projects_new).performClick()
-        field(R.string.project_rate).performScrollTo().performTextInput("abc")
-        button(R.string.project_create).performScrollTo().performClick()
+        field(R.string.project_rate).type("abc")
+        button(R.string.project_create).tap()
 
         composeRule.awaitText(string(R.string.project_name_missing))
         composeRule.awaitText(string(R.string.project_rate_invalid))
@@ -267,8 +274,64 @@ class ProjectsServerTest {
         }
     }
 
+    /**
+     * Shows the page in a window laid out as MainActivity's: edge to edge, and resized for the
+     * keyboard, never panned. The target SDK makes every window edge to edge from Android 15 on.
+     * Below that a plain ComponentActivity keeps the keyboard's insets from the page, which then
+     * keeps its full height, so a control scrolled into view sits at the bottom of the window,
+     * under the snackbar of the change before, and a touch there lands on the snackbar.
+     */
     private fun show() {
+        composeRule.runOnUiThread {
+            val window = composeRule.activity.window
+            WindowCompat.enableEdgeToEdge(window)
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        }
         composeRule.setContent { TokklTheme { ProjectsScreen(model) } }
+    }
+
+    /** Types [text] into the field, as a user does, and waits until the keyboard it opens takes up room. */
+    private fun SemanticsNodeInteraction.type(text: String) {
+        performScrollTo().performTextInput(text)
+        awaitKeyboard()
+    }
+
+    /** Clears the field, as a user does, and waits until the keyboard it opens takes up room. */
+    private fun SemanticsNodeInteraction.clear() {
+        performScrollTo().performTextClearance()
+        awaitKeyboard()
+    }
+
+    /**
+     * Taps the control, scrolled into view unless [scroll] is false, once it has kept still for
+     * [STILL_MS]. While the keyboard slides in or out, the page shrinks or grows above it frame
+     * by frame, and a tap aimed at where a control near the bottom was lands beside it.
+     */
+    private fun SemanticsNodeInteraction.tap(scroll: Boolean = true) {
+        if (scroll) performScrollTo()
+        var bounds: Rect? = null
+        var since = SystemClock.uptimeMillis()
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            val now = fetchSemanticsNode().boundsInRoot
+            if (now != bounds) {
+                bounds = now
+                since = SystemClock.uptimeMillis()
+            }
+            SystemClock.uptimeMillis() - since >= STILL_MS
+        }
+        performClick()
+    }
+
+    /** Waits until the keyboard takes up room at the bottom of the window. */
+    private fun awaitKeyboard() {
+        val decor = composeRule.activity.window.decorView
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            var height = 0
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                height = ViewCompat.getRootWindowInsets(decor)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+            }
+            height > 0
+        }
     }
 
     private fun button(id: Int) = composeRule.onNode(hasText(string(id)) and hasClickAction())
@@ -311,5 +374,8 @@ class ProjectsServerTest {
 
     private companion object {
         val NETWORK_TIMEOUT: Duration = Duration.ofSeconds(30)
+
+        /** How long a control keeps still before a tap, longer than the keyboard takes to slide. */
+        const val STILL_MS = 500L
     }
 }
