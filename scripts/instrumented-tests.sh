@@ -33,6 +33,10 @@
 # end. It changes no setting on a device it did not boot. It also stops the adb
 # server if that was not running before.
 #
+# Runs take turns. Each run locks a file in $XDG_RUNTIME_DIR from its start
+# until its cleanup ends. A run that starts meanwhile prints the PID, start
+# time and directory of the run holding the lock, and waits for it to end.
+#
 # qemu peaks at about 3.5 GB in a full run, and its oom_score_adj of 800 makes
 # it the kernel OOM killer's first pick. When the user's systemd manager is
 # reachable, the emulator runs in a scope of its own with OOMPolicy=continue
@@ -70,9 +74,27 @@ readonly EMULATOR_MEMORY_MAX=6G
 
 cd "$(dirname "$0")/.."
 
-for tool in docker adb curl jq openssl; do
+for tool in docker adb curl jq openssl flock; do
     command -v "$tool" >/dev/null || { echo "$0: $tool is not on PATH" >&2; exit 1; }
 done
+
+# Runs take turns. A second run would test on the first one's emulator, which
+# the first one's cleanup then stops, along with an adb server it started. So
+# each run locks this file until it exits, after its cleanup, and a run that
+# starts meanwhile waits. The file names the run that holds the lock.
+lock_file="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/tokkl-instrumented-tests-$(id -u).lock"
+exec {lock_fd}<>"$lock_file"
+if ! flock --nonblock "$lock_fd"; then
+    holder=$(cat "$lock_file")
+    echo "Waiting for the instrumented tests run that holds $lock_file: ${holder:-unknown}"
+    waited_from=$SECONDS
+    flock "$lock_fd"
+    echo "Got $lock_file after $((SECONDS - waited_from)) s"
+fi
+printf 'PID %s, started %s in %s\n' "$$" "$(date '+%F %T')" "$PWD" >"$lock_file"
+# An adb server or emulator that this script starts can outlive it. Neither
+# gets the lock's descriptor, or the next run would wait for them too.
+adb() { command adb "$@" {lock_fd}>&-; }
 
 work_dir=$(mktemp -d)
 container=''
@@ -189,7 +211,7 @@ boot_emulator() {
     # image. lavapipe is the renderer it picked on its own, which drew the
     # screenshot references.
     "${launch[@]}" emulator -avd "$AVD" -port "$port" -memory 2560 -cores 4 -gpu lavapipe \
-        -no-window -no-audio -no-boot-anim -no-snapshot -accel on >"$log" 2>&1 &
+        -no-window -no-audio -no-boot-anim -no-snapshot -accel on {lock_fd}>&- >"$log" 2>&1 &
     emulator_pid=$!
     export ANDROID_SERIAL="$emulator_serial"
     until [ "$(adb -s "$emulator_serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
