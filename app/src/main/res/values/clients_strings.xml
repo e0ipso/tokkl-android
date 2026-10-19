@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The clients page and its form (docs/PRD.md P3), in the web app's words. -->
+<resources>
+    <string name="clients_new">New client</string>
+    <string name="clients_loading">Loading clients…</string>
+    <string name="clients_server_needed_title">Clients need the server</string>
+    <string name="clients_server_needed_message">The server can\'t be reached, so these are the clients on this phone. Creating, editing, archiving and restoring them needs the server.</string>
+    <string name="clients_empty_title">No clients yet</string>
+    <string name="clients_empty_message">Add one to group projects by who you work for.</string>
+    <!-- The heading over the archived clients, and the marker on each of them. -->
+    <string name="clients_archived">Archived</string>
+    <plurals name="clients_projects">
+        <item quantity="one">%d project</item>
+        <item quantity="other">%d projects</item>
+    </plurals>
+    <!-- What TalkBack says a tap on a client's row does. -->
+    <string name="clients_edit">Edit</string>
+    <string name="clients_archive">Archive</string>
+    <!-- Archive Acme -->
+    <string name="clients_archive_named">Archive %1$s</string>
+    <string name="clients_restore">Restore</string>
+    <!-- Restore Acme -->
+    <string name="clients_restore_named">Restore %1$s</string>
+    <string name="clients_archived_done">Archived %1$s and its projects</string>
+    <string name="clients_restored_done">Restored %1$s and its projects</string>
+    <!-- Archive Acme? -->
+    <string name="clients_archive_title">Archive %1$s?</string>
+    <string name="clients_archive_no_projects">It has no projects right now.</string>
+    <plurals name="clients_archive_projects">
+        <item quantity="one">This also archives its %d project. Archived projects keep their time entries but don\'t show up when you pick a project.</item>
+        <item quantity="other">This also archives its %d projects. Archived projects keep their time entries but don\'t show up when you pick a project.</item>
+    </plurals>
+    <string name="clients_archive_restore_note">Restoring the client restores its projects too.</string>
+
+    <string name="client_form_new">New client</string>
+    <string name="client_form_edit">Edit client</string>
+    <string name="client_name">Name</string>
+    <string name="client_name_missing">Enter a client name</string>
+    <string name="client_notes">Notes</string>
+    <string name="client_save">Save</string>
+    <string name="client_create">Create client</string>
+</resources>

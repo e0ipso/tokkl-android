@@ -14,7 +14,6 @@
     <string name="timer_view_list">List</string>
     <string name="timer_view_calendar">Calendar</string>
 
-    <string name="clients_later">Creating, editing and archiving clients comes in a later version.</string>
     <string name="tags_later">Creating, renaming and deleting tags comes in a later version.</string>
     <string name="trash_later">Restoring and purging deleted time entries comes in a later version.</string>
 </resources>

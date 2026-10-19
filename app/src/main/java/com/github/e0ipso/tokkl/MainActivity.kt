@@ -16,6 +16,7 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
+import com.github.e0ipso.tokkl.clients.ClientsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
     private val historyViewModel: HistoryViewModel by viewModels()
     private val calendarViewModel: CalendarViewModel by viewModels()
     private val projectsViewModel: ProjectsViewModel by viewModels()
+    private val clientsViewModel: ClientsViewModel by viewModels()
 
     /** Whether a time entry runs, from the phone's cache, which the bottom bar marks on Timer. */
     private val timerRunning: Flow<Boolean> by lazy {
@@ -61,6 +63,7 @@ class MainActivity : ComponentActivity() {
                     history = historyViewModel.model,
                     calendar = calendarViewModel.model,
                     projects = projectsViewModel.model,
+                    clients = clientsViewModel.model,
                     timerView = (application as TokklApplication).timerView,
                     timerRunning = timerRunning,
                 )

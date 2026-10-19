@@ -22,6 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.calendar.CalendarModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
+import com.github.e0ipso.tokkl.clients.ClientsModel
+import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryModel
 import com.github.e0ipso.tokkl.licences.LicencesScreen
@@ -75,6 +77,7 @@ fun TokklNavHost(
     history: HistoryModel,
     calendar: CalendarModel,
     projects: ProjectsModel,
+    clients: ClientsModel,
     timerView: TimerViewSetting,
     timerRunning: Flow<Boolean> = flowOf(false),
 ) {
@@ -104,7 +107,7 @@ fun TokklNavHost(
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
     SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open, timerRunning = running) {
-        Screen(destination, backStack, themeSettings, reports, history, calendar, projects, view, onTimerViewChange = timerView::choose)
+        Screen(destination, backStack, themeSettings, reports, history, calendar, projects, clients, view, onTimerViewChange = timerView::choose)
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -145,6 +148,7 @@ private fun Screen(
     history: HistoryModel,
     calendar: CalendarModel,
     projects: ProjectsModel,
+    clients: ClientsModel,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
 ) {
@@ -159,7 +163,7 @@ private fun Screen(
         )
         Destination.REPORTS -> ReportsScreen(model = reports)
         Destination.PROJECTS -> ProjectsScreen(model = projects)
-        Destination.CLIENTS -> PlaceholderScreen(title = R.string.nav_clients, message = R.string.clients_later)
+        Destination.CLIENTS -> ClientsScreen(model = clients)
         Destination.TAGS -> PlaceholderScreen(title = R.string.nav_tags, message = R.string.tags_later)
         Destination.TRASH -> PlaceholderScreen(title = R.string.nav_trash, message = R.string.trash_later)
         Destination.SETTINGS -> SettingsScreen(
