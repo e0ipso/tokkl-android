@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The project, task and tag picker (docs/PRD.md P1). -->
+<resources>
+    <string name="picker_search">Search projects, tasks and tags</string>
+    <string name="picker_offline">You are offline. These are the projects, clients and tasks on this phone. Creating one needs a connection.</string>
+    <string name="picker_project">Project</string>
+    <string name="picker_no_project">No project</string>
+    <string name="picker_no_match">No project or task matches.</string>
+    <!-- Under a project, task or client that is archived, or a task marked done. -->
+    <string name="picker_archived">Archived</string>
+    <string name="picker_tags">Tags</string>
+    <!-- Under a tag the server does not have yet, which it creates when the entry is sent. -->
+    <string name="picker_new_tag">New tag</string>
+    <!-- Add tag “client call” -->
+    <string name="picker_add_tag">Add tag “%1$s”</string>
+</resources>
