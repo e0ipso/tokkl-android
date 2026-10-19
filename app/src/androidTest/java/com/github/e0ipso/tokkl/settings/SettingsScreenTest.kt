@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.settings
 
 import android.os.Build
+import android.view.KeyEvent
 import androidx.annotation.StringRes
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -14,17 +15,23 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import androidx.test.filters.SdkSuppress
+import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import org.junit.Assert.assertEquals
@@ -120,6 +127,38 @@ class SettingsScreenTest {
         assertEquals(switches, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
     }
 
+    /**
+     * About's Licences row opens the Licences screen, and the screen's Back button and the system
+     * Back key each return to Settings. TalkBack reads the row as a button named Licences, and the
+     * row is at least 48dp tall, the smallest touch target Android's accessibility guidance allows.
+     */
+    @Test
+    fun licencesRowOpensLicencesAndBackReturnsToSettings() {
+        composeRule.openSettings()
+        val row = licencesRow().performScrollTo()
+        val config = row.fetchSemanticsNode().config
+        assertEquals(Role.Button, config.getOrNull(SemanticsProperties.Role))
+        assertEquals(listOf(string(R.string.licences)), config.getOrNull(SemanticsProperties.Text)?.map { it.text })
+        val height = row.getUnclippedBoundsInRoot().let { it.bottom - it.top }
+        assertTrue("the Licences row is $height tall", height >= MIN_TOUCH_TARGET - SLACK)
+
+        row.performClick()
+        composeRule.awaitText(string(R.string.licence_anybody_title))
+        composeRule.onNodeWithContentDescription(string(R.string.back)).performClick()
+        settingsHeading().assertIsDisplayed()
+
+        licencesRow().performScrollTo().performClick()
+        composeRule.awaitText(string(R.string.licence_anybody_title))
+        composeRule.waitUntil("the app window has input focus", FOCUS_TIMEOUT_MS) {
+            var focused = false
+            composeRule.activityRule.scenario.onActivity { focused = it.hasWindowFocus() }
+            focused
+        }
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        settingsHeading().assertIsDisplayed()
+        licencesRow().assertIsDisplayed()
+    }
+
     /** All the text on the screen, read or shown, is one of the app's English string resources. */
     @Test
     fun everyTextComesFromStringResources() {
@@ -145,8 +184,20 @@ class SettingsScreenTest {
     private fun settingsHeading(): SemanticsNodeInteraction =
         composeRule.onNode(hasText(string(R.string.settings)) and isHeading())
 
+    private fun licencesRow(): SemanticsNodeInteraction =
+        composeRule.onNode(hasText(string(R.string.licences)) and hasClickAction())
+
     private fun hasRole(role: Role) = SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
 
     private fun tokklTheme(dark: Boolean): ShownTheme =
         expectedTheme(if (dark) TokklDarkColorScheme.background else TokklLightColorScheme.background, dark)
+
+    private companion object {
+        const val FOCUS_TIMEOUT_MS = 5_000L
+
+        val MIN_TOUCH_TARGET = 48.dp
+
+        /** Less than a pixel, for bounds that touch after rounding. */
+        val SLACK = 0.5.dp
+    }
 }

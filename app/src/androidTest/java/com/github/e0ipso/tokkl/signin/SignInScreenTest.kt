@@ -36,6 +36,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import com.github.e0ipso.tokkl.ui.assertBrandReadsOnce
 import java.io.File
 import java.security.KeyStore
 import java.time.DayOfWeek
@@ -68,6 +69,12 @@ class SignInScreenTest {
     @Before
     fun awaitSignInScreen() {
         composeRule.awaitText(string(R.string.sign_in_server_url))
+    }
+
+    /** TalkBack reads the brand above the form once, as "Tokkl". The icon beside the wordmark is decorative. */
+    @Test
+    fun theBrandIsOneTalkBackNode() {
+        composeRule.assertBrandReadsOnce()
     }
 
     @Test

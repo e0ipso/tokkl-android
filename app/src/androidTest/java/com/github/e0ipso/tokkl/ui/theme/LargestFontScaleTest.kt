@@ -32,6 +32,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
@@ -108,11 +109,15 @@ class LargestFontScaleTest {
                 "dark choice" to choice(R.string.settings_theme_dark),
             ) + listOfNotNull(
                 ("wallpaper colours switch" to switch(R.string.settings_dynamic_colour)).takeIf { wallpaperColours },
+            ) + listOf(
+                "About heading" to composeRule.onNode(hasText(string(R.string.settings_about)) and isHeading()),
+                "Licences row" to button(R.string.licences),
             ),
             texts = listOf(
                 inside(R.string.settings_theme_system, isSelectable()),
                 inside(R.string.settings_theme_light, isSelectable()),
                 inside(R.string.settings_theme_dark, isSelectable()),
+                inside(R.string.licences, hasClickAction()),
             ) + if (wallpaperColours) {
                 listOf(
                     inside(R.string.settings_dynamic_colour, isToggleable()),
@@ -167,10 +172,59 @@ class LargestFontScaleTest {
             ),
             texts = signInTexts() + listOf(
                 fieldLabel(R.string.sign_in_email),
+                text(R.string.sign_in_email_hint),
                 fieldLabel(R.string.sign_in_password),
                 text(R.string.sign_in_password_hint),
             ),
         )
+    }
+
+    /**
+     * The error that replaces the email hint after an empty email. It may take another number of
+     * lines than the hint (TKA-0149), so only its fit is checked here.
+     */
+    @SignedOut
+    @Test
+    fun emailErrorFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+        choice(R.string.sign_in_method_email_password).performClick()
+        field(R.string.sign_in_server_url).performScrollTo().performTextInput(TokklTestServer.url.toString())
+        field(R.string.sign_in_password).performScrollTo().performTextInput(TokklTestServer.password)
+        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.awaitText(string(R.string.sign_in_error_email))
+
+        assertFitWhenScrolledTo(
+            blocks = signInBlocks(
+                "email field" to field(R.string.sign_in_email),
+                "password field" to field(R.string.sign_in_password),
+            ),
+            texts = listOf(fieldLabel(R.string.sign_in_email), text(R.string.sign_in_error_email)),
+        )
+    }
+
+    /**
+     * The message for a server whose certificate does not name the host in the URL. The URL
+     * names `localhost`, which a relay on the phone's loopback carries to the harness's TLS
+     * proxy, whose certificate names only IP addresses.
+     */
+    @SignedOut
+    @Test
+    fun certificateHostMessageFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+        val proxy = TokklTestServer.tlsUrl.api("me")
+        LoopbackRelay(proxy.host, proxy.port).use { relay ->
+            signInTo(ServerUrl.parse("https://localhost:${relay.localPort}") ?: error("not a URL"))
+            val message = string(R.string.sign_in_error_certificate_host, "localhost")
+            composeRule.awaitText(message, NETWORK_TIMEOUT_MS)
+
+            assertFitWhenScrolledTo(
+                blocks = signInBlocks("API token field" to field(R.string.sign_in_api_token)) +
+                    ("host name message" to composeRule.onNodeWithText(message, useUnmergedTree = true)),
+                texts = emptyList(),
+            )
+        }
     }
 
     /**
