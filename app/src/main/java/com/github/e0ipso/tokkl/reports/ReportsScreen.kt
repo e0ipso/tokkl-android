@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
+import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -118,11 +119,7 @@ internal fun ReportsContent(
                 IconButton(onClick = onBack) {
                     Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.back))
                 }
-                Text(
-                    text = stringResource(R.string.reports),
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.semantics { heading() },
-                )
+                PageTitle(stringResource(R.string.reports))
             }
             Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             ReportTabs()

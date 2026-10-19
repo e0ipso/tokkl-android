@@ -30,7 +30,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -41,6 +40,7 @@ import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
 import com.github.e0ipso.tokkl.ui.Brand
 import com.github.e0ipso.tokkl.ui.BrandSize
+import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -133,11 +133,7 @@ private fun SignInForm(
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space4),
         ) {
             Brand(BrandSize.LARGE, Modifier.align(Alignment.CenterHorizontally))
-            Text(
-                text = stringResource(R.string.sign_in_title),
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.semantics { heading() },
-            )
+            PageTitle(stringResource(R.string.sign_in_title))
             OutlinedTextField(
                 value = state.serverUrl,
                 onValueChange = onServerUrlChange,

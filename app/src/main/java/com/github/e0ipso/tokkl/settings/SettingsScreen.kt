@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -92,11 +93,7 @@ internal fun SettingsContent(
                         contentDescription = stringResource(R.string.back),
                     )
                 }
-                Text(
-                    text = stringResource(R.string.settings),
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.semantics { heading() },
-                )
+                PageTitle(stringResource(R.string.settings))
             }
             Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             ThemeSection(settings, showDynamicColor, onModeChange, onDynamicColorChange)

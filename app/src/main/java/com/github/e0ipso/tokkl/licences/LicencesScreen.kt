@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -60,11 +61,7 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         contentDescription = stringResource(R.string.back),
                     )
                 }
-                Text(
-                    text = stringResource(R.string.licences),
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.semantics { heading() },
-                )
+                PageTitle(stringResource(R.string.licences))
             }
             Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             Text(
