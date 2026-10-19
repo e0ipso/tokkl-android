@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.ui.theme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.github.e0ipso.tokkl.reports.projectMark
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -91,7 +92,7 @@ class ThemeContrastTest {
             Pair("onTertiaryFixed on tertiaryFixedDim", s.onTertiaryFixed, s.tertiaryFixedDim, Kind.TEXT),
             Pair("onTertiaryFixedVariant on tertiaryFixed", s.onTertiaryFixedVariant, s.tertiaryFixed, Kind.TEXT),
         )
-        return surfacePairs + fills + navigationBarPairs(s) + texturePairs(s, x)
+        return surfacePairs + fills + navigationBarPairs(s) + texturePairs(s, x) + reportPairs(s, x)
     }
 
     /**
@@ -134,6 +135,25 @@ class ThemeContrastTest {
         return text + halo
     }
 
+    /**
+     * The pairs styles.css lists for the report chart and the project dots, on the report card's
+     * surface. A bar's billable part is solid chartBillable, and the chartOther stripes draw a
+     * non-billable part's edge; the stripes on their wash are texture inside one part and need no
+     * ratio. A project's dot is its colour mixed with projectMix, as the reports screen draws it,
+     * for every colour of Tokkl's project palette and for the muted dot of a project without one.
+     */
+    private fun reportPairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
+        val marks = listOf(
+            Pair("chartBillable on surface", x.chartBillable, s.surface, Kind.NON_TEXT),
+            Pair("chartOther on surface", x.chartOther, s.surface, Kind.NON_TEXT),
+        )
+        val dots = (PROJECT_COLOURS + null).map { hex ->
+            val dot = projectMark(hex, x.projectMix, s.onSurfaceVariant)
+            Pair("project dot ${hex ?: "without a colour"} on surface", dot, s.surface, Kind.NON_TEXT)
+        }
+        return marks + dots
+    }
+
     private fun assertPairsPass(scheme: String, colours: ColorScheme, extra: TokklExtraColors) {
         val failures = pairs(colours, extra).mapNotNull { pair ->
             val ratio = contrast(pair.foreground, pair.background)
@@ -165,5 +185,13 @@ class ThemeContrastTest {
             return if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
         }
         return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+    }
+
+    private companion object {
+        /** Tokkl's project palette, PROJECT_COLORS in ../tokkl/packages/common/colors.ts. */
+        val PROJECT_COLOURS = listOf(
+            "#0b83d9", "#9e5bd9", "#d94182", "#e36a00", "#bf7000", "#c7af14", "#d92b2b",
+            "#2da608", "#06a893", "#c9806b", "#465bb3", "#990099", "#566614", "#525266",
+        )
     }
 }
