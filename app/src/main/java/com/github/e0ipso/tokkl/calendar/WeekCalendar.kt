@@ -77,6 +77,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.lifecycle.Lifecycle
@@ -403,7 +404,10 @@ private fun DayColumn(
     }
 }
 
-/** An entry's block: its description, project and duration as far as they fit, and all of it, with its times, to TalkBack. */
+/**
+ * An entry's block: its description, project and duration as far as they fit, marked when the
+ * server does not have the entry yet, and all of it, with its times, to TalkBack.
+ */
 @Composable
 private fun Block(block: CalendarBlock, columnWidth: Dp, settings: AccountSettings, zone: ZoneId, now: Instant) {
     val resources = LocalResources.current
@@ -445,23 +449,44 @@ private fun Block(block: CalendarBlock, columnWidth: Dp, settings: AccountSettin
             .padding(start = BlockBar + TokklTheme.spacing.space1, end = TokklTheme.spacing.space1)
             .clearAndSetSemantics { contentDescription = spoken },
     ) {
-        val strong = MaterialTheme.typography.labelSmall
-        val small = MaterialTheme.typography.bodySmall
-        if (block.bottom - block.top >= TWO_LINE_MINUTES) {
-            Column {
-                Text(heading, style = strong, color = scheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    text = buildAnnotatedString {
-                        if (entry.project != null) append(entry.project + resources.getString(R.string.calendar_block_separator))
-                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = scheme.onSurface)) { append(duration) }
-                    },
-                    style = small.copy(fontFeatureSettings = "tnum"),
-                    color = muted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+        val twoLines = block.bottom - block.top >= TWO_LINE_MINUTES
+        if (entry.unsent) {
+            UnsentBlockText { mark -> BlockText(entry, heading, duration, twoLines, mark) }
         } else {
+            BlockText(entry, heading, duration, twoLines, mark = false)
+        }
+    }
+}
+
+/**
+ * A block's text: its heading over its project and duration when [twoLines], or else its heading
+ * and project on one line. With [mark], the unsent icon starts the first line.
+ */
+@Composable
+private fun BlockText(entry: CalendarEntry, heading: String, duration: String, twoLines: Boolean, mark: Boolean) {
+    val resources = LocalResources.current
+    val scheme = MaterialTheme.colorScheme
+    val muted = scheme.onSurfaceVariant
+    val strong = MaterialTheme.typography.labelSmall
+    val small = MaterialTheme.typography.bodySmall
+    if (twoLines) {
+        Column {
+            MarkedLine(mark, strong) {
+                Text(heading, style = strong, color = scheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Text(
+                text = buildAnnotatedString {
+                    if (entry.project != null) append(entry.project + resources.getString(R.string.calendar_block_separator))
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = scheme.onSurface)) { append(duration) }
+                },
+                style = small.copy(fontFeatureSettings = "tnum"),
+                color = muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    } else {
+        MarkedLine(mark, small) {
             Text(
                 text = buildAnnotatedString {
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = scheme.onSurface)) { append(heading) }
@@ -474,6 +499,63 @@ private fun Block(block: CalendarBlock, columnWidth: Dp, settings: AccountSettin
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+/** [line] after the unsent icon, which is as tall as a line of [style], when [mark]; else [line] alone. */
+@Composable
+private fun MarkedLine(mark: Boolean, style: TextStyle, line: @Composable () -> Unit) {
+    if (mark) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
+            Icon(
+                painterResource(R.drawable.ic_unsent),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(with(LocalDensity.current) { style.lineHeight.toDp() }),
+            )
+            line()
+        }
+    } else {
+        line()
+    }
+}
+
+/**
+ * An unsent entry's text, marked as the history marks it, by more than colour: the history's NOT
+ * SENT label under the text where the block has room for the whole label, or else the unsent icon
+ * at the start of the first line. [text] draws the text, with the icon when it gets true. The
+ * block keeps "Not sent" in what TalkBack reads, so the label and icon stay out of it.
+ */
+@Composable
+private fun UnsentBlockText(text: @Composable (mark: Boolean) -> Unit) {
+    val locale = LocalConfiguration.current.locales[0]
+    Layout(
+        content = {
+            text(false)
+            Text(
+                text = stringResource(R.string.history_unsent).uppercase(locale),
+                style = TokklTheme.smallCapsLabelTextStyle,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+            text(true)
+        },
+    ) { measurables, constraints ->
+        val (plain, label, marked) = measurables
+        // Each part as tall as its text; the block clips what goes past its end.
+        val free = Constraints(maxWidth = constraints.maxWidth)
+        val labelFits = label.maxIntrinsicWidth(Constraints.Infinity) <= constraints.maxWidth
+        val lines = plain.measure(free)
+        val words = label.measure(free)
+        if (labelFits && lines.height + words.height <= constraints.maxHeight) {
+            layout(constraints.maxWidth, lines.height + words.height) {
+                lines.place(0, 0)
+                words.place(0, lines.height)
+            }
+        } else {
+            val withIcon = marked.measure(free)
+            layout(constraints.maxWidth, constraints.constrainHeight(withIcon.height)) { withIcon.place(0, 0) }
         }
     }
 }
