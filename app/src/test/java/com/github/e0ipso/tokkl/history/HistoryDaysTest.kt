@@ -106,6 +106,8 @@ class HistoryDaysTest {
         assertEquals(listOf(LocalDate.of(2026, 10, 14), LocalDate.of(2026, 9, 3)), days.map { it.date })
         assertEquals(listOf(1L), days[0].entries.map { it.id })
         assertEquals(listOf(2L), days[1].entries.map { it.id })
+        assertTrue("the phone holds it, so the queue can edit it", days[0].entries.single().cached)
+        assertFalse("only the server has it, so the queue cannot edit it", days[1].entries.single().cached)
     }
 
     private fun time(resolution: Double?) = AccountTime(MADRID, DayOfWeek.MONDAY, resolution, CLOCK)

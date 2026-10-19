@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.history
 
 import android.content.res.Resources
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -34,6 +35,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -50,29 +52,30 @@ import java.util.Locale
 
 /**
  * The history in the Timer page's List view: the days with entries, newest first, each with its
- * total, and at the end the older days, which load from the server as the end shows.
+ * total, and at the end the older days, which load from the server as the end shows. A tap on an
+ * entry the phone holds hands its id to [onEdit] (docs/PRD.md H2).
  */
 @Composable
-fun HistoryList(model: HistoryModel, modifier: Modifier = Modifier) {
+fun HistoryList(model: HistoryModel, onEdit: (Long) -> Unit, modifier: Modifier = Modifier) {
     val state by model.state.collectAsState()
-    HistoryContent(state = state, onLoadOlder = model::loadOlder, modifier = modifier)
+    HistoryContent(state = state, onLoadOlder = model::loadOlder, onEdit = onEdit, modifier = modifier)
 }
 
 /** [HistoryList] without its model. */
 @Composable
-internal fun HistoryContent(state: HistoryState, onLoadOlder: () -> Unit, modifier: Modifier = Modifier) {
+internal fun HistoryContent(state: HistoryState, onLoadOlder: () -> Unit, modifier: Modifier = Modifier, onEdit: (Long) -> Unit = {}) {
     when (state) {
         // The cache reads in moments, so this shows nothing rather than a flash of a spinner.
         HistoryState.Loading -> Unit
         is HistoryState.NoAccountTime -> Column(modifier.fillMaxSize()) {
             Text(stringResource(R.string.history_unknown_time_zone, state.timeZone), style = MaterialTheme.typography.bodyLarge)
         }
-        is HistoryState.Shown -> Days(state, onLoadOlder, modifier)
+        is HistoryState.Shown -> Days(state, onLoadOlder, onEdit, modifier)
     }
 }
 
 @Composable
-private fun Days(state: HistoryState.Shown, onLoadOlder: () -> Unit, modifier: Modifier) {
+private fun Days(state: HistoryState.Shown, onLoadOlder: () -> Unit, onEdit: (Long) -> Unit, modifier: Modifier) {
     val resources = LocalResources.current
     val locale = LocalConfiguration.current.locales[0]
     val words = remember(resources) { DateWords(resources) }
@@ -95,7 +98,7 @@ private fun Days(state: HistoryState.Shown, onLoadOlder: () -> Unit, modifier: M
                 DayHeader(dayLabel(day.date, state.today, resources, words), day.totalSeconds, state.settings)
             }
             items(day.entries, key = { "entry-${it.id}" }, contentType = { ENTRY_TYPE }) { entry ->
-                EntryRow(entry, state.zone, state.settings, locale)
+                EntryRow(entry, state.zone, state.settings, locale, onEdit)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
@@ -139,20 +142,26 @@ private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettin
     }
 }
 
-/** One stopped entry, one item to TalkBack. Its marks are words, never a colour alone. */
+/**
+ * One stopped entry, one item to TalkBack. Its marks are words, never a colour alone. A tap on an
+ * entry the phone holds opens it for editing. The older days the server sent are not on the phone,
+ * so the change queue cannot edit them, and their rows take no tap.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSettings, locale: Locale) {
+private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSettings, locale: Locale, onEdit: (Long) -> Unit) {
     val resources = LocalResources.current
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val start = settings.formatTime(entry.start, zone)
     val stop = settings.formatTime(entry.stop, zone)
     val spokenRange = stringResource(R.string.history_time_range_spoken, start, stop)
     val spokenSeconds = spokenDuration(resources, entry.seconds)
+    val editLabel = stringResource(R.string.entry_edit_action)
     Column(
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (entry.cached) Modifier.clickable(onClickLabel = editLabel, role = Role.Button) { onEdit(entry.id) } else Modifier)
             .semantics(mergeDescendants = true) {}
             .padding(vertical = TokklTheme.spacing.space3),
     ) {

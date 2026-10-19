@@ -17,4 +17,36 @@
     <string name="entry_billable">Billable</string>
     <string name="entry_picker_title">Project and tags</string>
     <string name="entry_picker_done">Done</string>
+
+    <!-- The screen that edits an entry from the history (docs/PRD.md H2) and adds a past entry by hand (M1). -->
+    <string name="entry_form_edit">Edit entry</string>
+    <string name="entry_form_new">New entry</string>
+    <!-- The description field's hint, as in the web app's manual mode. -->
+    <string name="entry_form_description_hint">What did you work on?</string>
+    <string name="entry_date">Date</string>
+    <!-- The date button: Mon, 19 Oct 2026 -->
+    <string name="entry_date_value">%1$s, %2$s</string>
+    <!-- What TalkBack reads for the date button: Date: Mon, 19 Oct 2026 -->
+    <string name="entry_date_spoken">Date: %1$s</string>
+    <string name="entry_start">Start</string>
+    <string name="entry_end">End</string>
+    <string name="entry_duration">Duration</string>
+    <!-- Examples of what the time and duration fields read, shown while they are empty. -->
+    <string name="entry_start_hint">9:00</string>
+    <string name="entry_end_hint">10:30</string>
+    <string name="entry_duration_hint">1h 30m</string>
+    <!-- Under the times of an entry that ends on another day than it starts: Ends on Tue, 20 Oct 2026. -->
+    <string name="entry_ends_on">Ends on %1$s.</string>
+    <string name="entry_save">Save</string>
+    <string name="entry_cancel">Cancel</string>
+    <!-- The mistakes Save marks under a time field, the first three as the web app words them. -->
+    <string name="entry_mistake_times">Check the start and end times</string>
+    <string name="entry_mistake_manual_times">Enter a start and end time, like 9:00 and 10:30</string>
+    <string name="entry_mistake_duration">Check the duration</string>
+    <string name="entry_mistake_end_before_start">The entry must end after it starts</string>
+    <string name="entry_mistake_too_long">Entries can\'t be longer than 999 hours</string>
+    <string name="entry_form_missing">This entry isn\'t on the phone any more, or it\'s running. The timer edits a running entry.</string>
+    <string name="entry_form_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t read times.</string>
+    <!-- What TalkBack says a tap on a history row does. -->
+    <string name="entry_edit_action">Edit entry</string>
 </resources>

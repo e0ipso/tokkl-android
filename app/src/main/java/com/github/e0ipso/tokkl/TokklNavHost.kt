@@ -25,6 +25,8 @@ import com.github.e0ipso.tokkl.calendar.CalendarModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
 import com.github.e0ipso.tokkl.clients.ClientsModel
 import com.github.e0ipso.tokkl.clients.ClientsScreen
+import com.github.e0ipso.tokkl.entry.EntryFormModel
+import com.github.e0ipso.tokkl.entry.EntryFormScreen
 import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryModel
 import com.github.e0ipso.tokkl.licences.LicencesScreen
@@ -55,8 +57,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 
-/** The app's screens. */
-enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, SETTINGS, LICENCES }
+/** The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model holds. */
+enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, SETTINGS, LICENCES, ENTRY }
 
 /**
  * The app's navigation host: a back stack of [Destination]s that survives configuration changes
@@ -68,7 +70,8 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a page, such as Licences from
  * Settings, stacks above that page, and the bar keeps marking the page. While [timerRunning] says
  * a time entry runs, the bar's Timer item carries a dot. The Timer page's [timer] picks projects,
- * tasks and tags from [cache].
+ * tasks and tags from [cache]. A tap on an entry in the history opens [entryForm] above the Timer
+ * page.
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -87,6 +90,7 @@ fun TokklNavHost(
     tags: TagsModel,
     timerView: TimerViewSetting,
     timer: TimerModel,
+    entryForm: EntryFormModel,
     cache: AccountCache,
     timerRunning: Flow<Boolean> = flowOf(false),
 ) {
@@ -116,7 +120,21 @@ fun TokklNavHost(
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
     SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open, timerRunning = running) {
-        Screen(destination, backStack, themeSettings, reports, history, calendar, projects, clients, tags, view, onTimerViewChange = timerView::choose) {
+        Screen(
+            destination = destination,
+            backStack = backStack,
+            themeSettings = themeSettings,
+            reports = reports,
+            history = history,
+            calendar = calendar,
+            projects = projects,
+            clients = clients,
+            tags = tags,
+            entryForm = entryForm,
+            cache = cache,
+            timerView = view,
+            onTimerViewChange = timerView::choose,
+        ) {
             TimerBar(timer, cache)
         }
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
@@ -161,6 +179,8 @@ private fun Screen(
     projects: ProjectsModel,
     clients: ClientsModel,
     tags: TagsModel,
+    entryForm: EntryFormModel,
+    cache: AccountCache,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
     timer: @Composable () -> Unit,
@@ -172,7 +192,12 @@ private fun Screen(
             view = timerView,
             onViewChange = onTimerViewChange,
             timer = timer,
-            listContent = { HistoryList(history) },
+            listContent = {
+                HistoryList(history, onEdit = { entryId ->
+                    entryForm.edit(entryId)
+                    backStack.add(Destination.ENTRY)
+                })
+            },
             calendarContent = { WeekCalendar(calendar) },
         )
         Destination.REPORTS -> ReportsScreen(model = reports)
@@ -185,6 +210,14 @@ private fun Screen(
             onOpenLicences = { backStack.add(Destination.LICENCES) },
         )
         Destination.LICENCES -> LicencesScreen(onBack = { backStack.removeAt(backStack.lastIndex) })
+        Destination.ENTRY -> EntryFormScreen(
+            model = entryForm,
+            cache = cache,
+            onClose = {
+                if (backStack.lastOrNull() == Destination.ENTRY) backStack.removeAt(backStack.lastIndex)
+                entryForm.close()
+            },
+        )
     }
 }
 

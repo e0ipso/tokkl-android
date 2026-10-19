@@ -15,6 +15,8 @@ import java.time.LocalDate
  *   has not received, the start the server will store, snapped on the phone.
  * @property stop as [start].
  * @property unsent the queue holds a change to the entry that the server has not received.
+ * @property cached the phone holds the entry, so the change queue can edit it. The older days
+ *   that the server sent, and the days the cache dropped since, are not on the phone.
  */
 data class HistoryEntry(
     val id: Long,
@@ -27,6 +29,7 @@ data class HistoryEntry(
     val start: Instant,
     val stop: Instant,
     val unsent: Boolean,
+    val cached: Boolean = true,
 ) {
     /** Whole seconds from [start] to [stop], as entrySeconds in the web app's lib/settings.ts. */
     val seconds: Long get() = maxOf(0L, Math.floorDiv(stop.toEpochMilli() - start.toEpochMilli(), 1000L))
@@ -59,19 +62,23 @@ fun historyDays(
     val cachedIds = cached.mapTo(HashSet()) { it.entry.id }
     // An entry edited between two pages can come in both; the later page has its newer values.
     val olderOnly = older.associateBy { it.id }.values.filter { it.id !in cachedIds }
-    val rows = cached.map { it.entry to it.unsent } + olderOnly.map { it to false }
+    val rows = cached.map { Row(it.entry, it.unsent, cached = true) } + olderOnly.map { Row(it, unsent = false, cached = false) }
     val projectsById = projects.associateBy { it.id }
     val tasksById = tasks.associateBy { it.id }
     return rows
-        .mapNotNull { (entry, unsent) -> entry.shown(unsent, time, projectsById, tasksById) }
+        .mapNotNull { row -> row.entry.shown(row.unsent, row.cached, time, projectsById, tasksById) }
         .groupBy { time.local(it.start).toLocalDate() }
         .map { (date, entries) -> HistoryDay(date, entries.sortedWith(NEWEST_FIRST)) }
         .sortedByDescending { it.date }
 }
 
+/** An entry the history shows, from the phone's cache or from the older days. */
+private class Row(val entry: CachedTimeEntry, val unsent: Boolean, val cached: Boolean)
+
 /** The entry as the history shows it, or null while it runs. */
 private fun CachedTimeEntry.shown(
     unsent: Boolean,
+    cached: Boolean,
     time: AccountTime,
     projects: Map<Long, CachedProject>,
     tasks: Map<Long, CachedTask>,
@@ -90,6 +97,7 @@ private fun CachedTimeEntry.shown(
         start = span?.start ?: start,
         stop = span?.stop ?: stop,
         unsent = unsent,
+        cached = cached,
     )
 }
 

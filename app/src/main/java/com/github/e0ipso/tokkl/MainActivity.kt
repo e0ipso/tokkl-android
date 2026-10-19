@@ -17,6 +17,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
+import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
     private val clientsViewModel: ClientsViewModel by viewModels()
     private val tagsViewModel: TagsViewModel by viewModels()
     private val timerViewModel: TimerViewModel by viewModels()
+    private val entryFormViewModel: EntryFormViewModel by viewModels()
 
     /** Whether a time entry runs, from the phone's cache, which the bottom bar marks on Timer. */
     private val timerRunning: Flow<Boolean> by lazy {
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
                     tags = tagsViewModel.model,
                     timerView = (application as TokklApplication).timerView,
                     timer = timerViewModel.model,
+                    entryForm = entryFormViewModel.model,
                     cache = (application as TokklApplication).cache,
                     timerRunning = timerRunning,
                 )
