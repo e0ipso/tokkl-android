@@ -17,8 +17,8 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * The settings that decide how the app shows and reads times: those from `GET /api/v9/me`
- * (docs/PRD.md S7), and the duration format from `GET /api/v9/me/preferences`. They hold no
- * credential.
+ * (docs/PRD.md S7), and the duration format from `GET /api/v9/me/preferences`. With them goes
+ * the account's default workspace, where new entries go. They hold no credential.
  *
  * @property timeZone the account's timezone name, exactly as the server sent it.
  * @property timeResolutionMinutes Tokkl's `time_resolution_minutes`, which the server snaps
@@ -26,12 +26,18 @@ import kotlinx.serialization.json.JsonPrimitive
  *   it out, and they do not snap.
  * @property durationFormat the preferences' `duration_format`. Improved until a refresh reads
  *   the preferences, and when they leave it out, as in the web app.
+ * @property defaultWorkspaceId the account's `default_workspace_id` from `/me`, the workspace
+ *   that the timer and manual entry pass to `ChangeQueue.start` and `ChangeQueue.create`. It is
+ *   stored, so a timer started offline has one. A refresh whose `/me` leaves it out keeps the
+ *   stored one. Null until a `/me` sends it, so settings that an older app version stored have
+ *   none until the next refresh.
  */
 data class AccountSettings(
     val timeZone: String,
     val beginningOfWeek: DayOfWeek,
     val timeResolutionMinutes: Double?,
     val durationFormat: DurationFormat = DurationFormat.IMPROVED,
+    val defaultWorkspaceId: Long? = null,
 ) {
 
     /**
@@ -57,9 +63,10 @@ data class AccountSettings(
 
 /**
  * The fields the app reads from `GET /api/v9/me`. Toggl Track and Tokkl always send `id`,
- * `timezone` and `beginning_of_week`, so a body without them is not a `/me` user.
- * `time_resolution_minutes` and `role` are Tokkl's own and may be missing. `role` marks a Tokkl
- * server. `toString` leaves out the token.
+ * `timezone` and `beginning_of_week`, so a body without them is not a `/me` user. They send
+ * `default_workspace_id` too, but a body without it still signs in, and a refresh then keeps the
+ * stored workspace. `time_resolution_minutes` and `role` are Tokkl's own and may be missing.
+ * `role` marks a Tokkl server. `toString` leaves out the token.
  *
  * [clients], [projects], [tags] and [tasks] come only with `with_related_data=true`, and are null
  * without it. Tokkl sends every one of them, archived projects and done tasks included.
@@ -71,6 +78,7 @@ class Me(
     val timezone: String,
     @SerialName("beginning_of_week") val beginningOfWeek: Int,
     @SerialName("time_resolution_minutes") val timeResolutionMinutes: Double? = null,
+    @SerialName("default_workspace_id") val defaultWorkspaceId: Long? = null,
     val role: String? = null,
     val clients: List<ServerClient>? = null,
     val projects: List<ServerProject>? = null,
@@ -80,7 +88,9 @@ class Me(
 
     /** The account settings, or null when `beginning_of_week` is not a day from 0 to 6. */
     fun accountSettings(): AccountSettings? =
-        dayOfWeek(beginningOfWeek)?.let { AccountSettings(timezone, it, timeResolutionMinutes) }
+        dayOfWeek(beginningOfWeek)?.let {
+            AccountSettings(timezone, it, timeResolutionMinutes, defaultWorkspaceId = defaultWorkspaceId)
+        }
 
     override fun toString(): String = "Me(id=$id)"
 }

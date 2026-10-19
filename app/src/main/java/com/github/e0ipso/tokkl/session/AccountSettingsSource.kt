@@ -19,7 +19,8 @@ import kotlinx.serialization.json.JsonObject
  * Sign-in stores the settings from its own `GET /api/v9/me`, and [refresh] reads them again, so
  * a change made in the web app reaches the phone. They persist, so screens have them offline and
  * after a restart. Screens take their zone, clock and week start from [AccountSettings.time],
- * never from the device, and write durations with [AccountSettings.formatDuration].
+ * never from the device, and write durations with [AccountSettings.formatDuration]. The timer and
+ * manual entry take the workspace of a new entry from [AccountSettings.defaultWorkspaceId].
  *
  * @param initial the stored settings, or null when none are stored.
  * @param save writes the settings, throwing [IOException] when it cannot.
@@ -65,9 +66,10 @@ class AccountSettingsSource(
     /**
      * Reads `GET /api/v9/me` for the signed-in account, with its related data for the cache, and
      * `GET /api/v9/me/preferences` for the duration format, and keeps the settings. Does nothing
-     * when signed out. A failed `/me` or write keeps what is stored, and failed preferences keep
-     * the stored duration format. While one refresh runs, another call returns that one instead
-     * of sending a second request.
+     * when signed out. A failed `/me` or write keeps what is stored, failed preferences keep the
+     * stored duration format, and a `/me` without `default_workspace_id` keeps the stored
+     * workspace. While one refresh runs, another call returns that one instead of sending a
+     * second request.
      */
     fun refresh(): Job {
         val job = synchronized(lock) {
@@ -88,8 +90,10 @@ class AccountSettingsSource(
         synchronized(lock) {
             // Sign-in stored newer settings while the requests ran.
             if (writes != writesBefore) return
+            val stored = mutableState.value
             val settings = fromMe.copy(
-                durationFormat = preferences?.durationFormat ?: mutableState.value?.durationFormat ?: DurationFormat.IMPROVED,
+                durationFormat = preferences?.durationFormat ?: stored?.durationFormat ?: DurationFormat.IMPROVED,
+                defaultWorkspaceId = fromMe.defaultWorkspaceId ?: stored?.defaultWorkspaceId,
             )
             if (settings != mutableState.value) {
                 try {

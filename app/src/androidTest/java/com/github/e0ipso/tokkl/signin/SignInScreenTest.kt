@@ -30,8 +30,11 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -40,6 +43,10 @@ import com.github.e0ipso.tokkl.ui.assertBrandReadsOnce
 import java.io.File
 import java.security.KeyStore
 import java.time.DayOfWeek
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
+import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -89,7 +96,7 @@ class SignInScreenTest {
         assertEquals(TokklTestServer.url, ServerConfigStore(context).load())
         assertTrue("the token store holds the API token", ApiTokenStore(context).load() == TokklTestServer.apiToken)
         // The test account is in UTC (scripts/instrumented-tests.sh), with Tokkl's other defaults.
-        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0)
+        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = defaultWorkspace())
         assertEquals(settings, AccountSettingsStore(context).load())
         assertEquals(settings, (context.applicationContext as TokklApplication).accountSettings.state.value)
         assertStoredNowhere(TokklTestServer.apiToken, "the API token in plain text")
@@ -274,6 +281,13 @@ class SignInScreenTest {
 
     private fun awaitHome() {
         composeRule.waitUntil("the home screen shows", NETWORK_TIMEOUT_MS) { exists(hasText(string(R.string.launch_message))) }
+    }
+
+    /** The test account's default workspace, read straight from the server, past the app's guard. */
+    private fun defaultWorkspace(): Long {
+        val api = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+        return api.get(api.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+            .getValue("default_workspace_id").jsonPrimitive.long
     }
 
     private fun exists(matcher: SemanticsMatcher): Boolean =

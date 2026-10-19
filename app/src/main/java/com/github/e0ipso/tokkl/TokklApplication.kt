@@ -40,7 +40,7 @@ class TokklApplication : Application() {
 
     /**
      * Loaded on first use, which reads the stored settings from disk. That is usually
-     * MainActivity's onStart on the main thread, and the file holds four short values. Each
+     * MainActivity's onStart on the main thread, and the file holds five short values. Each
      * refresh refreshes the [capabilities] and the [cache] too, with the same `GET /api/v9/me`,
      * and the cache takes the favorites from the settings' `GET /api/v9/me/preferences`. Then the
      * [sender] sends the queue, since the server has just answered.

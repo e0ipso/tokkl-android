@@ -23,7 +23,9 @@ class AccountSettingsStore(context: Context) {
         val timeResolution = preferences.getString(KEY_TIME_RESOLUTION_MINUTES, null)?.toDoubleOrNull()
         // Settings stored before the app read the duration format have none, which means improved.
         val durationFormat = DurationFormat.fromTogglName(preferences.getString(KEY_DURATION_FORMAT, null))
-        return AccountSettings(timeZone, beginningOfWeek, timeResolution, durationFormat)
+        // Settings stored before the app kept the default workspace have none until the next refresh.
+        val defaultWorkspaceId = KEY_DEFAULT_WORKSPACE_ID.takeIf(preferences::contains)?.let { preferences.getLong(it, 0) }
+        return AccountSettings(timeZone, beginningOfWeek, timeResolution, durationFormat, defaultWorkspaceId)
     }
 
     /** Replaces the stored settings in one write. */
@@ -40,6 +42,8 @@ class AccountSettingsStore(context: Context) {
                 putString(KEY_TIME_RESOLUTION_MINUTES, timeResolution.toString())
             }
             putString(KEY_DURATION_FORMAT, settings.durationFormat.togglName)
+            val defaultWorkspaceId = settings.defaultWorkspaceId
+            if (defaultWorkspaceId == null) remove(KEY_DEFAULT_WORKSPACE_ID) else putLong(KEY_DEFAULT_WORKSPACE_ID, defaultWorkspaceId)
         }
     }
 
@@ -58,5 +62,6 @@ class AccountSettingsStore(context: Context) {
         private const val KEY_BEGINNING_OF_WEEK = "beginning_of_week"
         private const val KEY_TIME_RESOLUTION_MINUTES = "time_resolution_minutes"
         private const val KEY_DURATION_FORMAT = "duration_format"
+        private const val KEY_DEFAULT_WORKSPACE_ID = "default_workspace_id"
     }
 }

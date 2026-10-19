@@ -47,7 +47,8 @@ class ChangeQueue(
     /**
      * Starts a timer in [workspaceId] with [fields], at the tap time. A cached running entry
      * stops at that time first, as the server does when a timer starts. Returns the new entry's
-     * local id.
+     * local id. Pass the account's `AccountSettings.defaultWorkspaceId`, which the phone keeps,
+     * so it is there offline too.
      */
     suspend fun start(workspaceId: Long, fields: EntryFields): Long {
         val at = clock.instant()
@@ -70,7 +71,10 @@ class ChangeQueue(
         }
     }
 
-    /** Creates a stopped entry in [workspaceId], as a manual entry does. Returns its local id. */
+    /**
+     * Creates a stopped entry in [workspaceId], as a manual entry does. Returns its local id. Pass
+     * the account's `AccountSettings.defaultWorkspaceId`, as for [start].
+     */
     suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
         require(!stop.isBefore(start)) { "The stop comes before the start." }
         return queue { queueCreate(workspaceId, fields, start, stop) }

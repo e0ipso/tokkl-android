@@ -8,11 +8,14 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.orFail
 import java.time.DayOfWeek
 import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -51,11 +54,15 @@ class AccountSettingsServerTest {
         runBlocking { source.refresh().join() }
 
         // Tokkl's instance time resolution is 5 minutes unless an admin changes it.
-        val expected = AccountSettings("america/sao_paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0)
+        val expected = AccountSettings("america/sao_paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = defaultWorkspace())
         assertEquals(expected, source.state.value)
         assertEquals("the stored settings", expected, AccountSettingsStore(context).load())
         assertEquals(ZoneId.of("America/Sao_Paulo"), expected.time()?.zone)
     }
+
+    private fun defaultWorkspace(): Long =
+        client.get(client.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+            .getValue("default_workspace_id").jsonPrimitive.long
 
     private fun putMe(timezone: String, beginningOfWeek: Int) {
         val body = buildJsonObject {
