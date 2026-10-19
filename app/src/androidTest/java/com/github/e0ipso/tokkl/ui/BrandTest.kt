@@ -63,7 +63,8 @@ class BrandTest {
         val marker = capture()
         assertEquals("the captures differ in size", dark.width to dark.height, marker.width to marker.height)
 
-        val artwork = Mask(marker.width, marker.height) { x, y -> !marker[x, y].near(MARKER, EXACT) }
+        // Any pixel off the marker colour is artwork, even a faint edge pixel within EXACT of it.
+        val artwork = Mask(marker.width, marker.height) { x, y -> !marker[x, y].near(MARKER, 0) }
         val outside = (0 until marker.width).flatMap { x -> (0 until marker.height).map { y -> x to y } }
             .filterNot { (x, y) -> artwork[x, y] }
         assertTrue("light mode draws something around the brand", outside.all { (x, y) -> light[x, y].near(DARK_BACKGROUND, EXACT) })

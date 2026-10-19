@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The brand images for hdpi screens, at 1.5x. raw/brand_images_source.txt says why they are aliases. -->
+<resources>
+    <drawable name="tokkl_icon_sm">@drawable/tokkl_icon_36px</drawable>
+    <drawable name="tokkl_icon_md">@drawable/tokkl_icon_45px</drawable>
+    <drawable name="tokkl_icon_lg">@drawable/tokkl_icon_72px</drawable>
+    <drawable name="tokkl_wordmark_sm">@drawable/tokkl_wordmark_126px</drawable>
+    <drawable name="tokkl_wordmark_md">@drawable/tokkl_wordmark_195px</drawable>
+    <drawable name="tokkl_wordmark_lg">@drawable/tokkl_wordmark_390px</drawable>
+</resources>

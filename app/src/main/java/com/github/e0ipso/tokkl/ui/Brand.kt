@@ -28,7 +28,9 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 /**
  * The sizes of [Brand], Tokkl's sm, md and lg in Brand.tsx: the icon's size, the wordmark's
  * width and the gap between them. Each has its own images, so none is drawn scaled down from a
- * larger size. res/raw/brand_images_source.txt records where they come from.
+ * larger size. The image names are aliases: brand_images.xml in res/values and in each density's
+ * values folder points them at one file per density. res/raw/brand_images_source.txt records
+ * where the files come from.
  */
 enum class BrandSize(
     internal val iconSize: Dp,
