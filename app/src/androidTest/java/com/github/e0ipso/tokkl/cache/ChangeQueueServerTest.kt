@@ -42,7 +42,7 @@ import org.junit.Test
 /**
  * The queue against the real Tokkl container, through the app's [ChangeQueue] and [ChangeSender],
  * since no timer screen exists yet. The app talks to the server through a [HangingRelay], so a
- * test can make the network hang. The test's own requests, which stand in for the web app, go
+ * test can make the network hang or hold one answer. The test's own requests, which stand in for the web app, go
  * straight to the server. Each test seeds its own account and deletes it after.
  */
 class ChangeQueueServerTest {
@@ -221,6 +221,43 @@ class ChangeQueueServerTest {
         assertEquals(0, unsentCount())
     }
 
+    @Test
+    fun aRefreshThatReadTheTimerBeforeItsStopWasSentDoesNotLeaveItRunning() {
+        val start = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS)
+        val entry = web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", "Started on the web")
+                put("start", start.toString())
+                put("duration", -1)
+            },
+            JsonObject.serializer(),
+        ).orFail("POST a running time entry").getValue("id").jsonPrimitive.long
+        runBlocking { app.accountSettings.refresh().join() }
+        assertEquals("the phone shows the web's timer", entry, runBlocking { app.cache.running.first() }?.entry?.id)
+
+        // The server answers a refresh with the running entry, and the answer is slow to reach the phone.
+        relay.holdAnswerTo(TIME_ENTRIES)
+        val stale = app.accountSettings.refresh()
+        waitUntil("the server answered the refresh's entries") { relay.holdsAnswer }
+        assertTrue(runBlocking { app.changes.stop(entry) })
+        waitUntil("the sender sent the stop") { unsentCount() == 0 }
+        val stopped = serverEntry(entry)
+        assertTrue("the server has the stop", stopped["stop"] !is JsonNull)
+
+        relay.releaseAnswer()
+        runBlocking { stale.join() }
+        waitUntil("the cache shows the timer stopped, as the server has it") {
+            runBlocking { app.cache.running.first() } == null
+        }
+        val row = runBlocking { app.cache.entries.first() }.single { it.entry.id == entry }
+        assertEquals(stopped.instant("stop"), row.entry.stop)
+        assertFalse(row.unsent)
+    }
+
     private fun editOnTheWeb(entry: Long, description: String, billable: Boolean) {
         web.send(
             "PUT",
@@ -284,5 +321,8 @@ class ChangeQueueServerTest {
         /** Far below OkHttp's 10-second timeouts, which a call that waited for the network would hit. */
         val AT_ONCE: Duration = Duration.ofSeconds(2)
         val DRAIN_TIMEOUT: Duration = Duration.ofSeconds(60)
+
+        /** The start of the cache refresh's request for the history window's entries. */
+        const val TIME_ENTRIES = "GET /api/v9/me/time_entries?"
     }
 }

@@ -36,7 +36,8 @@ import okhttp3.HttpUrl
  *
  * @param client the signed-in account's client, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
- * @param onSent runs on [io] after a drain that sent at least one change, so the app can refresh.
+ * @param onSent runs on [io] once a drain has sent at least one change, so the app can refresh:
+ *   after the drain's last pass, not after each change or pass.
  */
 class ChangeSender(
     private val store: ChangeStore,
@@ -94,6 +95,7 @@ class ChangeSender(
 
     private fun drainUntilQuiet() {
         var drainAgain = true
+        var sent = 0
         try {
             while (drainAgain) {
                 val outcome = try {
@@ -102,7 +104,7 @@ class ChangeSender(
                     // The queue stays on disk for the next try.
                     null
                 }
-                if (outcome != null && outcome.sent > 0) onSent()
+                sent += outcome?.sent ?: 0
                 if (outcome is Outcome.Waiting) retryAfterWait(outcome.until)
                 drainAgain = synchronized(lock) {
                     again.also {
@@ -115,6 +117,8 @@ class ChangeSender(
             // A cancelled or failed drain lets the next call start another.
             if (drainAgain) synchronized(lock) { sending = null }
         }
+        // One refresh for the whole drain, however many changes and passes it took.
+        if (sent > 0) onSent()
     }
 
     /**

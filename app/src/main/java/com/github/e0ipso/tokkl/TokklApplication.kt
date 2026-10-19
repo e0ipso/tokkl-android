@@ -96,14 +96,18 @@ class TokklApplication : Application() {
     /** Start, stop, create, edit and delete entries on the phone, which the [sender] then sends. */
     val changes: ChangeQueue by lazy { ChangeQueue(cacheDatabase, Dispatchers.IO, onQueued = { sender.send() }) }
 
-    /** Sends the queued changes in order. Once it has sent some, the account refreshes. */
+    /**
+     * Sends the queued changes in order. Once it has sent some, the account refreshes with a read
+     * that starts after the send, so a refresh that read the server before it cannot put the
+     * cache back.
+     */
     val sender: ChangeSender by lazy {
         ChangeSender(
             RoomChangeStore(cacheDatabase),
             client = Session(this)::client,
             scope = MainScope(),
             io = Dispatchers.IO,
-            onSent = { accountSettings.refresh() },
+            onSent = { accountSettings.refreshAfterChange() },
         )
     }
 
