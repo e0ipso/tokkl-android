@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.ui.theme
 
 import android.app.Activity
-import android.app.UiModeManager
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import androidx.compose.ui.graphics.Color
@@ -23,7 +22,6 @@ import com.github.e0ipso.tokkl.settings.ThemeSettings
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import org.junit.Assert.assertEquals
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -37,6 +35,9 @@ import org.junit.Test
  * So each test launches twice. The first launch hands the mode to Android. The second has to
  * start in it, in the same configuration Android draws a cold start's starting window in. Below
  * Android 12 the app hands Android nothing, and one test checks that instead.
+ *
+ * The system's night mode is light for each test, so following the system has one answer also
+ * on a device whose mode follows a schedule.
  */
 class WindowBackgroundTest {
     /** Signed in, so the Timer page shows. */
@@ -48,6 +49,9 @@ class WindowBackgroundTest {
     val themeSettings = DefaultThemeSettings()
 
     @get:Rule(order = 2)
+    val systemNightMode = SystemNightMode(dark = false)
+
+    @get:Rule(order = 3)
     val composeRule = createEmptyComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -67,7 +71,7 @@ class WindowBackgroundTest {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     fun followingTheSystemLaunchShowsTheSystemsSchemeBackground() {
-        assertLaunches(ThemeMode.SYSTEM, dark = systemSettingIsDark())
+        assertLaunches(ThemeMode.SYSTEM, dark = systemNightMode.dark)
     }
 
     /**
@@ -78,7 +82,7 @@ class WindowBackgroundTest {
     @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.R)
     @Test
     fun belowAndroid12LaunchesKeepTheSystemsNightModeAndShowTheChosenBackground() {
-        val systemDark = systemSettingIsDark()
+        val systemDark = systemNightMode.dark
         val mode = if (systemDark) ThemeMode.LIGHT else ThemeMode.DARK
         ThemeSettingsStore(context).save(ThemeSettings(mode = mode))
         val background = if (systemDark) TokklLightColorScheme.background else TokklDarkColorScheme.background
@@ -126,17 +130,6 @@ class WindowBackgroundTest {
 
         assertEquals("$launch: window background", hex(schemeBackground.toArgb()), window?.let(::hex))
         assertEquals("$launch: content background", hex(schemeBackground.toArgb()), hex(content.toArgb()))
-    }
-
-    /**
-     * Whether the system's own setting is dark. The app's night mode does not change it, so it
-     * tells whether following the system really follows it. A schedule has no fixed answer.
-     */
-    private fun systemSettingIsDark(): Boolean {
-        val nightMode = context.getSystemService(UiModeManager::class.java).nightMode
-        val fixed = nightMode == UiModeManager.MODE_NIGHT_YES || nightMode == UiModeManager.MODE_NIGHT_NO
-        assumeTrue("the system's night mode follows a schedule", fixed)
-        return nightMode == UiModeManager.MODE_NIGHT_YES
     }
 
     private fun hex(argb: Int): String = "#%08X".format(argb)

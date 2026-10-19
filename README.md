@@ -158,6 +158,8 @@ TOKKL_TEST_AVD=tokkl-api30 scripts/instrumented-tests.sh
 
 A second run waits for the first one's lock, so the two emulators never run at once.
 
+No test may skip itself with a JUnit assumption. The Android Gradle plugin 9.4.1 runs the tests through its test engine 1.0.1, which records every result but a pass as a failure, so a failed assumption shows as a failed test in the JUnit XML and the HTML report, even though the Gradle task passes. Engine 1.0.7, which AGP 9.5.0-alpha08 and later bring, records it as skipped. To leave a test out on some Android versions, use `@SdkSuppress`. When a test needs a device setting, it sets the setting and puts it back afterwards, as `SystemFontScale` does for the font scale and `SystemNightMode` for the night mode.
+
 Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that need the server. To move to a newer Tokkl, put the digest from `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>` into `IMAGE` in the script. `PROXY_IMAGE` takes the digest of `haproxy:<version>-alpine` the same way.
 
 `gradle.properties` caps the Gradle heap at 2 GB and compiles Kotlin inside the Gradle daemon, so no separate Kotlin daemon starts. The Gradle daemon itself stays in memory after the build. Stop it when you finish:
