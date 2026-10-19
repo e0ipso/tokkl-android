@@ -1,15 +1,21 @@
 package com.github.e0ipso.tokkl.signin
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
@@ -18,15 +24,24 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -44,11 +59,15 @@ import com.github.e0ipso.tokkl.ui.BrandSize
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
+import com.github.e0ipso.tokkl.ui.Scene
 import com.github.e0ipso.tokkl.ui.TokklButton
+import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 
 /**
  * Sign-in with a server URL, which may carry a path, and the API token by
@@ -105,6 +124,7 @@ fun SignInScreen(model: SignInModel, onSignedIn: () -> Unit, modifier: Modifier 
     }
 }
 
+/** The large brand on Tokkl's scene, as on Tokkl's web sign-in, and the form on a card under it. */
 @Composable
 private fun SignInForm(
     state: SignInState,
@@ -120,123 +140,185 @@ private fun SignInForm(
     val errors = state.inputErrors
     val canSubmit = !state.submitting && secondsLeft == 0L
     val submitFromKeyboard = KeyboardActions(onDone = { if (canSubmit) onSubmit() })
-    Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                // The keyboard's full height, which covers the navigation bar. imePadding consumes
-                // it, so navigationBarsPadding adds nothing while the keyboard is open.
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .screenContent()
-                .padding(vertical = TokklTheme.spacing.space6),
-            verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space4),
-        ) {
-            Brand(BrandSize.LARGE, Modifier.align(Alignment.CenterHorizontally))
-            PageTitle(stringResource(R.string.sign_in_title))
-            OutlinedTextField(
-                value = state.serverUrl,
-                onValueChange = onServerUrlChange,
-                label = { Text(stringResource(R.string.sign_in_server_url)) },
-                supportingText = {
-                    SupportingLine(
-                        hint = R.string.sign_in_server_url_hint,
-                        error = R.string.sign_in_error_server_url.takeIf { InputError.SERVER_URL in errors },
-                        errors = listOf(R.string.sign_in_error_server_url),
-                    )
-                },
-                isError = InputError.SERVER_URL in errors,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Uri,
-                    autoCorrectEnabled = false,
-                    imeAction = ImeAction.Next,
-                ),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            MethodChoice(selected = state.method, onSelect = onMethodChange)
-            when (state.method) {
-                SignInMethod.API_TOKEN -> SecretField(
-                    value = state.apiToken,
-                    onValueChange = onApiTokenChange,
-                    label = R.string.sign_in_api_token,
-                    hint = R.string.sign_in_api_token_hint,
-                    error = R.string.sign_in_error_api_token,
-                    showError = InputError.API_TOKEN in errors,
-                    keyboardActions = submitFromKeyboard,
-                )
-                SignInMethod.EMAIL_PASSWORD -> {
-                    val emailError = when {
-                        InputError.EMAIL in errors -> R.string.sign_in_error_email
-                        InputError.EMAIL_COLON in errors -> R.string.sign_in_error_email_colon
-                        else -> null
-                    }
+    Scene(modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            contentWindowInsets = ScrollingScreenInsets,
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+                    // The keyboard's full height, which covers the navigation bar. imePadding consumes
+                    // it, so navigationBarsPadding adds nothing while the keyboard is open.
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
+                    .navigationBarsPadding()
+                    .screenContent()
+                    .padding(vertical = TokklTheme.spacing.space6),
+                verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
+            ) {
+                Brand(BrandSize.LARGE, Modifier.align(Alignment.CenterHorizontally))
+                FormCard {
+                    PageTitle(stringResource(R.string.sign_in_title))
                     OutlinedTextField(
-                        value = state.email,
-                        onValueChange = onEmailChange,
-                        label = { Text(stringResource(R.string.sign_in_email)) },
+                        value = state.serverUrl,
+                        onValueChange = onServerUrlChange,
+                        label = { Text(stringResource(R.string.sign_in_server_url)) },
                         supportingText = {
                             SupportingLine(
-                                hint = R.string.sign_in_email_hint,
-                                error = emailError,
-                                errors = listOf(R.string.sign_in_error_email, R.string.sign_in_error_email_colon),
+                                hint = R.string.sign_in_server_url_hint,
+                                error = R.string.sign_in_error_server_url.takeIf { InputError.SERVER_URL in errors },
+                                errors = listOf(R.string.sign_in_error_server_url),
                             )
                         },
-                        isError = emailError != null,
+                        isError = InputError.SERVER_URL in errors,
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
+                            keyboardType = KeyboardType.Uri,
                             autoCorrectEnabled = false,
                             imeAction = ImeAction.Next,
                         ),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.keptAboveKeyboard().fillMaxWidth(),
                     )
-                    SecretField(
-                        value = state.password,
-                        onValueChange = onPasswordChange,
-                        label = R.string.sign_in_password,
-                        hint = R.string.sign_in_password_hint,
-                        error = R.string.sign_in_error_password,
-                        showError = InputError.PASSWORD in errors,
-                        keyboardActions = submitFromKeyboard,
-                    )
+                    MethodChoice(selected = state.method, onSelect = onMethodChange)
+                    Group {
+                        Credentials(
+                            state = state,
+                            onApiTokenChange = onApiTokenChange,
+                            onEmailChange = onEmailChange,
+                            onPasswordChange = onPasswordChange,
+                            keyboardActions = submitFromKeyboard,
+                        )
+                    }
+                    Group {
+                        state.failure?.let { failureMessage(it, state.method) }?.let { message ->
+                            ErrorBanner(message, Modifier.fillMaxWidth())
+                        }
+                        if (secondsLeft > 0) {
+                            val seconds = secondsLeft.toInt()
+                            Text(
+                                text = pluralStringResource(R.plurals.sign_in_retry_countdown, seconds, seconds),
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                        TokklButton(onClick = onSubmit, enabled = canSubmit, modifier = Modifier.fillMaxWidth()) {
+                            val label = if (state.submitting) R.string.sign_in_submitting else R.string.sign_in_submit
+                            Text(stringResource(label))
+                        }
+                    }
                 }
-            }
-            state.failure?.let { failureMessage(it, state.method) }?.let { message ->
-                ErrorBanner(message, Modifier.fillMaxWidth())
-            }
-            if (secondsLeft > 0) {
-                val seconds = secondsLeft.toInt()
-                Text(
-                    text = pluralStringResource(R.plurals.sign_in_retry_countdown, seconds, seconds),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-            TokklButton(onClick = onSubmit, enabled = canSubmit, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(if (state.submitting) R.string.sign_in_submitting else R.string.sign_in_submit))
             }
         }
     }
 }
 
+/**
+ * The form on a surface card in Tokkl's frame, so no texture sits behind a field. Its parts are
+ * the title and the groups: the server URL, the sign-in method, the credentials and the actions,
+ * each the spacing between groups apart.
+ */
+@Composable
+private fun FormCard(content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(FrameWidth, MaterialTheme.colorScheme.outline),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(TokklTheme.spacing.space4),
+            verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
+            content = content,
+        )
+    }
+}
+
+/** One group of the form, its parts the spacing inside a group apart. */
+@Composable
+private fun Group(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup), content = content)
+}
+
 /** Radio buttons: the selected one differs in shape, not only in colour. */
 @Composable
 private fun MethodChoice(selected: SignInMethod, onSelect: (SignInMethod) -> Unit) {
-    Column(Modifier.selectableGroup()) {
+    Group(Modifier.selectableGroup()) {
         Text(
             text = stringResource(R.string.sign_in_method),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
-        for ((method, label) in METHOD_LABELS) {
-            RadioOptionRow(
-                label = stringResource(label),
-                selected = method == selected,
-                onSelect = { onSelect(method) },
-                textStyle = MaterialTheme.typography.bodyLarge,
+        // Each row is a 48dp touch target, so the rows need no gap between them.
+        Column {
+            for ((method, label) in METHOD_LABELS) {
+                RadioOptionRow(
+                    label = stringResource(label),
+                    selected = method == selected,
+                    onSelect = { onSelect(method) },
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                )
+            }
+        }
+    }
+}
+
+/** The API token field, or the email and password fields, for the chosen method. */
+@Composable
+private fun Credentials(
+    state: SignInState,
+    onApiTokenChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    keyboardActions: KeyboardActions,
+) {
+    val errors = state.inputErrors
+    when (state.method) {
+        SignInMethod.API_TOKEN -> SecretField(
+            value = state.apiToken,
+            onValueChange = onApiTokenChange,
+            label = R.string.sign_in_api_token,
+            hint = R.string.sign_in_api_token_hint,
+            error = R.string.sign_in_error_api_token,
+            showError = InputError.API_TOKEN in errors,
+            keyboardActions = keyboardActions,
+        )
+        SignInMethod.EMAIL_PASSWORD -> {
+            val emailError = when {
+                InputError.EMAIL in errors -> R.string.sign_in_error_email
+                InputError.EMAIL_COLON in errors -> R.string.sign_in_error_email_colon
+                else -> null
+            }
+            OutlinedTextField(
+                value = state.email,
+                onValueChange = onEmailChange,
+                label = { Text(stringResource(R.string.sign_in_email)) },
+                supportingText = {
+                    SupportingLine(
+                        hint = R.string.sign_in_email_hint,
+                        error = emailError,
+                        errors = listOf(R.string.sign_in_error_email, R.string.sign_in_error_email_colon),
+                    )
+                },
+                isError = emailError != null,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    autoCorrectEnabled = false,
+                    imeAction = ImeAction.Next,
+                ),
+                modifier = Modifier.keptAboveKeyboard().fillMaxWidth(),
+            )
+            SecretField(
+                value = state.password,
+                onValueChange = onPasswordChange,
+                label = R.string.sign_in_password,
+                hint = R.string.sign_in_password_hint,
+                error = R.string.sign_in_error_password,
+                showError = InputError.PASSWORD in errors,
+                keyboardActions = keyboardActions,
             )
         }
     }
@@ -271,8 +353,33 @@ private fun SecretField(
             imeAction = ImeAction.Done,
         ),
         keyboardActions = keyboardActions,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.keptAboveKeyboard().fillMaxWidth(),
     )
+}
+
+/**
+ * Brings a focused field, with its supporting line, into view whenever the keyboard's height
+ * changes, one frame later, once the form's IME padding has shrunk the scroll area. The scroll
+ * area keeps a focused field in view on its own only when the field was wholly inside it before
+ * the keyboard opened and no other scroll was running. On tokkl-api36 at font scale 2.0, a
+ * password field scrolled to end within 1dp of the bottom edge stayed under the keyboard.
+ */
+@Composable
+private fun Modifier.keptAboveKeyboard(): Modifier {
+    val requester = remember { BringIntoViewRequester() }
+    var focused by remember { mutableStateOf(false) }
+    val keyboard = WindowInsets.ime
+    val density = LocalDensity.current
+    LaunchedEffect(focused) {
+        if (!focused) return@LaunchedEffect
+        snapshotFlow { keyboard.getBottom(density) }
+            .filter { it > 0 }
+            .collectLatest {
+                withFrameNanos {}
+                requester.bringIntoView()
+            }
+    }
+    return bringIntoViewRequester(requester).onFocusChanged { focused = it.isFocused }
 }
 
 /**
