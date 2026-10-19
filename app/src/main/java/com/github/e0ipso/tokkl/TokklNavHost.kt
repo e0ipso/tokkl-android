@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.calendar.CalendarModel
+import com.github.e0ipso.tokkl.calendar.WeekCalendar
 import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryModel
 import com.github.e0ipso.tokkl.licences.LicencesScreen
@@ -66,6 +68,7 @@ fun TokklNavHost(
     sessionTrust: SessionTrustModel,
     reports: ReportsModel,
     history: HistoryModel,
+    calendar: CalendarModel,
     timerView: TimerViewSetting,
 ) {
     val appContext = LocalContext.current.applicationContext
@@ -93,7 +96,7 @@ fun TokklNavHost(
     }
     val view by timerView.view.collectAsState()
     SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open) {
-        Screen(destination, backStack, themeSettings, reports, history, view, onTimerViewChange = timerView::choose)
+        Screen(destination, backStack, themeSettings, reports, history, calendar, view, onTimerViewChange = timerView::choose)
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -126,6 +129,7 @@ private fun Screen(
     themeSettings: ThemeSettingsModel,
     reports: ReportsModel,
     history: HistoryModel,
+    calendar: CalendarModel,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
 ) {
@@ -136,6 +140,7 @@ private fun Screen(
             view = timerView,
             onViewChange = onTimerViewChange,
             listContent = { HistoryList(history) },
+            calendarContent = { WeekCalendar(calendar) },
         )
         Destination.REPORTS -> ReportsScreen(model = reports)
         Destination.PROJECTS -> PlaceholderScreen(title = R.string.nav_projects, message = R.string.projects_later)

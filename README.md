@@ -168,7 +168,7 @@ Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that n
 
 ### Screenshot tests
 
-`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/` captures sign-in with each method, the Timer page, Settings, Licences, Reports, the http warning and the certificate prompt, in the light and the dark theme, at font scale 1.0 and 2.0. Each capture shrinks to a third in each direction and is compared with its reference image in `app/src/androidTest/assets/screenshots/`. The references come from `tokkl-api36`, because density and system fonts change the pixels. Each class carries `@SdkSuppress` for API 36, so on any other version the runner leaves the screenshot tests out. An assumption would not do, because the Android Gradle plugin reports a failed assumption as a failed test. Run all four classes with:
+`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/` captures sign-in with each method, the Timer page with its List and Calendar views, Settings, Licences, Reports, the http warning and the certificate prompt, in the light and the dark theme, at font scale 1.0 and 2.0. Each capture shrinks to a third in each direction and is compared with its reference image in `app/src/androidTest/assets/screenshots/`. The references come from `tokkl-api36`, because density and system fonts change the pixels. Each class carries `@SdkSuppress` for API 36, so on any other version the runner leaves the screenshot tests out. An assumption would not do, because the Android Gradle plugin reports a failed assumption as a failed test. Run all four classes with:
 
 ```sh
 scripts/instrumented-tests.sh \

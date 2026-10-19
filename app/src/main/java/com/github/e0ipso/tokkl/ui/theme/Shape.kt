@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -25,6 +26,12 @@ internal val TokklShapes = Shapes(
     large = RadiusLarge,
     extraLarge = RadiusLarge,
 )
+
+/** `--radius-sm` in styles.css: the corners of the calendar's blocks. */
+val SmallCorner: Dp = 6.dp
+
+/** [SmallCorner] on every corner. */
+val SmallCornerShape: Shape = RoundedCornerShape(SmallCorner)
 
 /** The frame around a card or dialog, `border-width: 2px` on Tokkl's cards in styles.css. */
 val FrameWidth: Dp = 2.dp

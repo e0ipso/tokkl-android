@@ -8,11 +8,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -38,7 +34,7 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
     /** The entries, a day at a time. */
     LIST(R.string.timer_view_list, "list"),
 
-    /** The week calendar. */
+    /** The calendar: the week, or the day on a phone held upright. */
     CALENDAR(R.string.timer_view_calendar, "calendar"),
 }
 
@@ -47,17 +43,16 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
  * lays it out: the timer, then the List and Calendar switch, then the entries in the chosen [view]. The timer
  * (TKA-0039) is not built yet, so the brand stands in its place.
  *
- * [listContent], the history, and [calendarContent] fill the rest of the page under the switch,
- * with a bounded height, so each scrolls on its own. Until the week view (TKA-0030) exists, the
- * calendar says what it will show.
+ * [listContent], the history, and [calendarContent], the calendar, fill the rest of the page
+ * under the switch, with a bounded height, so each scrolls on its own.
  */
 @Composable
 fun TimerScreen(
     view: TimerView,
     onViewChange: (TimerView) -> Unit,
     listContent: @Composable () -> Unit,
+    calendarContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    calendarContent: @Composable () -> Unit = { ComesLater(R.string.timer_calendar_later) },
 ) {
     Scaffold(modifier = modifier.fillMaxSize(), contentWindowInsets = ScrollingScreenInsets) { innerPadding ->
         Column(
@@ -101,18 +96,5 @@ private fun ViewSwitch(view: TimerView, onViewChange: (TimerView) -> Unit) {
                 label = { Text(stringResource(option.label)) },
             )
         }
-    }
-}
-
-/** What a view will show once it is built. It scrolls, so it fits under a large font. */
-@Composable
-private fun ComesLater(@StringRes message: Int) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .navigationBarsPadding(),
-    ) {
-        Text(text = stringResource(message), style = MaterialTheme.typography.bodyLarge)
     }
 }

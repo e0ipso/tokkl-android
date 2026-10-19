@@ -29,6 +29,10 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.calendar.CalendarContent
+import com.github.e0ipso.tokkl.calendar.CalendarEntry
+import com.github.e0ipso.tokkl.calendar.CalendarState
+import com.github.e0ipso.tokkl.calendar.WeekSource
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.history.HistoryDay
 import com.github.e0ipso.tokkl.history.HistoryEntry
@@ -137,12 +141,33 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                     view = TimerView.LIST,
                     onViewChange = {},
                     listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
+                    calendarContent = {},
                 )
             }
         }) {
             composeRule.awaitTimerPage()
             composeRule.awaitText(string(R.string.history_today).uppercase(Locale.ROOT))
             assertScreen("timer")
+        }
+    }
+
+    /** The Calendar view at noon on [TODAY], one day on this upright phone, with a running entry. */
+    @SignedOut
+    @Test
+    fun calendar() {
+        show({
+            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+                TimerScreen(
+                    view = TimerView.CALENDAR,
+                    onViewChange = {},
+                    listContent = {},
+                    calendarContent = { CalendarContent(state = CALENDAR, now = TODAY.instant(), onStep = {}, onToday = {}, onRetry = {}) },
+                )
+            }
+        }) {
+            composeRule.awaitTimerPage()
+            composeRule.awaitText("Thu, 15 Oct")
+            assertScreen("calendar")
         }
     }
 
@@ -308,6 +333,28 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             older = OlderDays.End,
         )
 
+        /**
+         * [WEEK] in the calendar with Thursday chosen: entries on four days, one across midnight
+         * into Thursday, two that overlap, one the server has not received and one running.
+         */
+        val CALENDAR = CalendarState.Shown(
+            selected = LocalDate.of(2026, 10, 15),
+            weekStart = WEEK.from,
+            today = LocalDate.of(2026, 10, 15),
+            zone = ZoneOffset.UTC,
+            settings = ACCOUNT,
+            entries = listOf(
+                calendarEntry(1, "Paint the mural", WALL, "2026-10-12T09:00", "2026-10-12T12:30"),
+                calendarEntry(2, "Sprint planning", APP, "2026-10-13T08:30", "2026-10-13T12:00"),
+                calendarEntry(3, "", project = null, "2026-10-14T23:00", "2026-10-15T01:00"),
+                calendarEntry(4, "Stand-up", APP, "2026-10-15T08:00", "2026-10-15T08:30"),
+                calendarEntry(5, "Write the history list", APP, "2026-10-15T09:00", "2026-10-15T10:30", task = "Design"),
+                calendarEntry(6, "Code review", WALL, "2026-10-15T10:45", "2026-10-15T11:50", unsent = true),
+                calendarEntry(7, "Calendar grid", APP, "2026-10-15T11:15", stop = null),
+            ),
+            week = WeekSource.Cached,
+        )
+
         val HTTP_SERVER: ServerUrl = checkNotNull(ServerUrl.parse("http://10.0.2.2:8080"))
 
         val CERTIFICATE = ServerCertificate(
@@ -339,6 +386,26 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             billable = billable,
             start = Instant.parse("2026-10-${day}T$start:00Z"),
             stop = Instant.parse("2026-10-${day}T$stop:00Z"),
+            unsent = unsent,
+        )
+
+        /** An entry of [CALENDAR] from [start] to [stop] in UTC, running when [stop] is null. */
+        private fun calendarEntry(
+            id: Long,
+            description: String,
+            project: Project?,
+            start: String,
+            stop: String?,
+            task: String? = null,
+            unsent: Boolean = false,
+        ) = CalendarEntry(
+            id = id,
+            description = description,
+            project = project?.name,
+            projectColor = project?.colour,
+            task = task,
+            start = Instant.parse("$start:00Z"),
+            stop = stop?.let { Instant.parse("$it:00Z") },
             unsent = unsent,
         )
 

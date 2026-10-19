@@ -40,7 +40,10 @@ object TokklSpacing {
     val contentMaxWidth: Dp = 600.dp
 
     /** The screen margin for a screen [width] wide. */
-    fun screenMargin(width: Dp): Dp = if (width < MEDIUM_WIDTH) compactMargin else mediumMargin
+    fun screenMargin(width: Dp): Dp = if (isCompact(width)) compactMargin else mediumMargin
+
+    /** Whether [width] is a compact width, a phone held upright, by Material's window size classes. */
+    fun isCompact(width: Dp): Boolean = width < MEDIUM_WIDTH
 
     /** Where Material's window size classes start medium widths. */
     private val MEDIUM_WIDTH = 600.dp
