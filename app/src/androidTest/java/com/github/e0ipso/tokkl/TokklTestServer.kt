@@ -32,6 +32,17 @@ object TokklTestServer {
         ServerUrl.parse(url) ?: error("tokklTlsBaseUrl is not an https URL: $url")
     }
 
+    /**
+     * The same server under the path prefix `/tokkl`, as a reverse proxy
+     * serves it beside other sites, such as `http://10.0.2.2:32770/tokkl`. The
+     * proxy strips the prefix and answers 404 to every path outside it, so a
+     * request that drops the prefix fails.
+     */
+    val prefixedUrl: ServerUrl by lazy {
+        val url = argument("tokklPrefixedBaseUrl")
+        ServerUrl.parse(url) ?: error("tokklPrefixedBaseUrl is not an http or https URL: $url")
+    }
+
     /** The proxy certificate's SHA-256 fingerprint, as `openssl x509 -noout -fingerprint -sha256` prints it. */
     val tlsFingerprint: String by lazy { argument("tokklTlsFingerprint") }
 

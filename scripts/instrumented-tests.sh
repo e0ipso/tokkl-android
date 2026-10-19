@@ -9,13 +9,16 @@
 # 3. Puts a TLS proxy, haproxy pinned by digest, in front of the same server,
 #    with a self-signed certificate made for this run. The certificate names
 #    10.0.2.2 and 127.0.0.1 as IP addresses, so host name checks pass. Its
-#    private key stays in this script's temporary directory.
+#    private key stays in this script's temporary directory. The same proxy
+#    serves Tokkl over http under the path prefix /tokkl on a port of its
+#    own, as a reverse proxy serves it beside other sites, and answers 404
+#    there to every path outside the prefix.
 # 4. Copies the password and the API token to each test device, in a file
 #    that only the shell user can read. Before that it deletes the
 #    credentials files that killed runs left behind, once they are older than
 #    any run lasts.
-# 5. Runs connectedDebugAndroidTest with the http and https server URLs, the
-#    proxy certificate's SHA-256 fingerprint, the email and that file's path
+# 5. Runs connectedDebugAndroidTest with the http, https and prefixed server
+#    URLs, the proxy certificate's SHA-256 fingerprint, the email and that file's path
 #    as instrumentation arguments. The emulator reaches the host's 127.0.0.1
 #    as 10.0.2.2. The credentials work only on this container. The run fails
 #    when a test device goes away during it, even if Gradle reports success.
@@ -309,15 +312,17 @@ container="tokkl-android-tests-$(random_hex 4)"
 echo "Starting $IMAGE as $container"
 # The image runs as an unprivileged user, so the tmpfs must be writable by any
 # UID. --env without a value reads the setup code from the environment. The
-# TLS proxy joins this container's network namespace, so its port 8443 is
-# published here too.
+# proxy joins this container's network namespace, so its ports 8443 and 8081
+# are published here too.
 TOKKL_SETUP_CODE="$setup_code" docker run --detach --name "$container" \
     --env TOKKL_SETUP_CODE --tmpfs /data:mode=1777 \
-    --publish 127.0.0.1::8080 --publish 127.0.0.1::8443 "$IMAGE" >/dev/null
+    --publish 127.0.0.1::8080 --publish 127.0.0.1::8443 --publish 127.0.0.1::8081 "$IMAGE" >/dev/null
 host_port=$(docker port "$container" 8080/tcp | head -n 1)
 host_port=${host_port##*:}
 tls_port=$(docker port "$container" 8443/tcp | head -n 1)
 tls_port=${tls_port##*:}
+prefix_port=$(docker port "$container" 8081/tcp | head -n 1)
+prefix_port=${prefix_port##*:}
 server="http://127.0.0.1:$host_port"
 
 if ! curl --silent --fail --output /dev/null \
@@ -360,6 +365,17 @@ frontend tls
     bind :8443 ssl crt /usr/local/etc/haproxy/server.pem
     default_backend tokkl
 
+# Tokkl under /tokkl, with the prefix stripped on the way in. Every other path
+# gets 404, so a client that drops the prefix fails instead of reaching Tokkl
+# at the root.
+frontend prefix
+    bind :8081
+    acl prefixed path /tokkl
+    acl prefixed path_beg /tokkl/
+    http-request deny deny_status 404 unless prefixed
+    http-request replace-path ^/tokkl/?(.*)$ /\1
+    default_backend tokkl
+
 backend tokkl
     server tokkl 127.0.0.1:8080
 CONFIG
@@ -373,6 +389,18 @@ if ! curl --silent --fail --output /dev/null --cacert "$proxy_dir/cert.pem" \
     --retry 30 --retry-delay 1 --retry-all-errors "https://127.0.0.1:$tls_port/healthz"; then
     echo "$0: the TLS proxy did not answer on https://127.0.0.1:$tls_port/healthz. Last proxy output:" >&2
     docker logs "$proxy" 2>&1 | tail -n 20 >&2
+    exit 1
+fi
+# The proxy is up, so the prefix answers at once, and the root of its port
+# must not.
+prefixed="http://127.0.0.1:$prefix_port/tokkl"
+if ! curl --silent --fail --output /dev/null "$prefixed/healthz"; then
+    echo "$0: the proxy did not serve Tokkl under $prefixed" >&2
+    exit 1
+fi
+root_status=$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:$prefix_port/healthz")
+if [ "$root_status" != 404 ]; then
+    echo "$0: http://127.0.0.1:$prefix_port/healthz answered $root_status, not 404, so a client that drops the prefix would pass" >&2
     exit 1
 fi
 
@@ -426,10 +454,12 @@ done
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
 echo "The TLS proxy is ready on https://127.0.0.1:$tls_port, with certificate SHA-256 $tls_fingerprint"
+echo "The proxy serves Tokkl under $prefixed, which the emulator reaches as http://10.0.2.2:$prefix_port/tokkl"
 gradle_status=0
 ./gradlew --no-daemon connectedDebugAndroidTest \
     "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
     "-P$RUNNER_ARGS.tokklTlsBaseUrl=https://10.0.2.2:$tls_port" \
+    "-P$RUNNER_ARGS.tokklPrefixedBaseUrl=http://10.0.2.2:$prefix_port/tokkl" \
     "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
     "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
     "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \

@@ -28,9 +28,10 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * The sign-in form against a MockWebServer. The Tokkl container in the
- * instrumented tests serves at the root and must not lock its account, so the
- * base path and 429 cases live here.
+ * The sign-in form against a MockWebServer, which shows the exact requests.
+ * On the device, SignInUnderPathPrefixTest signs in to the Tokkl container
+ * under a path prefix. The container's shared account must not be locked, so
+ * the 429 cases live here.
  */
 class SignInModelTest {
 
