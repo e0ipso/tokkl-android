@@ -30,22 +30,28 @@
 #
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
 # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
-# tokkl-api36; tokkl-api30 runs Android 11) without a window, with 2.5 GB of
-# guest RAM, 4 cores and the lavapipe renderer, turns off error dialogs on it,
-# sets its font scale to 1.0, lets its soft keyboard open, makes apps draw with
-# Vulkan on Android 12 and later, and stops it at the end. It changes no
-# setting on a device it did not boot. It also stops the adb server if that was
-# not running before.
+# tokkl-api36; tokkl-api30 runs Android 11, tokkl-api26 Android 8.0) without a
+# window, with 2.5 GB of guest RAM, 4 cores and the lavapipe renderer, turns
+# off error dialogs on it, sets its font scale to 1.0, lets its soft keyboard
+# open, makes apps draw with Vulkan on Android 12 and later, and stops it at
+# the end. It changes no setting on a device it did not boot. It also stops
+# the adb server if that was not running before.
+#
+# Below Android 12, a run with no test runner argument on an emulator the
+# script boots goes in batches of whole test classes, each on a fresh
+# emulator, so qemu never holds a full run's memory (see run_in_batches). The
+# run prints each batch's totals and then the whole run's, and keeps each
+# batch's results in app/build/outputs/androidTest-results/batches/.
 #
 # Runs take turns. Each run locks a file in $XDG_RUNTIME_DIR from its start
 # until its cleanup ends. A run that starts meanwhile prints the PID, start
 # time and directory of the run holding the lock, and waits for it to end.
 #
-# qemu peaks at about 3.5 GB in a full run on tokkl-api36 and at 5.5 GB on
-# tokkl-api30, and its oom_score_adj of 800 makes it the kernel OOM killer's
-# first pick. When the user's systemd manager is reachable, the emulator runs
-# in a scope of its own with OOMPolicy=continue and at most
-# EMULATOR_MEMORY_MAX of memory, so an OOM kill ends only qemu and
+# qemu peaks at about 3.5 GB in a full run on tokkl-api36 and below 4 GB in
+# each batch on tokkl-api30 and tokkl-api26. Its oom_score_adj of 800 makes it
+# the kernel OOM killer's first pick. When the user's systemd manager is
+# reachable, the emulator runs in a scope of its own with OOMPolicy=continue
+# and at most EMULATOR_MEMORY_MAX of memory, so an OOM kill ends only qemu and
 # this script, not the caller's scope with everything else in it, such as an
 # agent session. The scope is PartOf the caller's unit, so stopping the caller
 # still stops the emulator. Without a user manager, as in CI, the emulator
@@ -92,9 +98,21 @@ readonly FILTER_PREFIX='tokkl-test-filter-'
 # run that ended without its cleanup, never to one still reading it.
 readonly STALE_CREDENTIALS_HOURS=6
 # The most memory the emulator's scope may use, swap included. A full run
-# peaks below 4 GB on tokkl-api36 and at 5.5 GB on tokkl-api30, where apps
-# draw with OpenGL (see boot_emulator).
+# peaks below 4 GB on tokkl-api36. On tokkl-api30, where apps draw with OpenGL
+# (see boot_emulator), it reached 5.5 GB on one emulator, and each batch now
+# stays below 4 GB.
 readonly EMULATOR_MEMORY_MAX=6G
+# Below Android 12 qemu keeps memory after every test (see boot_emulator), up
+# to about 110 MB on API 26, so a full run on an emulator the script boots
+# there goes in batches of whole test classes, each on a fresh emulator. A
+# batch holds at most this many tests, unless one class has more. With 20, qemu
+# peaked below 4 GB on tokkl-api30 and tokkl-api26.
+readonly BATCH_TESTS=20
+# Where Gradle puts the results and the report of a run, which every run
+# replaces, and where the script keeps each batch's.
+readonly RESULTS='app/build/outputs/androidTest-results/connected/debug'
+readonly REPORT='app/build/reports/androidTests/connected/debug'
+readonly BATCH_RESULTS='app/build/outputs/androidTest-results/batches'
 
 cd "$(dirname "$0")/.."
 
@@ -132,6 +150,12 @@ if [ "${#test_filter[@]}" -gt 0 ]; then
         esac
     done
 fi
+# A run with no test runner argument runs every test, which below Android 12
+# goes in batches (see run_in_batches).
+full_run=true
+for arg in "$@"; do
+    case $arg in *"$RUNNER_ARGS."*) full_run=false ;; esac
+done
 
 # Runs take turns. A second run would test on the first one's emulator, which
 # the first one's cleanup then stops, along with an adb server it started. So
@@ -157,6 +181,7 @@ proxy=''
 emulator_pid=''
 emulator_serial=''
 emulator_unit=''
+emulator_sdk=''
 credentials_on_device=''
 filter_on_device=''
 devices_with_credentials=()
@@ -183,6 +208,38 @@ report_emulator_exit() {
     fi
 }
 
+# Deletes the credentials file, and the test list if any, from each device
+# they went to. sync writes the deletion to disk before an emulator this script
+# booted is killed. Without it, the file was back on the next boot.
+remove_device_files() {
+    for device in "${devices_with_credentials[@]}"; do
+        adb -s "$device" shell "rm -f $credentials_on_device $filter_on_device && sync" >/dev/null 2>&1 ||
+            echo "$0: could not remove $credentials_on_device${filter_on_device:+ or $filter_on_device} from $device" >&2
+    done
+    devices_with_credentials=()
+}
+
+# Stops the emulator this script booted, if any, and its scope. Fails, after
+# saying why, when the emulator had already exited on its own.
+stop_emulator() {
+    local status=0
+    if [ -n "$emulator_pid" ] && ! kill -0 "$emulator_pid" 2>/dev/null; then
+        report_emulator_exit
+        status=1
+    fi
+    if [ -n "$emulator_pid" ]; then
+        adb -s "$emulator_serial" emu kill >/dev/null 2>&1 || kill "$emulator_pid" 2>/dev/null || true
+        wait "$emulator_pid" 2>/dev/null || true
+        emulator_pid=''
+    fi
+    if [ -n "$emulator_unit" ]; then
+        # Stops whatever is left in the scope. It is gone once qemu exits.
+        systemctl --user stop "$emulator_unit" >/dev/null 2>&1 || true
+        emulator_unit=''
+    fi
+    return "$status"
+}
+
 # ShellCheck 0.11 misses that the EXIT trap runs this.
 # shellcheck disable=SC2329
 cleanup() {
@@ -195,24 +252,8 @@ cleanup() {
         docker rm --force --volumes "$container" >/dev/null 2>&1 ||
             echo "$0: could not remove container $container" >&2
     fi
-    # sync writes the deletion to disk before an emulator this script booted
-    # is killed below. Without it, the file was back on the next boot.
-    for device in "${devices_with_credentials[@]}"; do
-        adb -s "$device" shell "rm -f $credentials_on_device $filter_on_device && sync" >/dev/null 2>&1 ||
-            echo "$0: could not remove $credentials_on_device${filter_on_device:+ or $filter_on_device} from $device" >&2
-    done
-    if [ -n "$emulator_pid" ] && ! kill -0 "$emulator_pid" 2>/dev/null; then
-        report_emulator_exit
-        if [ "$status" -eq 0 ]; then status=1; fi
-    fi
-    if [ -n "$emulator_pid" ]; then
-        adb -s "$emulator_serial" emu kill >/dev/null 2>&1 || kill "$emulator_pid" 2>/dev/null || true
-        wait "$emulator_pid" 2>/dev/null || true
-    fi
-    if [ -n "$emulator_unit" ]; then
-        # Stops whatever is left in the scope. It is gone once qemu exits.
-        systemctl --user stop "$emulator_unit" >/dev/null 2>&1 || true
-    fi
+    remove_device_files
+    if ! stop_emulator && [ "$status" -eq 0 ]; then status=1; fi
     if [ "$adb_was_running" = false ]; then
         adb kill-server >/dev/null 2>&1 || true
     fi
@@ -303,9 +344,21 @@ boot_emulator() {
     # process starts, so it applies to every test. Below Android 12 HWUI
     # aborted every app at its first frame with it: the API 28 image offers no
     # Vulkan, and the API 30 image's Vulkan lacks VK_KHR_external_semaphore_fd,
-    # which HWUI needs. Apps there draw with OpenGL, and a full run on
-    # tokkl-api30 takes qemu to 5.5 GB.
-    if [ "$(adb -s "$emulator_serial" shell getprop ro.build.version.sdk | tr -d '\r')" -ge 31 ]; then
+    # which HWUI needs. Apps there draw with OpenGL, and a full run there goes
+    # in batches (see run_in_batches).
+    # With pipefail, one failed adb call here would end the run without a
+    # message, so this asks again until it gets a number, within the boot's
+    # deadline.
+    emulator_sdk=$(adb -s "$emulator_serial" shell getprop ro.build.version.sdk | tr -d '\r') || true
+    until [[ $emulator_sdk =~ ^[0-9]+$ ]]; do
+        if [ "$SECONDS" -ge "$deadline" ]; then
+            echo "$0: $AVD did not report its API level in 5 minutes." >&2
+            exit 1
+        fi
+        sleep 2
+        emulator_sdk=$(adb -s "$emulator_serial" shell getprop ro.build.version.sdk | tr -d '\r') || true
+    done
+    if [ "$emulator_sdk" -ge 31 ]; then
         adb -s "$emulator_serial" shell setprop debug.hwui.renderer skiavk
     else
         echo "$AVD runs Android 11 or earlier, so apps on it draw with OpenGL"
@@ -442,49 +495,183 @@ if [ -n "${ANDROID_SERIAL:-}" ]; then
 else
     mapfile -t devices < <(attached_devices)
 fi
-if [ "${#test_filter[@]}" -gt 0 ]; then
-    filter="$work_dir/test-filter.txt"
-    printf '%s\n' "${test_filter[@]}" >"$filter"
-    filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
-    gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
-fi
-for device in "${devices[@]}"; do
-    remove_stale_credentials "$device"
-    devices_with_credentials+=("$device")
-    adb -s "$device" push "$credentials" "$credentials_on_device" >/dev/null
-    # adb push keeps this machine's modification time. touch sets the device's
-    # own, the clock its stale file check reads.
-    adb -s "$device" shell "chmod 600 $credentials_on_device && touch $credentials_on_device"
-    # The test runner reads the list in the app's process, so every user may
-    # read it. It names test classes and nothing secret.
-    if [ -n "$filter_on_device" ]; then
-        adb -s "$device" push "$filter" "$filter_on_device" >/dev/null
-        adb -s "$device" shell "chmod 644 $filter_on_device"
+filter="$work_dir/test-filter.txt"
+
+# Copies the credentials file to each test device, and the test list in
+# $filter too once filter_on_device names its place there.
+push_to_devices() {
+    for device in "${devices[@]}"; do
+        remove_stale_credentials "$device"
+        devices_with_credentials+=("$device")
+        adb -s "$device" push "$credentials" "$credentials_on_device" >/dev/null
+        # adb push keeps this machine's modification time. touch sets the
+        # device's own, the clock its stale file check reads.
+        adb -s "$device" shell "chmod 600 $credentials_on_device && touch $credentials_on_device"
+        # The test runner reads the list in the app's process, so every user
+        # may read it. It names test classes and nothing secret.
+        if [ -n "$filter_on_device" ]; then
+            adb -s "$device" push "$filter" "$filter_on_device" >/dev/null
+            adb -s "$device" shell "chmod 644 $filter_on_device"
+        fi
+    done
+}
+
+# Runs the tests once on every test device, with any further Gradle arguments
+# given. Fails when Gradle fails or a test device went away during the run.
+run_tests() {
+    local status=0 device
+    local -a gone=()
+    ./gradlew --no-daemon connectedDebugAndroidTest \
+        "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
+        "-P$RUNNER_ARGS.tokklTlsBaseUrl=https://10.0.2.2:$tls_port" \
+        "-P$RUNNER_ARGS.tokklPrefixedBaseUrl=http://10.0.2.2:$prefix_port/tokkl" \
+        "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
+        "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
+        "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
+        "${gradle_args[@]}" "$@" || status=$?
+    # AGP's test task can pass when a device dies between two tests. With the
+    # emulator killed a second into the run, Gradle printed BUILD SUCCESSFUL
+    # and had run none of the 32 tests. So every test device must still be
+    # online.
+    for device in "${devices[@]}"; do
+        if [ "$(adb -s "$device" get-state 2>/dev/null)" != device ]; then gone+=("$device"); fi
+    done
+    if [ "${#gone[@]}" -gt 0 ]; then
+        echo "$0: ${gone[*]} went away during the run. Gradle can pass without running every test, so this run fails." >&2
+        return 1
     fi
-done
+    return "$status"
+}
+
+# Prints the numbers of tests, failures, errors and skipped tests in the JUnit
+# XML report of a run on one device, in directory $1, on one line. A run that
+# left no report counts as 0 0 0 0.
+report_totals() {
+    local xml attribute value
+    local -a totals=()
+    xml=$(find "$1" -maxdepth 1 -name 'TEST-*.xml' -print -quit)
+    for attribute in tests failures errors skipped; do
+        value=''
+        if [ -n "$xml" ]; then
+            value=$(sed -n "s/^<testsuites [^>]*\b$attribute=\"\([0-9]*\)\".*/\1/p" "$xml" | head -n 1)
+        fi
+        totals+=("${value:-0}")
+    done
+    echo "${totals[*]}"
+}
+
+# Below Android 12 qemu keeps memory after each test, so a full run on an
+# emulator this script booted there goes in batches of whole test classes, at
+# most BATCH_TESTS tests each, and every batch gets a fresh emulator. The tests
+# of one class stay in one batch, so the steps of each *RestartTest still run
+# in order on one device. The runner lists the tests without running them
+# first, so the batches leave out what @SdkSuppress leaves out. All batches
+# use the same server. The run fails when a batch fails, and when the batches
+# ran a different number of tests than the runner listed.
+run_in_batches() {
+    local instrumentation listing count class batch='' size=0 listed=0 ran=0 failures=0 skipped=0
+    local i n status tests failed errors skips dir
+    local -a classes=() counts=() batches=() sizes=() failed_batches=()
+    echo "Listing the tests on $emulator_serial to run them in batches of at most $BATCH_TESTS"
+    ./gradlew --no-daemon --quiet installDebug installDebugAndroidTest "${gradle_args[@]}"
+    instrumentation=$(adb -s "$emulator_serial" shell pm list instrumentation | tr -d '\r' |
+        sed -n 's/^instrumentation:\([^ ]*\) (target=com\.github\.e0ipso\.tokkl)$/\1/p')
+    listing=$(adb -s "$emulator_serial" shell am instrument -r -w -e log true "$instrumentation" | tr -d '\r')
+    if ! grep -qx 'INSTRUMENTATION_CODE: -1' <<<"$listing"; then
+        echo "$0: the runner could not list the tests. Its last output:" >&2
+        tail -n 20 <<<"$listing" >&2
+        return 1
+    fi
+    # Both APKs go again. On API 26, AGP's test task failed to install the
+    # app over the copy left here (INSTALL_FAILED_ALREADY_EXISTS), ran none of
+    # the batch's tests and still passed.
+    adb -s "$emulator_serial" uninstall "${instrumentation%%/*}" >/dev/null
+    adb -s "$emulator_serial" uninstall com.github.e0ipso.tokkl >/dev/null
+    # Each test's start is a status block that names its class and ends in
+    # code 1. This prints each class with its number of tests, in the
+    # runner's order.
+    while read -r count class; do
+        classes+=("$class")
+        counts+=("$count")
+    done < <(awk '
+        /^INSTRUMENTATION_STATUS: class=/ { class = $0; sub(/^INSTRUMENTATION_STATUS: class=/, "", class) }
+        /^INSTRUMENTATION_STATUS_CODE: 1$/ { if (!(class in tests)) order[++classes] = class; tests[class]++ }
+        END { for (i = 1; i <= classes; i++) print tests[order[i]], order[i] }' <<<"$listing")
+    for i in "${!classes[@]}"; do
+        if [ -n "$batch" ] && [ $((size + counts[i])) -gt "$BATCH_TESTS" ]; then
+            batches+=("$batch")
+            sizes+=("$size")
+            batch=''
+            size=0
+        fi
+        batch+="${classes[i]}"$'\n'
+        size=$((size + counts[i]))
+        listed=$((listed + counts[i]))
+    done
+    if [ "$listed" -eq 0 ]; then
+        echo "$0: the runner listed no tests" >&2
+        return 1
+    fi
+    batches+=("$batch")
+    sizes+=("$size")
+    echo "The runner listed $listed tests in ${#classes[@]} classes: ${#batches[@]} batches"
+
+    rm -rf "$BATCH_RESULTS"
+    for i in "${!batches[@]}"; do
+        n=$((i + 1))
+        if [ "$i" -gt 0 ]; then
+            boot_emulator
+            devices=("$emulator_serial")
+        fi
+        printf '%s' "${batches[i]}" >"$filter"
+        filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
+        push_to_devices
+        echo "Batch $n of ${#batches[@]}: ${sizes[i]} tests in $(grep -c . "$filter") classes on $emulator_serial"
+        # A batch whose Gradle run stops before the tests must not count the
+        # previous batch's results.
+        rm -rf "$RESULTS" "$REPORT"
+        status=0
+        run_tests "-P$RUNNER_ARGS.testFile=$filter_on_device" || status=$?
+        remove_device_files
+        stop_emulator || status=1
+        dir="$BATCH_RESULTS/$n"
+        mkdir -p "$dir"
+        if [ -d "$RESULTS" ]; then cp -R "$RESULTS/." "$dir/"; fi
+        if [ -d "$REPORT" ]; then cp -R "$REPORT" "$dir/report"; fi
+        read -r tests failed errors skips < <(report_totals "$dir")
+        ran=$((ran + tests))
+        failures=$((failures + failed + errors))
+        skipped=$((skipped + skips))
+        echo "Batch $n: $tests of its ${sizes[i]} tests ran, $((failed + errors)) failed, $skips skipped"
+        # Gradle can pass a batch without running its tests (see above).
+        if [ "$tests" -ne "${sizes[i]}" ]; then status=1; fi
+        if [ "$status" -ne 0 ]; then failed_batches+=("$n"); fi
+    done
+
+    echo "All ${#batches[@]} batches: $ran of the $listed listed tests ran, $failures failed, $skipped skipped. Each batch's results and report are in $BATCH_RESULTS/<batch>."
+    if [ "$ran" -ne "$listed" ]; then
+        echo "$0: the batches ran $ran tests, but the runner listed $listed." >&2
+        return 1
+    fi
+    if [ "${#failed_batches[@]}" -gt 0 ]; then
+        echo "$0: batch ${failed_batches[*]} failed." >&2
+        return 1
+    fi
+}
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
 echo "The TLS proxy is ready on https://127.0.0.1:$tls_port, with certificate SHA-256 $tls_fingerprint"
 echo "The proxy serves Tokkl under $prefixed, which the emulator reaches as http://10.0.2.2:$prefix_port/tokkl"
-gradle_status=0
-./gradlew --no-daemon connectedDebugAndroidTest \
-    "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
-    "-P$RUNNER_ARGS.tokklTlsBaseUrl=https://10.0.2.2:$tls_port" \
-    "-P$RUNNER_ARGS.tokklPrefixedBaseUrl=http://10.0.2.2:$prefix_port/tokkl" \
-    "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
-    "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
-    "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
-    "${gradle_args[@]}" || gradle_status=$?
-
-# AGP's test task can pass when a device dies between two tests. With the
-# emulator killed a second into the run, Gradle printed BUILD SUCCESSFUL and
-# had run none of the 32 tests. So every test device must still be online.
-gone=()
-for device in "${devices[@]}"; do
-    if [ "$(adb -s "$device" get-state 2>/dev/null)" != device ]; then gone+=("$device"); fi
-done
-if [ "${#gone[@]}" -gt 0 ]; then
-    echo "$0: ${gone[*]} went away during the run. Gradle can pass without running every test, so this run fails." >&2
-    exit 1
+# Neither function runs with || after it, so set -e still stops either at its
+# first failing command.
+if [ -n "$emulator_pid" ] && [ "$emulator_sdk" -lt 31 ] && [ "$full_run" = true ]; then
+    run_in_batches
+else
+    if [ "${#test_filter[@]}" -gt 0 ]; then
+        printf '%s\n' "${test_filter[@]}" >"$filter"
+        filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
+        gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
+    fi
+    push_to_devices
+    run_tests
 fi
-exit "$gradle_status"
