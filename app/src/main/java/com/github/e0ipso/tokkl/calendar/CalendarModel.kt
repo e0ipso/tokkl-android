@@ -13,6 +13,8 @@ import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.coroutines.CoroutineContext
@@ -61,7 +63,10 @@ sealed interface CalendarState {
 /** Where the shown week's entries come from. */
 sealed interface WeekSource {
 
-    /** The phone keeps the week: today's week and the week before it. */
+    /**
+     * The phone keeps the week: today's week and the week before it. The entries that start
+     * before the cache and run into the week join them once the server sends them.
+     */
     data object Cached : WeekSource
 
     /** The week is not on the phone, and its entries load from the server. */
@@ -89,10 +94,16 @@ sealed interface WeekSource {
 /**
  * The calendar on the Timer page (docs/PRD.md K1): a week at a time, from the account's first day
  * of the week, in the account's timezone. Today's week and the week before it come from the
- * phone, which keeps today and the 13 days before it, so they show offline. Any other week loads
- * from the configured server when it is chosen, together with the day before it, where an entry
- * across midnight starts. The loaded weeks live in memory while the model does, and nothing of
- * them is written to the phone. Nothing loads on a timer.
+ * phone, which keeps the entries that start today and in the 13 days before it, so they show
+ * offline. Any other week loads from the configured server when it is chosen.
+ *
+ * The server finds entries by their start, and an entry can start up to [LONGEST_ENTRY] before a
+ * week and still run into it. So a week outside the cache asks for the entries that start from
+ * that long before it, and keeps those that run into it. When a cached week shows, the entries
+ * that start in that time before the cache and run into it load the same way, once for both
+ * cached weeks; offline, the week shows what the phone keeps. What the server sends lives in
+ * memory while the model does, and nothing of it is written to the phone. Nothing loads on a
+ * timer.
  *
  * Call [step], [showToday] and [loadWeek] on the main thread.
  *
@@ -114,8 +125,8 @@ class CalendarModel(
     /** The chosen day, or null to follow today. */
     private val selected = MutableStateFlow<LocalDate?>(null)
 
-    /** The weeks outside the cache, by their first day, as far as they have loaded. */
-    private val loaded = MutableStateFlow<Map<LocalDate, ServerWeek>>(emptyMap())
+    /** What the server sent, by the span it covers, as far as it has loaded. */
+    private val loaded = MutableStateFlow<Map<Span, ServerWeek>>(emptyMap())
 
     private val choice = combine(selected, loaded) { day, weeks -> day to weeks }
 
@@ -128,7 +139,7 @@ class CalendarModel(
                 val today = time.today()
                 val shown = day ?: today
                 val weekStart = time.startOfWeek(shown)
-                val server = if (isCached(weekStart, today)) null else weeks[weekStart]
+                val server = weeks[spanOf(time, weekStart, today)]
                 CalendarState.Shown(
                     selected = shown,
                     weekStart = weekStart,
@@ -156,34 +167,50 @@ class CalendarModel(
     }
 
     /**
-     * Loads the week from [weekStart] from the server, unless the phone keeps it or it has loaded
-     * or is loading. Showing a week is the event that loads it, and so is Try again after a
-     * failure. A week that failed loads again the next time it shows.
+     * Loads the server's part of the week from [weekStart], unless it has loaded or is loading:
+     * the whole week outside the cache, or the entries from before the cache for a cached week.
+     * Showing a week is the event that loads it, and so is Try again after a failure. A week that
+     * failed loads again the next time it shows.
      */
     fun loadWeek(weekStart: LocalDate) {
         val time = accountSettings.value?.time(clock) ?: return
-        if (isCached(weekStart, time.today())) return
-        val status = loaded.value[weekStart]?.status
+        val span = spanOf(time, weekStart, time.today())
+        val status = loaded.value[span]?.status
         if (status == WeekSource.Loading || status == WeekSource.Loaded) return
-        loaded.update { it + (weekStart to ServerWeek(emptyList(), WeekSource.Loading)) }
+        loaded.update { it + (span to ServerWeek(emptyList(), WeekSource.Loading)) }
         scope.launch {
-            val week = withContext(io) { fetch(time, weekStart) }
-            loaded.update { it + (weekStart to week) }
+            val week = withContext(io) { fetch(span) }
+            loaded.update { it + (span to week) }
         }
     }
 
-    /** The entries that start from the day before [weekStart] to the end of its week. */
-    private fun fetch(time: AccountTime, weekStart: LocalDate): ServerWeek {
+    /**
+     * The server's part of the week from [weekStart]. For a week outside the cache, that is the
+     * whole week. The cache holds every entry that starts from its first day on, so for a cached
+     * week it is the entries that start before the cache and run into it, the same for both
+     * cached weeks.
+     */
+    private fun spanOf(time: AccountTime, weekStart: LocalDate, today: LocalDate): Span {
+        if (isCached(weekStart, today)) {
+            val cacheStart = today.minusDays(HistoryWindow.DAYS - 1).atStartOfDay(time.zone).toInstant()
+            return Span(cacheStart, cacheStart)
+        }
+        return Span(weekStart.atStartOfDay(time.zone).toInstant(), weekStart.plusDays(7).atStartOfDay(time.zone).toInstant())
+    }
+
+    /** The entries in [span]. The server finds entries by their start, so this asks from [LONGEST_ENTRY] before it. */
+    private fun fetch(span: Span): ServerWeek {
         val api = client() ?: return ServerWeek(emptyList(), WeekSource.AuthFailed)
-        val start = weekStart.minusDays(1).atStartOfDay(time.zone).toInstant()
-        val end = weekStart.plusDays(7).atStartOfDay(time.zone).toInstant()
         val url = api.server.api("me", "time_entries").newBuilder()
-            .addQueryParameter("start_date", start.toString())
-            .addQueryParameter("end_date", end.toString())
+            .addQueryParameter("start_date", (span.from - LONGEST_ENTRY).toString())
+            .addQueryParameter("end_date", span.to.toString())
             .build()
         return when (val answer = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
             is ApiResult.Failure -> ServerWeek(emptyList(), statusOf(answer.error))
-            is ApiResult.Success -> ServerWeek(answer.value.mapNotNull { it.toCached() }, WeekSource.Loaded)
+            is ApiResult.Success -> ServerWeek(
+                answer.value.mapNotNull { it.toCached() }.filter { it.stop == null || it.stop > span.from },
+                WeekSource.Loaded,
+            )
         }
     }
 
@@ -197,7 +224,10 @@ class CalendarModel(
         is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> WeekSource.Failed(null)
     }
 
-    /** A week from the server: its [entries] once loaded, and how its load went. */
+    /** The entries that start before [to] and run past [from], or still run. */
+    private data class Span(val from: Instant, val to: Instant)
+
+    /** A span from the server: its [entries] once loaded, and how its load went. */
     private data class ServerWeek(val entries: List<CachedTimeEntry>, val status: WeekSource)
 
     companion object {
@@ -206,6 +236,12 @@ class CalendarModel(
 
         /** How long the state keeps following the cache after the last screen stops reading it. */
         private const val STOP_TIMEOUT_MS = 5_000L
+
+        /**
+         * The longest stopped entry Tokkl stores, 999 hours, so a stopped entry that starts
+         * earlier ends before the week.
+         */
+        internal val LONGEST_ENTRY: Duration = Duration.ofHours(999)
 
         /**
          * The phone keeps today and the 13 days before it, so it holds every day of the week from
@@ -219,8 +255,8 @@ class CalendarModel(
 
 /**
  * The entries that touch the week from [weekStart] in [time]'s zone: [cached] from the phone, with
- * queued changes applied, and [server] for a week outside the cache. An entry in both shows as
- * cached. A stopped entry with a change the server has not received shows the times the server
+ * queued changes applied, and [server], what the server sent for the week. An entry in both shows
+ * as cached. A stopped entry with a change the server has not received shows the times the server
  * will store, as in the history.
  */
 internal fun weekEntries(
