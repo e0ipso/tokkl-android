@@ -1,13 +1,22 @@
 package com.github.e0ipso.tokkl
 
+import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithText
 import com.github.e0ipso.tokkl.ui.assertBrandReadsOnce
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
+/** The first screen of a signed-in session, the Timer page, with the bottom bar. */
 class LaunchScreenTest {
     @get:Rule(order = 0)
     val session = SessionRule()
@@ -15,20 +24,35 @@ class LaunchScreenTest {
     @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<MainActivity>()
 
+    /**
+     * The page shows the brand, where the timer goes, and the List and Calendar switch with List
+     * chosen. The bar holds the web app's phone items in its order, and marks Timer.
+     */
     @Test
-    fun showsTheLaunchTextFromStringResources() {
-        val activity = composeRule.activity
-        composeRule.awaitText(activity.getString(R.string.launch_message))
+    fun opensOnTheTimerPageWithTheBottomBar() {
+        composeRule.awaitTimerPage()
+
         // The brand's wordmark, an image that TalkBack reads as the app's name.
-        composeRule.onNodeWithContentDescription(activity.getString(R.string.app_name)).assertIsDisplayed()
-        composeRule.onNodeWithText(activity.getString(R.string.launch_message)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(string(R.string.app_name)).assertIsDisplayed()
+        composeRule.onNode(hasText(string(R.string.timer_view_list)) and isSelectable()).assertIsSelected()
+        composeRule.onNode(hasText(string(R.string.timer_view_calendar)) and isSelectable()).assertIsDisplayed()
+
+        val tabs = composeRule.onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab))
+            .fetchSemanticsNodes()
+            .sortedBy { it.boundsInRoot.left }
+        val labels = tabs.map { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { text -> text.text } }
+        val expected = listOf(R.string.nav_timer, R.string.reports, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        assertEquals(expected.map(::string), labels)
+        assertEquals(listOf(true, false, false, false, false), tabs.map { it.config.getOrNull(SemanticsProperties.Selected) })
     }
 
-    /** TalkBack reads the brand on the home screen once, as "Tokkl". The icon beside the wordmark is decorative. */
+    /** TalkBack reads the brand on the Timer page once, as "Tokkl". The icon beside the wordmark is decorative. */
     @Test
     fun theBrandIsOneTalkBackNode() {
-        composeRule.awaitText(composeRule.activity.getString(R.string.launch_message))
+        composeRule.awaitTimerPage()
 
         composeRule.assertBrandReadsOnce()
     }
+
+    private fun string(@StringRes id: Int): String = composeRule.activity.getString(id)
 }

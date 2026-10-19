@@ -6,38 +6,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.signin.SignInViewModel
-import com.github.e0ipso.tokkl.ui.Brand
-import com.github.e0ipso.tokkl.ui.BrandSize
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import com.github.e0ipso.tokkl.ui.theme.screenContent
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -127,50 +107,6 @@ class MainActivity : ComponentActivity() {
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = !darkTheme
             isAppearanceLightNavigationBars = !darkTheme
-        }
-    }
-}
-
-/** The home screen until the timer screen replaces it. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun LaunchScreen(
-    onOpenReports: () -> Unit,
-    onOpenSettings: () -> Unit,
-    onOpenLicences: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .screenContent()
-                .padding(vertical = TokklTheme.spacing.space6),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Brand(BrandSize.LARGE, Modifier.semantics { heading() })
-            Spacer(Modifier.height(TokklTheme.spacing.space4))
-            Text(
-                text = stringResource(R.string.launch_message),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(TokklTheme.spacing.space4))
-            // Side by side where they fit, so at the largest font scale the links take two rows,
-            // and a notice at the bottom of the screen still covers none of them.
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2, Alignment.CenterHorizontally)) {
-                TextButton(onClick = onOpenReports) {
-                    Text(stringResource(R.string.reports))
-                }
-                TextButton(onClick = onOpenSettings) {
-                    Text(stringResource(R.string.settings))
-                }
-                TextButton(onClick = onOpenLicences) {
-                    Text(stringResource(R.string.licences))
-                }
-            }
         }
     }
 }

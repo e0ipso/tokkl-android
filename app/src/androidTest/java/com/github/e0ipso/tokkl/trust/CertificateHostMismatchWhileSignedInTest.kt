@@ -16,7 +16,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.serialization.json.JsonObject
@@ -33,7 +33,7 @@ import org.junit.rules.RuleChain
  * harness's TLS proxy under `localhost`, while its certificate names only the IP addresses
  * 10.0.2.2 and 127.0.0.1. A relay on the phone's loopback carries the connection to the proxy,
  * so the app's own client and trust checks see the proxy's certificate. No answer to a prompt
- * fixes that, so the home screen offers none.
+ * fixes that, so the Timer page offers none.
  */
 @SignedOut
 class CertificateHostMismatchWhileSignedInTest {
@@ -59,7 +59,7 @@ class CertificateHostMismatchWhileSignedInTest {
 
     @Test
     fun theNoticeNamesTheHostAndTheFixAndNothingIsPinned() {
-        composeRule.awaitText(string(R.string.launch_message))
+        composeRule.awaitTimerPage()
 
         val notice = context.getString(R.string.trust_refused_certificate_host, HOST)
         composeRule.waitUntil("the host name notice shows", NETWORK_TIMEOUT_MS) { exists(hasText(notice)) }

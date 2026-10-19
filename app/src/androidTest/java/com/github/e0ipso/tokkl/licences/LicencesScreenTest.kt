@@ -4,22 +4,25 @@ import android.view.KeyEvent
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.settings.openSettings
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** The Licences screen, reached from the launch screen of the real activity. */
+/** The Licences screen, reached from Settings, About, in the real activity. */
 class LicencesScreenTest {
     @get:Rule(order = 0)
     val session = SessionRule()
@@ -28,7 +31,7 @@ class LicencesScreenTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun launchScreenEntryOpensTheFullOflText() {
+    fun aboutEntryOpensTheFullOflText() {
         openLicences()
 
         composeRule.onNodeWithText(string(R.string.licence_anybody_title)).assertIsDisplayed()
@@ -44,17 +47,17 @@ class LicencesScreenTest {
     }
 
     @Test
-    fun backButtonReturnsToTheLaunchScreen() {
+    fun backButtonReturnsToSettings() {
         openLicences()
 
         composeRule.onNodeWithContentDescription(string(R.string.back)).performClick()
 
-        composeRule.onNodeWithText(string(R.string.launch_message)).assertIsDisplayed()
+        settingsHeading().assertIsDisplayed()
     }
 
-    /** System back goes to the launch screen instead of closing the app. */
+    /** System back goes to Settings, and from there to the Timer page, instead of closing the app. */
     @Test
-    fun systemBackReturnsToTheLaunchScreen() {
+    fun systemBackReturnsToSettingsThenTimer() {
         openLicences()
 
         composeRule.waitUntil("the app window has input focus", FOCUS_TIMEOUT_MS) {
@@ -63,8 +66,10 @@ class LicencesScreenTest {
             focused
         }
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        settingsHeading().assertIsDisplayed()
 
-        composeRule.onNodeWithText(string(R.string.launch_message)).assertIsDisplayed()
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        composeRule.awaitTimerPage()
     }
 
     /** A rotation, theme or font change recreates the activity. */
@@ -78,12 +83,14 @@ class LicencesScreenTest {
     }
 
     private fun openLicences() {
-        composeRule.awaitText(string(R.string.licences))
-        composeRule.onNodeWithText(string(R.string.licences)).performClick()
+        composeRule.openSettings()
+        composeRule.onNode(hasText(string(R.string.licences)) and hasClickAction()).performScrollTo().performClick()
         licencesHeading().assertIsDisplayed()
     }
 
     private fun licencesHeading() = composeRule.onNode(hasText(string(R.string.licences)) and isHeading())
+
+    private fun settingsHeading() = composeRule.onNode(hasText(string(R.string.settings)) and isHeading())
 
     private fun string(@StringRes id: Int): String = composeRule.activity.getString(id)
 

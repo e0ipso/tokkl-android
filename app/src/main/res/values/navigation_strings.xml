@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The bottom bar and its More sheet, the Timer page, and the pages they open before their features exist. -->
+<resources>
+    <string name="nav_timer">Timer</string>
+    <string name="nav_projects">Projects</string>
+    <string name="nav_more">More</string>
+    <string name="nav_clients">Clients</string>
+    <string name="nav_tags">Tags</string>
+    <string name="nav_trash">Trash</string>
+    <string name="nav_more_close">Close</string>
+
+    <string name="timer_view_list">List</string>
+    <string name="timer_view_calendar">Calendar</string>
+    <string name="timer_list_later">Your time entries, grouped by day, come in a later version.</string>
+    <string name="timer_calendar_later">The week calendar comes in a later version.</string>
+
+    <string name="projects_later">Creating, editing and archiving projects comes in a later version.</string>
+    <string name="clients_later">Creating, editing and archiving clients comes in a later version.</string>
+    <string name="tags_later">Creating, renaming and deleting tags comes in a later version.</string>
+    <string name="trash_later">Restoring and purging deleted time entries comes in a later version.</string>
+</resources>

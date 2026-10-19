@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -74,7 +75,7 @@ class CertificatePromptTest {
 
         composeRule.onNode(hasText(string(R.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
 
-        composeRule.waitUntil("the home screen shows", NETWORK_TIMEOUT_MS) { exists(hasText(string(R.string.launch_message))) }
+        composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
         assertEquals(sha256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
         assertEquals(TokklTestServer.tlsUrl, ServerConfigStore(context).load())
     }
@@ -114,7 +115,7 @@ class CertificatePromptTest {
 
         signIn()
 
-        composeRule.waitUntil("the home screen shows", NETWORK_TIMEOUT_MS) { exists(hasText(string(R.string.launch_message))) }
+        composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
     }
 
     private fun signIn() {

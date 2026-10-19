@@ -18,7 +18,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerCertificate
-import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.serialization.json.JsonObject
@@ -56,7 +56,7 @@ class ChangedCertificateWhileSignedInTest {
 
     @Test
     fun changedCertificateShowsThePromptOnTheHomeScreenAndConnectsOnlyOnceTrusted() {
-        composeRule.awaitText(string(R.string.launch_message))
+        composeRule.awaitTimerPage()
 
         awaitNode(hasText(string(R.string.sign_in_certificate_changed_title)), "the certificate prompt shows")
         composeRule.onNode(hasText(TokklTestServer.tlsFingerprint)).performScrollTo().assertIsDisplayed()
@@ -72,7 +72,7 @@ class ChangedCertificateWhileSignedInTest {
 
     @Test
     fun cancellingKeepsRequestsRefusedAndTheNoticeReopensThePrompt() {
-        composeRule.awaitText(string(R.string.launch_message))
+        composeRule.awaitTimerPage()
         awaitNode(hasText(string(R.string.sign_in_certificate_changed_title)), "the certificate prompt shows")
 
         composeRule.onNode(hasText(string(R.string.sign_in_warning_cancel)) and hasClickAction()).performClick()

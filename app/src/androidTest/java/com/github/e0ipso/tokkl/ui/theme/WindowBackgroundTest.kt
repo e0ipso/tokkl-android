@@ -16,7 +16,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.settings.DefaultThemeSettings
 import com.github.e0ipso.tokkl.settings.ThemeMode
 import com.github.e0ipso.tokkl.settings.ThemeSettings
@@ -39,7 +39,7 @@ import org.junit.Test
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class WindowBackgroundTest {
-    /** Signed in, so the launch screen shows. */
+    /** Signed in, so the Timer page shows. */
     @get:Rule(order = 0)
     val session = SessionRule()
 
@@ -81,10 +81,10 @@ class WindowBackgroundTest {
         }
     }
 
-    /** Starts the app on the launch screen and runs [check] with its activity. */
+    /** Starts the app on the Timer page and runs [check] with its activity. */
     private fun launch(check: (Activity) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            composeRule.awaitText(context.getString(R.string.launch_message))
+            composeRule.awaitTimerPage()
             lateinit var activity: Activity
             scenario.onActivity { activity = it }
             check(activity)
@@ -92,7 +92,7 @@ class WindowBackgroundTest {
     }
 
     private fun assertBackgrounds(launch: String, activity: Activity, schemeBackground: Color) {
-        // The launch screen leaves its left edge empty, so the pixel there is the
+        // The Timer page leaves its left edge empty, so the pixel there is the
         // Scaffold's container colour, which is the scheme background.
         val content = composeRule.onRoot().captureToImage().toPixelMap().let { it[0, it.height / 2] }
         var window: Int? = null

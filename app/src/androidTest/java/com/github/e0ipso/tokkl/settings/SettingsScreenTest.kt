@@ -41,7 +41,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-/** The settings screen in the real activity, reached from the launch screen. */
+/** The settings screen in the real activity, reached from the bottom bar. */
 class SettingsScreenTest {
     @get:Rule(order = 0)
     val session = SessionRule()
@@ -121,8 +121,8 @@ class SettingsScreenTest {
         }
         assertTrue("a control without a label among $labels", labels.none { it.isBlank() })
         val switches = if (dynamicColorAvailable()) 1 else 0
-        // Back, three theme modes, the wallpaper colours switch and Licences.
-        assertEquals(labels.toString(), 1 + 3 + switches + 1, controls.size)
+        // Three theme modes, the wallpaper colours switch, Licences and the bottom bar's five items.
+        assertEquals(labels.toString(), 3 + switches + 1 + 5, controls.size)
         assertEquals(3, composeRule.onAllNodes(hasRole(Role.RadioButton)).fetchSemanticsNodes().size)
         assertEquals(switches, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
     }

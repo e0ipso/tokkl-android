@@ -12,7 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import java.io.File
@@ -94,10 +94,10 @@ class ThemeSettingsRestartTest {
         }
     }
 
-    /** Starts the app on the launch screen and runs [steps] with its activity. */
+    /** Starts the app on the Timer page and runs [steps] with its activity. */
     private fun launch(steps: (Activity) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            composeRule.awaitText(string(R.string.launch_message))
+            composeRule.awaitTimerPage()
             lateinit var activity: Activity
             scenario.onActivity { activity = it }
             steps(activity)

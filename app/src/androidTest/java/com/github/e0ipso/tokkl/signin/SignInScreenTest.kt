@@ -33,6 +33,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -282,7 +283,7 @@ class SignInScreenTest {
     }
 
     private fun awaitHome() {
-        composeRule.waitUntil("the home screen shows", NETWORK_TIMEOUT_MS) { exists(hasText(string(R.string.launch_message))) }
+        composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
     }
 
     /** The test account's default workspace, read straight from the server, past the app's guard. */

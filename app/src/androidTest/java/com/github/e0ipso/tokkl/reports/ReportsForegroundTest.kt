@@ -165,11 +165,11 @@ class ReportsForegroundTest {
         assertEquals("the relay reached the server each time", emptyList<String>(), relay.failures)
     }
 
-    /** Launches the app on the home screen, opens the reports and returns the screen's model. */
+    /** Launches the app on the Timer page, opens the reports and returns the screen's model. */
     private fun openReports(): ReportsModel {
         runBlocking { app.accountSettings.refresh().join() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        compose.waitUntil("the home screen shows", LOAD_TIMEOUT_MS) { hasNode(string(R.string.reports)) }
+        compose.waitUntil("the Timer page shows", LOAD_TIMEOUT_MS) { hasNode(string(R.string.reports)) }
         compose.onNode(hasText(string(R.string.reports)) and hasClickAction()).performClick()
         return modelOf(resumedActivity()!!)
     }

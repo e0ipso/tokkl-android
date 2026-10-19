@@ -20,7 +20,7 @@ import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.serialization.json.JsonObject
@@ -53,7 +53,7 @@ class UnconfirmedHttpWhileSignedInTest {
 
     @Test
     fun unconfirmedHttpSessionShowsTheWarningAndSendsNothingUntilConfirmed() {
-        composeRule.awaitText(string(R.string.launch_message))
+        composeRule.awaitTimerPage()
 
         awaitNode(hasText(string(R.string.sign_in_http_warning_title)), "the http warning shows")
         continueButton().assertIsNotEnabled()
@@ -74,7 +74,7 @@ class UnconfirmedHttpWhileSignedInTest {
 
     @Test
     fun cancellingKeepsRequestsRefusedAndTheNoticeReopensTheWarning() {
-        composeRule.awaitText(string(R.string.launch_message))
+        composeRule.awaitTimerPage()
         awaitNode(hasText(string(R.string.sign_in_http_warning_title)), "the http warning shows")
 
         composeRule.onNode(hasText(string(R.string.sign_in_warning_cancel)) and hasClickAction()).performClick()

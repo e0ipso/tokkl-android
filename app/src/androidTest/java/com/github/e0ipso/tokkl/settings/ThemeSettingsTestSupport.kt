@@ -55,7 +55,7 @@ val THEME_MODE_LABELS = mapOf(
     ThemeMode.DARK to R.string.settings_theme_dark,
 )
 
-/** Opens the settings screen from the launch screen. */
+/** Opens the settings screen from the bottom bar on the Timer page. */
 fun ComposeTestRule.openSettings() {
     awaitText(string(R.string.settings))
     onNodeWithText(string(R.string.settings)).performClick()

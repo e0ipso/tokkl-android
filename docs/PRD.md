@@ -186,6 +186,16 @@ The first release is feature complete: it ships every requirement below, so they
 | G1 | Theme: light, dark, or follow the system. |
 | G2 | Opt-in dynamic color. |
 
+### 5.11 Navigation
+
+The app moves between pages as Tokkl's web app does on a phone (`NAV` and the More sheet in `../tokkl/packages/web/src/App.tsx`), so the same habits work on both.
+
+| ID | Requirement |
+|---|---|
+| B1 | Every signed-in screen has a bottom navigation bar with Timer, Reports, Projects, Settings and More, in that order. More opens a sheet with Clients, Tags and Trash. Admin stays out, since the app has no admin features. Sign-in has no bar. |
+| B2 | Timer is the first page after sign-in. History (H1) and the calendar (K1) show on it, behind a List and Calendar switch, as on the web app's Timer page. |
+| B3 | Back from any page in the bar or the sheet goes to Timer, and Back from Timer leaves the app. A screen opened from a page, such as Licences from Settings, goes back to that page. |
+
 ## 6. Architecture
 
 Proposed, except Kotlin and Jetpack Compose, which the owner confirmed. Nothing here is built.

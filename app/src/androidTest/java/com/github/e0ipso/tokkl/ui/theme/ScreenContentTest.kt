@@ -71,7 +71,6 @@ class ScreenContentTest {
             showDynamicColor = false,
             onModeChange = {},
             onDynamicColorChange = {},
-            onBack = {},
             onOpenLicences = {},
         )
     }

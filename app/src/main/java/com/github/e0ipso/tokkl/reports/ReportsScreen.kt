@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
@@ -30,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -54,9 +51,10 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
  * foreground asks again for the range on screen; leaving it forgets the report, while a
  * configuration change keeps it and asks nothing. Offline, it says that reports need the server
  * and shows no numbers. The detailed (TKA-0034) and weekly (TKA-0035) reports add their tabs here.
+ * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable
-fun ReportsScreen(model: ReportsModel, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
     val activity = LocalActivity.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(model) {
@@ -82,7 +80,6 @@ fun ReportsScreen(model: ReportsModel, onBack: () -> Unit, modifier: Modifier = 
         state = state,
         settings = settings,
         time = time,
-        onBack = onBack,
         onShift = model::shift,
         onPreset = model::select,
         onCustom = model::selectCustom,
@@ -97,7 +94,6 @@ internal fun ReportsContent(
     state: ReportsState,
     settings: AccountSettings?,
     time: AccountTime?,
-    onBack: () -> Unit,
     onShift: (Int) -> Unit,
     onPreset: (RangePreset) -> Unit,
     onCustom: (ReportRange) -> Unit,
@@ -115,12 +111,7 @@ internal fun ReportsContent(
                 .screenContent()
                 .padding(vertical = TokklTheme.spacing.space2),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.back))
-                }
-                PageTitle(stringResource(R.string.reports))
-            }
+            PageTitle(stringResource(R.string.reports))
             Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             ReportTabs()
             Spacer(Modifier.height(TokklTheme.spacing.space4))

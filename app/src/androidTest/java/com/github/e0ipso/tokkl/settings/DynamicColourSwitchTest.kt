@@ -30,7 +30,6 @@ class DynamicColourSwitchTest {
                     showDynamicColor = dynamicColorAvailable(sdkInt),
                     onModeChange = {},
                     onDynamicColorChange = {},
-                    onBack = {},
                     onOpenLicences = {},
                 )
             }

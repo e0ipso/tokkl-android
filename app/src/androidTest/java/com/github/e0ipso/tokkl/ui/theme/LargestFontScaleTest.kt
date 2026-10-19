@@ -4,6 +4,7 @@ import android.os.SystemClock
 import android.view.WindowInsets
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -42,6 +43,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.dynamicColorAvailable
@@ -59,7 +61,8 @@ import org.junit.runners.model.Statement
  * The Anybody headlines and the text around them at Android's largest font scale, 200%: no
  * text is cut off, leaves the screen or overlaps another. The sign-in form and the settings
  * scroll, so each of their parts has to fit once scrolled into view. So do the trust prompts,
- * from sign-in and over the home screen, and the notice left after cancelling one. With the
+ * from sign-in and over the Timer page, and the notice left after cancelling one. The bottom
+ * bar's five items fit side by side, each label whole. With the
  * keyboard open, the sign-in field being typed in stays above it.
  *
  * The clock and totals styles have no screen yet; ClockAndTotalStylesFitTest covers them.
@@ -79,17 +82,12 @@ class LargestFontScaleTest {
         .around(composeRule)
 
     @Test
-    fun launchScreenFits() {
+    fun timerPageFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.launch_message))
+        composeRule.awaitTimerPage()
 
-        assertFitWithoutOverlap(
-            brand(),
-            text(R.string.launch_message),
-            text(R.string.reports),
-            text(R.string.settings),
-            text(R.string.licences),
-        )
+        assertFitWithoutOverlap(*timerPageParts().toTypedArray())
+        assertLabelsWhole()
     }
 
     @Test
@@ -102,7 +100,6 @@ class LargestFontScaleTest {
         val wallpaperColours = dynamicColorAvailable()
         assertFitWhenScrolledTo(
             blocks = listOf(
-                "Back button" to composeRule.onNodeWithContentDescription(string(R.string.back)),
                 "heading" to composeRule.onNode(hasText(string(R.string.settings)) and isHeading()),
                 "theme heading" to composeRule.onNode(hasText(string(R.string.settings_theme)) and isHeading()),
                 "follow the system choice" to choice(R.string.settings_theme_system),
@@ -133,8 +130,10 @@ class LargestFontScaleTest {
     @Test
     fun licencesHeadingsFit() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.licences))
-        composeRule.onNodeWithText(string(R.string.licences)).performClick()
+        composeRule.awaitText(string(R.string.settings))
+        composeRule.onNodeWithText(string(R.string.settings)).performClick()
+        button(R.string.licences).performScrollTo().performClick()
+        composeRule.awaitText(string(R.string.licence_anybody_title))
 
         assertFitWithoutOverlap(
             "Back button" to composeRule.onNodeWithContentDescription(string(R.string.back)),
@@ -544,14 +543,10 @@ class LargestFontScaleTest {
         }
     }
 
-    /** The notice sits over the home screen, so it may cover none of the home screen's own parts either. */
+    /** The notice sits over the Timer page, so it may cover none of the page's own parts or the bar either. */
     private fun assertNoticeFits(@StringRes message: Int) {
         assertFitWithoutOverlap(
-            brand(),
-            text(R.string.launch_message),
-            "reports button" to button(R.string.reports),
-            "settings button" to button(R.string.settings),
-            "licences button" to button(R.string.licences),
+            *timerPageParts().toTypedArray(),
             text(message),
             "review button" to button(R.string.trust_refused_review),
         )
@@ -561,6 +556,35 @@ class LargestFontScaleTest {
 
     private fun button(@StringRes label: Int): SemanticsNodeInteraction =
         composeRule.onNode(hasText(string(label)) and hasClickAction())
+
+    /**
+     * The Timer page's parts that stack, and the bottom bar's items, which must not overlap. The
+     * List and Calendar segments share their border, so the switch counts as one part.
+     */
+    private fun timerPageParts(): List<Pair<String, SemanticsNodeInteraction>> =
+        listOf(
+            brand(),
+            "view switch" to composeRule.onNode(
+                SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup) and
+                    hasAnyDescendant(hasText(string(R.string.timer_view_list))),
+            ),
+            text(R.string.timer_list_later),
+        ) + BAR_LABELS.map { label -> "${string(label)} item" to button(label) }
+
+    /** Each segment's and each bar item's label shows in full, inside its control. */
+    private fun assertLabelsWhole() {
+        for (label in listOf(R.string.timer_view_list, R.string.timer_view_calendar)) {
+            val (name, text) = inside(label, isSelectable())
+            text.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
+            assertTrue("$name leaves its segment", text.getBoundsInRoot().inside(choice(label).getBoundsInRoot()))
+        }
+        for (label in BAR_LABELS) {
+            val (name, text) = inside(label, hasClickAction())
+            text.assertIsDisplayed()
+            text.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
+            assertTrue("$name leaves its item", text.getBoundsInRoot().inside(button(label).getBoundsInRoot()))
+        }
+    }
 
     /** The brand, which TalkBack reads by its wordmark's description, the app's name. */
     private fun brand(): Pair<String, SemanticsNodeInteraction> =
@@ -655,6 +679,9 @@ class LargestFontScaleTest {
         val SLACK = 0.5.dp
 
         val MIN_TOUCH_TARGET = 48.dp
+
+        /** The bottom bar's items, in order. */
+        val BAR_LABELS = listOf(R.string.nav_timer, R.string.reports, R.string.nav_projects, R.string.settings, R.string.nav_more)
 
         /** The subject of the certificate that scripts/instrumented-tests.sh makes. */
         const val CERTIFICATE_SUBJECT = "CN=Tokkl instrumented tests"

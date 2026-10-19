@@ -16,8 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -28,7 +26,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -44,11 +41,11 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 /**
  * The app's settings: the theme, then About, which opens the licences through [onOpenLicences].
  * Sign-out (TKA-0038) goes in a section of its own between the two. Every change applies at once.
+ * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable
 fun SettingsScreen(
     model: ThemeSettingsModel,
-    onBack: () -> Unit,
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,7 +55,6 @@ fun SettingsScreen(
         showDynamicColor = dynamicColorAvailable(),
         onModeChange = model::onModeChange,
         onDynamicColorChange = model::onDynamicColorChange,
-        onBack = onBack,
         onOpenLicences = onOpenLicences,
         modifier = modifier,
     )
@@ -71,7 +67,6 @@ internal fun SettingsContent(
     showDynamicColor: Boolean,
     onModeChange: (ThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
-    onBack: () -> Unit,
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -86,15 +81,7 @@ internal fun SettingsContent(
                 .screenContent()
                 .padding(vertical = TokklTheme.spacing.space2),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.back),
-                    )
-                }
-                PageTitle(stringResource(R.string.settings))
-            }
+            PageTitle(stringResource(R.string.settings))
             Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
             ThemeSection(settings, showDynamicColor, onModeChange, onDynamicColorChange)
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))

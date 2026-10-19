@@ -8,13 +8,13 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.RangeSelection
 import com.github.e0ipso.tokkl.reports.ReportEntry
@@ -39,7 +40,6 @@ import com.github.e0ipso.tokkl.settings.ThemeSettings
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.applicationNightMode
 import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
-import com.github.e0ipso.tokkl.settings.openSettings
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
@@ -59,8 +59,8 @@ import org.junit.rules.RuleChain
 /**
  * Screenshots of every screen and trust prompt, compared with reference images by
  * [ReferenceImages]. The four classes below run them in the light and the dark theme, at font
- * scale 1.0 and at the largest, 2.0. Sign-in, home, Settings and Licences show in the real
- * activity. The reports screen shows a fixed summary for a fixed day, and each prompt fixed text,
+ * scale 1.0 and at the largest, 2.0. Sign-in, Timer, Settings and Licences show in the real
+ * activity, with the bottom bar. The reports screen shows a fixed summary for a fixed day, and each prompt fixed text,
  * so no capture depends on the date, the server's port or its certificate. A capture holds the
  * app's window or the dialog's, never the status bar.
  *
@@ -115,17 +115,17 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     }
 
     @Test
-    fun home() {
+    fun timer() {
         launchApp {
-            composeRule.awaitText(string(R.string.launch_message))
-            assertScreen("home")
+            composeRule.awaitTimerPage()
+            assertScreen("timer")
         }
     }
 
     @Test
     fun settings() {
         launchApp {
-            composeRule.openSettings()
+            openSettings()
             assertScreen("settings")
         }
     }
@@ -133,8 +133,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun licences() {
         launchApp {
-            composeRule.awaitText(string(R.string.licences))
-            composeRule.onNodeWithText(string(R.string.licences)).performClick()
+            openSettings()
+            composeRule.onNode(hasText(string(R.string.licences)) and hasClickAction())
+                .performScrollTo()
+                .performSemanticsAction(SemanticsActions.OnClick)
             composeRule.awaitText(string(R.string.licence_anybody_title))
             assertScreen("licences")
         }
@@ -148,7 +150,6 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 state = ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), REPORT),
                 settings = ACCOUNT,
                 time = ACCOUNT.time(TODAY),
-                onBack = {},
                 onShift = {},
                 onPreset = {},
                 onCustom = {},
@@ -176,6 +177,16 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             composeRule.awaitText(string(R.string.sign_in_certificate_title))
             assertDialog("certificate-prompt")
         }
+    }
+
+    /**
+     * Opens Settings from the bottom bar with a click through semantics, not a touch, since the
+     * bar stays in the capture and a touch's ripple would show on it.
+     */
+    private fun openSettings() {
+        composeRule.awaitTimerPage()
+        composeRule.onNode(hasText(string(R.string.settings)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.awaitText(string(R.string.settings_theme))
     }
 
     /** Starts the app and runs [steps] once it shows in this class's theme. */

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Tokkl</string>
-    <string name="launch_message">Time tracking for Tokkl and Toggl Track.</string>
     <string name="back">Back</string>
     <string name="licences">Licences</string>
     <string name="licence_anybody_title">Anybody font</string>
