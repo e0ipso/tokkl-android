@@ -11,7 +11,10 @@
 # Gradle user home, which reads downloaded dependencies from yours but redoes
 # every transform, such as dexing the libraries. So output that depends on the
 # core count or on a cached transform shows up too. Both builds run without the
-# release signing variables, and with --no-daemon so they share no daemon.
+# release signing variables, with --no-daemon so they share no daemon, and
+# with --no-build-cache, because gradle.properties turns on the local build
+# cache and the first build would otherwise take task outputs from your earlier
+# builds instead of building from clean, as F-Droid does.
 #
 # The clones and the second Gradle home live in build/reproducible-release.*
 # of this checkout, up to about 700 MB, and go away at the end.
@@ -57,7 +60,7 @@ build() {
         cp "$repo/local.properties" "$tree/"
     fi
     echo "Building $(git -C "$tree" rev-parse --short HEAD) in $tree"
-    if ! (cd "$tree" && env "${unset_signing[@]}" "$@" ./gradlew --no-daemon assembleRelease) \
+    if ! (cd "$tree" && env "${unset_signing[@]}" "$@" ./gradlew --no-daemon --no-build-cache assembleRelease) \
         >"$tree.log" 2>&1; then
         tail -n 40 "$tree.log" >&2
         echo "$0: the build in $tree failed" >&2

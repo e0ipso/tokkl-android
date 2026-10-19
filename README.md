@@ -163,7 +163,7 @@ No test may skip itself with a JUnit assumption. The Android Gradle plugin 9.4.1
 
 Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that need the server. To move to a newer Tokkl, put the digest from `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>` into `IMAGE` in the script. `PROXY_IMAGE` takes the digest of `haproxy:<version>-alpine` the same way.
 
-`gradle.properties` caps the Gradle heap at 2 GB and compiles Kotlin inside the Gradle daemon, so no separate Kotlin daemon starts. The Gradle daemon itself stays in memory after the build. Stop it when you finish:
+`gradle.properties` caps the Gradle heap at 2 GB and compiles Kotlin inside the Gradle daemon, so no separate Kotlin daemon starts. It also turns on Gradle's local build cache in `~/.gradle/caches/build-cache-1`, so a new clone or git worktree takes the outputs of tasks another checkout already ran with the same inputs instead of compiling everything again. Gradle deletes entries unused for 7 days. Add `--no-build-cache` to a command to build without it. The Gradle daemon itself stays in memory after the build. Stop it when you finish:
 
 ```sh
 ./gradlew --stop
@@ -196,7 +196,7 @@ scripts/reproducible-release.sh          # HEAD
 scripts/reproducible-release.sh v0.1.0   # a tag or any other commit
 ```
 
-The script clones the commit twice, runs `./gradlew --no-daemon assembleRelease` in each clone without the signing variables below, and compares the two unsigned APKs byte for byte. It builds committed work only. The clones sit at paths of different lengths. The second build runs on at most two CPU cores and gets its own Gradle user home, which reads downloaded dependencies from yours but redoes every transform. So an embedded path, output that depends on the core count, and a transform that differs from run to run all show up as differences. When the APKs differ, the script lists the zip entries that differ and keeps both APKs. On this machine the two builds take about four minutes and use up to about 700 MB under `build/`, which the script removes at the end. CI runs the script on pull requests to `main` and on pushes to `main`.
+The script clones the commit twice, runs `./gradlew --no-daemon --no-build-cache assembleRelease` in each clone without the signing variables below, and compares the two unsigned APKs byte for byte. It builds committed work only. The clones sit at paths of different lengths. The second build runs on at most two CPU cores and gets its own Gradle user home, which reads downloaded dependencies from yours but redoes every transform. So an embedded path, output that depends on the core count, and a transform that differs from run to run all show up as differences. Neither build reads or fills the local build cache, so both compile everything, as F-Droid does. When the APKs differ, the script lists the zip entries that differ and keeps both APKs. On this machine the two builds take about four minutes and use up to about 700 MB under `build/`, which the script removes at the end. CI runs the script on pull requests to `main` and on pushes to `main`.
 
 These keep the APK the same from build to build:
 
