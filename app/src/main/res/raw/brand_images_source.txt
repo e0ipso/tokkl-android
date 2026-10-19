@@ -1,54 +1,47 @@
-Where the brand images in res/drawable-nodpi/tokkl_wordmark_*px.png and
-res/drawable-nodpi/tokkl_icon_*px.png come from
+Where the wordmark images in res/drawable-nodpi/tokkl_wordmark_*px.png come from
 
-Sources: the owner's Tokkl artwork in ../tokkl/docs/brand (github.com/e0ipso/tokkl
-at 36bcba9), PNG only:
-  tokkl-wordmark-v3.png, 1774x887 RGBA, SHA-256
-  e3653f852d75bc2786ea5acbef7a3aebd396223c5188a24fde1eaf9195beb7b7
-  tokkl-icon-v4-1024.png, 1024x1024 RGBA, SHA-256
-  874f7ec9ccb91c4c60b426a4aa75827db1ed96833cdfbcd3b7e24edb3efe3aae
-The launcher icon does not come from these sources: res/mipmap-anydpi/ic_launcher.xml
-takes its layers from Tokkl's icon pack, ../tokkl/docs/brand/icon-pack.
+Source: the owner's clock O wordmark in Tokkl's wordmark pack (github.com/e0ipso/tokkl
+at df6711b), the raster master, PNG only:
+  ../tokkl/docs/brand/wordmark-pack/source/tokkl-wordmark-clock-master.png,
+  2067x761 RGBA, SHA-256
+  0d4164b01e9452f10387694cc192e192e57fe0d486e51cb66f3e186e44f858ca
+The clock in place of the "o" is a letter of the wordmark, not the logo. The logo is
+only the launcher icon.
 
-Crop: Tokkl's WORDMARK_CROP in ../tokkl/scripts/icons.ts, 1645x709+80+91, the
-letters and paint spots inside the source's transparent margin, plus 4 px.
+Crop: the rule of Tokkl's WORDMARK_CROP in ../tokkl/scripts/icons.ts, the letters
+and paint spots inside the source's transparent margin, plus 4 px. Here that is
+the alpha bounds, 2051x761+16+0, plus a 4 px transparent border: 2059x769.
 
-Sizes: ui/Brand.kt draws the icon at 24, 30 or 48 dp beside the wordmark at 84, 130
-or 260 dp wide (sm, md and lg, as in Tokkl's Brand.tsx). Each size has its own
-image in each density bucket, at 1x (mdpi), 1.5x (hdpi), 2x (xhdpi), 3x (xxhdpi)
-and 4x (xxxhdpi), so each size draws from an image made for its width near the
-screen's density, never from a larger size scaled down. Widths in px, wordmark
-then icon:
-  sm  84 126 168 252  336   24 36 48  72  96
-  md 130 195 260 390  520   30 45 60  90 120
-  lg 260 390 520 780 1040   48 72 96 144 192
-The widest, 1040 px, is under the crop's 1645 px, so nothing is upscaled.
+Sizes: ui/Brand.kt draws the wordmark 84, 130 or 260 dp wide (sm, md and lg, as
+in Tokkl's Brand.tsx). Each size has its own image in each density bucket, at 1x
+(mdpi), 1.5x (hdpi), 2x (xhdpi), 3x (xxhdpi) and 4x (xxxhdpi), so each size draws
+from an image made for its width near the screen's density, never from a larger
+size scaled down. Widths in px:
+  sm  84 126 168 252  336
+  md 130 195 260 390  520
+  lg 260 390 520 780 1040
+The widest, 1040 px, is under the crop's 2059 px, so nothing is upscaled.
 
-Files: some widths repeat across sizes and buckets, such as the 48 px icon (sm at
-xhdpi, lg at mdpi) and the 260 px wordmark (md at xhdpi, lg at mdpi). Each width
-ships once, as res/drawable-nodpi/tokkl_icon_Ipx.png or tokkl_wordmark_Wpx.png:
-12 icons and 12 wordmarks. res/values/brand_images.xml (mdpi) and
-values-hdpi to values-xxxhdpi/brand_images.xml alias tokkl_icon_sm, _md, _lg and
-tokkl_wordmark_sm, _md, _lg to the width the table gives for that bucket, and
-ui/Brand.kt asks only for those names. The images sit in drawable-nodpi, not in
-the density folders, so lint's IconDuplicates check finds no file twice, and its
-IconDensities check, which wants each density folder to hold the same images,
-finds no drawable density folder to compare. Android
-does not rescale a nodpi image when it loads it; Brand.kt draws it at its dp size.
+Files: some widths repeat across sizes and buckets, such as 260 px (md at xhdpi,
+lg at mdpi). Each width ships once, as res/drawable-nodpi/tokkl_wordmark_Wpx.png:
+12 wordmarks. res/values/brand_images.xml (mdpi) and values-hdpi to
+values-xxxhdpi/brand_images.xml alias tokkl_wordmark_sm, _md and _lg to the width
+the table gives for that bucket, and ui/Brand.kt asks only for those names. The
+images sit in drawable-nodpi, not in the density folders, so lint's
+IconDuplicates check finds no file twice, and its IconDensities check, which wants
+each density folder to hold the same images, finds no drawable density folder to
+compare. Android does not rescale a nodpi image when it loads it; Brand.kt draws
+it at its dp size.
 
 Built with ImageMagick 7.1.1-43 with Tokkl's own steps from scripts/icons.ts:
-resize, then reduce to a 256-colour palette with alpha, and strip metadata and
-timestamps. W is the wordmark width and I the icon size in px for one size and
-bucket:
-  magick tokkl-wordmark-v3.png -crop 1645x709+80+91 +repage -resize Wx
-    -colors 256 -strip -define png:exclude-chunks=date,time
+crop, resize, then reduce to a 256-colour palette with alpha, and strip metadata
+and timestamps. W is the width in px for one size and bucket:
+  magick tokkl-wordmark-clock-master.png -trim +repage -bordercolor none
+    -border 4 -resize Wx -colors 256 -strip -define png:exclude-chunks=date,time
     png:drawable-nodpi/tokkl_wordmark_Wpx.png
-  magick tokkl-icon-v4-1024.png -resize IxI
-    -colors 256 -strip -define png:exclude-chunks=date,time
-    png:drawable-nodpi/tokkl_icon_Ipx.png
-The 260 and 520 px wordmarks and the 96 px icon come out byte for byte the same as
-Tokkl's packages/web/public/brand/wordmark-260.png, wordmark-520.png and
-icon-96.png.
+Tokkl's npm run icons still cuts packages/web/public/brand/wordmark-260.png and
+wordmark-520.png from the earlier tokkl-wordmark-v3.png, so these files do not
+match them.
 
 This note lives in res/raw because the build accepts only drawable files in
 res/drawable-*.

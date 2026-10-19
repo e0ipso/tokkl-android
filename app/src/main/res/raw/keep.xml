@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     anybody_font_source.txt records where res/font/anybody_wdth_wght.ttf comes from, and
-    brand_images_source.txt where the tokkl_wordmark_* and tokkl_icon_* drawables come from.
+    brand_images_source.txt where the tokkl_wordmark_* drawables come from.
     No code reads them; they sit in res/raw because res/font accepts only font files and
     res/drawable-* only drawables.
 -->

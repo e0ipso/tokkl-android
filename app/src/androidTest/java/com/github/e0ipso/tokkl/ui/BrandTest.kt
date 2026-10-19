@@ -12,8 +12,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PixelMap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasContentDescription
@@ -37,10 +39,10 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * The brand's halo and its fit (docs/PRD.md, Visual direction, Wordmark). The halo is checked
- * against the same brand drawn in light mode, which draws none, on the same background, and
- * against the wordmark alone on a marker colour, which shows where the artwork is.
- * LaunchScreenTest and SignInScreenTest check that TalkBack reads the brand once.
+ * The brand's halo, its fit, and that it is the wordmark alone (docs/PRD.md, Visual direction,
+ * Wordmark). The halo is checked against the same brand drawn in light mode, which draws none, on
+ * the same background, and against the brand on a marker colour, which shows where the artwork
+ * is. LaunchScreenTest and SignInScreenTest check that TalkBack reads the brand once.
  */
 class BrandTest {
     @get:Rule
@@ -74,14 +76,11 @@ class BrandTest {
         val stray = outside.filter { (x, y) -> !dark[x, y].near(light[x, y], EXACT) && !artwork.anyWithin(x, y, reach) }
         assertTrue("the halo reaches beyond 1dp at ${stray.take(5)}", stray.isEmpty())
 
-        // The icon, left of the wordmark and the gap, has no halo.
-        val wordmarkLeft = ((wordmarkBounds().left - composeRule.onNodeWithTag(FRAME).getUnclippedBoundsInRoot().left).value * density).toInt() - reach
-        val aroundWordmark = outside.filter { (x, _) -> x >= wordmarkLeft }
-        val halo = aroundWordmark.count { (x, y) -> dark[x, y].near(HALO, EXACT) }
+        val halo = outside.count { (x, y) -> dark[x, y].near(HALO, EXACT) }
         assertTrue("only $halo pixels in the wordmark-halo colour", halo > MIN_HALO_PIXELS)
 
         // The pixels just outside the artwork, on every side of every letter, take the halo.
-        val edge = aroundWordmark.filter { (x, y) -> artwork.anyWithin(x, y, 1) }
+        val edge = outside.filter { (x, y) -> artwork.anyWithin(x, y, 1) }
         val traced = edge.count { (x, y) -> dark[x, y].near(HALO, BLENDED) }
         assertTrue("the halo covers $traced of ${edge.size} pixels at the wordmark's edge", traced >= edge.size * MIN_TRACED_SHARE)
     }
@@ -94,18 +93,57 @@ class BrandTest {
     }
 
     @Test
-    fun aNarrowRowShrinksTheWordmarkBesideTheIconWithoutCuttingIt() {
+    fun aNarrowRowShrinksTheWordmarkToItsWidthWithoutCuttingIt() {
         show(width = NARROW)
 
         val frame = composeRule.onNodeWithTag(FRAME).getUnclippedBoundsInRoot()
         val wordmark = wordmarkBounds()
         val width = wordmark.right - wordmark.left
         val height = wordmark.bottom - wordmark.top
-        assertTrue("the wordmark is $width wide in a $NARROW row", width < BrandSize.LARGE.wordmarkWidth && width > 0.dp)
+        assertEquals("the wordmark's width in a $NARROW row", NARROW.value, width.value, PIXEL_DP)
         assertTrue("the wordmark ends at ${wordmark.right}, past the row's ${frame.right}", wordmark.right <= frame.right + PIXEL_DP.dp)
         assertEquals("the wordmark keeps its shape", WORDMARK_ASPECT_RATIO, width / height, 0.02f)
-        val icon = BrandSize.LARGE.iconSize + BrandSize.LARGE.gap
-        assertEquals("the icon keeps its size", icon.value, (wordmark.left - frame.left).value, PIXEL_DP)
+    }
+
+    /**
+     * The logo is only the launcher icon, never beside the wordmark. TalkBack finds one image in
+     * the brand, the wordmark. A decorative image has no semantics node, so the test also checks
+     * the brand's bounds and pixels. Anything beside the wordmark widens the brand or draws outside
+     * the wordmark's bounds.
+     */
+    @Test
+    fun theBrandDrawsTheWordmarkAndNoOtherImage() {
+        var size by mutableStateOf(BrandSize.LARGE)
+        composeRule.setContent {
+            Box(Modifier.testTag(FRAME).background(MARKER).padding(FRAME_PADDING)) {
+                TokklTheme(darkTheme = false) { Brand(size, Modifier.testTag(BRAND)) }
+            }
+        }
+        for (each in BrandSize.entries) {
+            size = each
+            val image = capture()
+
+            val images = composeRule.onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Image), useUnmergedTree = true)
+                .fetchSemanticsNodes()
+                .map { it.config.getOrNull(SemanticsProperties.ContentDescription) }
+            assertEquals("the images in the $each brand", listOf(listOf(string(R.string.app_name))), images)
+
+            val brand = composeRule.onNodeWithTag(BRAND).getUnclippedBoundsInRoot()
+            val wordmark = wordmarkBounds()
+            assertEquals("the $each wordmark's width", each.wordmarkWidth.value, (wordmark.right - wordmark.left).value, PIXEL_DP)
+            val margins = listOf(wordmark.left - brand.left, brand.right - wordmark.right, wordmark.top - brand.top, brand.bottom - wordmark.bottom)
+            assertTrue("the $each brand reaches past its wordmark by $margins", margins.all { abs(it.value) <= PIXEL_DP })
+
+            // Light mode draws no halo, so every pixel off the marker colour is inside the wordmark.
+            val frame = composeRule.onNodeWithTag(FRAME).getUnclippedBoundsInRoot()
+            val left = (wordmark.left - frame.left).px() - 1
+            val right = (wordmark.right - frame.left).px() + 1
+            val top = (wordmark.top - frame.top).px() - 1
+            val bottom = (wordmark.bottom - frame.top).px() + 1
+            val stray = (0 until image.width).flatMap { x -> (0 until image.height).map { y -> x to y } }
+                .filter { (x, y) -> (x !in left..right || y !in top..bottom) && !image[x, y].near(MARKER, 0) }
+            assertTrue("the $each brand draws outside its wordmark at ${stray.take(5)}", stray.isEmpty())
+        }
     }
 
     private fun show(width: Dp) {
@@ -120,6 +158,8 @@ class BrandTest {
     /** The wordmark's own node, not the brand's merged one. */
     private fun wordmarkBounds() =
         composeRule.onNode(hasContentDescription(string(R.string.app_name)), useUnmergedTree = true).getUnclippedBoundsInRoot()
+
+    private fun Dp.px(): Int = (value * density).roundToInt()
 
     private fun capture(): PixelMap {
         composeRule.waitForIdle()
@@ -146,6 +186,7 @@ class BrandTest {
 
     private companion object {
         const val FRAME = "frame"
+        const val BRAND = "brand"
 
         /** Room around the brand for the halo, which draws outside the wordmark's bounds. */
         val FRAME_PADDING = 8.dp
@@ -167,15 +208,15 @@ class BrandTest {
         const val MIN_HALO_PIXELS = 1000
         const val MIN_TRACED_SHARE = 0.9
 
-        /** Width over height of the wordmark images, 1645x709 px. */
-        const val WORDMARK_ASPECT_RATIO = 1645f / 709f
+        /** Width over height of the wordmark images, 2059x769 px. */
+        const val WORDMARK_ASPECT_RATIO = 2059f / 769f
 
         /** About a pixel, in dp. */
         const val PIXEL_DP = 0.5f
     }
 }
 
-/** TalkBack finds the brand once, as the app's name: one node, which the decorative icon adds nothing to. */
+/** TalkBack finds the brand once, as the app's name: one node, the wordmark's. */
 fun ComposeTestRule.assertBrandReadsOnce() {
     val name = string(R.string.app_name)
     val nodes = onAllNodes(hasContentDescription(name) or hasText(name)).fetchSemanticsNodes()

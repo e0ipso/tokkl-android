@@ -79,7 +79,7 @@ class SignInScreenTest {
         composeRule.awaitText(string(R.string.sign_in_server_url))
     }
 
-    /** TalkBack reads the brand above the form once, as "Tokkl". The icon beside the wordmark is decorative. */
+    /** TalkBack reads the brand above the form, the wordmark alone, once, as "Tokkl". */
     @Test
     fun theBrandIsOneTalkBackNode() {
         composeRule.assertBrandReadsOnce()

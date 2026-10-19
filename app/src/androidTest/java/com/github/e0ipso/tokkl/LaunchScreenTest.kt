@@ -46,7 +46,7 @@ class LaunchScreenTest {
         assertEquals(listOf(true, false, false, false, false), tabs.map { it.config.getOrNull(SemanticsProperties.Selected) })
     }
 
-    /** TalkBack reads the brand on the Timer page once, as "Tokkl". The icon beside the wordmark is decorative. */
+    /** TalkBack reads the brand on the Timer page, the wordmark alone, once, as "Tokkl". */
     @Test
     fun theBrandIsOneTalkBackNode() {
         composeRule.awaitTimerPage()
