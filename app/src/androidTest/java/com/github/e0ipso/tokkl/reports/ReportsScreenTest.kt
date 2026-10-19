@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
@@ -35,6 +36,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -55,6 +57,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
+import org.junit.rules.Timeout
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
@@ -72,7 +75,16 @@ class ReportsScreenTest {
     @get:Rule(order = 1)
     val fontScale: TestRule = LargestFontScaleWhenMarked()
 
+    /**
+     * Fails a test that hangs instead of the whole run. The compose rule waits for the app's main
+     * thread to go idle after each test with no timeout, so a screen that lays itself out on every
+     * frame kept it waiting for good (TKA-0166). Order it outside the compose rule and inside the
+     * font scale rule, which puts the usual scale back for the next test.
+     */
     @get:Rule(order = 2)
+    val timeout = Timeout(TEST_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+
+    @get:Rule(order = 3)
     val compose = createEmptyComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -95,7 +107,7 @@ class ReportsScreenTest {
     @After
     fun cleanUp() {
         try {
-            scenario?.close()
+            scenario?.let { finishWithin("closing the activity") { it.close() } }
         } finally {
             try {
                 DeviceShell.run("cmd connectivity airplane-mode disable")
@@ -290,7 +302,9 @@ class ReportsScreenTest {
 
     private fun modelState(): ReportsState {
         var state: ReportsState? = null
-        scenario!!.onActivity { state = ViewModelProvider(it)[ReportsViewModel::class.java].model.state.value }
+        finishWithin("reading the report's state") {
+            scenario!!.onActivity { state = ViewModelProvider(it)[ReportsViewModel::class.java].model.state.value }
+        }
         return state!!
     }
 
@@ -379,6 +393,9 @@ class ReportsScreenTest {
         const val CHART_DESCRIPTION = "Bar chart of time per day"
         const val LOAD_TIMEOUT_MS = 30_000L
         const val POLL_MS = 200L
+
+        /** Well above the sum of a test's own waits, and far below CI's 45 minutes for the run. */
+        const val TEST_TIMEOUT_MINUTES = 5L
     }
 }
 

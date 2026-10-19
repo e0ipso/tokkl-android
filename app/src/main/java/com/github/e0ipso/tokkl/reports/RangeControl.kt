@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -43,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
@@ -179,6 +183,7 @@ private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (
     val tooLong = picked != null && picked.days > MAX_RANGE_DAYS
     val words = DateWords(LocalResources.current)
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        FillScreenWindow()
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
             Column {
                 Row(
@@ -233,6 +238,22 @@ private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (
                 )
             }
         }
+    }
+}
+
+/**
+ * Makes the dialog's window as tall as the screen instead of as tall as its content. Compose
+ * leaves a full-width dialog's window at WRAP_CONTENT height, and Android 11 then measures it in
+ * every layout pass twice: at the width of `screenWidthDp`, which rounds to 1079 px on a 1080 px
+ * screen, and again at the window's 1080 px. With the date range picker's month list inside,
+ * that never settled: the dialog laid itself out on every frame and the main thread never went
+ * idle. The Surface inside already fills the window, so the window keeps its size.
+ */
+@Composable
+private fun FillScreenWindow() {
+    val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+    SideEffect {
+        if (window != null && window.attributes.height != MATCH_PARENT) window.setLayout(MATCH_PARENT, MATCH_PARENT)
     }
 }
 
