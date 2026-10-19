@@ -19,7 +19,7 @@ kk_confidence: high
 ---
 The user unit `t3-update.timer` has `OnCalendar=daily`, `RandomizedDelaySec=1h` and `Persistent=true`. It starts `t3-update.service`, a oneshot that runs `t3 update` and then `systemctl --user restart t3.service` through `ExecStartPost`. The restart happens even when T3 is already current. T3 stops all running agent sessions when the service stops, and the stop logs `stoppedSessions: <count>`.
 
-An agent run or background agent still going between about 00:00 and 01:00 local time is cut off this way. A missed timer fires at the next boot. A run that stops in that window was interrupted, not failed, so start it again.
+An agent run or background agent still going between about 00:00 and 01:00 local time is cut off this way. A missed timer fires at the next boot. A run that stops in that window was interrupted, not failed, so start it again. The restart also ends an instrumented run the session started, emulator included, although the emulator runs in a `tokkl-emulator-*.scope` of its own. Such a run leaves no emulator or containers behind, only the worktree's uncommitted edits, so check `git status` before starting again.
 
 <!-- kk:related:start -->
 # Related

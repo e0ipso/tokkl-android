@@ -27,7 +27,7 @@ The HTTP code lives in `app/src/main/java/com/github/e0ipso/tokkl/api/`. `Shared
 
 `TogglApiClient.get` and `send` decode a 2xx body with a kotlinx.serialization deserializer, and an empty body fails to decode. Calls that expect no content use `sendNoContent`, which treats any 2xx as success and ignores the body. Tokkl's DELETE routes for time entries, tasks, clients and tags answer 200 with an empty body, while the project DELETE answers 200 with the project id as JSON (`../tokkl/packages/api/src/routes/togglV9.ts`). `sendNoContent` handles both.
 
-Every call returns `ApiResult.Success` or `ApiResult.Failure(ApiError)`. 403 maps to `AuthFailed`, 429 to `RateLimited` with the `Retry-After` seconds (null when the header is missing or not a whole number), and any other status outside 2xx to `UnexpectedStatus`. `Network` wraps the `IOException` of a request that got no response. `InvalidResponse` is a 2xx body that is not the expected JSON. `TrustRefused` covers `CleartextNotConfirmed` and `UntrustedCertificate`, which the client also reports to its `TrustListener`.
+Every call returns `ApiResult.Success` or `ApiResult.Failure(ApiError)`. 403 maps to `AuthFailed`, 429 to `RateLimited` with the `Retry-After` seconds (null when the header is missing or not a whole number), and any other status outside 2xx to `UnexpectedStatus`. `Network` wraps the `IOException` of a request that got no response. `InvalidResponse` is a 2xx body that is not the expected JSON. `TrustRefused` covers the `TrustQuestion`s `CleartextNotConfirmed` and `UntrustedCertificate`, and `CertificateHostMismatch`. The client also reports each to its `TrustListener`.
 
 <!-- kk:related:start -->
 # Related

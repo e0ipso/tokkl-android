@@ -1,11 +1,19 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:0f3e06a51e287ec4ad7f5e21c1f023ba277b4842c0e33f726fd0eca7fb72a86a'
-node_count: 30
+nodes_hash: 'sha256:34ad6e994356df28370135ceb135ae92e5dd5d3a5e629906c7aae93384afb487'
+node_count: 34
 ---
 # kenkeep Graph
 
-Total nodes: 30
+Total nodes: 34
+
+## map-account-cache-and-capabilities
+
+- **kind:** map
+- **title:** Offline cache and capabilities: AccountCache, HistoryWindow, CapabilitiesSource
+- **path:** map-account-cache-and-capabilities.md
+- **tags:** offline, cache, room, api, compatibility
+- **relates_to:** map-account-settings-source-and-account-time, practice-check-capabilities-not-server-version, practice-never-wait-for-server-on-start-stop, map-signin-session-settings-and-navigation-host
 
 ## map-account-settings-source-and-account-time
 
@@ -13,7 +21,7 @@ Total nodes: 30
 - **title:** Account settings: AccountSettingsSource, AccountTime and NoDeviceZoneTest
 - **path:** map-account-settings-source-and-account-time.md
 - **tags:** time, api, android, settings
-- **relates_to:** practice-match-web-app-behavior-account-timezone, map-signin-session-settings-and-navigation-host, map-connection-trust-store-pinning-and-prompts, practice-refresh-on-events-no-polling
+- **relates_to:** practice-match-web-app-behavior-account-timezone, map-signin-session-settings-and-navigation-host, map-connection-trust-store-pinning-and-prompts, practice-refresh-on-events-no-polling, map-account-cache-and-capabilities
 
 ## map-api-client-shared-okhttp-serverurl-and-errors
 
@@ -46,6 +54,14 @@ Total nodes: 30
 - **path:** map-connection-trust-store-pinning-and-prompts.md
 - **tags:** security, network, ui, dialogs
 - **relates_to:** practice-pin-self-signed-certs-warn-on-http, map-api-client-shared-okhttp-serverurl-and-errors, map-signin-session-settings-and-navigation-host, map-account-settings-source-and-account-time
+
+## map-design-foundation-spacing-shapes-type-brand
+
+- **kind:** map
+- **title:** Design foundation: spacing, shapes, type roles, option rows, brand and insets
+- **path:** map-design-foundation-spacing-shapes-type-brand.md
+- **tags:** ui, theme, accessibility, android
+- **relates_to:** map-tokkl-colour-tokens-and-font, practice-tokkl-palette-wcag-english-strings
 
 ## map-fdroid-metadata-release-artifacts
 
@@ -86,13 +102,21 @@ Total nodes: 30
 - **tags:** architecture, android, offline
 - **derived_from:** docs/PRD.md
 
+## map-reports-summary-from-detailed-search
+
+- **kind:** map
+- **title:** Reports: the summary summed on the phone from the detailed search
+- **path:** map-reports-summary-from-detailed-search.md
+- **tags:** reports, api, toggl, ui
+- **relates_to:** map-tokkl-toggl-api, practice-match-web-app-behavior-account-timezone, practice-refresh-on-events-no-polling, practice-port-tokkl-typescript-with-javascript-semantics
+
 ## map-signin-session-settings-and-navigation-host
 
 - **kind:** map
 - **title:** Sign-in, the stored session, theme settings and the navigation host
 - **path:** map-signin-session-settings-and-navigation-host.md
 - **tags:** android, ui, credentials, navigation
-- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-api-token-store-and-backup-exclusion, map-tokkl-colour-tokens-and-font, map-account-settings-source-and-account-time, map-connection-trust-store-pinning-and-prompts
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-api-token-store-and-backup-exclusion, map-tokkl-colour-tokens-and-font, map-account-settings-source-and-account-time, map-connection-trust-store-pinning-and-prompts, map-account-cache-and-capabilities, map-reports-summary-from-detailed-search
 
 ## map-t3-daily-restart-stops-agent-sessions
 
@@ -108,7 +132,7 @@ Total nodes: 30
 - **title:** Tokkl colour tokens and Anybody font in ../tokkl
 - **path:** map-tokkl-colour-tokens-and-font.md
 - **tags:** ui, tokkl
-- **relates_to:** practice-tokkl-palette-wcag-english-strings
+- **relates_to:** practice-tokkl-palette-wcag-english-strings, map-design-foundation-spacing-shapes-type-brand
 - **derived_from:** docs/PRD.md
 
 ## map-tokkl-toggl-api
@@ -125,6 +149,7 @@ Total nodes: 30
 - **title:** Check server capabilities instead of requiring a server version
 - **path:** practice-check-capabilities-not-server-version.md
 - **tags:** api, toggl, compatibility
+- **relates_to:** map-account-cache-and-capabilities
 - **derived_from:** docs/PRD.md
 
 ## practice-emulator-plain-aosp-image-headless
@@ -217,7 +242,7 @@ Total nodes: 30
 - **title:** Run instrumented tests only through scripts/instrumented-tests.sh
 - **path:** practice-run-instrumented-tests-only-through-the-script.md
 - **tags:** testing, android, emulator, docker
-- **relates_to:** practice-test-real-tokkl-server-speed-regressions, practice-emulator-plain-aosp-image-headless, practice-gradle-no-daemon-in-parallel-worktrees
+- **relates_to:** practice-test-real-tokkl-server-speed-regressions, practice-emulator-plain-aosp-image-headless, practice-gradle-no-daemon-in-parallel-worktrees, practice-screenshot-references-on-tokkl-api36
 
 ## practice-run-npm-install-in-every-clone-and-worktree
 
@@ -225,6 +250,14 @@ Total nodes: 30
 - **title:** Run npm install in every new clone or worktree to turn on the commit hook
 - **path:** practice-run-npm-install-in-every-clone-and-worktree.md
 - **tags:** git, commits, tooling
+
+## practice-screenshot-references-on-tokkl-api36
+
+- **kind:** practice
+- **title:** Record screenshot references on tokkl-api36, in the commit that changes the look
+- **path:** practice-screenshot-references-on-tokkl-api36.md
+- **tags:** testing, android, emulator, ui
+- **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-emulator-plain-aosp-image-headless, map-design-foundation-spacing-shapes-type-brand
 
 ## practice-talk-only-to-configured-server
 
@@ -250,4 +283,5 @@ Total nodes: 30
 - **title:** Use Tokkl's palette, WCAG AA contrast and English string resources
 - **path:** practice-tokkl-palette-wcag-english-strings.md
 - **tags:** ui, accessibility, i18n
+- **relates_to:** map-tokkl-colour-tokens-and-font, map-design-foundation-spacing-shapes-type-brand
 - **derived_from:** docs/PRD.md
