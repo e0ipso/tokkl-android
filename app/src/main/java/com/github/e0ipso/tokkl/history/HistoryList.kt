@@ -44,10 +44,8 @@ import com.github.e0ipso.tokkl.reports.projectMark
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
@@ -147,8 +145,8 @@ private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettin
 private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSettings, locale: Locale) {
     val resources = LocalResources.current
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    val start = clockTime(entry.start, zone)
-    val stop = clockTime(entry.stop, zone)
+    val start = settings.formatTime(entry.start, zone)
+    val stop = settings.formatTime(entry.stop, zone)
     val spokenRange = stringResource(R.string.history_time_range_spoken, start, stop)
     val spokenSeconds = spokenDuration(resources, entry.seconds)
     Column(
@@ -272,11 +270,6 @@ private fun Empty() {
         Text(stringResource(R.string.history_empty_message), style = MaterialTheme.typography.bodyLarge)
     }
 }
-
-/** [instant] on the account's 24-hour clock, as formatTime in the web app's default `H:mm` format. */
-private fun clockTime(instant: Instant, zone: ZoneId): String = CLOCK.format(instant.atZone(zone))
-
-private val CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT)
 
 private const val EMPTY_KEY = "empty"
 private const val OLDER_KEY = "older"

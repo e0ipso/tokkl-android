@@ -7,9 +7,13 @@ import com.github.e0ipso.tokkl.api.ServerTask
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
+import com.github.e0ipso.tokkl.time.formatTime
+import com.github.e0ipso.tokkl.time.isTwelveHourFormat
 import com.github.e0ipso.tokkl.time.parseTimeZone
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -17,7 +21,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * The settings that decide how the app shows and reads times: those from `GET /api/v9/me`
- * (docs/PRD.md S7), and the duration format from `GET /api/v9/me/preferences`. With them goes
+ * (docs/PRD.md S7), and the duration and clock formats from `GET /api/v9/me/preferences`. With them goes
  * the account's default workspace, where new entries go. They hold no credential.
  *
  * @property timeZone the account's timezone name, exactly as the server sent it.
@@ -31,6 +35,9 @@ import kotlinx.serialization.json.JsonPrimitive
  *   stored, so a timer started offline has one. A refresh whose `/me` leaves it out keeps the
  *   stored one. Null until a `/me` sends it, so settings that an older app version stored have
  *   none until the next refresh.
+ * @property twelveHour the preferences' `timeofday_format` asks for the 12-hour clock, as `h:mm A`
+ *   does. False, the 24-hour clock, until a refresh reads the preferences, and when they leave it
+ *   out, as in the web app.
  */
 data class AccountSettings(
     val timeZone: String,
@@ -38,6 +45,7 @@ data class AccountSettings(
     val timeResolutionMinutes: Double?,
     val durationFormat: DurationFormat = DurationFormat.IMPROVED,
     val defaultWorkspaceId: Long? = null,
+    val twelveHour: Boolean = false,
 ) {
 
     /**
@@ -46,6 +54,13 @@ data class AccountSettings(
      * [time] is null.
      */
     fun formatDuration(totalSeconds: Long): String = formatDuration(totalSeconds, durationFormat)
+
+    /**
+     * [instant] on the account's clock in [zone], the account's zone from [time], in the
+     * account's clock format: `14:00`, or `2:00 PM` with [twelveHour]. Screens show every clock
+     * time this way.
+     */
+    fun formatTime(instant: Instant, zone: ZoneId): String = formatTime(instant, zone, twelveHour)
 
     /**
      * Times in the account's zone, read from [clock], or null when [parseTimeZone] cannot
@@ -97,8 +112,8 @@ class Me(
 
 /**
  * One `GET /api/v9/me/preferences` answer. A refresh asks for it once and hands it to each
- * reader: the account settings take [durationFormat], the cache the favorites. Each reader
- * decodes only its own key from [body], so a malformed key fails that reader alone.
+ * reader: the account settings take [durationFormat] and [twelveHour], the cache the favorites.
+ * Each reader decodes only its own key from [body], so a malformed key fails that reader alone.
  */
 class MePreferences(val body: JsonObject) {
 
@@ -111,6 +126,17 @@ class MePreferences(val body: JsonObject) {
         get() {
             val name = (body["duration_format"] as? JsonPrimitive)?.takeIf { it.isString }?.content
             return DurationFormat.fromTogglName(name)
+        }
+
+    /**
+     * The web app writes clock times on the 12-hour clock when `timeofday_format` holds an `a` in
+     * either case, as `h:mm A` does, and on the 24-hour clock otherwise. A missing or null value
+     * reads as the web app's default, `H:mm`, and so does a value that is not a string.
+     */
+    val twelveHour: Boolean
+        get() {
+            val format = (body["timeofday_format"] as? JsonPrimitive)?.takeIf { it.isString } ?: return false
+            return isTwelveHourFormat(format.content)
         }
 }
 

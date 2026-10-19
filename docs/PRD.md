@@ -210,6 +210,7 @@ Proposed, except Kotlin and Jetpack Compose, which the owner confirmed. Nothing 
 - OkHttp and kotlinx.serialization for the API, with a trust manager that adds the pinned self-signed certificate (S3).
 - A Kotlin port of three TypeScript functions, each checked against the cases in its test file: `parseDuration` in `../tokkl/packages/common/duration.ts` (cases in `../tokkl/packages/common/duration.test.ts`), `parseTimeOfDay` in `../tokkl/packages/web/src/lib/timeOfDay.ts` (cases in `../tokkl/packages/web/src/lib/timeOfDay.test.ts`) and `snapSpan` (T3) in `../tokkl/packages/common/snap.ts` (cases in `../tokkl/packages/common/snap.test.ts`). The time-of-day parser lives in the web package, not in `packages/common`.
 - A Kotlin port of `formatDuration` in `../tokkl/packages/common/duration.ts`, checked against the format cases in `../tokkl/packages/common/duration.test.ts`. Screens write every duration in the account's `duration_format`, which the app reads from `GET /api/v9/me/preferences`. When the preferences leave it out, they use the improved format, as the web app does.
+- A Kotlin port of `formatTime` in `../tokkl/packages/web/src/lib/settings.ts`. Screens write every clock time on the 12-hour clock, as `2:00 PM`, when the preferences' `timeofday_format` holds an `a`, as `h:mm A` does, and on the 24-hour clock, as `14:00`, otherwise. When the preferences leave it out, they use the 24-hour clock, the web app's default `H:mm`.
 
 Every dependency must be free software (section 8.1).
 

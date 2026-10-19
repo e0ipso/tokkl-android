@@ -25,7 +25,9 @@ class AccountSettingsStore(context: Context) {
         val durationFormat = DurationFormat.fromTogglName(preferences.getString(KEY_DURATION_FORMAT, null))
         // Settings stored before the app kept the default workspace have none until the next refresh.
         val defaultWorkspaceId = KEY_DEFAULT_WORKSPACE_ID.takeIf(preferences::contains)?.let { preferences.getLong(it, 0) }
-        return AccountSettings(timeZone, beginningOfWeek, timeResolution, durationFormat, defaultWorkspaceId)
+        // Settings stored before the app read the clock format have none, which means 24-hour.
+        val twelveHour = preferences.getBoolean(KEY_TWELVE_HOUR, false)
+        return AccountSettings(timeZone, beginningOfWeek, timeResolution, durationFormat, defaultWorkspaceId, twelveHour)
     }
 
     /** Replaces the stored settings in one write. */
@@ -44,6 +46,7 @@ class AccountSettingsStore(context: Context) {
             putString(KEY_DURATION_FORMAT, settings.durationFormat.togglName)
             val defaultWorkspaceId = settings.defaultWorkspaceId
             if (defaultWorkspaceId == null) remove(KEY_DEFAULT_WORKSPACE_ID) else putLong(KEY_DEFAULT_WORKSPACE_ID, defaultWorkspaceId)
+            putBoolean(KEY_TWELVE_HOUR, settings.twelveHour)
         }
     }
 
@@ -63,5 +66,6 @@ class AccountSettingsStore(context: Context) {
         private const val KEY_TIME_RESOLUTION_MINUTES = "time_resolution_minutes"
         private const val KEY_DURATION_FORMAT = "duration_format"
         private const val KEY_DEFAULT_WORKSPACE_ID = "default_workspace_id"
+        private const val KEY_TWELVE_HOUR = "twelve_hour"
     }
 }
