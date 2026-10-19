@@ -12,6 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.DeviceShell
+import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
@@ -26,17 +27,9 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.io.Closeable
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
-import java.net.InetAddress
-import java.net.ServerSocket
-import java.net.Socket
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.thread
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -284,78 +277,36 @@ class ReportsForegroundTest {
 }
 
 /**
- * A plain TCP relay on the phone's loopback to [server] that counts the report searches the app
- * sends through it. Each search is one `POST .../search/time_entries`, and no other request or
- * body holds [SEARCH], so counting it in the stream needs no HTTP parsing.
+ * Counts the report searches the app sends through a [LoopbackRelay] to [server]. Each search is
+ * one `POST .../search/time_entries`, and no other request or body holds [SEARCH], so counting it
+ * in the stream needs no HTTP parsing.
  */
 private class ReportSearchCounter(server: ServerUrl) : Closeable {
 
-    private val target = server.toString().toHttpUrl()
-    // The address the URL names. getLoopbackAddress() may be ::1 instead.
-    private val listener = ServerSocket(0, 0, InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1)))
-    private val sockets = CopyOnWriteArrayList<Socket>()
-    private val count = AtomicInteger()
+    private val total = AtomicInteger()
+    private val relay = server.toString().toHttpUrl().let { LoopbackRelay(it.host, it.port) { SearchesOnOneConnection() } }
 
     /** Connections the relay could not pass on, which would make [searches] wrong. */
-    val failures = CopyOnWriteArrayList<String>()
+    val failures: List<String> get() = relay.failures
 
-    val url: ServerUrl = ServerUrl.parse("http://127.0.0.1:${listener.localPort}") ?: error("not a URL")
+    val url: ServerUrl = ServerUrl.parse("http://127.0.0.1:${relay.localPort}") ?: error("not a URL")
 
-    val searches: Int get() = count.get()
+    val searches: Int get() = total.get()
 
-    init {
-        thread(isDaemon = true, name = "report-search-relay") {
-            while (true) {
-                val app = try {
-                    listener.accept()
-                } catch (e: IOException) {
-                    return@thread
-                }
-                val tokkl = try {
-                    Socket(target.host, target.port)
-                } catch (e: IOException) {
-                    failures += "connect: $e"
-                    app.close()
-                    continue
-                }
-                sockets += app
-                sockets += tokkl
-                thread(isDaemon = true) { pipe(app.getInputStream(), tokkl.getOutputStream(), counting = true, app, tokkl) }
-                thread(isDaemon = true) { pipe(tokkl.getInputStream(), app.getOutputStream(), counting = false, app, tokkl) }
-            }
+    override fun close() = relay.close()
+
+    /** Counts [SEARCH] in one connection's requests, once even when it is split across two chunks. */
+    private inner class SearchesOnOneConnection : LoopbackRelay.RequestWatcher {
+        private var tail = ByteArray(0)
+
+        override fun sent(bytes: ByteArray, count: Int) {
+            val seen = tail + bytes.copyOf(count)
+            total.addAndGet(occurrences(seen))
+            tail = seen.copyOfRange(maxOf(0, seen.size - SEARCH.size + 1), seen.size)
         }
-    }
 
-    /** Copies [input] to [output] until either side closes, counting [SEARCH] in requests. */
-    private fun pipe(input: InputStream, output: OutputStream, counting: Boolean, vararg ends: Socket) {
-        val buffer = ByteArray(8192)
-        // The end of the previous read, so a search split across two reads is counted once.
-        var tail = ByteArray(0)
-        try {
-            while (true) {
-                val read = input.read(buffer)
-                if (read < 0) break
-                output.write(buffer, 0, read)
-                output.flush()
-                if (counting) {
-                    val seen = tail + buffer.copyOf(read)
-                    count.addAndGet(occurrences(seen))
-                    tail = seen.copyOfRange(maxOf(0, seen.size - SEARCH.size + 1), seen.size)
-                }
-            }
-        } catch (e: IOException) {
-            // A side closed its connection.
-        } finally {
-            ends.forEach { it.close() }
-        }
-    }
-
-    private fun occurrences(bytes: ByteArray): Int =
-        (0..bytes.size - SEARCH.size).count { start -> SEARCH.indices.all { bytes[start + it] == SEARCH[it] } }
-
-    override fun close() {
-        listener.close()
-        sockets.forEach { it.close() }
+        private fun occurrences(bytes: ByteArray): Int =
+            (0..bytes.size - SEARCH.size).count { start -> SEARCH.indices.all { bytes[start + it] == SEARCH[it] } }
     }
 
     private companion object {
