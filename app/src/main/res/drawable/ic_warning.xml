@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    A warning triangle with an exclamation mark, for error messages. It is Tokkl's "alert" icon
+    from packages/web/src/components/Icon.tsx (github.com/e0ipso/tokkl, MIT), drawn the way that
+    component draws it: a 2-unit stroke with round caps and joins, and no fill.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,3l10,18H2zM12,10v4M12,17.5h0.01" />
+</vector>

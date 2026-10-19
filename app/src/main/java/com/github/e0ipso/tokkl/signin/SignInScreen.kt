@@ -28,9 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,6 +38,7 @@ import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
 import com.github.e0ipso.tokkl.ui.Brand
 import com.github.e0ipso.tokkl.ui.BrandSize
+import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -197,12 +196,7 @@ private fun SignInForm(
                 }
             }
             state.failure?.let { failureMessage(it, state.method) }?.let { message ->
-                Text(
-                    text = message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
+                ErrorBanner(message, Modifier.fillMaxWidth())
             }
             if (secondsLeft > 0) {
                 val seconds = secondsLeft.toInt()
