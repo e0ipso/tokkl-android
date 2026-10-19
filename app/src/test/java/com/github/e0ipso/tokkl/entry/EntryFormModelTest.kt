@@ -278,6 +278,174 @@ class EntryFormModelTest {
         awaitState("the form names the zone") { it == EntryFormState.NoAccountTime("Mars/Olympus_Mons") }
     }
 
+    @Test
+    fun aPastEntryOpensOnTodayInTheAccountsTimezone() {
+        assertEquals(
+            EntryFormState.Open(
+                editing = false,
+                workspaceId = WORKSPACE,
+                fields = EntryFields(),
+                labels = EntryLabels(),
+                original = Picked(),
+                date = LocalDate.of(2026, 10, 19),
+                start = "",
+                end = "",
+                duration = "",
+                mistakes = emptyMap(),
+                endsOn = null,
+                saving = false,
+            ),
+            openNew(),
+        )
+    }
+
+    /**
+     * The examples of docs/PRD.md M1 save what the web app saves: its manual mode for a start and
+     * an end, and its editor's start plus the duration for a duration.
+     */
+    @Test
+    fun everyM1ExampleSavesWhatTheWebAppSaves() {
+        for (case in listOf(
+            Typed(start = "9", end = "930", stop = "2026-10-19T07:30:00Z", from = "2026-10-19T07:00:00Z"),
+            Typed(start = "9:30", end = "4pm", stop = "2026-10-19T14:00:00Z", from = "2026-10-19T07:30:00Z"),
+            Typed(start = "930", duration = "1h 30m", stop = "2026-10-19T09:00:00Z", from = "2026-10-19T07:30:00Z"),
+            Typed(start = "9", duration = "90", stop = "2026-10-19T08:30:00Z", from = "2026-10-19T07:00:00Z"),
+            Typed(start = "9", duration = "1,5h", stop = "2026-10-19T08:30:00Z", from = "2026-10-19T07:00:00Z"),
+            Typed(start = "23:00", end = "1:00", stop = "2026-10-19T23:00:00Z", from = "2026-10-19T21:00:00Z"),
+        )) {
+            changes.calls.clear()
+            openNew()
+            onMain {
+                model.setStart(case.start)
+                case.end?.let(model::setEnd)
+                case.duration?.let(model::setDuration)
+                model.save()
+            }
+            awaitState("$case saves") { it == EntryFormState.Saved }
+            assertEquals("$case", listOf("create $WORKSPACE ${EntryFields()} ${case.from} ${case.stop}"), changes.calls)
+        }
+    }
+
+    @Test
+    fun anEntryFrom23To01EndsOnTheNextDay() {
+        openNew()
+        onMain {
+            model.setStart("23:00")
+            model.setEnd("01:00")
+            model.timesDone()
+        }
+        val form = awaitOpen("the duration crosses midnight") { it.duration == "2:00:00" }
+        assertEquals(LocalDate.of(2026, 10, 20), form.endsOn)
+
+        save()
+
+        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T21:00:00Z 2026-10-19T23:00:00Z"), changes.calls)
+    }
+
+    @Test
+    fun theDurationFillsInTheEndAndTheTimesTheDuration() {
+        openNew()
+        onMain {
+            model.setStart("9")
+            model.setDuration("1h 30m")
+            model.durationDone()
+        }
+        awaitOpen("the end follows the duration") { it.end == "10:30" && it.duration == "1:30:00" }
+
+        onMain {
+            model.setEnd("11")
+            model.timesDone()
+        }
+        awaitOpen("the duration follows the end") { it.duration == "2:00:00" }
+        save()
+
+        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T07:00:00Z 2026-10-19T09:00:00Z"), changes.calls)
+    }
+
+    /** zonedToUtc's rules, which time.test.ts pins, decide the clock changes, as on the web app. */
+    @Test
+    fun wallTimesOnTheDaysTheClocksChangeResolveAsTokklResolvesThem() {
+        for (case in listOf(
+            // Spring: 01:30 CET to 03:30 CEST is one hour.
+            Typed(LocalDate.of(2026, 3, 29), "1:30", end = "3:30", from = "2026-03-29T00:30:00Z", stop = "2026-03-29T01:30:00Z"),
+            // 02:30 does not exist then, so it lands after the gap, at 03:30 CEST.
+            Typed(LocalDate.of(2026, 3, 29), "2:30", end = "4", from = "2026-03-29T01:30:00Z", stop = "2026-03-29T02:00:00Z"),
+            // Autumn: 02:30 happens twice, and the later one, in CET, is the one.
+            Typed(LocalDate.of(2026, 10, 25), "2:30", end = "3", from = "2026-10-25T01:30:00Z", stop = "2026-10-25T02:00:00Z"),
+        )) {
+            changes.calls.clear()
+            openNew()
+            onMain {
+                model.setDate(case.date)
+                model.setStart(case.start)
+                model.setEnd(case.end!!)
+                model.save()
+            }
+            awaitState("$case saves") { it == EntryFormState.Saved }
+            assertEquals("$case", listOf("create $WORKSPACE ${EntryFields()} ${case.from} ${case.stop}"), changes.calls)
+        }
+    }
+
+    /** As the web app guesses for a 12-hour clock: the start nearer to now, then the first end after it. */
+    @Test
+    fun twelveHourAccountsGetTheNearerStartAndTheFirstEndAfterIt() {
+        settings.value = SETTINGS.copy(twelveHour = true)
+        openNew()
+        onMain {
+            // At noon, 4 is nearer as 4 PM, and 5 after it is 5 PM.
+            model.setStart("4")
+            model.setEnd("5")
+        }
+
+        save()
+
+        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T14:00:00Z 2026-10-19T15:00:00Z"), changes.calls)
+    }
+
+    @Test
+    fun aPastEntryWithoutReadableTimesIsMarkedInTheManualFormsWords() {
+        openNew()
+        onMain { model.save() }
+        awaitOpen("the start is marked") { it.mistakes == mapOf(TimeField.START to TimeMistake.MANUAL_TIMES) }
+
+        onMain {
+            model.setStart("9")
+            model.save()
+        }
+        awaitOpen("the end is marked") { it.mistakes == mapOf(TimeField.END to TimeMistake.MANUAL_TIMES) }
+        assertEquals("nothing queued", emptyList<String>(), changes.calls)
+    }
+
+    @Test
+    fun aPastEntryWaitsForTheAccountsWorkspace() {
+        settings.value = SETTINGS.copy(defaultWorkspaceId = null)
+        openNew()
+        onMain {
+            model.setStart("9")
+            model.setEnd("10")
+            model.save()
+        }
+
+        val form = awaitOpen("the form stays open") { it.workspaceId == null }
+        assertEquals(false, form.saving)
+        assertEquals("nothing queued", emptyList<String>(), changes.calls)
+    }
+
+    private fun openNew(): EntryFormState.Open {
+        onMain { model.new() }
+        return awaitOpen("the form for a past entry opens") { !it.editing && it.start.isEmpty() }
+    }
+
+    /** What a test types into the form, and the span it saves. */
+    private data class Typed(
+        val date: LocalDate = LocalDate.of(2026, 10, 19),
+        val start: String,
+        val end: String? = null,
+        val duration: String? = null,
+        val from: String,
+        val stop: String,
+    )
+
     private fun openEntry(): EntryFormState.Open {
         onMain { model.edit(ENTRY_ID) }
         return awaitOpen("the form opens") { true }

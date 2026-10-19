@@ -46,10 +46,12 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
@@ -63,9 +65,9 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 
 /**
- * The entry form against the real Tokkl container (docs/PRD.md H2): an entry the web app made,
- * opened from the history, edited and saved through the change queue, online and in airplane
- * mode. The test's own requests stand in for the web app and go straight to the server. Each test
+ * The entry form against the real Tokkl container: an entry the web app made, opened from the
+ * history, edited and saved through the change queue (docs/PRD.md H2), and past entries added
+ * from the Timer page (M1), online and in airplane mode. The test's own requests stand in for the web app and go straight to the server. Each test
  * signs in to an account of its own, in Madrid, and deletes it after.
  */
 class EntryFormServerTest {
@@ -214,6 +216,43 @@ class EntryFormServerTest {
         }
     }
 
+    /** docs/PRD.md M1: a past entry by a start and a duration, and one from 23:00 to 01:00. */
+    @Test
+    fun pastEntriesByDurationAndAcrossMidnightReachTheServer() {
+        val today = ZonedDateTime.now(MADRID).toLocalDate()
+        launch {
+            addPastEntry("By duration", start = "930", duration = "1,5h")
+            addPastEntry("Across midnight", start = "23:00", end = "1:00")
+            drainUntilEmpty()
+        }
+
+        val byDuration = serverEntry("By duration")
+        assertEquals(at(today, 9, 30), instant(byDuration.string("start")))
+        assertEquals(at(today, 11, 0), instant(byDuration.string("stop")))
+        val acrossMidnight = serverEntry("Across midnight")
+        assertEquals(at(today, 23, 0), instant(acrossMidnight.string("start")))
+        assertEquals("it ends on the next day", at(today.plusDays(1), 1, 0), instant(acrossMidnight.string("stop")))
+    }
+
+    @Test
+    fun aPastEntrySavedInAirplaneModeReachesTheServerWhenTheNetworkReturns() {
+        val today = ZonedDateTime.now(MADRID).toLocalDate()
+        launch {
+            AirplaneMode.set(true, web)
+            addPastEntry("Offline past entry", start = "8", end = "9:15")
+            awaitShows("the history says the server lacks it") {
+                composeRule.onNode(hasText("Offline past entry") and hasText(string(R.string.history_unsent), ignoreCase = true))
+            }
+
+            AirplaneMode.set(false, web)
+            drainUntilEmpty()
+        }
+
+        val saved = serverEntry("Offline past entry")
+        assertEquals(at(today, 8, 0), instant(saved.string("start")))
+        assertEquals(at(today, 9, 15), instant(saved.string("stop")))
+    }
+
     private fun launch(steps: () -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
@@ -236,10 +275,25 @@ class EntryFormServerTest {
         awaitShows("the form opens") { field(R.string.entry_start) }
     }
 
-    /** Taps Save, which queues the change at once and closes the form. */
-    private fun save() {
+    /**
+     * Opens the form for a past entry from the Timer page, on today's date, and saves [description]
+     * from [start] to [end], or for [duration].
+     */
+    private fun addPastEntry(description: String, start: String, end: String? = null, duration: String? = null) {
+        composeRule.onNode(hasText(string(R.string.timer_add_entry)) and hasClickAction()).performClick()
+        awaitShows("the form for a past entry opens") { composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()) }
+        composeRule.waitUntil("the account's workspace is known", NETWORK_TIMEOUT.toMillis()) { field(R.string.entry_description).isEnabled() }
+        field(R.string.entry_description).performTextInput(description)
+        replace(R.string.entry_start, start)
+        end?.let { replace(R.string.entry_end, it) }
+        duration?.let { replace(R.string.entry_duration, it) }
+        save(R.string.entry_form_new)
+    }
+
+    /** Taps Save, which queues the change at once and closes the form, titled [title]. */
+    private fun save(@StringRes title: Int = R.string.entry_form_edit) {
         composeRule.onNode(hasText(string(R.string.entry_save)) and hasClickAction()).performScrollTo().performClick()
-        val heading = hasText(string(R.string.entry_form_edit)) and isHeading()
+        val heading = hasText(string(title)) and isHeading()
         composeRule.waitUntil("the form closes within $AT_ONCE", AT_ONCE.toMillis()) {
             composeRule.onAllNodes(heading).fetchSemanticsNodes().isEmpty()
         }
@@ -280,6 +334,15 @@ class EntryFormServerTest {
 
     private fun SemanticsNodeInteraction.isError(): Boolean =
         SemanticsProperties.Error in fetchSemanticsNode().config
+
+    private fun SemanticsNodeInteraction.isEnabled(): Boolean =
+        SemanticsProperties.Disabled !in fetchSemanticsNode().config
+
+    /** The entry described as [description], as the server keeps it. */
+    private fun serverEntry(description: String): JsonObject =
+        web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
+            .map { it.jsonObject }
+            .single { it.string("description") == description }
 
     private fun dateButton(): SemanticsNodeInteraction =
         composeRule.onNode(hasContentDescription(string(R.string.entry_date_spoken, ""), substring = true) and hasClickAction())

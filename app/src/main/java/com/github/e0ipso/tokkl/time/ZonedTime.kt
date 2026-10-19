@@ -4,7 +4,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-// Port of zonedToUtc in ../tokkl/packages/common/time.ts at tokkl commit
+// Port of zonedToUtc and addClockMinutes in ../tokkl/packages/common/time.ts at tokkl commit
 // bafe8eb953c258804bb100850a5faa475823ce91. ZonedTimeTest replays the cases from time.test.ts.
 
 private const val DAY_MS = 86_400_000L
@@ -33,6 +33,18 @@ fun zonedToUtc(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: 
     // A second pass settles guesses that landed on the other side of a DST change.
     guess = wall - offsetMillis(guess, zone)
     return Instant.ofEpochMilli(guess)
+}
+
+/**
+ * Moves [instant] by [minutes] on the wall clock of [zone], as addClockMinutes in Tokkl, so 01:00
+ * plus 120 is 03:00 even when the clocks change in between. A result in the spring gap lands after
+ * it, and one in the repeated autumn hour is the later one, as [zonedToUtc] decides. The seconds
+ * and milliseconds of [instant] stay as they are.
+ */
+fun addClockMinutes(instant: Instant, minutes: Int, zone: ZoneId): Instant {
+    val wall = instant.atZone(zone)
+    val shifted = zonedToUtc(wall.year, wall.monthValue, wall.dayOfMonth, wall.hour, wall.minute + minutes, wall.second, zone)
+    return shifted.plusMillis(Math.floorMod(instant.toEpochMilli(), SECOND_MS))
 }
 
 /** JavaScript's `Date.UTC(year, month - 1, day, hour, minute, second)`, months counted from 1. */

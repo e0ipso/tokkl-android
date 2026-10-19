@@ -212,6 +212,7 @@ private fun CalendarPage() {
                     onBillableChange = {},
                     onStart = {},
                     onStop = {},
+                    onAddEntry = {},
                     picker = { _, _, _, _, _ -> },
                 )
             },

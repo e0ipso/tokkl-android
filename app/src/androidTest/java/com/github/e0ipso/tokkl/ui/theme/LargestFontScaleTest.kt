@@ -64,8 +64,9 @@ import org.junit.runners.model.Statement
  * text is cut off, leaves the screen or overlaps another. The sign-in form and the settings
  * scroll, so each of their parts has to fit once scrolled into view. So do the trust prompts,
  * from sign-in and over the Timer page, and the notice left after cancelling one. The Timer
- * page's idle timer fits above its history. The bottom bar's five items fit side by side, each
- * label whole. With the keyboard open, the sign-in field being typed in stays above it.
+ * page's idle timer and its button for a past entry fit above its history, and so does each part
+ * of the entry form, scrolled into view. The bottom bar's five items fit side by side, each label
+ * whole. With the keyboard open, the sign-in field being typed in stays above it.
  *
  * ClockAndTotalStylesFitTest covers the clock and totals styles in wrapping text.
  */
@@ -92,6 +93,44 @@ class LargestFontScaleTest {
 
         assertFitWithoutOverlap(*timerPageParts().toTypedArray(), text(R.string.history_empty_title))
         assertLabelsWhole()
+    }
+
+    @Test
+    fun pastEntryFormFits() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitTimerPage()
+        button(R.string.timer_add_entry).performClick()
+        composeRule.waitUntil("the form opens", NETWORK_TIMEOUT_MS) {
+            composeRule.onAllNodes(hasSetTextAction() and hasText(string(R.string.entry_start))).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        assertFitWhenScrolledTo(
+            blocks = listOf(
+                "back button" to composeRule.onNode(hasContentDescription(string(R.string.back)) and hasClickAction()),
+                "heading" to composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()),
+                "description field" to field(R.string.entry_description),
+                "project button" to composeRule.onNode(hasContentDescription(string(R.string.entry_no_project_spoken)) and hasClickAction()),
+                "tags button" to composeRule.onNode(hasContentDescription(string(R.string.entry_no_tags_spoken)) and hasClickAction()),
+                "billable" to switch(R.string.entry_billable),
+                "date button" to composeRule.onNode(
+                    hasContentDescription(string(R.string.entry_date_spoken, ""), substring = true) and hasClickAction(),
+                ),
+                "start field" to field(R.string.entry_start),
+                "end field" to field(R.string.entry_end),
+                "duration field" to field(R.string.entry_duration),
+                "cancel button" to button(R.string.entry_cancel),
+                "save button" to button(R.string.entry_save),
+            ),
+            texts = listOf(
+                fieldLabel(R.string.entry_description),
+                inside(R.string.entry_billable, isToggleable()),
+                fieldLabel(R.string.entry_start),
+                fieldLabel(R.string.entry_end),
+                fieldLabel(R.string.entry_duration),
+                inside(R.string.entry_cancel, hasClickAction()),
+                inside(R.string.entry_save, hasClickAction()),
+            ),
+        )
     }
 
     @Test
@@ -642,6 +681,7 @@ class LargestFontScaleTest {
             "tags button" to composeRule.onNode(hasContentDescription(string(R.string.entry_no_tags_spoken)) and hasClickAction()),
             "billable" to composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable()),
             "start button" to composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()),
+            "past entry button" to button(R.string.timer_add_entry),
             "view switch" to composeRule.onNode(
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup) and
                     hasAnyDescendant(hasText(string(R.string.timer_view_list))),
@@ -655,6 +695,7 @@ class LargestFontScaleTest {
             R.string.entry_tags to hasClickAction(),
             R.string.entry_billable to isToggleable(),
             R.string.timer_start to hasClickAction(),
+            R.string.timer_add_entry to hasClickAction(),
         )) {
             val (name, text) = inside(label, control)
             text.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }

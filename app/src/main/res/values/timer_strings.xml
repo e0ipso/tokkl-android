@@ -13,4 +13,6 @@
     <string name="timer_running">Running</string>
     <!-- What TalkBack reads for the running clock: 1 hour, 5 minutes elapsed -->
     <string name="timer_elapsed_spoken">%1$s elapsed</string>
+    <!-- The timer's button that opens the form for a past entry (docs/PRD.md M1). -->
+    <string name="timer_add_entry">Add a past entry</string>
 </resources>

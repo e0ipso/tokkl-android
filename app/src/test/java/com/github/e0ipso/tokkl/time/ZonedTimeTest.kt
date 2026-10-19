@@ -1,5 +1,5 @@
 // Cases copied verbatim from ../tokkl/packages/common/time.test.ts at tokkl commit
-// bafe8eb953c258804bb100850a5faa475823ce91, for the port of zonedToUtc in
+// bafe8eb953c258804bb100850a5faa475823ce91, for the port of zonedToUtc and addClockMinutes in
 // ../tokkl/packages/common/time.ts at the same commit. The helpers below stand in for the
 // TypeScript's dateKey, clockMinutes and addDays, which the cases call.
 // Diff the TypeScript file against this one to spot drift.
@@ -26,6 +26,33 @@ class ZonedTimeTest {
     }
 
     @Test
+    fun `addClockMinutes shifts by local clock time across Madrid DST changes`() {
+        // Spring: 01:00 CET plus 120 clock minutes is 03:00 CEST, one hour of elapsed time.
+        val one = at("2026-03-29T00:00:00Z")
+        assertEquals("2026-03-29T01:00:00.000Z", iso(addClockMinutes(one, 120, MADRID)))
+        // A result inside the spring gap (02:30) lands after it, at 03:30 CEST.
+        assertEquals("2026-03-29T01:30:00.000Z", iso(addClockMinutes(at("2026-03-29T00:30:00Z"), 60, MADRID)))
+        // Autumn: 01:30 CEST plus 60 is 02:30, which happens twice; it resolves to the later one (CET).
+        assertEquals("2026-10-25T01:30:00.000Z", iso(addClockMinutes(at("2026-10-24T23:30:00Z"), 60, MADRID)))
+        // 00:00 CEST plus 240 is 04:00 CET, five hours of elapsed time.
+        assertEquals("2026-10-25T03:00:00.000Z", iso(addClockMinutes(at("2026-10-24T22:00:00Z"), 240, MADRID)))
+    }
+
+    @Test
+    fun `addClockMinutes handles negative shifts, midnight crossings and milliseconds`() {
+        // 03:00 CEST minus 120 is 01:00 CET.
+        assertEquals("2026-03-29T00:00:00.000Z", iso(addClockMinutes(at("2026-03-29T01:00:00Z"), -120, MADRID)))
+        // 23:00 CET on the 28th plus 240 is 03:00 CEST on the 29th.
+        assertEquals("2026-03-29T01:00:00.000Z", iso(addClockMinutes(at("2026-03-28T22:00:00Z"), 240, MADRID)))
+        // 00:30 CET on the 29th minus 60 is 23:30 CET on the 28th.
+        assertEquals("2026-03-28T22:30:00.000Z", iso(addClockMinutes(at("2026-03-28T23:30:00Z"), -60, MADRID)))
+        // 04:00 CET on 2026-10-26 minus 240 crosses midnight back to 00:00 CET.
+        assertEquals("2026-10-25T23:00:00.000Z", iso(addClockMinutes(at("2026-10-26T03:00:00Z"), -240, MADRID)))
+        assertEquals("2026-10-14T08:30:05.250Z", iso(addClockMinutes(at("2026-10-14T08:00:05.250Z"), 30, MADRID)))
+        assertEquals("2026-10-14T08:00:00.000Z", iso(addClockMinutes(at("2026-10-14T08:00:00Z"), 0, MADRID)))
+    }
+
+    @Test
     fun `the next local day at a clock time spans DST nights correctly`() {
         // A 10:00 to 09:00-next-day range is 22 hours on the spring night and 24 on the autumn night.
         assertEquals(22.0, hours(zonedToUtc(2026, 3, 28, 10, 0, 0, MADRID), zonedToUtc(2026, 3, 29, 9, 0, 0, MADRID)), 0.0)
@@ -46,6 +73,9 @@ class ZonedTimeTest {
     }
 
     private fun zone(name: String): ZoneId = ZoneId.of(name)
+
+    /** `at` in time.test.ts: `new Date(iso)`. */
+    private fun at(iso: String): Instant = Instant.parse(iso)
 
     /** JavaScript's `toISOString`, with milliseconds. */
     private fun iso(instant: Instant): String = ISO.format(instant)

@@ -428,6 +428,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             onBillableChange = {},
             onStart = {},
             onStop = {},
+            onAddEntry = {},
             picker = { _, _, _, _, _ -> },
         )
     }

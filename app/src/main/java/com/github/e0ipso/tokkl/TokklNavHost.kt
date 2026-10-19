@@ -70,8 +70,8 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a page, such as Licences from
  * Settings, stacks above that page, and the bar keeps marking the page. While [timerRunning] says
  * a time entry runs, the bar's Timer item carries a dot. The Timer page's [timer] picks projects,
- * tasks and tags from [cache]. A tap on an entry in the history opens [entryForm] above the Timer
- * page.
+ * tasks and tags from [cache]. A tap on an entry in the history, or on the Timer page's button for
+ * a past entry, opens [entryForm] above the Timer page.
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -135,7 +135,10 @@ fun TokklNavHost(
             timerView = view,
             onTimerViewChange = timerView::choose,
         ) {
-            TimerBar(timer, cache)
+            TimerBar(timer, cache, onAddEntry = {
+                entryForm.new()
+                backStack.add(Destination.ENTRY)
+            })
         }
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }

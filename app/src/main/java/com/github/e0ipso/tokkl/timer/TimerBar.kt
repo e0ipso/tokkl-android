@@ -45,6 +45,7 @@ import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
+import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
@@ -62,10 +63,16 @@ typealias WorkspacePicker =
  * The timer at the top of the Timer page (docs/PRD.md T1), from [model], with the cached
  * projects, tasks and tags of [cache] in its picker. While an entry runs, the clock counts from
  * its start on the phone, a tick at each whole second while the screen shows, and asks the server
- * nothing (principle 3).
+ * nothing (principle 3). Its button for a past entry calls [onAddEntry] (M1).
  */
 @Composable
-fun TimerBar(model: TimerModel, cache: AccountCache, modifier: Modifier = Modifier, clock: Clock = Clock.systemUTC()) {
+fun TimerBar(
+    model: TimerModel,
+    cache: AccountCache,
+    onAddEntry: () -> Unit,
+    modifier: Modifier = Modifier,
+    clock: Clock = Clock.systemUTC(),
+) {
     val state by model.state.collectAsState()
     val elapsed = rememberElapsedSeconds((state as? TimerState.Running)?.start, clock)
     TimerBarContent(
@@ -77,6 +84,7 @@ fun TimerBar(model: TimerModel, cache: AccountCache, modifier: Modifier = Modifi
         onBillableChange = model::setBillable,
         onStart = model::start,
         onStop = model::stop,
+        onAddEntry = onAddEntry,
         picker = { workspaceId, original, picked, onPickedChange, pickerModifier ->
             EntityPicker(cache, workspaceId, original, picked, onPickedChange, pickerModifier)
         },
@@ -90,6 +98,8 @@ fun TimerBar(model: TimerModel, cache: AccountCache, modifier: Modifier = Modifi
  * Stop. The frame takes the running colour while an entry runs, and the label and the Stop
  * button's square say so too, so colour is never the only sign. Until the phone knows the
  * account's workspace, which the first account settings bring, the fields and Start are disabled.
+ * After Start or Stop comes the button that adds a past entry by hand, as the web app's bar holds
+ * its manual mode (M1), whether an entry runs or not.
  */
 @Composable
 fun TimerBarContent(
@@ -101,6 +111,7 @@ fun TimerBarContent(
     onBillableChange: (Boolean) -> Unit,
     onStart: () -> Unit,
     onStop: () -> Unit,
+    onAddEntry: () -> Unit,
     picker: WorkspacePicker,
     modifier: Modifier = Modifier,
 ) {
@@ -144,6 +155,7 @@ fun TimerBarContent(
                     focusManager.clearFocus()
                 }
             }
+            TokklGhostButton(onClick = onAddEntry) { Text(stringResource(R.string.timer_add_entry)) }
         }
     }
 }
