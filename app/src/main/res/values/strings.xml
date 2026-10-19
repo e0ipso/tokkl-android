@@ -35,7 +35,7 @@
         <item quantity="other">You can try again in %d seconds.</item>
     </plurals>
 
-    <string name="sign_in_error_server_url">Enter an http or https URL, such as https://example.com/tokkl. Leave out any user name or password.</string>
+    <string name="sign_in_error_server_url">Enter an http or https URL, no user name or password.</string>
     <string name="sign_in_error_api_token">Enter your API token.</string>
     <string name="sign_in_error_email">Enter your email.</string>
     <string name="sign_in_error_email_colon">An email can\'t contain a colon.</string>
