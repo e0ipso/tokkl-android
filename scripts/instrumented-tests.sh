@@ -19,8 +19,8 @@
 #    as instrumentation arguments. The emulator reaches the host's 127.0.0.1
 #    as 10.0.2.2. The credentials work only on this container. The run fails
 #    when a test device goes away during it, even if Gradle reports success.
-# 6. Removes both containers, the certificate's key and the credentials file,
-#    also when a step fails.
+# 6. Removes both containers, the certificate's key, the credentials file and
+#    the test filter file, if any (see below), also when a step fails.
 #
 # The setup code, the password and the API token never appear in a process's
 # arguments, which every user on the machine can read with ps.
@@ -49,6 +49,21 @@
 # Arguments go to Gradle, for example to run one class:
 #   scripts/instrumented-tests.sh \
 #     -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest
+#
+# The test filters it takes, each as one -Pandroid.testInstrumentationRunnerArguments.<name>=<value>
+# argument:
+#   class=<class>              one class
+#   class=<class>#<method>     one test
+#   class=<entry>,<entry>,...  several classes or tests
+#   package=<package>          one package and the packages under it
+#   package=<package>,...      several packages
+# AGP hands the test runner all its arguments in one string of key=value pairs
+# joined with commas, and splits that string at every comma. A value with a
+# comma lost everything after its first comma, so class=A,B ran only A and
+# still passed. So the script writes a class= or package= list to a file on
+# each test device, one entry per line, and passes the runner its path as
+# testFile instead. It refuses a comma in any other runner argument, and a
+# testFile argument of your own beside a list.
 
 set -euo pipefail
 
@@ -65,6 +80,9 @@ readonly RUNNER_ARGS='android.testInstrumentationRunnerArguments'
 # prefix, a random part and .properties.
 readonly CREDENTIALS_DIR='/data/local/tmp'
 readonly CREDENTIALS_PREFIX='tokkl-test-credentials-'
+# Where a run puts the class= or package= list it passes as testFile, beside
+# the credentials file.
+readonly FILTER_PREFIX='tokkl-test-filter-'
 # A run takes minutes, so a credentials file this many hours old belongs to a
 # run that ended without its cleanup, never to one still reading it.
 readonly STALE_CREDENTIALS_HOURS=6
@@ -77,6 +95,37 @@ cd "$(dirname "$0")/.."
 for tool in docker adb curl jq openssl flock; do
     command -v "$tool" >/dev/null || { echo "$0: $tool is not on PATH" >&2; exit 1; }
 done
+
+# The arguments for Gradle, and the entries of a class= or package= list,
+# which go to the runner in a file (see the header). Checked before the run
+# waits for its turn or boots anything.
+gradle_args=()
+test_filter=()
+for arg in "$@"; do
+    case $arg in
+        "-P$RUNNER_ARGS.class="*,* | "-P$RUNNER_ARGS.package="*,*)
+            IFS=, read -ra entries <<<"${arg#*=}"
+            for entry in "${entries[@]}"; do
+                if [ -n "$entry" ]; then test_filter+=("$entry"); fi
+            done
+            ;;
+        *"$RUNNER_ARGS."*=*,*)
+            echo "$0: $arg holds a comma. AGP splits the test runner's arguments at every comma. Only a class= or package= list may hold commas, given as one -P$RUNNER_ARGS.<name>=<list> argument." >&2
+            exit 2
+            ;;
+        *) gradle_args+=("$arg") ;;
+    esac
+done
+if [ "${#test_filter[@]}" -gt 0 ]; then
+    for arg in "${gradle_args[@]}"; do
+        case $arg in
+            *"$RUNNER_ARGS.testFile="*)
+                echo "$0: $arg cannot go with a class= or package= list, which the script passes as testFile." >&2
+                exit 2
+                ;;
+        esac
+    done
+fi
 
 # Runs take turns. A second run would test on the first one's emulator, which
 # the first one's cleanup then stops, along with an adb server it started. So
@@ -103,6 +152,7 @@ emulator_pid=''
 emulator_serial=''
 emulator_unit=''
 credentials_on_device=''
+filter_on_device=''
 devices_with_credentials=()
 adb_was_running=false
 if pgrep -x adb >/dev/null; then adb_was_running=true; fi
@@ -142,8 +192,8 @@ cleanup() {
     # sync writes the deletion to disk before an emulator this script booted
     # is killed below. Without it, the file was back on the next boot.
     for device in "${devices_with_credentials[@]}"; do
-        adb -s "$device" shell "rm -f $credentials_on_device && sync" >/dev/null 2>&1 ||
-            echo "$0: could not remove $credentials_on_device from $device" >&2
+        adb -s "$device" shell "rm -f $credentials_on_device $filter_on_device && sync" >/dev/null 2>&1 ||
+            echo "$0: could not remove $credentials_on_device${filter_on_device:+ or $filter_on_device} from $device" >&2
     done
     if [ -n "$emulator_pid" ] && ! kill -0 "$emulator_pid" 2>/dev/null; then
         report_emulator_exit
@@ -353,6 +403,12 @@ if [ -n "${ANDROID_SERIAL:-}" ]; then
 else
     mapfile -t devices < <(attached_devices)
 fi
+if [ "${#test_filter[@]}" -gt 0 ]; then
+    filter="$work_dir/test-filter.txt"
+    printf '%s\n' "${test_filter[@]}" >"$filter"
+    filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
+    gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
+fi
 for device in "${devices[@]}"; do
     remove_stale_credentials "$device"
     devices_with_credentials+=("$device")
@@ -360,6 +416,12 @@ for device in "${devices[@]}"; do
     # adb push keeps this machine's modification time. touch sets the device's
     # own, the clock its stale file check reads.
     adb -s "$device" shell "chmod 600 $credentials_on_device && touch $credentials_on_device"
+    # The test runner reads the list in the app's process, so every user may
+    # read it. It names test classes and nothing secret.
+    if [ -n "$filter_on_device" ]; then
+        adb -s "$device" push "$filter" "$filter_on_device" >/dev/null
+        adb -s "$device" shell "chmod 644 $filter_on_device"
+    fi
 done
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
@@ -371,7 +433,7 @@ gradle_status=0
     "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
     "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
     "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
-    "$@" || gradle_status=$?
+    "${gradle_args[@]}" || gradle_status=$?
 
 # AGP's test task can pass when a device dies between two tests. With the
 # emulator killed a second into the run, Gradle printed BUILD SUCCESSFUL and
