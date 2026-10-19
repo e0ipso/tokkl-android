@@ -61,7 +61,7 @@ import java.time.ZoneOffset
  * button names the preset the range matches today, when it matches one.
  *
  * [selection] is null while there is no range, and then every control is off. [time] gives
- * today and the week start in the account's timezone.
+ * today and the week start in the account's timezone. [presets] are the ones the dialog offers.
  */
 @Composable
 internal fun RangeControl(
@@ -71,6 +71,7 @@ internal fun RangeControl(
     onPreset: (RangePreset) -> Unit,
     onCustom: (ReportRange) -> Unit,
     modifier: Modifier = Modifier,
+    presets: List<RangePreset> = RangePreset.entries,
 ) {
     var presetsOpen by rememberSaveable { mutableStateOf(false) }
     var customOpen by rememberSaveable { mutableStateOf(false) }
@@ -118,6 +119,7 @@ internal fun RangeControl(
 
     if (presetsOpen && enabled) {
         PresetDialog(
+            presets = presets,
             active = active,
             onPreset = { presetsOpen = false; onPreset(it) },
             onCustom = { presetsOpen = false; customOpen = true },
@@ -136,7 +138,7 @@ internal fun RangeControl(
 
 /** The presets as radio buttons, which apply on a tap, and a button that opens the custom range. */
 @Composable
-private fun PresetDialog(active: RangePreset?, onPreset: (RangePreset) -> Unit, onCustom: () -> Unit, onDismiss: () -> Unit) {
+private fun PresetDialog(presets: List<RangePreset>, active: RangePreset?, onPreset: (RangePreset) -> Unit, onCustom: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.reports_range_title), modifier = Modifier.semantics { heading() }) },
@@ -144,7 +146,7 @@ private fun PresetDialog(active: RangePreset?, onPreset: (RangePreset) -> Unit, 
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 // Radio buttons: the selected one differs in shape, not only in colour.
                 Column(Modifier.selectableGroup()) {
-                    for (preset in RangePreset.entries) {
+                    for (preset in presets) {
                         RadioOptionRow(
                             label = stringResource(PRESET_LABELS.getValue(preset)),
                             selected = preset == active,

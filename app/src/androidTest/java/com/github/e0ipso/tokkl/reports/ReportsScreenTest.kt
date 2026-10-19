@@ -246,7 +246,9 @@ class ReportsScreenTest {
 
     /**
      * No text on screen or in an open dialog is cut off or leaves the screen's width. Semantics
-     * lays text out again at the full width, so only the height says whether it was cut off.
+     * lays text out again at the full width, so only the height says whether it was cut off. Text
+     * in a row that scrolls sideways, such as the report tabs at the largest font scale, may lie
+     * past the edge, since a scroll brings it in.
      */
     private fun assertTextsFit() {
         compose.waitForIdle()
@@ -256,11 +258,15 @@ class ReportsScreenTest {
         for (node in texts) {
             val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString() ?: continue
             textLayout(node)?.let { assertFalse("cut off: $text", it.didOverflowHeight) }
+            if (scrollsSideways(node)) continue
             val left = node.positionOnScreen.x
             val right = left + node.size.width
             assertTrue("leaves the screen's width, $left to $right of $screenWidth: $text", left >= -1 && right <= screenWidth + 1)
         }
     }
+
+    private fun scrollsSideways(node: SemanticsNode): Boolean =
+        generateSequence(node.parent) { it.parent }.any { SemanticsProperties.HorizontalScrollAxisRange in it.config }
 
     private fun textLayout(node: SemanticsNode): TextLayoutResult? {
         val layouts = mutableListOf<TextLayoutResult>()

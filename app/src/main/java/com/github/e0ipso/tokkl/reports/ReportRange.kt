@@ -48,6 +48,16 @@ data class ReportRange(val from: LocalDate, val to: LocalDate) {
         return ReportRange(from.plusDays(days * step), to.plusDays(days * step))
     }
 
+    /**
+     * The week the weekly report shows for this range: seven days from [firstDayOfWeek], the
+     * week that holds [today] when the range does, otherwise the one that holds its first day.
+     */
+    fun week(today: LocalDate, firstDayOfWeek: DayOfWeek): ReportRange {
+        val day = if (today.isBefore(from) || today.isAfter(to)) from else today
+        val start = day.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
+        return ReportRange(start, start.plusDays(DAYS_IN_WEEK - 1L))
+    }
+
     /** The number of calendar months the range covers, or 0 when it does not start and end on month edges. */
     private fun wholeMonths(): Long {
         if (from.dayOfMonth != 1 || to != to.with(TemporalAdjusters.lastDayOfMonth())) return 0

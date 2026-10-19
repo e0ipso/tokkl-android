@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.WithHeaders
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeParseException
@@ -91,6 +92,31 @@ class ReportsServer(private val api: TogglApiClient) {
     }
 
     /**
+     * The weekly report of the seven days from [weekStart] in [workspace], from
+     * `POST /reports/api/v3/workspace/{id}/weekly/time_entries`: a row per project with its
+     * seconds on each day. The request asks for the workspace's rounding, as [entries] does.
+     */
+    fun weekly(workspace: ReportWorkspace, weekStart: LocalDate): ApiResult<List<WeeklyRow>> {
+        val url = api.server.reports("workspace", workspace.id.toString(), "weekly", "time_entries")
+        val body = buildJsonObject {
+            put("start_date", weekStart.toString())
+            put("end_date", weekStart.plusDays(DAYS_IN_WEEK - 1L).toString())
+            put("rounding", workspace.rounding)
+            put("rounding_minutes", workspace.roundingMinutes)
+        }
+        val rows = when (val answer = api.send("POST", url, body, WEEKLY_ROWS)) {
+            is ApiResult.Success -> answer.value
+            is ApiResult.Failure -> return answer
+        }
+        if (rows.any { it.seconds.size != DAYS_IN_WEEK }) {
+            return ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("a weekly row does not hold $DAYS_IN_WEEK days")))
+        }
+        return ApiResult.Success(
+            rows.map { WeeklyRow(it.projectId, it.projectName ?: "", it.projectColor ?: it.projectHexColor, it.seconds.map { day -> day ?: 0 }) },
+        )
+    }
+
+    /**
      * A page of `POST /reports/api/v3/workspace/{id}/search/time_entries` by date in [direction],
      * `ASC` or `DESC`, with the workspace's rounding.
      */
@@ -141,6 +167,8 @@ class ReportsServer(private val api: TogglApiClient) {
         const val NEXT_ROW_HEADER = "X-Next-Row-Number"
 
         val ROWS = ListSerializer(DetailedRow.serializer())
+
+        val WEEKLY_ROWS = ListSerializer(WeeklyServerRow.serializer())
     }
 }
 
@@ -205,3 +233,13 @@ private class DetailedRow(
  */
 @Serializable
 private class DetailedTimeEntry(val id: Long? = null, val seconds: Long, val start: String, val stop: String? = null)
+
+/** One row of the weekly report: a project's seconds on each of the seven days, after rounding. */
+@Serializable
+private class WeeklyServerRow(
+    @SerialName("project_id") val projectId: Long? = null,
+    @SerialName("project_name") val projectName: String? = null,
+    @SerialName("project_color") val projectColor: String? = null,
+    @SerialName("project_hex_color") val projectHexColor: String? = null,
+    val seconds: List<Long?> = emptyList(),
+)

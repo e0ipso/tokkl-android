@@ -22,9 +22,10 @@ data class RangeSelection(val range: ReportRange, val preset: RangePreset?)
 enum class ReportTab {
     SUMMARY,
     DETAILED,
+    WEEKLY,
 }
 
-/** What one tab shows once the server answers: a [SummaryReport] or a [DetailedReport]. */
+/** What one tab shows once the server answers: a [SummaryReport], a [DetailedReport] or a [WeeklyReport]. */
 sealed interface Report
 
 /** What the reports screen shows. No state carries numbers from another range or an earlier answer. */
@@ -73,7 +74,8 @@ sealed interface ReportFailure {
 /**
  * The reports screen's state. Each time the screen opens, the tab or the range changes or the app
  * comes back to the foreground, it asks the configured server for the report, and it never asks
- * on a timer. The detailed tab asks for its next page when the list nears its end. Reports live
+ * on a timer. The detailed tab asks for its next page when the list nears its end, and the
+ * weekly tab always shows one whole week from the account's week start. Reports live
  * in memory while the screen is open; [close] drops them, and nothing is written to the phone.
  * When a request fails, the screen shows why and no numbers or entries, even those of pages that
  * loaded before.
@@ -134,7 +136,10 @@ class ReportsModel(
         load(RangeSelection(current.range.shift(direction), preset = null))
     }
 
-    /** Shows [tab] and asks for its report of the range on screen. */
+    /**
+     * Shows [tab] and asks for its report of the range on screen. The weekly tab takes the week
+     * that [ReportRange.week] picks from that range.
+     */
     fun selectTab(tab: ReportTab) {
         if (tab == mutableTab.value) return
         mutableTab.value = tab
@@ -202,17 +207,28 @@ class ReportsModel(
         mutableState.value = ReportsState.NoAccountTime(accountSettings.value?.timeZone)
     }
 
-    private fun load(selection: RangeSelection) {
+    private fun load(requested: RangeSelection) {
+        val tab = mutableTab.value
+        val selection = if (tab == ReportTab.WEEKLY) weekOf(requested) ?: return showNoAccountTime() else requested
         loading?.cancel()
         mutableState.value = ReportsState.Loading(selection)
         val known = workspace
-        val tab = mutableTab.value
         loading = scope.launch {
             // A cancelled load drops its answer: withContext throws once it returns.
             val (shown, read) = withContext(io) { fetch(selection, known, tab) }
             workspace = read
             mutableState.value = shown
         }
+    }
+
+    /**
+     * The week the weekly tab shows for [selection], with no preset when that changes its range,
+     * or null when the phone cannot resolve the account's timezone.
+     */
+    private fun weekOf(selection: RangeSelection): RangeSelection? {
+        val time = accountTime() ?: return null
+        val week = selection.range.week(time.today(), time.firstDayOfWeek)
+        return if (week == selection.range) selection else RangeSelection(week, preset = null)
     }
 
     /** What [tab] shows for [selection], and the workspace, [known] or read from the server when null. */
@@ -231,6 +247,10 @@ class ReportsModel(
             }
             ReportTab.DETAILED -> when (val answer = server.detailedPage(workspace, selection.range, time.zone, firstRow = 1)) {
                 is ApiResult.Success -> ReportsState.Loaded(selection, DetailedReport(answer.value.entries, answer.value.nextRow))
+                is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
+            }
+            ReportTab.WEEKLY -> when (val answer = server.weekly(workspace, selection.range.from)) {
+                is ApiResult.Success -> ReportsState.Loaded(selection, WeeklyReport.of(selection.range.from, answer.value))
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
         }

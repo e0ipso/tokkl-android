@@ -59,7 +59,7 @@ internal fun SummaryContent(report: SummaryReport, settings: AccountSettings) {
 
 /** A card in Tokkl's frame: surface, the large corners and a 2dp outline. */
 @Composable
-private fun ReportCard(content: @Composable ColumnScope.() -> Unit) {
+internal fun ReportCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
@@ -75,7 +75,7 @@ private fun ReportCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun CardHeading(text: String) {
+internal fun CardHeading(text: String) {
     Text(text = text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
 }
 

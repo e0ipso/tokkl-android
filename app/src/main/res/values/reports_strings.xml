@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The detailed report's words. The rest of the reports screen's are in strings.xml. -->
+<!-- The detailed and weekly reports' words. The rest of the reports screen's are in strings.xml. -->
 <resources>
     <string name="reports_tab_detailed">Detailed</string>
     <string name="reports_loading_more">Loading more entries…</string>
@@ -10,4 +10,19 @@
     <string name="reports_time_range">%1$s – %2$s</string>
     <!-- What TalkBack reads for reports_time_range. -->
     <string name="reports_time_range_spoken">from %1$s to %2$s</string>
+
+    <string name="reports_tab_weekly">Weekly</string>
+    <string name="reports_weekly_title">Time per project and day</string>
+    <string name="reports_weekly_project">Project</string>
+    <string name="reports_weekly_total">Total</string>
+    <!-- A day without time in the grid, as the web app's weekly report shows it. -->
+    <string name="reports_weekly_no_time">-</string>
+    <!-- What TalkBack reads for a cell: "Website, Mon 13 Oct: 2 hours, 30 minutes". -->
+    <string name="reports_weekly_cell_description">%1$s, %2$s: %3$s</string>
+    <!-- What TalkBack reads for a project's total: "Website, week total: 7 hours". -->
+    <string name="reports_weekly_row_total_description">%1$s, week total: %2$s</string>
+    <!-- What TalkBack reads for a day's total: "All projects, Mon 13 Oct: 3 hours". -->
+    <string name="reports_weekly_day_total_description">All projects, %1$s: %2$s</string>
+    <!-- What TalkBack reads for the week's total. -->
+    <string name="reports_weekly_total_description">All projects, week total: %1$s</string>
 </resources>

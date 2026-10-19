@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -28,11 +30,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -46,12 +50,13 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The reports screen (docs/PRD.md R1, R2 and R5): a tab per report, the summary and the detailed
- * list, under the range they share. Opening the screen asks the server for this week, and coming
- * back to the foreground asks again for the range on screen; leaving it forgets the report, while
- * a configuration change keeps it and asks nothing. Offline, it says that reports need the server
- * and shows no numbers or entries. The weekly report (TKA-0035) adds its tab here. It is a page
- * of the bottom bar, so it has no back button; system Back goes to Timer.
+ * The reports screen (docs/PRD.md R1, R2, R3 and R5): a tab per report, the summary, the detailed
+ * list and the weekly grid, under the range they share. On the weekly tab the range is always a
+ * week from the account's week start, and the range button offers only the week presets. Opening
+ * the screen asks the server for this week, and coming back to the foreground asks again for the
+ * range on screen; leaving it forgets the report, while a configuration change keeps it and asks
+ * nothing. Offline, it says that reports need the server and shows no numbers or entries. It is a
+ * page of the bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable
 fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
@@ -167,25 +172,46 @@ private fun Header(
         onShift = onShift,
         onPreset = onPreset,
         onCustom = onCustom,
+        presets = if (tab == ReportTab.WEEKLY) WEEK_PRESETS else RangePreset.entries,
     )
     Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
 }
 
 /**
  * The report types, in the web app's order. The tabs not shown are muted, as in the web app, and
- * the indicator under the one shown marks it by shape too.
+ * the indicator under the one shown marks it by shape too. The tabs share the width equally while
+ * every label fits its share on one line; at larger font scales the row scrolls sideways instead,
+ * so no label breaks inside a word.
  */
 @Composable
 private fun ReportTabs(selected: ReportTab, onTab: (ReportTab) -> Unit) {
-    PrimaryTabRow(selectedTabIndex = selected.ordinal, containerColor = MaterialTheme.colorScheme.background) {
+    val labels = ReportTab.entries.map { stringResource(TAB_LABELS.getValue(it)) }
+    val measurer = rememberTextMeasurer()
+    val style = MaterialTheme.typography.titleSmall
+    val density = LocalDensity.current
+    val tabs: @Composable () -> Unit = {
         for (tab in ReportTab.entries) {
             Tab(
                 selected = tab == selected,
                 onClick = { onTab(tab) },
-                text = { Text(stringResource(TAB_LABELS.getValue(tab))) },
+                text = { Text(labels[tab.ordinal], style = style) },
                 selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+    BoxWithConstraints {
+        val share = maxWidth / labels.size
+        val fit = labels.all { label ->
+            val width = with(density) { measurer.measure(label, style, softWrap = false, maxLines = 1).size.width.toDp() }
+            // Material pads a tab's text by 16dp on each side, the spacing scale's space4.
+            width + TokklTheme.spacing.space4 * 2 <= share
+        }
+        val background = MaterialTheme.colorScheme.background
+        if (fit) {
+            PrimaryTabRow(selectedTabIndex = selected.ordinal, containerColor = background, tabs = tabs)
+        } else {
+            PrimaryScrollableTabRow(selectedTabIndex = selected.ordinal, containerColor = background, edgePadding = 0.dp, tabs = tabs)
         }
     }
 }
@@ -193,7 +219,11 @@ private fun ReportTabs(selected: ReportTab, onTab: (ReportTab) -> Unit) {
 private val TAB_LABELS = mapOf(
     ReportTab.SUMMARY to R.string.reports_tab_summary,
     ReportTab.DETAILED to R.string.reports_tab_detailed,
+    ReportTab.WEEKLY to R.string.reports_tab_weekly,
 )
+
+/** The presets that name a whole week, the only ranges the weekly tab shows. */
+private val WEEK_PRESETS = listOf(RangePreset.THIS_WEEK, RangePreset.LAST_WEEK)
 
 @Composable
 private fun Body(state: ReportsState, settings: AccountSettings?, onRetry: () -> Unit) {
@@ -217,6 +247,11 @@ private fun Body(state: ReportsState, settings: AccountSettings?, onRetry: () ->
             }
             // A detailed report with entries shows as a list, once the settings and the zone are known.
             is DetailedReport -> if (report.entries.isEmpty()) Empty() else Loading()
+            is WeeklyReport -> when {
+                settings == null -> Loading()
+                report.rows.isEmpty() -> Empty()
+                else -> WeeklyContent(report, settings)
+            }
         }
     }
 }
