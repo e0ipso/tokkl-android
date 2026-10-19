@@ -17,6 +17,14 @@ abstract class CacheDao {
     @Query("SELECT * FROM time_entries ORDER BY start DESC, id DESC")
     abstract fun timeEntries(): Flow<List<CachedTimeEntry>>
 
+    /** The newest entry first, each marked unsent while the queue holds a change to it. */
+    @Query("SELECT time_entries.*, $UNSENT FROM time_entries ORDER BY start DESC, id DESC")
+    abstract fun timeEntriesWithSendState(): Flow<List<EntryWithSendState>>
+
+    /** The running entry that started last, or null when none runs. */
+    @Query("SELECT time_entries.*, $UNSENT FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC LIMIT 1")
+    abstract fun runningEntry(): Flow<EntryWithSendState?>
+
     @Query("SELECT * FROM projects ORDER BY name COLLATE NOCASE, id")
     abstract fun projects(): Flow<List<CachedProject>>
 
@@ -34,11 +42,13 @@ abstract class CacheDao {
     abstract fun favorites(): Flow<List<CachedFavorite>>
 
     /**
-     * Replaces every row with what [change] makes of the current rows, in one transaction, so a
-     * reader sees the cache before or after the refresh and never part way.
+     * Replaces every row with what [change] makes of the current rows and the queue's pending
+     * changes, oldest first, in one transaction, so a reader sees the cache before or after the
+     * refresh and never part way, and a change queued meanwhile is not lost. The queue stays as
+     * it is.
      */
     @Transaction
-    open fun refresh(change: (CacheContents) -> CacheContents) {
+    open fun refresh(change: (current: CacheContents, pending: List<PendingChange>) -> CacheContents) {
         val current = CacheContents(
             timeEntries = allTimeEntries(),
             projects = allProjects(),
@@ -47,7 +57,7 @@ abstract class CacheDao {
             tasks = allTasks(),
             favorites = allFavorites(),
         )
-        val next = change(current)
+        val next = change(current, allPendingChanges())
         deleteTimeEntries()
         insertTimeEntries(next.timeEntries)
         deleteProjects()
@@ -79,6 +89,9 @@ abstract class CacheDao {
 
     @Query("SELECT * FROM favorites")
     protected abstract fun allFavorites(): List<CachedFavorite>
+
+    @Query("SELECT * FROM pending_changes ORDER BY sequence")
+    protected abstract fun allPendingChanges(): List<PendingChange>
 
     @Query("DELETE FROM time_entries")
     protected abstract fun deleteTimeEntries()
@@ -115,4 +128,9 @@ abstract class CacheDao {
 
     @Insert
     protected abstract fun insertFavorites(rows: List<CachedFavorite>)
+
+    private companion object {
+        /** The `unsent` column of [EntryWithSendState]. */
+        const val UNSENT = "EXISTS (SELECT 1 FROM pending_changes WHERE pending_changes.entryId = time_entries.id) AS unsent"
+    }
 }

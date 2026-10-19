@@ -5,6 +5,9 @@ import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CacheDatabase
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
@@ -39,7 +42,8 @@ class TokklApplication : Application() {
      * Loaded on first use, which reads the stored settings from disk. That is usually
      * MainActivity's onStart on the main thread, and the file holds four short values. Each
      * refresh refreshes the [capabilities] and the [cache] too, with the same `GET /api/v9/me`,
-     * and the cache takes the favorites from the settings' `GET /api/v9/me/preferences`.
+     * and the cache takes the favorites from the settings' `GET /api/v9/me/preferences`. Then the
+     * [sender] sends the queue, since the server has just answered.
      */
     val accountSettings: AccountSettingsSource by lazy {
         val store = AccountSettingsStore(this)
@@ -49,7 +53,10 @@ class TokklApplication : Application() {
             client = Session(this)::client,
             scope = MainScope(),
             io = Dispatchers.IO,
-            onRefresh = { api, me, preferences -> cache.refresh(api, me, preferences, capabilities.refresh(api, me)) },
+            onRefresh = { api, me, preferences ->
+                cache.refresh(api, me, preferences, capabilities.refresh(api, me))
+                sender.send()
+            },
         )
     }
 
@@ -59,8 +66,25 @@ class TokklApplication : Application() {
         CapabilitiesSource(initial = store.load(), save = store::save)
     }
 
-    /** The offline cache. Its database file opens on the first query, which Room keeps off the main thread. */
-    val cache: AccountCache by lazy { AccountCache(CacheDatabase.open(this)) }
+    /** The file of the [cache] and the queue. It opens on the first query, which Room keeps off the main thread. */
+    private val cacheDatabase: CacheDatabase by lazy { CacheDatabase.open(this) }
+
+    /** The offline cache. */
+    val cache: AccountCache by lazy { AccountCache(cacheDatabase) }
+
+    /** Start, stop, create, edit and delete entries on the phone, which the [sender] then sends. */
+    val changes: ChangeQueue by lazy { ChangeQueue(cacheDatabase, Dispatchers.IO, onQueued = { sender.send() }) }
+
+    /** Sends the queued changes in order. Once it has sent some, the account refreshes. */
+    val sender: ChangeSender by lazy {
+        ChangeSender(
+            RoomChangeStore(cacheDatabase),
+            client = Session(this)::client,
+            scope = MainScope(),
+            io = Dispatchers.IO,
+            onSent = { accountSettings.refresh() },
+        )
+    }
 
     /**
      * The trust refusals of the signed-in session's requests, which every

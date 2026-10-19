@@ -6,6 +6,7 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 /** How a refresh replaces, prunes and keeps the cached rows. */
@@ -175,6 +176,39 @@ class CacheContentsTest {
 
         assertEquals(listOf(usedProject), refreshed.projects)
         assertEquals(listOf(fresh, usedTag), refreshed.tags)
+    }
+
+    @Test
+    fun queuedChangesStayAppliedOverTheRefreshedEntriesUntilSent() {
+        val server = listOf(entry(1, description = "Server"), entry(2, description = "Deleted on the phone"))
+        val pending = listOf(
+            PendingChange.of(ChangeKind.UPDATE, entry(1, description = "Phone, first")).copy(sequence = 1),
+            PendingChange.of(ChangeKind.CREATE, entry(-3, description = "Started offline").copy(stop = null)).copy(sequence = 3),
+            PendingChange.of(ChangeKind.UPDATE, entry(1, description = "Phone, last")).copy(sequence = 4),
+            PendingChange.of(ChangeKind.DELETE, entry(2)).copy(sequence = 5),
+        )
+
+        val refreshed = CacheContents().refreshedWith(ServerSnapshot(history = WINDOW, timeEntries = server), pending)
+
+        assertEquals(
+            listOf(1L to "Phone, last", -3L to "Started offline"),
+            refreshed.timeEntries.map { it.id to it.description },
+        )
+        assertNull("the offline timer runs", refreshed.timeEntries.single { it.id == -3L }.stop)
+    }
+
+    @Test
+    fun aQueuedChangeToAnEntryBeforeTheWindowStaysAndKeepsItsArchivedProject() {
+        val old = entry(1, start = "2026-09-20T08:00:00Z", description = "Edited offline", projectId = 9)
+        val pending = listOf(PendingChange.of(ChangeKind.UPDATE, old).copy(sequence = 1))
+
+        val refreshed = CacheContents().refreshedWith(
+            ServerSnapshot(history = WINDOW, timeEntries = emptyList(), projects = listOf(project(9, active = false))),
+            pending,
+        )
+
+        assertEquals(listOf(old), refreshed.timeEntries)
+        assertEquals(listOf(9L), refreshed.projects.map { it.id })
     }
 
     private fun time(zone: String, now: Instant) =

@@ -61,12 +61,16 @@ data class HistoryWindow(val start: Instant, val end: Instant) {
  * - A project, task or tag the server no longer sends stays, with the values it had, while a
  *   cached entry or favorite uses it.
  * - A list the refresh did not read stays as it was.
+ * - Each of the [pending] changes the server has not received applies on top, in order, also to
+ *   an entry from before the history window, so the user keeps seeing it until it is sent. The
+ *   projects, tasks and tags it uses stay as for any cached entry.
  */
-fun CacheContents.refreshedWith(server: ServerSnapshot): CacheContents {
+fun CacheContents.refreshedWith(server: ServerSnapshot, pending: List<PendingChange> = emptyList()): CacheContents {
     val historyStart = server.history?.start
     val entries = (server.timeEntries ?: timeEntries)
         .filter { historyStart == null || it.start >= historyStart }
         .distinctBy { it.id }
+        .withPending(pending)
     val favorites = (server.favorites ?: favorites).distinctBy { it.position }
     val usedProjects = (entries.mapNotNull { it.projectId } + favorites.mapNotNull { it.projectId }).toSet()
     val usedTasks = (entries.mapNotNull { it.taskId } + favorites.mapNotNull { it.taskId }).toSet()

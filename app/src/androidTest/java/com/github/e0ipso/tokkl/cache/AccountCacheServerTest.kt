@@ -80,7 +80,7 @@ class AccountCacheServerTest {
         // Another instance on the same file, as the app's own is not open to writes from here.
         CacheDatabase.open(context).run {
             try {
-                cache().refresh { stale }
+                cache().refresh { _, _ -> stale }
             } finally {
                 close()
             }

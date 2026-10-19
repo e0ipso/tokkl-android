@@ -22,6 +22,15 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
 
     /** The cached history, newest entry first. */
     val timeEntries: Flow<List<CachedTimeEntry>> = dao.timeEntries()
+
+    /** The cached history, newest entry first, each marked unsent while a change to it is queued. */
+    val entries: Flow<List<EntryWithSendState>> = dao.timeEntriesWithSendState()
+
+    /**
+     * The running entry, or null when none runs. The notification, widget and tile read it, so a
+     * queued Start or Stop shows at once.
+     */
+    val running: Flow<EntryWithSendState?> = dao.runningEntry()
     val projects: Flow<List<CachedProject>> = dao.projects()
     val clients: Flow<List<CachedClient>> = dao.clients()
     val tags: Flow<List<CachedTag>> = dao.tags()
@@ -31,7 +40,8 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     val favorites: Flow<List<CachedFavorite>> = dao.favorites()
 
     /**
-     * Reads the server with [api] and replaces the cached rows, as [refreshedWith] describes.
+     * Reads the server with [api] and replaces the cached rows, as [refreshedWith] describes, with
+     * the queued changes applied on top.
      * [me] is the refresh's `GET /api/v9/me` with related data, [preferences] its
      * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
      * A server without favorites gets none cached. A failed request keeps its rows, and a failed
@@ -40,15 +50,15 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     fun refresh(api: TogglApiClient, me: Me, preferences: MePreferences?, capabilities: Capabilities) {
         val snapshot = readServerSnapshot(api, me, preferences, clock, favorites = capabilities.favorites)
         try {
-            dao.refresh { it.refreshedWith(snapshot) }
+            dao.refresh { current, pending -> current.refreshedWith(snapshot, pending) }
         } catch (e: SQLiteException) {
             // Keeps the cache until the next refresh.
         }
     }
 
     /**
-     * Deletes every cached row. Signing out calls this, together with clearing the stored
-     * session and settings. Blocks, so call it off the main thread.
+     * Deletes every cached row and the queue of unsent changes. Signing out calls this, together
+     * with clearing the stored session and settings. Blocks, so call it off the main thread.
      */
     fun clear() {
         database.clearAllTables()

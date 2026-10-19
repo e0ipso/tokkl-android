@@ -1,0 +1,82 @@
+package com.github.e0ipso.tokkl.cache
+
+import android.database.sqlite.SQLiteDatabase
+import androidx.room.Room
+import androidx.test.platform.app.InstrumentationRegistry
+import java.time.Instant
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * A cache written by version 1, before the queue, opens under the current version through Room's
+ * migration, keeps its rows and takes queued changes. Room checks the migrated tables against the
+ * exported schema when it opens the file, so a migration that left them wrong fails here.
+ */
+class CacheDatabaseMigrationTest {
+
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    @Test
+    fun version1MigratesAndKeepsTheCachedRows() {
+        context.deleteDatabase(FILE)
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+            VERSION_1.forEach(db::execSQL)
+            db.execSQL(
+                "INSERT INTO time_entries VALUES " +
+                    "(42, 7, 3, NULL, 'Cached before the update', ${START.toEpochMilli()}, NULL, 0, '[\"focus\"]', '[5]')",
+            )
+            db.execSQL("INSERT INTO projects VALUES (3, 7, NULL, 'Website', '#0b83d9', 1, 0)")
+            db.execSQL("INSERT INTO tags VALUES (5, 7, 'focus')")
+            db.version = 1
+        }
+
+        val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            val cache = database.cache()
+            assertEquals(
+                listOf(CachedTimeEntry(42, 7, 3, null, "Cached before the update", START, null, false, listOf("focus"), listOf(5))),
+                runBlocking { cache.timeEntries().first() },
+            )
+            assertEquals(listOf("Website"), runBlocking { cache.projects().first() }.map { it.name })
+
+            val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            assertTrue("the migrated file takes a queued stop", runBlocking { queue.stop(42) })
+            assertEquals(1, runBlocking { queue.unsentCount.first() })
+            assertTrue(runBlocking { cache.timeEntriesWithSendState().first() }.single().unsent)
+        } finally {
+            database.close()
+            context.deleteDatabase(FILE)
+        }
+    }
+
+    private companion object {
+        const val FILE = "cache-migration-test.db"
+        val START: Instant = Instant.parse("2026-10-19T08:00:00Z")
+
+        /** The tables of version 1, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/1.json. */
+        val VERSION_1 = listOf(
+            "CREATE TABLE IF NOT EXISTS `time_entries` (`id` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
+                "`projectId` INTEGER, `taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, " +
+                "`stop` INTEGER, `billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, PRIMARY KEY(`id`))",
+            "CREATE INDEX IF NOT EXISTS `index_time_entries_start` ON `time_entries` (`start`)",
+            "CREATE TABLE IF NOT EXISTS `projects` (`id` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
+                "`clientId` INTEGER, `name` TEXT NOT NULL, `color` TEXT, `active` INTEGER NOT NULL, " +
+                "`billable` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+            "CREATE TABLE IF NOT EXISTS `clients` (`id` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
+                "`name` TEXT NOT NULL, `archived` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+            "CREATE TABLE IF NOT EXISTS `tags` (`id` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
+                "`name` TEXT NOT NULL, PRIMARY KEY(`id`))",
+            "CREATE TABLE IF NOT EXISTS `tasks` (`id` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
+                "`projectId` INTEGER, `name` TEXT NOT NULL, `active` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+            "CREATE TABLE IF NOT EXISTS `favorites` (`position` INTEGER NOT NULL, `description` TEXT NOT NULL, " +
+                "`projectId` INTEGER, `taskId` INTEGER, `tags` TEXT NOT NULL, `billable` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`position`))",
+            "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8107a6946224f42e71b1e5b586a3e59c')",
+        )
+    }
+}
