@@ -108,7 +108,8 @@ import kotlinx.coroutines.delay
  * long as it lasts, in the account's timezone. On a compact window, a phone held upright, it
  * shows the chosen day alone, and the arrows and a swipe move a day instead of a week. On a
  * window of compact height, a phone held sideways, the toolbar scrolls away as the grid scrolls
- * on, after the Timer page's title and switch, and the day heads stay. The running entry's block
+ * on, after the Timer page's top bar, timer and switch, and the day heads stay. When the page
+ * opens with those scrolled away, the toolbar starts scrolled away too. The running entry's block
  * grows with the phone's clock, once a minute while the page shows, and sends no request.
  */
 @Composable

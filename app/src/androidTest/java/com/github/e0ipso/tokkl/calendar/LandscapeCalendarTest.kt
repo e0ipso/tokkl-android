@@ -55,10 +55,11 @@ import org.junit.rules.RuleChain
 /**
  * The Timer page's Calendar view on a phone held sideways, a window of compact height (docs/PRD.md
  * K1), or upright at the largest font scale, where the height is compact for the text it holds.
- * Once the calendar scrolls on, the page title, the timer, the view switch and the toolbar have
- * scrolled away, and the grid shows at least [hourRows] whole hour rows under the day heads,
- * which stay in the window. The view switch and every toolbar control scroll back into the window
- * whole, as TalkBack scrolls to them.
+ * On a phone held sideways the view opens with the top bar, the timer, the view switch and the
+ * toolbar scrolled away, so the grid shows at least [hourRows] whole hour rows at once. Once the
+ * calendar scrolls on, those have scrolled away in every case, and the grid shows at least
+ * [hourRows] whole hour rows under the day heads, which stay in the window. The view switch and
+ * every toolbar control scroll back into the window whole, as TalkBack scrolls to them.
  */
 abstract class LandscapeCalendarTest(
     private val fontScale: Float,
@@ -115,6 +116,12 @@ abstract class LandscapeCalendarTest(
                     !hasAnyDescendant(isHeading()),
             )
             val before = grid.getBoundsInRoot()
+            if (landscape) {
+                assertTrue(
+                    "the grid shows $hourRows whole hour rows as the view opens: ${before.height()} tall",
+                    before.height() >= HOUR_ROW * hourRows,
+                )
+            }
             // The page's column, which holds the view switch, ends right above the bottom bar.
             val page = composeRule.onNode(hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable()))
             val pageBottom = page.fetchSemanticsNode().boundsInRoot.bottom

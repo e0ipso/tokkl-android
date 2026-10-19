@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -30,12 +33,17 @@ import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
  * once [body] has scrolled back to its start, as Material's exitUntilCollapsed top app bar does,
  * or when dragged itself. The column scrolls for TalkBack, which reaches everything in [top].
  * Put one in [body] for a second [top] that goes after this one and comes back before it.
+ *
+ * With [startScrolledAway], [top] starts scrolled away the first time the column shows, so
+ * [body] has the whole height at once. A column in [body] that first shows while this one's
+ * [top] is scrolled away starts with its own [top] scrolled away too, so the order holds.
  */
 @Composable
 fun ScrollAwayColumn(
     top: @Composable ColumnScope.() -> Unit,
     modifier: Modifier = Modifier,
     scrollAway: Boolean = compactHeightWindow(),
+    startScrolledAway: Boolean = false,
     body: @Composable BoxScope.() -> Unit,
 ) {
     if (!scrollAway) {
@@ -50,10 +58,15 @@ fun ScrollAwayColumn(
         }
         return
     }
+    val outerTopGone = LocalOuterTopGone.current
+    // Read once, as the column first shows, without following the outer column's scroll after.
+    val startGone = remember { startScrolledAway || Snapshot.withoutReadObservation { outerTopGone() } }
     BoxWithConstraints(modifier) {
         val height = maxHeight
-        val scroll = rememberScrollState()
+        // Past the end, which the first layout brings back to the end once it knows the top's height.
+        val scroll = rememberScrollState(initial = if (startGone) Int.MAX_VALUE else 0)
         val topGoesFirst = remember(scroll) { TopGoesFirst(scroll) }
+        val topGone = remember(scroll) { { scroll.value >= scroll.maxValue } }
         Column(
             Modifier
                 .fillMaxSize()
@@ -61,15 +74,20 @@ fun ScrollAwayColumn(
                 .verticalScroll(scroll),
         ) {
             top()
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(height),
-                content = body,
-            )
+            CompositionLocalProvider(LocalOuterTopGone provides topGone) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(height),
+                    content = body,
+                )
+            }
         }
     }
 }
+
+/** Whether the top of the scroll-away column around this one has scrolled away. */
+private val LocalOuterTopGone = staticCompositionLocalOf<() -> Boolean> { { false } }
 
 /**
  * Whether the window has a compact height for the text it holds, such as a phone held sideways,
@@ -81,6 +99,16 @@ fun compactHeightWindow(): Boolean {
     val density = LocalDensity.current
     val height = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
     return TokklSpacing.isCompactHeight(height / density.fontScale)
+}
+
+/**
+ * Whether the window itself is under 480dp tall, whatever the font scale, by Material's window
+ * size classes: a phone held sideways, and not one held upright at the largest font scale.
+ */
+@Composable
+fun shortWindow(): Boolean {
+    val height = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() }
+    return TokklSpacing.isCompactHeight(height)
 }
 
 /**

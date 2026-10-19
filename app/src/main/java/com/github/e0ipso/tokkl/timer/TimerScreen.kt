@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.ui.ScrollAwayColumn
 import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.TopBarStatusBand
 import com.github.e0ipso.tokkl.ui.compactHeightWindow
+import com.github.e0ipso.tokkl.ui.shortWindow
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -50,6 +51,9 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
  * height, such as a phone held sideways or upright at the largest font scale, the bar, the timer
  * and the switch scroll away as the entries scroll on, so the entries get the page's whole
  * height ([ScrollAwayColumn]). A bar pinned there would leave the week grid too little room.
+ * On a phone held sideways the page opens in the Calendar view with all of that, the calendar's
+ * toolbar too, already scrolled away, so the week shows at least four hour rows at once. A drag
+ * on the day heads, or the grid back at midnight, brings them back, and TalkBack scrolls to them.
  */
 @Composable
 fun TimerScreen(
@@ -73,6 +77,7 @@ fun TimerScreen(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding),
             scrollAway = scrollAway,
+            startScrolledAway = view == TimerView.CALENDAR && shortWindow(),
             top = {
                 if (scrollAway) TokklTopBar(title, windowInsets = WindowInsets(0))
                 Column(Modifier.screenContent()) {
