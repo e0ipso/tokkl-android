@@ -241,6 +241,11 @@ class LargestFontScaleTest {
      * Only the form's IME padding may move it. MainActivity's adjustResize keeps the window in
      * place, so the compose root stays at the window's top. Without it, Android panned the whole
      * window up by 258 px on tokkl-api36, and the pan alone kept the field in view.
+     *
+     * The keyboard has to be closed, with no room taken, before the tap, so the move starts from
+     * where the form rests without it. When the field ends under the keyboard, the message gives
+     * the bottom of the form's scrolling area too: at the window's bottom, the keyboard's inset
+     * never reached the form; above it, the form made room but did not scroll the field into it.
      */
     @SignedOut
     @Test
@@ -250,19 +255,37 @@ class LargestFontScaleTest {
         choice(R.string.sign_in_method_email_password).performClick()
         val password = field(R.string.sign_in_password)
         password.performScrollTo()
+        composeRule.waitUntil("the keyboard is closed before the tap", KEYBOARD_TIMEOUT_MS) { keyboardClosed() }
         val before = password.bottomInWindow()
 
         password.performClick()
         val keyboardTop = awaitKeyboardTop()
         val after = awaitStill(password)
         val rootTop = composeRule.onRoot().fetchSemanticsNode().positionInWindow.y
+        val formBottom = composeRule.onNode(hasScrollAction()).fetchSemanticsNode().boundsInWindow.bottom
 
         assertTrue(
             "the password field ends at $before px before the keyboard opens, above its top at $keyboardTop px, so this test checks nothing",
             before > keyboardTop,
         )
         assertEquals("the window panned for the keyboard: the compose root starts at $rootTop px", 0f, rootTop, 0f)
-        assertTrue("the focused password field ends at $after px, under the keyboard's top at $keyboardTop px", after <= keyboardTop)
+        assertTrue(
+            "the focused password field ends at $after px, under the keyboard's top at $keyboardTop px, and the form's scrolling area ends at $formBottom px",
+            after <= keyboardTop,
+        )
+    }
+
+    /** Whether the keyboard is closed and takes no room at the window's bottom. */
+    private fun keyboardClosed(): Boolean {
+        val decor = composeRule.activity.window.decorView
+        var closed = false
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val insets = ViewCompat.getRootWindowInsets(decor)
+            closed = insets != null &&
+                !insets.isVisible(WindowInsetsCompat.Type.ime()) &&
+                insets.getInsets(WindowInsetsCompat.Type.ime()).bottom == 0
+        }
+        return closed
     }
 
     @SignedOut
