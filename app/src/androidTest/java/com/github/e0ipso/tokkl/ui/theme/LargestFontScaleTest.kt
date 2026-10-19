@@ -48,6 +48,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.dynamicColorAvailable
+import com.github.e0ipso.tokkl.signin.assertFieldErrorsLeaveTheFormInPlace
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -271,6 +272,57 @@ class LargestFontScaleTest {
         assertEquals("the window panned for the keyboard: the compose root starts at $rootTop px", 0f, rootTop, 0f)
         assertTrue(
             "the focused password field ends at $after px, under the keyboard's top at $keyboardTop px, and the form's scrolling area ends at $formBottom px",
+            after <= keyboardTop,
+        )
+    }
+
+    /**
+     * A focused field that ends right at the form's bottom edge before the keyboard opens still
+     * ends above the keyboard. Compose brings a focused field into view on its own only when it
+     * was wholly inside the form, and left one that ended within a dp of the edge under the
+     * keyboard. The password field ends 0, 1 and 2 px above the edge in these three tests.
+     */
+    @SignedOut
+    @Test
+    fun signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard() = assertFieldAtTheEdgeStaysAboveTheKeyboard(pixels = 0)
+
+    @SignedOut
+    @Test
+    fun signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard() = assertFieldAtTheEdgeStaysAboveTheKeyboard(pixels = 1)
+
+    @SignedOut
+    @Test
+    fun signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard() = assertFieldAtTheEdgeStaysAboveTheKeyboard(pixels = 2)
+
+    /** Every sign-in field keeps its height and its place when its error shows or clears. */
+    @SignedOut
+    @Test
+    fun signInFieldErrorsLeaveTheFormInPlace() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+
+        composeRule.assertFieldErrorsLeaveTheFormInPlace()
+    }
+
+    private fun assertFieldAtTheEdgeStaysAboveTheKeyboard(pixels: Int) {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+        choice(R.string.sign_in_method_email_password).performClick()
+        val password = field(R.string.sign_in_password)
+        val form = composeRule.onNode(hasScrollAction())
+        // The field starts below the form's edge, so this scroll ends it right at the edge.
+        password.performScrollTo()
+        if (pixels > 0) form.performSemanticsAction(SemanticsActions.ScrollBy) { scrollBy -> scrollBy(0f, pixels.toFloat()) }
+        composeRule.waitUntil("the keyboard is closed before the tap", KEYBOARD_TIMEOUT_MS) { keyboardClosed() }
+        val gap = form.fetchSemanticsNode().boundsInWindow.bottom - password.bottomInWindow()
+        assertEquals("how far above the form's bottom edge the password field ends, in px", pixels.toFloat(), gap, EDGE_SLACK_PX)
+
+        password.performClick()
+        val keyboardTop = awaitKeyboardTop()
+        val after = awaitStill(password)
+
+        assertTrue(
+            "the focused password field, $pixels px above the form's edge before, ends at $after px, under the keyboard's top at $keyboardTop px",
             after <= keyboardTop,
         )
     }
@@ -700,6 +752,9 @@ class LargestFontScaleTest {
 
         /** Longer than the keyboard's animation, so a field still moving does not count as still. */
         const val STILL_MS = 1_000L
+
+        /** Positions in the window are floats from two layouts, so they match to within this. */
+        const val EDGE_SLACK_PX = 0.5f
 
         /** Less than a pixel, for bounds that touch after rounding. */
         val SLACK = 0.5.dp

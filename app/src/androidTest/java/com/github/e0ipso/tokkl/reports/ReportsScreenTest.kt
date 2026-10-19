@@ -58,8 +58,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
 import org.junit.rules.Timeout
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
 
 /**
  * The reports screen against the real Tokkl container (docs/PRD.md R1 and R5), for an account at
@@ -403,15 +401,4 @@ class ReportsScreenTest {
         /** Well above the sum of a test's own waits, and far below CI's 45 minutes for the run. */
         const val TEST_TIMEOUT_MINUTES = 5L
     }
-}
-
-/** A test that runs at Android's largest font scale. */
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-private annotation class AtLargestFontScale
-
-/** Sets the largest font scale around a test marked [AtLargestFontScale]. Order it before the compose rule. */
-private class LargestFontScaleWhenMarked : TestRule {
-    override fun apply(base: Statement, description: Description): Statement =
-        if (description.getAnnotation(AtLargestFontScale::class.java) == null) base else SystemFontScale(SystemFontScale.LARGEST).apply(base, description)
 }

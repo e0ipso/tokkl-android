@@ -210,6 +210,15 @@ class SignInScreenTest {
         assertEquals("the password field moved when the email error cleared", before.value, cleared.value, SLACK_DP)
     }
 
+    /**
+     * Every field keeps its height and its place when its error shows or clears, the server URL
+     * field's too.
+     */
+    @Test
+    fun fieldErrorsLeaveTheFormInPlace() {
+        composeRule.assertFieldErrorsLeaveTheFormInPlace()
+    }
+
     @Test
     fun everyFieldAndButtonHasATalkBackLabel() {
         assertEveryControlIsLabelled()
