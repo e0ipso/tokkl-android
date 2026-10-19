@@ -191,11 +191,13 @@ class SignInScreenTest {
         composeRule.onNode(hasText(string(R.string.sign_in_method_email_password)) and isSelectable()).performClick()
         enterServerUrl()
         val before = passwordOffset()
+        assertEmailFieldReads(R.string.sign_in_email_hint, not = R.string.sign_in_error_email)
 
         submit()
         composeRule.onNode(hasText(string(R.string.sign_in_error_email)), useUnmergedTree = true).assertExists()
         // The field's error semantics make TalkBack announce it.
         field(R.string.sign_in_email).assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Error))
+        assertEmailFieldReads(R.string.sign_in_error_email, not = R.string.sign_in_email_hint)
         val withError = passwordOffset()
         field(R.string.sign_in_email).performTextInput(TokklTestServer.email)
         composeRule.onNode(hasText(string(R.string.sign_in_error_email)), useUnmergedTree = true).assertDoesNotExist()
@@ -296,6 +298,13 @@ class SignInScreenTest {
     /** The text field whose label is [label]. */
     private fun field(@StringRes label: Int): SemanticsNodeInteraction =
         composeRule.onNode(hasSetTextAction() and hasText(string(label)))
+
+    /** TalkBack reads [shown] with the email field, and never [not], which the line only reserves room for. */
+    private fun assertEmailFieldReads(@StringRes shown: Int, @StringRes not: Int) {
+        val read = field(R.string.sign_in_email).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
+        assertTrue("the email field does not read \"${string(shown)}\"", string(shown) in read)
+        assertFalse("the email field reads \"${string(not)}\"", string(not) in read)
+    }
 
     /** How far below the email field's top the password field's top is. */
     private fun passwordOffset(): Dp =

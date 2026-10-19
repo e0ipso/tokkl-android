@@ -29,6 +29,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
@@ -180,8 +181,10 @@ class LargestFontScaleTest {
     }
 
     /**
-     * The error that replaces the email hint after an empty email. It may take another number of
-     * lines than the hint (TKA-0149), so only its fit is checked here.
+     * The error that replaces the email hint after an empty email. At this size the hint takes two
+     * lines and the error one, and the supporting line keeps the taller one's height, so the
+     * password field stays where it was. The offset is from the email field to the password
+     * field, so a scroll or the keyboard moving both does not count.
      */
     @SignedOut
     @Test
@@ -191,8 +194,10 @@ class LargestFontScaleTest {
         choice(R.string.sign_in_method_email_password).performClick()
         field(R.string.sign_in_server_url).performScrollTo().performTextInput(TokklTestServer.url.toString())
         field(R.string.sign_in_password).performScrollTo().performTextInput(TokklTestServer.password)
+        val before = passwordOffset()
         composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
         composeRule.awaitText(string(R.string.sign_in_error_email))
+        assertEquals("the password field moved when the email error showed", before.value, passwordOffset().value, SLACK.value)
 
         assertFitWhenScrolledTo(
             blocks = signInBlocks(
@@ -353,6 +358,10 @@ class LargestFontScaleTest {
 
     private fun field(@StringRes label: Int): SemanticsNodeInteraction =
         composeRule.onNode(hasSetTextAction() and hasText(string(label)))
+
+    /** How far below the email field's top the password field's top is. */
+    private fun passwordOffset(): Dp =
+        field(R.string.sign_in_password).getUnclippedBoundsInRoot().top - field(R.string.sign_in_email).getUnclippedBoundsInRoot().top
 
     /** A radio button, by its label. */
     private fun choice(@StringRes label: Int): SemanticsNodeInteraction =

@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.signin
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,9 +26,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -139,10 +142,10 @@ private fun SignInForm(
                 onValueChange = onServerUrlChange,
                 label = { Text(stringResource(R.string.sign_in_server_url)) },
                 supportingText = {
-                    Text(
-                        stringResource(
-                            if (InputError.SERVER_URL in errors) R.string.sign_in_error_server_url else R.string.sign_in_server_url_hint,
-                        ),
+                    SupportingLine(
+                        hint = R.string.sign_in_server_url_hint,
+                        error = R.string.sign_in_error_server_url.takeIf { InputError.SERVER_URL in errors },
+                        errors = listOf(R.string.sign_in_error_server_url),
                     )
                 },
                 isError = InputError.SERVER_URL in errors,
@@ -161,7 +164,8 @@ private fun SignInForm(
                     onValueChange = onApiTokenChange,
                     label = R.string.sign_in_api_token,
                     hint = R.string.sign_in_api_token_hint,
-                    error = R.string.sign_in_error_api_token.takeIf { InputError.API_TOKEN in errors },
+                    error = R.string.sign_in_error_api_token,
+                    showError = InputError.API_TOKEN in errors,
                     keyboardActions = submitFromKeyboard,
                 )
                 SignInMethod.EMAIL_PASSWORD -> {
@@ -174,8 +178,13 @@ private fun SignInForm(
                         value = state.email,
                         onValueChange = onEmailChange,
                         label = { Text(stringResource(R.string.sign_in_email)) },
-                        // Always there, with the hint or the error, so an error does not move the fields below.
-                        supportingText = { Text(stringResource(emailError ?: R.string.sign_in_email_hint)) },
+                        supportingText = {
+                            SupportingLine(
+                                hint = R.string.sign_in_email_hint,
+                                error = emailError,
+                                errors = listOf(R.string.sign_in_error_email, R.string.sign_in_error_email_colon),
+                            )
+                        },
                         isError = emailError != null,
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
@@ -190,7 +199,8 @@ private fun SignInForm(
                         onValueChange = onPasswordChange,
                         label = R.string.sign_in_password,
                         hint = R.string.sign_in_password_hint,
-                        error = R.string.sign_in_error_password.takeIf { InputError.PASSWORD in errors },
+                        error = R.string.sign_in_error_password,
+                        showError = InputError.PASSWORD in errors,
                         keyboardActions = submitFromKeyboard,
                     )
                 }
@@ -243,15 +253,16 @@ private fun SecretField(
     onValueChange: (String) -> Unit,
     @StringRes label: Int,
     @StringRes hint: Int,
-    @StringRes error: Int?,
+    @StringRes error: Int,
+    showError: Boolean,
     keyboardActions: KeyboardActions,
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(stringResource(label)) },
-        supportingText = { Text(stringResource(error ?: hint)) },
-        isError = error != null,
+        supportingText = { SupportingLine(hint = hint, error = error.takeIf { showError }, errors = listOf(error)) },
+        isError = showError,
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(
@@ -262,6 +273,23 @@ private fun SecretField(
         keyboardActions = keyboardActions,
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+/**
+ * A field's supporting line: [error] when there is one, else [hint]. It always takes the height of
+ * the tallest of [hint] and [errors], every error the field can show, at the current width and
+ * font scale, so showing or clearing an error never moves the fields below. The lines not shown
+ * are laid out invisible and left out of semantics, so TalkBack reads only the one that shows.
+ */
+@Composable
+private fun SupportingLine(@StringRes hint: Int, @StringRes error: Int?, @StringRes errors: List<Int>) {
+    val shown = error ?: hint
+    Box {
+        for (line in listOf(hint) + errors) {
+            if (line != shown) Text(stringResource(line), Modifier.alpha(0f).clearAndSetSemantics {})
+        }
+        Text(stringResource(shown))
+    }
 }
 
 /** The message under the form, or null for a result that the screen shows in a dialog or not at all. */
