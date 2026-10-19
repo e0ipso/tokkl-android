@@ -20,6 +20,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -63,7 +64,7 @@ class SignInUnderPathPrefixTest {
         submit()
         confirmHttpWarning()
 
-        awaitHome()
+        composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
         assertSignedInThroughThePrefix()
     }
 
@@ -77,7 +78,7 @@ class SignInUnderPathPrefixTest {
         submit()
         confirmHttpWarning()
 
-        awaitHome()
+        composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
         assertSignedInThroughThePrefix()
     }
 
@@ -110,10 +111,6 @@ class SignInUnderPathPrefixTest {
         composeRule.onNode(hasText(string(R.string.sign_in_http_warning_body, server.toString()))).assertExists()
         composeRule.onNode(hasText(string(R.string.sign_in_http_warning_understood)) and isToggleable()).performClick()
         composeRule.onNode(hasText(string(R.string.sign_in_http_warning_continue)) and hasClickAction()).performClick()
-    }
-
-    private fun awaitHome() {
-        composeRule.waitUntil("the home screen shows", NETWORK_TIMEOUT_MS) { exists(hasText(string(R.string.launch_message))) }
     }
 
     private fun exists(matcher: SemanticsMatcher): Boolean =
