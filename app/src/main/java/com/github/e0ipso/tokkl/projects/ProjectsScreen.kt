@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.projects
 
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,8 +19,6 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,6 +34,7 @@ import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
+import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.catalog.ServerProblem
@@ -52,17 +50,12 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  * section of their own, with New project, and Archive or Restore on each row. A tap on a row opens
  * its form. Each change goes to the server at once. While the phone is offline or the server out
  * of reach, the page lists the projects on the phone and says that changing them needs the server,
- * with every action off. Coming back online loads the projects again.
+ * with every action off. Coming back online, or to the foreground, loads the projects again.
  */
 @Composable
 fun ProjectsScreen(model: ProjectsModel, modifier: Modifier = Modifier) {
-    val activity = LocalActivity.current
-    DisposableEffect(model) {
-        model.open()
-        onDispose { if (activity?.isChangingConfigurations != true) model.close() }
-    }
     val offline = rememberOffline()
-    LaunchedEffect(offline) { if (!offline) model.reconnected() }
+    CatalogPageEffects(model, offline)
     val state by model.state.collectAsState()
     val cachedProjects by model.cachedProjects.collectAsState(initial = emptyList())
     val cachedClients by model.cachedClients.collectAsState(initial = emptyList())

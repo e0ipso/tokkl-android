@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
+import com.github.e0ipso.tokkl.catalog.CatalogPageModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +42,8 @@ typealias ClientsState = CatalogState<ClientsData, ClientsOverlay>
 
 /**
  * The clients page's state (docs/PRD.md P3): the workspace's clients from the server, loaded each
- * time the page opens, and the changes the page sends at once, as [CatalogModel] describes.
+ * time the page opens or the app comes back to it, and the changes the page sends at once, as
+ * [CatalogModel] describes.
  * Archiving a client archives its projects, and restoring it restores them, as in the web app.
  *
  * @param cachedClients the clients on the phone, which the page lists while the server's do not
@@ -54,7 +56,7 @@ class ClientsModel(
     scope: CoroutineScope,
     io: CoroutineContext,
     val cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
-) {
+) : CatalogPageModel {
 
     private val catalog = CatalogModel<ClientsData, ClientsOverlay>(client, workspaceId, refreshCache, scope, io, ::read)
 
@@ -62,13 +64,17 @@ class ClientsModel(
 
     fun workspace(): Long? = catalog.workspace()
 
-    fun open() = catalog.open()
+    override fun open() = catalog.open()
 
     fun retry() = catalog.retry()
 
-    fun reconnected() = catalog.reconnected()
+    override fun reconnected() = catalog.reconnected()
 
-    fun close() = catalog.close()
+    override fun close() = catalog.close()
+
+    override fun wentToBackground() = catalog.wentToBackground()
+
+    override fun cameToForeground() = catalog.cameToForeground()
 
     fun doneShown() = catalog.doneShown()
 

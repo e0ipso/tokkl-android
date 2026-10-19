@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.tags
 
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,7 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +43,7 @@ import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
+import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
@@ -61,17 +60,12 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  * and on each row a tap to rename it and Delete, which asks first and names the tag. Each change
  * goes to the server at once. While the phone is offline or the server out of reach, the page
  * lists the tags on the phone and says that changing them needs the server, with every action
- * off. Coming back online loads the tags again.
+ * off. Coming back online, or to the foreground, loads the tags again.
  */
 @Composable
 fun TagsScreen(model: TagsModel, modifier: Modifier = Modifier) {
-    val activity = LocalActivity.current
-    DisposableEffect(model) {
-        model.open()
-        onDispose { if (activity?.isChangingConfigurations != true) model.close() }
-    }
     val offline = rememberOffline()
-    LaunchedEffect(offline) { if (!offline) model.reconnected() }
+    CatalogPageEffects(model, offline)
     val state by model.state.collectAsState()
     val cachedTags by model.cachedTags.collectAsState(initial = emptyList())
     val workspace = model.workspace()

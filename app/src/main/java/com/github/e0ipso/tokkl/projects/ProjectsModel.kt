@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
+import com.github.e0ipso.tokkl.catalog.CatalogPageModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +35,8 @@ typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
 
 /**
  * The projects page's state (docs/PRD.md P2): the workspace's projects from the server, loaded
- * each time the page opens, and the changes the page sends at once, as [CatalogModel] describes.
+ * each time the page opens or the app comes back to it, and the changes the page sends at once,
+ * as [CatalogModel] describes.
  *
  * @param cachedProjects the projects on the phone, which the page lists while the server's do not
  *   load.
@@ -48,7 +50,7 @@ class ProjectsModel(
     io: CoroutineContext,
     val cachedProjects: Flow<List<CachedProject>> = flowOf(emptyList()),
     val cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
-) {
+) : CatalogPageModel {
 
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(client, workspaceId, refreshCache, scope, io, ::read)
 
@@ -56,13 +58,17 @@ class ProjectsModel(
 
     fun workspace(): Long? = catalog.workspace()
 
-    fun open() = catalog.open()
+    override fun open() = catalog.open()
 
     fun retry() = catalog.retry()
 
-    fun reconnected() = catalog.reconnected()
+    override fun reconnected() = catalog.reconnected()
 
-    fun close() = catalog.close()
+    override fun close() = catalog.close()
+
+    override fun wentToBackground() = catalog.wentToBackground()
+
+    override fun cameToForeground() = catalog.cameToForeground()
 
     fun doneShown() = catalog.doneShown()
 

@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
+import com.github.e0ipso.tokkl.catalog.CatalogPageModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +36,8 @@ typealias TagsState = CatalogState<TagsData, TagsOverlay>
 
 /**
  * The tags page's state (docs/PRD.md P4): the workspace's tags from the server, loaded each time
- * the page opens, and the changes the page sends at once, as [CatalogModel] describes.
+ * the page opens or the app comes back to it, and the changes the page sends at once, as
+ * [CatalogModel] describes.
  *
  * @param cachedTags the tags on the phone, which the page lists while the server's do not load.
  */
@@ -46,7 +48,7 @@ class TagsModel(
     scope: CoroutineScope,
     io: CoroutineContext,
     val cachedTags: Flow<List<CachedTag>> = flowOf(emptyList()),
-) {
+) : CatalogPageModel {
 
     private val catalog = CatalogModel<TagsData, TagsOverlay>(client, workspaceId, refreshCache, scope, io, ::read)
 
@@ -54,13 +56,17 @@ class TagsModel(
 
     fun workspace(): Long? = catalog.workspace()
 
-    fun open() = catalog.open()
+    override fun open() = catalog.open()
 
     fun retry() = catalog.retry()
 
-    fun reconnected() = catalog.reconnected()
+    override fun reconnected() = catalog.reconnected()
 
-    fun close() = catalog.close()
+    override fun close() = catalog.close()
+
+    override fun wentToBackground() = catalog.wentToBackground()
+
+    override fun cameToForeground() = catalog.cameToForeground()
 
     fun doneShown() = catalog.doneShown()
 

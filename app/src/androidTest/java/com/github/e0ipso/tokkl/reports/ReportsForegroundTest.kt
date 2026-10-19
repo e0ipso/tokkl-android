@@ -12,31 +12,27 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.io.Closeable
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -67,7 +63,7 @@ class ReportsForegroundTest {
     private val app get() = context.applicationContext as TokklApplication
     private lateinit var account: TestAccounts.Account
     private var scenario: ActivityScenario<MainActivity>? = null
-    private var relay: ReportSearchCounter? = null
+    private var relay: RequestCounter? = null
 
     @Before
     fun signInToANewAccountWithTimeThisWeek() {
@@ -131,19 +127,19 @@ class ReportsForegroundTest {
 
     @Test
     fun theForegroundAsksOnceAndARotationAsksNothing() {
-        val relay = ReportSearchCounter(TokklTestServer.url).also { this.relay = it }
+        val relay = RequestCounter(TokklTestServer.url, SEARCH).also { this.relay = it }
         ServerTrustStore(context).confirmCleartext(relay.url)
         Session(context).save(relay.url, account.apiToken)
 
         val model = openReports()
         val first = awaitLoaded(model, after = null)
-        assertEquals("opening asks once", 1, relay.searches)
+        assertEquals("opening asks once", 1, relay.count)
 
         bringBack(sendToBackground())
         val second = awaitLoaded(model, after = first)
         assertEquals("the same range again", first.selection, second.selection)
         Thread.sleep(SETTLE_MS)
-        assertEquals("coming back asks once", 2, relay.searches)
+        assertEquals("coming back asks once", 2, relay.count)
 
         val portrait = resumedActivity()!!
         scenario!!.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
@@ -154,7 +150,7 @@ class ReportsForegroundTest {
         Thread.sleep(SETTLE_MS)
         assertSame("the rotation keeps the model", model, modelOf(landscape))
         assertSame("the rotation keeps the report", second, model.state.value)
-        assertEquals("the rotation asks nothing", 2, relay.searches)
+        assertEquals("the rotation asks nothing", 2, relay.count)
         assertEquals("the relay reached the server each time", emptyList<String>(), relay.failures)
     }
 
@@ -273,43 +269,8 @@ class ReportsForegroundTest {
 
         /** FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_REORDER_TO_FRONT: the existing task and activity, as they were. */
         const val NEW_TASK_REORDER_TO_FRONT = "0x10020000"
-    }
-}
 
-/**
- * Counts the report searches the app sends through a [LoopbackRelay] to [server]. Each search is
- * one `POST .../search/time_entries`, and no other request or body holds [SEARCH], so counting it
- * in the stream needs no HTTP parsing.
- */
-private class ReportSearchCounter(server: ServerUrl) : Closeable {
-
-    private val total = AtomicInteger()
-    private val relay = server.toString().toHttpUrl().let { LoopbackRelay(it.host, it.port) { SearchesOnOneConnection() } }
-
-    /** Connections the relay could not pass on, which would make [searches] wrong. */
-    val failures: List<String> get() = relay.failures
-
-    val url: ServerUrl = ServerUrl.parse("http://127.0.0.1:${relay.localPort}") ?: error("not a URL")
-
-    val searches: Int get() = total.get()
-
-    override fun close() = relay.close()
-
-    /** Counts [SEARCH] in one connection's requests, once even when it is split across two chunks. */
-    private inner class SearchesOnOneConnection : LoopbackRelay.RequestWatcher {
-        private var tail = ByteArray(0)
-
-        override fun sent(bytes: ByteArray, count: Int) {
-            val seen = tail + bytes.copyOf(count)
-            total.addAndGet(occurrences(seen))
-            tail = seen.copyOfRange(maxOf(0, seen.size - SEARCH.size + 1), seen.size)
-        }
-
-        private fun occurrences(bytes: ByteArray): Int =
-            (0..bytes.size - SEARCH.size).count { start -> SEARCH.indices.all { bytes[start + it] == SEARCH[it] } }
-    }
-
-    private companion object {
-        val SEARCH = "/search/time_entries HTTP/1.1".toByteArray(Charsets.US_ASCII)
+        /** The request line of a report search, `POST .../search/time_entries`. No other request holds it. */
+        const val SEARCH = "/search/time_entries HTTP/1.1"
     }
 }

@@ -54,12 +54,31 @@ data class CatalogState<D, O>(
     val canChange: Boolean get() = data != null && loadProblem == null && !sending
 }
 
+/** What a catalog page's screen tells its model about the page's life, through [CatalogPageEffects]. */
+interface CatalogPageModel {
+    /** The page opened. */
+    fun open()
+
+    /** The page went, not for a configuration change. */
+    fun close()
+
+    /** The network came back. */
+    fun reconnected()
+
+    /** The app went to the background with the page open, not for a configuration change. */
+    fun wentToBackground()
+
+    /** The app came back to the foreground with the page open. */
+    fun cameToForeground()
+}
+
 /**
  * The state of a page that manages one kind of the account's items on the server: projects,
- * clients or tags (docs/PRD.md P2 to P4). It loads them with [fetch] each time the page opens,
- * and sends each change at once. Nothing is queued: offline, or with the server out of reach,
- * nothing changes. After each change the server accepts, [refreshCache] reloads the offline
- * cache, so the picker, the history and the reports show it.
+ * clients or tags (docs/PRD.md P2 to P4). It loads them with [fetch] each time the page opens and
+ * each time the app comes back to the foreground with the page open, and sends each change at
+ * once. Nothing is queued: offline, or with the server out of reach, nothing changes. After each
+ * change the server accepts, [refreshCache] reloads the offline cache, so the picker, the history
+ * and the reports show it.
  *
  * Call every function on the main thread.
  *
@@ -76,13 +95,16 @@ class CatalogModel<D, O>(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val fetch: (TogglApiClient, Long) -> ApiResult<D>,
-) {
+) : CatalogPageModel {
 
     private val mutableState = MutableStateFlow(CatalogState<D, O>())
     val state: StateFlow<CatalogState<D, O>> = mutableState.asStateFlow()
 
     private var opened = false
     private var loading: Job? = null
+
+    /** The app went to the background with the page open, so what it lists may be old. */
+    private var backgrounded = false
 
     /** The workspace the data came from, once a load found it. */
     private var workspace: Long? = null
@@ -91,7 +113,7 @@ class CatalogModel<D, O>(
     fun workspace(): Long? = workspace ?: workspaceId()
 
     /** Loads the data. Does nothing while the page is open, so turning the phone sends no request. */
-    fun open() {
+    override fun open() {
         if (opened) return
         opened = true
         load()
@@ -103,15 +125,35 @@ class CatalogModel<D, O>(
     }
 
     /** The network came back. Loads again when the server could not be reached. */
-    fun reconnected() {
+    override fun reconnected() {
         if (opened && state.value.loadProblem != null) load()
     }
 
+    /**
+     * The app went to the background with the page open. Call it when the activity stops, but not
+     * for a configuration change, which is no trip to the background.
+     */
+    override fun wentToBackground() {
+        if (opened) backgrounded = true
+    }
+
+    /**
+     * The app came back to the foreground. After [wentToBackground], loads the data again, since it
+     * may have changed on the server meanwhile. The list keeps what it shows until the answer
+     * comes, and an open form or question stays as it is.
+     */
+    override fun cameToForeground() {
+        if (!backgrounded) return
+        backgrounded = false
+        load()
+    }
+
     /** Closes the page: stops waiting and forgets what it loaded. A change already sent still lands. */
-    fun close() {
+    override fun close() {
         loading?.cancel()
         loading = null
         opened = false
+        backgrounded = false
         workspace = null
         mutableState.value = CatalogState()
     }
