@@ -95,6 +95,9 @@ readonly STALE_CREDENTIALS_HOURS=6
 # The most memory the emulator's scope may use, swap included. A full run
 # peaks below 4 GB on tokkl-api36.
 readonly EMULATOR_MEMORY_MAX=6G
+# Where Gradle puts the JUnit XML results of a run, one file for each test
+# device.
+readonly RESULTS='app/build/outputs/androidTest-results/connected/debug'
 
 cd "$(dirname "$0")/.."
 
@@ -502,11 +505,14 @@ push_to_devices() {
     done
 }
 
-# Runs the tests once on every test device. Fails when Gradle fails or a test
-# device went away during the run.
+# Runs the tests once on every test device. Fails when Gradle fails, when a
+# test device went away during the run, and when Gradle passed without running
+# the tests on every device.
 run_tests() {
-    local status=0 device
-    local -a gone=()
+    local status=0 device xml tests
+    local -a gone=() results=()
+    # A run that stops before its tests must not count the last run's results.
+    rm -rf "$RESULTS"
     ./gradlew --no-daemon connectedDebugAndroidTest \
         "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
         "-P$RUNNER_ARGS.tokklTlsBaseUrl=https://10.0.2.2:$tls_port" \
@@ -514,7 +520,7 @@ run_tests() {
         "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
         "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
         "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
-        "${gradle_args[@]}" || status=$?
+        "${gradle_args[@]}" 2>&1 | tee "$work_dir/gradle.log" || status=$?
     # AGP's test task can pass when a device dies between two tests. With the
     # emulator killed a second into the run, Gradle printed BUILD SUCCESSFUL
     # and had run none of the 32 tests. So every test device must still be
@@ -526,7 +532,28 @@ run_tests() {
         echo "$0: ${gone[*]} went away during the run. Gradle can pass without running every test, so this run fails." >&2
         return 1
     fi
-    return "$status"
+    if [ "$status" -ne 0 ]; then return "$status"; fi
+    # AGP's test task also passes when it cannot start the tests. With another
+    # copy of the app on the device, signed with another key, it logged
+    # "AndroidTestRunner failed" and INSTALL_FAILED_UPDATE_INCOMPATIBLE, ran no
+    # test, wrote no JUnit XML and printed BUILD SUCCESSFUL. On API 26 a copy
+    # left by a killed run did the same with INSTALL_FAILED_ALREADY_EXISTS.
+    if grep -q 'AndroidTestRunner failed' "$work_dir/gradle.log"; then
+        echo "$0: Gradle passed, but the test runner failed on a device (\"AndroidTestRunner failed\" above), so this run fails." >&2
+        return 1
+    fi
+    mapfile -t results < <(find "$RESULTS" -maxdepth 1 -name 'TEST-*.xml' 2>/dev/null)
+    if [ "${#results[@]}" -lt "${#devices[@]}" ]; then
+        echo "$0: Gradle passed, but $RESULTS holds results for ${#results[@]} of the ${#devices[@]} test devices, so this run fails." >&2
+        return 1
+    fi
+    for xml in "${results[@]}"; do
+        tests=$(sed -n 's/^<testsuites [^>]*\btests="\([0-9]*\)".*/\1/p;T;q' "$xml")
+        if [ "${tests:-0}" -eq 0 ]; then
+            echo "$0: Gradle passed, but $xml reports no test run, so this run fails." >&2
+            return 1
+        fi
+    done
 }
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
