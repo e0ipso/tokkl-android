@@ -28,10 +28,11 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * The sign-in form against a MockWebServer, which shows the exact requests.
- * On the device, SignInUnderPathPrefixTest signs in to the Tokkl container
- * under a path prefix. The container's shared account must not be locked, so
- * the 429 cases live here.
+ * The sign-in form against a MockWebServer, which shows the exact requests
+ * and can answer 429 with any Retry-After. On the device,
+ * SignInUnderPathPrefixTest signs in to the Tokkl container under a path
+ * prefix, and SignInRateLimitTest trips the container's own 429 with a
+ * throwaway account, so the shared account is never locked.
  */
 class SignInModelTest {
 
