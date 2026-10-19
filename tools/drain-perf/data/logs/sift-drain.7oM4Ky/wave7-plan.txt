@@ -1,0 +1,67 @@
+Wave 7 plan (2026-10-19). 25 tickets. Review base 5a709f8 (wave 6 close). One emulator at a time until TKA-0133's lock lands; then at most two lanes in parallel, with the lock serialising emulator runs.
+Phase A:
+  H1: TKA-0132 -> TKA-0133 (emulator memory, run lock; scripts/instrumented-tests.sh) [opus, emulator]
+  J1: TKA-0148 (percent rounding; reports/ReportFormat.kt; JVM + Node only) [opus, no emulator], parallel with H1
+Phase B (after H1 lands; lock on main):
+  D1: TKA-0152 -> TKA-0118 -> TKA-0119 -> TKA-0120 -> TKA-0122 -> TKA-0149 (design; sign-in/Settings/Licences/home + screenshot refs)
+  T1: TKA-0027 (p1 change queue; cache/, Room) -> TKA-0028 (picker)
+Phase C:
+  D2: TKA-0124 (sign-in scene) after D1
+  T2: TKA-0029 (p1 history) -> TKA-0030 (calendar) after T1
+  R1: TKA-0150 -> TKA-0151 -> TKA-0034 -> TKA-0035 (reports)
+  P1: TKA-0031 -> TKA-0032 -> TKA-0033 (CRUD)
+  H2: TKA-0134 -> TKA-0135 -> TKA-0136 -> TKA-0131 (harness)
+Wave 7 capture: rebalance kenkeep root leaves into branches (ENTRY.md over target).
+Wave 7 started (review base 5a709f8): H1 TKA-0132, TKA-0133 in ../tokkl-android--w7-h1; J1 TKA-0148 in ../tokkl-android--w7-j1.
+J1 landed TKA-0148 4655077.
+H1 landed (TKA-0132, TKA-0133, HEAD 5278980). Filed TKA-0153 (CI setprop, w7 -> H2 lane), TKA-0154 (Google report, -> w13). Phase B next: D1 + T1 in parallel, lock serialises emulator runs.
+Phase B dispatched: D1 (TKA-0152, 0118, 0119, 0120, 0122, 0149) in ../tokkl-android--w7-d1; T1 (TKA-0027, 0028) in ../tokkl-android--w7-t1; both base 5278980, lock serialises emulator runs.
+T1 landed (TKA-0027 f33cd36, TKA-0028 0e1e585). TKA-0155 (default workspace offline, p2 w7) -> T2 lane first. Filed TKA-0156 (duplicate create on lost answer, p2 w8). TKA-0028 reuse criterion waived to TKA-0039/0040/0041.
+Filed TKA-0157 (bottom navigation matching the web app: Timer, Reports, Projects, Settings, More; p2 w7). Revised order:
+  now:        D1 (running) || T2a TKA-0155 (dispatched, ../tokkl-android--w7-t2a base 0e1e585)
+  after D1:   N1 TKA-0157 (navigation shell) || D2 TKA-0124 (sign-in scene)
+  after N1:   T2b TKA-0029 -> TKA-0030 (history, week view on the Timer page) || P1 TKA-0031 -> 0032 -> 0033 (CRUD)
+  then:       R1 TKA-0150 -> 0151 -> 0034 -> 0035 || H2 TKA-0134 -> 0135 -> 0136 -> 0153 -> 0131
+T2a landed TKA-0155 d6cee32. D1 on its last ticket (TKA-0149), 5 commits so far.
+H2 dispatched (TKA-0134, 0153, 0135, 0136) in ../tokkl-android--w7-h2 base d6cee32. TKA-0131 deferred to a later harness sitting. Next on D1 landing: N1 TKA-0157.
+D1 landed (TKA-0152 12c9017 .. TKA-0149 f36b768); main compiles androidTest, JVM 265/0. TKA-0158 (server URL gap, p4 w7) -> D2 lane with TKA-0124. N1 TKA-0157 next.
+N1 dispatched (TKA-0157) in ../tokkl-android--w7-n1 base f36b768, parallel with H2.
+H2 landed (TKA-0134, 0153, 0135, 0136; HEAD 8775328). Next: D2 (TKA-0124, TKA-0158) parallel with N1.
+D2 dispatched (TKA-0158, TKA-0124) in ../tokkl-android--w7-d2 base 8775328, parallel with N1.
+D2 landed (TKA-0158, TKA-0124; HEAD f0e9ade). TKA-0159 -> w8. N1 still running.
+H3 dispatched (TKA-0131) in ../tokkl-android--w7-h3 base f0e9ade, parallel with N1.
+N1 returned TKA-0157 (6d8144b on f36b768). Cherry-picked onto main f0e9ade in ../tokkl-android--w7-n1-int (sift/w7-n1-int, fe6bee8); compile fails only at SignInUnderPathPrefixTest.kt:116 (launch_message removed). N1 worker resumed there for a separate integration fix commit + signin/screenshot/ui.theme runs. Filed by N1: TKA-0160 (timerView preference, p3) -> T2b lane; TKA-0161 (Timer item running dot, p3) -> T2b lane; TKA-0162 (keyboard fit test flaky in package runs, p3) -> harness lane after H3.
+N1 landed (TKA-0157 + integration fix, HEAD 2211a7f). Next: T2b (TKA-0029, TKA-0030, TKA-0160, TKA-0161) and P1 (TKA-0031..0033) — H3 still running, so one of them now.
+T2b dispatched (TKA-0029, TKA-0160) in ../tokkl-android--w7-t2b base 2211a7f, parallel with H3. Remaining after: T2c (TKA-0030, TKA-0161), P1 (TKA-0031..0033), R1 (TKA-0150, 0151, 0034, 0035), H4 (TKA-0162). TKA-0123 updated for the bottom bar.
+T2b landed (TKA-0029 d4537a1, TKA-0160 b33bfdc). TKA-0163 (timeofday_format, p3 w7) -> T2c with TKA-0030, TKA-0161. TKA-0038 updated (clear TimerViewStore, queue, history pages).
+T2c dispatched (TKA-0163, TKA-0030, TKA-0161) in ../tokkl-android--w7-t2c base b33bfdc, parallel with H3.
+H3 returned TKA-0131 (d0d2689 on f0e9ade). Cherry-pick onto main b33bfdc in ../tokkl-android--w7-h3-int stopped on README.md conflict; H3 worker resumed there to resolve, fix merge fallout separately, and run API 36 (touched + screenshots) and API 30 full (minus TKA-0166 hang). Filed: TKA-0166 (reports font-scale test hangs on API 30, p2 w7 -> R1 lane first), TKA-0167 (failed assumptions fail tests, p3 w7 -> H4), TKA-0168 (pre-12 memory headroom + API 26 run, p3 w7 -> H4).
+H3 landed TKA-0131 5376d2b. Next free slot: R1 (TKA-0166 first, then TKA-0150, TKA-0151, TKA-0034, TKA-0035).
+Owner-filed TKA-0164 (wordmark alone in Brand, clock-O wordmark) and TKA-0165 (clock logo launcher icon) arrived in closed wave 1 (09:21, 10:27); moved to wave 7 as tail. TKA-0165 prerequisite met (../tokkl icon-pack, Tokkl 1771f08) -> D3 dispatched in ../tokkl-android--w7-d3 base 5376d2b. TKA-0164 blocked on asset: ../tokkl/docs/brand/wordmark-pack/source/tokkl-wordmark-clock-master.png not in ../tokkl yet (only /tmp/tokkl-wordmark-pack.WdI6Oh); also overlaps T2c (TimerScreen heading) -> after T2c and once the asset is committed in ../tokkl.
+Queue: R1a (TKA-0166 p2, TKA-0150, TKA-0151) next free slot; then R1b (TKA-0034, TKA-0035), P1 (TKA-0031..0033), H4 (TKA-0162, 0167, 0168), D4 (TKA-0164).
+T2c returned TKA-0163 b86caa0, TKA-0030 c414168, TKA-0161 fca7a15 (base b33bfdc). TKA-0163 landed 7f02666. TKA-0030 conflicted (README) during cherry-pick -n ON MAIN; abort did nothing (no state for -n), so main was reset --hard to 7f02666 after confirming all 18 staged paths came from c414168. LESSON: land stale-base sittings in an integration worktree first, never with cherry-pick -n on main. Integration worktree ../tokkl-android--w7-t2c-int (cherry-pick of c414168 in progress, README conflict) handed to the T2c worker with fca7a15 to follow. Filed: TKA-0169 (calendar room in landscape, p3 w7), TKA-0170 (calendar unsent mark, p3 w7).
+Owner ACK: TKA-0164 prerequisite now met (../tokkl wordmark-pack committed as Tokkl df6711b). Order: TKA-0165 (running, D3) -> TKA-0164 after D3 and T2c-int land (shared brand_images_source.txt/keep.xml, Timer heading, sign-in/timer screenshot refs).
+T2c landed (TKA-0163 7f02666, TKA-0030 c86ee20, TKA-0161 beb5518). Free slot: R1a (TKA-0166, TKA-0150, TKA-0151). TKA-0164 waits for D3.
+R1a dispatched (TKA-0166, TKA-0150, TKA-0151) in ../tokkl-android--w7-r1a base beb5518, parallel with D3.
+D3 landed TKA-0165 d7b8915. TKA-0164 now unblocked (asset in Tokkl df6711b; D3 and T2c landed) -> D4 next.
+D4 dispatched (TKA-0164) in ../tokkl-android--w7-d4 base d7b8915, parallel with R1a.
+D4 landed TKA-0164 2822ad1. R1a running. Free slot -> P1 (TKA-0031..0033) or R1b after R1a.
+P1 dispatched (TKA-0031, 0032, 0033) in ../tokkl-android--w7-p1 base 2822ad1, parallel with R1a.
+R1a landed (TKA-0166, 0150, 0151; HEAD ba90ee8). TKA-0171 -> w8. Next free slot: R1b (TKA-0034, TKA-0035).
+R1b dispatched (TKA-0034, TKA-0035) in ../tokkl-android--w7-r1b base ba90ee8, parallel with P1. Remaining after: H4 (TKA-0162, 0167, 0168), C1 (TKA-0169, 0170), then gate.
+P1 landed (TKA-0031, 0032, 0033; HEAD a5be60f). TKA-0172 -> w8. Next free slot: H4 (TKA-0162, 0167, 0168) or C1 (TKA-0169, 0170).
+C1 dispatched (TKA-0170, TKA-0169) in ../tokkl-android--w7-c1 base a5be60f, parallel with R1b. Last wave 7 sitting after these: H4 (TKA-0162, 0167, 0168).
+R1b landed (TKA-0034, TKA-0035; HEAD 2bb318b). Next free slot: H4 (TKA-0162, 0167, 0168).
+H4 dispatched (TKA-0167, 0162, 0168) in ../tokkl-android--w7-h4 base 2bb318b, parallel with C1. These are the last wave 7 sittings; gate next (review base 5a709f8).
+C1 landed (TKA-0170 1f73a0f, TKA-0169 feb8c1f, partial on-open criterion -> TKA-0173 w8). Only H4 remains in wave 7.
+H4 landed (TKA-0167 2576b8f, TKA-0162 5d182ab, TKA-0168 bee3574). TKA-0174/0175/0176 -> w8. Wave 7 implementation complete; gate next (review base 5a709f8).
+Gate w7: review started 15:48 (codex, worktree ../tokkl-android--review-w7 at bee3574, base 5a709f8, 41 commits/263 files). Stage 1 skipped (no browser e2e). Coverage prompt ready at gate-w7/coverage-prompt.txt; dispatch after review findings are filed and any major ones fixed.
+Review: rc 0, 5 major findings, snapshot differs only by T3 checkpoint refs (tree = HEAD), worktree clean. Filed TKA-0177 (refresh after send), TKA-0178 (history gap), TKA-0179 (calendar boundary, 2 findings), TKA-0180 (calendar foreground) p2 w7. Dispatched RC (0179,0180) and RH (0177,0178) base bee3574.
+Review fixes landed: TKA-0179 b5e0aed, TKA-0180 7ba96d3, TKA-0177, TKA-0178 (HEAD 1f29525). TKA-0181 (upstream web calendar) -> w13. Next: coverage dispatch from gate-w7/coverage-prompt.txt (rebuild waived list).
+Coverage dispatched in ../tokkl-android--w7-coverage base 1f29525 (prompt gate-w7/coverage-prompt.txt).
+Prime 2026-10-19 (wordmark + Spectrum palette): TKA-0182 (w8), 0183 (w8, splash option a default), 0184 (w9), 0185 (w9, after TT-0298 lands in ../tokkl), 0186 (w10, after TT-0299), 0187 (w8). TT-0298 (w6), TT-0299 (w7) in ../tokkl tracker. TKA-0123 and TKA-0173 now depend on TKA-0182.
+Coverage landed 7ded489..cc8c067 (tree = ba0a100). 319 JVM, 262 device on api36 at branch.
+Filed TKA-0188 (More sheet nav strip, p3 w8); TKA-0174 amended (AirplaneMode helper). Capture dispatched in ../tokkl-android--w7-capture base cc8c067.
+Capture landed 51e21d5 (kenkeep 40 nodes fresh, 7 branches; AGENTS/README openings). Filed TKA-0189 (PRD 8.2/6 + bounds comment, docs p4 w8), TKA-0190 (Settings 48dp literal, dx p4 w8). Close: npm test 16/16 rc0, commitlint 5a709f8..HEAD rc0; instrumented api36 then api30 running at cc8c067 (code tree same as 51e21d5). Pending: gradle check at 51e21d5 after the emulator runs.
+minSdk 31 decision (owner 19:0x): filed TKA-0191 (minSdk 31 + drop pre-12 code, w8 p2) and TKA-0192 (tokkl-api31, drop batching, CI [36,31], HistoryServerTest OffsetDateTime, ProjectsServerTest API30 timeout, w8 p2, dep 0191). TKA-0174, TKA-0175 superseded.
+Wave 7 CLOSED at 51e21d5 (19:05): ticket-check OK 191; npm 16/16; gradle assembleDebug check rc0 (319 unit, lint 0 errors 1 warning OldTargetApi); api36 full 262/262 rc0 at cc8c067 (code tree = 51e21d5); api30 batched 194 ran 3 failed (moot: minSdk 31 -> TKA-0192).

@@ -1,0 +1,44 @@
+- TKA-0027 [done] f33cd36 Queue start, stop, create, edit and delete offline and send them in order with real start times
+- TKA-0028 [done] 0e1e585 Add the project, task and tag picker, including archived items an old entry uses
+- TKA-0029 [done] d4537a1 Build day-grouped history that loads older days on scroll and shows server-snapped times
+- TKA-0030 [done] c86ee20 Build the week calendar in the account timezone and week start
+- TKA-0031 [done] 4be9085 Create, edit and archive projects with colour, client, rate, estimate and billable default
+- TKA-0032 [done] 31a08df Create, edit, archive and restore clients
+- TKA-0033 [done] a5be60f Create, rename and delete tags
+- TKA-0034 [done] 9291f4f Build the detailed report, paged by the server
+- TKA-0035 [done] 2bb318b Build the weekly report grid of projects by week
+- TKA-0118 [done] 962d5e4 Use one page-title style on every screen
+- TKA-0119 [done] 329dfa7 Set section headings in one Anybody role that ranks above the rows beneath them
+- TKA-0120 [done] 0ec41c5 Give filled buttons a 48dp pill and a weight-700 label
+- TKA-0122 [done] 028989d Show sign-in failures in an error banner with an icon
+- TKA-0124 [done] f0e9ade Rebuild sign-in with the brand on a gradient scene and the form on a surface card
+- TKA-0131 [done] 5376d2b Run the instrumented suite on an API 26 to 30 emulator as well as API 36
+- TKA-0132 [done] 448ac05 Cut the test emulator's host memory with a pinned GPU mode, core count and an effective RAM cap
+- TKA-0133 [done] 5278980 Make concurrent instrumented runs safe, or refuse a second run while one is active
+- TKA-0134 [done] 12969b6 Find why a comma-separated class filter runs only its first class, then fix or document it
+- TKA-0135 [done] 13e8179 Serve Tokkl under a path prefix in the harness proxy and sign in to it from the device
+- TKA-0136 [done] 8775328 Test the 429 sign-in cooldown on the device against real Tokkl with an invited throwaway account
+- TKA-0148 [done] 4655077 Round report percentages the way the web app's Intl.NumberFormat does
+- TKA-0149 [done] f36b768 Keep the email field's supporting line the same height when its two-line hint becomes a one-line error
+- TKA-0150 [done] e727b28 Keep the report chart's bars at 3:1 against their track in the light theme
+- TKA-0151 [done] ba90ee8 Build ReportsForegroundTest's search counter on the shared LoopbackRelay test helper
+- TKA-0152 [done] 12c9017 Clear the ten lint warnings the brand images added
+- TKA-0153 [done] 4192a1c Make CI's emulator draw with Vulkan, as the script does on the emulator it boots
+- TKA-0155 [done] d6cee32 Keep the account's default workspace so a timer started offline has one
+- TKA-0157 [done] 2211a7f 3342795 Add the app's bottom navigation, matching Tokkl's web app on phones
+- TKA-0158 [done] c4babae Shorten the server URL error so its reserved room does not leave a gap under the hint
+- TKA-0160 [done] b33bfdc Keep the Timer page's List or Calendar choice in Tokkl's timerView preference
+- TKA-0161 [done] beb5518 Mark the bottom bar's Timer item while an entry runs, as the web app's running dot does
+- TKA-0162 [done] 5d182ab Find why focusedSignInFieldStaysAboveTheKeyboard fails in some ui.theme package runs
+- TKA-0163 [done] 7f02666 Show clock times in the account's timeofday_format, 12-hour or 24-hour
+- TKA-0164 [done] 2822ad1 Show the clock-O wordmark alone in the Brand composable
+- TKA-0165 [done] d7b8915 Replace the launcher icon with the clock logo's adaptive layers
+- TKA-0166 [done] 14daa9d Find why the reports font scale test hangs on API 30
+- TKA-0167 [done] 2576b8f Stop failed assumptions from failing instrumented tests
+- TKA-0168 [done] bee3574 Give pre-Android 12 emulator runs memory headroom and a run at API 26
+- TKA-0169 [done] feb8c1f Give the Calendar view room on a phone held sideways
+- TKA-0170 [done] 1f73a0f Mark unsent entries on the calendar's blocks, as the history does
+- TKA-0177 [done] ed12227 Read the server again after the queue sends a change, so an older refresh cannot put the change back
+- TKA-0178 [done] 1f29525 Close the gap between cached days and older history pages when the cache window moves forward
+- TKA-0179 [done] b5e0aed Show calendar entries that start before a week and run into it
+- TKA-0180 [done] 7ba96d3 Reload older calendar weeks when the app comes back to the foreground

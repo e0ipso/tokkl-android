@@ -1,0 +1,4 @@
+free before: 11055 MB available
+exit=0
+qemu VmHWM peak: 3498420 kB (3,34 GiB)
+free after: 11573 MB available

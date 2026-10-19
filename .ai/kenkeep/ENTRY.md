@@ -1,7 +1,7 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:3c52db25ea285b4b657cd6863522a75b5041367c7348bc966e8dccd4cd46cc2b'
-node_count: 40
+nodes_hash: 'sha256:3a4b2d83f1dc6d64d6c3a3773dd0581dfc3d28df12cdb82f3d11cd7c3842081d'
+node_count: 41
 ---
 # kenkeep
 
@@ -15,3 +15,6 @@ node_count: 40
 - Load [`release/`](nodes/release/index.md) for more information on the app ID, versioning, reproducible signed builds, CI jobs and F-Droid metadata; read before touching versions, signing, CI or store text.
 - Load [`screens/`](nodes/screens/index.md) for more information on sign-in, the navigation host and bottom bar, the Timer page, Reports and the catalog pages; read before changing a screen, its model or navigation.
 - Load [`testing/`](nodes/testing/index.md) for more information on instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator.
+
+## Conventions (how we build)
+- Open [**Reuse drain checks by content and test configuration**](nodes/practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents

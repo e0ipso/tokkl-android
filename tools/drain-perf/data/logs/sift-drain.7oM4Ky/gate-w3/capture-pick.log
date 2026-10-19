@@ -1,0 +1,7 @@
+[main 6810108] docs: record wave 3 test harness, API client and build facts in kenkeep
+ Date: Sun Oct 18 10:24:42 2026 +0200
+ 18 files changed, 261 insertions(+), 49 deletions(-)
+ create mode 100644 .ai/kenkeep/nodes/map-api-client-shared-okhttp-serverurl-and-errors.md
+[credential-related line omitted]
+ create mode 100644 .ai/kenkeep/nodes/practice-port-tokkl-typescript-with-javascript-semantics.md
+ create mode 100644 .ai/kenkeep/nodes/practice-run-instrumented-tests-only-through-the-script.md

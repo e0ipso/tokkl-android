@@ -1,0 +1,2622 @@
+51e21d599b38b953390577865f799aacc7dac818 2026-10-19T18:34:38+02:00 docs: record wave 7 queue, screens, design and test facts in kenkeep
+Add nodes for the change queue and offline picker, the Timer page with
+its history, calendar and timerView choice, the catalog pages, the
+shared UI components, the rules for instrumented tests from API 26 to
+36, and the owner's rule that the wordmark shows only on sign-in and
+the launch splash.
+
+Bring the nodes that wave 7 left stale in line with the tree: the
+emulator memory fix and test batches, comma-separated test filters,
+the wordmark-only brand and the launcher icon, the bottom bar, the
+Detailed and Weekly reports, the chart band, the sharePercent and
+formatTime ports, and the CI matrix. Record the owner's Spectrum
+stickers palette decision and the order it lands in, not its values.
+
+Group the 40 leaves into seven branches, so ENTRY.md lists branches
+instead of every leaf. Bring the openings of AGENTS.md and README.md up
+to date, and list all 16 captured screens in README's screenshot tests.
+
+Refs: TKA-0027, TKA-0028, TKA-0029, TKA-0030, TKA-0031, TKA-0032
+Refs: TKA-0033, TKA-0034, TKA-0035, TKA-0131, TKA-0134, TKA-0148
+Refs: TKA-0150, TKA-0155, TKA-0157, TKA-0160, TKA-0161, TKA-0162
+Refs: TKA-0163, TKA-0165, TKA-0167, TKA-0168
+
+cc8c0676bab08098a8bb462d73d83126fb2d1633 2026-10-19T18:09:27+02:00 test: record references for the catalog pages, report tabs and More sheet
+Seven new screenshot tests in the four ScreenshotTest classes, with
+their references recorded on tokkl-api36 in light and dark, at 1.0 and
+2.0: the Detailed and Weekly report tabs with fixed reports, the
+Projects, Clients and Tags pages with fixed lists, the More sheet over
+the Tags page, and the brand's small and medium sizes.
+
+The More sheet has a window of its own, and captureToImage copies a
+node from the activity's window unless it is in a dialog, so the test
+copies the sheet's window with PixelCopy. The catalog pages' data lives
+in CatalogSamples, which CatalogFitTest shares.
+
+The 36 existing references are unchanged and pass.
+
+Refs: TKA-0031, TKA-0032, TKA-0033, TKA-0034, TKA-0035, TKA-0152
+Refs: TKA-0157
+
+d52a61a110ea63b754357e0dc91c94c0c8af16ef 2026-10-19T18:09:26+02:00 test: cover history, catalog pages, report tabs and sign-in fit on device
+Device tests against the real Tokkl container:
+
+- HistoryServerTest: the history shows the times the server stored,
+  leaves the running entry out and loads older days only at the list's
+  end, 14 at a time, to the account's first day. Offline the older days
+  say they need the server, and Try again loads them. An unsent entry
+  shows the times the server then keeps.
+- TimerViewServerTest: a cold start opens the server's timerView, a view
+  the server lacks opens List, taps reach the server, and an offline tap
+  goes with the next refresh. Tokkl refuses unknown values, so the JVM
+  test covers those.
+- ProjectsServerTest, ClientsServerTest and TagsServerTest, adopted from
+  the sittings: create, edit, archive, restore, rename and delete reach
+  the server and the cache, refusals show the server's reason, and
+  offline every action is off.
+- UsualFontCatalogFitTest and LargestFontCatalogFitTest: no text of the
+  catalog pages, forms and questions is cut off at 1.0 or 2.0.
+- DetailedReportServerTest and WeeklyReportServerTest: rows and grid
+  match the web app's /api/app/report/entries and /weekly in the
+  account's week, offline shows no numbers, and both fit at 2.0.
+- SignInScreenTest and LargestFontScaleTest: no sign-in field changes
+  height or moves when errors show or clear, at 1.0 and 2.0, and a
+  focused field that ends 0, 1 or 2 px above the form's edge ends above
+  the keyboard.
+
+ReportsScreenTest's largest-font marker moves to ReportTabsTestSupport,
+which the new report tests share.
+
+Refs: TKA-0029, TKA-0031, TKA-0032, TKA-0033, TKA-0034, TKA-0035
+Refs: TKA-0124, TKA-0149, TKA-0158, TKA-0160
+
+510309114dcf584e04d3e8fc7e0565905253c4d7 2026-10-19T18:09:25+02:00 test: cover the bottom bar, calendar and stored workspace on the device
+Device tests against the real Tokkl container, each data-filling one on
+an account of its own:
+
+- BottomBarTest: each bar item opens its page and Back returns to
+  Timer, Back from Timer leaves the app, the More sheet lists Clients,
+  Tags and Trash, opens each and closes on Close and on Back, the page,
+  the view choice and the open sheet survive recreation, and the Timer
+  item reads "Timer running" while an entry runs and stops when it
+  stops.
+- CalendarServerTest: TalkBack's label for a block, "Not sent" on an
+  offline entry until the queue sends it, last week from the phone and
+  an older week that needs the server and loads on Try again, swipes
+  between days, entries that run into last week and an older week from
+  before them, and an older week after a trip to the background, online
+  and offline.
+- DefaultWorkspaceRestartTest: one refresh stores default_workspace_id,
+  it reads in airplane mode after a process restart, and a timer
+  started there runs in that workspace once the queue sends it.
+- SharePercentOnDeviceTest: a sample of the Node share-percent cases
+  and JavaScript's shortest decimals, on ART.
+- ReportTabsModelTest and ReportsServerTest: the Detailed tab's paging
+  and the Weekly tab's week and sort against a MockWebServer.
+
+AirplaneMode and BackgroundTrip are shared helpers for these, and
+TestAccounts.Account can now create, read and delete entries.
+
+Process death for the bar's state is not covered: the test runs in the
+app's process, so killing it ends the test.
+
+Refs: TKA-0030, TKA-0034, TKA-0035, TKA-0148, TKA-0155, TKA-0157
+Refs: TKA-0161, TKA-0170, TKA-0179, TKA-0180
+
+7ded48917d214dc44e273a2c1cec9e19a602ebcd 2026-10-19T18:09:25+02:00 test: cover the Wave 7 models on the JVM
+New and extended unit tests for what the sittings checked by hand:
+
+- FormatTimeTest: formatTime at midnight, noon and one-digit hours on
+  the 12- and 24-hour clocks, seconds dropped, the zone's clock, and
+  which timeofday_format values ask for the 12-hour clock.
+- AccountSettingsSourceTest and AccountSettingsStoreTest: a refresh
+  stores default_workspace_id, a /me without it or with null keeps the
+  stored one, a failed /me changes nothing, the clock format comes from
+  the preferences and survives a failed read, and both fields read back
+  from the preferences file.
+- ChangeSenderTest: onSent runs once per drain job, after a second pass
+  that a send() during the drain asked for, and not at all when nothing
+  went.
+- CalendarModelTest: the scratch cases for entries that cross into a
+  week from before it and for the foreground reload, plus an
+  unreachable and a failed week that load on the next try.
+- HistoryDaysTest and HistoryModelTest: day grouping in the account's
+  zone, server times for sent entries and snapped times for unsent
+  ones, paging by 14 days to the bounds' first day, an empty page
+  without bounds waiting for a tap, and offline or 503 as unreachable
+  with a retry.
+- TimerViewSettingTest: cold start, missing and unknown timerView, a
+  tap posted at once, an offline tap sent by the next refresh, and no
+  writes to a server without Tokkl's preferences.
+- ClientsModelTest: archive asks first, restore brings the projects
+  back, and a new client goes trimmed with blank notes as none.
+- ThemeContrastTest: the scene overlap's worst corners, text, halo and
+  the wordmark outline on them, matching the rows of styles.css.
+- ReportFormatTest: the share-percent sample in the test APK's assets,
+  for a device test to come, holds only cases of the Node fixture.
+
+Refs: TKA-0029, TKA-0030, TKA-0032, TKA-0124, TKA-0148, TKA-0155
+Refs: TKA-0160, TKA-0163, TKA-0177, TKA-0179, TKA-0180
+
+1f295252eb57517e8b609c087f811fb95811ab61 2026-10-19T16:33:43+02:00 fix(history): keep the days the cache drops between it and the older days
+The older days end where the cache's window began when they first
+loaded. When the app stayed open past midnight, a refresh moved the
+window on a day and dropped its first day, which was then in neither the
+cache nor the older days, so the list skipped it, and later pages went
+on back from their own cursor and never filled it. With the server's
+word that nothing comes before the cache, the dropped day vanished above
+the end of the list too.
+
+The model now remembers where the older days end and keeps the entries
+of the days the cache drops after that, as the cache last held them. The
+list has every day from today to the oldest day loaded, with no request,
+and older pages still load only when the list's end shows.
+
+Refs: TKA-0178
+
+ed122272c2796875392dee73eb98ae20004f94f8 2026-10-19T16:33:42+02:00 fix(cache): read the server again after the queue sends a change
+After a drain sent changes, the sender asked for a refresh, which joined
+one already running. When that refresh had read the entries before a
+queued Stop reached the server and wrote them after the Stop left the
+queue, the cache showed the timer running again until some later
+refresh.
+
+The sender now calls refreshAfterChange, which waits for a running
+refresh and then reads the server once more, so the last write comes
+from a read that started after the send. The sender calls it once per
+drain, after its last pass, so a drain that sends several changes, or
+takes a second pass for a change queued meanwhile, still reads once.
+
+HangingRelay can now hold the server's answer to one request, which the
+new ChangeQueueServerTest case uses to keep a refresh's entries from the
+phone while the Stop is sent.
+
+Refs: TKA-0177
+
+7ba96d3a3782a3326d52b034cc5fa5f7ea8a29b3 2026-10-19T16:33:19+02:00 fix(calendar): load older weeks again when the app comes back to the foreground
+A week the server sent stayed as it was while the model lived. The
+foreground refresh updates only the cache, so an entry changed or
+deleted elsewhere kept its old block in an older week, also after
+leaving the week and coming back.
+
+The activity now tells the calendar when it stops, unless for a
+configuration change, and when it starts, the signal the reports screen
+uses. It tells the model rather than the screen because the loaded
+weeks live in the view model whichever page shows. After a trip to the
+background every loaded week loads again the next time it shows, and
+the week on screen loads at once. Its old entries show until the new
+ones come, and stay, with no error, when the server is out of reach. A
+rotation sends nothing.
+
+Refs: TKA-0180
+
+b5e0aedaae3a0d2c171e0b3b9afe7c971b49c414 2026-10-19T16:33:18+02:00 fix(calendar): show entries that start before a week and run into it
+The calendar asked the server only for entries that start from the day
+before a week, and drew the two cached weeks from the cache alone. The
+server finds entries by their start, so an entry that started two days
+before an older week, or the evening before the cache's first day, was
+missing from the week it runs into.
+
+Tokkl stores stopped entries of up to 999 hours. A week outside the
+cache now asks for the entries that start from 999 hours before it and
+keeps those that run into it. A cached week also asks the server for the
+entries that start in those 999 hours before the cache and run into it,
+one request shared by both cached weeks, and adds them to what the
+phone keeps. The cache keeps holding only entries that start in its two
+weeks, so the history's days and the refresh's request stay as they
+were. Offline, a cached week draws from the cache and shows no error.
+
+Refs: TKA-0179
+
+bee3574be78fe88a7277245f603f609adfe82057 2026-10-19T15:47:32+02:00 test: run full suites below Android 12 in batches, and add tokkl-api26
+Below Android 12 apps draw with OpenGL, and qemu keeps memory after
+every test. A full run on one tokkl-api30 emulator peaked at 5.5 GB, a
+few tests short of the 6 GB the emulator's scope may use, and one on
+API 26 does not fit at all.
+
+A run with no test filter on an emulator below Android 12 that
+scripts/instrumented-tests.sh boots now goes in batches. The script
+installs the APKs and has the runner list the tests with log=true, so
+what @SdkSuppress leaves out stays out. It then groups whole classes,
+at most 20 tests per batch, and runs each batch on a freshly booted
+emulator against the same server, so the steps of each *RestartTest
+still run in order on one device. It prints each batch's totals and
+the run's, keeps each batch's results and report under
+app/build/outputs/androidTest-results/batches/, and fails when a batch
+fails or ran a different number of tests than the runner listed for
+it. The listing uninstalls both APKs again: on API 26, AGP's test task
+could not install the app over the listed copy, ran none of the
+batch's tests and still passed. A run with a test filter, or on a
+device the script did not boot, runs as before. The script now keeps
+the emulator's API level and asks for it until it gets a number,
+because with pipefail one failed adb call there would end the run
+without a message.
+
+With batches qemu peaked at 3.4 GB on tokkl-api30, where all 111
+tests passed in 7 batches, and at 3.7 GB on the new tokkl-api26
+(Android 8.0, system-images;android-26;default;x86_64). All 111 tests
+ran there too; 7 fail on API 26 for reasons outside this change.
+Each run took about 15 minutes.
+
+README.md says how to create tokkl-api26 and run the suite on it, and
+how the batches work.
+
+Refs: TKA-0168
+
+5d182ab887f0a16953adeffc8c03e992bc45d50c 2026-10-19T15:47:31+02:00 test(ui): start the keyboard test with the keyboard closed
+focusedSignInFieldStaysAboveTheKeyboard failed in three of four runs of
+[credential-related line omitted]
+window's bottom, 2400 px, under the keyboard's top at 1604 px. It did
+not fail again: 12 package runs on tokkl-api36 passed it, three on
+f36b768, four with logging on this base, one of them with every host
+core busy, and five on this change. Before every tap the keyboard was
+hidden with no inset, and the app's insets and the form's scrolling
+area changed together once it opened.
+
+The test now waits until the keyboard is closed and takes no room
+before it taps the field, so the move it measures always starts from
+the form's resting place. The old message cannot tell whether the
+keyboard's inset never reached the form or the form made room without
+scrolling the field into it: the field ends at 2400 px either way. So
+when the field ends under the keyboard, the message now also gives the
+bottom of the form's scrolling area. With imePadding() taken off the
+form, the test fails with both at 2400 px.
+
+Refs: TKA-0162
+
+2576b8f8d810e6e33c9900449845787f1727f9ca 2026-10-19T15:47:31+02:00 test: set the system night mode in WindowBackgroundTest, not assume it
+WindowBackgroundTest skipped with assumeTrue when the system's night
+mode followed a schedule. The Android Gradle plugin 9.4.1 runs the
+tests through its test engine 1.0.1, which writes every result but a
+pass to the JUnit XML as a failure. On tokkl-api36 with the night mode
+set to auto, the report listed the skipped test as a failure with
+AssumptionViolatedException, while Gradle passed. The orchestrator and
+the runner report the assumption correctly: the engine maps it to an
+aborted test, which does not fail the task. Engine 1.0.7, which comes
+with AGP 9.5.0-alpha08, records it as skipped. AGP 9.4.1 has no option
+for it, and its newer engine only comes with an alpha.
+
+The new SystemNightMode rule sets the system's night mode with `cmd
+uimode night`, waits until the app's configuration has it, and puts the
+previous mode back afterwards, a schedule included, as SystemFontScale
+does for the font scale. WindowBackgroundTest runs every test with the
+system light, so following the system has one answer on any device.
+
+README.md says not to skip a test with an assumption, and how to leave
+it out or set the device state instead.
+
+Refs: TKA-0167
+
+feb8c1f8558cbe83804f959988b243169faf0785 2026-10-19T13:59:35+02:00 feat(calendar): give the week grid room on a phone held sideways
+On tokkl-api36 turned sideways the Timer page kept its brand, the List
+and Calendar switch and the calendar's toolbar above the week, so the
+grid showed 46dp, less than an hour row, at font scale 1.0 and nothing
+at 2.0.
+
+On a window of compact height, under 480dp, the brand and the switch
+now scroll away as soon as the entries scroll on, and the calendar's
+toolbar goes next. The day heads stay above the grid, which then shows
+246dp, five hour rows, at 1.0 and 198dp, four rows, at 2.0. Everything
+that scrolled away comes back once the grid is back at midnight, when
+the day heads or the toolbar are dragged down, or when TalkBack moves
+to it. The new ScrollAwayColumn does this for the page and for the
+calendar. Taller windows keep the layout as it was, and the portrait
+screenshot references pass unchanged.
+
+LandscapeCalendarTest checks the rows at both font scales in landscape
+and that the switch and every toolbar control scroll back into view
+whole.
+
+Refs: TKA-0169
+
+1f73a0fdc5f278a5652d5ab16c972777d72b1b6b 2026-10-19T13:59:34+02:00 feat(calendar): mark unsent entries on their blocks
+An entry the server had not received looked like any other block in
+the Calendar view. Only TalkBack said "Not sent". The block now shows
+the history's NOT SENT label under its text when the whole label fits
+below it. A block without that room gets an arrow-up icon at the start
+of its first line instead, Tokkl's upload icon. Neither mark is colour
+alone, and both go once the queue has sent the change, since they
+follow the cache's unsent flag. The dashed outline stays the running
+entry's own mark. TalkBack reads the block as before.
+
+The calendar's screenshot references show the label at font scale 1.0
+and the icon at 2.0 on the unsent Code review block.
+
+Refs: TKA-0170
+
+2bb318bf344872c2ea81b7b61aade3ea95e481ad 2026-10-19T13:21:35+02:00 feat(reports): add the weekly grid of projects by day
+The Reports screen gains a Weekly tab. It shows one week as a grid,
+with projects as rows, the week's seven days as columns, and a total
+for each project, each day and the week. Durations follow the account's
+format, and a day without time shows a dash, as in the web app.
+
+The numbers come from the Reports API v3 weekly endpoint for the seven
+days from the week's start, with the workspace's rounding. Rows of one
+project add up, and they sort as the web app's weekly grid sorts them:
+time without a project last, the rest by total, then by title in the
+root collation, as localeCompare does.
+
+The week always starts on the account's week start, in its timezone.
+On this tab the range is the week that holds today when the range
+does, otherwise the week that holds its first day. Previous and next
+move by a week, and the range button offers only This week and Last
+week. Going back to another tab keeps that week.
+
+The project column stays put while the days scroll sideways under it.
+Every row scrolls with one shared state and no overscroll, so the
+columns stay lined up. Each column is as wide as its widest text, and
+names wrap at word boundaries, up to 60% of the width for a long word.
+TalkBack reads every cell with its project and day, such as "Website,
+Mon 13 Oct: 2 hours", and every total with what it adds up.
+
+Offline or with the server unreachable, the tab shows the summary's
+message and no numbers, and nothing is kept on the phone.
+
+At the largest font scale the three tab labels no longer fit an equal
+share, and the words broke in two. The tab row now scrolls sideways
+when any label would not fit its share on one line. ReportsScreenTest
+no longer requires text inside a row that scrolls sideways to lie
+within the screen's width, since a scroll brings it in. The four
+reports references are recorded again on tokkl-api36; only the tab
+row differs.
+
+Refs: TKA-0035
+
+9291f4f2487c000a13c8e55106995906b950715c 2026-10-19T13:21:34+02:00 feat(reports): add the detailed report, paged by the server
+The Reports screen gains a Detailed tab beside Summary. It lists every
+entry of the range, newest first as the web app's detailed report
+sorts them, with its description, project and task, duration, day and
+start and stop times in the account's timezone and 12 or 24-hour
+clock.
+
+The entries come from the Reports API v3 detailed search, 50 to a
+page, with the workspace's rounding. The first page loads with the
+tab. When the list comes within ten rows of its end, the app asks for
+the next page at the X-Next-Row-Number the server sent, and stops when
+the server sends none. A next row that does not move forward is an
+invalid answer. The list is lazy, so a long range composes only the
+rows on screen. Rows stay in memory and are gone when the screen
+closes.
+
+When a page fails, the tab shows the summary's message and no rows,
+including those of pages that loaded before. Try again starts from the
+first page.
+
+The tab row now has two tabs, and tabs not shown are muted as in the
+web app. The four reports references are recorded again on
+tokkl-api36; only the tab row differs. Tests that read the summary
+from the model's state cast it to SummaryReport, since a loaded state
+now holds any tab's report.
+
+Refs: TKA-0034
+
+a5be60f9fa3a754379aac33ce3b559147f49433a 2026-10-19T13:07:29+02:00 feat(tags): create, rename and delete tags
+More > Tags showed a placeholder. It now lists the workspace's tags
+from the server, with the web app's New tag field and Add tag button
+above them. A tap on a tag opens a small form that renames it. Delete
+asks first and names the tag in the question, as the web app does, and
+Cancel keeps the tag. The question's Delete tag button uses the danger
+colours of the web app's button-danger through the new
+TokklDangerButton, and its label says what it does.
+
+Changes go to the server at once and are never queued. After each one
+the server accepts, the account refreshes. The cache then holds the new
+tags, and the cached entries carry the renamed tag or lose the deleted
+one, so the picker and the history show it. Offline or with the server
+out of reach, the page lists the tags cached on the phone, says that
+changing them needs the server and turns every action off.
+
+Refs: TKA-0033
+
+31a08df7c637b61942ab7bf69fb98a097410afc5 2026-10-19T13:07:28+02:00 feat(clients): create, edit, archive and restore clients
+More > Clients showed a placeholder. It now lists the workspace's
+clients from the server, each with its notes and number of projects.
+Archived clients sit under their own heading and each carries the word
+Archived, so they stay reachable for Restore. New client opens the form
+with the web app's name and notes fields, and a tap on a row edits that
+client.
+
+Archive asks first, as the web app does, and says how many projects go
+with the client. Restore brings the client back with all its projects.
+The question uses the new ConfirmDialog in the catalog package. Its
+Cancel and confirm buttons sit stacked at full width, so they cannot
+overlap at 200% font scale.
+
+Changes go to the server at once and are never queued. After each one
+the server accepts, the account refreshes, so the cached clients and
+projects follow and the project form offers the new state. Offline or
+with the server out of reach, the page lists the clients cached on the
+phone, says that changing them needs the server and turns every action
+off.
+
+Refs: TKA-0032
+
+4be9085d11f61ca948ab92acbf19ed0b3bacf571 2026-10-19T13:07:27+02:00 feat(projects): create, edit, archive and restore projects
+The Projects tab showed a placeholder. It now lists the workspace's
+projects from the server, with the archived ones under their own
+heading and each marked Archived in words. New project opens the form,
+a tap on a row edits that project, and each row has Archive or Restore.
+
+The form has the web app's fields, words and mistakes: name, colour,
+client, hourly rate, currency, estimated hours and billable by default.
+Each of Toggl's 14 swatches shows its name, and the chosen one gets a
+check mark and a heavier frame. Custom takes any #rrggbb. The client
+list comes from the clients cached on the phone, and an archived client
+shows only when the project already has it.
+
+Changes go to the server at once and are never queued. After each one
+the server accepts, the account refreshes, so the cache, the picker,
+the history and the reports show the new state. The new
+AccountSettingsSource.refreshAfterChange waits for a refresh that is
+already running, since it may have read the server before the change,
+and then starts its own. Offline or with the server out of reach, the
+page lists the projects cached on the phone, says that changing them
+needs the server and turns every action off. When the network comes
+back it loads them again.
+
+A refused change shows the server's reason, such as "Name has already
+been taken". ApiError.UnexpectedStatus now carries the error body when
+that body is one JSON string, so TogglApiClientTest expects "Not found"
+with its 404.
+
+The new catalog package holds the page model, the problems and their
+messages, and the page frame, which the clients and tags pages will
+share.
+
+Refs: TKA-0031
+
+ba90ee83fab2662b75959e5337bf03b475a54e64 2026-10-19T12:07:22+02:00 test: count report searches through the shared LoopbackRelay
+ReportsForegroundTest kept its own TCP relay to count report
+searches, next to LoopbackRelay, which the host mismatch tests use.
+Two copies of the socket code could drift apart, and the next test
+that counts requests would have had to pick one.
+
+LoopbackRelay now takes an optional watcher factory. It calls it once
+per connection and shows the watcher each chunk the app sends before
+passing it on, so a count is in place by the time the server answers.
+It also records the connections it could not pass on. The search
+counter is now a watcher on that relay, and keeps the end of each
+chunk so a search split across two reads counts once.
+
+HangingRelay, which ChangeQueueServerTest uses, still has socket code
+of its own. Its hang and release need more than a watcher, so it is
+left for a ticket of its own.
+
+Refs: TKA-0151
+
+e727b28ab8f8ea326a18ff0080f6854ae05b2669 2026-10-19T12:07:21+02:00 fix(reports): draw the chart's bar track in Tokkl's chart band
+Each bar of the summary chart sat on a full-width track in
+surfaceVariant, which is surface-2. In the light theme the billable
+and non-billable colours reached only 2.77:1 and 2.65:1 against it,
+under the 3:1 WCAG asks of graphical objects. The web app keeps its
+chart off surface-2 for the same reason.
+
+The track now uses --chart-band from styles.css, surface-2 at 50% over
+surface, which the theme gains as chartBand. Both bar colours reach
+3.17:1 and 3.04:1 on it in light, and 4.82:1 and 4.84:1 in dark. The
+track stays, so an empty day still shows a faint bar.
+ThemeContrastTest now checks both bar colours on the track in both
+themes; before the change it failed with the light numbers above.
+
+The four reports references are recorded again on tokkl-api36. Only
+the track pixels differ. The dark captures moved by at most 8 per
+channel, under the comparison's threshold, but they are recorded again
+so the references match what the screen draws.
+
+Refs: TKA-0150
+
+14daa9dbe148e07c8c1b97542555d67f7a881425 2026-10-19T12:07:20+02:00 fix(reports): stop the custom range dialog laying itself out forever on Android 11
+On tokkl-api30 the reports font scale test never ended. A thread dump
+showed the test in its @After, inside ActivityScenario.close(), waiting
+in Instrumentation.waitForIdleSync() for a main thread that never went
+idle. That thread measured the custom range dialog on every frame:
+12,885 frames in ten minutes, all but three of them janky.
+
+Compose keeps a full-width dialog's window at WRAP_CONTENT height. With
+that, Android 11's ViewRootImpl measures the window at
+dipToPx(screenWidthDp), 1079 px on a 1080 px screen, and then at the
+frame's 1080 px, in every layout pass. With the date range picker's
+month list inside, the layout never settled. The dialog now sets its
+window to MATCH_PARENT in both directions. Its Surface already filled
+the window, so the size stays the same: tokkl-api36 requested 1080 by
+2211 px before and after.
+
+The test can no longer hang the run. It reads the activity and closes
+it within 45 s, and a Timeout rule around the compose rule fails it
+after five minutes, since the compose rule's own idle wait after each
+test has no limit. Without the app fix the test now fails after 300 s
+with that wait in its stack, and no force-stop is needed.
+
+Refs: TKA-0166
+
+2822ad182e82c2b9864f9840f2bc4a2901be0824 2026-10-19T11:53:15+02:00 feat(brand): show the clock O wordmark alone as the brand
+Brand now draws only the wordmark, on the sign-in scene and as the
+Timer page heading. The logo stays the launcher icon. The 12 old icon
+PNGs, their sm, md and lg aliases and the keep.xml mention are gone.
+
+The 12 wordmark PNGs are cut from Tokkl's clock O master
+(docs/brand/wordmark-pack/source/tokkl-wordmark-clock-master.png at
+df6711b) with the alpha bounds plus a 4 px margin, 2059x769, at their
+old widths. WORDMARK_ASPECT_RATIO follows the new crop. The wordmark is
+shorter for its width, so the content under it moves up.
+
+BrandTest fails when anything sits beside the wordmark in Brand, at all
+three sizes. The sign-in, Timer and Calendar references are re-recorded
+on tokkl-api36. The Calendar view shows the Timer heading too. The PRD
+now says the logo never appears beside the wordmark.
+
+Refs: TKA-0164
+
+d7b8915f739610acb4b1ca08d44e4e626760f45d 2026-10-19T11:22:57+02:00 feat(brand): make the launcher icon the clock logo on plum
+The owner replaced the old stopwatch artwork on navy with the clock O
+logo on plum #291329. From now on the logo appears only as the launcher
+icon.
+
+The foreground and monochrome layers now come from Tokkl's icon pack in
+../tokkl/docs/brand/icon-pack (tokkl 1771f08), copied byte for byte into
+mipmap-mdpi to mipmap-xxxhdpi. They already carry the adaptive icon
+padding, so no inset or resize step runs. The old xxxhdpi drawable
+layers are gone. The one unversioned mipmap-anydpi/ic_launcher.xml
+points at the mipmaps, and ic_launcher_background is #291329.
+
+The pack's values file, its -v26 and -v33 adaptive XML and its legacy
+ic_launcher.png files stay out: colors.xml already defines the colour,
+and with minSdk 26 the app loads neither the versioned definitions nor
+the PNGs. LauncherIconTest compares the launcher's foreground with
+R.mipmap.ic_launcher_foreground. The comments in ic_launcher.xml,
+colors.xml and brand_images_source.txt name the pack as the source.
+
+Refs: TKA-0165
+
+beb55183e8f782196dc198cdf9e8c68c86653157 2026-10-19T10:47:14+02:00 feat(ui): mark the bottom bar's Timer item while an entry runs
+On the web app, the Timer link carries a dot while a time entry runs,
+with "Timer running" for screen readers, so a user on any other page
+still sees that the clock is going. The app's bar had no such mark.
+
+MainActivity now reads AccountCache.running, which the notification,
+widget and tile read too, and the bar puts a Material 3 Badge, a dot
+with no number, on the Timer item's icon while an entry runs. It takes
+the running colour, or on-primary on the selected item's primary
+indicator, where the running colour would not read, as the web's
+.nav-link.active .running-dot. Both reach 3:1 against what they sit on
+in light and dark. TalkBack reads "Timer running" as the item's state,
+so the dot is not the only sign.
+
+The calendar capture shows a running entry, so its four references are
+recorded again with the dot on the selected Timer item.
+
+Refs: TKA-0161
+
+c86ee2011b2b6ce371c28ddd8d5daebb4784d33a 2026-10-19T10:47:13+02:00 feat(calendar): show the week in the Timer page's Calendar view
+The Calendar view showed a placeholder. It now shows the calendar of
+the web app's WeekCalendar: the week from the account's first day of
+the week, an hour row for each hour, and each entry as a block as tall
+as it lasts, placed in the account's timezone, never the device's. An
+entry across midnight gets a block on both days, overlapping entries
+sit side by side, and the running entry's block grows with the phone's
+clock once a minute while the page shows, with no request. A block
+shows its description, project and duration as far as they fit, and
+TalkBack reads all of it with its start and stop. The day heads show
+each day's total, today in a filled badge, and the toolbar the week's
+total, with arrows, a swipe or This week to move between weeks.
+
+The phone keeps today and the 13 days before it, so this week and last
+week show offline. Any other week loads from the server, with the day
+before it, once it shows, and stays in memory. Offline it says the
+week needs the server, with Try again; a week that failed loads again
+when it shows again.
+
+On a compact window, a phone held upright, the grid shows the chosen
+day alone, and the arrows and a swipe move a day. TKA-0071 adds the
+week strip there. The hour labels follow the account's clock format.
+
+New references record the Calendar view on tokkl-api36, in light and
+dark, at font scale 1.0 and 2.0.
+
+Refs: TKA-0030
+
+7f02666e368370d69ef771c59c83d52b1382f885 2026-10-19T10:38:24+02:00 feat(history): write clock times in the account's 12-hour or 24-hour format
+The web app writes clock times as 2:00 PM when the account's
+timeofday_format preference holds an "a", as h:mm A does, and as 14:00
+otherwise. The history always wrote them as HH:mm, so a 12-hour account
+read different times on the phone and on the laptop.
+
+Each refresh now reads timeofday_format from the GET
+/api/v9/me/preferences it already sends, into a twelveHour flag in
+AccountSettings, which the settings file keeps. A missing, null or
+non-string value keeps the 24-hour clock, the web app's default H:mm,
+and failed preferences keep the stored flag. time/FormatTime.kt ports
+the web app's formatTime: 9:05 AM, 12:00 AM at midnight, 12:00 PM at
+noon, seconds dropped. The history's time ranges and their TalkBack
+text use it through AccountSettings.formatTime.
+
+Refs: TKA-0163
+
+5376d2b0575f2ee99f43e50e431b1dd2c06aa71a 2026-10-19T10:29:11+02:00 test: run the instrumented suite on an API 30 emulator too
+The app supports Android 8.0 and later, but the suite ran only on
+tokkl-api36, so the code for versions before Android 12 never ran on a
+device. tokkl-api30, on the plain AOSP Android 11 image, now runs it.
+There Android keeps no night mode for the app, the wallpaper colours
+switch is hidden, and android:allowBackup alone keeps the app out of
+backup. CI's instrumented job runs API 30 as a second matrix entry, and
+the README names both images and the command for each.
+
+API 26 and 28 came first. Below Android 12 HWUI aborted every app at
+its first frame with skiavk, so apps there draw with OpenGL, and qemu
+grew by about 110 MB a test on both, too fast for the emulator's 6 GB
+cap. A full run on API 30 peaks at 5.5 GB. The script and CI now set
+skiavk only on Android 12 and later. The SDK repository has no plain
+AOSP image for API 36.1 or later, so the cross-platform-transfer rules
+still run on no device.
+
+The older images found test bugs that API 36 hid. LargestFontScaleTest
+read the keyboard through WindowInsets.Type, an API 30 class, and now
+uses WindowInsetsCompat; it crashed on API 26 and passes there now.
+The queue tests parsed Tokkl's +00:00 times with Instant.parse, which
+API 30 refused. The TLS sign-in tests clicked the sign-in button without
+scrolling to it, and half of CertificatePromptTest timed out on API 30.
+SignInScreenTest scrolls to the button before it checks the button is
+still shown after a wrong token.
+
+BackupRefusedTest asks the backup manager to back the app up and
+expects a refusal. WindowBackgroundTest checks that launches below
+Android 12 keep the system's night mode and still show the chosen
+background. The screenshot classes carry @SdkSuppress for API 36, where
+their references come from: AGP reported a failed assumption as a
+failed test.
+
+Refs: TKA-0131
+
+b33bfdc0063492927984ea63d6c9539bbe3c57fc 2026-10-19T09:13:05+02:00 feat(timer): keep the List or Calendar choice in Tokkl's timerView
+The web app keeps the Timer page's view in the account's timerView
+preference, so the view picked on the laptop opens on every device. The
+app kept it in saved state only, so a cold start always opened List.
+
+TimerViewSetting now holds the view for the whole app. Each refresh
+reads timerView from the GET /api/v9/me/preferences it already sends:
+calendar opens Calendar, and a missing key or any other value opens
+List, as TimerPage.tsx reads it. A tap on the switch shows the new view
+at once and posts {"timerView": ...} to /api/v9/me/preferences in the
+background, one write at a time. The phone keeps the view in its own
+preferences file, so a cold start opens the last view before the
+refresh answers.
+
+Offline, the tap stays on the phone, marked unsent, and goes to the
+server with the next refresh, so the choice that reaches the server
+last wins, as for time entries (O3). The one refresh right after a tap
+keeps the tap, since its preferences may predate it. A server without
+Tokkl's preferences, such as Toggl Track, which Capabilities.favorites
+marks, gets no write: the choice stays on the phone and now also
+survives a cold start there.
+
+SessionRule clears the stored view with the rest of the session, so
+each test starts on List.
+
+Refs: TKA-0160
+
+d4537a1e8ec79cd8aad26160dfaf4e8588b8bf8f 2026-10-19T09:13:03+02:00 feat(history): show past entries by day in the Timer page's List view
+The List view of the Timer page now shows the history, as the web app's
+EntryList does: days in the account's timezone, newest first, each with
+its total, and under each its stopped entries, newest first, with the
+description, project and task, start and stop, tags, a Billable mark and
+the duration. The running entry stays out, since the timer shows it.
+
+The days come from the cached two weeks in Room, so they show offline.
+When the end of the list scrolls into view, the 14 days before the
+oldest loaded day load from the configured server and stay in memory.
+On Tokkl, GET /api/app/bounds tells where the account's history starts,
+so the list ends with "No older entries." A server without it, such as
+Toggl Track, gets pages until one comes back empty, and then more only
+on a tap, so scrolling never walks back through empty weeks by itself.
+Offline the end says that older days need the server, with Try again.
+Nothing loads on a timer.
+
+Entries the server has stopped show its start and stop as returned,
+snapped or not. An entry with a change the server has not received
+shows snapUnsent of its times, and its snapped start picks its day, so
+nothing moves when the server answers. It carries a "Not sent" mark in
+words.
+
+The Timer page's list slot no longer has a placeholder. A
+SignedInFrame, split out of TokklNavHost, puts a screen above the bottom
+bar, so the Timer capture can show a fixed history above the real bar.
+
+Screenshot references, re-recorded on tokkl-api36 in light and dark at
+100% and 200%: timer-* now show three days of fixed history on a fixed
+day, with no live server data. LargestFontScaleTest waits for the empty
+history of the test account instead of the removed placeholder.
+
+Refs: TKA-0029
+
+2211a7fac51ebd30c805e6b7d2a488b4e873df40 2026-10-19T08:06:06+02:00 test(sign-in): wait for the Timer page after a sign-in under a path prefix
+SignInUnderPathPrefixTest landed on main after the bottom navigation
+change and still waited for the launch message of the home screen, which
+that change removed with the home screen, so the test sources no longer
+compiled. Both tests now wait, as the other sign-in tests do, until the
+bottom bar marks Timer, the first page after sign-in.
+
+Refs: TKA-0157
+
+33427953d8d39f129484a1fd79568012dd701cee 2026-10-19T08:06:05+02:00 feat(ui): add the bottom navigation bar of Tokkl's web app on phones
+Signed-in screens now share a Material 3 bottom bar with Timer, Reports,
+Projects, Settings and More, in the order of the web app's NAV, with
+Tokkl's navigation item colours and the web app's own icons as vector
+drawables. More opens a sheet with Clients, Tags and Trash, the web
+app's "inMore" pages; Admin stays out. Sign-in has no bar.
+
+Timer replaces the placeholder home as the first page after sign-in. It
+shows the brand where the timer will go, the List and Calendar switch,
+and under it a slot of bounded height for the history list and the week
+view, which for now say they come in a later version. Projects, Clients,
+Tags and Trash open a page that says the same, so no item is a dead tap.
+
+Opening a page from the bar or the sheet puts it right above Timer, so
+Back goes to Timer and Back from Timer leaves the app. Licences, opened
+from Settings, stacks above Settings and keeps its back button. Reports
+and Settings lose theirs, since they are pages of the bar. The stack,
+the view choice and an open sheet are saveable, so a rotation or process
+death keeps them.
+
+At 200% font "Reports", "Projects" and "Settings" are wider than a bar
+item, so the bar's labels share the largest size at which every label
+fits, never smaller than at 100%.
+
+docs/PRD.md gets section 5.11, Navigation (B1 to B3), and README and
+AGENTS.md describe the new pages.
+
+Screenshot references, re-recorded on tokkl-api36 in light and dark at
+100% and 200%: timer-* replaces home-*, since Timer replaces the home
+screen; settings-* and licences-* show the bar, and Settings loses its
+back arrow; reports-* lose the back arrow.
+
+Refs: TKA-0157
+
+f0e9adeffdc7168a978be15c61b040cb71a1fdd1 2026-10-19T07:29:54+02:00 feat(sign-in): set the brand on Tokkl's scene and the form on a card
+Sign-in was a bare column on the background, with the same 16dp between
+every part. It now follows Tokkl's web sign-in: the large brand sits on
+the scene, and the form sits on a surface card under it.
+
+Scene draws the auth page background from styles.css with the scene
+tokens. A glow from the top left corner and the swell from the bottom
+right, each an ellipse 70% wide and 45% tall that fades out, lie over
+4dp stripes every 26dp that run up to the right, on the background. Only
+the brand sits on it. In dark the wordmark halo keeps 4.36:1 against the
+lightest blend of the scene colours, and in light the art's outline
+keeps 9.98:1 against the darkest, so no text or input meets the scene.
+
+The card is surface with the large corners and the 2dp outline, like
+the report cards. In it the title, the server URL, the sign-in method,
+the credentials and the actions sit 24dp apart, and the parts of each
+group 8dp apart. The IME padding, the dialogs and the 600dp cap stay.
+
+[credential-related line omitted]
+field, which then ends at the bottom edge. A field that ends within
+about 1dp of that edge stayed under the keyboard in 7 of 8 tries, since
+the scroll area follows a focused field only when it was wholly inside
+before the keyboard opened. A focused field now asks to be brought into
+view each time the keyboard's height changes.
+
+Re-records the eight sign-in references, both methods in light and dark
+at 1.0 and 2.0, for the scene and the card. The http warning and
+certificate prompt references still match.
+
+Refs: TKA-0124
+
+c4babaea1ae1b755c80a5df344e3aa605ae97caf 2026-10-19T07:29:54+02:00 fix(sign-in): shorten the server URL error to the hint's height
+The error repeated the hint's example. On tokkl-api36 it took three
+lines at font scale 1.0 and five at 2.0, against the hint's one and two,
+and the supporting line keeps room for the taller of the two. That left
+two blank lines under the hint at 1.0 and three at 2.0.
+
+[credential-related line omitted]
+at 1.0 and two at 2.0, as the hint does, also in a field 32dp narrower.
+It still says only what ServerUrl.parse checks. Showing it leaves the
+fields below where they were.
+
+Re-records the eight sign-in references, both methods in light and dark
+at 1.0 and 2.0: the blank lines under the hint are gone, so everything
+below it moves up.
+
+Refs: TKA-0158
+
+8775328191048b42924a0db5a803590d31a40df4 2026-10-19T06:15:18+02:00 test: trip Tokkl's real 429 at sign-in with a throwaway account
+The sign-in cooldown had met only canned MockWebServer 429s. On the
+device, SignInRateLimitTest invites a throwaway account through
+[credential-related line omitted]
+until Tokkl answers 429, at most 11 times, so the shared account is
+never charged and the run keeps 90 of the address's 100 failures. The
+countdown must match the Retry-After that Tokkl still sends for the
+account within 3 seconds, Sign in must stay disabled, and a new
+activity with a new model must show the same countdown from the stored
+deadline. The test then clears that deadline and deletes the account.
+
+A cooldown is kept by server origin, and every test signs in to the
+same few, so SessionRule's sign-out now clears the cooldowns too. One
+left by a test that ended early would otherwise block sign-in in every
+later test of the run.
+
+Refs: TKA-0136
+
+13e81793aca08feb612de1028fb291d18d07d799 2026-10-19T06:15:17+02:00 test: sign in to Tokkl under a path prefix from the device
+Only MockWebServer and the ServerUrl unit tests proved that a base URL
+with a path works. The harness proxy now also serves Tokkl over http
+under /tokkl on a port of its own, strips the prefix, and answers 404
+to every other path there, so a client that drops the prefix fails
+instead of reaching Tokkl at the root. The script checks both before
+the tests start, and passes the prefixed URL as tokklPrefixedBaseUrl,
+which TokklTestServer.prefixedUrl reads. The root and TLS URLs are
+unchanged.
+
+SignInUnderPathPrefixTest signs in through the screen with the API
+[credential-related line omitted]
+names the prefixed URL, and checks the stored server, token, account
+timezone from /me and the confirmation.
+
+Refs: TKA-0135
+
+4192a1c03e6376fdb08960b6ee0e6bc8ac1a6b75 2026-10-19T06:15:16+02:00 ci: make the emulator draw with Vulkan, as the script's own emulator does
+qemu keeps about 100 MB after every app process that drew with OpenGL,
+and the test orchestrator starts one per test, so a full run grew it by
+about 10 GB locally. scripts/instrumented-tests.sh sets
+debug.hwui.renderer to skiavk only on an emulator it boots, and CI's
+emulator comes from android-emulator-runner, so the CI step now sets it
+before it runs the script, and its comment lists the setting with the
+others.
+
+Refs: TKA-0153
+
+12969b611b7adce46dac493b56cc70922646ba34 2026-10-19T06:15:16+02:00 test: run every entry of a comma-separated class or package filter
+AGP 9.4's test engine gets the instrumentation arguments as one string
+of key=value pairs joined with commas, and splits it at every comma, so
+a value with a comma kept only its first entry. class=A,B ran only A,
+and package=p,q only p, with a passing build. The orchestrator is not
+the cause.
+
+The script now writes a class= or package= list to a file on each test
+device, one entry per line, and passes its path as the runner's
+testFile argument. The orchestrator lists the tests from that file and
+drops it when it runs each one. The script refuses a comma in any other
+runner argument and a testFile argument given beside a list, and
+the header lists the filter forms it takes.
+
+Refs: TKA-0134
+
+f36b76830bde37ddb6b6ee7f6896fbe61ed42a9b 2026-10-19T06:02:16+02:00 fix(sign-in): keep each supporting line as tall as its tallest text
+At font scale 2.0 the email hint wraps to two lines and "Enter your
+[credential-related line omitted]
+and the button up by 32dp. The server URL field had the same problem
+the other way at every font scale: its error runs to more lines than its
+hint, so a bad URL pushed the form down.
+
+Each sign-in field's supporting line now lays out the hint and every
+error the field can show, one over the other, and shows only the current
+one. The others are invisible and have no semantics, so the line keeps
+the tallest one's height and TalkBack reads only what shows. isError
+still follows the error.
+
+The email field keeps its height: LargestFontScaleTest.emailErrorFits
+[credential-related line omitted]
+to 140.6dp below the email field before this change), and
+SignInScreenTest checks at 100% that the field reads the hint or the
+[credential-related line omitted]
+than their errors, so those fields look the same. The server URL line
+now keeps room for its error, which shows as blank space under the hint.
+
+References re-recorded for that space under the server URL hint: sign-in
+with API token and with email, light and dark, at 100% and 200%.
+
+Refs: TKA-0149
+
+028989d30da40569c02614d36c5fb73bddea2394 2026-10-19T06:02:15+02:00 feat(ui): show sign-in failures in an error banner
+A failed sign-in showed its message as a bare line of red text, so the
+colour was close to the only sign that it was an error.
+
+ui/ErrorBanner puts the message beside a warning icon on the danger-soft
+surface (errorContainer), in the 16dp card shape with Tokkl's 2dp frame
+in danger. The icon is Tokkl's own "alert" from the web's Icon.tsx,
+bundled as res/drawable/ic_warning.xml with the same round 2-unit
+stroke. It is decorative, so TalkBack reads only the message, which
+stays a polite live region. The timer's offline and queue states can
+use the same banner later.
+
+Sign-in uses it in place of the bare text, with the same strings. Danger
+on danger-soft is 5.22:1 in light and 5.64:1 in dark, for the text and
+the icon alike; ThemeContrastTest already checks that pair at 4.5:1. No
+screenshot reference shows a failure, so none changed.
+
+Refs: TKA-0122
+
+0ec41c56e08584a6ad7e513e03c26cefe62db55c 2026-10-19T06:02:15+02:00 fix(ui): give Tokkl's buttons a 48dp pill
+Sign in was Material's stock filled button, drawn 40dp tall. The two
+trust dialogs used text buttons.
+
+ui/Buttons.kt adds TokklButton, filled on-primary on primary, and
+TokklGhostButton, onSurface text inside Tokkl's 2dp frame in --border.
+Both are pills at least 48dp tall, the minimum interactive size, so the
+drawn button is the whole touch target. Their labels take labelLarge,
+which the theme already maps to the button-label role, 14sp at 700.
+
+Sign in uses the filled button and now draws 48dp tall at 100%. Both
+buttons of the http warning and of the certificate prompt use the ghost
+button, so Continue and Trust stay no louder than Cancel. The label
+pairs, onPrimary on primary and onSurface on the dialog surface, are
+already in ThemeContrastTest.
+
+References re-recorded: sign-in with API token and with email at 100%,
+light and dark, for the taller button; the http warning and the
+certificate prompt, light and dark, at 100% and 200%, for the framed
+buttons. At 200% the Sign in button was already taller than 48dp, so
+those sign-in references did not change.
+
+Refs: TKA-0120
+
+329dfa7031f615a28abdb51096048506da125d04 2026-10-19T06:02:14+02:00 fix(ui): give every section heading the section-heading role
+The Licences screen set its "Anybody font" heading in headlineSmall,
+18sp, nearly as loud as the page title. "Sign in with" had the
+section-heading role through titleMedium, 16sp Anybody 800, but no
+heading semantics, so TalkBack read it as plain text. "Theme" in
+Settings already had both.
+
+The Licences heading now uses titleMedium, and "Sign in with" is a
+heading. LargestFontScaleTest finds both by their heading role, as it
+already found "Theme", so it checks that TalkBack announces all three.
+
+References re-recorded for the smaller Licences heading: Licences, light
+and dark, at 100% and 200%. The sign-in references did not change.
+
+Refs: TKA-0119
+
+962d5e41ae306c5866cae558b43b470b982191c2 2026-10-19T06:02:13+02:00 fix(ui): set every page title in the page-title role
+Sign-in set its title in headlineLarge, while Settings, Licences and
+Reports used headlineMedium, 22sp Anybody 800. All four were sentence
+case. Tokkl's web sets page titles in Anybody 900 capitals.
+
+ui/PageTitle draws a title in the page-title role, 28sp Anybody 900 with
+0.02em tracking, in capitals. Its semantics modifier sits outside Text's
+own, so the node's text stays the sentence-case string resource and
+TalkBack reads "Settings", not "SETTINGS", as a heading. The tests that
+find a title by its sentence-case text and heading role still pass, so
+they check that. Home already shows the Brand as its heading. Reports
+landed after this ticket was written and gets the same title.
+
+References re-recorded, each for the capitalised, larger title: sign-in
+with API token and with email, Settings, Licences and Reports, light and
+dark, at 100% and 200%. Nothing below the titles moved.
+
+Refs: TKA-0118
+
+12c90171be67ce76226a49c281377230d4ac4a66 2026-10-19T06:02:13+02:00 build(brand): ship each brand image once
+The 30 brand PNGs held 6 byte-identical pairs, because some sizes share
+a pixel width across densities: the 48 px icon is sm at xhdpi and lg at
+mdpi. Lint flagged them as IconDuplicates. It also flagged the four
+density folders with IconDensities, since the launcher layers live only
+in drawable-xxxhdpi.
+
+The 24 distinct images now sit in drawable-nodpi, named by width in px.
+brand_images.xml in values (mdpi) and values-hdpi to values-xxxhdpi
+points tokkl_icon_sm/md/lg and tokkl_wordmark_sm/md/lg at the width each
+bucket needs, so Brand.kt is unchanged and each size still draws from an
+image cut for its width. lintDebug drops from 11 warnings to 1, the
+OldTargetApi one, with nothing suppressed.
+
+Android no longer rescales the image when it loads it; Compose scales it
+when drawing. On a screen that matches its bucket nothing changes. On
+tokkl-api36, at 420 dpi, the dark halo's outer edge moves by a pixel in
+places, so the six dark references with the brand changed: home,
+sign-in with API token and sign-in with email, at 100% and 200%. Full
+captures of all three sizes before and after look equally sharp.
+
+One faint edge pixel of the wordmark, within 2 of the marker colour,
+made BrandTest call it background and then fail light mode for it.
+BrandTest now counts any pixel off the marker colour as artwork.
+
+Refs: TKA-0152
+
+d6cee32abba85eeb4d6b3e028ebb24fb3af845ca 2026-10-19T05:48:57+02:00 feat(session): keep the account's default workspace for offline entries
+Sign-in and each refresh now read default_workspace_id from
+GET /api/v9/me and store it with the account settings, so the timer
+and manual entry have a workspace to pass to ChangeQueue.start and
+create while offline and after a restart. A refresh whose /me leaves
+the field out, or sends it as null, keeps the stored workspace.
+Sign-in stores what its own /me sends, so a new sign-in never inherits
+the previous account's workspace, and a /me without the field still
+signs in.
+
+The two instrumented tests that compare the whole stored settings now
+expect the test account's workspace too.
+
+Refs: TKA-0155
+
+0e1e585687b8f77dc66f625f0e6e7e69b1a2cfe9 2026-10-19T05:28:28+02:00 feat(picker): add the project, task and tag picker over the offline cache
+EntityPicker is one Compose picker for the timer and the entry edit
+screens. It reads only the Room cache, so search and selection work
+offline, and it filters as the web app's pickers do: by project, client
+or task name, ignoring case, with projects grouped by client and tasks
+under their project. Each project shows its colour beside its name.
+
+Archived projects and done tasks show only when the entry being edited
+already uses them, selected and labelled "Archived"; no other archived
+item is offered. A tag typed by name joins the entry by name, online or
+offline, marked "New tag" until the server has it, and the queue sends
+it by name so Tokkl creates it.
+
+Offline, the picker says that the projects, clients and tasks are the
+ones on the phone and that creating one needs a connection. It follows
+the default network for that, so the app now asks for
+ACCESS_NETWORK_STATE.
+
+Every option is one TalkBack item with a radio button or checkbox role,
+so its selected or checked state is read and drawn by shape, and the
+archived and new states are text. The rows wrap and the list scrolls at
+the largest font scale. The strings live in picker_strings.xml.
+
+Refs: TKA-0028
+
+f33cd362cb39007836c34f1415e6b199c748c68f 2026-10-19T05:28:27+02:00 feat(cache): queue time entry changes on the phone and send them in order
+Start, Stop, create, edit and delete now change the cached entry at once
+and queue the change in the same Room transaction, so a tap never waits
+for the network and the change survives the process. The cache marks an
+entry unsent while a change to it is queued, and a refresh applies the
+queued changes over the server's rows until they are sent.
+
+ChangeQueue is the API the timer and the entry screens will call.
+Start and Stop take the tap time; Start also stops a cached running
+entry at that time, as the server would. An entry created on the phone
+gets a negative local id, and once the server answers the create,
+every queued change to it and the cached row take the server's id.
+
+ChangeSender drains the queue oldest first. A create is a POST, an
+update or stop a PUT with every field, so the stop keeps the tap time
+that Tokkl's PATCH .../stop would replace with the server's clock, and
+the last change to reach the server wins. A network failure, a 5xx, a
+429 or any other failure stops the drain and keeps the change queued;
+after a 429 the next try waits for Retry-After, or 60 seconds without
+one. The drain runs when a change is queued, after each refresh and
+when the wait ends, and the account refreshes after a drain that sent
+something.
+
+The database moves to version 2 through an auto-migration that adds
+pending_changes and entry_ids, with the exported schema, and never
+drops the file.
+
+Refs: TKA-0027
+
+52789804360d99978efa6638e1eb8f9855608d4d 2026-10-19T04:26:41+02:00 test: make concurrent instrumented runs take turns
+A second run that started while one was active found the first run's
+emulator, skipped booting its own and tested there. When the first run
+ended, its cleanup killed that emulator, and the adb server too if it
+had started it, under the second run.
+
+Each run now locks tokkl-instrumented-tests-<uid>.lock in
+XDG_RUNTIME_DIR, or TMPDIR without it, until it exits after its
+cleanup. A run that starts meanwhile prints the PID, start time and
+directory written in the lock file, and waits. It checks for a running
+adb server only once it holds the lock. Neither the emulator nor an adb
+server the script starts inherits the lock's descriptor, so a process
+that outlives a run cannot keep the next one waiting.
+
+Runs wait instead of each booting its own copy of the AVD. A full run
+took available memory on this 16 GB machine from 12.9 GB down to 8.5 GB,
+so two at once, next to another worktree's Gradle build, would leave too
+little.
+
+Refs: TKA-0133
+
+448ac058d09fe83d900cc6567ab459d5f52a89f0 2026-10-19T04:26:41+02:00 test: keep the test emulator under 4 GB by drawing with Vulkan
+A full instrumented run took qemu to 11 GB, and the kernel's OOM killer
+ended it on the last test. Each app process that drew with OpenGL left
+about 100 MB in qemu's heap when it ended, with lavapipe and with
+swiftshader, and the test orchestrator starts a process for every test.
+No emulator setting stopped that: not the GPU mode, 2 or 4 cores, the
+asg GL transport, four emulator features or tcmalloc's release
+settings. A process that draws with Vulkan leaves about 5 MB.
+
+On an emulator it boots, the script now sets debug.hwui.renderer to
+skiavk. The same full run passes with qemu at 3.5 GB, and all 32
+screenshot references still match. The launch pins -gpu lavapipe, the
+renderer the emulator picked on its own, -cores 4, and -memory 2560,
+which the emulator used anyway: it raises a smaller value to 2560 MB
+for API 34 and later images. The emulator's scope may use at most 6 GB,
+swap included, so a regression ends qemu before it pushes the machine
+into swap.
+
+Refs: TKA-0132
+
+4655077a80367a979862b1fc9f5035948fd8e635 2026-10-19T03:12:09+02:00 fix(reports): round percentages as the web app's Intl.NumberFormat does
+The reports screen rounded each share with toFixed, which works on the
+double's exact value. The web app formats it with Intl.NumberFormat,
+which rounds the shortest decimal that reads back as the double, halves
+away from zero. 15,300 of 600,000 seconds showed 2.5% where the web app
+shows 2.6%.
+
+jsShortestDecimal gives the digits JavaScript's String(x) writes. It
+does not use Double.toString, which promises the shortest decimal only
+from Java 19 on. sharePercent rounds that decimal half up. jsToFixed
+and formatDuration are unchanged.
+
+ReportFormatTest compares sharePercent with 1,604 cases written by
+scripts/share-percent-cases.mjs, which runs formatPercent from tokkl's
+format.ts in Node 24. toFixed gets 115 of them wrong.
+
+Refs: TKA-0148
+
+5a709f8613e1325f66c05a0361ed2db224d3fd17 2026-10-19T02:53:28+02:00 docs: record wave 6 cache, reports, design and test facts in kenkeep
+Add nodes for the offline cache and capability flags fed by one account
+settings refresh, the reports screen that sums the detailed search on
+the phone, the design foundation in ui/theme and ui/, and the
+screenshot references recorded on tokkl-api36. Record the host
+mismatch refusal and its test relay, the duration format and the gap
+between toFixed and Intl.NumberFormat rounding, the chart contrast rule,
+the stale credentials sweep, and what a T3 restart does to an
+instrumented run. Bring the colour token comments, type roles, preference
+files and destinations up to date, and list the Reports screen and cache
+in the project instructions.
+
+ec480ca31407754f753f266251b5a171a6556d9a 2026-10-19T02:36:53+02:00 test: cover the reports screen, brand, Licences row and host name notice
+ReportsScreenTest takes over the reports sitting's scratch test against
+the Tokkl container. Its account is at UTC+14 with Wednesday weeks, the
+workspace rounds up to 15 minutes and the time earns euros and dollars.
+The summary has to match the web app's POST /api/app/report. The chart's
+TalkBack description reads every day's time, offline the screen shows
+the message and no numbers, and at font scale 2.0 no text on the screen
+or in the range dialogs is cut off.
+
+BrandTest compares the brand in dark and light mode on the same
+background. In dark mode the wordmark-halo colour covers the pixels next
+to the wordmark and changes nothing past 1dp; light mode draws nothing.
+In a row too narrow for it, the wordmark shrinks, keeps its shape and
+stays inside the row. LaunchScreenTest and SignInScreenTest check that
+TalkBack finds one "Tokkl" node, since the icon is decorative.
+
+SettingsScreenTest opens Licences from About and comes back with the Back
+button and the system Back key. The row is a 48dp button named Licences.
+
+CertificateHostMismatchWhileSignedInTest stores a session for the TLS
+proxy under localhost, through a new LoopbackRelay on the phone. The
+certificate names only IP addresses. The home screen names the host and
+the fix, offers no Review connection button, and nothing is pinned.
+
+LargestFontScaleTest now covers the About section, the email hint, the
+empty email error and the host name message on sign-in.
+
+Refs: TKA-0026, TKA-0104, TKA-0115, TKA-0117, TKA-0121
+
+014ccc5577a444d2edd0e795702e762a64b0ef1c 2026-10-19T02:36:52+02:00 test: cover the summary report's ranges, sums, requests and reloads
+The reports sitting checked its ranges, sums, Reports API requests and
+number formats with scratch tests that never landed. They are JVM tests
+now, under the project's names.
+
+ReportRangeTest covers the presets for different week starts, shifting by
+months or by the range's length, the chart's resolution and the preset a
+range matches. SummaryReportTest covers totals, the series, project
+shares and week buckets. ReportsServerTest checks the search body with
+the workspace's rounding, paging by X-Next-Row-Number, a row that holds
+several entries and the refusals. ReportFormatTest covers money and
+percentages, avoiding exact halves, which TKA-0148 changes.
+
+ReportsModelTest drives the model at UTC+14 with Wednesday weeks, on a
+day the phone's UTC date is a day behind. It checks the opening range and
+presets in the account's time, and the foreground reload: one request
+after a stop, none for the start replayed when the screen opens, none
+after a stop while closed, and an offline start that shows the failure
+without numbers.
+
+ThemeContrastTest adds the chart marks and every project palette dot,
+mixed with projectMix, on the report card's surface.
+
+Refs: TKA-0026, TKA-0147
+
+1c8c3e46c75a9e75f51716030496ee2ec8363295 2026-10-19T01:47:46+02:00 fix(reports): ask again for the report when the app comes back to the foreground
+The reports screen loaded a report on opening and on a range change, and
+kept showing it after a trip to the background. A phone that lost its
+connection meanwhile showed the old numbers instead of saying that reports
+need the server.
+
+The screen now tells the model when the activity stops and starts. After a
+stop that is not a configuration change, the next start asks again for the
+range on screen and shows no numbers while it waits. Offline the request
+fails and the screen shows the offline message. Opening the screen and
+rotating it send no extra request.
+
+An instrumented test against the Tokkl container covers both cases. It
+counts report searches through a relay on the phone's loopback.
+
+Refs: TKA-0147
+
+2ff1b32714b0ea380634b3d7eaae2ca9f42b3f63 2026-10-19T01:05:08+02:00 test: compare every screen with reference screenshots
+Sign-in with each method, home, Settings, Licences, Reports, the http
+warning and the certificate prompt are captured in the light and dark
+themes at font scale 1.0 and 2.0, 32 images in all. Each capture shrinks
+to a third by averaging 3x3 blocks and must match its reference in
+app/src/androidTest/assets/screenshots within a small tolerance. A
+mismatch writes the capture and a diff to the additional test output,
+which the Android Gradle plugin copies to app/build/outputs.
+
+The screens run in MainActivity. Reports gets a fixed summary for a
+fixed week and day, and the prompts get a fixed server and
+certificate, so no capture depends on the date or on the test server's
+port and certificate. Captures hold the app's or the dialog's window,
+never the status bar.
+
+The references come from tokkl-api36. Two runs on freshly booted
+emulators matched pixel for pixel, and an 8dp spacing change on home
+failed with 18,359 differing pixels. README.md describes how to update
+the references.
+
+Refs: TKA-0113
+
+28ce55b9b34fa2b6387ea01af0e79cc6556b306d 2026-10-19T01:05:08+02:00 test: delete credentials files that killed instrumented runs left behind
+A run killed with SIGKILL, or ended along with its agent session, skips
+its EXIT trap, so its credentials file stays on the emulator for good.
+tokkl-api36 held five of them from 2026-10-18.
+
+Before it pushes its own file, the script now deletes the
+tokkl-test-credentials-*.properties files in /data/local/tmp that are
+more than six hours old, then syncs. A run takes minutes, so no live
+run's file is that old, even with two runs on one device. The pushed
+file gets the device's own modification time, because adb push keeps
+the host's.
+
+Refs: TKA-0146
+
+7e1f35fa7bc2a5271cd356eb6a06a495fa3f58e8 2026-10-19T00:25:39+02:00 feat(reports): add the reports screen with the summary report
+Home links to a Reports screen with a Summary tab. It shows the total,
+billable time and share, entries, amounts per currency, time per day,
+week or month, and time per project, as Tokkl's web app does.
+
+The range picker has the web app's presets, previous and next, and a
+custom range of up to 366 days. Ranges use the account's timezone and
+week start.
+
+The numbers come from the Reports API v3 detailed search, paged by
+X-Next-Row-Number and summed on the phone. Tokkl's v3 totals and
+summary answers have no billable time per bucket and no amounts per
+currency or per project. Each request asks for the workspace's
+rounding, which the web app always applies.
+
+Reports load when the screen opens or the range changes, and only in
+memory. Offline, or when the server or its proxy is down, the screen
+says reports need the server and shows no numbers.
+
+The chart labels every bar with its total and gives TalkBack one
+description that reads each bucket's total in words. The home links
+wrap side by side, so the trust notice still covers none of them at
+200% font size.
+
+Refs: TKA-0026
+
+b59e0cf730e177cb76a82f7f705b511ba309e60a 2026-10-18T23:34:24+02:00 fix(licences): reflow the licence's hard-wrapped lines
+anybody_ofl.txt is OFL.txt as it ships upstream, hard-wrapped at about
+75 characters. The Licences screen kept every one of those line breaks.
+At body size a phone line holds about 45 characters, so each source line
+wrapped once and then broke early, and sentences split in odd places,
+such as "to support the font creation" before a line starting "efforts
+of academic".
+
+licences/LicenceReflow.kt now joins each paragraph's lines with a space
+at display time, so a paragraph wraps at the screen's width. It still
+splits the text at the rules of dashes, which stay dividers. A line
+keeps its break after a blank line, after a heading and before a
+numbered condition such as "1)". A heading is a paragraph's first line
+in capitals that ends in a letter or a digit, so PREAMBLE and
+PERMISSION & CONDITIONS stay on their own lines while the disclaimer's
+capitals flow as one paragraph. Trailing spaces go, so a join never
+leaves a double space. The file itself is unchanged, and the semantics
+node keeps the text as it ships, so LicencesScreenTest still compares it
+line for line.
+
+LicenceReflowTest runs the reflow over the shipped file. It checks that
+the three blocks stay, that every word stays in order, that the headings
+and the five conditions keep their own lines, that the PREAMBLE's first
+paragraph and the disclaimer are one line each, and that a line breaks
+only at a paragraph end, after a heading or before a condition. Without
+the reflow, four of its seven tests fail.
+
+Refs: TKA-0144
+
+7e66584b5099245150532e3e4ab9301d14b7ace9 2026-10-18T23:34:23+02:00 feat(brand): show the graffiti wordmark and icon on home and sign-in
+The app had no wordmark image. Home set "Tokkl" as Anybody text, and
+sign-in showed no brand at all.
+
+The wordmark and icon PNGs come from Tokkl's artwork by the steps in
+Tokkl's scripts/icons.ts. The wordmark is tokkl-wordmark-v3.png cropped
+to 1645x709+80+91 and the icon is tokkl-icon-v4-1024.png, each resized
+and reduced to a 256-colour palette. Each of the three sizes (sm, md, lg) has its own image in every
+density bucket from mdpi to xxxhdpi. The widest is the lg wordmark at
+xxxhdpi, 1040 px, so nothing is upscaled. res/raw/brand_images_source.txt
+records the sources, their commit and SHA-256, the crop and the
+commands. The 260 and 520 px wordmarks and the 96 px icon come out byte
+for byte the same as Tokkl's web images.
+
+ui/Brand.kt draws the icon beside the wordmark at Tokkl's three sizes:
+24, 30 or 48dp beside 84, 130 or 260dp. The brand is one semantics
+node that TalkBack reads as "Tokkl"; the icon is decorative. In dark mode
+the wordmark gets a 1dp --wordmark-halo outline, its silhouette drawn
+one dp off in each of the eight directions, which is what Tokkl's four
+chained 1px drop shadows add up to. In a row narrower than the brand the
+wordmark shrinks to fit. Home shows the large brand as its heading, in
+place of the text, and sign-in shows it centred above the form.
+
+LaunchScreenTest and LargestFontScaleTest now find the brand by its
+description instead of the "Tokkl" text, and LargestFontScaleTest
+checks that it fits beside the sign-in form at 200%. The brand pushes
+the Sign in button below the keyboard in email mode, so
+SignInScreenTest scrolls to the button before tapping it. That scroll
+[credential-related line omitted]
+half a dp instead of exactly: the two offsets differed by 0.00003dp.
+
+Refs: TKA-0121
+
+d1e7deeea0fe314e7467095ba8b6cf7a34e5ab01 2026-10-18T23:01:44+02:00 fix(trust): explain a certificate that does not name the server's host
+A self-signed certificate whose subjectAltName lists another host, or
+none, as a plain `openssl req -x509` makes, got the trust prompt. After
+the user trusted it, OkHttp's host name check refused it with
+SSLPeerUnverifiedException, and sign-in said "Can't reach the server".
+Signed in, the same failure stayed quiet.
+
+PinningTrustManager now asks OkHttp's own host name check before it
+offers an unpinned certificate. A leaf that does not name the host fails
+with CertificateHostMismatchException instead of
+UntrustedCertificateException, so the prompt never offers a certificate
+that cannot work. The check only picks the refusal; it accepts nothing.
+OkHttp's host name check stays on for every connection, so a pinned or
+CA-signed certificate that does not name the host still fails, with
+SSLPeerUnverifiedException.
+
+TogglApiClient turns either into ApiError.CertificateHostMismatch with
+the URL's host and reports it to its TrustListener. It is a
+TrustRefused, but not a TrustQuestion, the new parent of the two
+refusals a prompt can answer. Sign-in maps it to
+SignInResult.CertificateHostMismatch and shows a message under the form
+that names the host and says to add it to the certificate's
+subjectAltName and reissue it, or to use a host the certificate names.
+A signed-in session opens no prompt for it: the notice says the same
+without the "Review connection" button.
+
+NoTrustAllTest now lets PinningTrustManager.kt name OkHostnameVerifier
+and still flags any HostnameVerifier or hostnameVerifier anywhere. In
+PinningTrustManagerTest a pin for tokkl.test now meets a host mismatch
+for other.test, since the fixture names only tokkl.test.
+
+CertificateHostMismatchTest signs in through the screen to the test TLS
+proxy as tokkl.invalid, which its client resolves to the proxy. The
+certificate names only 10.0.2.2 and 127.0.0.1. Unpinned, and with its
+fingerprint pinned, the form shows the host message, never the prompt
+or the unreachable message, and nothing is stored.
+
+Refs: TKA-0104
+
+c9982ec7245f5f4698f03ec38d5589cdd2353523 2026-10-18T23:01:43+02:00 fix(sign-in): reserve the email field's supporting line
+The email field passed supporting text only with an error, so the line
+[credential-related line omitted]
+field and the Sign in button down by 20dp while the user was filling in
+the form, and they jumped back when the error cleared.
+
+The field now always has a supporting line, as the server URL and secret
+fields do. It shows a new hint, "The email of your account on that
+server.", or the error in its place. isError still follows the error, so
+the field keeps its error semantics and TalkBack announces it.
+
+SignInScreenTest gains a test that shows and clears the email error and
+[credential-related line omitted]
+field, and that the error semantics come and go with the error. Before
+the change it failed, with the gap growing from 80dp to 100.19dp.
+
+Refs: TKA-0117
+
+7502f126b97bf1d45562f6d3c6a5fdd8834b5b72 2026-10-18T23:01:43+02:00 refactor(ui): share one option row between sign-in, Settings and the http warning
+The sign-in method radios, the Settings theme radios and the http
+warning's checkbox each built the same row by hand: a full-width Row at
+least 48dp tall, clickable across its width, with the control, a 12dp
+spacer and the label. ui/OptionRow.kt now holds that row once, as
+RadioOptionRow (selectable, Role.RadioButton) and CheckboxOptionRow
+(toggleable, Role.Checkbox). The gap is the spacing scale's space3 and
+the minimum height is Material's minimum interactive size.
+
+The controls keep a null click handler, so TalkBack still reads each
+row as one item, and the radio groups keep selectableGroup on their
+parent columns. The label takes the surrounding text style unless given
+one, so the radios stay bodyLarge and the checkbox keeps the dialog's
+body style. Below the status bar, screenshots of sign-in and Settings
+match the earlier ones pixel for pixel. The http warning differs only in
+the test server's port and the row's press highlight. No test changed.
+
+Refs: TKA-0116
+
+687c0d551b6acd59ab6ecb17c67e60694897770f 2026-10-18T23:01:42+02:00 feat(settings): link the licences from Settings
+Only a text button on the placeholder home screen opened the Licences
+screen, and the timer screen will replace that home screen. Settings
+stays, so it now ends with an About section whose Licences row pushes
+Destination.LICENCES onto TokklNavHost's back stack. Back from the
+licences pops it and returns to Settings. Sign-out (TKA-0038) can go in
+its own section between the theme and About.
+
+The row fills the width and is clickable across it, with a button role
+and Material's minimum interactive size, 48dp, as its minimum height.
+Its label and the section heading are English string resources. The
+home screen keeps its Licences link.
+
+SettingsScreenTest now counts the row among the screen's controls, and
+the two tests that show SettingsContent pass it a no-op callback.
+
+Refs: TKA-0115
+
+9a1647d5089496eb2c85b85bb2e2ad2c5ea2da03 2026-10-18T23:01:41+02:00 fix: stop Android panning the sign-in window when the keyboard opens
+MainActivity set no windowSoftInputMode, so when the keyboard opened on
+sign-in Android panned the whole window up 258 px on tokkl-api36 while
+the form's IME padding also shrank its scrolling area. The top of the
+screen left the window and a gap opened between the focused field and
+the keyboard.
+
+MainActivity now uses adjustResize. The window stays put and the
+keyboard reaches Compose only as the IME inset, which the form's
+imePadding makes room for.
+
+focusedSignInFieldStaysAboveTheKeyboard now also checks that the
+compose root sits at y = 0 with the keyboard open. Before the change it
+failed with the root at -258 px. With the change it passes, and with
+[credential-related line omitted]
+1862 px under a keyboard top at 1604 px.
+
+Refs: TKA-0143
+
+bbb32b2cab2de7ac1d788d9eb461cf75b509a772 2026-10-18T21:53:51+02:00 test: open the soft keyboard on the test emulator and test the form under it
+On tokkl-api36, focusing a sign-in field never opened the soft keyboard.
+Its inset stayed 0 while Android reported it visible, so no test saw a
+screen with the keyboard open. With show_ime_with_hard_keyboard at 1 it
+opens, 796 px tall at the largest font scale.
+
+On an emulator it boots, scripts/instrumented-tests.sh now sets that
+setting next to hide_error_dialogs and nothing on a device it did not
+boot. CI boots its emulator with android-emulator-runner, so the job
+sets it there, as it already does for the dialogs.
+
+LargestFontScaleTest gains a sign-in test at 200%: it chooses email and
+[credential-related line omitted]
+and checks that the field ends above the keyboard's top. With no window
+pan and no IME padding it failed, with the field at 1862 px under a
+keyboard top at 1604 px. Typing now opens the keyboard too, so the wait
+for it to hide before measuring a trust prompt has something to wait
+for.
+
+MainActivity sets no windowSoftInputMode, so Android also pans the
+window up 258 px when the keyboard opens. The pan alone keeps the field
+in view, so the test still passes without the form's IME padding.
+
+Refs: TKA-0142
+
+85b4e02b0a027b833e7b7f9376643485e6e4e88d 2026-10-18T21:53:50+02:00 test: start every instrumented run on the test emulator at font scale 1.0
+tokkl-api36 kept font_scale at 2.0 across boots, and SystemFontScale puts
+back whatever it read before a test. So every class that sets no scale
+of its own ran at 200%, and screenshots meant for the default size came
+out at 200%.
+
+On an emulator it boots, scripts/instrumented-tests.sh now sets the
+system font scale to 1.0 next to hide_error_dialogs, before Gradle runs.
+It still changes no setting on a device it did not boot. Tests that need
+another scale keep setting it through SystemFontScale.
+
+README.md and the kenkeep node on running the instrumented tests now
+list the font scale among the settings the script changes.
+
+Refs: TKA-0141
+
+b105c634ec7dd4c1a0d2f81305d68b0c37d3a671 2026-10-18T21:18:26+02:00 fix: set the licence at body size with its dashed lines as rules
+Licences showed the OFL as one Text in bodySmall, 12sp. At the
+emulator's 200% font scale each 59-dash separator line wrapped onto a
+second line of dashes. The licence now uses bodyMedium. At render time
+the text splits at its lines made only of dashes, and a
+HorizontalDivider takes each one's place, so no rule wraps at any width
+or font scale. res/raw/anybody_ofl.txt is unchanged.
+
+The Column around the parts carries the whole text, dashes included,
+as one semantics node, as the single Text did. TalkBack still reads
+the licence as one block, and LicencesScreenTest still compares that
+text with the shipped file.
+
+Refs: TKA-0106
+
+3019ab2949b4c66af933b2fcd33aaf985c07c920 2026-10-18T21:18:25+02:00 fix(theme): pass Tokkl's corner shapes to MaterialTheme
+TokklTheme passed no shapes, so every component kept Material's
+corners, 4dp on the sign-in fields, 12dp on cards and 28dp on dialogs.
+TokklShapes maps --radius-md, 10dp, to extraSmall and small, which text
+fields and menus use, and --radius-lg, 16dp, to medium, large and
+extraLarge, which cards, sheets and dialogs use. The focused field
+outline is already Material's 2dp.
+
+Shapes set corners only. The trust notice, a Surface, now draws the
+2dp frame in the outline colour, which ThemeContrastTest already holds
+to 3:1 on every surface. AlertDialog has no border parameter, so the
+trust dialogs get the 16dp corners without a frame.
+
+ShapesTest checks MaterialTheme's shapes and the shapes the text
+field, card and dialog defaults read from it.
+
+Refs: TKA-0110
+
+b59cd7aa596251ad343d08d84e2d0388dd3a245e 2026-10-18T21:18:24+02:00 feat(theme): size the type roles from Tokkl's scale and add Anybody 900
+Type.kt registers the Anybody 900 instance beside 800, both at width
+85, so a role that asks for 900 no longer draws at 800. The named roles
+come from Tokkl's type scale: page title 28sp 900 with 0.02em tracking,
+clock 36sp, totals 28sp, day total 22sp, day header 17sp 900, card
+title 18sp and section heading 16sp, all in Anybody, plus a 12sp 700
+small-caps label, a 14sp 700 button label and a monospace role in the
+system fonts. TokklTheme exposes each beside clockTextStyle.
+totalTextStyle is now the 28sp totals role, and dayTotalTextStyle
+keeps the old 22sp.
+
+TokklTypography maps Material's roles onto the scale. Display roles
+take the clock's size, headlineLarge is the page title, headlineSmall
+and titleLarge the card title, titleMedium the section heading and
+labelLarge the button label. Body roles stay at 16, 14 and 12sp, 400.
+The certificate fingerprint uses the monospace role.
+
+TypeScaleTest checks each role's size and weight, and shapes a glyph
+with each Anybody role's resolved typeface to read the weight and width
+it draws at. With only the 800 instance registered, it reports 800 for
+the page title.
+
+Refs: TKA-0108
+
+35e4cba87ddc2f85473f768f6634fb09d69d377f 2026-10-18T21:18:24+02:00 feat(theme): add a spacing scale, one screen margin and a width cap
+ui/theme/Spacing.kt holds Tokkl's --space-1 to --space-8 scale, 4 to
+48dp, and the rhythm built on it: 24dp between groups, 8dp inside a
+group and 16dp under the top bar. TokklTheme.spacing exposes it.
+
+Modifier.screenContent gives a screen's column a 16dp margin below
+600dp of width, where Material's medium window class starts, and 24dp
+from there on. It caps the column at 600dp and centres it. Home,
+sign-in, Settings and Licences use it, so they share one margin on a
+phone. Their other spacing literals, the trust notice's padding and
+the trust dialogs' gaps are tokens now. The dialogs put 24dp between
+groups and 8dp inside one. AlertDialog keeps its own padding and its
+560dp maximum width, which already fits inside the cap.
+
+ScreenContentTest draws Settings at 400, 640 and 1000dp wide and
+Licences at 1000dp, and checks the margin, the cap and the centring.
+
+Refs: TKA-0107
+
+feedb4115d29885c16e52a94c1c84da31d2fcea2 2026-10-18T21:18:23+02:00 fix: draw under a transparent navigation bar with no scrim
+With three-button navigation the navigation bar showed a band:
+254,253,250 over the sand background in light mode and 18,22,37 over
+the navy in dark. The system painted it because navigation bar contrast
+enforcement was on, which androidx.activity's enableEdgeToEdge turns on
+for SystemBarStyle.auto. The scrim colours MainActivity passed were
+never drawn on API 29 and later, so they are gone. enableEdgeToEdge also
+reapplies its first call's styles after every configuration change, so
+MainActivity now calls WindowCompat.enableEdgeToEdge, which turns
+enforcement off, and sets the bar icons from the chosen theme itself,
+before the first frame and on every theme change.
+
+Sign-in, Settings and Licences keep the status bar and side insets
+outside their scroll and pad the navigation bar's height inside it.
+Text scrolls under the bar, and the last line still scrolls clear of
+it. On sign-in, imePadding consumes the keyboard's height, so the
+navigation bar padding adds nothing while the keyboard is open.
+
+Refs: TKA-0105
+
+fa5340939f27a4c25cdb157fab4d9a4afbb0390e 2026-10-18T20:56:28+02:00 perf(cache): read /me/preferences once per refresh
+A refresh against Tokkl sent GET /me/preferences twice: once for the
+duration format in the settings refresh, and again for the favorites in
+the cache refresh. The settings refresh now hands its answer to
+onRefresh, and the cache reads the favorites from it. MePreferences
+holds the raw JSON object, so each reader decodes only its own key, and
+a malformed favorites key still leaves the duration format readable.
+
+The TokklApplication comment now counts four stored settings.
+
+Refs: TKA-0140
+
+48617306b2f6207058de10a739e14823c2f42859 2026-10-18T20:47:22+02:00 feat(time): port formatDuration and follow the duration format
+Port formatDuration from tokkl's duration.ts with JavaScript semantics:
+doubles for the arithmetic and toFixed's exact half-up rounding, so 3618
+seconds read 1.00 h as in the web app. DurationTest replays the format
+cases from duration.test.ts, and DurationJsSemanticsTest pins the traps
+with values from Node 24.
+
+The settings refresh now reads duration_format from GET /me/preferences.
+It is stored with the account settings in the account_settings file,
+which sign-out can clear. A missing or unknown value means improved, and
+a failed request keeps the stored format. Screens write durations with
+AccountSettings.formatDuration.
+
+Refs: TKA-0130
+
+bd431dfc6d3d732d669d15fa953a89cb85300275 2026-10-18T19:46:55+02:00 feat: detect Tokkl-only capabilities from /me and a trash probe
+A persisted Capabilities model holds four flags. Time resolution is on
+when GET /me carries time_resolution_minutes, and favorites when it
+carries Tokkl's role, so a fresh Tokkl account without saved favorites
+still gets them. One GET /api/app/trash decides both trash and undo of
+a delete. A list turns both on, a 404 or a body that is not a list
+turns both off, and any other answer keeps them. Nothing probes the
+restore endpoint and nothing compares server versions.
+
+The flags refresh with the account settings' /me and persist in their
+own preferences file. The cache asks for favorites only when the server
+has them.
+
+Refs: TKA-0024
+
+6994bf5d9d6ba2445854cb781d9681731c233651 2026-10-18T19:46:54+02:00 feat: cache account data and two weeks of history in Room
+A Room database keeps what the app last loaded, so it reads offline:
+projects, clients, tags, tasks, favorites and time entries. The account
+settings refresh now asks GET /me with related data and hands the
+answer to the cache, so one /me serves both. The cache adds the time
+entries of today and the 13 days before it, counted in the account
+timezone, and the favorites from /me/preferences.
+
+A refresh replaces the cached rows with the server's. Entries before
+the window are pruned. Archived projects, done tasks and rows the
+server dropped stay while a cached entry or favorite uses them.
+
+AccountSettingsStore stays the one source of truth for the account
+settings, so the cache keeps no copy. AccountCache.clear() empties the
+cache for sign-out. MainActivity refreshes on start and after sign-in.
+
+Room 2.8.5 and KSP 2.3.12 come from the catalog. The schema is
+exported to app/schemas.
+
+Refs: TKA-0025
+
+1d97ca35b7b73b6cfece71f1b319daa6a6b07b28 2026-10-18T19:27:12+02:00 test: check contrast on the texture and scene colours
+ThemeContrastTest now checks the pairs styles.css lists for the gradients
+behind the top bar strip and the sign-in scene: onSurface and
+onSurfaceVariant on each texture colour, onSurface on each scene colour,
+and, in dark only, the wordmark halo on background, surface and those six
+colours. Light draws no halo, so it adds no halo pairs. All pairs pass at
+the current values; the lowest is 4.69:1.
+
+Refs: TKA-0129
+
+db85cece806998620e5f9f709781aeb637829c65 2026-10-18T19:23:36+02:00 docs: add Tokkl's texture, wordmark and motion rules to the PRD
+The Visual direction listed only components, colour, type, contrast and
+devices, so an agent reading this repository alone never met the rules the
+design tickets rely on. It now states the image wordmark with its dark
+halo, gradient-only texture never behind inputs or data, decoration-only
+rotated type, reduced motion and bundled assets, each pointing at the
+matching bullet of Tokkl's Visual direction by name. One more bullet
+records the spacing and type scale. Principle 5 and every other section
+are unchanged.
+
+Refs: TKA-0111
+
+0e353931f8fe19ce17c2fa0349c1a17b6bf79a1f 2026-10-18T19:23:35+02:00 feat(theme): set Tokkl's navigation bar item colours
+Material 3 paints a NavigationBar's active indicator in secondaryContainer,
+which Tokkl maps to --state-selected, a pale fill. The theme now has item
+colours that follow Tokkl's active nav link: a primary block behind the
+icon with an on-primary icon, a primary label on the bar, and
+on-surface-variant for inactive icons and labels. Material 3 draws the
+label below the indicator, where on-primary text would be unreadable, so
+the active label takes primary and bold (700) instead of sitting in the
+block as it does on the web.
+
+TokklNavigationBarDefaults.itemColors() gives the colours and
+TokklNavigationBarItem wraps NavigationBarItem with them and the bold
+active label. The colour scheme mapping is unchanged and no screen has a
+bar yet.
+
+ThemeContrastTest checks the four pairs in both themes (icon on indicator
+3:1, active label on the bar 4.5:1, inactive icon 3:1, inactive label
+4.5:1, with the bar being surfaceContainer). NavigationBarColoursTest pins
+the mapping and the weight.
+
+Refs: TKA-0114
+
+0684ca38023f360c6ee499184da1918b226cfeb6 2026-10-18T19:23:35+02:00 feat(theme): add Tokkl's texture, scene and wordmark-halo colours
+Color.kt now holds light and dark values for --texture-glow, --texture-swell,
+--texture-stripe, --scene-glow, --scene-swell, --scene-stripe and
+--wordmark-halo from styles.css, and TokklExtraColors exposes them next to
+the state colours. The light halo is transparent, because only dark mode
+draws it. Nothing draws them yet.
+
+TextureTokensTest checks every value against a table copied from styles.css,
+and each texture and scene colour against the primary or secondary mix that
+styles.css says produced it, so a palette change that skips the recompute
+fails.
+
+Refs: TKA-0109
+
+54a42a2d5364031459749cb733a5d5dd8309e635 2026-10-18T19:23:34+02:00 docs: cite styles.css and the PRD by token and heading in the theme code
+Every styles.css:NNN and PRD.md:NNN comment in ui/theme and its test had
+drifted a few lines from its target. Each now names the token (--bg,
+--text-3xl, the font-stretch rule) or the PRD heading (Visual direction,
+Colour), which survive edits to either file. Only comments changed; with
+comments stripped, the four files are identical to their parents.
+
+Refs: TKA-0112
+
+f65b8a013f6047fceb08ba9914e79ee1dd646521 2026-10-18T19:10:56+02:00 docs: record wave 5 account settings, trust and test facts in kenkeep
+Add nodes for the account settings from /me with AccountSettingsSource,
+AccountTime and NoDeviceZoneTest, and for connection trust: the trust
+store, PinningTrustManager, the session trust prompts and their stacked
+dialog buttons. Record the sign-in cooldown store and the new preference
+files, the application night mode sync that sets the starting window's
+colours on Android 12 and later, the haproxy TLS proxy in the test
+script, the one-class-per-run rule for runner filters, the screenrecord
+tail loss, and the design brief that points at Tokkl's principle 6 and
+the look-and-feel tickets.
+
+4d3d9e33939c86a01288d5048adeab025c817259 2026-10-18T18:53:37+02:00 fix: keep the trust dialogs' buttons apart at large font scales
+At 200% font the http warning's "Continue without encryption" wrapped to
+two lines and AlertDialog's button row in material3 1.4.0 put Cancel over
+its lower half, so the two touch targets overlapped by about 25dp on a
+security warning. Both trust dialogs now put their buttons in one slot,
+stacked full width with Cancel first, so they cannot overlap at any font
+scale. Neither button is filled, so Continue and Trust never become the
+call to action.
+
+The certificate prompt no longer closes on a tap outside or on Back,
+matching the http warning: the user picks Cancel or Trust.
+
+LargestFontScaleTest now checks the http warning from sign-in and over the
+home screen, and that every trust dialog button is at least 48dp tall.
+CertificatePromptTest checks that a tap outside and Back leave the prompt
+open.
+
+Refs: TKA-0126
+
+2316cd67714d3c2d8e1aca86c28627bf051e57e0 2026-10-18T18:39:33+02:00 test: check trust prompts at 200% font and forbid device zone reads
+LargestFontScaleTest now opens the certificate prompt from sign-in and
+over the home screen, and the notice left after cancelling the http
+warning or the certificate prompt, at the largest font scale. Each part
+has to show in full once scrolled to, and no text may be cut off or
+overlap another part. The notice adds no colour pair: it is onSurface
+and primary on surfaceContainerHighest, which ThemeContrastTest checks
+in both themes.
+
+The http warning has no fit test here. At 200% its Continue button
+wraps to two lines and overlaps Cancel by 25dp, because material3
+1.4.0's AlertDialog places its button rows in the wrong order.
+
+NoDeviceZoneTest reads the constant pool of every app class and fails
+on ZoneId.systemDefault, TimeZone.getDefault, Clock.systemDefaultZone,
+now() without a clock and a Calendar without a zone. The class file
+reader moves out of SingleHttpClientTest into ClassReferences, which
+now keeps member descriptors.
+
+AccountSettingsSourceTest covers a second refresh joining the running
+one and a sign-in write that a slower refresh must not replace.
+SignInModelTest covers a /me without timezone or beginning_of_week, or
+with a week start outside 0 to 6. ApplicationNightModeTest maps light,
+dark and system to Android's night modes.
+
+Refs: TKA-0021, TKA-0022, TKA-0023, TKA-0102, TKA-0125
+
+3133eb7b66cda3891346d011c948feb0b12329b4 2026-10-18T18:01:04+02:00 fix: prompt a signed-in session whose requests are refused for trust
+The certificate prompt and the http warning lived only on the sign-in
+screen. Once a session was stored, a changed self-signed certificate or a
+plain http server with no recorded confirmation got every request refused,
+the account settings refresh dropped the error, and nothing prompted.
+
+The API client now reports a certificate refusal as
+ApiError.UntrustedCertificate, next to CleartextNotConfirmed under
+ApiError.TrustRefused, and tells a TrustListener about refusals and
+answers. Every Session client reports to the app's SessionTrustModel. The
+navigation host shows the matching prompt above whatever screen is open.
+Accepting stores the pin or the confirmation and refreshes again.
+Cancelling keeps requests refused and leaves a notice with a Review
+connection button that opens the prompt again. Other network failures stay
+quiet, and an answer from the server clears the refusal.
+
+The two dialogs moved unchanged to trust/TrustPrompts.kt, so any screen
+can host them. Sign-in still shows its own.
+
+Refs: TKA-0125
+
+b79470fd462f0aa7d8dcafccee4ef1ee6e2f861c 2026-10-18T17:34:59+02:00 fix: start in the chosen theme's colours on Android 12 and later
+Android draws the starting window from the manifest theme before the app
+runs, and picks res/values or res/values-night by the night mode it keeps
+for the app. With the theme pinned to dark on a light phone, a cold start
+showed a sand starting window for about 0.7 s before the navy app, and the
+reverse with light pinned on a dark phone.
+
+The app now hands Android its night mode with
+UiModeManager.setApplicationNightMode: light is MODE_NIGHT_NO, dark is
+MODE_NIGHT_YES and following the system is MODE_NIGHT_AUTO. It does so on
+every start and every change, off the main thread. The call recreated
+MainActivity, so the activity now handles uiMode changes itself and a theme
+change keeps the screen and the activity. Below Android 12 the starting
+window still follows the system.
+
+WindowBackgroundTest now drives the theme setting and checks that the next
+launch starts in the chosen mode. DefaultThemeSettings hands the night mode
+back to the system around each test.
+
+Refs: TKA-0102
+
+396ca06f45d3911094b87534a4ac572d1b5088da 2026-10-18T16:59:30+02:00 fix: keep the 429 sign-in cooldown across process death
+The deadline after a 429 lived only in SignInModel's memory, so a model
+recreated within Retry-After, after the process died, let the user send
+attempts again. It now persists in SignInCooldownStore, one entry per
+server origin holding the deadline and nothing else. The model loads the
+entries when it starts, and submit waits for that load. It drops an entry
+once its deadline passes or a sign-in to that server succeeds. It still
+never retries on its own.
+
+The deadline is wall-clock time, not elapsed realtime, because Tokkl's
+lockout runs on the server's clock and a reboot of the phone does not
+lift it. ServerUrl.origin gives the scheme://host:port key, the same form
+the host guard reports.
+
+Refs: TKA-0103
+
+798a6d3ed0d801f0f6ecfd841ee460a45b2e45fd 2026-10-18T16:59:30+02:00 feat: trust a self-signed certificate only by its pinned fingerprint
+The shared client now runs TLS through PinningTrustManager. The platform's
+trust manager decides first, so system and user CAs and the network
+security config work as before. When it refuses a chain, the leaf passes
+only if its SHA-256 matches the pin stored for that host and port.
+Otherwise the handshake fails before any request, with an
+UntrustedCertificateException that carries the leaf's fingerprint and
+subject.
+
+Sign-in shows that fingerprint and subject in a prompt, and says when the
+certificate differs from the pinned one. Trusting it pins exactly that
+certificate in ServerTrustStore and sends the attempt again. OkHttp's
+host name check stays on. NoTrustAllTest fails on any other trust
+manager, host name verifier or insecure curl in the sources and scripts.
+The keyboard closes under both sign-in dialogs so their text has room.
+
+scripts/instrumented-tests.sh puts haproxy, pinned by digest, in front of
+the Tokkl container with a certificate made for each run, with IP SANs for
+10.0.2.2 and 127.0.0.1. Its key stays in the script's temporary directory.
+The JVM fixtures are two certificates with the same subject; their keys
+were discarded.
+
+Refs: TKA-0021
+
+a4e6453167f01d678a65984f3064426ebb9f52bb 2026-10-18T16:59:29+02:00 feat: warn before sending credentials to a plain http server
+The shared client's guard now refuses every request to an http:// server
+whose URL the user has not confirmed, before OkHttp connects. Sign-in
+turns that refusal into a warning that names the unencrypted API token or
+[credential-related line omitted]
+continuing takes a ticked checkbox and then the continue button.
+
+ServerTrustStore keeps the one confirmed URL in its own preferences file,
+so another URL asks again, and its clear() is there for sign-out. https
+URLs never warn. The instrumented fixtures confirm the test container's
+http URL, and the sign-in tests click through the warning.
+
+Refs: TKA-0022
+
+69706ecff7917cc3b162f7028e71021f7032421b 2026-10-18T16:08:40+02:00 feat: read the account timezone, week start and time resolution from /me
+Sign-in keeps the timezone, beginning_of_week and optional
+time_resolution_minutes from its own GET /api/v9/me, and the app reads
+them again each time it comes to the foreground. AccountSettingsSource
+holds them for the whole process and persists them in their own
+preferences file, next to no credential and inside the backup exclusion.
+
+AccountTime is the one zone and clock utility for screens: the zone,
+now, today, the week start and snapUnsent, all in the account's zone.
+A timezone name that parseTimeZone cannot resolve gives no AccountTime.
+Screens then show no clock times or dates and name the unknown zone,
+with no fallback to the device's zone. A /me without
+time_resolution_minutes means no snapping.
+
+A /me without timezone or beginning_of_week now fails sign-in as
+NotTokkl, since Toggl Track and Tokkl always send both.
+
+Refs: TKA-0023
+
+7fe66f7fce983565b5338279736882d0a09955a0 2026-10-18T15:48:37+02:00 docs: record wave 4 harness, OOM, sign-in, release and time facts in kenkeep
+Add nodes for OOM kills that end an agent session through its scope's
+OOMPolicy=stop, and for sign-in, the stored session, theme settings and
+the navigation host. Record the test credentials file, the device check
+after Gradle, the emulator's own systemd scope and the dialog settings
+in the test script node, and drop DeviceShell.closeSystemDialogs, which
+no longer exists. Add the host guard and the single-client test to the
+API client node, the signing variables, Build-Tools pin and four CI jobs
+to the release node, parseTimeZone and snapUnsent to the time nodes, and
+the window repaint for a theme mode that differs from the system's.
+
+9bdd1c13127615d27e549bc2e12d892ebeebe8f4 2026-10-18T15:34:39+02:00 test: pin the JavaScript Date range in the snapSpan port
+SnapJsDateRangeTest covers both ends of the range of a JavaScript Date:
+the exact limit accepted, one millisecond past it refused, a start
+within a step of either end refused, a snapped stop that would cross
+the limit refused, and a wall clock past the limit at UTC+14 refused.
+Expected values come from running snap.ts at tokkl commit 51aed28 in
+Node 24 on the same ISO strings. Africa/Casablanca is left out because
+its far-future offset depends on tz data.
+
+Refs: TKA-0070
+
+4607048cc6e00e1f1c34ef472ff6e1ce48d76efb 2026-10-18T15:19:44+02:00 feat: add a settings screen with the theme mode and wallpaper colours
+The launch screen opens a settings screen with three theme modes:
+follow the system (the default), light and dark. On Android 12 and
+later it also has a wallpaper colours switch, off by default. With the
+switch off the app keeps Tokkl's palette in every mode.
+
+The settings live in their own private preferences file, written with
+commit() the way ServerConfigStore writes the server URL. The existing
+backup rules already leave out every domain, so they stay on the phone.
+TokklApplication reads them once per process, before the first frame,
+and holds them in a model that TokklTheme reads, so a change redraws at
+once without restarting the activity. The write runs off the main
+thread in an application scope, so leaving the app cannot cancel it. If
+the write fails, the screen goes back to the stored choice.
+
+res/values-night only knows the system's mode, so MainActivity now
+paints the window background and picks the system bar icons from the
+chosen scheme. Before Android 12 the switch is hidden.
+
+Tests cover the three modes applying at once and surviving a process
+restart, the switch default and its Android 12 cut-off, wallpaper
+colours on and off, TalkBack labels and roles, string resources and the
+largest font scale. WindowBackgroundTest now resets the theme setting so
+it keeps following the system.
+
+Refs: TKA-0015
+
+8e1e215e48f55a1d39e0e75b0a1fd30897c533ad 2026-10-18T15:19:43+02:00 test: check the clock and totals styles at the largest font scale
+Add ui-test-manifest from the Compose BOM as a debug dependency, so a
+Compose test can host a bare composable. ClockAndTotalStylesFitTest
+renders 23:59:59 in the clock style and 9999:59:59 in the totals style
+at 200% in a 100dp column, where both wrap. The glyphs of each line have
+to stay inside that line's box and the samples must not overlap.
+
+Compose keeps the font's ascent above the first line and its descent
+below the last, so a style cannot clip a single line. The narrow column
+makes the line height count: a clock style with lineHeight = 0.6.em
+fails the test.
+
+SystemFontScale moves out of LargestFontScaleTest so both tests share
+it.
+
+Refs: TKA-0095
+
+ceb3b58bac0b1ed5cd81cfee199a07dd4c18eaf1 2026-10-18T14:33:49+02:00 ci: check that the release build is reproducible
+A new reproducible-release job runs scripts/reproducible-release.sh on
+pull requests to main and on pushes to main. The script builds the
+unsigned release APK in two fresh clones and exits 1 when the APKs
+differ, so a change that makes the release build unstable fails CI
+before F-Droid refuses a release.
+
+The job reuses the gradle job's setup and pins: Temurin 21, the SDK
+packages for compileSdk 37 and Build-Tools 36.0.0, and a checkout with
+persist-credentials set to false. The script clones the checked-out commit,
+which works from the shallow fetch of actions/checkout. The job sets no
+TOKKL_RELEASE_* signing variable. README.md says CI runs the check.
+
+The repo has no GitHub remote yet, so no run has gone green.
+
+Refs: TKA-0100
+
+0bc056c9cee68a7a073446bdff72c7c981f51a02 2026-10-18T14:33:48+02:00 test: fail the instrumented run when a test device goes away
+With the emulator killed a second into the tests, connectedDebugAndroidTest
+printed BUILD SUCCESSFUL with none of the 32 tests run, and
+scripts/instrumented-tests.sh exited 0 when the emulator had been
+attached before it started. That is how the CI job runs it. The script
+caught the case only for an emulator it booted, through its own check
+on qemu.
+
+After Gradle, the script now asks adb for the state of every test
+device and exits 1 when one is no longer online, naming it. Otherwise it
+exits with Gradle's status. The SIGKILL message for an emulator the
+script booted stays.
+
+[credential-related line omitted]
+a mode 600 file on the device instead of as instrumentation arguments
+(TKA-0094), that the emulator runs in a systemd scope of its own
+(TKA-0099), that the script hides error dialogs only on an emulator it
+boots (TKA-0093), and that a device going away fails the run.
+
+Refs: TKA-0101
+
+9e289b5de0388a08120dccf3a7f5073eace79407 2026-10-18T14:17:18+02:00 build: pin line endings for the Gradle wrapper scripts
+.gitattributes now holds the lines from Gradle's init template: gradlew
+is text with LF, *.bat text with CRLF, *.jar binary. A checkout with
+core.autocrlf set can no longer give gradlew CRLF endings, which stop it
+from running on Linux.
+
+gradlew.bat was committed with CRLF in the index. With text set, git
+stores text files with LF, so git add --renormalize rewrote its blob to
+LF; the file on disk keeps its CRLF bytes. Leaving the old blob would
+show gradlew.bat as modified after any touch. The LF blob also ends the
+112 trailing-whitespace findings git diff --check reported for it.
+
+Refs: TKA-0086
+
+9e44cb47d12bc3b06dd279f5fd555194ea86d923 2026-10-18T14:17:17+02:00 ci: add Dependabot updates for actions, Gradle and npm
+SHA pins never move on their own. .github/dependabot.yml now checks
+github-actions, gradle and npm weekly, the schedule Tokkl uses, with
+Tokkl's commit prefixes: ci for actions, build for the rest. The npm
+entry covers the commitlint and husky tooling. Tokkl's npm ignores are
+left out: there are no workspaces here, and a major commitlint update
+still shows up as a PR that CI tests.
+
+Dependabot runs only once the repo is on GitHub.
+
+Refs: TKA-0018
+
+447a59b9fbe6d746d1db46654a825c9f40335095 2026-10-18T14:17:17+02:00 ci: run the instrumented tests on an emulator
+The new instrumented-tests job sets the KVM udev rule from
+android-emulator-runner's README, then boots an API 36 emulator with
+ReactiveCircus/android-emulator-runner v2.38.0, pinned by commit SHA
+like every other action. The AVD follows tokkl-api36: the plain AOSP
+x86_64 image, which keeps SystemUI and the launcher, a medium_phone
+profile and 2 GB of RAM. -accel on with disable-linux-hw-accel: false
+fails the job when KVM is missing instead of emulating in software.
+
+The runner's script hides error dialogs on its emulator, which
+scripts/instrumented-tests.sh does only on one it boots, and then runs
+the script. The script finds the attached emulator, so it boots none
+and starts the Tokkl image at the digest it pins.
+
+The repo has no GitHub remote yet, so no run has gone green.
+
+Refs: TKA-0019
+
+6a8974b9282b0d95b43cc0f1aaf5be466a9c40d0 2026-10-18T14:17:16+02:00 test: hide error dialogs on the emulator the test script boots
+A fresh headless boot of tokkl-api36 often left the dialog
+"Application Not Responding: com.android.systemui" holding window
+focus, so a key a test injected went to the dialog instead of the app.
+In a baseline run the dialog had focus in 22 of 53 samples after boot.
+
+After the boot completes, scripts/instrumented-tests.sh now sets
+hide_error_dialogs to 1 and sends CLOSE_SYSTEM_DIALOGS. It does so only
+in boot_emulator, so it changes no setting on a device that was already
+attached. The setting stays in the AVD's data partition.
+
+LicencesScreenTest no longer closes system dialogs itself, and
+DeviceShell loses closeSystemDialogs. DeviceShell stays, since
+LargestFontScaleTest and TokklTestServer use run.
+
+Refs: TKA-0093
+
+[credential-related line omitted]
+[credential-related line omitted]
+Gradle as -P instrumentation arguments, so any user could read them with
+ps while the tests ran. Moving them out of Gradle's command line does
+not help, because AGP's test runner starts a java process with every
+instrumentation argument as a -D option, and that process runs
+[credential-related line omitted]
+values in a run that passed them to Gradle through a mode 600 @file in
+GRADLE_OPTS.
+
+The script now writes both to a properties file, mode 600, and pushes it
+with adb to /data/local/tmp on each test device, mode 600 there too. The
+only new instrumentation argument is the file's path. TokklTestServer
+reads the file with cat through UiAutomation, which runs as the shell
+user. Cleanup deletes the file from each device and runs sync, since
+the emulator is killed right after and kept the file without it. The
+setup code still reaches the container through the environment.
+
+ORG_GRADLE_PROJECT_* variables were no option either: the property names
+hold dots, which bash cannot export and dash, which runs gradlew, drops.
+
+Refs: TKA-0094
+
+1b87faf0eec299940846fcb6b1a2231f2fe03b00 2026-10-18T14:17:15+02:00 test: boot the test emulator in a systemd scope of its own
+qemu holds up to 5 GB, and its oom_score_adj of 800 makes it the kernel
+OOM killer's first pick. Started as a child of the caller, it ran in the
+caller's scope. When an agent
+ran the tests, that scope had OOMPolicy=stop, so each OOM kill of qemu
+ended the whole agent session. That happened three times on 2026-10-18.
+
+When the user's systemd manager answers, scripts/instrumented-tests.sh
+now starts the emulator with systemd-run --user --scope and
+OOMPolicy=continue, and makes the scope PartOf the caller's unit, so
+stopping the caller still stops the emulator. Cleanup stops the scope,
+which also ends netsimd and crashpad_handler. Without a user manager,
+as in CI, the emulator starts as a plain child process as before.
+
+The guest gets 2048 MB of RAM on the command line, the size the
+tokkl-api36 AVD already sets. When the emulator dies on its own, the
+script exits non-zero and says whether SIGKILL, which the OOM killer
+sends, ended it. The exit status matters: with qemu killed mid-run,
+Gradle printed BUILD SUCCESSFUL after one of the 32 tests.
+
+Refs: TKA-0099
+
+3882856804c731e9307a6d0dc8d67cdb7910afd8 2026-10-18T13:40:11+02:00 build: sign release APKs from environment variables and check reproducibility
+[credential-related line omitted]
+from four TOKKL_RELEASE_* environment variables and nothing else. With
+none of them set, assembleRelease still builds the unsigned APK; a partial
+set fails the build and names the missing ones. Build-Tools is pinned to
+36.0.0, the default and minimum of AGP 9.4.1, which CI installs.
+dependenciesInfo is off, so a signed APK carries no dependency block only
+Google can read, which F-Droid rejects.
+
+scripts/reproducible-release.sh builds the unsigned release APK in two
+fresh clones and compares them byte for byte. The second build runs on
+two cores with its own Gradle home. Builds of the base commit already
+matched that way: zip entries carry a fixed 1981 date, the VCS info holds
+only the commit hash, and the baseline profile came out the same, so the
+build keeps both.
+
+README.md documents the variables, the Actions secret names, how the
+owner creates the key, and the commands that print the certificate's
+SHA-256 for F-Droid's AllowedAPKSigningKeys. .gitignore also ignores
+*.pfx and *.pk8.
+
+Refs: TKA-0020
+
+e733b7921c63964cbeb5e996d5b0d1ed52292a52 2026-10-18T13:40:11+02:00 docs: describe the sign-in, home and Licences screens in the project summary
+README.md and AGENTS.md still said the app had one launch screen. Since
+the sign-in screen and the navigation host landed, the app opens on
+sign-in, then a placeholder home screen that links to the Licences
+screen.
+
+Refs: TKA-0016
+
+efb8456a274561771b8d8f1de78c37320262ab04 2026-10-18T11:11:07+02:00 docs: say which Tokkl DELETE routes answer with an empty body
+The sendNoContent KDoc claimed every Tokkl DELETE answers 200 with an
+empty body. Time entry, task, client and tag DELETEs do; the project
+DELETE answers with the project id as JSON, which sendNoContent ignores.
+ServerSmokeTest's comment made the same claim about the tag DELETE it
+runs. Comments only.
+
+Refs: TKA-0097
+
+94ac6a4de824a8f81d088ffb49eb4b7945f8a659 2026-10-18T11:11:06+02:00 feat: refuse requests and redirects to hosts other than the configured server
+SharedHttpClient now runs every call through ConfiguredServerGuard. It
+refuses a request whose scheme, host or port differs from
+ConfiguredServer.current before OkHttp connects, and fails with
+HostNotAllowedException, which TogglApiClient maps to
+ApiError.HostNotAllowed. Both name only scheme://host:port, never a
+path, query or credential.
+
+OkHttp follows redirects inside the call, past application
+interceptors, so the client turns automatic redirects off and the
+guard follows them itself: same-origin ones with OkHttp's method and
+body rules and a limit of 20, any other one refused.
+
+The configured server is the stored one, which TokklApplication reads
+from ServerConfigStore. During sign-in it is the URL being tried, and
+sign-in shows a refused redirect as its own message. With neither, no
+request goes out.
+
+SingleHttpClientTest reads the constant pool of every compiled app
+class and fails when code outside SharedHttpClient builds an OkHttp
+client, opens a URLConnection or socket, or uses WebView or
+DownloadManager.
+
+Refs: TKA-0017
+
+68fba2690ef96a2cbd12176d355ed1088c43beb8 2026-10-18T11:11:05+02:00 feat: add the sign-in screen and the app's navigation host
+The app now opens on a sign-in screen until a server and its token are
+stored. The server URL may carry a path. The API token is the default
+[credential-related line omitted]
+GET /api/v9/me with Basic auth. On 200 the server URL goes to the new
+[credential-related line omitted]
+[credential-related line omitted]
+[credential-related line omitted]
+
+[credential-related line omitted]
+counts down the Retry-After seconds (60 without the header), and the
+app never retries by itself. An untrusted certificate is its own
+result, ready for the TKA-0021 prompt, and the model marks where the
+TKA-0022 http warning goes. ServerUrl now refuses a URL with a user
+[credential-related line omitted]
+
+TokklNavHost keeps a saveable back stack of sign-in, home (the launch
+screen) and licences. Instrumented tests that open MainActivity set the
+session first through SessionRule, and wait for the first screen,
+which appears after the stores are read off the main thread.
+
+Refs: TKA-0016
+
+d76286733b9835875f859c8fc62f393808959931 2026-10-18T10:57:39+02:00 feat: resolve the account timezone with the leniency of Tokkl's Intl check
+Tokkl stores any name Intl.DateTimeFormat accepts, so /me can return
+"utc", "europe/madrid", "IST" or "+0530", which ZoneId.of rejects.
+parseTimeZone accepts the same names: ASCII case-insensitive IDs, the 33
+names only ICU knows mapped to Intl's targets, and Intl's offset syntax.
+It returns null for names Intl rejects, such as "Z" or "GMT+5", and
+never falls back to the device zone.
+
+Offsets past 18 hours return null, because ZoneOffset stops there.
+
+Refs: TKA-0098
+
+f46dbca2db4fa4fdf628c55ea1a37902b414c085 2026-10-18T10:42:28+02:00 feat: port snapSpan so the phone can snap entries it has not sent
+Snap.kt ports isTimeResolution and snapSpan from Tokkl's
+packages/common/snap.ts at 51aed28, with the offset lookup from time.ts.
+It keeps JavaScript's double arithmetic and Date range. SnapTest replays
+every case from snap.test.ts at that commit.
+
+snapUnsent is the rule callers use before display. Without a valid
+time_resolution_minutes the span comes back unchanged. Otherwise it cuts
+both ends to whole seconds, as the server does, and snaps them.
+
+Refs: TKA-0070
+
+6810108f23f13975fb69e3db1cf4717bc568760e 2026-10-18T10:25:11+02:00 docs: record wave 3 test harness, API client and build facts in kenkeep
+Add nodes for scripts/instrumented-tests.sh, the api package, the token
+store with its backup exclusion, and the JavaScript semantics of the time
+parser ports. Replace the stale commitlint gaps with the CI commitlint job
+and the header-only isIgnored check. Record gradle/version.properties and
+its F-Droid UpdateCheckData line, the denied-dependency check, the current
+CI jobs, the theme, font and icon resources, and the System UI dialog that
+steals focus on a fresh headless emulator boot.
+
+846511640258cca4f79d5e8050cabe01c13caaa7 2026-10-18T10:14:48+02:00 test: pin the JavaScript behaviours the duration parser ports
+Cover the places where Kotlin and JavaScript disagree in parseDuration:
+only the first comma becomes a dot, white space follows JavaScript's \s
+and trim, a unit named constructor is null where TypeScript returns NaN,
+numbers that overflow a double or reach 2^63 are null, and halves round
+up. The expected values come from running duration.ts in Node. They sit
+in their own class so a diff of DurationTest against tokkl stays clean.
+
+Refs: TKA-0012
+
+8454bcacef19bef7aef31f3cb1ea37633379c94b 2026-10-18T10:07:19+02:00 test: cover the Licences screen, theme, icon and API writes on the emulator
+[credential-related line omitted]
+deletes a tag on the real Tokkl container, and finds a new time entry
+through the Reports v3 search. Tokkl answers DELETE with 200 and an
+empty body, so the delete test fails if the client decodes that body
+again.
+
+LicencesScreenTest opens the Licences entry from the launch screen and
+compares the shown OFL text with res/raw/anybody_ofl.txt line by line.
+It also checks that the Back button, system back and an activity
+recreation each leave the app on the right screen. On a freshly booted
+headless AVD a "System UI isn't responding" dialog holds window focus
+and takes injected keys, so the system back test closes system dialogs
+and waits for the app window to get focus before it presses back.
+
+WindowBackgroundTest sets the app's night mode and checks that the
+window background and the launch screen both show the scheme
+background, in light and in dark. LargestFontScaleTest sets the device
+font scale to 200% and checks that the headlines on the launch and
+Licences screens are not cut off, stay on screen and do not overlap.
+LauncherIconTest checks that LauncherApps hands out the app's adaptive
+icon with its own background, foreground and monochrome layers.
+
+DeviceShell runs shell commands through UiAutomation, for closing the
+dialog and for the font scale.
+
+Refs: TKA-0007, TKA-0008, TKA-0009, TKA-0085, TKA-0092
+
+ea177e0549e1c9230436492cee1f485b6d5901ff 2026-10-18T09:30:04+02:00 fix: treat an empty 2xx body as success for calls that expect no content
+Tokkl answers every DELETE with 200 and an empty body. The client decoded
+every 2xx body, so a completed delete came back as InvalidResponse, and a
+queue would have retried a change the server already applied.
+
+sendNoContent returns Success(Unit) for any 2xx without decoding the
+body. send and get still decode, so an empty or malformed body there is
+still InvalidResponse. Both share one request path, which keeps the 403,
+429 and network mappings and the single OkHttpClient as they were.
+
+Refs: TKA-0092
+
+032806f6303e63f38e1d69fa0ccd0d1c6e02e654 2026-10-18T09:17:42+02:00 feat: add an adaptive launcher icon made from Tokkl's artwork
+The launcher showed Android's placeholder and lint reported
+MissingApplicationIcon. The adaptive icon in mipmap-anydpi has a navy
+background from Tokkl's palette (the dark bg token), a foreground made
+from docs/brand/tokkl-icon-v4-1024.png, and a monochrome layer from the
+artwork's dark outline and hands for themed icons. minSdk is 26, so no
+legacy PNG mipmaps are needed.
+
+The artwork exists only as PNG, so both layers are 432 px PNGs in
+drawable-xxxhdpi. The stopwatch fits a 32 dp circle at the centre of the
+108 dp layer, inside the 66 dp safe zone. ic_launcher.xml records the
+source file, its SHA-256 and the ImageMagick commands, which rebuild both
+PNGs byte for byte.
+
+Refs: TKA-0085
+
+d91ce27ddd254c945f7cc63eb1c0bed8e6bfcf4f 2026-10-18T09:17:41+02:00 feat: bundle the Anybody font with its OFL licence
+res/font holds Anybody 1.114, the upstream variable TTF from
+Etcetera-Type-Co/Anybody at fe7b55c, unconverted. Tokkl serves the woff2
+from the same commit. The display and headline styles use it at weight
+800 and 85% width, as the web app does, and TokklTheme exposes clock and
+total styles in it with tabular digits. Other text keeps the system font.
+
+The font's OFL.txt ships unchanged as res/raw/anybody_ofl.txt. A Licences
+button on the launch screen opens a screen that shows it. Its labels are
+English string resources.
+
+res/raw/anybody_font_source.txt records the source URL, commit, version
+and SHA-256. It sits beside the licence because res/font accepts only font
+and XML files, and keep.xml marks it as used so lint does not flag it.
+
+Refs: TKA-0008
+
+37fa3efa30e37cf7f8f0cebc51927487009662cd 2026-10-18T09:17:41+02:00 feat: build the Tokkl Material 3 theme from the web colour tokens
+ui/theme/Color.kt copies sand, ink and sunset orange (light) and navy and
+neon (dark) from the :root block of Tokkl's styles.css, each value with a
+comment naming its line. Every Material 3 role maps to one of those
+tokens; roles with no token of their own take the nearest one and say
+which. surfaceTint is surface, so tonal elevation adds no untested tint.
+
+TokklTheme provides the running, billable and lime colours next to the
+Material scheme, for use beside an icon or a label. Dynamic colour is a
+parameter that defaults to off until the opt-in setting exists.
+
+Theme.Tokkl paints the window in the scheme's background, with a night
+variant, so launch shows sand or navy instead of a white window.
+
+ThemeContrastTest checks WCAG AA for every pair in both schemes: 4.5:1
+for text, 3:1 for borders and state marks.
+
+Refs: TKA-0007
+
+79634dfc8b4db466d4fb5f25f6a02091ec6e1a3a 2026-10-18T09:17:40+02:00 test: move LaunchScreenTest to the v2 createAndroidComposeRule
+The junit4 createAndroidComposeRule is deprecated in Compose UI 1.12, and
+every compile of the instrumented tests warned about it. The v2 rule runs
+coroutines on a StandardTestDispatcher. LaunchScreenTest passes under it
+with its assertions unchanged, so it needs no extra synchronization.
+
+Refs: TKA-0089
+
+05c9951cccef4429e642d7ec06630f653b80bc7f 2026-10-18T09:09:04+02:00 ci: run the denied-dependency check in the gradle job
+The job ran assembleDebug, lint and testDebugUnitTest, none of which
+depend on :app:checkDeniedDependencies, so a pull request that added
+Play Services, Firebase or an analytics SDK passed CI. Run `check`
+instead. It covers lint and the unit tests and adds the denied-group
+check, so no task runs twice. The pinned actions are unchanged.
+
+Refs: TKA-0090
+
+73a2bc9883b1b35c435dbe682070ff80e9c2e57b 2026-10-18T09:02:31+02:00 build: read the app version from gradle/version.properties
+versionName comes from the file and starts at 0.1.0. versionCode is
+major * 1_000_000 + minor * 1_000 + patch, documented in
+app/build.gradle.kts, so 0.1.0 gets 1000. The file stores that number as
+well, because F-Droid reads versionCode from a file at each tag and cannot
+evaluate a formula. The build fails when the stored number breaks the
+formula, or when versionName is not MAJOR.MINOR.PATCH with minor and patch
+below 1000.
+
+Refs: TKA-0014
+
+3b0655bfac8aade4652352b8fbd9348f4719e0d5 2026-10-18T09:02:31+02:00 docs: say that CI lints the commits the local hook never sees
+git revert and --no-verify commits skip the commit-msg hook. The README
+now says the commitlint job in ci.yml lints every pull request and push to
+main and runs npm test.
+
+Refs: TKA-0082
+
+b273fefc0e067f2abad973d91dc398bccf9c6e47 2026-10-18T09:02:29+02:00 build: fail check when a denied dependency group reaches the release build
+gradle/denied-dependency-groups.txt lists Play Services, Firebase, the Play
+Core libraries, Google's data transport, and known crash reporting,
+analytics, attribution and ads groups, each with the reason it is denied.
+:app:checkDeniedDependencies resolves the release runtime classpath and
+fails on every module from a listed group or a group below one, naming the
+module and the dependencies that pulled it in. check depends on it.
+
+Refs: TKA-0005
+
+f0d6fd4469c7918960e46b887a84319ce6650890 2026-10-18T01:52:13+02:00 feat: store the API token encrypted with an Android Keystore key
+[credential-related line omitted]
+AndroidKeyStore and keeps the format version, IV and ciphertext in an
+app-private file written through AtomicFile. The plain token never
+touches disk. load() returns null when nothing is stored or the
+ciphertext no longer decrypts, and clear() deletes the file and the key
+for sign-out. The store adds no backup rules, since the app already keeps
+all of its data out of backup and device transfer.
+
+Instrumented tests run on the device's real Keystore. One scans every
+readable file under the app's data directory for the token as UTF-8,
+[credential-related line omitted]
+process and loads it in another, so the test orchestrator now runs each
+instrumented test in its own process.
+
+Refs: TKA-0011
+
+aba7e8e24317edb6f688abf22b6ecdf412dd79d6 2026-10-18T01:52:12+02:00 test: run instrumented tests against a real Tokkl container
+scripts/instrumented-tests.sh starts ghcr.io/e0ipso/tokkl 1.3.1, pinned
+by digest, on a free port of 127.0.0.1 with its database on a tmpfs. It
+creates an account through a random setup code, reads the API token from
+GET /api/v9/me, and passes the URL the emulator sees (10.0.2.2) and the
+credentials to connectedDebugAndroidTest as instrumentation arguments.
+The container goes away on exit, also when a test fails. With no device
+attached, the script boots tokkl-api36 headless and stops it afterwards.
+
+ServerSmokeTest signs in with the API token on GET /api/v9/me and checks
+that a wrong token gets 403.
+
+Refs: TKA-0006
+
+691e6d152f274bc16407d652eeca2ffb66839f8c 2026-10-18T01:52:11+02:00 feat: permit cleartext and user-installed CAs in a network security config
+Tokkl listens on plain HTTP and some servers use a certificate from a CA
+the user installed, but Android 9 blocks cleartext and Android 7 trusts
+only system CAs unless the app opts in. The base config now allows both.
+It holds no pin: TKA-0021 pins self-signed certificates in app code.
+
+Lint's InsecureBaseConfiguration and AcceptsUserCertificates warnings are
+suppressed in the file because both settings are deliberate.
+
+NetworkSecurityConfigTest reads the merged manifest like BackupRulesTest,
+and the shared XML helpers move to MergedManifest.
+
+Refs: TKA-0010
+
+f7ea689a143dc2a6da46408c6f98423151780093 2026-10-18T01:29:49+02:00 feat: port Tokkl's duration and time-of-day parsing to Kotlin
+parseDuration and parseTimeOfDay in com.github.e0ipso.tokkl.time follow
+../tokkl/packages/common/duration.ts and
+../tokkl/packages/web/src/lib/timeOfDay.ts. They copy JavaScript where
+Kotlin differs: the first-comma replace, the white space set of \s and
+trim, Math.round and double arithmetic. Where the TypeScript returns NaN,
+Infinity or a number from 2^63 up, parseDuration returns null.
+
+The JVM tests replay every parseDuration case from duration.test.ts and
+every case from timeOfDay.test.ts, and name the tokkl commits they came
+from. The formatDuration cases stay out, since this port covers parsing.
+
+Refs: TKA-0012
+
+cba6b9a326ad0ce82c2c2cdd1cae08c140ca21ae 2026-10-18T01:27:33+02:00 feat: add the Toggl API v9 and Reports v3 client
+TogglApiClient builds endpoint URLs from a base URL that may carry a path,
+appending /api/v9 or /reports/api/v3 without dropping the path or
+[credential-related line omitted]
+[credential-related line omitted]
+kotlinx.serialization.
+
+Results are typed: 403 is an auth failure, 429 carries the Retry-After
+seconds, other statuses keep their code, and a network failure is its own
+error, outside the HTTP errors. All requests go through one shared
+OkHttpClient, where the pinned-certificate trust manager and the host
+guard will be added later.
+
+Adds OkHttp 5.5.0, kotlinx-serialization-json 1.11.0 and the Kotlin
+serialization plugin 2.4.21 from the catalog, MockWebServer 5.5.0 for
+JVM tests, and the INTERNET permission. All are Apache-2.0.
+
+Refs: TKA-0009
+
+5368b96dcd9c81a6cd065e6321af7e15f1e61109 2026-10-18T01:27:32+02:00 fix: keep all app data out of Android backup and device transfer
+Set allowBackup="false" and point dataExtractionRules (Android 12+) and
+fullBackupContent (Android 11 and lower) at rules that exclude every
+storage domain, including the device-protected ones. The extraction rules
+also cover cross-platform transfer, since a missing section leaves its
+mode on for everything.
+
+BackupRulesTest reads the merged manifest that AGP lists in
+test_config.properties and both rule files, so unit tests now include
+Android resources.
+
+Refs: TKA-0069
+
+108903ecd8cf83b757e81591d7e6739809d78a26 2026-10-18T01:20:30+02:00 fix: decide commitlint merge ignores from the header only
+commitlint's merge ignores match a "Merge branch ..." line anywhere in a message, so
+"added a thing" with that line in its body skipped the Conventional Commits rules. The ignore
+function now hands the defaults the first line, so only a message whose header is a merge subject
+counts as a merge. Real git merge --no-ff and --log messages still pass.
+
+Refs: TKA-0084
+
+a0c2a9c32b4996bdfffb4d52c0133cb7aedfcb4c 2026-10-18T01:20:30+02:00 build: declare @commitlint/is-ignored in package.json
+commitlint.config.js imports it, but it resolved only because npm hoists it from
+@commitlint/lint. A stricter install or a lockfile that nests it would break the commit-msg hook
+with a module-not-found error and reject every commit. A test now checks that package.json lists
+each package the config imports.
+
+Refs: TKA-0083
+
+88124efae70b4054bb961c52d36be57425e91f10 2026-10-18T01:20:29+02:00 ci: lint commit messages and run the commitlint tests
+git revert, git cherry-pick and --no-verify commits skip the commit-msg hook. A commitlint job
+lints the pull request's commits or the pushed range, falling back to the last commit after a
+force push, and runs npm test for the rules and the hook.
+
+Refs: TKA-0082
+
+aab075524390b6cb23484add626d9b04c457dd26 2026-10-18T01:20:29+02:00 ci: add the Gradle build, lint and unit-test workflow
+Run assembleDebug, lint and testDebugUnitTest on Ubuntu for pull requests and pushes to main.
+JDK 21 comes from Temurin and the Android SDK from setup-android. Every action is pinned to a
+commit SHA with its version in a comment.
+
+Refs: TKA-0013
+
+aa18ff1f127fd5a2c359c82a8f4abb50b692c639 2026-10-18T01:10:56+02:00 docs: record wave 2 build, commit hook and agent host facts in kenkeep
+Add nodes for the Gradle build settings, the --no-daemon rule for parallel
+worktrees and the daily T3 restart. Replace the stale commitlint ignores claim
+with the current rules and the two remaining gaps. Add leftover-process checks
+to the emulator node.
+
+df48dfb027cf2d927b74ba2519215dd995a7f453 2026-10-18T01:02:11+02:00 test: cover the commitlint rules and the commit-msg hook
+Lint sample messages through @commitlint/load and @commitlint/lint with the
+options the CLI builds, then install the hook in a throwaway repository and
+run real commits and merges against it. npm test runs both with node --test.
+
+Declare @commitlint/load and @commitlint/lint, which the test imports.
+
+Refs: TKA-0003, TKA-0078
+
+f5c5cc44ea84195f25a19d015d9315e8610b2a4a 2026-10-18T00:45:53+02:00 build: scaffold the Gradle Android project with Compose Material 3
+One app module with a version catalog and a Gradle 9.8.1 wrapper pinned
+by SHA-256. AGP 9.4.1, Kotlin 2.4.21 and Compose BOM 2026.09.00.
+applicationId and namespace are com.github.e0ipso.tokkl, with minSdk 26,
+compileSdk 37 and targetSdk 36. The launch screen takes its text from
+strings.xml. The catalog also lists Glance, Room, WorkManager, OkHttp
+and kotlinx.serialization for later work. A JVM smoke test and a
+Compose UI smoke test cover the new source sets.
+
+Refs: TKA-0004
+
+73592538ded3bbd9561f369e4c835890ed5a0eb9 2026-10-18T00:33:13+02:00 chore: apply the ticket ID and credit rules to reverts, fixups and merges
+commitlint skips every rule for merge, Revert, fixup! and squash! messages, so a revert or fixup
+could carry a TKA ID in the subject or a Co-authored-by or AI credit trailer. Turn off the default
+ignores and re-apply them only to messages that pass both custom checks. Clean merges, reverts
+and fixups still pass. Anything else goes through the full rule set and is rejected.
+
+Refs: TKA-0078
+
+d3cf48cd375ac96a1842d8680875052659370ef2 2026-10-18T00:24:16+02:00 docs: record toolchain, commit hook and parser facts in kenkeep
+Add nodes for the per-tree commit-msg hook, the JDK and SDK paths and
+agent wrappers, the plain AOSP emulator image and its headless use, and
+the sdkmanager usage-metrics opt-out.
+
+Correct two nodes that placed the time-of-day parser in
+../tokkl/packages/common. It is parseTimeOfDay in
+packages/web/src/lib/timeOfDay.ts, as docs/PRD.md now says.
+
+Refs: TKA-0001, TKA-0002, TKA-0003, TKA-0076, TKA-0077
+
+5e4dfdea93eea20fd2367b7787dfa51333a5b0db 2026-10-18T00:13:51+02:00 docs: say how to turn on the commit-msg hook
+npm install sets up the commitlint hook. Each new clone or worktree needs it
+once, and it needs Node 22.12 or later. List what the hook rejects.
+
+Refs: TKA-0076
+
+567bd6d20cb562b3a1c4189d6a42dd68031c039f 2026-10-18T00:13:50+02:00 docs: explain how agent shells get the JDK and SDK
+The shell setup now keeps JAVA_HOME, ANDROID_HOME and the SDK PATH entries
+in ~/.config/android-env.sh, sourced by ~/.profile and the top of ~/.bashrc.
+Claude Code resets PATH in its Bash tool, so agents reach the tools through
+wrappers in ~/.local/bin.
+
+Refs: TKA-0077
+
+62cfcfcb7a3386ee7618b42b2969ab261ae14bea 2026-10-18T00:02:15+02:00 docs: add a building section with the JDK and Android SDK setup
+Record the JDK, SDK packages, emulator image and install commands used
+to prepare this machine, plus the headless emulator boot and shutdown.
+
+Refs: TKA-0001
+
+998af01d657ae90c52ed5cf1f996c932dac0864a 2026-10-17T23:52:14+02:00 chore: add commitlint and a husky commit-msg hook
+Copy Tokkl's commitlint rules and husky hook. The ticket ID rule also matches TKA- IDs, so an ID
+in the subject is rejected and belongs in a Refs trailer. npm install runs husky through the
+prepare script, which points core.hooksPath at .husky/_.
+
+Refs: TKA-0003
+
+0f6cbd90f95f4d08e122611294c6dac9bcea6814 2026-10-17T23:51:13+02:00 docs: name the real sources of the parsing ports
+PRD section 6.1 and risk 5 said the duration and time-of-day parsers
+both live in ../tokkl/packages/common. That package has parseDuration
+and snapSpan, but the time-of-day parser is parseTimeOfDay in
+packages/web/src/lib/timeOfDay.ts. Name each function, its file and its
+test file.
+
+Refs: TKA-0002
+
+2aba9d59e778a4e61a9cf604e316d22c422fba6b 2026-10-17T23:41:17+02:00 docs: drop the interview record from the PRD
+Every answer in the appendix was already stated in the body, so the
+record cost a sixth of the file and made readers reconcile superseded
+answers. Git history keeps it. The owner's confirmation of Kotlin and
+Compose moves into section 6, the one fact only the appendix held.
+
+912c70c504c0f9155dd9ab7c19e09d92dc8f886f 2026-10-17T23:39:58+02:00 docs: settle offline conflicts, freshness and sign-in
+Record the second interview round. A queued start no longer takes over
+a timer started later elsewhere, and the queue has a rule for each
+server rejection. Delete and new tags work offline. The tile and a
+[credential-related line omitted]
+keeps only the API token, backup is off, unsent entries snap on the
+phone, portrait phones get a day view, and reminders are a non-goal.
+Section 8.2 now comes before 8.3.
+
+41b450972191453941a55a5e21922a308bc46f21 2026-10-17T21:21:59+02:00 docs: seed the kenkeep knowledge base from the PRD
+
+0de66d428abb4cf95e8e82a1c68af7e2ea10f4dd 2026-10-17T21:21:59+02:00 chore: install the kenkeep skills with kenkeep init
+The skills CLI copies the kk skills from kenkeep's own .cursor/skills,
+which lag behind the templates the released CLI ships.
+
+4d2805bac682e9d3a5f13056a9c68af88ec24c27 2026-10-17T21:07:54+02:00 chore: install strikethroo, sift and kenkeep
+
+963d4f93bfa1c6ec7db5e3f0577f89c222e77160 2026-10-17T20:59:47+02:00 docs: record the answers on stores, versions, speed and languages
+
+e64588e06986d428d0461fa0711a199e5fb0eda8 2026-10-17T20:19:23+02:00 docs: settle stores, versioning, speed targets and languages
+
+de03c1911f946cb9e5782a776d8205d0ed05ef53 2026-10-17T20:16:39+02:00 docs: confirm tests run against a real Tokkl server
+
+2527870f0fe6b61195f82187bbd76a902e3355b3 2026-10-17T20:16:02+02:00 docs: confirm launcher shortcuts for favorites
+
+1ce871b33ecd7c9e974e6d57deab464b04eeee72 2026-10-17T20:15:37+02:00 docs: confirm the Quick Settings tile behavior
+
+16c28d6283d4a797ce873d488dd4c28c189fc25c 2026-10-17T20:14:24+02:00 docs: drop priorities, the first release ships every requirement
+
+990fbd55c0aa988e19c2df3512fe05cc73987a61 2026-10-17T20:08:02+02:00 docs: turn the interview answers into the PRD
+
+95c2dd10507854a51c270428443c396316c62e04 2026-10-17T20:05:43+02:00 docs: record the PRD interview answers
+
+97f2161a2f869ca01cd89410675c2188a25d6bcc 2026-10-17T11:47:08+02:00 docs: start the PRD for the Android client
+

@@ -1,0 +1,33 @@
+
+> test
+> node --test "test/**/*.test.js"
+
+▶ commitlint.config.js
+  ✔ loads with both custom rules set to error (1.336779ms)
+  ▶ ordinary commits (TKA-0003)
+    ✔ rejects a ticket ID in the header (13.111884ms)
+    ✔ rejects a co-author trailer, human or AI (1.729539ms)
+    ✔ rejects AI credit lines (4.543514ms)
+    ✔ accepts a Conventional Commit with ticket IDs in a Refs trailer (0.931655ms)
+  ✔ ordinary commits (TKA-0003) (20.764645ms)
+  ▶ messages commitlint ignores by default (TKA-0078)
+    ✔ rejects a revert or fixup with a ticket ID in the header and a credit trailer (0.923531ms)
+    ✔ rejects a revert, squash or merge that fails only one custom check (1.104699ms)
+    ✔ accepts a clean revert with a Refs trailer (0.19792ms)
+    ✔ accepts clean fixup! and squash! messages (0.175692ms)
+  ✔ messages commitlint ignores by default (TKA-0078) (2.841207ms)
+✔ commitlint.config.js (82.560092ms)
+▶ commit-msg hook in a throwaway repository
+  ✔ rejects a commit with a ticket ID in the subject (648.664181ms)
+  ✔ accepts a commit with a Refs trailer (651.282559ms)
+  ✔ runs on merges and rejects one whose header has a ticket ID (667.714304ms)
+  ✔ accepts the messages git merge --no-ff and git merge --log write (1374.91135ms)
+✔ commit-msg hook in a throwaway repository (3547.120043ms)
+ℹ tests 13
+ℹ suites 4
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3917.35147

@@ -1,0 +1,54 @@
+You are an independent code reviewer for Wave 1 of the sift roadmap in
+/home/e0ipso/workspace/apps/tokkl-android--review-w1. Other agents wrote this code. The orchestrator turns your findings
+into tickets for other agents to verify and fix.
+
+Read project agent instructions and relevant knowledge entries. Verify every named path
+against the live tree. Bound aggregate tool output to 8000 content bytes per call.
+
+WAVE 1 SHIPPED:
+- TKA-0001: README Building section for Temurin JDK 21, Android SDK cmdline-tools 23.0, platform-tools, emulator and the android-36 default x86_64 image installed under $HOME, plus headless emulator boot and shutdown (machine install itself is outside the repo).
+- TKA-0002: docs/PRD.md section 6.1 and risk 5 name parseDuration, parseTimeOfDay and snapSpan in ../tokkl with their test files.
+- TKA-0003: commitlint config copied from ../tokkl with the ticket-ID rule extended to TKA-, husky commit-msg hook, minimal npm package.json and lockfile, node_modules/ ignored.
+- TKA-0077: README "Set up the shell" now keeps JAVA_HOME, ANDROID_HOME and PATH in ~/.config/android-env.sh sourced by ~/.profile and ~/.bashrc, and documents ~/.local/bin wrappers for agent shells (dotfiles are outside the repo).
+- TKA-0076: README "Commit messages" section on npm install enabling the hook, Node 22.12+, and what the hook rejects.
+
+SHIPPED TICKETS (read each for the requirement it states):
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/dx/TKA-0001--dev-toolchain.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/tracking/docs/TKA-0002--parsing-source-docs.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0003--commitlint-husky.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/dx/TKA-0077--agent-shell-env.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/docs/TKA-0076--readme-commit-hook.md
+
+TASK
+Run `git diff 2aba9d59e778a4e61a9cf604e316d22c422fba6b HEAD` in /home/e0ipso/workspace/apps/tokkl-android--review-w1 and read the whole diff. For each
+symbol the diff renamed, removed, re-signatured or gave new behaviour, search the repository
+and read the callers outside the diff.
+
+Report a finding only when it is one of these:
+- defect: a crash, wrong behaviour, a broken declared contract, a security hole, data loss,
+  or breakage of other code.
+- requirement: the code does not do what its ticket's Acceptance criteria ask.
+Each finding names the file and line and the concrete input or state that fails. Skip style,
+naming, design preferences, speculative hardening and missing tests. Zero findings is a
+valid result; do not invent findings to justify the run.
+
+This review is read-only. Do not edit, create or delete files. Do not commit. Do not merge.
+Never `git push`. Never run `git checkout`, `git switch`, `git reset`, `git clean`,
+`git stash` or `git add`: ignored tracker files have no history to restore them from.
+Do not write tracker state. Do not edit the sift-drain skill. Never file,
+comment on, or patch an external tracker. Report upstream proposals as type: dx findings.
+Do not write patches; describe the fix in one line.
+
+REPORT (only this, as plain text):
+  status: done | blocked
+  reviewed: 2aba9d59e778a4e61a9cf604e316d22c422fba6b..<HEAD hash>, <N> files
+  findings: <count>
+  one block per finding:
+  - severity: blocker | major | minor
+    confidence: high | medium | low
+    category: defect | requirement | dx
+    ticket: <shipped ticket ID the change belongs to> | unknown
+    location: <repository-relative path>:<line>
+    problem: <one sentence>
+    evidence: <the input or state, and what happens>
+    fix: <one line>

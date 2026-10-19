@@ -1,0 +1,17 @@
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/hardening/TKA-0069--no-backup.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/feature/TKA-0009--api-client.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0013--ci-workflow.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0082--ci-commit-message-lint.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0083--declare-commitlint-is-ignored.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/bug/TKA-0084--commitlint-merge-ignore-body.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/tracking/feature/TKA-0012--time-parsing-port.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/feature/TKA-0010--network-security-config.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/test/TKA-0006--instrumented-harness.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/hardening/TKA-0011--keystore-secrets.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/hardening/TKA-0005--free-deps-guard.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/release/TKA-0014--version-code.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/hardening/TKA-0090--ci-denied-deps-check.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/test/TKA-0089--compose-test-rule-v2.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/feature/TKA-0007--tokkl-theme.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/feature/TKA-0008--anybody-font.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/feature/TKA-0085--launcher-icon.md

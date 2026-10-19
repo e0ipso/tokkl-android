@@ -1,0 +1,4 @@
+[sift/w7-h3-int 1601137] test: run the instrumented suite on an API 30 emulator too
+ Date: Mon Oct 19 09:38:23 2026 +0200
+ 12 files changed, 169 insertions(+), 52 deletions(-)
+ create mode 100644 app/src/androidTest/java/com/github/e0ipso/tokkl/BackupRefusedTest.kt

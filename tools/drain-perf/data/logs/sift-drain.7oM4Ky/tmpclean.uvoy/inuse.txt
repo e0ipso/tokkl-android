@@ -1,0 +1,120 @@
+/tmp/cf-cap/web
+/tmp/cfdl (deleted)
+/tmp/chromedriver.log
+[opaque value omitted]
+/tmp/claude-1000/-home-e0ipso-workspace-apps-tokkl-android/d8ce5e9a-90ec-4035-9d07-f8489841ef5e/tasks/bbvc8kkkc.output
+/tmp/claude-1000/-home-e0ipso-workspace-apps-tokkl-android/d8ce5e9a-90ec-4035-9d07-f8489841ef5e/tasks/brk3g8axt.output
+/tmp/codex-daemon-1000/44bea75133c52807c375d0d75aa05efdb0f55bb5c5ede7e80bc8c4d89e8d66fa.lock
+/tmp/mailpit-1791146604823337675.db
+/tmp/mailpit-1791146604823337675.db-shm
+/tmp/mailpit-1791146604823337675.db-wal
+/tmp/mailpit-stderr---supervisor-y9akx7dn.log
+/tmp/mailpit-stdout---supervisor-88t4n3em.log
+/tmp/.org.chromium.Chromium.9eCZTm (deleted)
+/tmp/.org.chromium.Chromium.c7iaQx (deleted)
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/chrome_debug.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Account Web Data
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Account Web Data-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Affiliation Database
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Affiliation Database-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Cache/No_Vary_Search/journal.baj
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Cookies
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnGraphiteCache/data_0
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnGraphiteCache/data_1
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnGraphiteCache/data_2
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnGraphiteCache/data_3
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnGraphiteCache/index
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnWebGPUCache/data_0
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnWebGPUCache/data_1
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnWebGPUCache/data_2
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnWebGPUCache/data_3
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DawnWebGPUCache/index
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/declarative_performance_observer.db
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/declarative_performance_observer.db-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DIPS
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/DIPS-wal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension Rules/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension Rules/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension Rules/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension Rules/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension Scripts/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension Scripts/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension Scripts/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension Scripts/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension State/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension State/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension State/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Extension State/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Favicons
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Favicons-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GCM Store/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GCM Store/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GCM Store/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GCM Store/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GPUCache/data_0
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GPUCache/data_1
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GPUCache/data_2
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GPUCache/data_3
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/GPUCache/index
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/heavy_ad_intervention_opt_out.db
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/heavy_ad_intervention_opt_out.db-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/History
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/History-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Local Storage/leveldb/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Local Storage/leveldb/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Local Storage/leveldb/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Local Storage/leveldb/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Login Data
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Login Data For Account
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Login Data For Account-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Login Data-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Network Action Predictor
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Network Action Predictor-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Reporting and NEL
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/ServerCertificate
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/ServerCertificate-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Sessions/Session_13436661471109922
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Session Storage/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Session Storage/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Session Storage/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Session Storage/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Shared Dictionary/db
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/shared_proto_db/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/shared_proto_db/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/shared_proto_db/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/shared_proto_db/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/shared_proto_db/metadata/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/shared_proto_db/metadata/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/shared_proto_db/metadata/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/shared_proto_db/metadata/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Shortcuts
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Shortcuts-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Site Characteristics Database/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Site Characteristics Database/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Site Characteristics Database/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Site Characteristics Database/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Sync Data/LevelDB/000003.log
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Sync Data/LevelDB/LOCK
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Sync Data/LevelDB/LOG
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Sync Data/LevelDB/MANIFEST-000001
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Top Sites
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Top Sites-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Trust Tokens
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Trust Tokens-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Web Data
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Default/Web Data-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/first_party_sets.db
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/first_party_sets.db-journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/GPUPersistentCache/GPUCache/BOYI7YJWAMYETP7UTLSRET53S6XBJN22/cache.db
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/GPUPersistentCache/GPUCache/BOYI7YJWAMYETP7UTLSRET53S6XBJN22/cache.db-wal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/GPUPersistentCache/GPUCache/BOYI7YJWAMYETP7UTLSRET53S6XBJN22/cache.journal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/segmentation_platform/ukm_db
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/segmentation_platform/ukm_db-wal
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/Subresource Filter/Indexed Rules/38/9.72.0/Ruleset Data
+/tmp/org.chromium.Chromium.scoped_dir.ejJjyY/ZxcvbnData/3/ranked_dicts
+/tmp/.org.chromium.Chromium.SlO31R (deleted)
+/tmp/php-cap.log
+/tmp/sift-drain.7oM4Ky/tmpclean.uvoy/inuse.txt
+/tmp/tka0020-logs/base-c-build.log
+/tmp/wl-copy-buffer-NqSpU1/stdin (deleted)
+/tmp/wl-copy-buffer-rn0OMR/stdin (deleted)

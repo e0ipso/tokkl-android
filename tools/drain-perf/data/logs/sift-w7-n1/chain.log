@@ -1,0 +1,30 @@
+07:01:26 start theme avail=10483MB
+07:05:50 end theme exit=1
+07:05:50 start trust avail=11925MB
+07:09:09 end trust exit=0
+07:09:09 start signin avail=11703MB
+07:11:43 end signin exit=0
+07:11:43 start reports avail=11477MB
+07:20:50 end reports exit=0
+07:20:50 start licences avail=11939MB
+07:21:50 end licences exit=0
+07:21:50 start launch avail=12128MB
+07:28:12 end launch exit=0
+chain done
+07:28:18 start theme2 avail=10637MB
+07:30:58 end theme2 exit=1
+chain done
+07:31:59 start base-keyboard avail=12313MB
+07:33:08 end base-keyboard exit=0
+chain done
+07:33:22 start mine-keyboard avail=12318MB
+07:34:32 end mine-keyboard exit=0
+chain done
+07:34:53 start base-theme avail=12360MB
+07:38:24 end base-theme exit=1
+chain done
+07:38:39 start theme3 avail=11006MB
+07:42:29 end theme3 exit=0
+07:42:29 start screenshot5 avail=12243MB
+07:46:53 end screenshot5 exit=0
+chain done

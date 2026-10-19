@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:3c52db25ea285b4b657cd6863522a75b5041367c7348bc966e8dccd4cd46cc2b'
-node_count: 40
+nodes_hash: 'sha256:3a4b2d83f1dc6d64d6c3a3773dd0581dfc3d28df12cdb82f3d11cd7c3842081d'
+node_count: 41
 ---
 # kenkeep Graph
 
-Total nodes: 40
+Total nodes: 41
 
 ## map-account-cache-and-capabilities
 
@@ -278,6 +278,14 @@ Total nodes: 40
 - **tags:** release, fdroid, security, ci
 - **relates_to:** map-fdroid-metadata-release-artifacts, practice-own-version-from-v0-1-0-tag, practice-run-instrumented-tests-only-through-the-script
 - **derived_from:** docs/PRD.md
+
+## practice-reuse-drain-checks-by-content-and-test-configuration
+
+- **kind:** practice
+- **title:** Reuse drain checks by content and test configuration
+- **path:** practice-reuse-drain-checks-by-content-and-test-configuration.md
+- **tags:** sift, testing, agents
+- **relates_to:** practice-run-instrumented-tests-only-through-the-script
 
 ## practice-run-instrumented-tests-only-through-the-script
 

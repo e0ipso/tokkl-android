@@ -1,0 +1,5 @@
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/feature/TKA-0023--account-settings.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/hardening/TKA-0022--http-warning.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/feature/TKA-0021--self-signed-trust.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/bug/TKA-0103--persist-sign-in-retry-deadline.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/bug/TKA-0102--starting-window-follows-pinned-theme.md

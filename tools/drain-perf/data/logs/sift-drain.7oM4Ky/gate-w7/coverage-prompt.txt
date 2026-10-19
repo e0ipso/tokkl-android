@@ -1,0 +1,114 @@
+You are the batch coverage agent closing Wave 7 of the sift roadmap in
+/home/e0ipso/workspace/apps/tokkl-android--w7-coverage.
+
+Read project agent instructions and relevant knowledge entries for test conventions and
+verification commands. Consult manifests and CI config for missing details. Verify every
+named path against the live tree.
+Reuse unchanged instructions already available in this context; read new applicable scope
+instructions and reload after context loss. Bound aggregate tool output to 8000 content bytes.
+Keep raw verification logs outside the checkout; preserve exit codes and return commands,
+available counts, failures and absolute log paths. Read logs in bounded pages or excerpts.
+
+WAVE 7 SHIPPED:
+- TKA-0027 [done] f33cd36 Queue start, stop, create, edit and delete offline and send them in order with real start times
+- TKA-0028 [done] 0e1e585 Add the project, task and tag picker, including archived items an old entry uses
+- TKA-0029 [done] d4537a1 Build day-grouped history that loads older days on scroll and shows server-snapped times
+- TKA-0030 [done] c86ee20 Build the week calendar in the account timezone and week start
+- TKA-0031 [done] 4be9085 Create, edit and archive projects with colour, client, rate, estimate and billable default
+- TKA-0032 [done] 31a08df Create, edit, archive and restore clients
+- TKA-0033 [done] a5be60f Create, rename and delete tags
+- TKA-0034 [done] 9291f4f Build the detailed report, paged by the server
+- TKA-0035 [done] 2bb318b Build the weekly report grid of projects by week
+- TKA-0118 [done] 962d5e4 Use one page-title style on every screen
+- TKA-0119 [done] 329dfa7 Set section headings in one Anybody role that ranks above the rows beneath them
+- TKA-0120 [done] 0ec41c5 Give filled buttons a 48dp pill and a weight-700 label
+- TKA-0122 [done] 028989d Show sign-in failures in an error banner with an icon
+- TKA-0124 [done] f0e9ade Rebuild sign-in with the brand on a gradient scene and the form on a surface card
+- TKA-0131 [done] 5376d2b Run the instrumented suite on an API 26 to 30 emulator as well as API 36
+- TKA-0132 [done] 448ac05 Cut the test emulator's host memory with a pinned GPU mode, core count and an effective RAM cap
+- TKA-0133 [done] 5278980 Make concurrent instrumented runs safe, or refuse a second run while one is active
+- TKA-0134 [done] 12969b6 Find why a comma-separated class filter runs only its first class, then fix or document it
+- TKA-0135 [done] 13e8179 Serve Tokkl under a path prefix in the harness proxy and sign in to it from the device
+- TKA-0136 [done] 8775328 Test the 429 sign-in cooldown on the device against real Tokkl with an invited throwaway account
+- TKA-0148 [done] 4655077 Round report percentages the way the web app's Intl.NumberFormat does
+- TKA-0149 [done] f36b768 Keep the email field's supporting line the same height when its two-line hint becomes a one-line error
+- TKA-0150 [done] e727b28 Keep the report chart's bars at 3:1 against their track in the light theme
+- TKA-0151 [done] ba90ee8 Build ReportsForegroundTest's search counter on the shared LoopbackRelay test helper
+- TKA-0152 [done] 12c9017 Clear the ten lint warnings the brand images added
+- TKA-0153 [done] 4192a1c Make CI's emulator draw with Vulkan, as the script does on the emulator it boots
+- TKA-0155 [done] d6cee32 Keep the account's default workspace so a timer started offline has one
+- TKA-0157 [done] 2211a7f 3342795 Add the app's bottom navigation, matching Tokkl's web app on phones
+- TKA-0158 [done] c4babae Shorten the server URL error so its reserved room does not leave a gap under the hint
+- TKA-0160 [done] b33bfdc Keep the Timer page's List or Calendar choice in Tokkl's timerView preference
+- TKA-0161 [done] beb5518 Mark the bottom bar's Timer item while an entry runs, as the web app's running dot does
+- TKA-0162 [done] 5d182ab Find why focusedSignInFieldStaysAboveTheKeyboard fails in some ui.theme package runs
+- TKA-0163 [done] 7f02666 Show clock times in the account's timeofday_format, 12-hour or 24-hour
+- TKA-0164 [done] 2822ad1 Show the clock-O wordmark alone in the Brand composable
+- TKA-0165 [done] d7b8915 Replace the launcher icon with the clock logo's adaptive layers
+- TKA-0166 [done] 14daa9d Find why the reports font scale test hangs on API 30
+- TKA-0167 [done] 2576b8f Stop failed assumptions from failing instrumented tests
+- TKA-0168 [done] bee3574 Give pre-Android 12 emulator runs memory headroom and a run at API 26
+- TKA-0169 [done] feb8c1f Give the Calendar view room on a phone held sideways
+- TKA-0170 [done] 1f73a0f Mark unsent entries on the calendar's blocks, as the history does
+- TKA-0177 [done] ed12227 Read the server again after the queue sends a change, so an older refresh cannot put the change back
+- TKA-0178 [done] 1f29525 Close the gap between cached days and older history pages when the cache window moves forward
+- TKA-0179 [done] b5e0aed Show calendar entries that start before a week and run into it
+- TKA-0180 [done] 7ba96d3 Reload older calendar weeks when the app comes back to the foreground
+DEFERRED CRITERIA TO COVER:
+- TKA-0148: check sharePercent/jsShortestDecimal on the device (an instrumented unit-style test over a sample of the Node fixture), since ART's BigDecimal and parseDouble were not exercised.
+- TKA-0155: committed tests for default_workspace_id: stored after one refresh, read in airplane mode after a process restart, an offline-started timer lands in the default workspace once sent, a /me without the field keeps the stored value. Disposable versions in /tmp/sift-drain.7oM4Ky/gate-w7/t2a-disposable.
+- TKA-0027/TKA-0028: none waived beyond the picker reuse criterion (moved to TKA-0039/0040/0041); run the full suite.
+- TKA-0152: a committed reference or test showing the brand's SMALL and MEDIUM sizes (only LARGE appears in references).
+- TKA-0149: a test that the server URL field keeps its height when its error shows (and the other fields at 2.0).
+- Merge note: SignInScreenTest.kt was edited by both TKA-0155 and the design sitting and auto-merged; it compiles (f36b768) but has not run on a device since; the gate's full run covers it.
+- TKA-0158: a test that showing the server URL error does not move the fields below, at 1.0 and 2.0.
+- TKA-0124: scene-overlap contrast pairs in ThemeContrastTest (text on scene 8.29 light / 8.32 dark, halo 4.36, outline 9.98 as computed by the worker) and a test for keptAboveKeyboard at 0-2px edge offsets.
+- TKA-0157: committed tests for the bottom bar: each item opens its page, back returns to Timer and back from Timer leaves; the More sheet lists Clients, Tags and Trash and closes on Close/Back; stack, view choice and open sheet survive recreation (and process death if feasible); a More-sheet screenshot reference (compose-root captures miss the ModalBottomSheet).
+- TKA-0029: committed JVM tests for historyDays/HistoryModel and instrumented history tests (server-snapped times shown as stored, paging only on scroll with the bounds end, offline message and retry, an unsent entry shown and stored identically). Throwaway versions in /tmp/sift-drain.7oM4Ky/gate-w7/t2b-scratch.
+- TKA-0160: committed tests for TimerViewSetting (cold start from timerView, missing/unknown key opens List, taps write the server, an offline tap sent by the next refresh). Throwaway versions in t2b-scratch.
+- TKA-0163: committed formatTime port cases (midnight, noon, single-digit hours, 12- and 24-hour) and a timeofday_format read test.
+- TKA-0030: committed tests for calendar block TalkBack labels, offline uncached/cached weeks, swipe between weeks, and reload after a failed week (live versions passed in the sitting).
+- TKA-0161: a committed test for the Timer item's running dot and its 'Timer running' state description.
+- TKA-0165: themed-icons live check not possible on the AOSP image (no switch; provider refuses shell).
+- TKA-0166: a full tokkl-api30 run with no force-stop (part of the gate's API 30 run).
+- TKA-0031/0032/0033: adopt the scratch tests in /tmp/sift-drain.7oM4Ky/gate-w7/p1-scratch (ProjectsServerTest, ClientsServerTest, TagsServerTest, CatalogLookTest, ClientsModelScratchTest) as committed tests; add deterministic screenshot references for the projects, clients and tags pages if feasible.
+- TKA-0034/TKA-0035: adopt the scratch tests in /tmp/sift-drain.7oM4Ky/gate-w7/r1b-scratch (detailed paging equals /api/app/report/entries; weekly equals /api/app/report/weekly, week start, offline, 200%) and add screenshot references for the Detailed and Weekly tabs with fixed data.
+- TKA-0170: tests that the calendar's unsent mark clears once the server has the change and that TalkBack reads "Not sent" for the block.
+- TKA-0167/TKA-0168: the full no-argument run on tokkl-api36 (yours); a batched full tokkl-api30 run comes at the close.
+- TKA-0179/TKA-0180: adopt the scratch tests /tmp/sift-w7-rc/CalendarBoundaryReproTest.kt (device: entries crossing into the first cached week and into an uncached week from more than a day before, deleted entry gone after foreground, airplane-mode foreground keeps entries) and /tmp/sift-w7-rc/CalendarModelReproTest.kt (JVM) as committed tests.
+- TKA-0177: a committed ChangeSender JVM test that onSent fires once per drain job, after the last pass, even when the drain takes several passes.
+Not coverable here (record as skipped): the CI emulator's screenshot comparison (CI only, carried by TKA-0087); TKA-0165's themed-icon check on the AOSP image.
+Coordinator notes: You run alone and have the emulator and Docker. Run instrumented tests only through scripts/instrumented-tests.sh (filter with -Pandroid.testInstrumentationRunnerArguments.class=<FQCN>[,<FQCN>...] or package=<package>; the script turns a list into a test file). Never start an adb server or poll a device outside scripts/instrumented-tests.sh. Run Gradle as `./gradlew --no-daemon ...`, never `--stop`, never a Gradle build at the same time as the emulator. Check `free -m` before each emulator run and start none with less than 7 GB available. Never touch the four ddev containers. At the end confirm no qemu, adb, test or proxy container, or `tokkl-emulator` unit is left. Write only tests (app/src/test, app/src/androidTest) and test helpers, plus new screenshot reference PNGs recorded on tokkl-api36; report product defects instead of fixing them. The 36 existing screenshot references in app/src/androidTest/assets/screenshots must keep passing unchanged; never loosen the comparison tolerance. Wave 8 adds a top bar to every page, so outside the screenshot tests assert behaviour and fit, not exact pixels. Scratch tests named above are throwaway versions from the sittings: adopt what is sound, rewrite what is not, and delete nothing outside the worktree. The daily T3 restart can end this session around 00:20 to 01:20 local time; commit tested work as you go rather than in one commit at the end. Commits go through the installed commit-msg hook (run `npm ci` first if .husky/_ is missing): Conventional Commits (`test:`), a `Refs:` trailer naming the tickets covered, no ticket ID in the subject, no Co-Authored-By or AI credit lines. Use the unslop skill for commit messages and prose. Apply the verification-before-completion skill before every factual or completion claim. Never restart t3.service; no sudo. Keep logs under /tmp/sift-w7-coverage.
+
+TASK
+Cover the deferred criteria above. Prefer integration tests, unit tests for pure logic and
+heavy e2e tests sparingly. Extend existing classes unless the subject is new. Test unsafe
+sequences in disposable integration fixtures. Report each criterion covered or skipped with
+a reason. Do not chase coverage percentages.
+
+Run the full tests, authoritative lint/static analysis and any existing e2e suite. Report
+exact totals for each, or explicitly report no e2e layer. All required runs must be green.
+
+Fix test-side failures. Report product defects with evidence and proposed scope; do not fix
+product code here. The orchestrator creates tickets before dispatching fixes or annotations
+that need their IDs.
+
+Do not capture durable knowledge. Do not edit the sift-drain skill. Never file, comment on, or
+patch an external tracker. Report upstream proposals as type: dx defects for the orchestrator.
+
+Use the prepared worktree at /home/e0ipso/workspace/apps/tokkl-android--w7-coverage and its checked-out branch. Commit your scoped
+changes and report the commit for integration into main. Do not create a branch
+or check out the integration branch. Do not merge. Never `git push`. Do not write tracker
+state, including ticket files, archive moves or wave keys.
+
+REPORT (only this):
+  status: done | blocked
+  commit: <hash>
+  summary: <one paragraph: what is now covered>
+  verification: commands, exit codes, log paths; tests <N tests, M assertions> full suite;
+                unavailable counters: not reported; lint <result>; static analysis
+                <result>; e2e <N passed / M failed / K skipped> | no e2e layer; tests
+                added: <count and class names>
+  deferred criteria: covered <list> | not covered <list and why>
+  failures needing a fix agent: <root-cause list> | none
+  ticket-worthy defects: <one line each with evidence and proposed scope> | none

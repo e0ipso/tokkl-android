@@ -1,0 +1,6 @@
+[main 2316cd6] test: check trust prompts at 200% font and forbid device zone reads
+ Date: Sun Oct 18 18:38:45 2026 +0200
+ 7 files changed, 628 insertions(+), 119 deletions(-)
+ create mode 100644 app/src/test/java/com/github/e0ipso/tokkl/ClassReferences.kt
+ create mode 100644 app/src/test/java/com/github/e0ipso/tokkl/settings/ApplicationNightModeTest.kt
+ create mode 100644 app/src/test/java/com/github/e0ipso/tokkl/time/NoDeviceZoneTest.kt

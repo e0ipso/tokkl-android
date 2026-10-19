@@ -1,0 +1,5 @@
+__pycache__/
+generated/patch-check/
+generated/repro/
+generated/npm-cache/
+generated/*.log

@@ -1,0 +1,27 @@
+1.19.1
+! 20 of 34 node(s) may describe code that changed since curation.
+
+By branch:
+  (root): 20
+
+Flagged nodes:
+  map-app-id-license-android-versions — changed: docs/PRD.md
+  map-fdroid-metadata-release-artifacts — changed: docs/PRD.md
+  map-gradle-build-sdk-levels-kotlin-and-memory — changed: gradle/libs.versions.toml
+  map-oom-kill-ends-agent-session — changed: scripts/instrumented-tests.sh
+  map-planned-android-stack — changed: docs/PRD.md
+  map-tokkl-colour-tokens-and-font — changed: docs/PRD.md
+  map-tokkl-toggl-api — changed: docs/PRD.md
+  practice-check-capabilities-not-server-version — changed: docs/PRD.md
+  practice-emulator-plain-aosp-image-headless — changed: scripts/instrumented-tests.sh
+  practice-match-web-app-behavior-account-timezone — changed: docs/PRD.md
+  practice-never-wait-for-server-on-start-stop — changed: docs/PRD.md
+  practice-own-version-from-v0-1-0-tag — changed: app/build.gradle.kts, docs/PRD.md
+  practice-pin-self-signed-certs-warn-on-http — changed: docs/PRD.md
+  practice-refresh-on-events-no-polling — changed: docs/PRD.md
+  practice-reproducible-builds-project-key — changed: app/build.gradle.kts, docs/PRD.md, scripts/instrumented-tests.sh
+  practice-run-instrumented-tests-only-through-the-script — changed: scripts/instrumented-tests.sh
+  practice-run-npm-install-in-every-clone-and-worktree — changed: .github/workflows/ci.yml
+  practice-talk-only-to-configured-server — changed: docs/PRD.md
+  practice-test-real-tokkl-server-speed-regressions — changed: docs/PRD.md, scripts/instrumented-tests.sh
+  practice-tokkl-palette-wcag-english-strings — changed: docs/PRD.md

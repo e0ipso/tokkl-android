@@ -1,0 +1,23 @@
+✓ Node.js >= 22: Node 24.21.0
+✓ .ai/kenkeep/.state/installed-version: 1.19.1
+✓ harness inventory: recorded: claude, cursor, codex
+✓ .gitignore lists kenkeep paths: kenkeep entries present
+✓ .kkignore present and non-empty: present with pattern(s)
+✓ claude CLI on PATH: 2.1.302 (Claude Code)
+✗ Claude hooks registered: missing scripts: kk-capture.cjs, kk-lint-tick.cjs, kk-proposal-drain.cjs, kk-session-start.cjs, kk-prompt-context.cjs. Run `npx kenkeep init --harnesses claude` to restore them.
+✓ Claude skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+✓ Cursor agent CLI on PATH: 2026.10.16-e3cb207
+✗ Cursor hooks registered: missing scripts: kk-capture.cjs, kk-lint-tick.cjs, kk-session-start.cjs, kk-proposal-drain.cjs. Run `npx kenkeep init --harnesses cursor` to restore them.
+✓ Cursor skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+✓ codex CLI on PATH: codex-cli 0.163.0
+✗ Codex hooks registered: missing scripts: kk-capture.cjs, kk-session-start.cjs, kk-proposal-drain.cjs, kk-lint-tick.cjs, kk-prompt-context.cjs. Run `npx kenkeep init --harnesses codex` to restore them.
+✓ Codex skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+✓ shipped prompts present: proposal-extract
+✓ settings file is valid: valid (4 override(s))
+✓ ENTRY.md is fresh: fresh (40 node(s))
+✓ ENTRY.md stays small: ~563 token(s) injected per session
+✓ node frontmatter valid: 40 node file(s), all parse cleanly
+✓ derived_from references resolve: no dangling references
+✓ nodes describe current code: no nodes appear to describe changed code
+
+✗ 3 error(s), 0 warning(s).

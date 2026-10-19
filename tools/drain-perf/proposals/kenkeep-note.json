@@ -1,0 +1,16 @@
+{
+  "state": "fields approved by user; persisted note path recorded in REPORT.md",
+  "kind": "practice",
+  "title": "Reuse drain checks by content and test configuration",
+  "summary": "Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.",
+  "tags": [
+    "sift",
+    "testing",
+    "agents"
+  ],
+  "body": "Record a drain check's content fingerprint, command, device/API, pinned server image, exit code, test counts and durable log path. Reuse passing evidence after a cherry-pick or documentation-only commit only when those checked inputs and the test configuration match. Otherwise rerun the affected checks.\n\nThe wave 7 investigation demonstrates why commit IDs alone cannot identify duplicate device runs.",
+  "relates_to": [
+    "practice-run-instrumented-tests-only-through-the-script"
+  ],
+  "confidence": "high"
+}

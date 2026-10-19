@@ -1,0 +1,3886 @@
+2026-10-17T22:14:18.520571Z ERROR codex_core::session::session: failed to load skill /home/e0ipso/.agents/skills/canvas/SKILL.md: missing field `description`
+OpenAI Codex v0.163.0
+--------
+workdir: /home/e0ipso/workspace/apps/tokkl-android--review-w1
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: high
+reasoning summaries: none
+session id: 01a14bee-1c79-7df3-9997-51159e4c8030
+--------
+user
+You are an independent code reviewer for Wave 1 of the sift roadmap in
+/home/e0ipso/workspace/apps/tokkl-android--review-w1. Other agents wrote this code. The orchestrator turns your findings
+into tickets for other agents to verify and fix.
+
+Read project agent instructions and relevant knowledge entries. Verify every named path
+against the live tree. Bound aggregate tool output to 8000 content bytes per call.
+
+WAVE 1 SHIPPED:
+- TKA-0001: README Building section for Temurin JDK 21, Android SDK cmdline-tools 23.0, platform-tools, emulator and the android-36 default x86_64 image installed under $HOME, plus headless emulator boot and shutdown (machine install itself is outside the repo).
+- TKA-0002: docs/PRD.md section 6.1 and risk 5 name parseDuration, parseTimeOfDay and snapSpan in ../tokkl with their test files.
+- TKA-0003: commitlint config copied from ../tokkl with the ticket-ID rule extended to TKA-, husky commit-msg hook, minimal npm package.json and lockfile, node_modules/ ignored.
+- TKA-0077: README "Set up the shell" now keeps JAVA_HOME, ANDROID_HOME and PATH in ~/.config/android-env.sh sourced by ~/.profile and ~/.bashrc, and documents ~/.local/bin wrappers for agent shells (dotfiles are outside the repo).
+- TKA-0076: README "Commit messages" section on npm install enabling the hook, Node 22.12+, and what the hook rejects.
+
+SHIPPED TICKETS (read each for the requirement it states):
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/dx/TKA-0001--dev-toolchain.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/tracking/docs/TKA-0002--parsing-source-docs.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0003--commitlint-husky.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/dx/TKA-0077--agent-shell-env.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/docs/TKA-0076--readme-commit-hook.md
+
+TASK
+Run `git diff 2aba9d59e778a4e61a9cf604e316d22c422fba6b HEAD` in /home/e0ipso/workspace/apps/tokkl-android--review-w1 and read the whole diff. For each
+symbol the diff renamed, removed, re-signatured or gave new behaviour, search the repository
+and read the callers outside the diff.
+
+Report a finding only when it is one of these:
+- defect: a crash, wrong behaviour, a broken declared contract, a security hole, data loss,
+  or breakage of other code.
+- requirement: the code does not do what its ticket's Acceptance criteria ask.
+Each finding names the file and line and the concrete input or state that fails. Skip style,
+naming, design preferences, speculative hardening and missing tests. Zero findings is a
+valid result; do not invent findings to justify the run.
+
+This review is read-only. Do not edit, create or delete files. Do not commit. Do not merge.
+Never `git push`. Never run `git checkout`, `git switch`, `git reset`, `git clean`,
+`git stash` or `git add`: ignored tracker files have no history to restore them from.
+Do not write tracker state. Do not edit the sift-drain skill. Never file,
+comment on, or patch an external tracker. Report upstream proposals as type: dx findings.
+Do not write patches; describe the fix in one line.
+
+REPORT (only this, as plain text):
+  status: done | blocked
+  reviewed: 2aba9d59e778a4e61a9cf604e316d22c422fba6b..<HEAD hash>, <N> files
+  findings: <count>
+  one block per finding:
+  - severity: blocker | major | minor
+    confidence: high | medium | low
+    category: defect | requirement | dx
+    ticket: <shipped ticket ID the change belongs to> | unknown
+    location: <repository-relative path>:<line>
+    problem: <one sentence>
+    evidence: <the input or state, and what happens>
+    fix: <one line>
+
+codex
+I’ll read the project guidance, shipped tickets, and full diff, then check the changed behavior and any callers. I’ll keep the review read-only and bound tool output as requested.
+
+exec
+/bin/bash -lc 'pwd && rg --files -g AGENTS.md -g ENTRY.md -g SKILL.md .ai .agents 2>/dev/null | head -60' in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+[opaque value omitted]
+.agents/skills/st-execute-blueprint/SKILL.md
+.agents/skills/sift-init/SKILL.md
+.agents/skills/sift-drain/SKILL.md
+.agents/skills/sift-prime/SKILL.md
+.agents/skills/st-generate-tasks/SKILL.md
+.agents/skills/st-refine-plan/SKILL.md
+.agents/skills/kk-session-extract/SKILL.md
+.agents/skills/st-create-plan/SKILL.md
+.agents/skills/kk-curate/SKILL.md
+.agents/skills/kk-add/SKILL.md
+.agents/skills/verification-before-completion/SKILL.md
+.agents/skills/st-code-review/SKILL.md
+.agents/skills/kk-bootstrap/SKILL.md
+.agents/skills/st-full-workflow/SKILL.md
+.agents/skills/kk-migrate/SKILL.md
+.agents/skills/st-execute-task/SKILL.md
+.ai/kenkeep/ENTRY.md
+
+exec
+/bin/bash -lc 'cat /home/e0ipso/.agents/skills/unslop/SKILL.md' in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+---
+name: unslop
+description: Cut AI tells from any writing. Must always apply.
+---
+
+# Unslop
+
+Edit text to remove AI patterns and add human voice.
+
+## Process
+
+1. Scan for the patterns below.
+2. Rewrite. Preserve meaning, match intended tone.
+3. Add soul (see next section).
+4. Self-audit: "What makes this obviously AI generated?" Fix remaining tells.
+
+## Adding soul
+
+Removing patterns is half the job. Sterile, voiceless writing is just as obvious.
+
+- **Have opinions.** React to facts instead of neutrally listing pros and cons.
+- **Vary rhythm.** Short sentences. Then longer ones that take their time. Mix it up.
+- **Acknowledge complexity.** "Impressive but also kind of unsettling" beats "impressive."
+- **Use "I" when it fits.** First person isn't unprofessional.
+- **Let some mess in.** Perfect structure looks machine-made.
+- **Be specific.** Not "this is concerning" but "there's something unsettling about agents churning away at 3am."
+
+## Patterns to detect and fix
+
+### Content
+
+1. **Puffery.** "pivotal moment", "testament to", "evolving landscape", "setting the stage for", "indelible mark", "deeply rooted". Cut puffery, state what happened.
+2. **Name-dropping.** Listing media outlets without context. Pick one, say what was said.
+3. **Superficial -ing phrases.** "highlighting...", "ensuring...", "reflecting...", "showcasing...", "fostering...". Delete or expand with real sources.
+4. **Promotional language.** "nestled", "vibrant", "breathtaking", "groundbreaking", "renowned", "stunning", "must-visit". Use neutral descriptions.
+5. **Vague attributions.** "Experts believe", "Industry reports suggest", "Some critics argue". Name the source or delete.
+6. **Formulaic challenges.** "Despite challenges... continues to thrive." Replace with specific facts.
+
+### Language
+
+7. **AI vocabulary.** Additionally, crucial, delve, enduring, enhance, fostering, garner, interplay, intricate, landscape (abstract), pivotal, showcase, tapestry (abstract), testament, underscore, vibrant. Replace with plain words.
+8. **Fancy ways to say "is".** "serves as", "stands as", "boasts", "features". Just say "is" or "has".
+9. **Scripted negation.** "Not just X, but Y", "No X, no Y, no Z", "Didn't flinch, didn't blink", "Don't call it X, call it Y". State the claim directly once.
+10. **Rule of three.** Forcing ideas into groups of three. Use the natural number.
+11. **Synonym cycling.** Protagonist, main character, central figure, hero all in one paragraph. Pick one, repeat it.
+12. **False ranges.** "from X to Y" where X and Y aren't on a meaningful scale. List topics directly.
+
+### Style
+
+13. **Em dash overuse.** Avoid em dashes entirely. Use periods or commas only (no parentheses, no en dashes, no hyphen-as-dash substitutes). Em dashes are an AI tell, and reaching for parentheses instead just trades one tell for another. If a thought needs separation, end the sentence or use a comma.
+14. **Colon overuse.** Colons are fine before a list or example. Not as mid-sentence connectors. "If you're coming from traditional automation: instead of registering event handlers, you describe conditions" adds nothing with the colon. Rewrite to let the point stand on its own without comparison framing. "Describing when the scheduler should fire works best as plain English." Same meaning, no crutch punctuation.
+15. **Boldface overuse.** Don't bold every proper noun or acronym.
+16. **Inline-header lists.** The tell is a bold label and colon that restates the line: "**Performance:** Performance improved...". Convert those to prose. A bold lead-in that ends in a period, names the item, and adds new detail ("**Schema in TypeScript.** Tables live in one file.") is fine, not a tell.
+17. **Title case headings.** Use sentence case.
+18. **Decorative emojis.** Remove from headings and bullets.
+19. **Curly quotes.** Replace with straight quotes.
+
+### Communication artifacts
+
+20. **Chatbot phrases.** "I hope this helps", "Let me know if", "Would you like", "Of course", "Certainly", "Found the smoking gun", "One honest caveat", "Here's what gets me", "The key insight is", "The punchline is", "Sit with that", "You already know the answer". Delete the greeting, stage direction, or recap. State the point.
+21. **Cutoff disclaimers.** "While specific details are limited..." Find sources or remove.
+22. **Sycophantic tone.** "Great question! You're absolutely right!" Respond directly.
+23. **Manufactured gravity.** "the real problem", "genuinely", "actually", "truly", "that's the whole point", "X is the entire game", "the improvement is real and not subtle", "that loss is worth naming", "that's not nothing". These insist something matters instead of showing why. Give the fact, consequence, or measurement. Keep an intensifier only when it marks a literal contrast.
+24. **Anthropomorphized tools.** Code does not "want to live" somewhere, feel "happiest" there, or "earn its keep". Name the constraint: cost, speed, ownership, or repeatability.
+
+### Filler
+
+25. **Filler phrases.** "In order to" becomes "To". "Due to the fact that" becomes "Because". "It is important to note that" gets deleted.
+26. **Excessive hedging.** "could potentially possibly be argued that it might" becomes "may".
+27. **Generic conclusions.** "The future looks bright." State specific plans or facts.
+
+### Jargon
+
+28. **Abstract metaphor nouns.** Substrate, wedge, vector, locus, vantage, nexus, primitive (as noun), harness (as metaphor), surface (as in "API surface"), bedrock, scaffolding (as metaphor), modality, paradigm, gold-plating, ratchet (as metaphor), evacuate (for moving code), endgame, north star, flywheel. These read as technical but usually have a plainer concrete word. "Substrate" becomes "base". "Wedge in" becomes "add". "Vector" becomes "way" or "method". "Gold-plating" becomes "more than the job needs". "Ratchet" becomes the mechanism's real name or "a limit that only tightens". "Evacuate" becomes "move out". "Endgame" becomes "the last phase". Pick the concrete word.
+
+### Plain speech
+
+29. **Say what it does, not how it feels.** "the database stays close at hand", "SQL you can read", "types that follow your schema" name a feeling. The fix names the mechanism or a number: "`.toSQL()` returns the exact string sent to the database", "a column rename fails the build". Ask what the sentence tells the reader to do or know, then write that. If you can't restate it as a concrete instruction, fact, or number, cut it. One more check: if the sentence could appear unchanged in another project's docs, it says nothing about this one. Cut it.
+30. **Shorten or split dense sentences.** If the reader has to backtrack to parse a sentence, break it in two or drop clauses. One idea per sentence.
+31. **Active voice.** Prefer it. Catch "is/are/was/were + past participle" and name the actor: "queries are validated" becomes "the compiler validates queries", "the file is parsed by the loader" becomes "the loader parses the file". Passive is fine only when the actor is unknown or doesn't matter.
+32. **Cut adverbs, or use a stronger verb.** "runs quickly" becomes "is fast" or the number. "significantly improves" becomes the measured delta. An adverb propping up a weak verb means the verb is wrong.
+33. **Prefer the plain word.** "utilize" becomes "use", "leverage" becomes "use", "facilitate" becomes "help", "numerous" becomes "many", "in the event that" becomes "if". The fancier synonym is rarely clearer.
+
+codex
+I’m applying the git-github-manager and unslop skills for this review.
+
+exec
+/bin/bash -lc 'cat AGENTS.md .ai/kenkeep/ENTRY.md; git rev-parse HEAD; git diff --stat 2aba9d59e778a4e61a9cf604e316d22c422fba6b HEAD; git diff --name-only 2aba9d59e778a4e61a9cf604e316d22c422fba6b HEAD' in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+# Tokkl for Android
+
+Native Android client for the Tokkl server and for Toggl Track. The repo is in the requirements stage; [docs/PRD.md](docs/PRD.md) is the source of truth for scope and decisions.
+
+- The server lives in the sibling repo `../tokkl` (github.com/e0ipso/tokkl). Its `docs/PRD.md` section 6 lists the Toggl API v9 and Reports v3 endpoints Tokkl implements, and section 4 has the visual direction this app borrows from.
+- Commits follow Conventional Commits, as in tokkl. Ticket IDs (`TKA-NNNN`, tracked with sift in `.ai/sift`) go in a `Refs:` trailer, never in the subject. Commits carry no AI or co-author credit lines.
+[credential-related line omitted]
+
+<!-- >>> kenkeep:kk-index >>> -->
+You are required to load [.ai/kenkeep/ENTRY.md](.ai/kenkeep/ENTRY.md), the small curated entry catalog for this repo. Enter there and descend using progressive disclosure principles.
+
+> kenkeep navigation: the injected body above is the root index node, the top-level catalog of branches and root-level leaves. Do not expect the whole knowledge base here; descend on demand. Read the root index node, pick one or more branches whose intent and tags match your task (several branches can be relevant), and read those branch `index.md` nodes. Descend further only where the task needs it, opening only the leaves you have confirmed are relevant. Follow each leaf's `relates_to` and `depends_on` cross edges to reach related leaves in other branches. You decide how deep to go per branch.
+<!-- <<< kenkeep:kk-index <<< -->
+---
+schema_version: 3
+nodes_hash: 'sha256:5ec31a2f495438d0463a098c514c8ca3e09db0295c5132c8db7fce1ab612c110'
+node_count: 15
+---
+# kenkeep
+
+> kenkeep navigation: the injected body above is the root index node, the top-level catalog of branches and root-level leaves. Do not expect the whole knowledge base here; descend on demand. Read the root index node, pick one or more branches whose intent and tags match your task (several branches can be relevant), and read those branch `index.md` nodes. Descend further only where the task needs it, opening only the leaves you have confirmed are relevant. Follow each leaf's `relates_to` and `depends_on` cross edges to reach related leaves in other branches. You decide how deep to go per branch.
+
+## Branches
+_None._
+
+## Conventions (how we build)
+- Open [**Check server capabilities instead of requiring a server version**](nodes/practice-check-capabilities-not-server-version.md) to learn about: No minimum Tokkl version. A missing /me field or a 404 from a Tokkl-only endpoint hides the features that depend on it. #api #toggl #compatibility
+- Open [**Keep release builds reproducible and signed with the project key**](nodes/practice-reproducible-builds-project-key.md) to learn about: Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA. #release #fdroid #security #ci
+- Open [**Match Tokkl web app behavior in the account timezone**](nodes/practice-match-web-app-behavior-account-timezone.md) to learn about: Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me. #api #ui #time
+- Open [**Never make Start or Stop wait for the server**](nodes/practice-never-wait-for-server-on-start-stop.md) to learn about: Taps change state on the phone at once and queue the change. The server is the source of truth, with a cache and queue, no sync engine. #offline #network #api
+- Open [**Pin self-signed certificates by fingerprint and warn before plain HTTP**](nodes/practice-pin-self-signed-certs-warn-on-http.md) to learn about: Trust a self-signed cert only by its pinned SHA-256 fingerprint, never accept any cert, and put plain HTTP behind a stronger warning. #security #network
+- Open [**Refresh on events, never on a short polling timer**](nodes/practice-refresh-on-events-no-polling.md) to learn about: Refresh when the app opens, after a change and when the network returns. No short polling, so Toggl's base URL later fits its quotas. #network #toggl #battery
+- Open [**Talk only to the configured server and use only free software**](nodes/practice-talk-only-to-configured-server.md) to learn about: No telemetry, analytics, crash reporting, ads or proprietary libraries. The app sends requests only to the configured server. #privacy #network #fdroid #security
+- Open [**Test against a real Tokkl server and catch speed regressions in CI**](nodes/practice-test-real-tokkl-server-speed-regressions.md) to learn about: Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. Macrobenchmark fails a build slower than the previous one. #testing #ci #performance
+- Open [**Use Tokkl's palette, WCAG AA contrast and English string resources**](nodes/practice-tokkl-palette-wcag-english-strings.md) to learn about: Always Tokkl's palette, with wallpaper dynamic colour only as an opt-in. WCAG AA contrast, colour never the only signal, text in resources. #ui #accessibility #i18n
+- Open [**Version the app on its own, starting from a hand-made v0.1.0 tag**](nodes/practice-own-version-from-v0-1-0-tag.md) to learn about: The app has its own v* tags and changelog, independent of Tokkl. The first release is a hand-made v0.1.0 tag; semantic-release counts on. #release #versioning
+
+## Components (what exists)
+- Open [**Application ID, license and supported Android versions**](nodes/map-app-id-license-android-versions.md) to learn about: Application ID com.github.e0ipso.tokkl, MIT license, Android 8.0 (API 26) and later, one server and one account at a time. #release #fdroid #android
+- Open [**F-Droid metadata layout and release artifacts**](nodes/map-fdroid-metadata-release-artifacts.md) to learn about: Store text and images live under fastlane/metadata/android/en-US/. F-Droid finds versions by git tag and the signed APK via Binaries. #fdroid #release
+- Open [**Planned stack: Compose, Glance, TileService, Room, WorkManager, OkHttp**](nodes/map-planned-android-stack.md) to learn about: Proposed stack: Kotlin and Compose Material 3, Glance widget, TileService tile, Room cache and queue, WorkManager, OkHttp. #architecture #android #offline
+- Open [**Tokkl and Toggl API endpoints, auth and Tokkl-only extensions**](nodes/map-tokkl-toggl-api.md) to learn about: Tokkl speaks a subset of Toggl API v9 at /api/v9 and Reports v3 at /reports/api/v3 with Basic auth, plus Tokkl-only fields and endpoints. #api #toggl #network
+- Open [**Tokkl colour tokens and Anybody font in ../tokkl**](nodes/map-tokkl-colour-tokens-and-font.md) to learn about: The colour tokens in ../tokkl/packages/web/src/styles.css are the palette's source of truth. Tokkl ships Anybody under the SIL OFL 1.1. #ui #tokkl
+[opaque value omitted]
+ .gitignore           |    1 +
+ .husky/commit-msg    |    1 +
+ README.md            |  114 ++++
+ commitlint.config.js |  104 ++++
+ docs/PRD.md          |    4 +-
+ package-lock.json    | 1416 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ package.json         |   15 +
+ 7 files changed, 1653 insertions(+), 2 deletions(-)
+.gitignore
+.husky/commit-msg
+README.md
+commitlint.config.js
+docs/PRD.md
+package-lock.json
+package.json
+
+exec
+/bin/bash -lc 'cat /home/e0ipso/.agents/skills/git-github-manager/SKILL.md' in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+---
+name: git-github-manager
+description: >
+  Use this skill when you need to perform any Git version control operations, GitHub repository management, or related tasks. This includes creating commits with proper conventional commit format, managing pull requests, handling issues, working with branches, analyzing repository history, and using GitHub CLI tools.
+triggers:
+  - git commit
+  - git push
+  - git pull
+  - git merge
+  - git rebase
+  - git branch
+  - git checkout
+  - git stash
+  - pull request
+  - PR
+  - create PR
+  - merge PR
+  - GitHub
+  - gh cli
+  - conventional commit
+  - commit message
+  - branch management
+  - git history
+  - git log
+  - git diff
+  - git status
+  - remote repository
+  - upstream
+  - origin
+  - git conflict
+  - merge conflict
+  - cherry-pick
+  - git tag
+  - release
+  - GitHub Actions
+  - workflow
+  - GitHub issue
+  - issue tracking
+  - repository
+---
+
+You are an expert Git and GitHub operations specialist with deep expertise in version control workflows, repository management, and GitHub ecosystem tools. Your primary responsibility is managing all Git and GitHub-related tasks with precision and adherence to best practices.
+
+**Core Responsibilities:**
+
+- Execute all Git commands (commit, push, pull, branch, merge, rebase, stash, etc.)
+- Manage GitHub operations using both web interface concepts and gh CLI
+- Create properly formatted conventional commits by analyzing codebase patterns
+- Handle pull request creation, management, and review processes
+- Manage GitHub issues, labels, milestones, and project boards
+- Monitor GitHub Actions workflows and manage artifacts
+- Perform repository analysis, history exploration, and branch management
+- Resolve merge conflicts and handle complex Git workflows
+
+**Critical Requirements:**
+
+- NEVER include any AI attribution in commits, pull requests, issues, or any repository metadata
+- ALWAYS analyze existing commit history to understand and follow the project's conventional commit patterns
+- Use conventional commit format (feat:, fix:, docs:, style:, refactor:, test:, chore:) based on project patterns
+- Ensure all commit messages are clear, concise, and follow established project conventions
+- **Follow the 50/72 rule:** subject line max 50 characters, body lines max 72 characters, blank line between subject and body
+- Verify GitHub Actions status before and after operations when relevant
+- **NEVER use `git add -A` or `git add .`** - Always stage files explicitly by specifying file paths
+- **ALWAYS stage files explicitly:** `git add file1.md file2.md` rather than bulk staging
+- **ASK the user if there are unstaged changes beyond what was requested** before proceeding with commits
+
+**Conventional Commit Analysis Process:**
+
+1. Examine recent commit history using `git log --oneline -20` to identify patterns
+2. Analyze commit message structure, scope usage, and formatting conventions
+3. Determine appropriate commit type based on changes made
+4. Follow project-specific scope and format patterns
+5. Create commit messages that maintain consistency with existing history
+
+**Commit Message Formatting (50/72 Rule):**
+
+1. **Subject line:** max 50 characters (including type prefix like `feat:`)
+2. **Blank line:** mandatory separator between subject and body
+3. **Body lines:** hard-wrap at 72 characters per line
+4. If the subject cannot fit in 50 characters, move detail to the body
+5. Validate line lengths before committing — reject and rewrite if over limits
+
+**GitHub CLI Expertise:**
+
+- Use `gh` commands for all GitHub operations when possible
+- Handle authentication and repository context automatically
+- Manage pull requests: create, review, merge, close
+- Handle issues: create, assign, label, close
+- Monitor workflows: check status, download artifacts, view logs
+- Manage releases, tags, and repository settings
+
+**Workflow Management:**
+
+- Understand and implement GitFlow, GitHub Flow, and other branching strategies
+- Handle complex scenarios: rebasing, cherry-picking, conflict resolution
+- Manage remote repositories and upstream synchronization
+- Coordinate between local and remote repository states
+
+**Quality Assurance:**
+
+- Always check repository status before major operations
+- Verify branch state and clean working directory when needed
+- Ensure proper remote tracking and upstream configuration
+- Validate that operations complete successfully before proceeding
+- Never disclose the use of AI in descriptions, messages, or anywhere else
+
+**Communication Style:**
+
+- Provide clear explanations of Git operations being performed
+- Explain the reasoning behind commit message choices
+- Offer alternative approaches when multiple valid options exist
+- Warn about potentially destructive operations before executing
+
+You should proactively suggest best practices and catch potential issues before they become problems. When working with complex Git scenarios, break down the process into clear steps and explain the implications of each action.
+
+
+exec
+/bin/bash -lc "cat .ai/kenkeep/nodes/practice-match-web-app-behavior-account-timezone.md .ai/kenkeep/nodes/map-planned-android-stack.md; rg --files -g AGENTS.md -g '"'!node_modules'"' -g '"'!package-lock.json'"'; git log -6 --oneline" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+---
+type: practice
+title: Match Tokkl web app behavior in the account timezone
+description: >-
+  Use the web app's time parsing, favorites, grouping and undo, in the account
+  timezone read from GET /api/v9/me.
+tags:
+  - api
+  - ui
+  - time
+kk_schema_version: 3
+kk_id: practice-match-web-app-behavior-account-timezone
+kk_derived_from:
+  - docs/PRD.md
+kk_relates_to: []
+kk_depends_on: []
+kk_confidence: high
+---
+The app uses the same time parsing, favorites, grouping and undo as Tokkl's web app, in the account's timezone. Moving between the laptop and the phone then needs no relearning.
+
+Read the timezone, first day of the week and `time_resolution_minutes` from `GET /api/v9/me`, and use the account timezone everywhere (S7). Show stopped entries as the server returns them, after it snaps them to `time_resolution_minutes` (T3).
+
+Manual entry accepts times like `9`, `930`, `9:30` and `4pm`, entries across midnight, and durations like `1h 30m`, `90` and `1,5h` (M1). The parsing is a Kotlin port of the duration and time-of-day parsing in `../tokkl/packages/common`, checked against the same cases as the TypeScript tests. The port can drift from the TypeScript original. Sharing the test cases between the two repos would catch that.
+
+Favorites are the same ones the web app shows, read from and written to `/me/preferences`, up to 9 of them.
+
+<!-- kk:citations:start -->
+# Citations
+
+[1] [docs/PRD.md](../../../docs/PRD.md)
+<!-- kk:citations:end -->
+---
+type: map
+title: 'Planned stack: Compose, Glance, TileService, Room, WorkManager, OkHttp'
+description: >-
+  Proposed stack: Kotlin and Compose Material 3, Glance widget, TileService
+  tile, Room cache and queue, WorkManager, OkHttp.
+tags:
+  - architecture
+  - android
+  - offline
+kk_schema_version: 3
+kk_id: map-planned-android-stack
+kk_derived_from:
+  - docs/PRD.md
+kk_relates_to: []
+kk_depends_on: []
+kk_confidence: low
+---
+The PRD marks this stack as proposed.
+
+- Kotlin and Jetpack Compose with Compose Material 3. Compose is not available from Java.
+- Jetpack Glance for the home screen widget.
+- A `TileService` for the Quick Settings tile.
+- Room (SQLite) for the cache and the queue of unsent changes.
+- WorkManager to send the queue when the network comes back.
+- OkHttp and kotlinx.serialization for the API, with a trust manager that adds the pinned self-signed certificate (S3).
+- A Kotlin port of the duration and time-of-day parsing in `../tokkl/packages/common`.
+
+Every dependency must be free software.
+
+<!-- kk:citations:start -->
+# Citations
+
+[1] [docs/PRD.md](../../../docs/PRD.md)
+<!-- kk:citations:end -->
+AGENTS.md
+5e4dfde docs: say how to turn on the commit-msg hook
+567bd6d docs: explain how agent shells get the JDK and SDK
+62cfcfc docs: add a building section with the JDK and Android SDK setup
+998af01 chore: add commitlint and a husky commit-msg hook
+0f6cbd9 docs: name the real sources of the parsing ports
+2aba9d5 docs: drop the interview record from the PRD
+
+exec
+/bin/bash -lc 'cat /home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/dx/TKA-0001--dev-toolchain.md /home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/tracking/docs/TKA-0002--parsing-source-docs.md /home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0003--commitlint-husky.md' in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+---
+id: TKA-0001
+title: Install a JDK and the Android SDK on this machine and boot a headless emulator
+status: done
+type: dx
+milestone: foundation
+priority: p1
+effort: m
+wave: 1
+created: 2026-10-17
+updated: 2026-10-18
+labels: [toolchain, android-sdk, emulator]
+depends_on: []
+source: "sift-prime from docs/PRD.md, 2026-10-17"
+resolution: "TKA-0001: Temurin JDK 21.0.12.1+1, cmdline-tools 23.0, platform-tools 37.0.1, emulator 37.2.12 and android-36 default x86_64 image under $HOME, env in ~/.profile, AVD tokkl-api36 booted headless with KVM; README Building section; waived: post-reboot check needs the owner (disk unlocked by hand)."
+---
+
+# Install a JDK and the Android SDK on this machine and boot a headless emulator
+
+## Problem
+
+On 2026-10-17 this machine had no JDK or Android SDK. Without them no Gradle build, unit test or instrumented test can run here, and the PRD requires instrumented tests on an emulator. `/dev/kvm` exists and the user is in the `kvm` group, so a headless emulator with KVM is possible. The repo has no Gradle wrapper and no `local.properties`, so nothing points a build at a JDK or an SDK yet.
+
+## Evidence
+
+- docs/PRD.md:215 requires JVM unit tests, Compose UI tests and instrumented tests on an emulator against a real Tokkl server.
+- docs/PRD.md:258 records that this machine had no JDK or Android SDK on 2026-10-17, and that `/dev/kvm` exists with the user in the `kvm` group.
+- absent: gradlew
+- absent: local.properties
+
+## Direction
+
+- Install a JDK that the current Android Gradle Plugin supports.
+- Install the Android SDK command-line tools, platform-tools, the emulator and one system image at API 26 or later. Put them under the user's home where possible.
+- Set `ANDROID_HOME` and put the JDK and SDK tools on `PATH` from a login-shell file, so both survive a reboot.
+- Create an AVD from that system image, boot it headless with KVM, and confirm `adb devices` lists it.
+- Add a section on building to README.md with the JDK version, the SDK package versions and the install commands.
+- This ticket changes the machine, not the repo, apart from README.md. Leave network, power, remote-access and system service settings as they are.
+- The disk on this machine is unlocked by hand after a reboot. Ask the owner before rebooting for the persistence check.
+
+## Acceptance criteria
+
+- [ ] In a fresh login shell after a reboot, `java -version` and `sdkmanager --list_installed` both work.
+- [ ] A headless emulator with a system image at API 26 or later boots with KVM, and `adb devices` lists it.
+- [ ] README.md has a section on building that gives the JDK and SDK versions and the install commands.
+- [ ] No network, power, remote-access or system service setting changed.
+---
+id: TKA-0002
+title: Point PRD section 6.1 at the real source of Tokkl's time-of-day parsing
+status: done
+type: docs
+milestone: tracking
+priority: p2
+effort: s
+wave: 1
+created: 2026-10-17
+updated: 2026-10-17
+labels: [parsing, prd, time-of-day]
+depends_on: []
+source: "sift-prime from docs/PRD.md, 2026-10-17"
+resolution: "TKA-0002: PRD 6.1 and risk 5 now name parseDuration (common/duration.ts), parseTimeOfDay (web/src/lib/timeOfDay.ts) and snapSpan (common/snap.ts) with their test files; no waivers."
+---
+
+# Point PRD section 6.1 at the real source of Tokkl's time-of-day parsing
+
+## Problem
+
+PRD section 6.1 says to port the duration and time-of-day parsing in `../tokkl/packages/common` and to check the port against the same cases as the TypeScript tests (docs/PRD.md:195). That package exports only `./colors`, `./duration`, `./snap` and `./time` (../tokkl/packages/common/package.json:7). Its only parsers are `parseDuration` (../tokkl/packages/common/duration.ts:16) and `parseDateKey`, which reads `YYYY-MM-DD` dates (../tokkl/packages/common/time.ts:82). Nothing there parses the M1 time inputs `9`, `930`, `9:30` or `4pm` (docs/PRD.md:113), and the package's only parsing tests are the duration cases at ../tokkl/packages/common/duration.test.ts:6. Risk 5 counts on shared test cases that the PRD never locates (docs/PRD.md:257), so TKA-0012 has no source and no cases for time of day.
+
+## Evidence
+
+- docs/PRD.md:195
+- docs/PRD.md:113
+- docs/PRD.md:257
+- ../tokkl/packages/common/package.json:7
+- ../tokkl/packages/common/duration.ts:16
+- ../tokkl/packages/common/time.ts:82
+- ../tokkl/packages/common/duration.test.ts:6
+
+## Direction
+
+Find where the Tokkl web app parses time-of-day input. Read `../tokkl` only and change nothing there. A search for `4pm` on 2026-10-17 matched `../tokkl/packages/web/src/lib/timeOfDay.ts`, `../tokkl/packages/web/src/lib/timeOfDay.test.ts` and `../tokkl/packages/web/src/components/TimeFields.tsx`. Confirm which file holds the parser before you record it. The right one accepts each M1 example (docs/PRD.md:113).
+
+Then edit docs/PRD.md:
+
+- In section 6.1 (docs/PRD.md:195), name `parseDuration` in `../tokkl/packages/common/duration.ts` (../tokkl/packages/common/duration.ts:16) with its cases in `../tokkl/packages/common/duration.test.ts` (../tokkl/packages/common/duration.test.ts:6).
+- In the same bullet, name the time-of-day parser's file and its test file. If no shared parser exists and the logic sits in a component, say so and name the component file.
+- Drop the claim that both parsers live in `packages/common`. Its exports (../tokkl/packages/common/package.json:7) have no time-of-day parser, and `parseDateKey` (../tokkl/packages/common/time.ts:82) reads dates, not times of day.
+- In the same bullet, name `snapSpan` in `../tokkl/packages/common/snap.ts` with its cases in `../tokkl/packages/common/snap.test.ts`, since T3 ports it too.
+- In risk 5 (docs/PRD.md:257), which covers time parsing and snapping, name the same three test files as the cases the repos share: the two parser test files and `../tokkl/packages/common/snap.test.ts`.
+
+## Acceptance criteria
+
+- [ ] Section 6.1 names `../tokkl/packages/common/duration.ts` as the duration parser and `../tokkl/packages/common/duration.test.ts` as its tests.
+- [ ] Section 6.1 names the actual file that parses time of day and its test file, or says the logic sits in a component and names that file.
+- [ ] Section 6.1 names `../tokkl/packages/common/snap.ts` as the source of `snapSpan` and `../tokkl/packages/common/snap.test.ts` as its tests.
+- [ ] Risk 5 refers to the same test files as section 6.1, including `../tokkl/packages/common/snap.test.ts`.
+- [ ] The time-of-day source named handles every M1 time example in docs/PRD.md:113.
+- [ ] No file in `../tokkl` changes.
+- [ ] TKA-0012 can start from the paths recorded, with no further search.
+---
+id: TKA-0003
+title: Add commitlint with Tokkl's rules and a husky commit-msg hook
+status: done
+type: dx
+milestone: ci-and-release
+priority: p3
+effort: s
+wave: 1
+created: 2026-10-17
+updated: 2026-10-17
+labels: [commitlint, git-hooks, release]
+depends_on: []
+source: "sift-prime from docs/PRD.md, 2026-10-17"
+resolution: "TKA-0003: Tokkl's commitlint config and husky commit-msg hook copied, ticket-ID rule extended to TKA- (keeps TT-), minimal npm package.json with prepare: husky; no tests added (none requested)."
+---
+
+# Add commitlint with Tokkl's rules and a husky commit-msg hook
+
+## Problem
+
+The commit rules exist only as prose in AGENTS.md. They are Conventional Commits, no AI or co-author trailers, and no ticket IDs in the subject. semantic-release will compute versions from these messages, so one bad commit can cut a wrong release. The PRD copies Tokkl's commitlint rules and husky hook, and a local hook does not need to wait for the move to GitHub.
+
+## Evidence
+
+- docs/PRD.md:240 has the repo copy Tokkl's setup once it moves to github.com/e0ipso/tokkl-android.
+- docs/PRD.md:243 asks for commitlint with Tokkl's rules and a husky hook that runs it locally.
+- docs/PRD.md:245 has semantic-release compute versions from the commits on `main`.
+- AGENTS.md:6 states the commit rules in prose.
+- absent: commitlint.config.js
+- absent: .husky/commit-msg
+- absent: package.json
+
+## Direction
+
+- Copy the commitlint configuration and husky setup from `../tokkl`.
+- If Tokkl's ticket-ID rule only matches Tokkl's own prefix, extend it to `TKA-` IDs.
+- Add a minimal `package.json` that holds only this tooling. Use the package manager Tokkl uses.
+- Installing the tooling sets up the `commit-msg` hook, so a fresh clone gets it with one install command.
+
+## Acceptance criteria
+
+- [ ] A commit whose subject contains a TKA ID is rejected locally.
+- [ ] A commit with a `Co-Authored-By` trailer or an AI credit trailer is rejected.
+- [ ] A Conventional Commit with a `Refs: TKA-0001` trailer is accepted.
+- [ ] Installing the tooling sets up the hook.
+
+exec
+/bin/bash -lc 'cat /home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0003--commitlint-husky.md /home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/dx/TKA-0077--agent-shell-env.md /home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/docs/TKA-0076--readme-commit-hook.md' in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+---
+id: TKA-0003
+title: Add commitlint with Tokkl's rules and a husky commit-msg hook
+status: done
+type: dx
+milestone: ci-and-release
+priority: p3
+effort: s
+wave: 1
+created: 2026-10-17
+updated: 2026-10-17
+labels: [commitlint, git-hooks, release]
+depends_on: []
+source: "sift-prime from docs/PRD.md, 2026-10-17"
+resolution: "TKA-0003: Tokkl's commitlint config and husky commit-msg hook copied, ticket-ID rule extended to TKA- (keeps TT-), minimal npm package.json with prepare: husky; no tests added (none requested)."
+---
+
+# Add commitlint with Tokkl's rules and a husky commit-msg hook
+
+## Problem
+
+The commit rules exist only as prose in AGENTS.md. They are Conventional Commits, no AI or co-author trailers, and no ticket IDs in the subject. semantic-release will compute versions from these messages, so one bad commit can cut a wrong release. The PRD copies Tokkl's commitlint rules and husky hook, and a local hook does not need to wait for the move to GitHub.
+
+## Evidence
+
+- docs/PRD.md:240 has the repo copy Tokkl's setup once it moves to github.com/e0ipso/tokkl-android.
+- docs/PRD.md:243 asks for commitlint with Tokkl's rules and a husky hook that runs it locally.
+- docs/PRD.md:245 has semantic-release compute versions from the commits on `main`.
+- AGENTS.md:6 states the commit rules in prose.
+- absent: commitlint.config.js
+- absent: .husky/commit-msg
+- absent: package.json
+
+## Direction
+
+- Copy the commitlint configuration and husky setup from `../tokkl`.
+- If Tokkl's ticket-ID rule only matches Tokkl's own prefix, extend it to `TKA-` IDs.
+- Add a minimal `package.json` that holds only this tooling. Use the package manager Tokkl uses.
+- Installing the tooling sets up the `commit-msg` hook, so a fresh clone gets it with one install command.
+
+## Acceptance criteria
+
+- [ ] A commit whose subject contains a TKA ID is rejected locally.
+- [ ] A commit with a `Co-Authored-By` trailer or an AI credit trailer is rejected.
+- [ ] A Conventional Commit with a `Refs: TKA-0001` trailer is accepted.
+- [ ] Installing the tooling sets up the hook.
+---
+id: TKA-0077
+title: Give agent shells the JDK and Android SDK environment from ~/.profile
+status: done
+type: dx
+milestone: foundation
+priority: p2
+effort: s
+wave: 1
+created: 2026-10-18
+updated: 2026-10-18
+labels: [toolchain, android-sdk, agents]
+depends_on: [TKA-0001]
+source: "TKA-0001 sitting, 2026-10-18"
+resolution: "TKA-0077: JAVA_HOME, ANDROID_HOME and PATH now in ~/.config/android-env.sh, sourced by ~/.profile and the top of ~/.bashrc; java, adb, sdkmanager, avdmanager and emulator reachable from Claude Code shells via ~/.local/bin wrappers; README shell section updated; t3.service untouched."
+---
+
+# Give agent shells the JDK and Android SDK environment from ~/.profile
+
+## Problem
+
+TKA-0001 put `JAVA_HOME`, `ANDROID_HOME` and the JDK and SDK tool directories on `PATH` in `~/.profile`, which only login shells read. Agents on this machine run under the `t3.service` user unit, which sets none of those variables, and the agent shell of the TKA-0001 sitting did not see them. An agent that runs `./gradlew`, `adb` or `emulator` in TKA-0004 or later tickets will find no JDK or SDK unless it starts a login shell. Whether a fresh Claude Code session picks up `~/.profile` was not checked; the session that did TKA-0001 started before the change.
+
+## Evidence
+
+- ~/.profile:29-38 sets `JAVA_HOME`, `ANDROID_HOME` and `PATH` for login shells only.
+- ~/.bashrc:5-8 returns early for non-interactive shells, and ~/.bashrc:120 adds `~/.local/bin` to `PATH`.
+- `systemctl --user cat t3.service` on 2026-10-18 shows `Environment=` lines for `WAYLAND_DISPLAY`, `DISPLAY`, `XDG_SESSION_TYPE` and `XDG_CURRENT_DESKTOP`, and none for `PATH`, `JAVA_HOME` or `ANDROID_HOME`.
+- On 2026-10-18 the agent's own shell and a fresh `bash -i -c 'echo $JAVA_HOME'` both printed nothing, while `env -i HOME=$HOME bash -l -c 'java -version'` printed Temurin 21.0.12.1+1.
+
+## Direction
+
+- First check in a new agent session started after 2026-10-18 whether `echo $JAVA_HOME` and `command -v java adb` work. If they do, close this as wontfix with that evidence.
+- Otherwise pick one place that agent shells read and set the variables there once, without duplicating the `~/.profile` block by hand. One option is to source a shared file such as `~/.config/android-env.sh` from both `~/.profile` and `~/.bashrc`, before the non-interactive guard if agents use non-interactive shells.
+- Adding `Environment=` lines to `t3.service` or an `environment.d` file changes a user service and needs a restart of `t3.service`, which ends running agent sessions. Ask the owner before doing that.
+- Do not touch `sway-headless.service`, `wayvnc-headless.service`, network, power or Tailscale settings.
+
+## Acceptance criteria
+
+- [ ] In a new agent session, `java -version`, `adb version` and `sdkmanager --list_installed` work without `bash -l` or a manual `source`.
+- [ ] `env -i HOME=$HOME bash -l -c 'java -version'` still works, and `PATH` in a login shell has no duplicate JDK or SDK entries.
+- [ ] No change to remote-access, network, power or system service settings, and `t3.service` restarted only with the owner's approval.
+---
+id: TKA-0076
+title: Say in README.md that npm install sets up the commit-msg hook
+status: done
+type: docs
+milestone: ci-and-release
+priority: p3
+effort: s
+wave: 1
+created: 2026-10-17
+updated: 2026-10-18
+labels: [commitlint, git-hooks, readme]
+depends_on: [TKA-0001]
+source: "sift-drain wave 1, TKA-0003 worker report"
+resolution: "TKA-0076: README Commit messages section says npm install sets up the commitlint hook (Node 22.12+), once per clone or worktree, and lists what it rejects."
+---
+
+# Say in README.md that npm install sets up the commit-msg hook
+
+## Problem
+
+TKA-0003 added commitlint and a husky `commit-msg` hook, but README.md does not say how to turn the hook on. The hook only runs in a checkout where `npm install` (or `npm ci`) has run, because husky's `prepare` script generates the git-ignored `.husky/_` directory and points `core.hooksPath` at it. A fresh clone or a new git worktree commits without any linting until someone runs it. Tokkl's README states this in one sentence. The commitlint 21 packages also need Node 22.12 or later, which nothing in this repo mentions.
+
+## Evidence
+
+- package.json:8 has `"prepare": "husky"`.
+- .husky/commit-msg:1 runs `npx --no -- commitlint --edit "$1"`.
+- ../tokkl/README.md:180 says "`npm install` sets up a commit-msg hook that runs commitlint" and lists what the rules reject.
+- node_modules/@commitlint/cli/package.json:58 declares `"node": ">=22.12.0"`.
+- README.md has only the title and a License section at the base of this ticket; TKA-0001 adds a building section in the same wave.
+
+## Direction
+
+- After TKA-0001 lands, add a short paragraph or subsection to README.md that says commit messages follow Conventional Commits, that `npm install` sets up the `commit-msg` hook, and that the hook rejects ticket IDs in the subject and co-author or AI credit trailers.
+- Say that the hook needs Node 22.12 or later and that each new clone or git worktree needs `npm install` once.
+- Keep it next to TKA-0001's building section, and match Tokkl's wording where it fits.
+- Do not change package.json, the commitlint config or the hook.
+
+## Acceptance criteria
+
+- [ ] README.md says that `npm install` sets up the `commit-msg` hook and names the Node version it needs.
+- [ ] README.md says that each new clone or worktree needs `npm install` once before commits are linted.
+- [ ] README.md lists what the hook rejects: ticket IDs in the subject and co-author or AI credit trailers.
+- [ ] No file other than README.md changes.
+
+exec
+/bin/bash -lc "git diff 2aba9d59e778a4e61a9cf604e316d22c422fba6b HEAD -- .gitignore .husky/commit-msg README.md commitlint.config.js docs/PRD.md package.json | sed -n '1,155p'" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+diff --git a/.gitignore b/.gitignore
+index 0b070e6..5370fd1 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,4 @@ captures/
+ .idea/
+ *.iml
+ .DS_Store
++node_modules/
+diff --git a/.husky/commit-msg b/.husky/commit-msg
+new file mode 100644
+index 0000000..da99483
+--- /dev/null
++++ b/.husky/commit-msg
+@@ -0,0 +1 @@
++npx --no -- commitlint --edit "$1"
+diff --git a/README.md b/README.md
+index f38240d..8d3df38 100644
+--- a/README.md
++++ b/README.md
+@@ -4,6 +4,120 @@ A native Android client for [Tokkl](https://github.com/e0ipso/tokkl) and Toggl T
+ 
+ There is no code yet. The product requirements are being collected in [docs/PRD.md](docs/PRD.md).
+ 
++## Building
++
++There is no Gradle project yet. These steps prepare a Linux x86_64 machine to build and test it. Everything installs under `$HOME` and needs no root.
++
++| Component | Version | Path |
++| --- | --- | --- |
++| JDK | Eclipse Temurin 21.0.12.1+1 | `~/.local/share/jdk/21` |
++| Android SDK Command-line Tools | 23.0 | `~/Android/Sdk/cmdline-tools/latest` |
++| Android SDK Platform-Tools | 37.0.1 | `~/Android/Sdk/platform-tools` |
++| Android Emulator | 37.2.12 | `~/Android/Sdk/emulator` |
++| System image | `system-images;android-36;default;x86_64`, revision 2 | `~/Android/Sdk/system-images` |
++
++Android Gradle Plugin 9.4 needs JDK 17 or later, and JDK 21 is an LTS release above that floor. The system image is the plain AOSP build of Android 16 (API 36), not a Google APIs or Play Store build. It keeps SystemUI and the launcher, which tests of the notification, the Quick Settings tile and the widget need. The smaller Automated Test Device images remove both.
++
++### Install the JDK
++
++```sh
++tmp=$(mktemp -d)
++curl -fL -o "$tmp/jdk.tar.gz" \
++  https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk_x64_linux_hotspot_21.0.12.1_1.tar.gz
++echo "ce79869e1307ed8ee1e2baa86a412b1eb5b75d10a01006d788a6f968bcfaee94  $tmp/jdk.tar.gz" | sha256sum -c -
++mkdir -p ~/.local/share/jdk/versions
++tar -xzf "$tmp/jdk.tar.gz" -C ~/.local/share/jdk/versions
++ln -sfn versions/jdk-21.0.12.1+1 ~/.local/share/jdk/21
++```
++
++To upgrade, unpack the new release next to the old one and point the `21` symlink at it.
++
++### Install the Android SDK
++
++The Android Studio download page gives a SHA-256 checksum for command-line tools 22.0 (build 15859902). Use the `sdkmanager` in that archive once to install everything else, including command-line tools 23.0.
++
++```sh
++curl -fL -o "$tmp/cmdline-tools.zip" \
++  https://dl.google.com/android/repository/commandlinetools-linux-15859902_latest.zip
++echo "4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583  $tmp/cmdline-tools.zip" | sha256sum -c -
++unzip -q "$tmp/cmdline-tools.zip" -d "$tmp"
++export JAVA_HOME=~/.local/share/jdk/21
++"$tmp/cmdline-tools/bin/sdkmanager" --sdk_root="$HOME/Android/Sdk" --licenses
++"$tmp/cmdline-tools/bin/sdkmanager" --sdk_root="$HOME/Android/Sdk" \
++  'cmdline-tools;latest' platform-tools emulator 'system-images;android-36;default;x86_64'
++rm -rf "$tmp"
++```
++
++`--licenses` asks you to accept each SDK license, eight of them on 2026-10-17. These packages need only `android-sdk-license`.
++
++`sdkmanager` 23.0 hands each command to the new `android` CLI. On first use that CLI downloads itself into `~/.android`, and it sends usage data to Google unless it gets `--no-metrics`. It reads default flags from `~/.androidrc`, so opt out once:
++
++```sh
++echo --no-metrics > ~/.androidrc
++```
++
++### Set up the shell
++
++The variables live in one file, `~/.config/android-env.sh`:
++
++```sh
++export JAVA_HOME="$HOME/.local/share/jdk/21"
++export ANDROID_HOME="$HOME/Android/Sdk"
++for _android_env_dir in "$JAVA_HOME/bin" "$ANDROID_HOME/emulator" \
++    "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/cmdline-tools/latest/bin"; do
++    case ":$PATH:" in
++        *":$_android_env_dir:"*) ;;
++        *) PATH="$_android_env_dir:$PATH" ;;
++    esac
++done
++unset _android_env_dir
++export PATH
++```
++
++Source it at the end of `~/.profile`, and in `~/.bashrc` above the check that returns early for non-interactive shells:
++
++```sh
++if [ -f "$HOME/.config/android-env.sh" ]; then
++    . "$HOME/.config/android-env.sh"
++fi
++```
++
++A bash login shell reads both files, and the loop skips a directory that is already on `PATH`, so none of these directories appears twice. Check it from a clean login shell:
++
++```sh
++env -i HOME="$HOME" bash -l -c 'java -version && sdkmanager --list_installed'
++```
++
++Claude Code's Bash tool resets `PATH` to the `PATH` of the Claude Code process, so agents never get the JDK and SDK directories from these files. That `PATH` does include `~/.local/bin`. On this machine `java`, `adb`, `sdkmanager`, `avdmanager` and `emulator` in `~/.local/bin` are symlinks to `~/.local/libexec/android-env/tool-wrapper`, which sources `android-env.sh` and runs the real tool. A symlink straight to the tool breaks `sdkmanager` and `avdmanager`, which look for the SDK relative to their own path. Agent sessions run by t3 also get `JAVA_HOME` and `ANDROID_HOME`, because their shells read the top of `~/.bashrc`. Shells under `claude -p` don't get them, so a Gradle build there needs `ANDROID_HOME` set by hand or `sdk.dir` in `local.properties`.
++
++### Run the emulator
++
++The emulator needs KVM, which usually means your user is in the `kvm` group. `emulator -accel-check` says whether KVM works. Create the virtual device once:
++
++```sh
++avdmanager create avd -n tokkl-api36 -d medium_phone \
++  -k 'system-images;android-36;default;x86_64'
++```
++
++Boot it without a window and wait until Android finishes starting:
++
++```sh
++emulator -avd tokkl-api36 -no-window -no-audio -no-boot-anim -no-snapshot -accel on &
++adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != 1 ]; do sleep 1; done'
++adb devices
++```
++
++With `-accel on` the emulator refuses to start when KVM is missing, instead of falling back to slow software emulation. Stop the emulator and the adb server when you finish:
++
++```sh
++adb emu kill
++adb kill-server
++```
++
++## Commit messages
++
++Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/). `npm install` sets up a commit-msg hook that runs commitlint, which needs Node 22.12 or later. The hook lives in `.husky/_`, which git ignores, so run `npm install` once in every new clone or git worktree. Until you do, commits there skip the check. The hook rejects a ticket ID such as `TKA-0001` in the subject; put it in a `Refs: TKA-0001` trailer instead. It also rejects commits that credit an AI tool or a co-author (`Co-authored-by:`, "Generated with Claude Code" and the like).
++
+ ## License
+ 
+ MIT. See [LICENSE](LICENSE).
+diff --git a/commitlint.config.js b/commitlint.config.js
+new file mode 100644
+index 0000000..3a73d99
+--- /dev/null
++++ b/commitlint.config.js
+@@ -0,0 +1,104 @@
++const aiTools = [
++  'aider',
++  'amp',
++  'anthropic',
++  'chatgpt',
++  'claude',
++  'codex',
++  'copilot',
+
+exec
+/bin/bash -lc "git diff 2aba9d59e778a4e61a9cf604e316d22c422fba6b HEAD -- .gitignore .husky/commit-msg README.md commitlint.config.js docs/PRD.md package.json | sed -n '156,340p'; wc -c package-lock.json; test -d node_modules && echo node_modules-present; command -v node npm" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
++  'cursor',
++  'devin',
++  'gemini',
++  'jules',
++  'openai',
++  'opencode',
++  'qwen',
++  'windsurf',
++].join('|');
++
++// Unicode-aware word boundaries, so "Ampère" or "OpenCoder" don't match.
++const tool = `(?<![\\p{L}\\p{N}])(?:${aiTools})(?![\\p{L}\\p{N}])`;
++
++const forbiddenPatterns = [
++  // Any co-author, human or not.
++  /^Co-authored-by:.*/im,
++  // Made-with: Cursor, Assisted-by: Claude:claude-opus-5-5, ...
++  new RegExp(`^(?:Assisted-by|Generated-by|Made-with|Signed-off-by):.*${tool}`, 'imu'),
++  // Tool-specific trailers: Copilot-Session: ..., Amp-Thread: ...
++  new RegExp(`^${tool}-[\\w-]+:`, 'imu'),
++  // 🤖 Generated with [Claude Code](https://claude.com/claude-code)
++  new RegExp(`(?:Generated|Made) (?:with|by|using)\\b.*${tool}`, 'iu'),
++];
++
++// TKA is this repo's prefix. TT is Tokkl's, kept from the copied rule.
++const ticketIdInHeader = /\b(?:TKA|TT)-\d+\b/;
++
++export default {
++  extends: ['@commitlint/config-conventional'],
++  plugins: [
++    {
++      rules: {
++        'no-ai-generated': parsed => {
++          for (const pattern of forbiddenPatterns) {
++            const match = parsed.raw.match(pattern);
++            if (match) {
++              return [false, `Commit message contains forbidden AI-generated content: "${match[0]}"`];
++            }
++          }
++
++          return [true, ''];
++        },
++        'no-ticket-id-in-header': parsed => {
++          const match = (parsed.header ?? '').match(ticketIdInHeader);
++          if (match) {
++            return [
++              false,
++              `Commit header contains ticket ID "${match[0]}". Move it to a "Refs: ${match[0]}" trailer in the body.`,
++            ];
++          }
++
++          return [true, ''];
++        },
++      },
++    },
++  ],
++  rules: {
++    // Ensure the commit type is lowercase
++    'type-case': [2, 'always', 'lower-case'],
++    // Ensure the commit type is not empty
++    'type-empty': [2, 'never'],
++    // Ensure the commit subject is not empty
++    'subject-empty': [2, 'never'],
++    // Ensure the commit subject doesn't end with a period
++    'subject-full-stop': [2, 'never', '.'],
++    // Limit the subject line to 72 characters
++    'subject-max-length': [2, 'always', 72],
++    // Ensure the commit body has a maximum line length
++    'body-max-line-length': [2, 'always', 100],
++    // Ensure the commit footer has a maximum line length
++    'footer-max-line-length': [2, 'always', 100],
++    // Ensure valid commit types
++    'type-enum': [
++      2,
++      'always',
++      [
++        'feat', // A new feature
++        'fix', // A bug fix
++        'docs', // Documentation only changes
++        'style', // Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
++        'refactor', // A code change that neither fixes a bug nor adds a feature
++        'perf', // A code change that improves performance
++        'test', // Adding missing tests or correcting existing tests
++        'build', // Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
++        'ci', // Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
++        'chore', // Other changes that don't modify src or test files
++        'revert', // Reverts a previous commit
++      ],
++    ],
++    // Custom rule to block AI-generated strings
++    'no-ai-generated': [2, 'always'],
++    // Custom rule to keep internal ticket IDs out of release notes and the CHANGELOG
++    'no-ticket-id-in-header': [2, 'always'],
++  },
++  helpUrl: 'https://github.com/conventional-changelog/commitlint/#what-is-commitlint',
++};
+diff --git a/docs/PRD.md b/docs/PRD.md
+index 421668d..29e0222 100644
+--- a/docs/PRD.md
++++ b/docs/PRD.md
+@@ -192,7 +192,7 @@ Proposed, except Kotlin and Jetpack Compose, which the owner confirmed. Nothing
+ - Room (SQLite) for the cache and the queue of unsent changes.
+ - WorkManager to send the queue when the network comes back.
+ - OkHttp and kotlinx.serialization for the API, with a trust manager that adds the pinned self-signed certificate (S3).
+-- A Kotlin port of the duration and time-of-day parsing and of `snapSpan` (T3) in `../tokkl/packages/common`, checked against the same cases as the TypeScript tests.
++- A Kotlin port of three TypeScript functions, each checked against the cases in its test file: `parseDuration` in `../tokkl/packages/common/duration.ts` (cases in `../tokkl/packages/common/duration.test.ts`), `parseTimeOfDay` in `../tokkl/packages/web/src/lib/timeOfDay.ts` (cases in `../tokkl/packages/web/src/lib/timeOfDay.test.ts`) and `snapSpan` (T3) in `../tokkl/packages/common/snap.ts` (cases in `../tokkl/packages/common/snap.test.ts`). The time-of-day parser lives in the web package, not in `packages/common`.
+ 
+ Every dependency must be free software (section 8.1).
+ 
+@@ -254,7 +254,7 @@ The repo is local only for now. When it moves to `github.com/e0ipso/tokkl-androi
+ 2. Toggl Track's API quotas. Since 2025-09-05, workspace and organization requests are capped per user per organization at 30 an hour on Free, 240 on Starter and 600 on Premium, with custom limits on Enterprise. User endpoints such as `/me` are capped at 30 an hour on every plan below Enterprise. The window slides over 60 minutes, and a request over the limit gets HTTP 402 ([Toggl support](https://support.toggl.com/api-webhook-limits), read 2026-10-17). Tokkl's web app polls the running timer every 30 seconds, which alone is 120 requests an hour. If this app polled like that, pointing it at Toggl would hit the Free quota within 15 minutes.
+ 3. F-Droid's NonFreeNet anti-feature covers apps that "promote or depend entirely on a proprietary network service" ([Anti-Features](https://f-droid.org/docs/Anti-Features/), read 2026-10-17). It does not apply while the app talks to Tokkl only. Once Toggl support lands, F-Droid's reviewers decide whether supporting Toggl counts as promoting it.
+ 4. Tokkl-only features (trash, undo of a delete, favorites, time resolution) will not work against Toggl. The capability checks in section 8.3 hide them there, as they do on older Tokkl servers.
+-5. The Kotlin port of Tokkl's time parsing and snapping can drift from the TypeScript original. Sharing the test cases between the two repos would catch that.
++5. The Kotlin port of Tokkl's time parsing and snapping can drift from the TypeScript original. Sharing the test cases between the two repos would catch that. The cases are in `../tokkl/packages/common/duration.test.ts`, `../tokkl/packages/web/src/lib/timeOfDay.test.ts` and `../tokkl/packages/common/snap.test.ts`.
+ 6. Live Updates depend on the device and on the Android 16 release it runs. The notification has to work without them.
+ 7. Google's developer verification. From 2026-09-30 certified Android 7+ phones in Brazil, Indonesia, Singapore and Thailand block apps from unregistered developers when installed from participating stores, and Google plans to extend it to all apps worldwide in 2027. A full registration needs a government ID checked by Google and a $25 fee; the free limited account covers only 20 devices ([developer verification](https://developer.android.com/developer-verification), [FAQ](https://developer.android.com/developer-verification/guides/faq), read 2026-10-17). Whether F-Droid is a participating store was not confirmed. The owner will not register for now and will decide in 2027. Shipping F-Droid builds signed with the project's own key (section 8.1) keeps registration possible later.
+ 8. Some phone makers restrict background work, which can delay sending the queue. To verify on real devices.
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..206e274
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,15 @@
++{
++  "name": "tokkl-android",
++  "private": true,
++  "description": "Commit message tooling for Tokkl for Android",
++  "license": "MIT",
++  "type": "module",
++  "scripts": {
++    "prepare": "husky"
++  },
++  "devDependencies": {
++    "@commitlint/cli": "^21.2.3",
++    "@commitlint/config-conventional": "^21.2.3",
++    "husky": "^9.1.7"
++  }
++}
+48584 package-lock.json
+/usr/bin/node
+/usr/bin/npm
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+b=subprocess.check_output(['git','diff','2aba9d59e778a4e61a9cf604e316d22c422fba6b','HEAD']).decode()
+print('Diff bytes:',len(b.encode()))
+print(b[12000:19000])
+PY" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+Diff bytes: 65250
+ests are capped per user per organization at 30 an hour on Free, 240 on Starter and 600 on Premium, with custom limits on Enterprise. User endpoints such as `/me` are capped at 30 an hour on every plan below Enterprise. The window slides over 60 minutes, and a request over the limit gets HTTP 402 ([Toggl support](https://support.toggl.com/api-webhook-limits), read 2026-10-17). Tokkl's web app polls the running timer every 30 seconds, which alone is 120 requests an hour. If this app polled like that, pointing it at Toggl would hit the Free quota within 15 minutes.
+ 3. F-Droid's NonFreeNet anti-feature covers apps that "promote or depend entirely on a proprietary network service" ([Anti-Features](https://f-droid.org/docs/Anti-Features/), read 2026-10-17). It does not apply while the app talks to Tokkl only. Once Toggl support lands, F-Droid's reviewers decide whether supporting Toggl counts as promoting it.
+ 4. Tokkl-only features (trash, undo of a delete, favorites, time resolution) will not work against Toggl. The capability checks in section 8.3 hide them there, as they do on older Tokkl servers.
+-5. The Kotlin port of Tokkl's time parsing and snapping can drift from the TypeScript original. Sharing the test cases between the two repos would catch that.
++5. The Kotlin port of Tokkl's time parsing and snapping can drift from the TypeScript original. Sharing the test cases between the two repos would catch that. The cases are in `../tokkl/packages/common/duration.test.ts`, `../tokkl/packages/web/src/lib/timeOfDay.test.ts` and `../tokkl/packages/common/snap.test.ts`.
+ 6. Live Updates depend on the device and on the Android 16 release it runs. The notification has to work without them.
+ 7. Google's developer verification. From 2026-09-30 certified Android 7+ phones in Brazil, Indonesia, Singapore and Thailand block apps from unregistered developers when installed from participating stores, and Google plans to extend it to all apps worldwide in 2027. A full registration needs a government ID checked by Google and a $25 fee; the free limited account covers only 20 devices ([developer verification](https://developer.android.com/developer-verification), [FAQ](https://developer.android.com/developer-verification/guides/faq), read 2026-10-17). Whether F-Droid is a participating store was not confirmed. The owner will not register for now and will decide in 2027. Shipping F-Droid builds signed with the project's own key (section 8.1) keeps registration possible later.
+ 8. Some phone makers restrict background work, which can delay sending the queue. To verify on real devices.
+diff --git a/package-lock.json b/package-lock.json
+new file mode 100644
+index 0000000..93d1bcd
+--- /dev/null
++++ b/package-lock.json
+@@ -0,0 +1,1416 @@
++{
++  "name": "tokkl-android",
++  "lockfileVersion": 3,
++  "requires": true,
++  "packages": {
++    "": {
++      "name": "tokkl-android",
++      "license": "MIT",
++      "devDependencies": {
++        "@commitlint/cli": "^21.2.3",
++        "@commitlint/config-conventional": "^21.2.3",
++        "husky": "^9.1.7"
++      }
++    },
++    "node_modules/@babel/code-frame": {
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.7.tgz",
++      "integrity": "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/helper-validator-identifier": "^7.29.7",
++        "js-tokens": "^4.0.0",
++        "picocolors": "^1.1.1"
++      },
++      "engines": {
++        "node": ">=6.9.0"
++      }
++    },
++    "node_modules/@babel/helper-validator-identifier": {
++      "version": "7.29.7",
++      "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz",
++      "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=6.9.0"
++      }
++    },
++    "node_modules/@commitlint/cli": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/cli/-/cli-21.2.3.tgz",
++      "integrity": "sha512-5yOX6IRjcrIReCxpyAd04hgI/yhUMpVBJ/ouwFV0wk9yx5+fYRDWZWJ5h55Tbedgfol+5m2mU5nqzbB8g3v0vQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/config-conventional": "^21.2.3",
++        "@commitlint/format": "^21.2.3",
++        "@commitlint/lint": "^21.2.3",
++        "@commitlint/load": "^21.2.3",
++        "@commitlint/read": "^21.2.3",
++        "@commitlint/types": "^21.2.3",
++        "tinyexec": "^1.0.0",
++        "yargs": "^18.0.0"
++      },
++      "bin": {
++        "commitlint": "cli.js"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/config-conventional": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/config-conventional/-/config-conventional-21.2.3.tgz",
++      "integrity": "sha512-EP2n5DN2GwRWNVrLX0Jx3mpQlW5PfFi9HnD9OJ8hN/H0xFqpCFyHeGDhg+0P8/21iMMcdkcQgbNqmVklebqYsQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/types": "^21.2.3",
++        "conventional-changelog-conventionalcommits": "^10.0.0"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/config-validator": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/config-validator/-/config-validator-21.2.3.tgz",
++      "integrity": "sha512-JQ13v0GafSM4fBYX8UowSy++07Was20auq0NcTdnzSEq6/05Cq5GBUMIfKkqjzyBwC9sJFmPpKWgLLhH7cygkw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/types": "^21.2.3",
++        "ajv": "^8.11.0"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/ensure": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/ensure/-/ensure-21.2.3.tgz",
++      "integrity": "sha512-gEjNKgRocbODI5/sMx2Qc9XOf2/zFTNV2aEK1QZ4gKDKxDC/VR7us3QtIX1C5d5xxHxx0I/tEbYbdSP1Am2LwA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/types": "^21.2.3",
++        "es-toolkit": "^1.46.0"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/execute-rule": {
++      "version": "21.0.1",
++      "resolved": "https://registry.npmjs.org/@commitlint/execute-rule/-/execute-rule-21.0.1.tgz",
++      "integrity": "sha512-RifH+FmImozKBE6mozhF4K3r2RRKP7SMi/Q/zLCmExtp5e05lhHOUYqGBlFBAGNHaZxU/WYw1XuugYK9jQzqnA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/format": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/format/-/forma
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+b=subprocess.check_output(['git','diff','2aba9d59e778a4e61a9cf604e316d22c422fba6b','HEAD'])
+print(b[19000:26500].decode())
+PY" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+ormat-21.2.3.tgz",
++      "integrity": "sha512-KKwCjXYqA8r295uhLnulDXL9yekdXmj2yp2Q0XsBPhxQ2iPuvRE8F43j7g7yexo69wTdmUQmFz15jpderluzUQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/types": "^21.2.3",
++        "picocolors": "^1.1.1"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/is-ignored": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/is-ignored/-/is-ignored-21.2.3.tgz",
++      "integrity": "sha512-Ng4nRj/LBAOvc+GQu7bsFW4/fL89LvZ14OOC/ERLbUpnG6QBwWRzY/1oXGwPs3C8YHWjJObin4kLYo2YeEn70w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/types": "^21.2.3",
++        "semver": "^7.6.0"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/lint": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/lint/-/lint-21.2.3.tgz",
++      "integrity": "sha512-lUZcSuVLLEDkhge9ERk8Rp+FXQtrUhCK+h328BFnzKXrTuXGdqiYMEpTlNWdZaOrjyMhMJaz354ZaWEGJxcLeg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/is-ignored": "^21.2.3",
++        "@commitlint/parse": "^21.2.3",
++        "@commitlint/rules": "^21.2.3",
++        "@commitlint/types": "^21.2.3"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/load": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/load/-/load-21.2.3.tgz",
++      "integrity": "sha512-cDrL8lOo23Lk7knGzQdjbFcq7z2JgvjwV6PhbESVvEc+Fe21MeLjPKBJi8nKjg7j+jh79CVbVSUbZc104thXRw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/config-validator": "^21.2.3",
++        "@commitlint/execute-rule": "^21.0.1",
++        "@commitlint/resolve-extends": "^21.2.3",
++        "@commitlint/types": "^21.2.3",
++        "cosmiconfig": "^9.0.1",
++        "cosmiconfig-typescript-loader": "^6.1.0",
++        "es-toolkit": "^1.46.0",
++        "is-plain-obj": "^4.1.0",
++        "picocolors": "^1.1.1"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/message": {
++      "version": "21.2.0",
++      "resolved": "https://registry.npmjs.org/@commitlint/message/-/message-21.2.0.tgz",
++      "integrity": "sha512-YxGoiXD/HXNXLJPrQwE5poXa+XH0CBEm+mdvbHQP0g6MV/dmJyUFCzPNzZbxL93GvZ70TmtTK0Z0/IBpAqHv8g==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/parse": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/parse/-/parse-21.2.3.tgz",
++      "integrity": "sha512-Jt61QpF1xA88damCELe8I0FlDZPSpXNc8IhN7z5kZ0EcDYPjdZ+ZHPvsSXl69r2MIlLnNKeHhOn2cmVpziFE9w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/types": "^21.2.3",
++        "conventional-changelog-angular": "^9.0.0",
++        "conventional-commits-parser": "^7.0.0"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/read": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/read/-/read-21.2.3.tgz",
++      "integrity": "sha512-szAepuLA1vTTr7fuudEg7jYyVHudf+FH+vptU91bhxE1WnE8TKrfTAi44HVllz8XpI8Pvp4GjR/iP5Nshgh+og==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/top-level": "^21.2.0",
++        "@commitlint/types": "^21.2.3",
++        "@conventional-changelog/git-client": "^3.0.0",
++        "tinyexec": "^1.0.0"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/resolve-extends": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/resolve-extends/-/resolve-extends-21.2.3.tgz",
++      "integrity": "sha512-bqJdmAtXgAQel+l02uIsF7rHgKgx1AGZdGBjam7uK4XW54ZAQtB6XAIUXezYprQiCcRMpBh4fHs5JodXK4mVZA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/config-validator": "^21.2.3",
++        "@commitlint/types": "^21.2.3",
++        "es-toolkit": "^1.46.0",
++        "global-directory": "^5.0.0",
++        "resolve-from": "^5.0.0"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/rules": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/rules/-/rules-21.2.3.tgz",
++      "integrity": "sha512-5+YnI/LuTx3JDl9GjqfP2z9x96M8KKDrd+4jOel/T0L1BB3oAmBlSN8xppf63QsudiVEgR8C0gRoAMrPVrms6g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@commitlint/ensure": "^21.2.3",
++        "@commitlint/message": "^21.2.0",
++        "@commitlint/to-lines": "^21.0.1",
++        "@commitlint/types": "^21.2.3"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/to-lines": {
++      "version": "21.0.1",
++      "resolved": "https://registry.npmjs.org/@commitlint/to-lines/-/to-lines-21.0.1.tgz",
++      "integrity": "sha512-bd1BFII7p1EQZre9Kaj+kKaMFP3cFCdt21K7DItVux9XP5WjLgJ0/Uy1pJJh9aPwVJ6SKg62PxqlZaHI8hQAXw==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/top-level": {
++      "version": "21.2.0",
++      "resolved": "https://registry.npmjs.org/@commitlint/top-level/-/top-level-21.2.0.tgz",
++      "integrity": "sha512-Y5gmQ+KxzqCrBFJfLvFEPvvwD3LDiNZoTT2yeFBm96M8qhmqSzQc5DvX3rheAaAMjyIvMXOCLS/mWfdpONsjyQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "escalade": "^3.2.0"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@commitlint/types": {
++      "version": "21.2.3",
++      "resolved": "https://registry.npmjs.org/@commitlint/types/-/types-21.2.3.tgz",
++      "integrity": "sha512-sGEA473TlCvhCGNoTBY9OXZVWdscIXdGt0dm8EpB+2MRfmt8LNh/X56P/T3nCtEB+eH5qGEa3odphSAoUxSfSQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "conventional-commits-parser": "^7.0.0",
++        "picocolors": "^1.1.1"
++      },
++      "engines": {
++        "node": ">=22.12.0"
++      }
++    },
++    "node_modules/@conventional-changelog/git-client": {
++      "version": "3.2.0",
++      "resolved": "https://registry.npmjs.org/@conventional-changelog/git-client/-/git-client-3.2.0.tgz",
++      "integrity": "sha512-sD/E0vzpkoDz/dqM1Hhv0ihC4KBw6RXjefeO8SG1XrX+wGkMxe1pKeedkKDPCtr2JjuhbuS9aJNgOvnT8hbeBw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@simple-libs/child-process-utils": "^2.0.0",
++        "@simple-libs/stream-utils": "^2.0.0",
++        "verkit": "^0.5.0"
++      },
++      "engines": {
++        "node": ">=22"
++      },
++      "peerDependencies": {
++        "conventional-commits-filter": "^6.0.1",
++        "conventional-commits-parser": "^7.1.3"
++      },
++      "peerDependenciesMeta": {
++        "conventional-commits-filter": {
++          "optional": true
++        },
++        "conventional-commits-parser": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@conventional-changelog/template": {
++      "version": "1.4.0",
++      "resolved": "https://registry.npmjs.org/@conventional-changelog/template/-/template-1.4.0.tgz",
++   
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+b=subprocess.check_output(['git','diff','2aba9d59e778a4e61a9cf604e316d22c422fba6b','HEAD'])
+print(b[26500:34000].decode())
+PY" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+   "integrity": "sha512-aalGyl7dbB5PArRebDIX43ZvBlXrYm9uWzGJ26t+4SzJVPsOuvfILGGbw5X4yX7i50YEmJ8zvbiWnqH/AAnZqg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=22"
++      }
++    },
++    "node_modules/@simple-libs/child-process-utils": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/@simple-libs/child-process-utils/-/child-process-utils-2.0.0.tgz",
++      "integrity": "sha512-dvNoRKLijXnD0XoJAz94pbNuB5GQgDr55UhpSPhffDkTT0Cmcqh9jSCOtwfT2d4H6MI9E7c4SgtMuJXZ6F3c6A==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@simple-libs/stream-utils": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=22"
++      },
++      "funding": {
++        "url": "https://ko-fi.com/dangreen"
++      }
++    },
++    "node_modules/@simple-libs/stream-utils": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/@simple-libs/stream-utils/-/stream-utils-2.0.0.tgz",
++      "integrity": "sha512-fCTuZK4QBa+39Oz9l4OGfJfz+GpwCp3AqO7Zch3to99xHPgstVsRFpeQ8LNd2o1Gv8raL2mCFwiaHh7bFSp5DQ==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=22"
++      },
++      "funding": {
++        "url": "https://ko-fi.com/dangreen"
++      }
++    },
++    "node_modules/@types/node": {
++      "version": "26.6.5",
++      "resolved": "https://registry.npmjs.org/@types/node/-/node-26.6.5.tgz",
++      "integrity": "sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "undici-types": "~8.9.0"
++      }
++    },
++    "node_modules/@typescript/typescript-aix-ppc64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-aix-ppc64/-/typescript-aix-ppc64-7.0.2.tgz",
++      "integrity": "sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "aix"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-darwin-arm64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-darwin-arm64/-/typescript-darwin-arm64-7.0.2.tgz",
++      "integrity": "sha512-gowzar9MwS/aRWp6f3a4KUqzRjAZjOsmGNCM6LcTgXum+dBfgsBVMN+AgvOCCbguXyick6LJhpBszxMebJ8syA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-darwin-x64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-darwin-x64/-/typescript-darwin-x64-7.0.2.tgz",
++      "integrity": "sha512-SZ9xZInqApNlNGc9s0W1VSsktYSOe9cFqNOIqmN1Gs8SmkjKZYFt017G4VwPxASInODuAdbTW7sXiFUf893RgA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-freebsd-arm64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-freebsd-arm64/-/typescript-freebsd-arm64-7.0.2.tgz",
++      "integrity": "sha512-W5NH4y/J0plIIS5b2xvTEkU7JFxyqdMAOgf+Ilhl0vHQXKO5dZoxd+C/jEtq56c4F3wk71RB4BMRQ2XdI+bwYQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-freebsd-x64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-freebsd-x64/-/typescript-freebsd-x64-7.0.2.tgz",
++      "integrity": "sha512-UMGDx5sTpzNw3WiPebH7l90IWfJggEd+egHt/q6p7/Cm3zqoV7VxkGXt+3DxPIw8CcmvAB0j3sVVfbhX+M4Tpw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-linux-arm": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-arm/-/typescript-linux-arm-7.0.2.tgz",
++      "integrity": "sha512-gffT3xPz9sR7j/YJExkyPntrI0P2EP9XbOyWzth2/Gs0RstK+90RBcO0ncXoXy/beYll1SXw846Nf2zdnEz0QQ==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-linux-arm64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-arm64/-/typescript-linux-arm64-7.0.2.tgz",
++      "integrity": "sha512-Qh4eU4/y3yDjnfjjyPYihMj5/ODIlmt+Bzu17OI+fiSRDW57QmU5SiN63exPRNJPKUzcc1INa1NXdrJ+MqHjUQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-linux-loong64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-loong64/-/typescript-linux-loong64-7.0.2.tgz",
++      "integrity": "sha512-uEHck9i8hoAzXPiYRib1O7miOnz23SxIeVl6F4LXox+qov1K35jHcEW6VHKvZI+pyvl7fZEP4MCU5LYvIq1GuQ==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-linux-mips64el": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-mips64el/-/typescript-linux-mips64el-7.0.2.tgz",
++      "integrity": "sha512-R4KvAMnE43W5Qeqb0Ly56O3mWMWIAgsMyz36DCaycd5nbg/9kzm0liw3JocfRqyJY0KPmzFjbswozXyW0DnIYA==",
++      "cpu": [
++        "mips64el"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-linux-ppc64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-ppc64/-/typescript-linux-ppc64-7.0.2.tgz",
++      "integrity": "sha512-DORx5b3sd/4S7eayxm4FQv+A7CrkUIGRaHiwI8oiHTAI1fAPWhF4J0vAlkC8biAlHSVVwxMQ3tjZ2/DVbnQiiA==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-linux-riscv64": {
++      "version": "7.0.2",
++ 
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+b=subprocess.check_output(['git','diff','2aba9d59e778a4e61a9cf604e316d22c422fba6b','HEAD'])
+print(b[34000:41500].decode())
+PY" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+     "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-riscv64/-/typescript-linux-riscv64-7.0.2.tgz",
++      "integrity": "sha512-wf0jqEDOjrPRnKwYRyyJDRo11KMbvMFrU+q4zqKyChODBzvlkbhNQfKvLxQCcwTpdDaXSHZTVuh0JoCrKCUMHQ==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-linux-s390x": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-s390x/-/typescript-linux-s390x-7.0.2.tgz",
++      "integrity": "sha512-IkwJc3L7yhytWd/ewjyxNDfOmswCm9GWMJT/ue/dU4aZNbwZeYAetq42VyLmsmSjvoX7z74X6ZaYCtzAr0EuGw==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-linux-x64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-linux-x64/-/typescript-linux-x64-7.0.2.tgz",
++      "integrity": "sha512-EYdf2cNg7rgCWJnxCdJ+F3V39O8ihb37eHAu1LK8oAFizgTQbPOK7zHHXbPt8rX24COqODXeI3sIf0fCXG7H/A==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-netbsd-arm64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-netbsd-arm64/-/typescript-netbsd-arm64-7.0.2.tgz",
++      "integrity": "sha512-+polYF4MF04aPpO5FTkHran9yUQDSXqy5GiSDKpsll5jy3l3+g9QLhpf39T+ePtefhXLOGrLl0QIjkQP6VnelA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "netbsd"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-netbsd-x64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-netbsd-x64/-/typescript-netbsd-x64-7.0.2.tgz",
++      "integrity": "sha512-8YIT0EHM/3dq10ZOVF/A7pc/YSMtbcecct4rWtexrnSCHOPcpC2KTLXfTCR6vDpnSiY12heNb1GiN/wu+T/FyA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "netbsd"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-openbsd-arm64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-openbsd-arm64/-/typescript-openbsd-arm64-7.0.2.tgz",
++      "integrity": "sha512-APT8+ClYnuYm1u9+kgGXoMj2VzWzcymwh2gNSQVySHfkRDGOTVkoWLjCmOQSaO+PoqQ57B0flRp9SA+7GnnkzQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-openbsd-x64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-openbsd-x64/-/typescript-openbsd-x64-7.0.2.tgz",
++      "integrity": "sha512-yX7s+Q0Dln0Dt9tEzZsAjXXR/+ytBM7AlglaqyeMPxQszJ1JhlJdZ6jLA+IzldHtflX81em7lDao1xXu+aRRkg==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-sunos-x64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-sunos-x64/-/typescript-sunos-x64-7.0.2.tgz",
++      "integrity": "sha512-dLJDGaLZ1D4HPQn62u1n8mBDkJREwMsAkCdkwd4Ieqw+x3TUyTsqY0YiBCtE6H6OzzgGk3iuZ3vFWRS+E8/d1g==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "sunos"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-win32-arm64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-win32-arm64/-/typescript-win32-arm64-7.0.2.tgz",
++      "integrity": "sha512-Gyl1Vy6OsWesLzmq+EP0Fb7b4Nid5232AvcA2SFcdYreldpNtYFFofPjnt62y9hQy7VTaZp65ICJjuAQRaVcIQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/@typescript/typescript-win32-x64": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/@typescript/typescript-win32-x64/-/typescript-win32-x64-7.0.2.tgz",
++      "integrity": "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "Apache-2.0",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "peer": true,
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/ajv": {
++      "version": "8.20.0",
++      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz",
++      "integrity": "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "fast-deep-equal": "^3.1.3",
++        "fast-uri": "^3.0.1",
++        "json-schema-traverse": "^1.0.0",
++        "require-from-string": "^2.0.2"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/epoberezkin"
++      }
++    },
++    "node_modules/ansi-regex": {
++      "version": "6.4.0",
++      "resolved": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-6.4.0.tgz",
++      "integrity": "sha512-KzTVk2tCWAHtYrvvvaP8bJKJq2pVinhLcGEQdtLIYPbmNGNyYe8QwNaTUYQp2J7/vIsUKt5QCqAfUkYyG9DkOw==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/chalk/ansi-regex?sponsor=1"
++      }
++    },
++    "node_modules/ansi-styles": {
++      "version": "6.2.3",
++      "resolved": "https://registry.npmjs.org/ansi-styles/-/ansi-styles-6.2.3.tgz",
++      "integrity": "sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/chalk/ansi-styles?sponsor=1"
++      }
++    },
++    "node_modules/argparse": {
++      "version": "2.0.1",
++      "resolved": "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz",
++      "integrity": "sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==",
++      "dev": true,
++      "license": "Python-2.0"
++    },
++    "node_modules/argue-cli": {
+
+codex
+The diff covers seven files. I’ve read all five shipped tickets and am finishing the lockfile review. Next I’ll check the parser paths against the sibling repo and exercise the commitlint rules without installing packages or changing Git configuration.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+b=subprocess.check_output(['git','diff','2aba9d59e778a4e61a9cf604e316d22c422fba6b','HEAD'])
+print(b[41500:49000].decode())
+PY" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+
++      "version": "3.2.0",
++      "resolved": "https://registry.npmjs.org/argue-cli/-/argue-cli-3.2.0.tgz",
++      "integrity": "sha512-VipTB0gXgGIFO2Rg9yEVN5wLt2AurJcZqDbgmYSwPwsykhLrQhs240/bfceev4w68lI8JshoOJIk9uW7tFzROw==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=22"
++      },
++      "funding": {
++        "url": "https://ko-fi.com/dangreen"
++      }
++    },
++    "node_modules/callsites": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/callsites/-/callsites-3.1.0.tgz",
++      "integrity": "sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=6"
++      }
++    },
++    "node_modules/cliui": {
++      "version": "9.0.1",
++      "resolved": "https://registry.npmjs.org/cliui/-/cliui-9.0.1.tgz",
++      "integrity": "sha512-k7ndgKhwoQveBL+/1tqGJYNz097I7WOvwbmmU2AR5+magtbjPWQTS1C5vzGkBC8Ym8UWRzfKUzUUqFLypY4Q+w==",
++      "dev": true,
++      "license": "ISC",
++      "dependencies": {
++        "string-width": "^7.2.0",
++        "strip-ansi": "^7.1.0",
++        "wrap-ansi": "^9.0.0"
++      },
++      "engines": {
++        "node": ">=20"
++      }
++    },
++    "node_modules/cliui/node_modules/string-width": {
++      "version": "7.2.0",
++      "resolved": "https://registry.npmjs.org/string-width/-/string-width-7.2.0.tgz",
++      "integrity": "sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "emoji-regex": "^10.3.0",
++        "get-east-asian-width": "^1.0.0",
++        "strip-ansi": "^7.1.0"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/conventional-changelog-angular": {
++      "version": "9.4.0",
++      "resolved": "https://registry.npmjs.org/conventional-changelog-angular/-/conventional-changelog-angular-9.4.0.tgz",
++      "integrity": "sha512-HdxRxuS8bBXVIuo4V82gvSwAXT0vYQUizrjs/izmPg5JdDstr8v8I5hduGL3iQbG+o310dUDxC4+LetuS5hu9w==",
++      "dev": true,
++      "license": "ISC",
++      "dependencies": {
++        "@conventional-changelog/template": "^1.4.0"
++      },
++      "engines": {
++        "node": ">=22"
++      }
++    },
++    "node_modules/conventional-changelog-conventionalcommits": {
++      "version": "10.4.1",
++      "resolved": "https://registry.npmjs.org/conventional-changelog-conventionalcommits/-/conventional-changelog-conventionalcommits-10.4.1.tgz",
++      "integrity": "sha512-jS1LRFSbRoAr6JbhhRy1JYfNNUj5LM3+v49hRE03CgccsiYqgdVj/RTmrw4J1rylrqijHwdOlJWiJa61JHOgHg==",
++      "dev": true,
++      "license": "ISC",
++      "dependencies": {
++        "@conventional-changelog/template": "^1.4.0"
++      },
++      "engines": {
++        "node": ">=22"
++      }
++    },
++    "node_modules/conventional-commits-parser": {
++      "version": "7.1.3",
++      "resolved": "https://registry.npmjs.org/conventional-commits-parser/-/conventional-commits-parser-7.1.3.tgz",
++      "integrity": "sha512-Q9oWm1o9uy/oEsZQIraoFMZ4RuPD+79KgwWj6mJVP356tazolCB0piRLZ5Kz9te9p027uSEcUW+Gu44Eh+X79g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@simple-libs/stream-utils": "^2.0.0",
++        "argue-cli": "^3.1.0"
++      },
++      "bin": {
++        "conventional-commits-parser": "dist/cli/index.js"
++      },
++      "engines": {
++        "node": ">=22"
++      }
++    },
++    "node_modules/cosmiconfig": {
++      "version": "9.0.2",
++      "resolved": "https://registry.npmjs.org/cosmiconfig/-/cosmiconfig-9.0.2.tgz",
++      "integrity": "sha512-gtTZxTDau1wL7Y7zifc2dd8jHSK/k6BTx/2Xp/BpdlAdnlYWFVt7qhJqgwi7637yRwRQ3qL4ZidbB4I8tA5VOg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "env-paths": "^2.2.1",
++        "import-fresh": "^3.3.0",
++        "js-yaml": "^4.1.0",
++        "parse-json": "^5.2.0"
++      },
++      "engines": {
++        "node": ">=14"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/d-fischer"
++      },
++      "peerDependencies": {
++        "typescript": ">=4.9.5"
++      },
++      "peerDependenciesMeta": {
++        "typescript": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/cosmiconfig-typescript-loader": {
++      "version": "6.3.0",
++      "resolved": "https://registry.npmjs.org/cosmiconfig-typescript-loader/-/cosmiconfig-typescript-loader-6.3.0.tgz",
++      "integrity": "sha512-Akr82WH1Wfqatyiqpj8HDkO2o2KmJRu1FhKfSNJP3K4IdXwHfEyL7MOb62i1AGQVLtIQM+iCE9CGOtrfhR+mmA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "jiti": "2.6.1"
++      },
++      "engines": {
++        "node": ">=v18"
++      },
++      "peerDependencies": {
++        "@types/node": "*",
++        "cosmiconfig": ">=9",
++        "typescript": ">=5"
++      }
++    },
++    "node_modules/emoji-regex": {
++      "version": "10.6.0",
++      "resolved": "https://registry.npmjs.org/emoji-regex/-/emoji-regex-10.6.0.tgz",
++      "integrity": "sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/env-paths": {
++      "version": "2.2.1",
++      "resolved": "https://registry.npmjs.org/env-paths/-/env-paths-2.2.1.tgz",
++      "integrity": "sha512-+h1lkLKhZMTYjog1VEpJNG7NZJWcuc2DDk/qsqSTRRCOXiLjeQ1d1/udrUGhqMxUgAlwKNZ0cf2uqan5GLuS2A==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=6"
++      }
++    },
++    "node_modules/error-ex": {
++      "version": "1.3.4",
++      "resolved": "https://registry.npmjs.org/error-ex/-/error-ex-1.3.4.tgz",
++      "integrity": "sha512-sqQamAnR14VgCr1A618A3sGrygcpK+HEbenA/HiEAkkUwcZIIB/tgWqHFxWgOyDh4nB4JCRimh79dR5Ywc9MDQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "is-arrayish": "^0.2.1"
++      }
++    },
++    "node_modules/es-toolkit": {
++      "version": "1.52.0",
++      "resolved": "https://registry.npmjs.org/es-toolkit/-/es-toolkit-1.52.0.tgz",
++      "integrity": "sha512-XTNEJQh1tY1ZJVcf6ayP/2n4ZPyaHlW2FWs7xvw5ddPuhUVjLD3olQVQS7kf58JbAB48iL0uL/jerTrjtV3lDA==",
++      "dev": true,
++      "license": "MIT",
++      "workspaces": [
++        "docs",
++        "benchmarks",
++        "tests/types",
++        "tests/browser-compat"
++      ]
++    },
++    "node_modules/escalade": {
++      "version": "3.2.0",
++      "resolved": "https://registry.npmjs.org/escalade/-/escalade-3.2.0.tgz",
++      "integrity": "sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=6"
++      }
++    },
++    "node_modules/fast-deep-equal": {
++      "version": "3.1.3",
++      "resolved": "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz",
++      "integrity": "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/fast-uri": {
++      "version": "3.1.8",
++      "resolved": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.8.tgz",
++      "integrity": "sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==",
++      "dev": true,
++      "funding": [
++  
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+b=subprocess.check_output(['git','diff','2aba9d59e778a4e61a9cf604e316d22c422fba6b','HEAD'])
+print(b[49000:56500].decode())
+PY" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+      {
++          "type": "github",
++          "url": "https://github.com/sponsors/fastify"
++        },
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/fastify"
++        }
++      ],
++      "license": "BSD-3-Clause"
++    },
++    "node_modules/get-caller-file": {
++      "version": "2.0.5",
++      "resolved": "https://registry.npmjs.org/get-caller-file/-/get-caller-file-2.0.5.tgz",
++      "integrity": "sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==",
++      "dev": true,
++      "license": "ISC",
++      "engines": {
++        "node": "6.* || 8.* || >= 10.*"
++      }
++    },
++    "node_modules/get-east-asian-width": {
++      "version": "1.7.0",
++      "resolved": "https://registry.npmjs.org/get-east-asian-width/-/get-east-asian-width-1.7.0.tgz",
++      "integrity": "sha512-XjH1AECxf0giL2V1aU8vKyRR2ppRUb5c0EvT7zuJTokQ74bNo52zOtghqdWIqrhUD79fo3x0WfKZdOqxF6LG1Q==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/global-directory": {
++      "version": "5.0.0",
++      "resolved": "https://registry.npmjs.org/global-directory/-/global-directory-5.0.0.tgz",
++      "integrity": "sha512-1pgFdhK3J2LeM+dVf2Pd424yHx2ou338lC0ErNP2hPx4j8eW1Sp0XqSjNxtk6Tc4Kr5wlWtSvz8cn2yb7/SG/w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "ini": "6.0.0"
++      },
++      "engines": {
++        "node": ">=20"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/husky": {
++      "version": "9.1.7",
++      "resolved": "https://registry.npmjs.org/husky/-/husky-9.1.7.tgz",
++      "integrity": "sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==",
++      "dev": true,
++      "license": "MIT",
++      "bin": {
++        "husky": "bin.js"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/typicode"
++      }
++    },
++    "node_modules/import-fresh": {
++      "version": "3.3.1",
++      "resolved": "https://registry.npmjs.org/import-fresh/-/import-fresh-3.3.1.tgz",
++      "integrity": "sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "parent-module": "^1.0.0",
++        "resolve-from": "^4.0.0"
++      },
++      "engines": {
++        "node": ">=6"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/import-fresh/node_modules/resolve-from": {
++      "version": "4.0.0",
++      "resolved": "https://registry.npmjs.org/resolve-from/-/resolve-from-4.0.0.tgz",
++      "integrity": "sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=4"
++      }
++    },
++    "node_modules/ini": {
++      "version": "6.0.0",
++      "resolved": "https://registry.npmjs.org/ini/-/ini-6.0.0.tgz",
++      "integrity": "sha512-IBTdIkzZNOpqm7q3dRqJvMaldXjDHWkEDfrwGEQTs5eaQMWV+djAhR+wahyNNMAa+qpbDUhBMVt4ZKNwpPm7xQ==",
++      "dev": true,
++      "license": "ISC",
++      "engines": {
++        "node": "^20.17.0 || >=22.9.0"
++      }
++    },
++    "node_modules/is-arrayish": {
++      "version": "0.2.1",
++      "resolved": "https://registry.npmjs.org/is-arrayish/-/is-arrayish-0.2.1.tgz",
++      "integrity": "sha512-zz06S8t0ozoDXMG+ube26zeCTNXcKIPJZJi8hBrF4idCLms4CG9QtK7qBl1boi5ODzFpjswb5JPmHCbMpjaYzg==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/is-plain-obj": {
++      "version": "4.1.0",
++      "resolved": "https://registry.npmjs.org/is-plain-obj/-/is-plain-obj-4.1.0.tgz",
++      "integrity": "sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/jiti": {
++      "version": "2.6.1",
++      "resolved": "https://registry.npmjs.org/jiti/-/jiti-2.6.1.tgz",
++      "integrity": "sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==",
++      "dev": true,
++      "license": "MIT",
++      "bin": {
++        "jiti": "lib/jiti-cli.mjs"
++      }
++    },
++    "node_modules/js-tokens": {
++      "version": "4.0.0",
++      "resolved": "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz",
++      "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/js-yaml": {
++      "version": "4.3.2",
++      "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.3.2.tgz",
++      "integrity": "sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/puzrin"
++        },
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/nodeca"
++        }
++      ],
++      "license": "MIT",
++      "dependencies": {
++        "argparse": "^2.0.1"
++      },
++      "bin": {
++        "js-yaml": "bin/js-yaml.js"
++      }
++    },
++    "node_modules/json-parse-even-better-errors": {
++      "version": "2.3.1",
++      "resolved": "https://registry.npmjs.org/json-parse-even-better-errors/-/json-parse-even-better-errors-2.3.1.tgz",
++      "integrity": "sha512-xyFwyhro/JEof6Ghe2iz2NcXoj2sloNsWr/XsERDK/oiPCfaNhl5ONfp+jQdAZRQQ0IJWNzH9zIZF7li91kh2w==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/json-schema-traverse": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz",
++      "integrity": "sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/lines-and-columns": {
++      "version": "1.2.4",
++      "resolved": "https://registry.npmjs.org/lines-and-columns/-/lines-and-columns-1.2.4.tgz",
++      "integrity": "sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/parent-module": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/parent-module/-/parent-module-1.0.1.tgz",
++      "integrity": "sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "callsites": "^3.0.0"
++      },
++      "engines": {
++        "node": ">=6"
++      }
++    },
++    "node_modules/parse-json": {
++      "version": "5.2.0",
++      "resolved": "https://registry.npmjs.org/parse-json/-/parse-json-5.2.0.tgz",
++      "integrity": "sha512-ayCKvm/phCGxOkYRSCM82iDwct8/EonSEgCSxWxD7ve6jHggsFl4fZVQBPRNgQoKiuV/odhFrGzQXZwbifC8Rg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/code-f
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+b=subprocess.check_output(['git','diff','2aba9d59e778a4e61a9cf604e316d22c422fba6b','HEAD'])
+print(b[56500:64000].decode())
+PY" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+rame": "^7.0.0",
++        "error-ex": "^1.3.1",
++        "json-parse-even-better-errors": "^2.3.0",
++        "lines-and-columns": "^1.1.6"
++      },
++      "engines": {
++        "node": ">=8"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/picocolors": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
++      "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==",
++      "dev": true,
++      "license": "ISC"
++    },
++    "node_modules/require-from-string": {
++      "version": "2.0.2",
++      "resolved": "https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz",
++      "integrity": "sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/resolve-from": {
++      "version": "5.0.0",
++      "resolved": "https://registry.npmjs.org/resolve-from/-/resolve-from-5.0.0.tgz",
++      "integrity": "sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/semver": {
++      "version": "7.8.5",
++      "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz",
++      "integrity": "sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==",
++      "dev": true,
++      "license": "ISC",
++      "bin": {
++        "semver": "bin/semver.js"
++      },
++      "engines": {
++        "node": ">=10"
++      }
++    },
++    "node_modules/string-width": {
++      "version": "8.3.0",
++      "resolved": "https://registry.npmjs.org/string-width/-/string-width-8.3.0.tgz",
++      "integrity": "sha512-ZbmZM0JCihQN91dWnxoipT2KOEyHqEyfRXUyjuRhW8b/xnqPDoq4gWEVApTVa9db2wN8mmoikgFBbjh71+cGeQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "get-east-asian-width": "^1.5.0",
++        "strip-ansi": "^7.1.2"
++      },
++      "engines": {
++        "node": ">=20"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/strip-ansi": {
++      "version": "7.2.0",
++      "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-7.2.0.tgz",
++      "integrity": "sha512-yDPMNjp4WyfYBkHnjIRLfca1i6KMyGCtsVgoKe/z1+6vukgaENdgGBZt+ZmKPc4gavvEZ5OgHfHdrazhgNyG7w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "ansi-regex": "^6.2.2"
++      },
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/chalk/strip-ansi?sponsor=1"
++      }
++    },
++    "node_modules/tinyexec": {
++      "version": "1.3.1",
++      "resolved": "https://registry.npmjs.org/tinyexec/-/tinyexec-1.3.1.tgz",
++      "integrity": "sha512-GCvB3aoys96IuDFBMcTB46JOR6mdMtAToqwiW8JlWhsoh1mhHi/xn9ss/Dg7N555GiJyEt2qzoG/NHCwM6h1EA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/typescript": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz",
++      "integrity": "sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "peer": true,
++      "bin": {
++        "tsc": "bin/tsc"
++      },
++      "engines": {
++        "node": ">=16.20.0"
++      },
++      "optionalDependencies": {
++        "@typescript/typescript-aix-ppc64": "7.0.2",
++        "@typescript/typescript-darwin-arm64": "7.0.2",
++        "@typescript/typescript-darwin-x64": "7.0.2",
++        "@typescript/typescript-freebsd-arm64": "7.0.2",
++        "@typescript/typescript-freebsd-x64": "7.0.2",
++        "@typescript/typescript-linux-arm": "7.0.2",
++        "@typescript/typescript-linux-arm64": "7.0.2",
++        "@typescript/typescript-linux-loong64": "7.0.2",
++        "@typescript/typescript-linux-mips64el": "7.0.2",
++        "@typescript/typescript-linux-ppc64": "7.0.2",
++        "@typescript/typescript-linux-riscv64": "7.0.2",
++        "@typescript/typescript-linux-s390x": "7.0.2",
++        "@typescript/typescript-linux-x64": "7.0.2",
++        "@typescript/typescript-netbsd-arm64": "7.0.2",
++        "@typescript/typescript-netbsd-x64": "7.0.2",
++        "@typescript/typescript-openbsd-arm64": "7.0.2",
++        "@typescript/typescript-openbsd-x64": "7.0.2",
++        "@typescript/typescript-sunos-x64": "7.0.2",
++        "@typescript/typescript-win32-arm64": "7.0.2",
++        "@typescript/typescript-win32-x64": "7.0.2"
++      }
++    },
++    "node_modules/undici-types": {
++      "version": "8.9.0",
++      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-8.9.0.tgz",
++      "integrity": "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true
++    },
++    "node_modules/verkit": {
++      "version": "0.5.0",
++      "resolved": "https://registry.npmjs.org/verkit/-/verkit-0.5.0.tgz",
++      "integrity": "sha512-u4J1hr6Y+C/hit34GwL3eIcUf3wngT8TlYUjK7tk0jxydKLAq3sYvifjdTDA6U3KCKRcQCQDGf/srjxfZF3l7g==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=18.12.0"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sxzz"
++      }
++    },
++    "node_modules/wrap-ansi": {
++      "version": "9.0.2",
++      "resolved": "https://registry.npmjs.org/wrap-ansi/-/wrap-ansi-9.0.2.tgz",
++      "integrity": "sha512-42AtmgqjV+X1VpdOfyTGOYRi0/zsoLqtXQckTmqTeybT+BDIbM/Guxo7x3pE2vtpr1ok6xRqM9OpBe+Jyoqyww==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "ansi-styles": "^6.2.1",
++        "string-width": "^7.0.0",
++        "strip-ansi": "^7.1.0"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "url": "https://github.com/chalk/wrap-ansi?sponsor=1"
++      }
++    },
++    "node_modules/wrap-ansi/node_modules/string-width": {
++      "version": "7.2.0",
++      "resolved": "https://registry.npmjs.org/string-width/-/string-width-7.2.0.tgz",
++      "integrity": "sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "emoji-regex": "^10.3.0",
++        "get-east-asian-width": "^1.0.0",
++        "strip-ansi": "^7.1.0"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/y18n": {
++      "version": "5.0.8",
++      "resolved": "https://registry.npmjs.org/y18n/-/y18n-5.0.8.tgz",
++      "integrity": "sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==",
++      "dev": true,
++      "license": "ISC",
++      "engines": {
++        "node": ">=10"
++      }
++    },
++    "node_modules/yargs": {
++      "version": "18.2.0",
++      "resolved": "https://registry.npmjs.org/yargs/-/yargs-18.2.0.tgz",
++      "integrity": "sha512-9OpKOLeaoNFecEp7P6iYbzze/5CqWoH7N3SMs/6y1XF4nMvFMspEGZzJ6uFi9MmQwXhyzqYoSEKO3tvA3Z/o2w=="
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import subprocess
+b=subprocess.check_output(['git','diff','2aba9d59e778a4e61a9cf604e316d22c422fba6b','HEAD'])
+print(b[64000:].decode())
+PY
+command -v node npm
+ls -d node_modules ../tokkl/node_modules ../tokkl-android/node_modules 2>/dev/null
+cat .gitignore; diff -u ../tokkl/commitlint.config.js commitlint.config.js; cat ../tokkl/.husky/commit-msg; rg -n 'packageManager|prepare|husky|commitlint' ../tokkl/package.json" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+,
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "cliui": "^9.0.1",
++        "escalade": "^3.1.1",
++        "get-caller-file": "^2.0.5",
++        "string-width": "^8.2.1",
++        "y18n": "^5.0.5",
++        "yargs-parser": "^22.0.0"
++      },
++      "engines": {
++        "node": "^20.19.0 || ^22.12.0 || >=23"
++      }
++    },
++    "node_modules/yargs-parser": {
++      "version": "22.0.0",
++      "resolved": "https://registry.npmjs.org/yargs-parser/-/yargs-parser-22.0.0.tgz",
++      "integrity": "sha512-rwu/ClNdSMpkSrUb+d6BRsSkLUq1fmfsY6TOpYzTwvwkg1/NRG85KBy3kq++A8LKQwX6lsu+aWad+2khvuXrqw==",
++      "dev": true,
++      "license": "ISC",
++      "engines": {
++        "node": "^20.19.0 || ^22.12.0 || >=23"
++      }
++    }
++  }
++}
+diff --git a/package.json b/package.json
+new file mode 100644
+index 0000000..206e274
+--- /dev/null
++++ b/package.json
+@@ -0,0 +1,15 @@
++{
++  "name": "tokkl-android",
++  "private": true,
++  "description": "Commit message tooling for Tokkl for Android",
++  "license": "MIT",
++  "type": "module",
++  "scripts": {
++    "prepare": "husky"
++  },
++  "devDependencies": {
++    "@commitlint/cli": "^21.2.3",
++    "@commitlint/config-conventional": "^21.2.3",
++    "husky": "^9.1.7"
++  }
++}
+
+/usr/bin/node
+/usr/bin/npm
+../tokkl-android/node_modules
+../tokkl/node_modules
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.pem
+*.key
+*.p12
+local.properties
+.gradle/
+.kotlin/
+build/
+captures/
+.idea/
+*.iml
+.DS_Store
+node_modules/
+--- ../tokkl/commitlint.config.js	2026-10-17 11:48:18.233711238 +0200
++++ commitlint.config.js	2026-10-18 00:14:01.162581206 +0200
+@@ -30,7 +30,8 @@
+   new RegExp(`(?:Generated|Made) (?:with|by|using)\\b.*${tool}`, 'iu'),
+ ];
+ 
+-const ticketIdInHeader = /\bTT-\d+\b/;
++// TKA is this repo's prefix. TT is Tokkl's, kept from the copied rule.
++const ticketIdInHeader = /\b(?:TKA|TT)-\d+\b/;
+ 
+ export default {
+   extends: ['@commitlint/config-conventional'],
+npx --no -- commitlint --edit "$1"
+27:    "prepare": "husky"
+30:    "@commitlint/cli": "^21.2.3",
+31:    "@commitlint/config-conventional": "^21.2.3",
+39:    "husky": "^9.1.7",
+
+exec
+/bin/bash -lc "ls -l ../tokkl/packages/common/{duration.ts,duration.test.ts,snap.ts,snap.test.ts} ../tokkl/packages/web/src/lib/{timeOfDay.ts,timeOfDay.test.ts}; cat ../tokkl/packages/web/src/lib/timeOfDay.ts; sed -n '1,110p' ../tokkl/packages/web/src/lib/timeOfDay.test.ts" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+-rw-rw-r-- 1 e0ipso e0ipso 1160 Oct 15 09:38 ../tokkl/packages/common/duration.test.ts
+-rw-rw-r-- 1 e0ipso e0ipso 2464 Oct 15 12:36 ../tokkl/packages/common/duration.ts
+-rw-rw-r-- 1 e0ipso e0ipso 6962 Oct 17 11:48 ../tokkl/packages/common/snap.test.ts
+-rw-rw-r-- 1 e0ipso e0ipso 3506 Oct 17 11:48 ../tokkl/packages/common/snap.ts
+-rw-rw-r-- 1 e0ipso e0ipso 3083 Oct 15 09:57 ../tokkl/packages/web/src/lib/timeOfDay.test.ts
+-rw-rw-r-- 1 e0ipso e0ipso 1830 Oct 15 09:57 ../tokkl/packages/web/src/lib/timeOfDay.ts
+const TIME_OF_DAY = /^(\d{1,2})(?:[:.]?(\d{2}))?(?::\d{2})?(a|am|p|pm)?$/;
+
+function matchTimeOfDay(raw: string): RegExpExecArray | null {
+  return TIME_OF_DAY.exec(raw.trim().toLowerCase().replace(/\s+/g, ''));
+}
+
+/**
+ * Parses a typed clock time into minutes after midnight.
+ *
+ * Accepted: "9", "930", "0930", "9:30", "9.30", "9:30:15" (seconds dropped), "9a", "9pm", "12am".
+ * Without a suffix, 24-hour input is taken literally. For 12-hour users, AM or PM for 1-11 is guessed
+ * like Toggl does: with `after` (an end time), the first of the two that follows `after`, wrapping past
+ * midnight; otherwise whichever is closer to `reference` (a start time, guessed against now).
+ * Times are minutes after midnight. An explicit suffix is never second-guessed.
+ */
+export function parseTimeOfDay(
+  raw: string, options: { twelveHour?: boolean; reference?: number; after?: number } = {},
+): number | null {
+  const match = matchTimeOfDay(raw);
+  if (!match) return null;
+  let hour = Number(match[1]);
+  const minute = Number(match[2] ?? 0);
+  const suffix = match[3];
+  if (minute > 59) return null;
+
+  if (suffix) {
+    if (hour < 1 || hour > 12) return null;
+    if (suffix.startsWith('a')) hour = hour === 12 ? 0 : hour;
+    else hour = hour === 12 ? 12 : hour + 12;
+    return hour * 60 + minute;
+  }
+  if (hour > 23) return null;
+  if (options.twelveHour && hour >= 1 && hour <= 11) {
+    const am = hour * 60 + minute;
+    const pm = am + 12 * 60;
+    const { after } = options;
+    if (after !== undefined) {
+      const wait = (candidate: number) => (candidate - after + 24 * 60) % (24 * 60);
+      return wait(pm) < wait(am) ? pm : am;
+    }
+    if (options.reference !== undefined) {
+      return Math.abs(pm - options.reference) < Math.abs(am - options.reference) ? pm : am;
+    }
+  }
+  return hour * 60 + minute;
+}
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { parseTimeOfDay } from './timeOfDay.ts';
+
+test('parseTimeOfDay handles 24-hour input', () => {
+  assert.equal(parseTimeOfDay('9'), 540);
+  assert.equal(parseTimeOfDay('09:30'), 570);
+  assert.equal(parseTimeOfDay('930'), 570);
+  assert.equal(parseTimeOfDay('1745'), 1065);
+  assert.equal(parseTimeOfDay('17.45'), 1065);
+  assert.equal(parseTimeOfDay('23:59:59'), 1439);
+  assert.equal(parseTimeOfDay('24'), null);
+  assert.equal(parseTimeOfDay('9:75'), null);
+  assert.equal(parseTimeOfDay('abc'), null);
+});
+
+test('parseTimeOfDay handles suffixes and 12-hour guessing', () => {
+  assert.equal(parseTimeOfDay('8a'), 480);
+  assert.equal(parseTimeOfDay('4pm'), 960);
+  assert.equal(parseTimeOfDay('12am'), 0);
+  assert.equal(parseTimeOfDay('12pm'), 720);
+  assert.equal(parseTimeOfDay('13pm'), null);
+  // At 15:00, "11" means 11 AM and "4" means 4 PM.
+  assert.equal(parseTimeOfDay('11', { twelveHour: true, reference: 900 }), 660);
+  assert.equal(parseTimeOfDay('4', { twelveHour: true, reference: 900 }), 960);
+});
+
+test('an explicit suffix on an end time is never guessed', () => {
+  // 10am to 9am: the end stays 9 AM, before the start, so it lands on the next day (23 hours).
+  const start = parseTimeOfDay('10am', { twelveHour: true, reference: 600 });
+  assert.equal(start, 600);
+  assert.equal(parseTimeOfDay('9am', { twelveHour: true, after: 600 }), 540);
+  assert.equal(parseTimeOfDay('9pm', { twelveHour: true, after: 1320 }), 1260);
+  assert.equal(parseTimeOfDay('12am', { twelveHour: true, after: 600 }), 0);
+  assert.equal(parseTimeOfDay('12pm', { twelveHour: true, after: 780 }), 720);
+});
+
+test('an unsuffixed 12-hour end is the first occurrence after the start', () => {
+  // 11pm to "1" is 1 AM, two hours later across midnight.
+  assert.equal(parseTimeOfDay('1', { twelveHour: true, after: 23 * 60 }), 60);
+  // 10am to "9" is 9 PM, not 9 AM the next day.
+  assert.equal(parseTimeOfDay('9', { twelveHour: true, after: 600 }), 21 * 60);
+  // 8pm to "9:30" is 9:30 PM; 1pm to "11" is 11 PM; 9pm to "8" is 8 AM the next day.
+  assert.equal(parseTimeOfDay('9:30', { twelveHour: true, after: 20 * 60 }), 21 * 60 + 30);
+  assert.equal(parseTimeOfDay('11', { twelveHour: true, after: 13 * 60 }), 23 * 60);
+  assert.equal(parseTimeOfDay('8', { twelveHour: true, after: 21 * 60 }), 8 * 60);
+  // 9am to "10" is 10 AM; "12" and 0/13-23 are not ambiguous.
+  assert.equal(parseTimeOfDay('10', { twelveHour: true, after: 540 }), 600);
+  assert.equal(parseTimeOfDay('12', { twelveHour: true, after: 600 }), 720);
+  assert.equal(parseTimeOfDay('15', { twelveHour: true, after: 1000 }), 900);
+  assert.equal(parseTimeOfDay('0:30', { twelveHour: true, after: 1000 }), 30);
+});
+
+test('24-hour input ignores the end-time guess', () => {
+  assert.equal(parseTimeOfDay('1', { after: 23 * 60 }), 60);
+  assert.equal(parseTimeOfDay('9', { after: 600 }), 540);
+  assert.equal(parseTimeOfDay('9', { twelveHour: false, after: 600 }), 540);
+  assert.equal(parseTimeOfDay('21:00', { after: 600 }), 1260);
+});
+
+exec
+/bin/bash -lc "rg -n --hidden -g '"'!package-lock.json'"' -g '"'!node_modules/**'"' -g '"'!.git/**'"' 'parseDuration|parseTimeOfDay|snapSpan|no-ai-generated|no-ticket-id-in-header|commitlint|husky|android-env|tool-wrapper' . | head -75" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+./README.md:61:The variables live in one file, `~/.config/android-env.sh`:
+./README.md:80:if [ -f "$HOME/.config/android-env.sh" ]; then
+./README.md:81:    . "$HOME/.config/android-env.sh"
+./README.md:91:Claude Code's Bash tool resets `PATH` to the `PATH` of the Claude Code process, so agents never get the JDK and SDK directories from these files. That `PATH` does include `~/.local/bin`. On this machine `java`, `adb`, `sdkmanager`, `avdmanager` and `emulator` in `~/.local/bin` are symlinks to `~/.local/libexec/android-env/tool-wrapper`, which sources `android-env.sh` and runs the real tool. A symlink straight to the tool breaks `sdkmanager` and `avdmanager`, which look for the SDK relative to their own path. Agent sessions run by t3 also get `JAVA_HOME` and `ANDROID_HOME`, because their shells read the top of `~/.bashrc`. Shells under `claude -p` don't get them, so a Gradle build there needs `ANDROID_HOME` set by hand or `sdk.dir` in `local.properties`.
+./README.md:119:Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/). `npm install` sets up a commit-msg hook that runs commitlint, which needs Node 22.12 or later. The hook lives in `.husky/_`, which git ignores, so run `npm install` once in every new clone or git worktree. Until you do, commits there skip the check. The hook rejects a ticket ID such as `TKA-0001` in the subject; put it in a `Refs: TKA-0001` trailer instead. It also rejects commits that credit an AI tool or a co-author (`Co-authored-by:`, "Generated with Claude Code" and the like).
+./commitlint.config.js:37:  extends: ['@commitlint/config-conventional'],
+./commitlint.config.js:41:        'no-ai-generated': parsed => {
+./commitlint.config.js:51:        'no-ticket-id-in-header': parsed => {
+./commitlint.config.js:99:    'no-ai-generated': [2, 'always'],
+./commitlint.config.js:101:    'no-ticket-id-in-header': [2, 'always'],
+./commitlint.config.js:103:  helpUrl: 'https://github.com/conventional-changelog/commitlint/#what-is-commitlint',
+./docs/PRD.md:105:| T3 | Show stopped entries as the server returns them, after it snaps them to `time_resolution_minutes`. Entries not yet sent are snapped on the phone with a port of `snapSpan` (`../tokkl/packages/common/snap.ts`) in the account timezone, so their times do not change when the server answers. The running clock is not snapped. |
+./docs/PRD.md:195:- A Kotlin port of three TypeScript functions, each checked against the cases in its test file: `parseDuration` in `../tokkl/packages/common/duration.ts` (cases in `../tokkl/packages/common/duration.test.ts`), `parseTimeOfDay` in `../tokkl/packages/web/src/lib/timeOfDay.ts` (cases in `../tokkl/packages/web/src/lib/timeOfDay.test.ts`) and `snapSpan` (T3) in `../tokkl/packages/common/snap.ts` (cases in `../tokkl/packages/common/snap.test.ts`). The time-of-day parser lives in the web package, not in `packages/common`.
+./docs/PRD.md:240:- commitlint with Tokkl's rules: Conventional Commits, no AI or co-author trailers, no ticket IDs in the subject. A husky hook runs it locally.
+./.husky/commit-msg:1:npx --no -- commitlint --edit "$1"
+./package.json:8:    "prepare": "husky"
+./package.json:11:    "@commitlint/cli": "^21.2.3",
+./package.json:12:    "@commitlint/config-conventional": "^21.2.3",
+./package.json:13:    "husky": "^9.1.7"
+
+exec
+/bin/bash -lc "node --version; cat ../tokkl-android/node_modules/husky/{index.js,husky}; sed -n '1,125p' ../tokkl-android/node_modules/@commitlint/lint/lib/lint.js; cat ../tokkl-android/node_modules/@commitlint/is-ignored/lib/defaults.js; sed -n '1,100p' ../tokkl-android/node_modules/@commitlint/is-ignored/lib/is-ignored.js" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+v24.21.0
+import c from 'child_process'
+import f, { readdir, writeFileSync as w } from 'fs'
+import p from 'path'
+
+let l = [ 'pre-commit', 'pre-merge-commit', 'prepare-commit-msg', 'commit-msg', 'post-commit', 'applypatch-msg', 'pre-applypatch', 'post-applypatch', 'pre-rebase', 'post-rewrite', 'post-checkout', 'post-merge', 'pre-push', 'pre-auto-gc' ],
+	msg = `echo "husky - DEPRECATED\n\nPlease remove the following two lines from $0:\n\n#!/usr/bin/env sh\n. \\"\\$(dirname -- \\"\\$0\\")/_/husky.sh\\"\n\nThey WILL FAIL in v10.0.0\n"`
+
+export default (d = '.husky') => {
+	if (process.env.HUSKY === '0') return 'HUSKY=0 skip install'
+	if (d.includes('..')) return '.. not allowed'
+	if (!f.existsSync('.git')) return `.git can't be found`
+
+	let _ = (x = '') => p.join(d, '_', x)
+	let { status: s, stderr: e } = c.spawnSync('git', ['config', 'core.hooksPath', `${d}/_`])
+	if (s == null) return 'git command not found'
+	if (s) return '' + e
+
+	f.rmSync(_('husky.sh'), { force: true })
+	f.mkdirSync(_(), { recursive: true })
+	w(_('.gitignore'), '*')
+	f.copyFileSync(new URL('husky', import.meta.url), _('h'))
+	l.forEach(h => w(_(h), `#!/usr/bin/env sh\n. "\$(dirname "\$0")/h"`, { mode: 0o755 }))
+	w(_('husky.sh'), msg)
+	return ''
+}
+#!/usr/bin/env sh
+[ "$HUSKY" = "2" ] && set -x
+n=$(basename "$0")
+s=$(dirname "$(dirname "$0")")/$n
+
+[ ! -f "$s" ] && exit 0
+
+if [ -f "$HOME/.huskyrc" ]; then
+	echo "husky - '~/.huskyrc' is DEPRECATED, please move your code to ~/.config/husky/init.sh"
+fi
+i="${XDG_CONFIG_HOME:-$HOME/.config}/husky/init.sh"
+[ -f "$i" ] && . "$i"
+
+[ "${HUSKY-}" = "0" ] && exit 0
+
+export PATH="node_modules/.bin:$PATH"
+sh -e "$s" "$@"
+c=$?
+
+[ $c != 0 ] && echo "husky - $n script failed (code $c)"
+[ $c = 127 ] && echo "husky - command not found in PATH=$PATH"
+exit $c
+import util from "node:util";
+import isIgnored from "@commitlint/is-ignored";
+import parse from "@commitlint/parse";
+import defaultRules from "@commitlint/rules";
+import { RuleConfigSeverity } from "@commitlint/types";
+import { buildCommitMessage } from "./commit-message.js";
+export default async function lint(message, rawRulesConfig, rawOpts) {
+    const opts = rawOpts ? rawOpts : { defaultIgnores: undefined, ignores: undefined };
+    const rulesConfig = rawRulesConfig || {};
+    // Found a wildcard match, skip. Matchers see the message without the trailing
+    // newlines git leaves behind. Only the end is trimmed, since the default matchers
+    // are anchored to the start, and `message` itself is left alone because rules such
+    // as body-leading-blank read its blank lines back off `parsed.raw`.
+    if (isIgnored(message?.trimEnd(), { defaults: opts.defaultIgnores, ignores: opts.ignores })) {
+        return {
+            valid: true,
+            errors: [],
+            warnings: [],
+            input: message,
+        };
+    }
+    // Parse the commit message
+    const parsed = message === ""
+        ? { header: null, body: null, footer: null }
+        : await parse(message, opts.parser, opts.parserOpts);
+    if (parsed.header === null && parsed.body === null && parsed.footer === null) {
+        // Commit is empty, skip
+        return {
+            valid: true,
+            errors: [],
+            warnings: [],
+            input: message,
+        };
+    }
+    const allRules = new Map(Object.entries(defaultRules));
+    if (opts.plugins) {
+        Object.values(opts.plugins).forEach((plugin) => {
+            if (plugin.rules) {
+                Object.keys(plugin.rules).forEach((ruleKey) => allRules.set(ruleKey, plugin.rules[ruleKey]));
+            }
+        });
+    }
+    // Find invalid rules configs
+    const missing = Object.keys(rulesConfig).filter((name) => typeof allRules.get(name) !== "function");
+    if (missing.length > 0) {
+        const names = [...allRules.keys()];
+        throw new RangeError([
+            `Found rules without implementation: ${missing.join(", ")}.`,
+            `Supported rules are: ${names.join(", ")}.`,
+        ].join("\n"));
+    }
+    const invalid = Object.entries(rulesConfig)
+        .map(([name, config]) => {
+        if (!Array.isArray(config)) {
+            return new Error(`config for rule ${name} must be array, received ${util.inspect(config)} of type ${typeof config}`);
+        }
+        const [level] = config;
+        if (level === RuleConfigSeverity.Disabled && config.length === 1) {
+            return null;
+        }
+        const [, when] = config;
+        if (typeof level !== "number" || isNaN(level)) {
+            return new Error(`level for rule ${name} must be number, received ${util.inspect(level)} of type ${typeof level}`);
+        }
+        if (config.length < 2 || config.length > 3) {
+            return new Error(`config for rule ${name} must be 2 or 3 items long, received ${util.inspect(config)} of length ${config.length}`);
+        }
+        if (level < 0 || level > 2) {
+            return new RangeError(`level for rule ${name} must be between 0 and 2, received ${util.inspect(level)}`);
+        }
+        if (typeof when !== "string") {
+            return new Error(`condition for rule ${name} must be string, received ${util.inspect(when)} of type ${typeof when}`);
+        }
+        if (when !== "never" && when !== "always") {
+            return new Error(`condition for rule ${name} must be "always" or "never", received ${util.inspect(when)}`);
+        }
+        return null;
+    })
+        .filter((item) => item instanceof Error);
+    if (invalid.length > 0) {
+        throw new Error(invalid.map((i) => i.message).join("\n"));
+    }
+    // Validate against all rules
+    const pendingResults = Object.entries(rulesConfig)
+        // Level 0 rules are ignored
+        .filter(([, config]) => !!config && config.length && config[0] > 0)
+        .map(async (entry) => {
+        const [name, config] = entry;
+        const [level, when, value] = config; //
+        const rule = allRules.get(name);
+        if (!rule) {
+            throw new Error(`Could not find rule implementation for ${name}`);
+        }
+        const executableRule = rule;
+        const [valid, message] = await executableRule(parsed, when, value);
+        return {
+            level,
+            valid,
+            name,
+            message,
+        };
+    });
+    const results = (await Promise.all(pendingResults)).filter((result) => result !== null);
+    const errors = results.filter((result) => result.level === RuleConfigSeverity.Error && !result.valid);
+    const warnings = results.filter((result) => result.level === RuleConfigSeverity.Warning && !result.valid);
+    const valid = errors.length === 0;
+    return {
+        valid,
+        errors,
+        warnings,
+        input: buildCommitMessage(parsed),
+    };
+}
+//# sourceMappingURL=lint.js.mapimport semver from "semver";
+const isSemver = (c) => {
+    const firstLine = c.split("\n").shift();
+    if (typeof firstLine !== "string") {
+        return false;
+    }
+    const stripped = firstLine
+        .replace(/^chore(\([^)]+\))?:/, "")
+        .replace(/\[(skip|ci)(-|\s)(ci|skip)\]/i, "")
+        .replace(/\((skip|ci)(-|\s)(ci|skip)\)/i, "")
+        .trim();
+    return semver.valid(stripped) !== null;
+};
+const test = (r) => r.test.bind(r);
+export const wildcards = [
+    test(/^((Merge pull request)|(Merge (.*?) into (.*?)|(Merge branch (.*?)))(?:\r?\n)*$)/m),
+    test(/^(Merge tag (.*?))(?:\r?\n)*$/m),
+    test(/^(R|r)evert (.*)/),
+    test(/^(R|r)eapply (.*)/),
+    test(/^(amend|fixup|squash)!/),
+    isSemver,
+    test(/^(Merged (.*?)(in|into) (.*)|Merged PR (.*): (.*))/),
+    test(/^Merge remote-tracking branch(\s*)(.*)/),
+    test(/^Automatic merge(.*)/),
+    test(/^Auto-merged (.*?) into (.*)/),
+];
+//# sourceMappingURL=defaults.js.mapimport { wildcards } from "./defaults.js";
+export default function isIgnored(commit = "", opts = {}) {
+    const ignores = typeof opts.ignores === "undefined" ? [] : opts.ignores;
+    if (!Array.isArray(ignores)) {
+        throw new Error(`ignores must be of type array, received ${ignores} of type ${typeof ignores}`);
+    }
+    const invalids = ignores.filter((c) => typeof c !== "function");
+    if (invalids.length > 0) {
+        throw new Error(`ignores must be array of type function, received items of type: ${invalids
+            .map((i) => typeof i)
+            .join(", ")}`);
+    }
+    const base = opts.defaults === false ? [] : wildcards;
+    return [...base, ...ignores].some((w) => w(commit));
+}
+//# sourceMappingURL=is-ignored.js.map
+exec
+/bin/bash -lc "cat ../tokkl-android/node_modules/@commitlint/config-conventional/lib/index.js; rg -n 'defaultIgnores|plugins|lint\\(' ../tokkl-android/node_modules/@commitlint/cli/lib/cli.js; ls -l ~/.local/share/jdk/21 ~/Android/Sdk/cmdline-tools/latest ~/.config/android-env.sh ~/.local/libexec/android-env/tool-wrapper ~/.local/bin/{java,adb,sdkmanager,avdmanager,emulator}; cat ~/.config/android-env.sh ~/.local/libexec/android-env/tool-wrapper; rg -n 'android-env|non-interactive|case \\"'$-'"' ~/.profile ~/.bashrc" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+import { RuleConfigSeverity } from "@commitlint/types";
+export default {
+    parserPreset: "conventional-changelog-conventionalcommits",
+    rules: {
+        "body-leading-blank": [RuleConfigSeverity.Warning, "always"],
+        "body-max-line-length": [RuleConfigSeverity.Error, "always", 100],
+        "footer-leading-blank": [RuleConfigSeverity.Warning, "always"],
+        "footer-max-line-length": [RuleConfigSeverity.Error, "always", 100],
+        "header-max-length": [RuleConfigSeverity.Error, "always", 100],
+        "header-trim": [RuleConfigSeverity.Error, "always"],
+        "subject-case": [
+            RuleConfigSeverity.Error,
+            "never",
+            ["sentence-case", "start-case", "pascal-case", "upper-case"],
+        ],
+        "subject-empty": [RuleConfigSeverity.Error, "never"],
+        "subject-full-stop": [RuleConfigSeverity.Error, "never", "."],
+        "type-case": [RuleConfigSeverity.Error, "always", "lower-case"],
+        "type-empty": [RuleConfigSeverity.Error, "never"],
+        "type-enum": [
+            RuleConfigSeverity.Error,
+            "always",
+            [
+                "build",
+                "chore",
+                "ci",
+                "docs",
+                "feat",
+                "fix",
+                "perf",
+                "refactor",
+                "revert",
+                "style",
+                "test",
+            ],
+        ],
+    },
+    prompt: {
+        questions: {
+            type: {
+                description: "Select the type of change that you're committing",
+                enum: {
+                    feat: {
+                        description: "A new feature",
+                        title: "Features",
+                        emoji: "✨",
+                    },
+                    fix: {
+                        description: "A bug fix",
+                        title: "Bug Fixes",
+                        emoji: "🐛",
+                    },
+                    docs: {
+                        description: "Documentation only changes",
+                        title: "Documentation",
+                        emoji: "📚",
+                    },
+                    style: {
+                        description: "Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)",
+                        title: "Styles",
+                        emoji: "💎",
+                    },
+                    refactor: {
+                        description: "A code change that neither fixes a bug nor adds a feature",
+                        title: "Code Refactoring",
+                        emoji: "📦",
+                    },
+                    perf: {
+                        description: "A code change that improves performance",
+                        title: "Performance Improvements",
+                        emoji: "🚀",
+                    },
+                    test: {
+                        description: "Adding missing tests or correcting existing tests",
+                        title: "Tests",
+                        emoji: "🚨",
+                    },
+                    build: {
+                        description: "Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)",
+                        title: "Builds",
+                        emoji: "🛠",
+                    },
+                    ci: {
+                        description: "Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)",
+                        title: "Continuous Integrations",
+                        emoji: "⚙️",
+                    },
+                    chore: {
+                        description: "Other changes that don't modify src or test files",
+                        title: "Chores",
+                        emoji: "♻️",
+                    },
+                    revert: {
+                        description: "Reverts a previous commit",
+                        title: "Reverts",
+                        emoji: "🗑",
+                    },
+                },
+            },
+            scope: {
+                description: "What is the scope of this change (e.g. component or file name)",
+            },
+            subject: {
+                description: "Write a short, imperative tense description of the change",
+            },
+            body: {
+                description: "Provide a longer description of the change",
+            },
+            isBreaking: {
+                description: "Are there any breaking changes?",
+            },
+            breakingBody: {
+                description: "A BREAKING CHANGE commit requires a body. Please enter a longer description of the commit itself",
+            },
+            breaking: {
+                description: "Describe the breaking changes",
+            },
+            isIssueAffected: {
+                description: "Does this change affect any open issues?",
+            },
+            issuesBody: {
+                description: "If issues are closed, the commit requires a body. Please enter a longer description of the commit itself",
+            },
+            issues: {
+                description: 'Add issue references (e.g. "fix #123", "re #123".)',
+            },
+        },
+    },
+};
+//# sourceMappingURL=index.js.map236:        plugins: {},
+238:        defaultIgnores: true,
+243:    if (loaded.plugins) {
+244:        opts.plugins = loaded.plugins;
+249:    if (loaded.defaultIgnores === false) {
+250:        opts.defaultIgnores = false;
+266:    const results = await Promise.all(messages.map((message) => lint(message, loaded.rules, opts)));
+-rw-rw-r-- 1 e0ipso e0ipso  582 Oct 18 00:10 /home/e0ipso/.config/android-env.sh
+lrwxrwxrwx 1 e0ipso e0ipso   35 Oct 18 00:09 /home/e0ipso/.local/bin/adb -> ../libexec/android-env/tool-wrapper
+lrwxrwxrwx 1 e0ipso e0ipso   35 Oct 18 00:09 /home/e0ipso/.local/bin/avdmanager -> ../libexec/android-env/tool-wrapper
+lrwxrwxrwx 1 e0ipso e0ipso   35 Oct 18 00:09 /home/e0ipso/.local/bin/emulator -> ../libexec/android-env/tool-wrapper
+lrwxrwxrwx 1 e0ipso e0ipso   35 Oct 18 00:09 /home/e0ipso/.local/bin/java -> ../libexec/android-env/tool-wrapper
+lrwxrwxrwx 1 e0ipso e0ipso   35 Oct 18 00:09 /home/e0ipso/.local/bin/sdkmanager -> ../libexec/android-env/tool-wrapper
+-rwxr-xr-x 1 e0ipso e0ipso 1128 Oct 18 00:09 /home/e0ipso/.local/libexec/android-env/tool-wrapper
+lrwxrwxrwx 1 e0ipso e0ipso   24 Oct 17 23:50 /home/e0ipso/.local/share/jdk/21 -> versions/jdk-21.0.12.1+1
+
+/home/e0ipso/Android/Sdk/cmdline-tools/latest:
+total 132
+-rwxrwxr-x  1 e0ipso e0ipso 101504 Oct 17 23:52 NOTICE.txt
+drwxrwxr-x  2 e0ipso e0ipso   4096 Oct 17 23:52 bin
+drwxrwxr-x 18 e0ipso e0ipso   4096 Oct 17 23:52 lib
+-rw-rw-r--  1 e0ipso e0ipso  18652 Oct 17 23:56 package.xml
+-rwxrwxr-x  1 e0ipso e0ipso     86 Oct 17 23:52 source.properties
+# JDK and Android SDK for Android builds, installed 2026-10-17.
+# ~/.profile sources this for login shells and ~/.bashrc for every other bash
+# shell. Sourcing it twice adds nothing to PATH twice.
+export JAVA_HOME="$HOME/.local/share/jdk/21"
+export ANDROID_HOME="$HOME/Android/Sdk"
+for _android_env_dir in "$JAVA_HOME/bin" "$ANDROID_HOME/emulator" \
+    "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/cmdline-tools/latest/bin"; do
+    case ":$PATH:" in
+        *":$_android_env_dir:"*) ;;
+        *) PATH="$_android_env_dir:$PATH" ;;
+    esac
+done
+unset _android_env_dir
+export PATH
+#!/bin/sh
+# Wrapper for JDK and Android SDK tools, installed as ~/.local/bin/<tool>
+# symlinks. Claude Code's Bash tool resets PATH to the PATH of the Claude Code
+# process, which has ~/.local/bin but not the JDK or SDK directories, so this
+# runs the real tool from the paths in ~/.config/android-env.sh. Symlinking the
+# tools directly does not work: sdkmanager and avdmanager find the SDK from
+# their own path.
+env_file="$HOME/.config/android-env.sh"
+if [ ! -f "$env_file" ]; then
+    echo "android-env: $env_file is missing" >&2
+    exit 127
+fi
+. "$env_file"
+
+tool=$(basename "$0")
+case $tool in
+    java) dir=${JAVA_HOME:-}/bin; base=${JAVA_HOME:-} ;;
+    adb) dir=${ANDROID_HOME:-}/platform-tools; base=${ANDROID_HOME:-} ;;
+    sdkmanager|avdmanager) dir=${ANDROID_HOME:-}/cmdline-tools/latest/bin; base=${ANDROID_HOME:-} ;;
+    emulator) dir=${ANDROID_HOME:-}/emulator; base=${ANDROID_HOME:-} ;;
+    *) echo "android-env: unknown tool '$tool'" >&2; exit 127 ;;
+esac
+if [ -z "$base" ] || [ ! -x "$dir/$tool" ]; then
+    echo "android-env: $tool is not installed; see $env_file" >&2
+    exit 127
+fi
+exec "$dir/$tool" "$@"
+/home/e0ipso/.bashrc:7:if [ -f "$HOME/.config/android-env.sh" ]; then
+/home/e0ipso/.bashrc:8:    . "$HOME/.config/android-env.sh"
+/home/e0ipso/.bashrc:12:case $- in
+/home/e0ipso/.profile:30:if [ -f "$HOME/.config/android-env.sh" ] ; then
+/home/e0ipso/.profile:31:    . "$HOME/.config/android-env.sh"
+
+exec
+/bin/bash -lc "node --input-type=module <<'JS'
+import config from './commitlint.config.js';
+import lint from '../tokkl-android/node_modules/@commitlint/lint/lib/lint.js';
+import conventional from '../tokkl-android/node_modules/@commitlint/config-conventional/lib/index.js';
+const rules = {...conventional.rules,...config.rules};
+const opts = {plugins: {local: config.plugins[0]}};
+for (const raw of [
+ 'docs: explain build\\n\\nRefs: TKA-0001',
+ 'docs: explain TKA-0001',
+ 'docs: explain build\\n\\nCo-Authored-By: Jane <jane@example.com>',
+ 'docs: explain build\\n\\nGenerated-by: Claude',
+ 'Revert \"feat: implement TKA-0001\"\\n\\nCo-Authored-By: Jane <jane@example.com>',
+ 'fixup"'! feat: implement TKA-0001'"\\n\\nGenerated-by: Claude',
+ 'docs: explain build\\n\\nAI-assisted-by: Claude',
+]) {
+ const r=await lint(raw,rules,opts);
+ console.log(JSON.stringify({raw,valid:r.valid,errors:r.errors.map(e=>e.name)}));
+}
+JS
+sed -n '25,60p' ~/.local/libexec/android-env/tool-wrapper
+rg -n 'android-env|non-interactive|case \\"'$-'"' ~/.profile ~/.bashrc
+cat ~/Android/Sdk/cmdline-tools/latest/source.properties ~/Android/Sdk/platform-tools/source.properties ~/Android/Sdk/emulator/source.properties" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 89ms:
+{"raw":"docs: explain build\n\nRefs: TKA-0001","valid":true,"errors":[]}
+{"raw":"docs: explain TKA-0001","valid":false,"errors":["no-ticket-id-in-header"]}
+{"raw":"docs: explain build\n\nCo-Authored-By: Jane <jane@example.com>","valid":false,"errors":["no-ai-generated"]}
+{"raw":"docs: explain build\n\nGenerated-by: Claude","valid":false,"errors":["no-ai-generated"]}
+{"raw":"Revert \"feat: implement TKA-0001\"\n\nCo-Authored-By: Jane <jane@example.com>","valid":true,"errors":[]}
+{"raw":"fixup! feat: implement TKA-0001\n\nGenerated-by: Claude","valid":true,"errors":[]}
+{"raw":"docs: explain build\n\nAI-assisted-by: Claude","valid":true,"errors":[]}
+    exit 127
+fi
+exec "$dir/$tool" "$@"
+/home/e0ipso/.profile:30:if [ -f "$HOME/.config/android-env.sh" ] ; then
+/home/e0ipso/.profile:31:    . "$HOME/.config/android-env.sh"
+/home/e0ipso/.bashrc:7:if [ -f "$HOME/.config/android-env.sh" ]; then
+/home/e0ipso/.bashrc:8:    . "$HOME/.config/android-env.sh"
+/home/e0ipso/.bashrc:12:case $- in
+Pkg.Revision=23.0
+Pkg.Path=cmdline-tools;23.0
+Pkg.Desc=Android SDK Command-line Tools
+Pkg.UserSrc=false
+Pkg.Revision=37.0.1
+Pkg.UserSrc=false
+Pkg.Revision=37.2.12
+Pkg.Path=emulator
+Pkg.Desc=Android Emulator
+Pkg.BuildId=16428233
+exec
+/bin/bash -lc "cat /home/e0ipso/.agents/skills/unslop/SKILL.md | sed -n '1,100p'; cat .agents/skills/verification-before-completion/SKILL.md | sed -n '1,65p'" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+---
+name: unslop
+description: Cut AI tells from any writing. Must always apply.
+---
+
+# Unslop
+
+Edit text to remove AI patterns and add human voice.
+
+## Process
+
+1. Scan for the patterns below.
+2. Rewrite. Preserve meaning, match intended tone.
+3. Add soul (see next section).
+4. Self-audit: "What makes this obviously AI generated?" Fix remaining tells.
+
+## Adding soul
+
+Removing patterns is half the job. Sterile, voiceless writing is just as obvious.
+
+- **Have opinions.** React to facts instead of neutrally listing pros and cons.
+- **Vary rhythm.** Short sentences. Then longer ones that take their time. Mix it up.
+- **Acknowledge complexity.** "Impressive but also kind of unsettling" beats "impressive."
+- **Use "I" when it fits.** First person isn't unprofessional.
+- **Let some mess in.** Perfect structure looks machine-made.
+- **Be specific.** Not "this is concerning" but "there's something unsettling about agents churning away at 3am."
+
+## Patterns to detect and fix
+
+### Content
+
+1. **Puffery.** "pivotal moment", "testament to", "evolving landscape", "setting the stage for", "indelible mark", "deeply rooted". Cut puffery, state what happened.
+2. **Name-dropping.** Listing media outlets without context. Pick one, say what was said.
+3. **Superficial -ing phrases.** "highlighting...", "ensuring...", "reflecting...", "showcasing...", "fostering...". Delete or expand with real sources.
+4. **Promotional language.** "nestled", "vibrant", "breathtaking", "groundbreaking", "renowned", "stunning", "must-visit". Use neutral descriptions.
+5. **Vague attributions.** "Experts believe", "Industry reports suggest", "Some critics argue". Name the source or delete.
+6. **Formulaic challenges.** "Despite challenges... continues to thrive." Replace with specific facts.
+
+### Language
+
+7. **AI vocabulary.** Additionally, crucial, delve, enduring, enhance, fostering, garner, interplay, intricate, landscape (abstract), pivotal, showcase, tapestry (abstract), testament, underscore, vibrant. Replace with plain words.
+8. **Fancy ways to say "is".** "serves as", "stands as", "boasts", "features". Just say "is" or "has".
+9. **Scripted negation.** "Not just X, but Y", "No X, no Y, no Z", "Didn't flinch, didn't blink", "Don't call it X, call it Y". State the claim directly once.
+10. **Rule of three.** Forcing ideas into groups of three. Use the natural number.
+11. **Synonym cycling.** Protagonist, main character, central figure, hero all in one paragraph. Pick one, repeat it.
+12. **False ranges.** "from X to Y" where X and Y aren't on a meaningful scale. List topics directly.
+
+### Style
+
+13. **Em dash overuse.** Avoid em dashes entirely. Use periods or commas only (no parentheses, no en dashes, no hyphen-as-dash substitutes). Em dashes are an AI tell, and reaching for parentheses instead just trades one tell for another. If a thought needs separation, end the sentence or use a comma.
+14. **Colon overuse.** Colons are fine before a list or example. Not as mid-sentence connectors. "If you're coming from traditional automation: instead of registering event handlers, you describe conditions" adds nothing with the colon. Rewrite to let the point stand on its own without comparison framing. "Describing when the scheduler should fire works best as plain English." Same meaning, no crutch punctuation.
+15. **Boldface overuse.** Don't bold every proper noun or acronym.
+16. **Inline-header lists.** The tell is a bold label and colon that restates the line: "**Performance:** Performance improved...". Convert those to prose. A bold lead-in that ends in a period, names the item, and adds new detail ("**Schema in TypeScript.** Tables live in one file.") is fine, not a tell.
+17. **Title case headings.** Use sentence case.
+18. **Decorative emojis.** Remove from headings and bullets.
+19. **Curly quotes.** Replace with straight quotes.
+
+### Communication artifacts
+
+20. **Chatbot phrases.** "I hope this helps", "Let me know if", "Would you like", "Of course", "Certainly", "Found the smoking gun", "One honest caveat", "Here's what gets me", "The key insight is", "The punchline is", "Sit with that", "You already know the answer". Delete the greeting, stage direction, or recap. State the point.
+21. **Cutoff disclaimers.** "While specific details are limited..." Find sources or remove.
+22. **Sycophantic tone.** "Great question! You're absolutely right!" Respond directly.
+23. **Manufactured gravity.** "the real problem", "genuinely", "actually", "truly", "that's the whole point", "X is the entire game", "the improvement is real and not subtle", "that loss is worth naming", "that's not nothing". These insist something matters instead of showing why. Give the fact, consequence, or measurement. Keep an intensifier only when it marks a literal contrast.
+24. **Anthropomorphized tools.** Code does not "want to live" somewhere, feel "happiest" there, or "earn its keep". Name the constraint: cost, speed, ownership, or repeatability.
+
+### Filler
+
+25. **Filler phrases.** "In order to" becomes "To". "Due to the fact that" becomes "Because". "It is important to note that" gets deleted.
+26. **Excessive hedging.** "could potentially possibly be argued that it might" becomes "may".
+27. **Generic conclusions.** "The future looks bright." State specific plans or facts.
+
+### Jargon
+
+28. **Abstract metaphor nouns.** Substrate, wedge, vector, locus, vantage, nexus, primitive (as noun), harness (as metaphor), surface (as in "API surface"), bedrock, scaffolding (as metaphor), modality, paradigm, gold-plating, ratchet (as metaphor), evacuate (for moving code), endgame, north star, flywheel. These read as technical but usually have a plainer concrete word. "Substrate" becomes "base". "Wedge in" becomes "add". "Vector" becomes "way" or "method". "Gold-plating" becomes "more than the job needs". "Ratchet" becomes the mechanism's real name or "a limit that only tightens". "Evacuate" becomes "move out". "Endgame" becomes "the last phase". Pick the concrete word.
+
+### Plain speech
+
+29. **Say what it does, not how it feels.** "the database stays close at hand", "SQL you can read", "types that follow your schema" name a feeling. The fix names the mechanism or a number: "`.toSQL()` returns the exact string sent to the database", "a column rename fails the build". Ask what the sentence tells the reader to do or know, then write that. If you can't restate it as a concrete instruction, fact, or number, cut it. One more check: if the sentence could appear unchanged in another project's docs, it says nothing about this one. Cut it.
+30. **Shorten or split dense sentences.** If the reader has to backtrack to parse a sentence, break it in two or drop clauses. One idea per sentence.
+31. **Active voice.** Prefer it. Catch "is/are/was/were + past participle" and name the actor: "queries are validated" becomes "the compiler validates queries", "the file is parsed by the loader" becomes "the loader parses the file". Passive is fine only when the actor is unknown or doesn't matter.
+32. **Cut adverbs, or use a stronger verb.** "runs quickly" becomes "is fast" or the number. "significantly improves" becomes the measured delta. An adverb propping up a weak verb means the verb is wrong.
+33. **Prefer the plain word.** "utilize" becomes "use", "leverage" becomes "use", "facilitate" becomes "help", "numerous" becomes "many", "in the event that" becomes "if". The fancier synonym is rarely clearer.
+---
+name: verification-before-completion
+description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+---
+
+# Verification Before Completion
+
+## Overview
+
+**Core principle:** Evidence before claims, always.
+
+**Violating the letter of this rule is violating the spirit of this rule.**
+
+## The Iron Law
+
+```
+NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+```
+
+If you haven't run the verification command in this message, you cannot claim it passes.
+
+## The Gate Function
+
+```
+BEFORE claiming any status or expressing satisfaction:
+
+1. IDENTIFY: What command proves this claim?
+2. RUN: Execute the FULL command (fresh, complete)
+3. READ: Full output, check exit code, count failures
+4. VERIFY: Does output confirm the claim?
+   - If NO: State actual status with evidence
+   - If YES: State claim WITH evidence
+5. ONLY THEN: Make the claim
+
+Skip any step = lying, not verifying
+```
+
+## Common Failures
+
+| Claim | Requires | Not Sufficient |
+|-------|----------|----------------|
+| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
+| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
+| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
+| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
+| Regression test works | Red-green cycle verified | Test passes once |
+| Agent completed | VCS diff shows changes | Agent reports "success" |
+| Requirements met | Line-by-line checklist | Tests passing |
+
+## Red Flags - STOP
+
+- Using "should", "probably", "seems to"
+- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
+- About to commit/push/PR without verification
+- Trusting agent success reports
+- Relying on partial verification
+- Thinking "just this once"
+- Tired and wanting work over
+- **ANY wording implying success without having run verification**
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "Should work now" | RUN the verification |
+
+codex
+The parser paths exist and point to the functions and tests the ticket requests. The commitlint checks reject the ordinary forbidden examples, but its default ignore rules let revert and fixup messages bypass both custom rules. I’m checking that result through the CLI before reporting it.
+
+exec
+/bin/bash -lc "sed -n '65,190p' .agents/skills/verification-before-completion/SKILL.md; nl -ba commitlint.config.js | sed -n '20,60p'; sed -n '228,270p' ../tokkl-android/node_modules/@commitlint/cli/lib/cli.js; sed -n '1,40p' ../tokkl-android/node_modules/@commitlint/is-ignored/lib/is-ignored.js; sed -n '1,65p' ../tokkl/packages/common/duration.ts; sed -n '1,100p' ../tokkl/packages/common/snap.ts" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+| "Should work now" | RUN the verification |
+| "I'm confident" | Confidence ≠ evidence |
+| "Just this once" | No exceptions |
+| "Linter passed" | Linter ≠ compiler |
+| "Agent said success" | Verify independently |
+| "I'm tired" | Exhaustion ≠ excuse |
+| "Partial check is enough" | Partial proves nothing |
+| "Different words so rule doesn't apply" | Spirit over letter |
+
+## Key Patterns
+
+**Tests:**
+```
+✅ [Run test command] [See: 34/34 pass] "All tests pass"
+❌ "Should pass now" / "Looks correct"
+```
+
+**Regression tests (TDD Red-Green):**
+```
+✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
+❌ "I've written a regression test" (without red-green verification)
+```
+
+**Build:**
+```
+✅ [Run build] [See: exit 0] "Build passes"
+❌ "Linter passed" (linter doesn't check compilation)
+```
+
+**Requirements:**
+```
+✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
+❌ "Tests pass, phase complete"
+```
+
+**Agent delegation:**
+```
+✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
+❌ Trust agent report
+```
+
+## When To Apply
+
+**ALWAYS before:**
+- ANY variation of success/completion claims
+- ANY expression of satisfaction
+- ANY positive statement about work state
+- Committing, PR creation, task completion
+- Moving to next task
+- Delegating to agents
+
+**Rule applies to:**
+- Exact phrases
+- Paraphrases and synonyms
+- Implications of success
+- ANY communication suggesting completion/correctness
+    20	const tool = `(?<![\\p{L}\\p{N}])(?:${aiTools})(?![\\p{L}\\p{N}])`;
+    21	
+    22	const forbiddenPatterns = [
+    23	  // Any co-author, human or not.
+    24	  /^Co-authored-by:.*/im,
+    25	  // Made-with: Cursor, Assisted-by: Claude:claude-opus-5-5, ...
+    26	  new RegExp(`^(?:Assisted-by|Generated-by|Made-with|Signed-off-by):.*${tool}`, 'imu'),
+    27	  // Tool-specific trailers: Copilot-Session: ..., Amp-Thread: ...
+    28	  new RegExp(`^${tool}-[\\w-]+:`, 'imu'),
+    29	  // 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+    30	  new RegExp(`(?:Generated|Made) (?:with|by|using)\\b.*${tool}`, 'iu'),
+    31	];
+    32	
+    33	// TKA is this repo's prefix. TT is Tokkl's, kept from the copied rule.
+    34	const ticketIdInHeader = /\b(?:TKA|TT)-\d+\b/;
+    35	
+    36	export default {
+    37	  extends: ['@commitlint/config-conventional'],
+    38	  plugins: [
+    39	    {
+    40	      rules: {
+    41	        'no-ai-generated': parsed => {
+    42	          for (const pattern of forbiddenPatterns) {
+    43	            const match = parsed.raw.match(pattern);
+    44	            if (match) {
+    45	              return [false, `Commit message contains forbidden AI-generated content: "${match[0]}"`];
+    46	            }
+    47	          }
+    48	
+    49	          return [true, ''];
+    50	        },
+    51	        'no-ticket-id-in-header': parsed => {
+    52	          const match = (parsed.header ?? '').match(ticketIdInHeader);
+    53	          if (match) {
+    54	            return [
+    55	              false,
+    56	              `Commit header contains ticket ID "${match[0]}". Move it to a "Refs: ${match[0]}" trailer in the body.`,
+    57	            ];
+    58	          }
+    59	
+    60	          return [true, ''];
+        cli.showHelp("log");
+        console.log(err.message);
+        throw err;
+    }
+    const loaded = await loadConfig(flags);
+    const parserOpts = selectParserOpts(loaded.parserPreset);
+    const opts = {
+        parserOpts: {},
+        plugins: {},
+        ignores: [],
+        defaultIgnores: true,
+    };
+    if (parserOpts) {
+        opts.parserOpts = parserOpts;
+    }
+    if (loaded.plugins) {
+        opts.plugins = loaded.plugins;
+    }
+    if (loaded.ignores) {
+        opts.ignores = loaded.ignores;
+    }
+    if (loaded.defaultIgnores === false) {
+        opts.defaultIgnores = false;
+    }
+    const format = await loadFormatter(loaded, flags);
+    // If reading from `.git/COMMIT_EDIT_MSG`, strip comments using
+    // core.commentChar from git configuration, falling back to '#'.
+    if (flags.edit) {
+        const result = x("git", ["config", "core.commentChar"]);
+        const output = await result;
+        if (result.exitCode && result.exitCode > 1) {
+            console.warn("Could not determine core.commentChar git configuration", output.stderr);
+            opts.parserOpts.commentChar = gitDefaultCommentChar;
+        }
+        else {
+            opts.parserOpts.commentChar = output.stdout.trim() || gitDefaultCommentChar;
+        }
+    }
+    const results = await Promise.all(messages.map((message) => lint(message, loaded.rules, opts)));
+    let isRulesEmpty = false;
+    if (Object.keys(loaded.rules).length === 0) {
+        let input = "";
+        if (results.length !== 0) {
+import { wildcards } from "./defaults.js";
+export default function isIgnored(commit = "", opts = {}) {
+    const ignores = typeof opts.ignores === "undefined" ? [] : opts.ignores;
+    if (!Array.isArray(ignores)) {
+        throw new Error(`ignores must be of type array, received ${ignores} of type ${typeof ignores}`);
+    }
+    const invalids = ignores.filter((c) => typeof c !== "function");
+    if (invalids.length > 0) {
+        throw new Error(`ignores must be array of type function, received items of type: ${invalids
+            .map((i) => typeof i)
+            .join(", ")}`);
+    }
+    const base = opts.defaults === false ? [] : wildcards;
+    return [...base, ...ignores].some((w) => w(commit));
+}
+//# sourceMappingURL=is-ignored.js.mapimport type { DurationFormat } from '@tokkl/types';
+
+const UNIT_SECONDS: Record<string, number> = {
+  h: 3600, hr: 3600, hrs: 3600, hour: 3600, hours: 3600,
+  m: 60, min: 60, mins: 60, minute: 60, minutes: 60,
+  s: 1, sec: 1, secs: 1, second: 1, seconds: 1,
+};
+
+/**
+ * Parses what a person types into a duration field and returns whole seconds.
+ *
+ * Accepted: "1:30" (h:mm), "1:30:15" (h:mm:ss), "90" (minutes), "1.5" or "1,5h"
+ * (decimal hours when a unit or separator says so), "1h 30m", "1h30m", "45s".
+ * Returns null for anything else.
+ */
+export function parseDuration(raw: string): number | null {
+  const input = raw.trim().toLowerCase().replace(',', '.');
+  if (input === '') return null;
+
+  const colon = /^(\d+):(\d{1,2})(?::(\d{1,2}))?$/.exec(input);
+  if (colon) {
+    const [, h, m, s] = colon;
+    if (Number(m) > 59 || Number(s ?? 0) > 59) return null;
+    return Number(h) * 3600 + Number(m) * 60 + Number(s ?? 0);
+  }
+
+  // A bare integer means minutes, a bare decimal means hours.
+  if (/^\d+$/.test(input)) return Number(input) * 60;
+  if (/^\d*\.\d+$/.test(input)) return Math.round(Number(input) * 3600);
+
+  const unitPattern = /(\d+(?:\.\d+)?|\.\d+)\s*([a-z]+)/g;
+  let total = 0;
+  let consumed = '';
+  for (const match of input.matchAll(unitPattern)) {
+    const seconds = UNIT_SECONDS[match[2]!];
+    if (seconds === undefined) return null;
+    total += Number(match[1]) * seconds;
+    consumed += match[0];
+  }
+  if (consumed.replace(/\s+/g, '') !== input.replace(/\s+/g, '')) return null;
+  return Math.round(total);
+}
+
+function pad(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+export function formatDuration(totalSeconds: number, format: DurationFormat = 'improved'): string {
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  if (format === 'decimal') return `${(seconds / 3600).toFixed(2)} h`;
+
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (format === 'classic') {
+    if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+    if (m > 0) return `${m}:${pad(s)} min`;
+    return `${s} sec`;
+  }
+  return `${h}:${pad(m)}:${pad(s)}`;
+}
+
+/** Compact form for totals and chart labels, e.g. "12h 05m". */
+export function formatHoursMinutes(totalSeconds: number): string {
+  const minutes = Math.floor(Math.max(0, totalSeconds) / 60);
+/**
+ * Snapping a time entry to a resolution: the step, in minutes, that every stored duration is a
+ * multiple of. Shared by the server, which snaps on write, and the web app.
+ */
+
+import { timeZoneOffsetMs } from './time.ts';
+
+const MINUTE_MS = 60_000;
+
+export interface SnappedSpan {
+  start: Date;
+  stop: Date;
+}
+
+/** True for the resolutions that divide an hour evenly: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30 and 60. */
+export function isTimeResolution(minutes: number): boolean {
+  return Number.isInteger(minutes) && minutes >= 1 && 60 % minutes === 0;
+}
+
+/**
+ * Snaps the span from `start` to `stop` to a resolution of `minutes`, which must divide 60.
+ *
+ * The duration rounds up to a multiple of the resolution: it never shrinks, it gains less than one
+ * step, and a duration that is already a multiple stays as it is. The start moves to the nearest
+ * point of the grid on the wall clock of `timeZone`, rounding a tie up. Because the resolution
+ * divides an hour, the grid falls on every whole hour, also in zones 30 or 45 minutes off UTC.
+ * Near a DST change each grid point uses the offset in force at that point, so a change of half an
+ * hour, as on Lord Howe Island, never leaves the start off the clock grid.
+ * The stop is the snapped start plus the rounded duration, counted in elapsed time, so a span
+ * across a DST change keeps its duration.
+ */
+export function snapSpan(start: Date, stop: Date, minutes: number, timeZone: string): SnappedSpan {
+  if (!isTimeResolution(minutes)) throw new RangeError(`Invalid time resolution: ${minutes}`);
+  const elapsed = stop.getTime() - start.getTime();
+  if (!(elapsed >= 0)) throw new RangeError('Stop must not be before start');
+  const step = minutes * MINUTE_MS;
+  const duration = Math.ceil(elapsed / step) * step;
+  const snappedStart = nearestGridPoint(start.getTime(), step, timeZone);
+  return { start: new Date(snappedStart), stop: new Date(snappedStart + duration) };
+}
+
+/** The last instant at or before `time` whose wall-clock time is a multiple of `step` at `offset`. */
+function gridFloor(time: number, step: number, offset: number): number {
+  return Math.floor((time + offset) / step) * step - offset;
+}
+
+/**
+ * The instant nearest `time` whose wall-clock time in `timeZone` is a multiple of `step`, taking
+ * the later one on a tie. Without an offset change within a step of `time`, the grid points on
+ * either side share the offset at `time`. Otherwise the candidates come from the offsets on both
+ * sides of the change, and each one counts only if it is on the grid with the offset in force at
+ * that instant, which also drops wall-clock times that a DST gap skips.
+ */
+function nearestGridPoint(time: number, step: number, timeZone: string): number {
+  const offsetAt = (at: number) => timeZoneOffsetMs(new Date(at), timeZone);
+  const offsets = [...new Set([time - step, time, time + step].map(offsetAt))];
+  if (offsets.length === 1) {
+    const below = gridFloor(time, step, offsets[0]!);
+    return (time - below) * 2 >= step ? below + step : below;
+  }
+  return offsets
+    .flatMap((offset) => {
+      const below = gridFloor(time, step, offset);
+      return [below - step, below, below + step, below + 2 * step];
+    })
+    .filter((candidate) => gridFloor(candidate, step, offsetAt(candidate)) === candidate)
+    .reduce((best, candidate) => {
+      const nearer = Math.abs(candidate - time) - Math.abs(best - time);
+      return nearer < 0 || (nearer === 0 && candidate > best) ? candidate : best;
+    });
+}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import subprocess
+local=Path('commitlint.config.js').read_bytes()
+sibling=Path('../tokkl-android/commitlint.config.js').read_bytes()
+print('Installed checkout config identical to reviewed config:', local==sibling)
+cli='../tokkl-android/node_modules/@commitlint/cli/cli.js'
+for msg in ['docs: explain build\\n\\nRefs: TKA-0001', 'docs: explain TKA-0001', 'docs: explain build\\n\\nCo-Authored-By: Jane <jane@example.com>', 'Revert \"feat: implement TKA-0001\"\\n\\nCo-Authored-By: Jane <jane@example.com>', 'fixup"'! feat: implement TKA-0001'"\\n\\nGenerated-by: Claude']:
+ r=subprocess.run(['node',cli,'--config','../tokkl-android/commitlint.config.js'],input=msg,text=True,capture_output=True)
+ print(repr(msg),'exit=',r.returncode)
+ print(r.stdout.strip(),r.stderr.strip())
+PY
+git status --short; git rev-parse HEAD" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 1652ms:
+Installed checkout config identical to reviewed config: True
+'docs: explain build\n\nRefs: TKA-0001' exit= 0
+ 
+'docs: explain TKA-0001' exit= 1
+⧗   --- input ---
+docs: explain TKA-0001
+✖   Commit header contains ticket ID "TKA-0001". Move it to a "Refs: TKA-0001" trailer in the body. [no-ticket-id-in-header]
+
+✖   found 1 problems, 0 warnings
+ⓘ   Get help: https://github.com/conventional-changelog/commitlint/#what-is-commitlint 
+'docs: explain build\n\nCo-Authored-By: Jane <jane@example.com>' exit= 1
+⧗   --- input ---
+docs: explain build
+
+Co-Authored-By: Jane <jane@example.com>
+✖   Commit message contains forbidden AI-generated content: "Co-Authored-By: Jane <jane@example.com>" [no-ai-generated]
+
+✖   found 1 problems, 0 warnings
+ⓘ   Get help: https://github.com/conventional-changelog/commitlint/#what-is-commitlint 
+'Revert "feat: implement TKA-0001"\n\nCo-Authored-By: Jane <jane@example.com>' exit= 0
+ 
+'fixup! feat: implement TKA-0001\n\nGenerated-by: Claude' exit= 0
+ 
+[opaque value omitted]
+
+codex
+The CLI confirmed the bypass with a configuration identical to the reviewed file: a revert with a ticket ID and co-author trailer exits successfully, as does a fixup with an AI credit. I’m applying verification-before-completion for the final checks of paths, line numbers, and read-only state.
+
+exec
+/bin/bash -lc "cat .agents/skills/verification-before-completion/SKILL.md; nl -ba README.md | sed -n '115,124p'; sed -n '1,35p' ../tokkl/packages/common/duration.test.ts; rg -n 'export function snapSpan|test\\(' ../tokkl/packages/common/snap.ts ../tokkl/packages/common/snap.test.ts | head -12; ls -l LICENSE docs/PRD.md .husky/commit-msg package.json package-lock.json; git diff --check 2aba9d59e778a4e61a9cf604e316d22c422fba6b HEAD" in /home/e0ipso/workspace/apps/tokkl-android--review-w1
+ succeeded in 0ms:
+---
+name: verification-before-completion
+description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+---
+
+# Verification Before Completion
+
+## Overview
+
+**Core principle:** Evidence before claims, always.
+
+**Violating the letter of this rule is violating the spirit of this rule.**
+
+## The Iron Law
+
+```
+NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+```
+
+If you haven't run the verification command in this message, you cannot claim it passes.
+
+## The Gate Function
+
+```
+BEFORE claiming any status or expressing satisfaction:
+
+1. IDENTIFY: What command proves this claim?
+2. RUN: Execute the FULL command (fresh, complete)
+3. READ: Full output, check exit code, count failures
+4. VERIFY: Does output confirm the claim?
+   - If NO: State actual status with evidence
+   - If YES: State claim WITH evidence
+5. ONLY THEN: Make the claim
+
+Skip any step = lying, not verifying
+```
+
+## Common Failures
+
+| Claim | Requires | Not Sufficient |
+|-------|----------|----------------|
+| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
+| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
+| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
+| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
+| Regression test works | Red-green cycle verified | Test passes once |
+| Agent completed | VCS diff shows changes | Agent reports "success" |
+| Requirements met | Line-by-line checklist | Tests passing |
+
+## Red Flags - STOP
+
+- Using "should", "probably", "seems to"
+- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
+- About to commit/push/PR without verification
+- Trusting agent success reports
+- Relying on partial verification
+- Thinking "just this once"
+- Tired and wanting work over
+- **ANY wording implying success without having run verification**
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "Should work now" | RUN the verification |
+| "I'm confident" | Confidence ≠ evidence |
+| "Just this once" | No exceptions |
+| "Linter passed" | Linter ≠ compiler |
+| "Agent said success" | Verify independently |
+| "I'm tired" | Exhaustion ≠ excuse |
+| "Partial check is enough" | Partial proves nothing |
+| "Different words so rule doesn't apply" | Spirit over letter |
+
+## Key Patterns
+
+**Tests:**
+```
+✅ [Run test command] [See: 34/34 pass] "All tests pass"
+❌ "Should pass now" / "Looks correct"
+```
+
+**Regression tests (TDD Red-Green):**
+```
+✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
+❌ "I've written a regression test" (without red-green verification)
+```
+
+**Build:**
+```
+✅ [Run build] [See: exit 0] "Build passes"
+❌ "Linter passed" (linter doesn't check compilation)
+```
+
+**Requirements:**
+```
+✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
+❌ "Tests pass, phase complete"
+```
+
+**Agent delegation:**
+```
+✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
+❌ Trust agent report
+```
+
+## When To Apply
+
+**ALWAYS before:**
+- ANY variation of success/completion claims
+- ANY expression of satisfaction
+- ANY positive statement about work state
+- Committing, PR creation, task completion
+- Moving to next task
+- Delegating to agents
+
+**Rule applies to:**
+- Exact phrases
+- Paraphrases and synonyms
+- Implications of success
+- ANY communication suggesting completion/correctness
+   115	```
+   116	
+   117	## Commit messages
+   118	
+   119	Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/). `npm install` sets up a commit-msg hook that runs commitlint, which needs Node 22.12 or later. The hook lives in `.husky/_`, which git ignores, so run `npm install` once in every new clone or git worktree. Until you do, commits there skip the check. The hook rejects a ticket ID such as `TKA-0001` in the subject; put it in a `Refs: TKA-0001` trailer instead. It also rejects commits that credit an AI tool or a co-author (`Co-authored-by:`, "Generated with Claude Code" and the like).
+   120	
+   121	## License
+   122	
+   123	MIT. See [LICENSE](LICENSE).
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { formatDuration, parseDuration } from './duration.ts';
+
+test('parseDuration accepts the formats people type', () => {
+  const cases: Array<[string, number | null]> = [
+    ['1:30', 5400],
+    ['0:05:30', 330],
+    ['90', 5400],
+    ['1.5', 5400],
+    ['1,5h', 5400],
+    ['1h 30m', 5400],
+    ['1h30m', 5400],
+    ['2 hours 15 min', 8100],
+    ['45s', 45],
+    ['', null],
+    ['abc', null],
+    ['1:75', null],
+    ['1x', null],
+    ['1h foo', null],
+  ];
+  for (const [input, expected] of cases) {
+    assert.equal(parseDuration(input), expected, `input ${JSON.stringify(input)}`);
+  }
+});
+
+test('formatDuration renders each Toggl duration format', () => {
+  assert.equal(formatDuration(3906, 'improved'), '1:05:06');
+  assert.equal(formatDuration(306, 'improved'), '0:05:06');
+  assert.equal(formatDuration(306, 'classic'), '5:06 min');
+  assert.equal(formatDuration(6, 'classic'), '6 sec');
+  assert.equal(formatDuration(3906, 'classic'), '1:05:06');
+  assert.equal(formatDuration(2826, 'decimal'), '0.79 h');
+  assert.equal(formatDuration(-5, 'improved'), '0:00:00');
+});
+../tokkl/packages/common/snap.test.ts:13:test('a duration that is already a multiple of the resolution keeps its length', () => {
+../tokkl/packages/common/snap.test.ts:20:test('the duration rounds up, padding less than one step', () => {
+../tokkl/packages/common/snap.test.ts:27:test('the start snaps to the nearest grid point, down or up, and a tie goes up', () => {
+../tokkl/packages/common/snap.test.ts:33:test('a resolution of one minute snaps to whole minutes and one of 60 to whole hours', () => {
+../tokkl/packages/common/snap.test.ts:40:test('the grid follows the account clock in zones 30 or 45 minutes off UTC', () => {
+../tokkl/packages/common/snap.test.ts:48:test('a span across midnight snaps like any other', () => {
+../tokkl/packages/common/snap.test.ts:53:test('a span across a DST change keeps its rounded duration as elapsed time', () => {
+../tokkl/packages/common/snap.test.ts:64:test('the start stays on the clock grid across a DST change of half an hour', () => {
+../tokkl/packages/common/snap.test.ts:82:test('only divisors of 60 are resolutions, and a stop before the start is refused', () => {
+../tokkl/packages/common/snap.ts:32:export function snapSpan(start: Date, stop: Date, minutes: number, timeZone: string): SnappedSpan {
+-rw-rw-r-- 1 e0ipso e0ipso    35 Oct 18 00:14 .husky/commit-msg
+-rw-rw-r-- 1 e0ipso e0ipso  1075 Oct 18 00:14 LICENSE
+-rw-rw-r-- 1 e0ipso e0ipso 26941 Oct 18 00:14 docs/PRD.md
+-rw-rw-r-- 1 e0ipso e0ipso 48584 Oct 18 00:14 package-lock.json
+-rw-rw-r-- 1 e0ipso e0ipso   331 Oct 18 00:14 package.json
+
+codex
+status: done
+reviewed: 2aba9d59e778a4e61a9cf604e316d22c422fba6b..5e4dfdea93eea20fd2367b7787dfa51333a5b0db, 7 files
+findings: 1
+
+- severity: minor
+  confidence: high
+  category: requirement
+  ticket: TKA-0003
+  location: commitlint.config.js:37
+  problem: Commitlint's default ignores bypass both custom rules for revert and fixup messages, violating the required rejections.
+  evidence: The CLI exits 0 for `Revert "feat: implement TKA-0001"\n\nCo-Authored-By: Jane <jane@example.com>` and `fixup! feat: implement TKA-0001\n\nGenerated-by: Claude`, accepting forbidden subjects and trailers.
+  fix: Disable defaultIgnores or enforce the ticket-ID and attribution checks before commitlint's ignore filter.
+tokens used
+80,842

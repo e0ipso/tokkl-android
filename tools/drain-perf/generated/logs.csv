@@ -1,0 +1,1051 @@
+path,wave,build_count,build_s,builds_json,lock_wait_s,wait_count,daemon_messages,tests,boot_lines,peak_kib,exit_codes
+logs/sift-drain.7oM4Ky/gate-w2/emulator.log,2,0,0,[],0,0,0,,"15:WARNING      | Feature QuickbootFileBacked is disabled due to stability issues, if you really want that, the environment variable ANDROID_EMU_FORCE_QUICKBOOT_FILE_BACKED need to set to 1
+56:INFO         | Userspace boot properties:
+57:INFO         |   androidboot.boot_devices=pci0000:00/0000:00:03.0 pci0000:00/0000:00:06.0
+58:INFO         |   androidboot.dalvik.vm.heapsize=576m
+59:INFO         |   androidboot.debug.hwui.renderer=skiagl
+60:INFO         |   androidboot.debug.sf.nobootanimation=1
+61:INFO         |   androidboot.hardware=ranchu
+62:INFO         |   androidboot.hardware.gltransport=pipe
+63:INFO         |   androidboot.hardware.vulkan=ranchu
+64:INFO         |   androidboot.logcat=*:V
+65:INFO         |   androidboot.opengles.version=196608
+66:INFO         |   androidboot.qemu=1
+68:INFO         |   androidboot.qemu.avd_name=tokkl-api36
+69:INFO         |   androidboot.qemu.camera_hq_edge_processing=0
+70:INFO         |   androidboot.qemu.camera_protocol_ver=1
+71:INFO         |   androidboot.qemu.cpuvulkan.version=4206592
+72:INFO         |   androidboot.qemu.gltransport.drawFlushInterval=800
+73:INFO         |   androidboot.qemu.gltransport.name=pipe
+74:INFO         |   androidboot.qemu.hwcodec.avcdec=2
+75:INFO         |   androidboot.qemu.hwcodec.hevcdec=2
+76:INFO         |   androidboot.qemu.hwcodec.vpxdec=2
+77:INFO         |   androidboot.qemu.settings.system.screen_off_timeout=2147483647
+78:INFO         |   androidboot.qemu.skin=1080x2400
+79:INFO         |   androidboot.qemu.virtiowifi=1
+80:INFO         |   androidboot.qemu.vsync=60
+81:INFO         |   androidboot.serialno=EMULATOR37X2X12X0
+82:INFO         |   androidboot.vbmeta.digest=d691872627a6e6bd3bceb7dac3a30a498d305819c117349424d61aae8093028f
+83:INFO         |   androidboot.vbmeta.hash_alg=sha256
+84:INFO         |   androidboot.vbmeta.size=6848
+85:INFO         |   androidboot.veritymode=enforcing
+101:INFO         | Boot completed in 31942 ms
+108:INFO         | Saving snapshot 'default_boot' took 0 ms",,
+logs/sift-drain.7oM4Ky/gate-w2/gradle-build-lint-test.log,2,1,38.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 38.0, ""line"": 81}]",0,0,1,,,,
+logs/sift-drain.7oM4Ky/gate-w2/gradle-connected.log,2,1,32.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 32.0, ""line"": 94}]",0,0,1,,,,
+logs/sift-drain.7oM4Ky/gate-w3/gradle-check.log,3,1,49.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 49.0, ""line"": 88}]",0,0,1,,,,
+logs/sift-drain.7oM4Ky/gate-w3/instrumented.log,3,1,85.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 85.0, ""line"": 96}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554,,
+logs/sift-drain.7oM4Ky/gate-w4/gradle-check.log,4,1,59.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 59.0, ""line"": 88}]",0,0,1,,,,
+logs/sift-drain.7oM4Ky/gate-w4/instrumented.log,4,1,170.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 170.0, ""line"": 97}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-f4ea333b.scope,,
+logs/sift-drain.7oM4Ky/gate-w4/kenkeep-doctor.log,4,0,0,[],0,0,0,,"8:✓ Claude skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+11:✓ Cursor skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+14:✓ Codex skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract",,
+logs/sift-drain.7oM4Ky/gate-w5/gradle-check.log,5,1,63.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 63.0, ""line"": 88}]",0,0,1,,,,
+logs/sift-drain.7oM4Ky/gate-w5/instrumented.log,5,1,311.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 311.0, ""line"": 99}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-7e1c4d60.scope,,
+logs/sift-drain.7oM4Ky/gate-w5/kenkeep-doctor.log,5,0,0,[],0,0,0,,"8:✓ Claude skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+11:✓ Cursor skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+14:✓ Codex skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract",,
+logs/sift-drain.7oM4Ky/gate-w6/close/gradle-check.log,6,1,84.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 84.0, ""line"": 91}]",0,0,1,,,,
+logs/sift-drain.7oM4Ky/gate-w6/close/instrumented.log,6,1,642.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 642.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ed99695a.scope,,
+logs/sift-drain.7oM4Ky/gate-w6/review-err.txt,6,0,0,[],0,0,0,,"130:.agents/skills/kk-bootstrap/SKILL.md
+352:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+645:-The tests run on the attached device or on `ANDROID_SERIAL`. With neither, the script boots the AVD named by `TOKKL_TEST_AVD` (default `tokkl-api36`) without a window and kills it at the end. It stops the adb server only when the server was not running before. On an emulator it booted, it also sets `hide_error_dialogs` to 1 and sends `CLOSE_SYSTEM_DIALOGS`, so tests carry no dialog workaround of their own. It changes no setting on a device it did not boot.
+659:-      # emulator it boots itself.
+661:+      # open, which the script does only on an emulator it boots itself.
+2071:+    // Two runs on tokkl-api36, each on a freshly booted emulator, matched pixel for pixel. The
+9590: # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
+9593:-# did not boot. It also stops the adb server if that was not running before.
+9595:+# stops it at the end. It changes no setting on a device it did not boot. It
+9639:@@ -170,6 +198,14 @@ boot_emulator() {
+9643:+    # The AVD keeps its font scale across boots, and SystemFontScale puts back
+9845:resolution: ""On an emulator it boots, scripts/instrumented-tests.sh sets font_scale 1.0 after hide_error_dialogs; README and the kenkeep node say so. Probe read 2.0 before and 1.0 after; LargestFontScaleTest 12/12 and ClockAndTotalStylesFitTest 1/1 still run at 2.0; a stub run made no settings calls on a device the script did not boot. No criteria waived.""
+9852:The tokkl-api36 emulator keeps the system font scale at 2.0 across boots. Every instrumented class that does not set its own scale runs at 200%, so a screen test meant for the default size checks the largest size instead. Screenshots taken at the default scale also come out at 200%. SystemFontScale puts back whatever value it read before the test, so once one run leaves 2.0 behind, later runs keep restoring it. The script resets other settings on an emulator it boots, but not the font scale.
+9856:- On 2026-10-18, a disposable probe read `settings get system font_scale` before each of its tests, on three separate boots of tokkl-api36 through the script. Every read gave `2.0`, and the probe put that value back afterwards.
+9858:- scripts/instrumented-tests.sh:171-172 sets `hide_error_dialogs` and closes system dialogs on an emulator the script boots. It sets nothing about the font scale.
+9862:On an emulator it boots, have scripts/instrumented-tests.sh delete the system font scale setting, or set it to 1.0, before Gradle runs, next to the `hide_error_dialogs` step. It keeps changing no setting on a device it did not boot. Tests that need another scale keep setting it themselves through SystemFontScale. Update the kenkeep node on running instrumented tests through the script if it lists what the script sets on the emulator.
+9866:- [ ] After the script boots tokkl-api36, `settings get system font_scale` reads `null` or `1.0` before the first test runs, even when the AVD was left at 2.0.
+9867:- [ ] A device the script did not boot keeps its font scale.
+9897:- On 2026-10-18, a disposable probe on tokkl-api36 clicked the sign-in API token field and typed one character. The ime inset stayed 0 for 10 seconds, in light and in dark. On later boots `settings get secure show_ime_with_hard_keyboard` read 0 before the probe changed it. With the setting at 1, the same steps in light gave a 796 px keyboard inset.
+9900:- scripts/instrumented-tests.sh:171-172 changes `hide_error_dialogs` on an emulator it boots and no keyboard setting.
+9909:- [ ] On an emulator the script boots, focusing a sign-in field opens the soft keyboard.
+9911:- [ ] A device the script did not boot keeps its keyboard setting.
+11113:- The graphical session is a headless sway compositor (`sway-headless.service`) shared by wayvnc (`wayvnc-headless.service`, VNC on the Tailscale address 100.127.76.70:5900 with no VNC login; ufw allows it only from punta-llarga, 100.91.141.70). Agents get `WAYLAND_DISPLAY=wayland-headless` and `DISPLAY=:0` from `t3.service`. Plasma, sddm and KRdp were removed from the boot path on 2026-10-02 (default target is `multi-user.target`). Setup and rollback are in `~/ai-env/headless-desktop.md`.
+11118:- OS setting changes must survive reboots. Use durable configuration or enabled boot services, and verify persistence rather than relying only on runtime changes.
+11120:- Manual disk unlocking after reboot is intentional and accepted; it is not a fault to fix.
+11140:- Runtime is `/usr/local/libexec/slabtop-notify`. Enabled boot timers are `slabtop-email-flush.timer`, `slabtop-health-check.timer`, and `slabtop-maintenance-report.timer`. Delivery retries and health checks run every five minutes; weekly reports run Sunday at 10:00 Europe/Madrid with up to 15 minutes random delay.
+11176:- To upgrade: `~/.local/share/kokoro-tts/venv/bin/python -m pip install -U kokoro-tts`. The venv has no system `ensurepip`; pip was bootstrapped into it.
+11339:- The graphical session is a headless sway compositor (`sway-headless.service`) shared by wayvnc (`wayvnc-headless.service`, VNC on the Tailscale address 100.127.76.70:5900 with no VNC login; ufw allows it only from punta-llarga, 100.91.141.70). Agents get `WAYLAND_DISPLAY=wayland-headless` and `DISPLAY=:0` from `t3.service`. Plasma, sddm and KRdp were removed from the boot path on 2026-10-02 (default target is `multi-user.target`). Setup and rollback are in `~/ai-env/headless-desktop.md`.
+11344:- OS setting changes must survive reboots. Use durable configuration or enabled boot services, and verify persistence rather than relying only on runtime changes.
+11346:- Manual disk unlocking after reboot is intentional and accepted; it is not a fault to fix.
+11366:- Runtime is `/usr/local/libexec/slabtop-notify`. Enabled boot timers are `slabtop-email-flush.timer`, `slabtop-health-check.timer`, and `slabtop-maintenance-report.timer`. Delivery retries and health checks run every five minutes; weekly reports run Sunday at 10:00 Europe/Madrid with up to 15 minutes random delay.
+11402:- To upgrade: `~/.local/share/kokoro-tts/venv/bin/python -m pip install -U kokoro-tts`. The venv has no system `ensurepip`; pip was bootstrapped into it.
+12832:68:  *   since a deadline has to outlast the process and a reboot.
+17521:97:       # open, which the script does only on an emulator it boots itself.
+17529:105:           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -accel on",,
+logs/sift-drain.7oM4Ky/gate-w7/capture-notes.txt,7,0,0,[],0,0,0,,"19:- Full runs below Android 12 on a script-booted emulator go in batches of whole classes (BATCH_TESTS=20), fresh emulator per batch, results under app/build/outputs/androidTest-results/batches/<n>; run fails on count mismatch. Peaks 3.4 GiB (api30), 3.7 GiB (api26).",,
+logs/sift-drain.7oM4Ky/gate-w7/capture-prompt.txt,7,0,0,[],0,0,0,,"23:- Full runs below Android 12 on a script-booted emulator go in batches of whole classes (BATCH_TESTS=20), fresh emulator per batch, results under app/build/outputs/androidTest-results/batches/<n>; run fails on count mismatch. Peaks 3.4 GiB (api30), 3.7 GiB (api26).",,
+logs/sift-drain.7oM4Ky/gate-w7/close/gradle-check.log,7,1,73.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 73.0, ""line"": 90}]",0,0,1,,,,
+logs/sift-drain.7oM4Ky/gate-w7/close/instrumented-api30.log,7,12,1224.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 57.0, ""line"": 111}, {""status"": ""SUCCESSFUL"", ""seconds"": 109.0, ""line"": 214}, {""status"": ""SUCCESSFUL"", ""seconds"": 62.0, ""line"": 317}, {""status"": ""SUCCESSFUL"", ""seconds"": 100.0, ""line"": 420}, {""status"": ""FAILED"", ""seconds"": 59.0, ""line"": 537}, {""status"": ""FAILED"", ""seconds"": 176.0, ""line"": 653}, {""status"": ""SUCCESSFUL"", ""seconds"": 139.0, ""line"": 755}, {""status"": ""SUCCESSFUL"", ""seconds"": 123.0, ""line"": 858}, {""status"": ""SUCCESSFUL"", ""seconds"": 148.0, ""line"": 961}, {""status"": ""SUCCESSFUL"", ""seconds"": 80.0, ""line"": 1064}, {""status"": ""SUCCESSFUL"", ""seconds"": 130.0, ""line"": 1167}, {""status"": ""SUCCESSFUL"", ""seconds"": 41.0, ""line"": 1270}]",0,0,12,"16:Batch 1 of 12: 18 tests in 8 classes on emulator-5554
+114:Batch 1: 18 of its 18 tests ran, 0 failed, 0 skipped
+119:Batch 2 of 12: 16 tests in 5 classes on emulator-5556
+217:Batch 2: 16 of its 16 tests ran, 0 failed, 0 skipped
+222:Batch 3 of 12: 12 tests in 1 classes on emulator-5554
+320:Batch 3: 12 of its 12 tests ran, 0 failed, 0 skipped
+325:Batch 4 of 12: 19 tests in 3 classes on emulator-5554
+423:Batch 4: 19 of its 19 tests ran, 0 failed, 0 skipped
+428:Batch 5 of 12: 15 tests in 3 classes on emulator-5554
+539:Batch 5: 15 of its 15 tests ran, 2 failed, 0 skipped
+544:Batch 6 of 12: 20 tests in 5 classes on emulator-5556
+655:Batch 6: 20 of its 20 tests ran, 1 failed, 0 skipped
+660:Batch 7 of 12: 20 tests in 8 classes on emulator-5554
+758:Batch 7: 20 of its 20 tests ran, 0 failed, 0 skipped
+763:Batch 8 of 12: 17 tests in 6 classes on emulator-5554
+861:Batch 8: 17 of its 17 tests ran, 0 failed, 0 skipped
+866:Batch 9 of 12: 18 tests in 3 classes on emulator-5554
+964:Batch 9: 18 of its 18 tests ran, 0 failed, 0 skipped
+969:Batch 10 of 12: 14 tests in 6 classes on emulator-5554
+1067:Batch 10: 14 of its 14 tests ran, 0 failed, 0 skipped
+1072:Batch 11 of 12: 18 tests in 1 classes on emulator-5554
+1170:Batch 11: 18 of its 18 tests ran, 0 failed, 0 skipped
+1175:Batch 12 of 12: 7 tests in 4 classes on emulator-5554
+1273:Batch 12: 7 of its 7 tests ran, 0 failed, 0 skipped
+1275:scripts/instrumented-tests.sh: batch 5 6 failed.","3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-71224f69.scope
+115:Booting tokkl-api30 as emulator-5556 in tokkl-emulator-5556-d8f57e75.scope
+218:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-8b681cf1.scope
+321:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-6072b37e.scope
+424:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-608555c9.scope
+540:Booting tokkl-api30 as emulator-5556 in tokkl-emulator-5556-f9e4c81e.scope
+656:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-6b1d16a4.scope
+759:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-db7a96fb.scope
+862:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-0c4ff9d7.scope
+965:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-5140e2af.scope
+1068:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-d7aa374f.scope
+1171:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-6ec66108.scope",,
+logs/sift-drain.7oM4Ky/gate-w7/close/instrumented-api36.log,7,1,1589.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 1589.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-21027dfc.scope,,
+logs/sift-drain.7oM4Ky/gate-w7/coverage-prompt.txt,7,0,0,[],0,0,0,,"38:- TKA-0153 [done] 4192a1c Make CI's emulator draw with Vulkan, as the script does on the emulator it boots",,
+logs/sift-drain.7oM4Ky/gate-w7/review-err.txt,7,0,0,[],0,0,0,,"47:- TKA-0153 [done] 4192a1c Make CI's emulator draw with Vulkan, as the script does on the emulator it boots
+384:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+977:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+1265:-  # boots the emulator; the script sees an attached device, so it starts and
+1266:-  # seeds the server and runs the tests without booting one of its own.
+1269:+  # android-emulator-runner boots the emulator; the script sees an attached
+1271:+  # booting one of its own. API 30 runs the code for Android 11 and earlier:
+1298:-      # open, which the script does only on an emulator it boots itself.
+1306:+      # Android 12 and later, as the script does on an emulator it boots
+1402: Boot it without a window and wait until Android finishes starting:",,
+logs/sift-drain.7oM4Ky/gate-w7/review-prompt.txt,7,0,0,[],0,0,0,,"34:- TKA-0153 [done] 4192a1c Make CI's emulator draw with Vulkan, as the script does on the emulator it boots",,
+logs/sift-drain.7oM4Ky/gate-w7/shipped.txt,7,0,0,[],0,0,0,,"26:- TKA-0153 [done] 4192a1c Make CI's emulator draw with Vulkan, as the script does on the emulator it boots",,
+logs/sift-drain.7oM4Ky/prompt-w6-e5.txt,,0,0,[],0,0,0,,"183:PRIOR_WORK: base b105c63 (main). existing-work.sh for font_scale and show_ime_with_hard_keyboard matched only these two tickets. scripts/instrumented-tests.sh sets only hide_error_dialogs on an emulator it boots.
+189:  summary: tokkl-api36 keeps font_scale 2.0 across boots and SystemFontScale restores whatever it read; on an emulator the script boots, reset the font scale to 1.0 (or delete it) before Gradle runs, and leave devices it did not boot alone.
+193:  summary: the soft keyboard never opens on the headless emulator; set show_ime_with_hard_keyboard 1 on an emulator the script boots, and add a sign-in test at the largest font scale that fails when the focused field sits under the keyboard.",,
+logs/sift-drain.7oM4Ky/prompt-w7-h1.txt,,0,0,[],0,0,0,,"182:TEST_SCOPE_HINT: scripts/instrumented-tests.sh (header, boot_emulator, device selection, cleanup traps); README's instrumented-tests section; ~/.android/avd/tokkl-api36.avd/config.ini and hardware-qemu.ini (read; change only through the script or as the ticket directs); the full instrumented suite through the script for the before/after memory measurement; agent's judgment beyond these",,
+logs/sift-drain.7oM4Ky/prompt-w7-h2.txt,,0,0,[],0,0,0,,"190:- TKA-0153: Make CI's emulator draw with Vulkan, as the script does on the emulator it boots",,
+logs/sift-drain.7oM4Ky/review-w1-err.txt,,0,0,[],0,0,0,,"22:- TKA-0001: README Building section for Temurin JDK 21, Android SDK cmdline-tools 23.0, platform-tools, emulator and the android-36 default x86_64 image installed under $HOME, plus headless emulator boot and shutdown (machine install itself is outside the repo).
+88:.agents/skills/kk-bootstrap/SKILL.md
+447:title: Install a JDK and the Android SDK on this machine and boot a headless emulator
+459:resolution: ""TKA-0001: Temurin JDK 21.0.12.1+1, cmdline-tools 23.0, platform-tools 37.0.1, emulator 37.2.12 and android-36 default x86_64 image under $HOME, env in ~/.profile, AVD tokkl-api36 booted headless with KVM; README Building section; waived: post-reboot check needs the owner (disk unlocked by hand).""
+462:# Install a JDK and the Android SDK on this machine and boot a headless emulator
+479:- Set `ANDROID_HOME` and put the JDK and SDK tools on `PATH` from a login-shell file, so both survive a reboot.
+480:- Create an AVD from that system image, boot it headless with KVM, and confirm `adb devices` lists it.
+483:- The disk on this machine is unlocked by hand after a reboot. Ask the owner before rebooting for the persistence check.
+487:- [ ] In a fresh login shell after a reboot, `java -version` and `sdkmanager --list_installed` both work.
+488:- [ ] A headless emulator with a system image at API 26 or later boots with KVM, and `adb devices` lists it.
+850:+Boot it without a window and wait until Android finishes starting:
+853:+emulator -avd tokkl-api36 -no-window -no-audio -no-boot-anim -no-snapshot -accel on &
+854:+adb wait-for-device shell 'while [ ""$(getprop sys.boot_completed)"" != 1 ]; do sleep 1; done'",,0 1 1 0 0
+logs/sift-drain.7oM4Ky/review-w1-prompt.txt,,0,0,[],0,0,0,,"9:- TKA-0001: README Building section for Temurin JDK 21, Android SDK cmdline-tools 23.0, platform-tools, emulator and the android-36 default x86_64 image installed under $HOME, plus headless emulator boot and shutdown (machine install itself is outside the repo).",,
+logs/sift-drain.7oM4Ky/review-w2-err.txt,,0,0,[],0,0,0,,"192:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+243:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+1925:  launcher. Boot it with -no-window -accel on and kill it after.
+1942:Boot it without a window: `emulator -avd tokkl-api36 -no-window -no-audio -no-boot-anim -no-snapshot -accel on`. With `-accel on` the emulator refuses to start when KVM is missing, instead of falling back to slow software emulation. `emulator -accel-check` says whether KVM works.",,0 2
+logs/sift-drain.7oM4Ky/review-w3-err.txt,,0,0,[],0,0,0,,"112:.agents/skills/kk-bootstrap/SKILL.md
+366:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+474:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+984:  launcher. Boot it with -no-window -accel on and kill it after.
+1001:Boot it without a window: `emulator -avd tokkl-api36 -no-window -no-audio -no-boot-anim -no-snapshot -accel on`. With `-accel on` the emulator refuses to start when KVM is missing, instead of falling back to slow software emulation. `emulator -accel-check` says whether KVM works.
+4998:+# attached, the script boots the AVD named by TOKKL_TEST_AVD (default
+5056:+boot_emulator() {
+5061:+    echo ""Booting $AVD as $emulator_serial""
+5062:+    emulator -avd ""$AVD"" -port ""$port"" -no-window -no-audio -no-boot-anim -no-snapshot -accel on >""$log"" 2>&1 &
+5065:+    until [ ""$(adb -s ""$emulator_serial"" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"" = 1 ]; do
+5067:+            echo ""$0: $AVD did not boot. Last emulator output:"" >&2
+5076:+    boot_emulator
+5234:.agents/skills/kk-bootstrap/SKILL.md
+5381:.claude/skills/kk-bootstrap/SKILL.md
+5402:.cursor/skills/kk-bootstrap/SKILL.md",,
+logs/sift-drain.7oM4Ky/review-w4-err.txt,,1,33.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 33.0, ""line"": 1696}]",0,0,0,,"28:- TKA-0099: scripts/instrumented-tests.sh boots the emulator in its own systemd scope (OOMPolicy=continue).
+30:- TKA-0093: script hides error dialogs on an emulator it booted.
+108:.agents/skills/kk-bootstrap/SKILL.md
+218:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+403:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+510:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+747:The tests run on the attached device or on `ANDROID_SERIAL`. With neither, the script boots the AVD named by `TOKKL_TEST_AVD` (default `tokkl-api36`) without a window and kills it at the end. It stops the adb server only when the server was not running before.
+974:  launcher. Boot it with -no-window -accel on and kill it after.
+992:Boot it without a window: `emulator -avd tokkl-api36 -no-window -no-audio -no-boot-anim -no-snapshot -accel on`. With `-accel on` the emulator refuses to start when KVM is missing, instead of falling back to slow software emulation. `emulator -accel-check` says whether KVM works.
+994:A fresh headless boot often leaves a ""System UI isn't responding"" dialog that holds window focus, so injected keys go to the dialog instead of the app. `adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS` closes it, and tests call `DeviceShell.closeSystemDialogs()` in `app/src/androidTest`, which sends the same broadcast.
+1360:title: Boot the harness emulator in its own systemd scope so an OOM kill cannot end the agent session
+1372:resolution: ""TKA-0099: scripts/instrumented-tests.sh boots the emulator with systemd-run --user --scope -p OOMPolicy=continue (PartOf the caller) and -memory 2048, plain child without a user manager; a killed emulator makes the script exit non-zero naming SIGKILL; full suite passes with qemu in its own tokkl-emulator scope; waived: fallback checked locally with the user bus hidden, not in real CI.""
+1375:# Boot the harness emulator in its own systemd scope so an OOM kill cannot end the agent session
+1418:- [ ] CI (no user systemd manager) still boots the emulator through the fallback.
+1463:title: Close the SystemUI ANR dialog after the harness boots the emulator
+1475:resolution: ""TKA-0093: boot_emulator sets hide_error_dialogs=1 and sends CLOSE_SYSTEM_DIALOGS only on an emulator it booted; test-side workaround removed; three fresh-boot runs 32/32 with the ANR dialog never holding focus (was 22 of 53 samples).""
+1478:# Close the SystemUI ANR dialog after the harness boots the emulator
+1486:- The wave 3 e2e specialist saw `dumpsys window` report `mCurrentFocus=Window{… Application Not Responding: com.android.systemui}` after a fresh boot; pressing back by hand with the app focused worked.
+1489:- scripts/instrumented-tests.sh boots the AVD in `boot_emulator` and waits only for `sys.boot_completed`.
+1493:- In `boot_emulator`, after `sys.boot_completed`, dismiss system dialogs once and keep error dialogs from taking focus on the AVD the script boots, for example `settings put global hide_error_dialogs 1` plus a `CLOSE_SYSTEM_DIALOGS` broadcast. Only change settings on an emulator the script booted itself, never on a device that was already attached.
+1498:- [ ] Three consecutive fresh-boot runs of `scripts/instrumented-tests.sh` pass with no test-side dialog workaround.
+1499:- [ ] The script changes no setting on a device it did not boot.
+1668:When the emulator died in the middle of the instrumented tests, `./gradlew connectedDebugAndroidTest` printed BUILD SUCCESSFUL and exited 0 after 1 of the 32 tests. `scripts/instrumented-tests.sh` now turns that into a failure only for an emulator it booted itself, because it notices its own qemu is gone. On a device that was already attached, which is how the CI job from TKA-0019 runs, a crashed or OOM-killed emulator gives a green run that tested almost nothing.
+1672:The script exits non-zero and says why when a target device goes offline or disappears before every test has run, whether the script booted it or not.
+1697:- scripts/instrumented-tests.sh:90-91 sets a non-zero status only when the emulator the script booted (`emulator_pid`) is gone.
+1705:- Keep the existing SIGKILL message for an emulator the script booted.
+1965:+  # boots the emulator; the script sees an attached device, so it starts and
+1966:+  # seeds the server and runs the tests without booting one of its own.
+1997:+      # emulator it boots itself.
+2005:+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -accel on
+2335:-     * Closes system dialogs. On a freshly booted headless emulator a ""System UI isn't
+7407: # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
+7412:+# did not boot. It also stops the adb server if that was not running before.
+7434:+# Reports why the emulator this script booted exited on its own, and forgets
+7474:+    # sync writes the deletion to disk before an emulator this script booted
+7475:+    # is killed below. Without it, the file was back on the next boot.
+7497: boot_emulator() {
+7505:-    echo ""Booting $AVD as $emulator_serial""
+7506:-    emulator -avd ""$AVD"" -port ""$port"" -no-window -no-audio -no-boot-anim -no-snapshot -accel on >""$log"" 2>&1 &
+7513:+    echo ""Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit}""
+7515:+        -no-window -no-audio -no-boot-anim -no-snapshot -accel on >""$log"" 2>&1 &
+7518:     until [ ""$(adb -s ""$emulator_serial"" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"" = 1 ]; do
+7520:-            echo ""$0: $AVD did not boot. Last emulator output:"" >&2
+7522:+            echo ""$0: $AVD did not boot."" >&2
+7526:+            echo ""$0: $AVD did not boot in 5 minutes. Last emulator output:"" >&2
+7532:+    # A fresh headless boot often leaves ""System UI isn't responding"" holding
+7739:- The graphical session is a headless sway compositor (`sway-headless.service`) shared by wayvnc (`wayvnc-headless.service`, VNC on the Tailscale address 100.127.76.70:5900 with no VNC login; ufw allows it only from punta-llarga, 100.91.141.70). Agents get `WAYLAND_DISPLAY=wayland-headless` and `DISPLAY=:0` from `t3.service`. Plasma, sddm and KRdp were removed from the boot path on 2026-10-02 (default target is `multi-user.target`). Setup and rollback are in `~/ai-env/headless-desktop.md`.
+7744:- OS setting changes must survive reboots. Use durable configuration or enabled boot services, and verify persistence rather than relying only on runtime changes.
+7746:- Manual disk unlocking after reboot is intentional and accepted; it is not a fault to fix.
+7766:- Runtime is `/usr/local/libexec/slabtop-notify`. Enabled boot timers are `slabtop-email-flush.timer`, `slabtop-health-check.timer`, and `slabtop-maintenance-report.timer`. Delivery retries and health checks run every five minutes; weekly reports run Sunday at 10:00 Europe/Madrid with up to 15 minutes random delay.
+7802:- To upgrade: `~/.local/share/kokoro-tts/venv/bin/python -m pip install -U kokoro-tts`. The venv has no system `ensurepip`; pip was bootstrapped into it.
+8612:22: # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
+8615:25: # did not boot. It also stops the adb server if that was not running before.
+8654:64: # Reports why the emulator this script booted exited on its own, and forgets
+8679:89:     # sync writes the deletion to disk before an emulator this script booted
+8680:90:     # is killed below. Without it, the file was back on the next boot.
+8715:125: boot_emulator() {
+8727:137:     echo ""Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit}""
+8729:139:         -no-window -no-audio -no-boot-anim -no-snapshot -accel on >""$log"" 2>&1 &
+8732:142:     until [ ""$(adb -s ""$emulator_serial"" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"" = 1 ]; do
+8734:144:             echo ""$0: $AVD did not boot."" >&2
+8738:148:             echo ""$0: $AVD did not boot in 5 minutes. Last emulator output:"" >&2
+8744:154:     # A fresh headless boot often leaves ""System UI isn't responding"" holding
+8753:163:     boot_emulator",,
+logs/sift-drain.7oM4Ky/review-w4-prompt.txt,,0,0,[],0,0,0,,"15:- TKA-0099: scripts/instrumented-tests.sh boots the emulator in its own systemd scope (OOMPolicy=continue).
+17:- TKA-0093: script hides error dialogs on an emulator it booted.",,
+logs/sift-drain.7oM4Ky/review-w5-err.txt,,0,0,[],0,0,0,,"84:.agents/skills/kk-bootstrap/SKILL.md
+330:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+558:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy
+1146:- Persist the deadline on the phone keyed by server origin, with a wall-clock time that survives a reboot or an elapsed-realtime base that does not, and record the choice; restore it when the model starts and clear it once it passes or a sign-in succeeds.
+3551:+ * clock, so a reboot of the phone does not lift it. Holds nothing else. Calls
+3633:+ *   since a deadline has to outlast the process and a reboot.
+7771:    # sync writes the deletion to disk before an emulator this script booted
+7772:    # is killed below. Without it, the file was back on the next boot.
+7807:boot_emulator() {
+7819:    echo ""Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit}""
+7907:- Open [**Test on the plain AOSP API 36 emulator, headless, and stop it afterwards**](nodes/practice-emulator-plain-aosp-image-headless.md) to learn about: AVD tokkl-api36 uses the AOSP image, since ATD images drop SystemUI and the launcher. Boot it with -no-window -accel on and kill it after. #testing #android #emulator #energy",,
+logs/sift-drain.7oM4Ky/shots/emulator.log,,0,0,[],0,0,0,,"15:WARNING      | Feature QuickbootFileBacked is disabled due to stability issues, if you really want that, the environment variable ANDROID_EMU_FORCE_QUICKBOOT_FILE_BACKED need to set to 1
+57:INFO         | Userspace boot properties:
+58:INFO         |   androidboot.boot_devices=pci0000:00/0000:00:03.0 pci0000:00/0000:00:06.0
+59:INFO         |   androidboot.dalvik.vm.heapsize=576m
+60:INFO         |   androidboot.debug.hwui.renderer=skiagl
+61:INFO         |   androidboot.debug.sf.nobootanimation=1
+62:INFO         |   androidboot.hardware=ranchu
+63:INFO         |   androidboot.hardware.gltransport=pipe
+64:INFO         |   androidboot.hardware.vulkan=ranchu
+65:INFO         |   androidboot.logcat=*:V
+66:INFO         |   androidboot.opengles.version=196608
+67:INFO         |   androidboot.qemu=1
+69:INFO         |   androidboot.qemu.avd_name=tokkl-api36
+70:INFO         |   androidboot.qemu.camera_hq_edge_processing=0
+71:INFO         |   androidboot.qemu.camera_protocol_ver=1
+72:INFO         |   androidboot.qemu.cpuvulkan.version=4206592
+73:INFO         |   androidboot.qemu.gltransport.drawFlushInterval=800
+74:INFO         |   androidboot.qemu.gltransport.name=pipe
+75:INFO         |   androidboot.qemu.hwcodec.avcdec=2
+76:INFO         |   androidboot.qemu.hwcodec.hevcdec=2
+77:INFO         |   androidboot.qemu.hwcodec.vpxdec=2
+78:INFO         |   androidboot.qemu.settings.system.screen_off_timeout=2147483647
+79:INFO         |   androidboot.qemu.skin=1080x2400
+80:INFO         |   androidboot.qemu.virtiowifi=1
+81:INFO         |   androidboot.qemu.vsync=60
+82:INFO         |   androidboot.serialno=EMULATOR37X2X12X0
+83:INFO         |   androidboot.vbmeta.digest=d691872627a6e6bd3bceb7dac3a30a498d305819c117349424d61aae8093028f
+84:INFO         |   androidboot.vbmeta.hash_alg=sha256
+85:INFO         |   androidboot.vbmeta.size=6848
+86:INFO         |   androidboot.veritymode=enforcing
+96:INFO         | Boot completed in 43248 ms
+101:INFO         | Saving snapshot 'default_boot' took 0 ms",,
+logs/sift-drain.7oM4Ky/shots-build.log,,1,23.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 23.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-drain.7oM4Ky/tmpclean.uvoy/candidates.txt,,0,0,[],0,0,0,,261:/tmp/compound-mr4-fix-bootstrap.php,,
+logs/sift-drain.7oM4Ky/w7/directions.txt,7,0,0,[],0,0,0,,"7:- Isolate. Each run boots its own read-only instance of the AVD on its own port, sets `ANDROID_SERIAL` for itself instead of using every device adb lists (:134-136, :275-279), and never kills an adb server or emulator it did not start (:71, :113, :120-121).
+29:- Pin a GPU mode in the launch at scripts/instrumented-tests.sh:151-152 that keeps the tests passing with less host memory. Compare `swiftshader_indirect`, which CI uses (.github/workflows/ci.yml:105), with lavapipe, which the last local boot picked (hardware-qemu.ini:75-76).
+30:- Pin a core count with `-cores`. The last boot used 4 (hardware-qemu.ini:2).
+41:- Let scripts/instrumented-tests.sh run against the older AVD through an AVD or API argument, without changing the default of tokkl-api36. `TOKKL_TEST_AVD` already selects the AVD (scripts/instrumented-tests.sh:52); add only what the older image needs to boot and run.
+42:- Each boot keeps its own systemd scope from TKA-0099. Run the older and the API 36 AVDs one after the other, never at the same time, to stay within this machine's memory.",,
+logs/sift-drain.7oM4Ky/w7/h2.txt,7,0,0,[],0,0,0,,"2:TKA-0153|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/ci-and-release/hardening/TKA-0153--ci-emulator-draws-with-vulkan.md|hardening|p3|s|Make CI's emulator draw with Vulkan, as the script does on the emulator it boots",,
+logs/sift-drain.7oM4Ky/w7/n1-int-compile.log,7,1,47.0,"[{""status"": ""FAILED"", ""seconds"": 47.0, ""line"": 19}]",0,0,0,,,,
+logs/sift-drain.7oM4Ky/wave6-plan.txt,,0,0,[],0,0,0,,"12:Prime 2: reserved TKA-0130..0139 (10 rows: formatDuration port, API matrix, emulator memory, concurrent runs, class filter, path prefix, 429 real, user CA, key swap, post-reboot).
+16:E2 landed (feedb41 TKA-0105, 35e4cba TKA-0107, b59cd7a TKA-0108, 3019ab2 TKA-0110, b105c63 TKA-0106). Filed TKA-0141 (font scale 1.0 at boot), TKA-0142 (soft keyboard) wave 6 -> new lane E5 (scripts/instrumented-tests.sh + sign-in test) before E6.",,
+logs/sift-w6-coverage/at-LaunchScreenTest-1.log,6,1,24.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a1536cee.scope,,
+logs/sift-w6-coverage/at-brand-calib.log,6,1,41.0,"[{""status"": ""FAILED"", ""seconds"": 41.0, ""line"": 120}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-941a50f0.scope,,
+logs/sift-w6-coverage/at-full-1.log,6,1,620.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 620.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-beac2be7.scope,,
+logs/sift-w6-coverage/at-hostmismatch-1.log,6,1,21.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 21.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-06958859.scope,,
+logs/sift-w6-coverage/at-largest-1.log,6,1,108.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 108.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-0e61056c.scope,,
+logs/sift-w6-coverage/at-reports-1.log,6,1,53.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 53.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-9af27259.scope,,
+logs/sift-w6-coverage/at-settings-SettingsScreenTest-1.log,6,1,46.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 46.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-690e167d.scope,,
+logs/sift-w6-coverage/at-signin-SignInScreenTest-1.log,6,1,82.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 82.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-df0e3f6e.scope,,
+logs/sift-w6-coverage/at-ui-BrandTest-1.log,6,1,27.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 27.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a32d1c0e.scope,,
+logs/sift-w6-coverage/compile-at-1.log,6,1,29.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 29.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w6-coverage/gradle-check.log,6,1,52.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 52.0, ""line"": 87}]",0,0,1,,,,
+logs/sift-w6-coverage/unit-mutation-1.log,6,1,23.0,"[{""status"": ""FAILED"", ""seconds"": 23.0, ""line"": 79}]",0,0,1,"58:10 tests completed, 5 failed",,,
+logs/sift-w6-coverage/unit-reports-1.log,6,1,47.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 47.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w6-e2/logs/final-assembleDebug-check.log,6,1,31.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 31.0, ""line"": 83}]",0,0,1,,,,
+logs/sift-w6-e2/logs/final-full-instrumented.log,6,1,358.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 358.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6a8e7b9b.scope,,
+logs/sift-w6-e2/logs/p0105-VisualProbe.log,6,1,192.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 192.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-eb47ad95.scope,,
+logs/sift-w6-e2/logs/p0105b-VisualProbe.log,6,0,0,[],0,0,0,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1a5b42d7.scope,,
+logs/sift-w6-e2/logs/p0105c-VisualProbe.log,6,1,181.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 181.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6c0f4a9d.scope,,
+logs/sift-w6-e2/logs/pafter-VisualProbe.log,6,1,209.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 209.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-33cc2acb.scope,,
+logs/sift-w6-e2/logs/probe-before.log,6,1,194.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 194.0, ""line"": 106}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-33b959b6.scope,,
+logs/sift-w6-e2/logs/probe-compile.log,6,1,23.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 23.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w6-e2/logs/probe-compile2.log,6,1,17.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 17.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w6-e2/logs/probe-compile3.log,6,1,17.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 17.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w6-e2/logs/t0105-LargestFontScaleTest.log,6,1,84.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 84.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b6444551.scope,,
+logs/sift-w6-e2/logs/t0105-LicencesScreenTest.log,6,1,35.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 35.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ca4a2341.scope,,
+logs/sift-w6-e2/logs/t0105-SettingsScreenTest.log,6,1,45.0,"[{""status"": ""FAILED"", ""seconds"": 45.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d87ded95.scope,,
+logs/sift-w6-e2/logs/t0105-SignInScreenTest.log,6,1,75.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 75.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-adb0b667.scope,,
+logs/sift-w6-e2/logs/t0105-ThemeSettingsRestartTest.log,6,1,37.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 37.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a516aa13.scope,,
+logs/sift-w6-e2/logs/t0105-VisualProbe#c_signInThreeButtonLight.log,6,1,52.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 52.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-322d039a.scope,,
+logs/sift-w6-e2/logs/t0105-WindowBackgroundTest.log,6,1,36.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 36.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d506e0ab.scope,,
+logs/sift-w6-e2/logs/t0105b-SettingsScreenTest.log,6,1,47.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 47.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-eec78695.scope,,
+logs/sift-w6-e2/logs/t0105b-ThemeSettingsRestartTest.log,6,1,38.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 38.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-068567a4.scope,,
+logs/sift-w6-e2/logs/t0105b-WindowBackgroundTest.log,6,1,35.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 35.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-dbcff0d0.scope,,
+logs/sift-w6-e2/logs/t0106-LicencesScreenTest.log,6,1,36.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 36.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e6cf2bce.scope,,
+logs/sift-w6-e2/logs/t0106-ScreenContentTest.log,6,1,34.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 34.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-5dc7e67d.scope,,
+logs/sift-w6-e2/logs/t0107-CertificatePromptTest.log,6,1,54.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 54.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-aa8ac945.scope,,
+logs/sift-w6-e2/logs/t0107-LargestFontScaleTest.log,6,1,82.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 82.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a7d14a0c.scope,,
+logs/sift-w6-e2/logs/t0107-ScreenContentTest.log,6,1,36.0,"[{""status"": ""FAILED"", ""seconds"": 36.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-06e14349.scope,,
+logs/sift-w6-e2/logs/t0107-WindowBackgroundTest.log,6,1,40.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 40.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-10f52ff7.scope,,
+logs/sift-w6-e2/logs/t0107b-ScreenContentTest.log,6,1,54.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 54.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-4747e4ee.scope,,
+logs/sift-w6-e2/logs/t0108-TypeScaleTest.log,6,1,27.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 27.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-32a05ed3.scope,,
+logs/sift-w6-e2/logs/t0108b-CertificatePromptTest.log,6,1,51.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 51.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-4ddf5ac1.scope,,
+logs/sift-w6-e2/logs/t0108b-ClockAndTotalStylesFitTest.log,6,1,35.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 35.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-54bc45a7.scope,,
+logs/sift-w6-e2/logs/t0108b-LargestFontScaleTest.log,6,1,93.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 93.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-483f750c.scope,,
+logs/sift-w6-e2/logs/t0108neg-TypeScaleTest.log,6,1,35.0,"[{""status"": ""FAILED"", ""seconds"": 35.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c825bd20.scope,,
+logs/sift-w6-e2/logs/t0110-LargestFontScaleTest.log,6,1,83.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 83.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ed03bc8c.scope,,
+logs/sift-w6-e2/logs/t0110-ShapesTest.log,6,1,23.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 23.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-780c6aea.scope,,
+logs/sift-w6-e2/logs/tka0105-compile-lint.log,6,1,34.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 34.0, ""line"": 57}]",0,0,1,,,,
+logs/sift-w6-e2/logs/tka0105-compile-lint2.log,6,1,51.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 51.0, ""line"": 57}]",0,0,1,,,,
+logs/sift-w6-e2/logs/tka0106-compile-lint.log,6,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 57}]",0,0,1,,,,
+logs/sift-w6-e2/logs/tka0107-compile-lint.log,6,1,52.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 52.0, ""line"": 57}]",0,0,1,,,,
+logs/sift-w6-e2/logs/tka0107-compile2.log,6,1,15.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 15.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w6-e2/logs/tka0108-compile-lint-unit.log,6,1,54.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 54.0, ""line"": 75}]",0,0,1,,,,
+logs/sift-w6-e2/logs/tka0110-compile-lint-unit.log,6,1,50.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 50.0, ""line"": 71}]",0,0,1,,,,
+logs/sift-w6-e3/logs/A-baseline-probe.log,6,1,71.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 71.0, ""line"": 106}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-0b1520c1.scope,,
+logs/sift-w6-e3/logs/B-0143-before.log,6,1,23.0,"[{""status"": ""FAILED"", ""seconds"": 23.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-7de2003e.scope,,
+logs/sift-w6-e3/logs/C-0143-LargestFontScaleTest.log,6,1,89.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 89.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-adf1b748.scope,,
+logs/sift-w6-e3/logs/C-0143-SignInScreenTest.log,6,1,76.0,"[{""status"": ""FAILED"", ""seconds"": 76.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-20875c07.scope,,
+logs/sift-w6-e3/logs/D-0143-no-imePadding.log,6,1,35.0,"[{""status"": ""FAILED"", ""seconds"": 35.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-353b9362.scope,,
+logs/sift-w6-e3/logs/E-0143-lintDebug.log,6,1,56.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 56.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e3/logs/F-0115-LicencesScreenTest.log,6,1,33.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 33.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a52f0310.scope,,
+logs/sift-w6-e3/logs/F-0115-probe-settings-r2.log,6,1,22.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 22.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-0cd3c275.scope,,
+logs/sift-w6-e3/logs/F-0115-probe-settings.log,6,0,0,[],0,0,0,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-104e0a54.scope,,
+logs/sift-w6-e3/logs/F-0115-settings-pkg.log,6,1,81.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 81.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-289361f6.scope,,
+logs/sift-w6-e3/logs/G-0115-lintDebug.log,6,1,39.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 39.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e3/logs/H-0116-SignInScreenTest.log,6,1,79.0,"[{""status"": ""FAILED"", ""seconds"": 79.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6950765b.scope,,
+logs/sift-w6-e3/logs/H-0116-probe.log,6,1,52.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 52.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-44185ace.scope,,
+logs/sift-w6-e3/logs/H-0116-settings-pkg.log,6,1,63.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 63.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e0eb6dc7.scope,,
+logs/sift-w6-e3/logs/I-0116-lintDebug-r2.log,6,1,49.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 49.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e3/logs/I-0116-lintDebug.log,6,1,41.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 41.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e3/logs/J-0117-SignInScreenTest.log,6,1,95.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 95.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e783af31.scope,,
+logs/sift-w6-e3/logs/J-0117-probe.log,6,1,28.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 28.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-42b862f0.scope,,
+logs/sift-w6-e3/logs/K-0117-lintDebug.log,6,1,43.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 43.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e3/logs/L-0104-compile.log,6,1,44.0,"[{""status"": ""FAILED"", ""seconds"": 44.0, ""line"": 19}]",0,0,0,,,,
+logs/sift-w6-e3/logs/M-0104-unit.log,6,1,13.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 13.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e3/logs/N-0104-api-pkg.log,6,1,33.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 33.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-8d83ed80.scope,,
+logs/sift-w6-e3/logs/N-0104-signin-pkg.log,6,1,135.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 135.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1606b23e.scope,,
+logs/sift-w6-e3/logs/N-0104-trust-pkg.log,6,1,39.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 39.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6b973b3a.scope,,
+logs/sift-w6-e3/logs/O-0104-probe.log,6,1,65.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 65.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-f7455907.scope,,
+logs/sift-w6-e3/logs/P-0104-lintDebug.log,6,1,49.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 49.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e3/logs/Q-final-licences.log,6,1,33.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 33.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1e671d4f.scope,,
+logs/sift-w6-e3/logs/Q-final-probe-notice.log,6,1,20.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 20.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1bb279bb.scope,,
+logs/sift-w6-e3/logs/Q-final-settings-pkg.log,6,1,65.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 65.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-7a421415.scope,,
+logs/sift-w6-e3/logs/Q-final-trust-pkg.log,6,1,37.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 37.0, ""line"": 123}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-3ff05642.scope,,
+logs/sift-w6-e3/logs/Q-final-ui-theme-pkg.log,6,1,136.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 136.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b244d5c5.scope,,
+logs/sift-w6-e4/logs/0121-build.log,6,1,46.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 46.0, ""line"": 68}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-certhost.log,6,1,31.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 31.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-certprompt.log,6,1,52.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 52.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-largest.log,6,1,95.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 95.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-launch.log,6,1,20.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 20.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-lint.log,6,1,46.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 46.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-screencontent.log,6,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-signin-r2.log,6,1,89.0,"[{""status"": ""FAILED"", ""seconds"": 89.0, ""line"": 114}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-signin-r3.log,6,1,87.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 87.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-signin.log,6,1,76.0,"[{""status"": ""FAILED"", ""seconds"": 76.0, ""line"": 114}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0121-windowbg.log,6,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0144-jvm-mutant.log,6,1,48.0,"[{""status"": ""FAILED"", ""seconds"": 48.0, ""line"": 76}]",0,0,1,"55:7 tests completed, 4 failed",,,
+logs/sift-w6-e4/logs/0144-jvm.log,6,1,61.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 61.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0144-largest-licences.log,6,1,23.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 23.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0144-licences.log,6,1,36.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 36.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0144-lint.log,6,1,41.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 41.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e4/logs/0144-screencontent.log,6,1,49.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 49.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-e4/logs/emulator.log,6,0,0,[],0,0,0,,"15:WARNING      | Feature QuickbootFileBacked is disabled due to stability issues, if you really want that, the environment variable ANDROID_EMU_FORCE_QUICKBOOT_FILE_BACKED need to set to 1
+57:INFO         | Userspace boot properties:
+58:INFO         |   androidboot.boot_devices=pci0000:00/0000:00:03.0 pci0000:00/0000:00:06.0
+59:INFO         |   androidboot.dalvik.vm.heapsize=576m
+60:INFO         |   androidboot.debug.hwui.renderer=skiagl
+61:INFO         |   androidboot.debug.sf.nobootanimation=1
+62:INFO         |   androidboot.hardware=ranchu
+63:INFO         |   androidboot.hardware.gltransport=pipe
+64:INFO         |   androidboot.hardware.vulkan=ranchu
+65:INFO         |   androidboot.logcat=*:V
+66:INFO         |   androidboot.opengles.version=196608
+67:INFO         |   androidboot.qemu=1
+69:INFO         |   androidboot.qemu.avd_name=tokkl-api36
+70:INFO         |   androidboot.qemu.camera_hq_edge_processing=0
+71:INFO         |   androidboot.qemu.camera_protocol_ver=1
+72:INFO         |   androidboot.qemu.cpuvulkan.version=4206592
+73:INFO         |   androidboot.qemu.gltransport.drawFlushInterval=800
+74:INFO         |   androidboot.qemu.gltransport.name=pipe
+75:INFO         |   androidboot.qemu.hwcodec.avcdec=2
+76:INFO         |   androidboot.qemu.hwcodec.hevcdec=2
+77:INFO         |   androidboot.qemu.hwcodec.vpxdec=2
+78:INFO         |   androidboot.qemu.settings.system.screen_off_timeout=2147483647
+79:INFO         |   androidboot.qemu.skin=1080x2400
+80:INFO         |   androidboot.qemu.virtiowifi=1
+81:INFO         |   androidboot.qemu.vsync=60
+82:INFO         |   androidboot.serialno=EMULATOR37X2X12X0
+83:INFO         |   androidboot.vbmeta.digest=d691872627a6e6bd3bceb7dac3a30a498d305819c117349424d61aae8093028f
+84:INFO         |   androidboot.vbmeta.hash_alg=sha256
+85:INFO         |   androidboot.vbmeta.size=6848
+86:INFO         |   androidboot.veritymode=enforcing
+96:INFO         | Boot completed in 30221 ms
+197:INFO         | Saving snapshot 'default_boot' took 1 ms",,
+logs/sift-w6-e4/logs/verify-jvm.log,6,1,11.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 11.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-e5/gradle-compile-lint.log,6,1,47.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 47.0, ""line"": 57}]",0,0,1,,,,
+logs/sift-w6-e5/kk-help.log,6,0,0,[],0,0,0,,"49:  bootstrap [options]               Launch the kk-bootstrap skill in the active
+50:                                    harness (execs `<harness> -p ""/kk-bootstrap
+53:  bootstrap-incremental [options]   [deprecated] Alias for `bootstrap`; will be
+55:                                    bootstrap` instead.
+79:                                    unchanged files out of bootstrap and curate.",,
+logs/sift-w6-e5/r1-baseline-probe.log,6,1,72.0,"[{""status"": ""FAILED"", ""seconds"": 72.0, ""line"": 120}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-33d3490b.scope,,
+logs/sift-w6-e5/r10-diag-resize-padding.log,6,1,36.0,"[{""status"": ""FAILED"", ""seconds"": 36.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d7b39aec.scope,,
+logs/sift-w6-e5/r11-trust.log,6,1,38.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 38.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6831dc0d.scope,,
+logs/sift-w6-e5/r2-0141-signin.log,6,1,123.0,"[{""status"": ""FAILED"", ""seconds"": 123.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-531c4209.scope,,
+logs/sift-w6-e5/r3-0141-theme.log,6,1,148.0,"[{""status"": ""FAILED"", ""seconds"": 148.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2d2c1574.scope,,
+logs/sift-w6-e5/r4-0142-signin.log,6,1,122.0,"[{""status"": ""FAILED"", ""seconds"": 122.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-324fc119.scope,,
+logs/sift-w6-e5/r5-0142-theme.log,6,1,140.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 140.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ccb8c470.scope,,
+logs/sift-w6-e5/r6-0142-mutation.log,6,1,36.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 36.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-dca92934.scope,,
+logs/sift-w6-e5/r7-diag-mutation.log,6,1,33.0,"[{""status"": ""FAILED"", ""seconds"": 33.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d6b832e6.scope,,
+logs/sift-w6-e5/r8-diag-unmutated.log,6,1,35.0,"[{""status"": ""FAILED"", ""seconds"": 35.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-45fe355e.scope,,
+logs/sift-w6-e5/r9-mutation-resize-nopadding.log,6,1,35.0,"[{""status"": ""FAILED"", ""seconds"": 35.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-5cae1cb3.scope,,
+logs/sift-w6-e5/stub/C-boots-emulator.log,6,0,0,[],0,0,0,,"4:emulator -avd tokkl-api36 -port 5554 -memory 2048 -no-window -no-audio -no-boot-anim -no-snapshot -accel on
+5:adb -s emulator-5554 shell getprop sys.boot_completed",,
+logs/sift-w6-e6/logs/compile-androidtest-1.log,6,1,17.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 17.0, ""line"": 45}]",0,0,1,,,,
+logs/sift-w6-e6/logs/compile-androidtest-2.log,6,1,17.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 17.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w6-e6/logs/run1-baseline.log,6,1,121.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 121.0, ""line"": 106}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c5c37305.scope,,0
+logs/sift-w6-e6/logs/run2-tka0146.log,6,1,21.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 21.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c795aca2.scope,,0
+logs/sift-w6-e6/logs/run3-tka0146-after.log,6,1,20.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 20.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6cb24846.scope,,0
+logs/sift-w6-e6/logs/run4-screenshots-record.log,6,1,169.0,"[{""status"": ""FAILED"", ""seconds"": 169.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a5ac94f3.scope,,1
+logs/sift-w6-e6/logs/run5-screenshots-record.log,6,1,164.0,"[{""status"": ""FAILED"", ""seconds"": 164.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-9f90d7a8.scope,,1
+logs/sift-w6-e6/logs/run6-screenshots-strict.log,6,1,165.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 165.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1ff8dd28.scope,,0
+logs/sift-w6-e6/logs/run7-padding-8dp.log,6,1,67.0,"[{""status"": ""FAILED"", ""seconds"": 67.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2b16edbc.scope,,1
+logs/sift-w6-e6/logs/run8-screenshots-final.log,6,1,177.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 177.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c275e64a.scope,,0
+logs/sift-w6-fix/after-foreground.log,6,1,38.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 38.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e4985152.scope,,
+logs/sift-w6-fix/baseline-foreground.log,6,1,100.0,"[{""status"": ""FAILED"", ""seconds"": 100.0, ""line"": 120}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a77df7e2.scope,,
+logs/sift-w6-fix/baseline2-foreground.log,6,1,61.0,"[{""status"": ""FAILED"", ""seconds"": 61.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-04dc8352.scope,,
+logs/sift-w6-fix/baseline3-foreground.log,6,1,93.0,"[{""status"": ""FAILED"", ""seconds"": 93.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a08aedde.scope,,
+logs/sift-w6-fix/compile-androidtest-baseline.log,6,1,44.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 44.0, ""line"": 45}]",0,0,1,,,,
+logs/sift-w6-fix/compile-fix.log,6,1,29.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 29.0, ""line"": 49}]",0,0,1,,,,
+logs/sift-w6-fix/lint.log,6,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-fix/screenshots.log,6,1,175.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 175.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d306e8db.scope,,
+logs/sift-w6-reports/logs/compile-5.log,6,1,29.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 29.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w6-reports/logs/it-LargestFontScaleTest-2.log,6,1,93.0,"[{""status"": ""FAILED"", ""seconds"": 93.0, ""line"": 114}]",0,0,1,,,,
+logs/sift-w6-reports/logs/it-LaunchScreenTest-3.log,6,1,20.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 20.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-reports/logs/it-LaunchScreenTest.log,6,1,20.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 20.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-reports/logs/it-licences.LicencesScreenTest-3.log,6,1,33.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 33.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-reports/logs/it-licences.LicencesScreenTest.log,6,1,33.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 33.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-reports/logs/it-scratch-1.log,6,1,97.0,"[{""status"": ""FAILED"", ""seconds"": 97.0, ""line"": 117}]",0,0,1,,,,1
+logs/sift-w6-reports/logs/it-scratch-2.log,6,1,112.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 112.0, ""line"": 103}]",0,0,1,,,,0
+logs/sift-w6-reports/logs/it-ui.theme.LargestFontScaleTest-3.log,6,1,92.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 92.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w6-reports/logs/it-ui.theme.LargestFontScaleTest.log,6,1,91.0,"[{""status"": ""FAILED"", ""seconds"": 91.0, ""line"": 114}]",0,0,1,,,,
+logs/sift-w6-reports/logs/jvm-1.log,6,1,31.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 31.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w6-reports/logs/jvm-2.log,6,1,26.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 26.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-reports/logs/jvm-3.log,6,1,15.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 15.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w6-reports/logs/lint-1.log,6,1,51.0,"[{""status"": ""FAILED"", ""seconds"": 51.0, ""line"": 96}]",0,0,1,,,,
+logs/sift-w6-reports/logs/lint-2.log,6,1,58.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 58.0, ""line"": 53}]",0,0,1,,,,
+logs/sift-w6-reports/logs/lint-3.log,6,1,44.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 44.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-c1/0169-compile-test.log,7,1,16.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 16.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-c1/0169-compile.log,7,1,38.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 38.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-c1/0169-compile2.log,7,1,38.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 38.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-c1/0169-compile3.log,7,1,18.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 18.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-c1/0169-landscape-baseline.log,7,1,27.0,"[{""status"": ""FAILED"", ""seconds"": 27.0, ""line"": 118}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b72a66c8.scope,,
+logs/sift-w7-c1/0169-lint-unit.log,7,1,168.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 168.0, ""line"": 64}]",0,0,1,,,,
+logs/sift-w7-c1/0169-run1.log,7,1,385.0,"[{""status"": ""FAILED"", ""seconds"": 385.0, ""line"": 119}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-eb4c43c8.scope,,
+logs/sift-w7-c1/0169-run2.log,7,1,355.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 355.0, ""line"": 107}]",31,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-acc8da99.scope,,
+logs/sift-w7-c1/0169-scratch-compile.log,7,1,24.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-c1/0169-scratch-run.log,7,1,37.0,"[{""status"": ""FAILED"", ""seconds"": 37.0, ""line"": 120}]",123,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c91313de.scope,,
+logs/sift-w7-c1/0170-lint.log,7,1,68.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 68.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-c1/0170-screenshots-run1.log,7,1,236.0,"[{""status"": ""FAILED"", ""seconds"": 236.0, ""line"": 123}]",13,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-cb7e4fe5.scope,,
+logs/sift-w7-c1/0170-screenshots-run2.log,7,1,233.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 233.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-34dc5a7d.scope,,
+logs/sift-w7-c1/0170-unit-calendar.log,7,1,73.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 73.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-capture/ci-instrumented-2211a7f.log,7,1,1358.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 1358.0, ""line"": 8134}]",0,0,1,"8240:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6423566Z               Time: 
+8244:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6425638Z               Time: 1239 ms
+8251:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6428129Z               Time: 
+8255:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6429631Z               Time: 
+8262:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6431524Z               Time: 
+8266:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6433110Z               Time: 4921 ms
+8273:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6434889Z               Time: 
+8277:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6436402Z               Time: 
+8284:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6438505Z               Time: 
+8288:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6440159Z               Time: 
+8295:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6442023Z               Time: 
+8299:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6443585Z               Time: 
+8306:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6445432Z               Time: 
+8310:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:33.6447306Z               Time: 5331 ms","1269:instrumented-tests	UNKNOWN STEP	2026-10-19T06:21:51.9741198Z   emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -accel on
+1281:instrumented-tests	UNKNOWN STEP	2026-10-19T06:21:51.9744885Z   emulator-boot-timeout: 600
+1312:instrumented-tests	UNKNOWN STEP	2026-10-19T06:21:52.0393068Z Emulator boot timeout: 600
+1314:instrumented-tests	UNKNOWN STEP	2026-10-19T06:21:52.0394231Z emulator options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -accel on
+1349:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.0346532Z [command]/usr/bin/sh -c \/usr/local/lib/android/sdk/emulator/emulator -port 5554 -avd test -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -accel on &
+1377:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.1095741Z WARNING      | Feature QuickbootFileBacked is disabled due to stability issues, if you really want that, the environment variable ANDROID_EMU_FORCE_QUICKBOOT_FILE_BACKED need to set to 1
+1419:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7031670Z INFO         | Userspace boot properties:
+1420:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7032706Z INFO         |   androidboot.boot_devices=pci0000:00/0000:00:03.0 pci0000:00/0000:00:06.0
+1421:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7033730Z INFO         |   androidboot.dalvik.vm.heapsize=576m
+1422:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7034289Z INFO         |   androidboot.debug.hwui.renderer=skiagl
+1423:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7035010Z INFO         |   androidboot.debug.sf.nobootanimation=1
+1424:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7035507Z INFO         |   androidboot.hardware=ranchu
+1425:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7035988Z INFO         |   androidboot.hardware.gltransport=pipe
+1426:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7036564Z INFO         |   androidboot.hardware.vulkan=ranchu
+1427:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7037474Z INFO         |   androidboot.logcat=*:V
+1428:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7038070Z INFO         |   androidboot.opengles.version=196608
+1429:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7038540Z INFO         |   androidboot.qemu=1
+1431:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7047288Z INFO         |   androidboot.qemu.avd_name=test
+1432:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7047860Z INFO         |   androidboot.qemu.camera_hq_edge_processing=0
+1433:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7048466Z INFO         |   androidboot.qemu.camera_protocol_ver=1
+1434:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7049011Z INFO         |   androidboot.qemu.cpuvulkan.version=4206592
+1435:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7049613Z INFO         |   androidboot.qemu.gltransport.drawFlushInterval=800
+1436:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7050260Z INFO         |   androidboot.qemu.gltransport.name=pipe
+1437:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7051081Z INFO         |   androidboot.qemu.hwcodec.avcdec=2
+1438:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7051654Z INFO         |   androidboot.qemu.hwcodec.hevcdec=2
+1439:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7052154Z INFO         |   androidboot.qemu.hwcodec.vpxdec=2
+1440:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7052749Z INFO         |   androidboot.qemu.settings.system.screen_off_timeout=2147483647
+1441:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7053402Z INFO         |   androidboot.qemu.skin=1080x2400
+1442:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7053918Z INFO         |   androidboot.qemu.virtiowifi=1
+1443:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7054482Z INFO         |   androidboot.qemu.vsync=60
+1444:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7054974Z INFO         |   androidboot.serialno=EMULATOR37X2X12X0
+1445:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7055693Z INFO         |   androidboot.vbmeta.digest=d691872627a6e6bd3bceb7dac3a30a498d305819c117349424d61aae8093028f
+1446:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7056448Z INFO         |   androidboot.vbmeta.hash_alg=sha256
+1447:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7057470Z INFO         |   androidboot.vbmeta.size=6848
+1448:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:26.7058004Z INFO         |   androidboot.veritymode=enforcing
+1460:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:36.0418703Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1465:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:38.1407362Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1468:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:40.1501824Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1471:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:42.1597721Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1474:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:44.1697474Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1477:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:46.1782676Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1480:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:48.1888948Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1482:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:50.2730886Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1484:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:52.3069471Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1486:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:54.3369108Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1488:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:56.3738906Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1490:instrumented-tests	UNKNOWN STEP	2026-10-19T06:22:58.4332319Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1492:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:00.4640011Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1494:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:02.5071576Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1496:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:04.5441952Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1498:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:06.5936293Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1500:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:08.8160215Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1502:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:10.9849059Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1504:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:13.2230920Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1506:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:15.3648929Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1508:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:17.4915546Z [command]/usr/local/lib/android/sdk/platform-tools/adb -s emulator-5554 shell getprop sys.boot_completed
+1510:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:17.8220753Z Emulator booted.
+1512:instrumented-tests	UNKNOWN STEP	2026-10-19T06:23:18.0868800Z INFO         | Boot completed in 51997 ms
+8145:instrumented-tests	UNKNOWN STEP	2026-10-19T06:46:18.4446395Z INFO         | Saving snapshot 'default_boot' took 0 ms",,
+logs/sift-w7-capture/doctor.log,7,0,0,[],0,0,0,,"8:✓ Claude skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+11:✓ Cursor skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract
+14:✓ Codex skills installed: kk-add, kk-bootstrap, kk-curate, kk-migrate, kk-session-extract",,
+logs/sift-w7-coverage/check.log,7,1,68.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 68.0, ""line"": 87}]",0,0,1,,,,0
+logs/sift-w7-coverage/compile-at-1.log,7,1,23.0,"[{""status"": ""FAILED"", ""seconds"": 23.0, ""line"": 61}]",0,0,1,,,,1
+logs/sift-w7-coverage/compile-at-2.log,7,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 43}]",0,0,1,,,,0
+logs/sift-w7-coverage/compile-at-3.log,7,1,18.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 18.0, ""line"": 43}]",0,0,1,,,,0
+logs/sift-w7-coverage/compile-at-4.log,7,1,29.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 29.0, ""line"": 43}]",0,0,1,,,,0
+logs/sift-w7-coverage/compile-at-5.log,7,1,45.0,"[{""status"": ""FAILED"", ""seconds"": 45.0, ""line"": 67}]",0,0,1,,,,1
+logs/sift-w7-coverage/compile-at-6.log,7,1,61.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 61.0, ""line"": 43}]",0,0,1,,,,0
+logs/sift-w7-coverage/compile-at-7.log,7,1,17.0,"[{""status"": ""FAILED"", ""seconds"": 17.0, ""line"": 65}]",0,0,1,,,,1
+logs/sift-w7-coverage/compile-at-8.log,7,1,18.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 18.0, ""line"": 43}]",0,0,1,,,,0
+logs/sift-w7-coverage/dev-1.log,7,1,91.0,"[{""status"": ""FAILED"", ""seconds"": 91.0, ""line"": 122}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-7faacd31.scope,,1
+logs/sift-w7-coverage/dev-2.log,7,1,248.0,"[{""status"": ""FAILED"", ""seconds"": 248.0, ""line"": 119}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-618a0662.scope,,1
+logs/sift-w7-coverage/dev-3.log,7,1,580.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 580.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e195b7b2.scope,,0
+logs/sift-w7-coverage/full-api36.log,7,1,1441.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 1441.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-553ceb62.scope,,0
+logs/sift-w7-coverage/jvm-1.log,7,1,70.0,"[{""status"": ""FAILED"", ""seconds"": 70.0, ""line"": 72}]",0,0,1,"51:68 tests completed, 1 failed",,,1
+logs/sift-w7-coverage/jvm-2.log,7,1,27.0,"[{""status"": ""FAILED"", ""seconds"": 27.0, ""line"": 67}]",0,0,1,"46:12 tests completed, 1 failed",,,1
+logs/sift-w7-coverage/jvm-3.log,7,1,25.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 25.0, ""line"": 50}]",0,0,1,,,,0
+logs/sift-w7-coverage/jvm-4.log,7,1,60.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 60.0, ""line"": 58}]",0,0,1,,,,0
+logs/sift-w7-coverage/jvm-full-1.log,7,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 50}]",0,0,1,,,,0
+logs/sift-w7-coverage/lint-2.log,7,1,42.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 42.0, ""line"": 57}]",0,0,1,,,,0
+logs/sift-w7-coverage/shots-1.log,7,1,337.0,"[{""status"": ""FAILED"", ""seconds"": 337.0, ""line"": 118}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ce2ac382.scope,,1
+logs/sift-w7-coverage/shots-2.log,7,1,292.0,"[{""status"": ""FAILED"", ""seconds"": 292.0, ""line"": 118}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-40a45c91.scope,,1
+logs/sift-w7-d1/0118-lint.log,7,1,45.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 45.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-d1/0118-ui-run1.log,7,1,282.0,"[{""status"": ""FAILED"", ""seconds"": 282.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e16544a0.scope,,1
+logs/sift-w7-d1/0118-v-licences.log,7,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-600ad949.scope,,0
+logs/sift-w7-d1/0118-v-reports.log,7,1,67.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 67.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-8a91c1dc.scope,,0
+logs/sift-w7-d1/0118-v-screenshot.log,7,1,163.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 163.0, ""line"": 105}]",28,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-62eecfc5.scope,,0
+logs/sift-w7-d1/0118-v-settings.log,7,1,58.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 58.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b0029b57.scope,,0
+logs/sift-w7-d1/0119-a-ui.log,7,1,273.0,"[{""status"": ""FAILED"", ""seconds"": 273.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-96045bed.scope,,1
+logs/sift-w7-d1/0119-lint.log,7,1,53.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 53.0, ""line"": 46}]",0,0,1,,,,
+logs/sift-w7-d1/0119-v-licences.log,7,1,33.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 33.0, ""line"": 105}]",70,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ecb4d15d.scope,,0
+logs/sift-w7-d1/0119-v-screenshot.log,7,1,169.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 169.0, ""line"": 105}]",46,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-235e4560.scope,,0
+logs/sift-w7-d1/0120-a-ui.log,7,1,264.0,"[{""status"": ""FAILED"", ""seconds"": 264.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-67f19990.scope,,1
+logs/sift-w7-d1/0120-compile.log,7,1,23.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 23.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-d1/0120-unit-lint.log,7,1,53.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 53.0, ""line"": 68}]",0,0,1,,,,
+logs/sift-w7-d1/0120-v-screenshot.log,7,1,138.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 138.0, ""line"": 105}]",130,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ecca33ee.scope,,0
+logs/sift-w7-d1/0120-v-signin.log,7,1,107.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 107.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-114ae4ab.scope,,0
+logs/sift-w7-d1/0122-b-FailureCaptureScratch.log,7,1,32.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 32.0, ""line"": 106}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-cf3b1c08.scope,,0
+logs/sift-w7-d1/0122-compile.log,7,1,25.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 25.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-d1/0122-unit-lint.log,7,1,61.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 61.0, ""line"": 64}]",0,0,1,,,,
+logs/sift-w7-d1/0122-v-signin.log,7,1,129.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 129.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-df0ca141.scope,,0
+logs/sift-w7-d1/0122-v-trust.log,7,1,39.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 39.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ad717a4f.scope,,0
+logs/sift-w7-d1/0149-a-LargestFontScaleTest#emailErrorFits.log,7,1,32.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 32.0, ""line"": 105}]",23,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d002366e.scope,,0
+logs/sift-w7-d1/0149-a-SignInScreenTest#emailErrorLeavesTheFieldsBelowInPlace.log,7,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 105}]",91,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-556d7b87.scope,,0
+logs/sift-w7-d1/0149-b-ui.log,7,1,271.0,"[{""status"": ""FAILED"", ""seconds"": 271.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a3badf1d.scope,,1
+logs/sift-w7-d1/0149-base-LargestFontScaleTest#emailErrorFits.log,7,1,33.0,"[{""status"": ""FAILED"", ""seconds"": 33.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1f2ed50a.scope,,1
+logs/sift-w7-d1/0149-compile.log,7,1,22.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 22.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-d1/0149-lint.log,7,1,57.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 57.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-d1/0149-v-screenshot.log,7,1,144.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 144.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e8f91b9a.scope,,0
+logs/sift-w7-d1/0149-v-signin.log,7,1,132.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 132.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-15d2cc25.scope,,0
+logs/sift-w7-d1/0152-brand-capture-before.log,7,1,47.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 47.0, ""line"": 106}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-61332c00.scope,,0
+logs/sift-w7-d1/0152-halo-diag-after.log,7,1,27.0,"[{""status"": ""FAILED"", ""seconds"": 27.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-0a9b44a7.scope,,1
+logs/sift-w7-d1/0152-lint-after.log,7,1,56.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 56.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-d1/0152-lint-before.log,7,1,81.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 81.0, ""line"": 50}]",0,0,1,,,,0
+logs/sift-w7-d1/0152-ui-run1.log,7,1,181.0,"[{""status"": ""FAILED"", ""seconds"": 181.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-4978110e.scope,,1
+logs/sift-w7-d1/0152-ui-run2.log,7,1,170.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 170.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c5a3664c.scope,,0
+logs/sift-w7-d1/final-LaunchScreenTest.log,7,1,22.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 22.0, ""line"": 105}]",27,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-5d722257.scope,,0
+logs/sift-w7-d1/final-LauncherIconTest.log,7,1,17.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 17.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c0f3c0f0.scope,,0
+logs/sift-w7-d2/final-lint-unit.log,7,1,64.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 64.0, ""line"": 64}]",0,0,1,,,,
+logs/sift-w7-d2/lint-0158.log,7,1,73.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 73.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-d2/lint-unit-0124.log,7,1,81.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 81.0, ""line"": 69}]",0,0,1,,,,
+logs/sift-w7-d2/run1-baseline.log,7,1,29.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 29.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1ab36689.scope,,0
+logs/sift-w7-d2/run10-keyboard-diag.log,7,1,99.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 99.0, ""line"": 106}]",106,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-5ad0dfe7.scope,,0
+logs/sift-w7-d2/run11-0124-verify.log,7,1,399.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 399.0, ""line"": 107}]",103,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b3291871.scope,,0
+logs/sift-w7-d2/run12-final-union.log,7,1,298.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 298.0, ""line"": 107}]",4,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-5d6770c1.scope,,0
+logs/sift-w7-d2/run2-0158.log,7,1,145.0,"[{""status"": ""FAILED"", ""seconds"": 145.0, ""line"": 119}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-cd1fd306.scope,,1
+logs/sift-w7-d2/run3-widths.log,7,1,32.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 32.0, ""line"": 107}]",101,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-64af206d.scope,,0
+logs/sift-w7-d2/run4-0158-record.log,7,1,76.0,"[{""status"": ""FAILED"", ""seconds"": 76.0, ""line"": 119}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-977c39e2.scope,,1
+logs/sift-w7-d2/run5-0158-verify.log,7,1,127.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 127.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-5012ad2b.scope,,0
+logs/sift-w7-d2/run6-0124-record.log,7,1,275.0,"[{""status"": ""FAILED"", ""seconds"": 275.0, ""line"": 121}]",105,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6b2b29d0.scope,,1
+logs/sift-w7-d2/run7-keyboard-new.log,7,1,80.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 80.0, ""line"": 106}]",115,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-56828b6d.scope,,0
+logs/sift-w7-d2/run8-keyboard-base.log,7,1,95.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 95.0, ""line"": 106}]",190,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c5288179.scope,,0
+logs/sift-w7-d2/run9-keyboard-diag.log,7,1,75.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 75.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-42575bad.scope,,0
+logs/sift-w7-d3/gradle-hold-compile.log,7,1,40.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 40.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-d3/gradle-hold-compile2.log,7,1,15.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 15.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-d3/gradle-lint-compile.log,7,1,160.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 160.0, ""line"": 57}]",0,0,1,,,,
+logs/sift-w7-d3/it-hold-api36.log,7,1,239.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 239.0, ""line"": 103}]",0,0,1,,2:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-422ccc50.scope,,0
+logs/sift-w7-d3/it-hold2-api36.log,7,1,90.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 90.0, ""line"": 105}]",778,1,1,,4:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d75f736d.scope,,0
+logs/sift-w7-d3/it-launcher-api30.log,7,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 106}]",5,1,1,,4:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-e70939ad.scope,,0
+logs/sift-w7-d3/it-launcher-api36.log,7,1,52.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 52.0, ""line"": 107}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e57e9631.scope,,0
+logs/sift-w7-d4/gradle-compile-final.log,7,1,34.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 34.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-d4/gradle-compile-lint.log,7,1,227.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 227.0, ""line"": 57}]",0,0,1,,,,
+logs/sift-w7-d4/gradle-lint-final.log,7,1,85.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 85.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-d4/it-mutation.log,7,1,43.0,"[{""status"": ""FAILED"", ""seconds"": 43.0, ""line"": 123}]",46,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-fc711963.scope,,
+logs/sift-w7-d4/it-run-b.log,7,1,369.0,"[{""status"": ""FAILED"", ""seconds"": 369.0, ""line"": 121}]",43,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-0e7d2e41.scope,,
+logs/sift-w7-d4/it-run-c.log,7,1,180.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 180.0, ""line"": 107}]",179,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2207e298.scope,,
+logs/sift-w7-h1/demo-run1.log,7,1,27.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 27.0, ""line"": 103}]",0,0,1,,3:04:13:45 Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-56831837.scope,,
+logs/sift-w7-h1/demo-run2.log,7,1,27.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 27.0, ""line"": 105}]",48,1,1,,5:04:14:33 Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-027a7b8d.scope,,
+logs/sift-w7-h1/diag-run1.log,7,1,46.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 46.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w7-h1/diag-run2.log,7,1,45.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 45.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w7-h1/run-A.log,7,1,816.0,"[{""status"": ""FAILED"", ""seconds"": 816.0, ""line"": 133}]",0,0,1,,"3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-3bee1d41.scope
+135:scripts/instrumented-tests.sh: line 334: 1329345 Killed                  ""${launch[@]}"" emulator -avd ""$AVD"" -port ""$port"" -memory 2048 -no-window -no-audio -no-boot-anim -no-snapshot -accel on > ""$log"" 2>&1",,
+logs/sift-w7-h1/run-B.log,7,1,268.0,"[{""status"": ""FAILED"", ""seconds"": 268.0, ""line"": 130}]",0,0,1,,"3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-793d1738.scope
+132:scripts/instrumented-tests.sh: line 334: 1349026 Killed                  ""${launch[@]}"" emulator -avd ""$AVD"" -port ""$port"" -memory 2048 ${TOKKL_EXP_ARGS:-} -no-window -no-audio -no-boot-anim -no-snapshot -accel on > ""$log"" 2>&1",,
+logs/sift-w7-h1/run-C.log,7,1,516.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 516.0, ""line"": 122}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-3e19db71.scope,,
+logs/sift-w7-h1/run-F.log,7,1,512.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 512.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-59a7dc0b.scope,,
+logs/sift-w7-h1/vk-screens.log,7,1,137.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 137.0, ""line"": 100}]",0,0,1,,,,
+logs/sift-w7-h2/compile-0135.log,7,1,24.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 49}]",0,0,1,,,,
+logs/sift-w7-h2/compile-0136.log,7,1,16.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 16.0, ""line"": 46}]",0,0,1,,,,
+logs/sift-w7-h2/fixed-class.log,7,1,18.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 18.0, ""line"": 106}]",4,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e52fe3b0.scope,,
+logs/sift-w7-h2/fixed-package.log,7,1,23.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 23.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e5b7456d.scope,,
+logs/sift-w7-h2/prebuild.log,7,1,82.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 82.0, ""line"": 98}]",0,0,1,,,,
+logs/sift-w7-h2/repro-class.log,7,1,36.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 36.0, ""line"": 105}]",2,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2ad085eb.scope,,
+logs/sift-w7-h2/repro-package.log,7,1,19.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 19.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2d627dc9.scope,,
+logs/sift-w7-h2/run-0135.log,7,1,111.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 111.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-806a05e6.scope,,
+logs/sift-w7-h2/run-0136.log,7,1,103.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 103.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b89836d1.scope,,
+logs/sift-w7-h2/run-verify.log,7,1,128.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 128.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b490d50d.scope,,
+logs/sift-w7-h2/unit-0135.log,7,1,11.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 11.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-h2/unit-verify.log,7,1,17.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 17.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-h3/build-baseline.log,7,1,85.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 85.0, ""line"": 98}]",0,0,1,,,,
+logs/sift-w7-h3/check26.log,7,1,139.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 139.0, ""line"": 107}]",22,1,1,,5:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-d795638b.scope,,
+logs/sift-w7-h3/check26.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/full30a.log,7,1,1039.0,"[{""status"": ""FAILED"", ""seconds"": 1039.0, ""line"": 119}]",0,0,1,,3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-47cbe907.scope,,
+logs/sift-w7-h3/full30a.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/full30b.log,7,1,926.0,"[{""status"": ""FAILED"", ""seconds"": 926.0, ""line"": 121}]",23,1,1,,5:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-25fa8e9e.scope,,
+logs/sift-w7-h3/full30b.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/full30c.log,7,1,481.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 481.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-661cc0a1.scope,,
+logs/sift-w7-h3/full30c.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/full36a.log,7,1,774.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 774.0, ""line"": 106}]",257,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-f0b20317.scope,,
+logs/sift-w7-h3/full36a.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/hang30.log,7,1,1143.0,"[{""status"": ""FAILED"", ""seconds"": 1143.0, ""line"": 121}]",39,1,1,,5:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-66e0d81f.scope,,
+logs/sift-w7-h3/hang30.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/int-build.log,7,1,76.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 76.0, ""line"": 98}]",0,0,1,,,,
+logs/sift-w7-h3/int30.log,7,1,494.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 494.0, ""line"": 107}]",211,1,1,,5:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-7ad88c9d.scope,,
+logs/sift-w7-h3/int30.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/int36.log,7,1,511.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 511.0, ""line"": 126}]",138,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d7e15112.scope,,
+logs/sift-w7-h3/int36.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/lint.log,7,1,65.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 65.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-h3/probe26a.log,7,1,122.0,"[{""status"": ""FAILED"", ""seconds"": 122.0, ""line"": 120}]",0,0,1,,3:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-fe34e1f9.scope,,
+logs/sift-w7-h3/probe26a.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe28a.log,7,1,31.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 31.0, ""line"": 108}]",14,1,1,,5:Booting tokkl-api28 as emulator-5554 in tokkl-emulator-5554-dd8d2ea6.scope,,
+logs/sift-w7-h3/probe28a.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe28b.log,7,1,80.0,"[{""status"": ""FAILED"", ""seconds"": 80.0, ""line"": 122}]",170,1,1,,5:Booting tokkl-api28 as emulator-5554 in tokkl-emulator-5554-1d96bc3c.scope,,
+logs/sift-w7-h3/probe28b.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe28c.log,7,1,173.0,"[{""status"": ""FAILED"", ""seconds"": 173.0, ""line"": 136}]",123,1,1,,"5:Booting tokkl-api28 as emulator-5554 in tokkl-emulator-5554-2a7af66d.scope
+138:scripts/instrumented-tests.sh: line 472: 1731378 Segmentation fault      ""${launch[@]}"" emulator -avd ""$AVD"" -port ""$port"" -memory 2560 -cores 4 -gpu lavapipe -no-window -no-audio -no-boot-anim -no-snapshot -accel on {lock_fd}>&- > ""$log"" 2>&1
+158:INFO         | Boot completed in 12809 ms",,
+logs/sift-w7-h3/probe28c.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe28d.log,7,1,155.0,"[{""status"": ""FAILED"", ""seconds"": 155.0, ""line"": 136}]",28,1,1,,"5:Booting tokkl-api28 as emulator-5554 in tokkl-emulator-5554-16447255.scope
+138:scripts/instrumented-tests.sh: line 472: 1752831 Killed                  ""${launch[@]}"" emulator -avd ""$AVD"" -port ""$port"" -memory 2560 -cores 4 -gpu ""${TOKKL_TEST_GPU:-lavapipe}"" -no-window -no-audio -no-boot-anim -no-snapshot -accel on {lock_fd}>&- > ""$log"" 2>&1",,
+logs/sift-w7-h3/probe28d.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe28e.log,7,1,110.0,"[{""status"": ""FAILED"", ""seconds"": 110.0, ""line"": 134}]",0,0,1,,"3:Booting tokkl-api28 as emulator-5554 in tokkl-emulator-5554-ba6b95c3.scope
+136:scripts/instrumented-tests.sh: line 472: 1759767 Killed                  ""${launch[@]}"" emulator -avd ""$AVD"" -port ""$port"" -memory 2560 -cores 4 -gpu ""${TOKKL_TEST_GPU:-lavapipe}"" -no-window -no-audio -no-boot-anim -no-snapshot -accel on {lock_fd}>&- > ""$log"" 2>&1",,
+logs/sift-w7-h3/probe28e.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe30a.log,7,1,83.0,"[{""status"": ""FAILED"", ""seconds"": 83.0, ""line"": 121}]",85,1,1,,5:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-4fad3540.scope,,
+logs/sift-w7-h3/probe30a.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe30b.log,7,1,126.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 126.0, ""line"": 106}]",0,0,1,,3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-fa2f4d33.scope,,
+logs/sift-w7-h3/probe30b.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe30c.log,7,1,223.0,"[{""status"": ""FAILED"", ""seconds"": 223.0, ""line"": 120}]",0,0,1,,3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-fe356344.scope,,
+logs/sift-w7-h3/probe30c.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h3/probe30d.log,7,1,100.0,"[{""status"": ""FAILED"", ""seconds"": 100.0, ""line"": 121}]",181,1,1,,5:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-99098e95.scope,,
+logs/sift-w7-h3/probe30d.peak,7,0,0,[],0,0,0,,,,
+logs/sift-w7-h4/0162-accept1.log,7,1,151.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 151.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-0b48f041.scope,,
+logs/sift-w7-h4/0162-accept1.peak,7,0,0,[],0,0,0,,,3556560,0
+logs/sift-w7-h4/0162-accept2.log,7,1,151.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 151.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1bb5b6dc.scope,,
+logs/sift-w7-h4/0162-accept2.peak,7,0,0,[],0,0,0,,,3549408,0
+logs/sift-w7-h4/0162-accept3.log,7,1,148.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 148.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2fff4485.scope,,
+logs/sift-w7-h4/0162-accept3.peak,7,0,0,[],0,0,0,,,3539584,0
+logs/sift-w7-h4/0162-accept4.log,7,1,147.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 147.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-fffbe0c6.scope,,
+logs/sift-w7-h4/0162-accept4.peak,7,0,0,[],0,0,0,,,3528008,0
+logs/sift-w7-h4/0162-accept5.log,7,1,150.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 150.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-80ad76c3.scope,,
+logs/sift-w7-h4/0162-accept5.peak,7,0,0,[],0,0,0,,,3539184,0
+logs/sift-w7-h4/0162-diag1.log,7,1,152.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 152.0, ""line"": 106}]",210,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c2177f1a.scope,,
+logs/sift-w7-h4/0162-diag1.peak,7,0,0,[],0,0,0,,,3491232,0
+logs/sift-w7-h4/0162-diag2.log,7,1,263.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 263.0, ""line"": 106}]",58,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6090d6d6.scope,,
+logs/sift-w7-h4/0162-diag2.peak,7,0,0,[],0,0,0,,,3414120,0
+logs/sift-w7-h4/0162-diag3.log,7,1,166.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 166.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-52506d0e.scope,,
+logs/sift-w7-h4/0162-diag3.peak,7,0,0,[],0,0,0,,,3477380,0
+logs/sift-w7-h4/0162-f36-1.log,7,1,144.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 144.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-37fb9e93.scope,,
+logs/sift-w7-h4/0162-f36-1.peak,7,0,0,[],0,0,0,,,3483820,0
+logs/sift-w7-h4/0162-f36-2.log,7,1,137.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 137.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-91096abb.scope,,
+logs/sift-w7-h4/0162-f36-2.peak,7,0,0,[],0,0,0,,,3540448,0
+logs/sift-w7-h4/0162-f36-3.log,7,1,139.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 139.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6796933d.scope,,
+logs/sift-w7-h4/0162-f36-3.peak,7,0,0,[],0,0,0,,,3530700,0
+logs/sift-w7-h4/0162-load1.log,7,1,259.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 259.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c395536f.scope,,
+logs/sift-w7-h4/0162-load1.peak,7,0,0,[],0,0,0,,,3476548,0
+logs/sift-w7-h4/0162-no-imepadding.log,7,1,37.0,"[{""status"": ""FAILED"", ""seconds"": 37.0, ""line"": 118}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d0a005f2.scope,,
+logs/sift-w7-h4/0162-no-imepadding.peak,7,0,0,[],0,0,0,,,3225084,1
+logs/sift-w7-h4/0167-baseline-api36.log,7,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 125}]",339,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-89bec842.scope,,
+logs/sift-w7-h4/0167-baseline-api36.peak,7,0,0,[],0,0,0,,,3334984,0
+logs/sift-w7-h4/0167-fix-tokkl-api30.log,7,1,22.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 22.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-ca9fc096.scope,,
+logs/sift-w7-h4/0167-fix-tokkl-api30.peak,7,0,0,[],0,0,0,,,2584480,0
+logs/sift-w7-h4/0167-fix-tokkl-api36.log,7,1,42.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 42.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-aa88ac53.scope,,
+logs/sift-w7-h4/0167-fix-tokkl-api36.peak,7,0,0,[],0,0,0,,,3362180,0
+logs/sift-w7-h4/0168-api26-full.log,7,7,619.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 15.0, ""line"": 157}, {""status"": ""SUCCESSFUL"", ""seconds"": 53.0, ""line"": 260}, {""status"": ""FAILED"", ""seconds"": 204.0, ""line"": 377}, {""status"": ""SUCCESSFUL"", ""seconds"": 86.0, ""line"": 479}, {""status"": ""SUCCESSFUL"", ""seconds"": 117.0, ""line"": 582}, {""status"": ""SUCCESSFUL"", ""seconds"": 121.0, ""line"": 685}, {""status"": ""SUCCESSFUL"", ""seconds"": 23.0, ""line"": 788}]",0,0,7,"16:Batch 1 of 7: 18 tests in 8 classes on emulator-5554
+160:Batch 1: 0 tests, 0 failed, 0 skipped
+165:Batch 2 of 7: 20 tests in 6 classes on emulator-5554
+263:Batch 2: 20 tests, 0 failed, 0 skipped
+268:Batch 3 of 7: 19 tests in 7 classes on emulator-5554
+379:Batch 3: 19 tests, 5 failed, 0 skipped
+384:Batch 4 of 7: 12 tests in 5 classes on emulator-5554
+482:Batch 4: 12 tests, 0 failed, 0 skipped
+487:Batch 5 of 7: 20 tests in 6 classes on emulator-5554
+585:Batch 5: 20 tests, 0 failed, 0 skipped
+590:Batch 6 of 7: 20 tests in 4 classes on emulator-5554
+688:Batch 6: 20 tests, 0 failed, 0 skipped
+693:Batch 7 of 7: 2 tests in 2 classes on emulator-5554
+791:Batch 7: 2 tests, 0 failed, 0 skipped","3:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-1ed0e998.scope
+161:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-4287bded.scope
+264:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-731e4476.scope
+380:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-e4aa4174.scope
+483:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-671fdb72.scope
+586:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-c447b425.scope
+689:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-5e113984.scope",,
+logs/sift-w7-h4/0168-api26-full.peak,7,0,0,[],0,0,0,,,3831368,1
+logs/sift-w7-h4/0168-api26-full2.log,7,7,715.0,"[{""status"": ""FAILED"", ""seconds"": 73.0, ""line"": 125}, {""status"": ""SUCCESSFUL"", ""seconds"": 52.0, ""line"": 227}, {""status"": ""FAILED"", ""seconds"": 216.0, ""line"": 344}, {""status"": ""SUCCESSFUL"", ""seconds"": 102.0, ""line"": 446}, {""status"": ""SUCCESSFUL"", ""seconds"": 124.0, ""line"": 549}, {""status"": ""FAILED"", ""seconds"": 124.0, ""line"": 666}, {""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 768}]",0,0,7,"16:Batch 1 of 7: 18 tests in 8 classes on emulator-5554
+127:Batch 1: 18 of its 18 tests ran, 1 failed, 0 skipped
+132:Batch 2 of 7: 20 tests in 6 classes on emulator-5556
+230:Batch 2: 20 of its 20 tests ran, 0 failed, 0 skipped
+235:Batch 3 of 7: 19 tests in 7 classes on emulator-5554
+346:Batch 3: 19 of its 19 tests ran, 5 failed, 0 skipped
+351:Batch 4 of 7: 12 tests in 5 classes on emulator-5554
+449:Batch 4: 12 of its 12 tests ran, 0 failed, 0 skipped
+454:Batch 5 of 7: 20 tests in 6 classes on emulator-5554
+552:Batch 5: 20 of its 20 tests ran, 0 failed, 0 skipped
+557:Batch 6 of 7: 20 tests in 4 classes on emulator-5554
+668:Batch 6: 20 of its 20 tests ran, 1 failed, 0 skipped
+673:Batch 7 of 7: 2 tests in 2 classes on emulator-5554
+771:Batch 7: 2 of its 2 tests ran, 0 failed, 0 skipped
+773:scripts/instrumented-tests.sh: batch 1 3 6 failed.","3:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-d24b3ecb.scope
+128:Booting tokkl-api26 as emulator-5556 in tokkl-emulator-5556-10e34dca.scope
+231:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-5132ec32.scope
+347:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-db51e49f.scope
+450:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-f7010cd9.scope
+553:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-8bd8e274.scope
+669:Booting tokkl-api26 as emulator-5554 in tokkl-emulator-5554-dff0bb21.scope",,
+logs/sift-w7-h4/0168-api26-full2.peak,7,0,0,[],0,0,0,,,3836620,1
+logs/sift-w7-h4/0168-api30-full.log,7,7,652.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 56.0, ""line"": 111}, {""status"": ""FAILED"", ""seconds"": 65.0, ""line"": 228}, {""status"": ""SUCCESSFUL"", ""seconds"": 144.0, ""line"": 330}, {""status"": ""SUCCESSFUL"", ""seconds"": 101.0, ""line"": 433}, {""status"": ""SUCCESSFUL"", ""seconds"": 138.0, ""line"": 536}, {""status"": ""SUCCESSFUL"", ""seconds"": 123.0, ""line"": 639}, {""status"": ""SUCCESSFUL"", ""seconds"": 25.0, ""line"": 742}]",0,0,7,"16:Batch 1 of 7: 18 tests in 8 classes on emulator-5554
+114:Batch 1: 18 tests, 0 failed, 0 skipped
+119:Batch 2 of 7: 20 tests in 6 classes on emulator-5554
+230:Batch 2: 20 tests, 1 failed, 0 skipped
+235:Batch 3 of 7: 19 tests in 7 classes on emulator-5554
+333:Batch 3: 19 tests, 0 failed, 0 skipped
+338:Batch 4 of 7: 12 tests in 5 classes on emulator-5554
+436:Batch 4: 12 tests, 0 failed, 0 skipped
+441:Batch 5 of 7: 20 tests in 6 classes on emulator-5554
+539:Batch 5: 20 tests, 0 failed, 0 skipped
+544:Batch 6 of 7: 20 tests in 4 classes on emulator-5554
+642:Batch 6: 20 tests, 0 failed, 0 skipped
+647:Batch 7 of 7: 2 tests in 2 classes on emulator-5556
+745:Batch 7: 2 tests, 0 failed, 0 skipped
+747:scripts/instrumented-tests.sh: batch 2 failed.","3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-8f05bd48.scope
+115:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-515cafe5.scope
+231:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-73a46ab2.scope
+334:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-d3c1313d.scope
+437:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-0384b1e9.scope
+540:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-f3bf0f16.scope
+643:Booting tokkl-api30 as emulator-5556 in tokkl-emulator-5556-42185b7e.scope",,
+logs/sift-w7-h4/0168-api30-full.peak,7,0,0,[],0,0,0,,,3547064,1
+logs/sift-w7-h4/0168-api30-full2.log,7,7,694.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 88.0, ""line"": 111}, {""status"": ""SUCCESSFUL"", ""seconds"": 73.0, ""line"": 214}, {""status"": ""SUCCESSFUL"", ""seconds"": 156.0, ""line"": 317}, {""status"": ""SUCCESSFUL"", ""seconds"": 86.0, ""line"": 420}, {""status"": ""SUCCESSFUL"", ""seconds"": 136.0, ""line"": 523}, {""status"": ""SUCCESSFUL"", ""seconds"": 131.0, ""line"": 626}, {""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 729}]",0,0,7,"16:Batch 1 of 7: 18 tests in 8 classes on emulator-5554
+114:Batch 1: 18 of its 18 tests ran, 0 failed, 0 skipped
+119:Batch 2 of 7: 20 tests in 6 classes on emulator-5554
+217:Batch 2: 20 of its 20 tests ran, 0 failed, 0 skipped
+222:Batch 3 of 7: 19 tests in 7 classes on emulator-5556
+320:Batch 3: 19 of its 19 tests ran, 0 failed, 0 skipped
+325:Batch 4 of 7: 12 tests in 5 classes on emulator-5554
+423:Batch 4: 12 of its 12 tests ran, 0 failed, 0 skipped
+428:Batch 5 of 7: 20 tests in 6 classes on emulator-5554
+526:Batch 5: 20 of its 20 tests ran, 0 failed, 0 skipped
+531:Batch 6 of 7: 20 tests in 4 classes on emulator-5554
+629:Batch 6: 20 of its 20 tests ran, 0 failed, 0 skipped
+634:Batch 7 of 7: 2 tests in 2 classes on emulator-5554
+732:Batch 7: 2 of its 2 tests ran, 0 failed, 0 skipped","3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-b1f9bde5.scope
+115:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-e834c3a1.scope
+218:Booting tokkl-api30 as emulator-5556 in tokkl-emulator-5556-49fdcada.scope
+321:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-592e6db9.scope
+424:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-9020f338.scope
+527:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-d4c2e0b2.scope
+630:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-bef5139a.scope",,
+logs/sift-w7-h4/0168-api30-full2.peak,7,0,0,[],0,0,0,,,3555456,0
+logs/sift-w7-h4/build-0162-diag-b.log,7,1,82.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 82.0, ""line"": 95}]",0,0,1,,,,
+logs/sift-w7-h4/build-0162-diag.log,7,1,31.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 31.0, ""line"": 75}]",0,0,1,,,,
+logs/sift-w7-h4/build-0162-f36.log,7,1,54.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 54.0, ""line"": 75}]",0,0,1,,,,
+logs/sift-w7-h4/build-0162-fix.log,7,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 95}]",0,0,1,,,,
+logs/sift-w7-h4/build-0167-baseline.log,7,1,95.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 95.0, ""line"": 98}]",0,0,1,,,,
+logs/sift-w7-h4/build-0167-fix.log,7,1,28.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 28.0, ""line"": 75}]",0,0,1,,,,
+logs/sift-w7-h4/build-0168.log,7,1,26.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 26.0, ""line"": 95}]",0,0,1,,,,
+logs/sift-w7-h4/compile-0167.log,7,1,90.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 90.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-h4/verify-compile.log,7,1,14.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 14.0, ""line"": 95}]",0,0,1,,,,
+logs/sift-w7-h4/verify-theme-default.log,7,1,151.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 151.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c3f4b028.scope,,
+logs/sift-w7-h4/verify-theme-default.peak,7,0,0,[],0,0,0,,,3498420,0
+logs/sift-w7-h4/verify-wbt-api30-b.log,7,1,28.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 28.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-40ecfa20.scope,,
+logs/sift-w7-h4/verify-wbt-api30-b.peak,7,0,0,[],0,0,0,,,2574380,0
+logs/sift-w7-h4/verify-wbt-api30-c.log,7,1,22.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 22.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-318da85f.scope,,
+logs/sift-w7-h4/verify-wbt-api30-c.peak,7,0,0,[],0,0,0,,,2572912,0
+logs/sift-w7-h4/verify-wbt-api30.log,7,0,0,[],0,0,0,,3:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-4a1f4dc2.scope,,
+logs/sift-w7-h4/verify-wbt-api30.peak,7,0,0,[],0,0,0,,,1918968,224
+logs/sift-w7-h4/verify-wbt-default.log,7,1,35.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 35.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d3078648.scope,,
+logs/sift-w7-h4/verify-wbt-default.peak,7,0,0,[],0,0,0,,,3410400,0
+logs/sift-w7-j1/after-test.log,7,1,27.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 27.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-j1/baseline-test.log,7,1,82.0,"[{""status"": ""FAILED"", ""seconds"": 82.0, ""line"": 74}]",0,0,1,"53:7 tests completed, 2 failed",,,
+logs/sift-w7-j1/final-test-lint.log,7,1,84.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 84.0, ""line"": 64}]",0,0,1,,,,
+logs/sift-w7-j1/lint.log,7,1,76.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 76.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-n1/compile-1.log,7,1,40.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 40.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-n1/compile-10.log,7,1,36.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 36.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-n1/compile-11.log,7,1,18.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 18.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-n1/compile-2.log,7,1,28.0,"[{""status"": ""FAILED"", ""seconds"": 28.0, ""line"": 65}]",0,0,1,,,,
+logs/sift-w7-n1/compile-3.log,7,1,49.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 49.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-n1/compile-4.log,7,1,24.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-n1/compile-5.log,7,1,28.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 28.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-n1/compile-6.log,7,1,26.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 26.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-n1/compile-7.log,7,1,27.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 27.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-n1/compile-8.log,7,1,24.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-n1/compile-9.log,7,1,26.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 26.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-n1/int-compile-after.log,7,1,27.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 27.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-n1/int-compile-before.log,7,1,21.0,"[{""status"": ""FAILED"", ""seconds"": 21.0, ""line"": 61}]",0,0,1,,,,
+logs/sift-w7-n1/int-it-screenshot.log,7,1,146.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 146.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-c2f89da7.scope,,
+logs/sift-w7-n1/int-it-signin.log,7,1,158.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 158.0, ""line"": 107}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-12275947.scope,,
+logs/sift-w7-n1/int-it-theme.log,7,1,139.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 139.0, ""line"": 106}]",114,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e7af98b6.scope,,
+logs/sift-w7-n1/it-base-keyboard.log,7,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-4062a04b.scope,,
+logs/sift-w7-n1/it-base-theme.log,7,1,190.0,"[{""status"": ""FAILED"", ""seconds"": 190.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-42f70a75.scope,,
+logs/sift-w7-n1/it-launch.log,7,1,40.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 40.0, ""line"": 105}]",319,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-7c694ea4.scope,,
+logs/sift-w7-n1/it-licences.log,7,1,35.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 35.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-327b47a3.scope,,
+logs/sift-w7-n1/it-mine-keyboard.log,7,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b11766f9.scope,,
+logs/sift-w7-n1/it-reports.log,7,1,101.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 101.0, ""line"": 105}]",423,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-52c93823.scope,,
+logs/sift-w7-n1/it-screenshot-1.log,7,1,207.0,"[{""status"": ""FAILED"", ""seconds"": 207.0, ""line"": 122}]",107,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d8519b2d.scope,,1
+logs/sift-w7-n1/it-screenshot-2.log,7,1,224.0,"[{""status"": ""FAILED"", ""seconds"": 224.0, ""line"": 119}]",148,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b0099b6c.scope,,1
+logs/sift-w7-n1/it-screenshot-3.log,7,1,203.0,"[{""status"": ""FAILED"", ""seconds"": 203.0, ""line"": 119}]",135,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1e3dc2b4.scope,,1
+logs/sift-w7-n1/it-screenshot-4.log,7,1,188.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 188.0, ""line"": 105}]",6,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1c395017.scope,,0
+logs/sift-w7-n1/it-screenshot5.log,7,1,142.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 142.0, ""line"": 105}]",100,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b4ce3fa7.scope,,
+logs/sift-w7-n1/it-settings-1.log,7,1,149.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 149.0, ""line"": 105}]",34,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b347234a.scope,,0
+logs/sift-w7-n1/it-signin.log,7,1,128.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 128.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b57b6218.scope,,
+logs/sift-w7-n1/it-theme.log,7,1,157.0,"[{""status"": ""FAILED"", ""seconds"": 157.0, ""line"": 119}]",85,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-5364e7ad.scope,,
+logs/sift-w7-n1/it-theme2.log,7,1,136.0,"[{""status"": ""FAILED"", ""seconds"": 136.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-02836b11.scope,,
+logs/sift-w7-n1/it-theme3.log,7,1,164.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 164.0, ""line"": 105}]",43,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a75df13b.scope,,
+logs/sift-w7-n1/it-trust.log,7,1,51.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 51.0, ""line"": 105}]",122,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-0eb4867e.scope,,
+logs/sift-w7-n1/lint-1.log,7,1,78.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 78.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-n1/unit-1.log,7,1,46.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 46.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0031-1.log,7,1,33.0,"[{""status"": ""FAILED"", ""seconds"": 33.0, ""line"": 40}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0031-2.log,7,1,39.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 39.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0031-3.log,7,1,56.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 56.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0031-4.log,7,1,32.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 32.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0031-5.log,7,1,53.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 53.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0032-1.log,7,1,60.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 60.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0032-2.log,7,1,40.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 40.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0032-3.log,7,1,51.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 51.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0032-4.log,7,1,26.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 26.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0033-1.log,7,1,49.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 49.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0033-2.log,7,1,56.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 56.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/compile-0033-3.log,7,1,16.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 16.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/compile-at-0031-1.log,7,1,31.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 31.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/compile-at-0031-2.log,7,1,17.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 17.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-p1/it-0031-1.log,7,1,60.0,"[{""status"": ""FAILED"", ""seconds"": 60.0, ""line"": 121}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-15770fe3.scope,,1
+logs/sift-w7-p1/it-0031-2.log,7,1,88.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 88.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-14fb8d35.scope,,0
+logs/sift-w7-p1/it-0031-3.log,7,1,105.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 105.0, ""line"": 106}]",83,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-205b10c2.scope,,0
+logs/sift-w7-p1/it-0031-look-1.log,7,1,76.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 76.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-da45eafb.scope,,0
+logs/sift-w7-p1/it-0031-look-2.log,7,1,110.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 110.0, ""line"": 106}]",90,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e4142d51.scope,,0
+logs/sift-w7-p1/it-0032-1.log,7,1,90.0,"[{""status"": ""FAILED"", ""seconds"": 90.0, ""line"": 120}]",180,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-fa994605.scope,,1
+logs/sift-w7-p1/it-0032-2.log,7,1,100.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 100.0, ""line"": 106}]",224,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-7731100c.scope,,0
+logs/sift-w7-p1/it-0032-look-1.log,7,1,174.0,"[{""status"": ""FAILED"", ""seconds"": 174.0, ""line"": 120}]",215,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a60fb436.scope,,1
+logs/sift-w7-p1/it-0033-1.log,7,1,106.0,"[{""status"": ""FAILED"", ""seconds"": 106.0, ""line"": 118}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-3f460ddf.scope,,1
+logs/sift-w7-p1/it-0033-2.log,7,1,95.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 95.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-88cb71a9.scope,,0
+logs/sift-w7-p1/it-0033-look-1.log,7,1,161.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 161.0, ""line"": 106}]",323,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b6b2feb9.scope,,0
+logs/sift-w7-p1/lint-0031-1.log,7,1,86.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 86.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-p1/lint-0032-1.log,7,1,85.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 85.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-p1/lint-0033-1.log,7,1,117.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 117.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-p1/lint-unit-0032-2.log,7,1,97.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 97.0, ""line"": 64}]",0,0,1,,,,
+logs/sift-w7-p1/unit-0031-1.log,7,1,55.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 55.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-p1/unit-0032-1.log,7,1,23.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 23.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-p1/unit-0032-scratch.log,7,1,24.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-p1/verify-unit-lint.log,7,1,155.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 155.0, ""line"": 64}]",0,0,1,,,,
+logs/sift-w7-r1a/0150-after-contrast.log,7,1,50.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 50.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-r1a/0150-baseline-contrast.log,7,1,42.0,"[{""status"": ""FAILED"", ""seconds"": 42.0, ""line"": 69}]",0,0,1,"50:3 tests completed, 1 failed",,,
+logs/sift-w7-r1a/0150-screenshots-1.log,7,1,209.0,"[{""status"": ""FAILED"", ""seconds"": 209.0, ""line"": 121}]",150,1,1,,6:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-3de36672.scope,,1
+logs/sift-w7-r1a/0150-screenshots-2.log,7,1,206.0,"[{""status"": ""FAILED"", ""seconds"": 206.0, ""line"": 121}]",181,1,1,,6:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-4baf2ca4.scope,,1
+logs/sift-w7-r1a/0150-screenshots-3.log,7,1,162.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 162.0, ""line"": 105}]",0,0,1,,4:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-08872d0c.scope,,0
+logs/sift-w7-r1a/0151-CertificateHostMismatchWhileSignedInTest.log,7,1,21.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 21.0, ""line"": 105}]",0,0,1,,4:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-9ce1b4c4.scope,,0
+logs/sift-w7-r1a/0151-LargestFontScaleTest-certificateHostMessageFits.log,7,1,24.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 24.0, ""line"": 105}]",0,0,1,,4:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e7b43cfb.scope,,0
+logs/sift-w7-r1a/0151-ReportsForegroundTest.log,7,1,39.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 39.0, ""line"": 105}]",0,0,1,,4:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-f612a07b.scope,,0
+logs/sift-w7-r1a/baseline-bounded-api30-2.log,7,1,741.0,"[{""status"": ""FAILED"", ""seconds"": 741.0, ""line"": 120}]",57,1,1,,4:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-64ac2a70.scope,,1
+logs/sift-w7-r1a/baseline-bounded-api30.log,7,0,0,[],0,0,0,,1:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-24dd0373.scope,,125
+logs/sift-w7-r1a/baseline-timeout-api30.log,7,1,320.0,"[{""status"": ""FAILED"", ""seconds"": 320.0, ""line"": 120}]",0,0,1,,4:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-747cb9fb.scope,,1
+logs/sift-w7-r1a/fixed-class-api30.log,7,1,119.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 119.0, ""line"": 106}]",0,0,1,,4:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-dd174cd8.scope,,0
+logs/sift-w7-r1a/fixed-class-api36.log,7,1,63.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 63.0, ""line"": 105}]",0,0,1,,4:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-29792934.scope,,0
+logs/sift-w7-r1a/prefix-api36.log,7,1,41.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 41.0, ""line"": 107}]",53,1,1,,6:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2f430995.scope,,0
+logs/sift-w7-r1a/repro-api30-1.log,7,1,760.0,"[{""status"": ""FAILED"", ""seconds"": 760.0, ""line"": 122}]",146,1,1,,3:Booting tokkl-api30 as emulator-5556 in tokkl-emulator-5556-125e5da7.scope,,1
+logs/sift-w7-r1a/verify-ReportsScreenTest-tokkl-api30.log,7,1,52.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 52.0, ""line"": 106}]",0,0,1,,4:Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-7c96199f.scope,,0
+logs/sift-w7-r1a/verify-ReportsScreenTest-tokkl-api36.log,7,1,43.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 43.0, ""line"": 105}]",0,0,1,,4:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-d59c92f5.scope,,0
+logs/sift-w7-r1a/verify-lint.log,7,1,121.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 121.0, ""line"": 50}]",0,0,1,,,,0
+logs/sift-w7-r1b/inst-0034-reports-1.log,7,1,126.0,"[{""status"": ""FAILED"", ""seconds"": 126.0, ""line"": 121}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-561e1203.scope,,1
+logs/sift-w7-r1b/inst-0034-scratch-2.log,7,1,67.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 67.0, ""line"": 106}]",83,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-4094c541.scope,,0
+logs/sift-w7-r1b/inst-0034-screenshot-1.log,7,1,226.0,"[{""status"": ""FAILED"", ""seconds"": 226.0, ""line"": 120}]",136,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-3a94db92.scope,,1
+logs/sift-w7-r1b/inst-0034-screenshot-2.log,7,1,192.0,"[{""status"": ""FAILED"", ""seconds"": 192.0, ""line"": 120}]",77,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-896b137f.scope,,1
+logs/sift-w7-r1b/inst-0034-screenshot-3.log,7,1,219.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 219.0, ""line"": 106}]",179,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-3c2f2738.scope,,0
+logs/sift-w7-r1b/inst-0034-shots.log,7,1,33.0,"[{""status"": ""FAILED"", ""seconds"": 33.0, ""line"": 120}]",40,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-9a46a314.scope,,
+logs/sift-w7-r1b/inst-0035-reports-1.log,7,1,135.0,"[{""status"": ""FAILED"", ""seconds"": 135.0, ""line"": 118}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-e89ece2b.scope,,1
+logs/sift-w7-r1b/inst-0035-scratch-2.log,7,1,60.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 60.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-159ac56b.scope,,0
+logs/sift-w7-r1b/inst-0035-screenshot-1.log,7,1,284.0,"[{""status"": ""FAILED"", ""seconds"": 284.0, ""line"": 120}]",8,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-081ed830.scope,,1
+logs/sift-w7-r1b/inst-0035-screenshot-2.log,7,1,201.0,"[{""status"": ""FAILED"", ""seconds"": 201.0, ""line"": 120}]",16,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6da37f99.scope,,1
+logs/sift-w7-r1b/inst-0035-screenshot-3.log,7,1,204.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 204.0, ""line"": 104}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-a0f45951.scope,,0
+logs/sift-w7-r1b/lint-0034.log,7,1,96.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 96.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-r1b/lint-unit-0035.log,7,1,93.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 93.0, ""line"": 64}]",0,0,1,,,,
+logs/sift-w7-r1b/unit-0034-1.log,7,1,22.0,"[{""status"": ""FAILED"", ""seconds"": 22.0, ""line"": 70}]",0,0,1,"49:34 tests completed, 2 failed",,,
+logs/sift-w7-r1b/unit-0034-2.log,7,1,29.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 29.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-r1b/unit-0035-1.log,7,1,37.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 37.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-rc/device-verify.log,7,1,74.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 74.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-7df91d2a.scope,,
+logs/sift-w7-rc/lint-0179.log,7,1,112.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 112.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-rc/lint-unit-0180.log,7,1,90.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 90.0, ""line"": 64}]",0,0,1,,,,
+logs/sift-w7-rc/repro-0179-after.log,7,1,58.0,"[{""status"": ""FAILED"", ""seconds"": 58.0, ""line"": 118}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-02ba5108.scope,,
+logs/sift-w7-rc/repro-0180-after.log,7,1,111.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 111.0, ""line"": 106}]",38,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-02fb4808.scope,,
+logs/sift-w7-rc/repro-before.log,7,1,63.0,"[{""status"": ""FAILED"", ""seconds"": 63.0, ""line"": 118}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-64ddd589.scope,,
+logs/sift-w7-rc/unit-0179-repro.log,7,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-rc/unit-0179.log,7,1,67.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 67.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-rc/unit-0180.log,7,1,43.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 43.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-rh/it-0177-after.log,7,1,100.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 100.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-44f52fc7.scope,,0
+logs/sift-w7-rh/it-0177-before.log,7,1,94.0,"[{""status"": ""FAILED"", ""seconds"": 94.0, ""line"": 123}]",43,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-ad37a7db.scope,,1
+logs/sift-w7-rh/lint-0177.log,7,1,133.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 133.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-rh/lint-0178.log,7,1,75.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 75.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-rh/unit-0177-after.log,7,1,75.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 75.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-rh/unit-0177-scratch-oldsender.log,7,1,24.0,"[{""status"": ""FAILED"", ""seconds"": 24.0, ""line"": 65}]",0,0,1,"46:2 tests completed, 1 failed",,,
+logs/sift-w7-rh/unit-0178-after.log,7,1,35.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 35.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-rh/unit-0178-before.log,7,1,40.0,"[{""status"": ""FAILED"", ""seconds"": 40.0, ""line"": 70}]",0,0,1,"49:2 tests completed, 2 failed",,,
+logs/sift-w7-rh/unit-verify.log,7,1,14.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 14.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t1/at-0027-1.log,7,1,45.0,"[{""status"": ""FAILED"", ""seconds"": 45.0, ""line"": 122}]",18,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2e81cc56.scope,,1
+logs/sift-w7-t1/at-0027-2.log,7,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 105}]",286,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-9ac75a98.scope,,0
+logs/sift-w7-t1/at-0028-1.log,7,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 105}]",280,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-43bba4c2.scope,,0
+logs/sift-w7-t1/at-0028-2.log,7,1,49.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 49.0, ""line"": 105}]",67,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-943d2f5c.scope,,0
+logs/sift-w7-t1/at-screenshots.log,7,1,137.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 137.0, ""line"": 105}]",282,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-be3ccdbf.scope,,0
+logs/sift-w7-t1/at-verify.log,7,1,41.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 41.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b1f9e830.scope,,0
+logs/sift-w7-t1/compile-0028-1.log,7,1,26.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 26.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-t1/compile-0028-at.log,7,1,21.0,"[{""status"": ""FAILED"", ""seconds"": 21.0, ""line"": 68}]",0,0,1,,,,
+logs/sift-w7-t1/compile-0028-at2.log,7,1,25.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 25.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-t1/compile-1.log,7,1,44.0,"[{""status"": ""FAILED"", ""seconds"": 44.0, ""line"": 42}]",0,0,1,,,,
+logs/sift-w7-t1/compile-2.log,7,1,56.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 56.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-t1/compile-at-1.log,7,1,43.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 43.0, ""line"": 45}]",0,0,1,,,,
+logs/sift-w7-t1/compile-at-2.log,7,1,26.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 26.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-t1/lint-0027.log,7,1,71.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 71.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t1/lint-0028.log,7,1,74.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 74.0, ""line"": 57}]",0,0,1,,,,
+logs/sift-w7-t1/unit-cache-1.log,7,1,34.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 34.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-t1/unit-cache-2.log,7,1,36.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 36.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t1/unit-picker-1.log,7,1,22.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 22.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t1/unit-scans.log,7,1,21.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 21.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t1/unit-verify.log,7,1,18.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 18.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2a/compile-androidtest.log,7,1,32.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 32.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-t2a/instrumented-1.log,7,1,45.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 45.0, ""line"": 106}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-81fde49b.scope,,0
+logs/sift-w7-t2a/instrumented-ChangeQueueServerTest.log,7,1,28.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 28.0, ""line"": 103}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-20f14dce.scope,,
+logs/sift-w7-t2a/instrumented-SignInScreenTest.log,7,1,69.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 69.0, ""line"": 105}]",52,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6a9b2be6.scope,,
+logs/sift-w7-t2a/instrumented-session.log,7,1,28.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 28.0, ""line"": 105}]",21,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2af63bf9.scope,,
+logs/sift-w7-t2a/lint.log,7,1,68.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 68.0, ""line"": 59}]",0,0,1,,,,
+logs/sift-w7-t2a/unit-1.log,7,1,77.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 77.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-t2a/unit-2.log,7,1,37.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 37.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-t2a/unit-disposable.log,7,1,22.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 22.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2b/compile-0160-b.log,7,1,22.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 22.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-t2b/compile-0160.log,7,1,39.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 39.0, ""line"": 46}]",0,0,1,,,,
+logs/sift-w7-t2b/compile-1.log,7,1,48.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 48.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-t2b/compile-2.log,7,1,42.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 42.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2b/compile-3.log,7,1,28.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 28.0, ""line"": 43}]",0,0,1,,,,
+logs/sift-w7-t2b/inst-0029-a.log,7,1,71.0,"[{""status"": ""FAILED"", ""seconds"": 71.0, ""line"": 124}]",558,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-53c824b4.scope,,1
+logs/sift-w7-t2b/inst-0029-b.log,7,1,250.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 250.0, ""line"": 107}]",223,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-3e6327d1.scope,,0
+logs/sift-w7-t2b/inst-0160-a.log,7,1,61.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 61.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-2267aeed.scope,,0
+logs/sift-w7-t2b/inst-verify.log,7,1,294.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 294.0, ""line"": 108}]",808,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-fd6abfa8.scope,,0
+logs/sift-w7-t2b/lint-0029.log,7,1,85.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 85.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2b/lint-0160.log,7,1,66.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 66.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2b/unit-0029-a.log,7,1,34.0,"[{""status"": ""FAILED"", ""seconds"": 34.0, ""line"": 67}]",0,0,1,"46:97 tests completed, 1 failed",,,
+logs/sift-w7-t2b/unit-0029-b.log,7,1,32.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 32.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2b/unit-0160-a.log,7,1,25.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 25.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2b/unit-verify.log,7,1,21.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 21.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2c/0030-compile-1.log,7,1,42.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 42.0, ""line"": 46}]",0,0,1,,,,
+logs/sift-w7-t2c/0030-compile-2.log,7,1,17.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 17.0, ""line"": 45}]",0,0,1,,,,
+logs/sift-w7-t2c/0030-compile-3.log,7,1,44.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 44.0, ""line"": 58}]",0,0,1,,,,
+logs/sift-w7-t2c/0030-compile-4.log,7,1,37.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 37.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-t2c/0030-instrumented-1.log,7,1,20.0,"[{""status"": ""FAILED"", ""seconds"": 20.0, ""line"": 117}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-613017af.scope,,1
+logs/sift-w7-t2c/0030-instrumented-2.log,7,1,238.0,"[{""status"": ""FAILED"", ""seconds"": 238.0, ""line"": 119}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-b7aaf96f.scope,,1
+logs/sift-w7-t2c/0030-instrumented-3.log,7,1,206.0,"[{""status"": ""FAILED"", ""seconds"": 206.0, ""line"": 121}]",411,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-9cdcd788.scope,,1
+logs/sift-w7-t2c/0030-instrumented-4.log,7,1,44.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 44.0, ""line"": 107}]",498,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-fc3b61cd.scope,,0
+logs/sift-w7-t2c/0030-lint-2.log,7,1,111.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 111.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2c/0030-lint-unit.log,7,1,79.0,"[{""status"": ""FAILED"", ""seconds"": 79.0, ""line"": 159}]",0,0,1,,,,
+logs/sift-w7-t2c/0030-unit-1.log,7,1,30.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 30.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2c/0161-compile-1.log,7,1,53.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 53.0, ""line"": 45}]",0,0,1,,,,
+logs/sift-w7-t2c/0161-compile-2.log,7,1,20.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 20.0, ""line"": 22}]",0,0,1,,,,
+logs/sift-w7-t2c/0161-instrumented-1.log,7,1,189.0,"[{""status"": ""FAILED"", ""seconds"": 189.0, ""line"": 121}]",835,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-172d6c68.scope,,1
+logs/sift-w7-t2c/0161-instrumented-2.log,7,1,57.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 57.0, ""line"": 105}]",0,0,1,,3:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-1e7c8bcf.scope,,0
+logs/sift-w7-t2c/0161-lint.log,7,1,109.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 109.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2c/0163-instrumented-1.log,7,1,51.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 51.0, ""line"": 113}]",480,1,1,,5:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-cac23050.scope,,0
+logs/sift-w7-t2c/0163-lint.log,7,1,87.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 87.0, ""line"": 50}]",0,0,1,,,,
+logs/sift-w7-t2c/0163-unit-1.log,7,1,108.0,"[{""status"": ""FAILED"", ""seconds"": 108.0, ""line"": 69}]",0,0,1,,,,
+logs/sift-w7-t2c/0163-unit-2.log,7,1,50.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 50.0, ""line"": 54}]",0,0,1,,,,
+logs/sift-w7-t2c/int-compile-unit.log,7,1,136.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 136.0, ""line"": 62}]",0,0,1,,,,
+logs/sift-w7-t2c/int-screenshots.log,7,1,246.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 246.0, ""line"": 105}]",0,0,1,,1:Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-f7d809a9.scope,,0
+logs/sift-w7-t2c/verify-final.log,7,1,57.0,"[{""status"": ""SUCCESSFUL"", ""seconds"": 57.0, ""line"": 64}]",0,0,1,,,,

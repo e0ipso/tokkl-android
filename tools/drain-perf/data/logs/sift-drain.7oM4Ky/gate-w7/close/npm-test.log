@@ -1,0 +1,38 @@
+
+> test
+> node --test "test/**/*.test.js"
+
+▶ commitlint.config.js
+  ✔ loads with both custom rules set to error (8.911651ms)
+  ✔ package.json declares every package the config imports (TKA-0083) (0.588901ms)
+  ▶ ordinary commits (TKA-0003)
+    ✔ rejects a ticket ID in the header (14.964089ms)
+    ✔ rejects a co-author trailer, human or AI (2.650437ms)
+    ✔ rejects AI credit lines (5.677094ms)
+    ✔ accepts a Conventional Commit with ticket IDs in a Refs trailer (1.291206ms)
+  ✔ ordinary commits (TKA-0003) (25.19175ms)
+  ▶ messages commitlint ignores by default (TKA-0078)
+    ✔ rejects a revert or fixup with a ticket ID in the header and a credit trailer (0.990859ms)
+    ✔ rejects a revert, squash or merge that fails only one custom check (1.307884ms)
+    ✔ accepts a clean revert with a Refs trailer (0.235452ms)
+    ✔ accepts clean fixup! and squash! messages (0.252037ms)
+  ✔ messages commitlint ignores by default (TKA-0078) (3.302319ms)
+  ▶ merge subjects count only in the header (TKA-0084)
+    ✔ rejects a non-Conventional message with a merge line in the body (1.245209ms)
+    ✔ still accepts a message whose header is a merge subject (0.326512ms)
+  ✔ merge subjects count only in the header (TKA-0084) (1.710654ms)
+✔ commitlint.config.js (111.04323ms)
+▶ commit-msg hook in a throwaway repository
+  ✔ rejects a commit with a ticket ID in the subject (856.614075ms)
+  ✔ accepts a commit with a Refs trailer (884.385155ms)
+  ✔ runs on merges and rejects one whose header has a ticket ID (856.672951ms)
+  ✔ accepts the messages git merge --no-ff and git merge --log write (1868.184708ms)
+✔ commit-msg hook in a throwaway repository (4691.507625ms)
+ℹ tests 16
+ℹ suites 5
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5202.221543

@@ -1,0 +1,18 @@
+adb devices
+[credential-related line omitted]
+docker port tokkl-android-tests-ba728fe0 8080/tcp
+docker port tokkl-android-tests-ba728fe0 8443/tcp
+curl --silent --fail --output /dev/null --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:40000/healthz
+docker run --detach --name tokkl-android-tests-ba728fe0-tls --network container:tokkl-android-tests-ba728fe0 --volume /tmp/tmp.EVi57381df/proxy:/usr/local/etc/haproxy:ro haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c67f33777c1b6a9dc0d4b28bcba7171460122
+curl --silent --fail --output /dev/null --cacert /tmp/tmp.EVi57381df/proxy/cert.pem --retry 30 --retry-delay 1 --retry-all-errors https://127.0.0.1:40000/healthz
+curl --silent --show-error --fail --output /dev/null --header Content-Type: application/json --header X-Tokkl-Csrf: 1 --data-binary @- http://127.0.0.1:40000/api/app/setup
+curl --silent --show-error --fail --config - http://127.0.0.1:40000/api/v9/me
+adb devices
+adb -s emulator-5554 push /tmp/tmp.EVi57381df/credentials.properties /data/local/tmp/tokkl-test-credentials-5af3d33e.properties
+adb -s emulator-5554 shell chmod 600 /data/local/tmp/tokkl-test-credentials-5af3d33e.properties
+gradlew --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.tokklBaseUrl=http://10.0.2.2:40000 -Pandroid.testInstrumentationRunnerArguments.tokklTlsBaseUrl=https://10.0.2.2:40000 -Pandroid.testInstrumentationRunnerArguments.tokklTlsFingerprint=85:17:D5:D2:90:16:69:74:68:0A:1E:3C:55:71:69:43:9A:6A:9E:0D:0E:56:50:85:96:75:F1:B5:1C:32:62:87 -Pandroid.testInstrumentationRunnerArguments.tokklEmail=instrumented-tests@example.com -Pandroid.testInstrumentationRunnerArguments.tokklCredentialsFile=/data/local/tmp/tokkl-test-credentials-5af3d33e.properties
+adb -s emulator-5554 get-state
+docker rm --force --volumes tokkl-android-tests-ba728fe0-tls
+docker rm --force --volumes tokkl-android-tests-ba728fe0
+adb -s emulator-5554 shell rm -f /data/local/tmp/tokkl-test-credentials-5af3d33e.properties && sync
+adb kill-server

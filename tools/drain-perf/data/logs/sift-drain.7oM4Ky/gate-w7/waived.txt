@@ -1,0 +1,22 @@
+- TKA-0148: check sharePercent/jsShortestDecimal on the device (an instrumented unit-style test over a sample of the Node fixture), since ART's BigDecimal and parseDouble were not exercised.
+- TKA-0155: committed tests for default_workspace_id: stored after one refresh, read in airplane mode after a process restart, an offline-started timer lands in the default workspace once sent, a /me without the field keeps the stored value. Disposable versions in /tmp/sift-drain.7oM4Ky/gate-w7/t2a-disposable.
+- TKA-0027/TKA-0028: none waived beyond the picker reuse criterion (moved to TKA-0039/0040/0041); run the full suite.
+- TKA-0152: a committed reference or test showing the brand's SMALL and MEDIUM sizes (only LARGE appears in references).
+- TKA-0149: a test that the server URL field keeps its height when its error shows (and the other fields at 2.0).
+- Merge note: SignInScreenTest.kt was edited by both TKA-0155 and the design sitting and auto-merged; it compiles (f36b768) but has not run on a device since; the gate's full run covers it.
+- TKA-0158: a test that showing the server URL error does not move the fields below, at 1.0 and 2.0.
+- TKA-0124: scene-overlap contrast pairs in ThemeContrastTest (text on scene 8.29 light / 8.32 dark, halo 4.36, outline 9.98 as computed by the worker) and a test for keptAboveKeyboard at 0-2px edge offsets.
+- TKA-0157: committed tests for the bottom bar: each item opens its page, back returns to Timer and back from Timer leaves; the More sheet lists Clients, Tags and Trash and closes on Close/Back; stack, view choice and open sheet survive recreation (and process death if feasible); a More-sheet screenshot reference (compose-root captures miss the ModalBottomSheet).
+- TKA-0029: committed JVM tests for historyDays/HistoryModel and instrumented history tests (server-snapped times shown as stored, paging only on scroll with the bounds end, offline message and retry, an unsent entry shown and stored identically). Throwaway versions in /tmp/sift-drain.7oM4Ky/gate-w7/t2b-scratch.
+- TKA-0160: committed tests for TimerViewSetting (cold start from timerView, missing/unknown key opens List, taps write the server, an offline tap sent by the next refresh). Throwaway versions in t2b-scratch.
+- TKA-0163: committed formatTime port cases (midnight, noon, single-digit hours, 12- and 24-hour) and a timeofday_format read test.
+- TKA-0030: committed tests for calendar block TalkBack labels, offline uncached/cached weeks, swipe between weeks, and reload after a failed week (live versions passed in the sitting).
+- TKA-0161: a committed test for the Timer item's running dot and its 'Timer running' state description.
+- TKA-0165: themed-icons live check not possible on the AOSP image (no switch; provider refuses shell).
+- TKA-0166: a full tokkl-api30 run with no force-stop (part of the gate's API 30 run).
+- TKA-0031/0032/0033: adopt the scratch tests in /tmp/sift-drain.7oM4Ky/gate-w7/p1-scratch (ProjectsServerTest, ClientsServerTest, TagsServerTest, CatalogLookTest, ClientsModelScratchTest) as committed tests; add deterministic screenshot references for the projects, clients and tags pages if feasible.
+- TKA-0034/TKA-0035: adopt the scratch tests in /tmp/sift-drain.7oM4Ky/gate-w7/r1b-scratch (detailed paging equals /api/app/report/entries; weekly equals /api/app/report/weekly, week start, offline, 200%) and add screenshot references for the Detailed and Weekly tabs with fixed data.
+- TKA-0170: tests that the calendar's unsent mark clears once the server has the change and that TalkBack reads "Not sent" for the block.
+- TKA-0167/TKA-0168: the full no-argument run on tokkl-api36 (yours); a batched full tokkl-api30 run comes at the close.
+- TKA-0179/TKA-0180: adopt the scratch tests /tmp/sift-w7-rc/CalendarBoundaryReproTest.kt (device: entries crossing into the first cached week and into an uncached week from more than a day before, deleted entry gone after foreground, airplane-mode foreground keeps entries) and /tmp/sift-w7-rc/CalendarModelReproTest.kt (JVM) as committed tests.
+- TKA-0177: a committed ChangeSender JVM test that onSent fires once per drain job, after the last pass, even when the drain takes several passes.

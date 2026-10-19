@@ -1,0 +1,68 @@
+On branch sift/w7-n1
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   AGENTS.md
+	modified:   README.md
+	deleted:    app/src/androidTest/assets/screenshots/home-dark-100.png
+	deleted:    app/src/androidTest/assets/screenshots/home-dark-200.png
+	deleted:    app/src/androidTest/assets/screenshots/home-light-100.png
+	deleted:    app/src/androidTest/assets/screenshots/home-light-200.png
+	modified:   app/src/androidTest/assets/screenshots/licences-dark-100.png
+	modified:   app/src/androidTest/assets/screenshots/licences-dark-200.png
+	modified:   app/src/androidTest/assets/screenshots/licences-light-100.png
+	modified:   app/src/androidTest/assets/screenshots/licences-light-200.png
+	modified:   app/src/androidTest/assets/screenshots/reports-dark-100.png
+	modified:   app/src/androidTest/assets/screenshots/reports-dark-200.png
+	modified:   app/src/androidTest/assets/screenshots/reports-light-100.png
+	modified:   app/src/androidTest/assets/screenshots/reports-light-200.png
+	modified:   app/src/androidTest/assets/screenshots/settings-dark-100.png
+	modified:   app/src/androidTest/assets/screenshots/settings-dark-200.png
+	modified:   app/src/androidTest/assets/screenshots/settings-light-100.png
+	modified:   app/src/androidTest/assets/screenshots/settings-light-200.png
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/ComposeWaits.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/LaunchScreenTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/licences/LicencesScreenTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportsForegroundTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/settings/DynamicColourSwitchTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SettingsScreenTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/settings/ThemeSettingsRestartTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/settings/ThemeSettingsTestSupport.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/signin/CertificatePromptTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInScreenTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/trust/CertificateHostMismatchWhileSignedInTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/trust/ChangedCertificateWhileSignedInTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/trust/UnconfirmedHttpWhileSignedInTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ScreenshotTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/LargestFontScaleTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ScreenContentTest.kt
+	modified:   app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/WindowBackgroundTest.kt
+	modified:   app/src/main/java/com/github/e0ipso/tokkl/MainActivity.kt
+	modified:   app/src/main/java/com/github/e0ipso/tokkl/TokklNavHost.kt
+	modified:   app/src/main/java/com/github/e0ipso/tokkl/reports/ReportsScreen.kt
+	modified:   app/src/main/java/com/github/e0ipso/tokkl/settings/SettingsScreen.kt
+	modified:   app/src/main/java/com/github/e0ipso/tokkl/ui/theme/NavigationBar.kt
+	modified:   app/src/main/res/values/strings.xml
+	modified:   docs/PRD.md
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	app/src/androidTest/assets/screenshots/timer-dark-100.png
+	app/src/androidTest/assets/screenshots/timer-dark-200.png
+	app/src/androidTest/assets/screenshots/timer-light-100.png
+	app/src/androidTest/assets/screenshots/timer-light-200.png
+	app/src/androidTest/java/com/github/e0ipso/tokkl/settings/ScratchNavigationTest.kt
+[opaque value omitted]
+[opaque value omitted]
+	app/src/main/res/drawable/ic_nav_clients.xml
+	app/src/main/res/drawable/ic_nav_more.xml
+	app/src/main/res/drawable/ic_nav_projects.xml
+	app/src/main/res/drawable/ic_nav_reports.xml
+	app/src/main/res/drawable/ic_nav_settings.xml
+	app/src/main/res/drawable/ic_nav_tags.xml
+	app/src/main/res/drawable/ic_nav_timer.xml
+	app/src/main/res/drawable/ic_nav_trash.xml
+	app/src/main/res/values/navigation_strings.xml
+
+no changes added to commit (use "git add" and/or "git commit -a")
+Dropped refs/stash@{0} (f8671b3fe37032257643525213171e0fc5ecacc7)

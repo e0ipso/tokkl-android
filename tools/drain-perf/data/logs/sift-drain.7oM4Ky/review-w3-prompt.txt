@@ -1,0 +1,78 @@
+You are an independent code reviewer for Wave 3 of the sift roadmap in
+/home/e0ipso/workspace/apps/tokkl-android--review-w3. Other agents wrote this code. The orchestrator turns your findings
+into tickets for other agents to verify and fix.
+
+Read project agent instructions and relevant knowledge entries. Verify every named path
+against the live tree. Bound aggregate tool output to 8000 content bytes per call.
+
+WAVE 3 SHIPPED:
+- TKA-0069: allowBackup=false, data_extraction_rules.xml and backup_rules.xml excluding all domains; BackupRulesTest.
+- TKA-0009: api package (ServerUrl, ApiCredentials, ApiResult/ApiError, SharedHttpClient, TogglApiClient) on OkHttp 5.5.0 and kotlinx.serialization; INTERNET permission.
+- TKA-0013: .github/workflows/ci.yml gradle job, actions pinned by SHA.
+- TKA-0082: ci.yml commitlint job (range lint with --last fallback, npm test).
+- TKA-0083: @commitlint/is-ignored declared in package.json.
+- TKA-0084: commitlint ignores decided from the header line only.
+- TKA-0012: time package with Kotlin ports of Tokkl's parseDuration and parseTimeOfDay, tests replaying the TypeScript cases.
+- TKA-0010: network_security_config.xml permitting cleartext and trusting system and user CAs.
+- TKA-0006: scripts/instrumented-tests.sh runs instrumented tests against a real ghcr.io/e0ipso/tokkl container pinned by digest; ServerSmokeTest.
+[credential-related line omitted]
+- TKA-0005: :app:checkDeniedDependencies with gradle/denied-dependency-groups.txt, wired into check.
+- TKA-0014: gradle/version.properties (versionName 0.1.0, versionCode 1000) with an enforced versionCode formula.
+- TKA-0090: CI gradle job runs assembleDebug check.
+- TKA-0089: LaunchScreenTest on the v2 createAndroidComposeRule.
+- TKA-0007: ui/theme Material 3 light/dark schemes from Tokkl's styles.css tokens, state colours, window theme with night variant, ThemeContrastTest.
+- TKA-0008: Anybody variable TTF, typography, OFL in res/raw and a Licences screen.
+- TKA-0085: adaptive launcher icon from Tokkl's artwork.
+
+SHIPPED TICKETS (read each for the requirement it states):
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/hardening/TKA-0069--no-backup.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/feature/TKA-0009--api-client.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0013--ci-workflow.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0082--ci-commit-message-lint.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/dx/TKA-0083--declare-commitlint-is-ignored.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/bug/TKA-0084--commitlint-merge-ignore-body.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/tracking/feature/TKA-0012--time-parsing-port.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/feature/TKA-0010--network-security-config.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/test/TKA-0006--instrumented-harness.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/hardening/TKA-0011--keystore-secrets.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/hardening/TKA-0005--free-deps-guard.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/release/TKA-0014--version-code.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/hardening/TKA-0090--ci-denied-deps-check.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/test/TKA-0089--compose-test-rule-v2.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/feature/TKA-0007--tokkl-theme.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/feature/TKA-0008--anybody-font.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/feature/TKA-0085--launcher-icon.md
+
+TASK
+Run `git diff aa18ff1f127fd5a2c359c82a8f4abb50b692c639 HEAD` in /home/e0ipso/workspace/apps/tokkl-android--review-w3 and read the whole diff. For each
+symbol the diff renamed, removed, re-signatured or gave new behaviour, search the repository
+and read the callers outside the diff.
+
+Report a finding only when it is one of these:
+- defect: a crash, wrong behaviour, a broken declared contract, a security hole, data loss,
+  or breakage of other code.
+- requirement: the code does not do what its ticket's Acceptance criteria ask.
+Each finding names the file and line and the concrete input or state that fails. Skip style,
+naming, design preferences, speculative hardening and missing tests. Zero findings is a
+valid result; do not invent findings to justify the run.
+
+This review is read-only. Do not edit, create or delete files. Do not commit. Do not merge.
+Never `git push`. Never run `git checkout`, `git switch`, `git reset`, `git clean`,
+`git stash` or `git add`: ignored tracker files have no history to restore them from.
+Do not write tracker state. Do not edit the sift-drain skill. Never file,
+comment on, or patch an external tracker. Report upstream proposals as type: dx findings.
+Do not write patches; describe the fix in one line.
+
+REPORT (only this, as plain text):
+  status: done | blocked
+  reviewed: aa18ff1f127fd5a2c359c82a8f4abb50b692c639..<HEAD hash>, <N> files
+  findings: <count>
+  one block per finding:
+  - severity: blocker | major | minor
+    confidence: high | medium | low
+    category: defect | requirement | dx
+    ticket: <shipped ticket ID the change belongs to> | unknown
+    location: <repository-relative path>:<line>
+    problem: <one sentence>
+    evidence: <the input or state, and what happens>
+    fix: <one line>

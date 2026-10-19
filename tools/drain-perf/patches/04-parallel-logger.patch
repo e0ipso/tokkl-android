@@ -1,0 +1,176 @@
+--- a/.agents/skills/sift-drain/scripts/drain-log.sh
++++ b/.agents/skills/sift-drain/scripts/drain-log.sh
+@@ -284,6 +284,15 @@
+     *) break ;;   # the subcommand; every argument from here is its operand
+   esac
+ done
++
++# Opt-in v2 is group-addressed; legacy reports remain available during migration.
++if [ "${1:-}" = --group ]; then
++  shift
++  [ $# -ge 2 ] || usage
++  group=$1; shift
++  exec python3 "$(dirname "${BASH_SOURCE[0]}")/drain-log-v2.py" \
++    --log "$SIFT/RUNLOG.v2.jsonl" --prefix "$PREFIX" --group "$group" "$@"
++fi
+ 
+ MODE="${1:-}"
+ [ $# -gt 0 ] && shift
+--- a/.agents/skills/sift-drain/SKILL.md
++++ b/.agents/skills/sift-drain/SKILL.md
+@@ -80,13 +80,17 @@
+ scripts/ticket-check.sh
+ scripts/reserve-ids.sh <count>
+ scripts/prepare-worktree.sh <base> <branch> <absolute-new-path>
+-scripts/drain-log.sh dispatch <TICKET>...
+-scripts/drain-log.sh return <TICKET> <STATUS>...
+-scripts/drain-log.sh report
++scripts/drain-log.sh --group <GROUP_ID> dispatch <TICKET>...
++scripts/drain-log.sh --group <GROUP_ID> return <TICKET> <STATUS>...
++scripts/drain-log.sh --group all report
+ ```
+ 
+ Pass all tickets in a sitting to one dispatch or return call so they share a timestamp.
+-Workers stamp their own phases. `drain-log.sh` alone writes `RUNLOG.md`.
++Mint a unique SIFT_GROUP_ID for each dispatch and every resumed sitting. Put it in
++   the worker Assignment and every dispatch, phase and return stamp. v2 writes the locked
++   RUNLOG.v2.jsonl sidecar; the legacy report remains read-only history. Workers stamp
++   phases at their actual start. Missing, duplicate or out-of-order stamps are telemetry
++   errors, never inferred durations. Report telemetry errors before closing a wave.
+ Use `find` and `command grep`, or no-ignore search, inside the usually ignored tracker.
+ 
+ ## Wave graph
+@@ -114,7 +118,7 @@
+    repository. Pass the prepared worktree as `PROJECT_ROOT`, its branch, and the original
+    project root as `SIFT_ROOT`. Keep the integration checkout for landings. Workers use
+    absolute shared tracker paths; do not replace their `.ai/sift` with a symlink.
+-3. Stamp `drain-log.sh dispatch` immediately before dispatch. For a fresh worker, load the
++3. Stamp `drain-log.sh --group "$SIFT_GROUP_ID" dispatch` immediately before dispatch. For a fresh worker, load the
+    placeholder preamble and Template section of [ticket-agent-prompt.md](references/ticket-agent-prompt.md)
+    and send the fixed contract first, verbatim, followed by its resolved Assignment block.
+    Keep assignment values at the end; prepend no ticket summary or coordinator history. For a related sitting
+@@ -128,7 +132,7 @@
+    effort, explicit inputs and checks. Apply reasoning effort only where the harness exposes
+    it. Honor user preferences.
+ 5. On return, handle tamper first, then record each ticket's reported status with
+-   `drain-log.sh return`. Integrate stale-base commits in a separate integration
++   `drain-log.sh --group "$SIFT_GROUP_ID" return`. Integrate stale-base commits in a separate integration
+    worktree, resolve conflicts and verify affected inputs there before landing. For each
+    done ticket, set status, resolution and updated, move it to the mirrored archive path and delete the
+    folders the move emptied. Land one commit per ticket, naming its ID in the message and
+--- /dev/null
++++ b/.agents/skills/sift-drain/scripts/drain-log-v2.py
+@@ -0,0 +1,113 @@
++#!/usr/bin/env python3
++"""Candidate parallel drain logger. This file is not installed in the live skill."""
++import argparse
++import fcntl
++import json
++import os
++import pathlib
++import re
++import time
++from datetime import datetime, timezone
++
++PHASES = ('orient', 'implement', 'verify', 'bookkeep')
++
++
++def validate(event, operands, prefix):
++    ticket = re.compile(re.escape(prefix) + r'-\d{4,}\Z')
++    if event == 'dispatch':
++        if not operands or not all(ticket.fullmatch(t) for t in operands):
++            raise ValueError('dispatch requires ticket IDs')
++        return {'tickets': operands}
++    if event == 'phase':
++        if len(operands) != 1 or operands[0] not in PHASES:
++            raise ValueError('phase requires orient, implement, verify or bookkeep')
++        return {'phase': operands[0]}
++    if not operands or len(operands) % 2 or any(not ticket.fullmatch(t) for t in operands[::2]):
++        raise ValueError('return requires ticket/status pairs')
++    if not all(re.fullmatch(r'[a-z][a-z -]{0,39}', s) for s in operands[1::2]):
++        raise ValueError('invalid status')
++    return {'statuses': dict(zip(operands[::2], operands[1::2]))}
++
++
++def report(rows):
++    groups = {}
++    for row in rows:
++        groups.setdefault(row['group'], []).append(row)
++    out = []
++    for group, events in groups.items():
++        dispatches = [e for e in events if e['event'] == 'dispatch']
++        returns = [e for e in events if e['event'] == 'return']
++        seen = [e['phase'] for e in events if e['event'] == 'phase']
++        issues = []
++        if len(dispatches) != 1:
++            issues.append('expected exactly one dispatch')
++        if seen != list(PHASES):
++            issues.append('missing, duplicate or out-of-order phase stamps')
++        if not returns:
++            issues.append('no return')
++        boots = {e['boot_id'] for e in events}
++        if len(boots) != 1:
++            issues.append('cross-boot duration unavailable')
++        statuses = {}
++        for e in returns:
++            statuses.update(e['statuses'])
++        if dispatches and set(statuses) != set(dispatches[0]['tickets']):
++            issues.append('return membership differs from dispatch')
++        duration = None
++        phases = {}
++        if len(dispatches) == 1 and returns and len(boots) == 1:
++            first = dispatches[0]['monotonic_ns']
++            last = returns[-1]['monotonic_ns']
++            duration = (last - first) / 1e9
++            if duration < 0:
++                issues.append('negative duration')
++                duration = None
++            stamps = [e for e in events if e['event'] == 'phase']
++            if seen == list(PHASES):
++                for i, e in enumerate(stamps):
++                    stop = stamps[i + 1]['monotonic_ns'] if i + 1 < len(stamps) else last
++                    phases[e['phase']] = (stop - e['monotonic_ns']) / 1e9
++                if any(t < 0 for t in phases.values()):
++                    issues.append('phase outside lifetime')
++                    phases = {}
++        out.append({'group': group, 'duration_s': duration, 'phases_s': phases,
++                    'statuses': statuses, 'issues': issues})
++    return out
++
++
++def main():
++    p = argparse.ArgumentParser(description=__doc__)
++    p.add_argument('--log', type=pathlib.Path, required=True)
++    p.add_argument('--prefix', default='TKA')
++    p.add_argument('--group', required=True)
++    p.add_argument('event', choices=('dispatch', 'phase', 'return', 'report'))
++    p.add_argument('operands', nargs='*')
++    args = p.parse_args()
++    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,95}', args.group):
++        p.error('group must be a short identifier')
++    if args.event == 'report':
++        with args.log.open() as f:
++            fcntl.flock(f, fcntl.LOCK_SH)
++            rows = [json.loads(line) for line in f if line.strip()]
++        print(json.dumps(report(rows), indent=2))
++        if any(row['issues'] for row in report(rows)):
++            raise SystemExit(1)
++        return
++    try:
++        details = validate(args.event, args.operands, args.prefix)
++    except ValueError as e:
++        p.error(str(e))
++    with args.log.open('a') as f:
++        fcntl.flock(f, fcntl.LOCK_EX)
++        # Timestamp inside the lock so append order is also clock order.
++        row = {'schema': 2, 'group': args.group, 'event': args.event, 'pid': os.getpid(),
++               'utc': datetime.now(timezone.utc).isoformat(), 'epoch_ns': time.time_ns(),
++               'monotonic_ns': time.monotonic_ns(),
++               'boot_id': pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(), **details}
++        f.write(json.dumps(row) + '\n')
++        f.flush()
++        os.fsync(f.fileno())
++
++
++if __name__ == '__main__':
++    main()

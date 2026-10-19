@@ -1,0 +1,12 @@
+status: done
+reviewed: 6810108f23f13975fb69e3db1cf4717bc568760e..4607048cc6e00e1f1c34ef472ff6e1ce48d76efb, 61 files
+findings: 1
+
+- severity: minor
+  confidence: high
+  category: requirement
+  ticket: TKA-0016
+  location: app/src/main/java/com/github/e0ipso/tokkl/signin/SignInModel.kt:57
+  problem: Recreating the app process clears the 429 cooldown before Retry-After expires.
+  evidence: After a 429 with Retry-After: 60, terminate and reopen the app within 60 seconds; the new model initializes retryAt to null, allowing another request after credentials are re-entered.
+  fix: Persist and restore a server-scoped retry deadline separately from credentials so the cooldown survives process recreation.

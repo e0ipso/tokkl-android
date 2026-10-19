@@ -1,0 +1,12 @@
+openjdk version "21.0.12.1" 2026-08-18 LTS
+OpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)
+OpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)
+WARNING: The SDK Manager CLI tool (sdkmanager) is deprecated. Android CLI will be used instead.
+The 'android' binary can also be found in the cmdline-tools directory, and 'android sdk' is the replacement for 'sdkmanager'.
+To learn more about the Android CLI and how to use it, see the documentation (https://d.android.com/tools/agents/android-cli)
+
+Installed packages:
+  cmdline-tools/latest                            23.0.0      Android SDK Command-line Tools (latest)
+  emulator                                        37.2.12     Android Emulator                       
+  platform-tools                                  37.0.1      Android SDK Platform-Tools             
+  system-images/android-36/default/x86_64         2.0.0       Intel x86_64 Atom System Image         

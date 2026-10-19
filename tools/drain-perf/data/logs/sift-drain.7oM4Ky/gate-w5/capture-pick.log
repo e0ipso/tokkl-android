@@ -1,0 +1,5 @@
+[main f65b8a0] docs: record wave 5 account settings, trust and test facts in kenkeep
+ Date: Sun Oct 18 19:10:18 2026 +0200
+ 13 files changed, 158 insertions(+), 43 deletions(-)
+ create mode 100644 .ai/kenkeep/nodes/map-account-settings-source-and-account-time.md
+ create mode 100644 .ai/kenkeep/nodes/map-connection-trust-store-pinning-and-prompts.md

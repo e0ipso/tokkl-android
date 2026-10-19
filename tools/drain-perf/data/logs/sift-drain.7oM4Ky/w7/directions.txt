@@ -1,0 +1,226 @@
+=== .ai/sift/open/foundation/dx/TKA-0133--concurrent-instrumented-runs.md
+## Direction
+
+Pick one of two approaches and record the choice and the reason in the resolution.
+
+- Lock. Take a `flock` on a file under `$XDG_RUNTIME_DIR` before the device check at :175-177. A second run then waits, or fails with a clear message that names the holder.
+- Isolate. Each run boots its own read-only instance of the AVD on its own port, sets `ANDROID_SERIAL` for itself instead of using every device adb lists (:134-136, :275-279), and never kills an adb server or emulator it did not start (:71, :113, :120-121).
+
+Prefer the lock if isolation would double memory beyond what TKA-0132 measures as safe on this 16 GB machine.
+
+Either way:
+
+- Keep the emulator's own systemd scope from TKA-0099 and the check from TKA-0101 that every test device is still online after Gradle.
+- Update the header (:26-30) to describe how concurrent runs behave.
+- Demonstrate with two overlapping runs and record the output in the resolution.
+
+=== .ai/sift/open/foundation/dx/TKA-0134--multi-class-filter.md
+## Direction
+
+- Reproduce first. Put two small instrumented classes in one comma-separated `class=` filter and record which tests ran, from the Gradle test report or the instrumentation output. Try a two-entry `package=` filter too.
+- Find the cause: the orchestrator's argument handling (app/build.gradle.kts:146-148), Gradle's parsing of the `-P` property, or how the script passes its arguments to Gradle.
+- Then make multi-class filters run every class, or make the script reject a comma in a `class=` or `package=` filter with a message that points to one class per run or a single package filter.
+- Document the supported filter forms in the script header beside the existing example (scripts/instrumented-tests.sh:40-42).
+
+=== .ai/sift/open/foundation/hardening/TKA-0132--emulator-host-memory.md
+## Direction
+
+- Reproduce first. Run the full suite once with today's settings and record qemu's peak RSS as the baseline, for example from `VmHWM` in qemu's `/proc/<pid>/status` just before the script stops it.
+- Pin a GPU mode in the launch at scripts/instrumented-tests.sh:151-152 that keeps the tests passing with less host memory. Compare `swiftshader_indirect`, which CI uses (.github/workflows/ci.yml:105), with lavapipe, which the last local boot picked (hardware-qemu.ini:75-76).
+- Pin a core count with `-cores`. The last boot used 4 (hardware-qemu.ini:2).
+- Make the guest RAM cap apply. `-memory 2048` did not stop the AVD running with hw.ramSize 2560 (emu-launch-params.txt, hardware-qemu.ini:3). Set hw.ramSize in the AVD's config.ini from the script, or document the setting next to the AVD setup if the script should not edit the AVD.
+- Try snapshot or cache options that cut memory, and keep only the ones that measurably help.
+- Run the same full suite again and record peak RSS. Update the 5 GB figure in the script header (scripts/instrumented-tests.sh:32) to the measured peak.
+- Keep the emulator in its own systemd scope from TKA-0099.
+- Leave the memory figure documented in kenkeep alone. The wave gate updates it, not this ticket.
+
+=== .ai/sift/open/foundation/test/TKA-0131--older-api-emulator.md
+## Direction
+
+- Install an older AOSP system image that keeps SystemUI and the launcher, under ~/Android/Sdk with sdkmanager as TKA-0001 did, and create an AVD for it. API 26 or 28 covers the pre-12 starting window and night mode. Add API 30 as well only if one image cannot cover both the pre-12 path and the API 26 to 30 backup path.
+- Let scripts/instrumented-tests.sh run against the older AVD through an AVD or API argument, without changing the default of tokkl-api36. `TOKKL_TEST_AVD` already selects the AVD (scripts/instrumented-tests.sh:52); add only what the older image needs to boot and run.
+- Each boot keeps its own systemd scope from TKA-0099. Run the older and the API 36 AVDs one after the other, never at the same time, to stay within this machine's memory.
+- Make sure the older run exercises the early return in ApplicationNightMode.kt:32-36, the theme and settings without dynamic colour (Theme.kt:31, ThemeSettings.kt:34), the backup rules that AndroidManifest.xml:15 names (backup_rules.xml:2-7), and the older branches in ThemeSettingsTestSupport.kt:44 and :101 and LauncherIconTest.kt:35.
+- Fix tests that fail on the older image. Mark tests that only apply on Android 12 and later so they skip there, rather than deleting them.
+- Add the older API level to the CI instrumented job as a matrix entry beside API 36 (.github/workflows/ci.yml:100), with every action pinned by SHA.
+- If an API 36.1 or later AOSP image exists, add it the same way so the cross-platform-transfer section (data_extraction_rules.xml:30) runs on a device. If none exists, say so in the resolution.
+- Name each image in the README, why it was picked, and the command that runs the suite against it.
+
+=== .ai/sift/open/foundation/test/TKA-0135--path-prefix-proxy.md
+## Direction
+
+- Add a route to the harness's haproxy (scripts/instrumented-tests.sh:233-238) that serves Tokkl under a fixed prefix such as `/tokkl` and strips the prefix before the request reaches Tokkl. Requests without the prefix keep going to Tokkl at the root.
+- Pass the prefixed base URL to the tests as another instrumentation argument beside the two at :290-291, and read it in TokklTestServer like the others (TokklTestServer.kt:18-33).
+[credential-related line omitted]
+- Update the KDoc at SignInModelTest.kt:30-34 so it no longer says the container serves only at the root. Keep the MockWebServer and ServerUrl unit tests (:92-98, ServerUrlTest.kt:24-43).
+- Keep the root URL, the TLS URL and their tests unchanged.
+
+=== .ai/sift/open/foundation/test/TKA-0136--real-server-429-cooldown.md
+## Direction
+
+- In an instrumented test, create a throwaway account with TestAccounts (TestAccounts.kt:36-62).
+[credential-related line omitted]
+- Check that the countdown follows the Retry-After Tokkl sent, that Sign in stays disabled during it, and that the countdown survives an activity restart (TKA-0103).
+- Every test in the run reaches Tokkl from one address, and each failure also charges the address counter of 100 (rateLimit.ts:29, :61-63). Stay well inside that budget so later tests in the run are not limited. Order or isolate the test so it cannot charge the shared account.
+- Keep the MockWebServer cases (SignInModelTest.kt:169, :195-207) and the store test (SignInCooldownStoreTest.kt:10). Update the KDoc at SignInModelTest.kt:30-34 to point at the new device test.
+
+=== .ai/sift/open/look-and-feel/bug/TKA-0118--page-title-style.md
+## Direction
+
+Apply TKA-0108's page-title role at all four sites. Uppercase is a style, not the text. Keep the string resources in sentence case, apply the capitals only when drawing, and make sure TalkBack still gets the sentence-case text. The sign-in, Settings and Licences titles already carry heading semantics, so keep them. The home title at MainActivity.kt:96-100 has none, so add it. If TKA-0121 has already replaced the home title with the Brand composable, that site needs no change. If TKA-0123 has landed, the Settings and Licences titles live in the top app bar and take the same role there. Check that every title fits at the largest font scale.
+
+=== .ai/sift/open/look-and-feel/bug/TKA-0119--section-heading-role.md
+## Direction
+
+Apply TKA-0108's section-heading role at the three sites. Keep the heading semantics on "Theme" and on the Licences heading, and add them to "Sign in with", which has none today. Change Type.kt's role mapping only through TKA-0108's scale.
+
+=== .ai/sift/open/look-and-feel/bug/TKA-0120--filled-button-style.md
+## Direction
+
+Add Tokkl button defaults for filled and ghost buttons, as a `TokklButton` composable or a `ButtonDefaults` wrapper. Following the shared decisions, both are pills at least 48dp tall. The filled one is primary with an on-primary weight-700 label, and the ghost one has a 2dp outline. Use the filled button for Sign in. Use the same defaults for the buttons of the http warning at SignInScreen.kt:320-329 and the certificate prompt at SignInScreen.kt:362-371. Each of those dialogs pairs a risky action, Continue over http or Trust the certificate, with Cancel, and today both are equal-weight text buttons. Keep that parity by giving both buttons in a dialog the same variant, so the restyle does not make the risky choice the loudest one. Keep every label at 4.5:1 against its fill in both themes.
+
+=== .ai/sift/open/look-and-feel/bug/TKA-0149--email-error-height-at-large-font.md
+## Direction
+
+- Reserve the taller of the hint and the error for the supporting line at the current width and font scale, for example by laying out both texts in the slot and showing one (the other invisible and excluded from semantics), or by measuring both.
+- Keep `isError` tied to the error, and keep TalkBack reading only the visible text.
+- Check the server URL and secret fields for the same problem; fix them the same way if they have it.
+- Update the screenshot references in the same commit if they change.
+
+=== .ai/sift/open/look-and-feel/dx/TKA-0152--brand-image-lint-warnings.md
+## Direction
+
+- Ship each distinct image once. For example, keep one size set and let ui/Brand.kt draw it at 24, 30 or 48dp (icon) and 84, 130 or 260dp (wordmark) with `Modifier.size`, choosing per-density files only where downscaling at draw time visibly hurts. Or reference a shared file through a resource alias. Check the sharpness of the 24dp icon and 84dp wordmark in a screenshot before and after.
+- Do not suppress either check globally. If the launcher layers really belong in xxxhdpi only, as TKA-0085 decided, keep them out of the density folders' scope instead, for example by moving the brand images to `drawable-nodpi` with explicit sizes, or by adding a narrowly scoped lint baseline or `tools:ignore` entry with a comment explaining it.
+- Update brand_images_source.txt with whatever changes, and re-record the screenshot references in the same commit if pixels change.
+
+=== .ai/sift/open/look-and-feel/feature/TKA-0122--error-banner.md
+## Direction
+
+Add an error banner composable in `ui/` with a warning icon and danger-coloured text on a surface, using the 16dp card shape from TKA-0110. Bundle the icon as a vector drawable, as SettingsScreen.kt:75 does for the back arrow. Keep the polite live region so TalkBack still announces a new failure. Use the banner for sign-in failures in place of the bare text, with the message strings unchanged. The icon carries the error signal alongside the colour, so it must stay visible in both themes.
+
+=== .ai/sift/open/look-and-feel/feature/TKA-0124--sign-in-brand-layout.md
+## Direction
+
+Lay sign-in out as TKA-0121's Brand at its large size over a gradient scene built from TKA-0109's scene tokens, two radial glows and a diagonal stripe. The scene ends at the edge of a surface card with TKA-0110's shape, and the card holds the form. No texture sits behind any input. Group the form with TKA-0107's spacing scale, 24dp between groups and 8dp inside a group. The groups are the server URL, the sign-in method, the credentials and the actions. Keep the http warning and certificate prompt dialogs, the IME padding at SignInScreen.kt:136, and every existing behaviour and test. The layout must stay usable at the largest font scale and be capped at the 600dp content width.
+
+=== .ai/sift/open/offline/feature/TKA-0027--change-queue.md
+## Direction
+
+- Keep a FIFO of pending operations in Room. The operations are create or start, stop, update and delete. Only time entries go in the queue.
+- Apply each operation to the cache at once and mark it unsent. Until it is sent, keep it applied over refreshed rows so the user still sees it.
+- An entry created offline gets a local ID. Once the server creates it, map the local ID to the server ID, and later operations that reference it use the server ID.
+- A sender drains the queue in order. A network failure, a 5xx or a 429 stops the drain and keeps the operation queued, and a 429 waits for `Retry-After` before the next try.
+- TKA-0073 owns the handling of 409, 404, 400 and 403. Until it lands, any other failure stops the drain and keeps the operation queued, so nothing is lost.
+- Send full field values. The last write to reach the server wins, and nothing merges, except a queued start, which TKA-0072 checks against the running entry before sending.
+- Taps never await the network. Start and stop times are the tap times.
+- The notification, widget and tile read the running entry from this cache, so they change at once while the queue sends behind them.
+
+=== .ai/sift/open/projects-and-reports/bug/TKA-0148--report-percent-rounding.md
+## Direction
+
+- Find out exactly how V8's Intl.NumberFormat rounds a double: it appears to round the shortest decimal string that round-trips the double, half away from zero, while `toFixed` works on the double's exact binary value. Confirm with more cases in Node before porting.
+- Port that rule into `sharePercent`, for example with `BigDecimal` built from the shortest round-trip string and `RoundingMode.HALF_UP`, and check that Android's `Double.toString` gives the shortest round-trip string on API 26 and later; if not, use a method that does.
+- Keep `jsToFixed` for the places that copy `toFixed`; do not change formatDuration's rounding.
+- Fix the comment on `sharePercent`.
+- Write a JVM test that runs the web app's rule in Node over many generated part/whole pairs, including 15,300/600,000, and checks the Kotlin output against them, as the TKA-0130 port of formatDuration did.
+
+=== .ai/sift/open/projects-and-reports/bug/TKA-0150--chart-bar-track-contrast.md
+## Direction
+
+- Drop the track, or draw it in a colour that keeps both bar colours at 3:1 or more in both themes, such as Tokkl's `--chart-band` token if it is not already in the theme. Follow styles.css for the value and cite it by token name.
+- Keep the empty-day bars visible somehow if the track goes, or confirm the web app shows nothing for an empty day.
+- Add a "chart marks on the bar track" pair, both themes, to ThemeContrastTest.
+- Re-record the reports screenshot references in the same commit if they change, as the README describes.
+
+=== .ai/sift/open/projects-and-reports/dx/TKA-0151--reuse-loopback-relay.md
+## Direction
+
+Give LoopbackRelay a hook for the request bytes it forwards, or a request callback, and rebuild ReportSearchCounter on it so the socket handling lives in one place. Keep both tests' behaviour.
+
+=== .ai/sift/open/projects-and-reports/feature/TKA-0031--projects-crud.md
+## Direction
+
+Add a projects list and a project form backed by the API v9 workspace project endpoints. The form edits the name, colour, client, rate, estimate and billable default. The client picker reads its options from the Room cache that TKA-0025 fills. The list offers archive and unarchive.
+
+Changes go to the server at once and are never queued, because only time entries are queued offline. When the phone is offline or the server is unreachable, create, edit, archive and unarchive are disabled, and a message says they need the server. After each change the server accepts, refresh the cached projects so the rest of the app shows the new state.
+
+The colour picker marks the chosen colour with more than the colour itself, such as a check mark and a name. All text lives in English string resources, every control has a TalkBack label, and the form stays usable at the largest font scale.
+
+=== .ai/sift/open/projects-and-reports/feature/TKA-0032--clients-crud.md
+## Direction
+
+Add a clients list and a client form backed by the API v9 workspace client endpoints, with create, edit, archive and restore. Archived clients stay reachable from the list so they can be restored, and they are marked with text, not only a faded colour.
+
+Changes go to the server at once and are never queued. When the phone is offline or the server is unreachable, the actions are disabled, and a message says they need the server. After each change the server accepts, refresh the cached clients so the project form and the report filters see it.
+
+All text lives in English string resources, every control has a TalkBack label, and the screens stay usable at the largest font scale.
+
+=== .ai/sift/open/projects-and-reports/feature/TKA-0033--tags-crud.md
+## Direction
+
+Add a tags list backed by the API v9 workspace tag endpoints, with create, rename and delete. Delete asks for confirmation first and names the tag in the question.
+
+Changes go to the server at once and are never queued. When the phone is offline or the server is unreachable, the actions are disabled, and a message says they need the server. After each change the server accepts, refresh the cached tags so the entry editor and the report filters see it.
+
+All text lives in English string resources, every control has a TalkBack label, and the list stays usable at the largest font scale.
+
+=== .ai/sift/open/projects-and-reports/feature/TKA-0034--detailed-report.md
+## Direction
+
+Add a detailed tab to the TKA-0026 reports screen. For the selected range it calls the Reports API v3 detailed search on the configured server. As the user scrolls near the end of the list, it requests the next page with the paging values the server returned. It never computes pages on the phone.
+
+Each row shows the entry's date and times in the account timezone, its description, project and duration. Rows are not cached on the device. When the phone is offline or the server is unreachable, the tab shows the same message as the summary, and no rows.
+
+All text lives in English string resources, every control has a TalkBack label, and the rows stay readable at the largest font scale.
+
+=== .ai/sift/open/projects-and-reports/feature/TKA-0035--weekly-report.md
+## Direction
+
+Add a weekly tab to the TKA-0026 reports screen. For the chosen week it calls the Reports API v3 weekly endpoint on the configured server. The week starts on the account's week start day, in the account timezone.
+
+The grid has projects as rows and the week's days as columns, with a total for each row and each day. On narrow screens it scrolls horizontally. TalkBack reads each cell with its project and day, not the number alone.
+
+Data is not cached on the device. When the phone is offline or the server is unreachable, the tab shows the same message as the summary, and no numbers. All text lives in English string resources and every control has a TalkBack label.
+
+=== .ai/sift/open/tracking/feature/TKA-0028--entity-picker.md
+## Direction
+
+Build one reusable Compose picker over the Room cache, so it works offline. The timer (T1, docs/PRD.md:103) and the entry edit screens (H2, docs/PRD.md:120) both use it.
+
+- Search by name.
+- Group projects by client. Label each project by its name as well as its colour.
+- List tasks under their project.
+- Select several tags at once.
+- Hide archived items, except those the current entry already uses (P1, docs/PRD.md:138). Those stay selected and show an "archived" text label. Archived items are never offered as new picks.
+- Let the user type a new tag name, online or offline. The entry keeps the tag by name, and the TKA-0027 queue sends it in `tags` by name. Tokkl creates any tag it does not know (`resolveTagNames`, ../tokkl/packages/api/src/models/tags.ts:42, called from ../tokkl/packages/api/src/models/timeEntries.ts:154).
+- Offline, offer only the cached projects, clients and tasks, and show text saying that creating one needs a connection.
+
+Keep all text in English string resources. Give every option a TalkBack label that includes its selected and archived state, never show state by colour alone, meet WCAG AA contrast, and keep the picker usable at the largest font scale.
+
+=== .ai/sift/open/tracking/feature/TKA-0029--history.md
+## Direction
+
+Build a scrolling list of days in the account timezone from TKA-0023, newest day first. Each day shows its total and its entries, newest first.
+
+- Read the cached two weeks from Room.
+- Past the cached range, page older days from the server by date range when online (H1, docs/PRD.md:119). Offline, show a row that says older days need the server.
+- Show start and stop of stopped entries exactly as the server returned them, snapped or not (docs/PRD.md:54, docs/PRD.md:105). Entries not yet sent show the times snapped on the phone by TKA-0070; call `snapUnsent` (app/src/main/java/com/github/e0ipso/tokkl/time/Snap.kt), not `snapSpan`, because the server truncates to whole seconds before snapping (../tokkl/packages/api/src/models/timeEntries.ts:131-138), and a server without `time_resolution_minutes` returns unsnapped times (docs/PRD.md:249).
+- Show the unsent marker on entries that have not reached the server.
+- Load on events, never on a polling timer.
+
+Keep all text in English string resources. Give every row and control a TalkBack label, never show state by colour alone, meet WCAG AA contrast, and keep the list usable at the largest font scale.
+
+=== .ai/sift/open/tracking/feature/TKA-0030--week-calendar.md
+## Direction
+
+Build a Compose week view (K1, docs/PRD.md:131) with seven day columns and hour rows, for landscape, tablets and unfolded foldables. Portrait phones show TKA-0071's day view instead, which reuses this grid and its hour rows, so keep the grid able to render a single day column.
+
+- Start the week on the account's first day of the week, from TKA-0023 (S7, docs/PRD.md:96).
+- Place entries as blocks sized by duration, in the account timezone, never the device's.
+- Grow the running entry's block as the clock ticks on the phone, with no network requests.
+- Show an entry across midnight on both days.
+- Swipe between weeks. Cached weeks render offline. Weeks outside the cache load from the server when online and say they need the server when offline.
+
+Keep all text in English string resources. Give every block and control a TalkBack label, never show state by colour alone, meet WCAG AA contrast, and keep the view usable at the largest font scale.
+

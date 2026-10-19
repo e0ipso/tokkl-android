@@ -1,0 +1,5 @@
+[main 7fe66f7] docs: record wave 4 harness, OOM, sign-in, release and time facts in kenkeep
+ Date: Sun Oct 18 15:48:03 2026 +0200
+ 17 files changed, 172 insertions(+), 51 deletions(-)
+ create mode 100644 .ai/kenkeep/nodes/map-oom-kill-ends-agent-session.md
+ create mode 100644 .ai/kenkeep/nodes/map-signin-session-settings-and-navigation-host.md

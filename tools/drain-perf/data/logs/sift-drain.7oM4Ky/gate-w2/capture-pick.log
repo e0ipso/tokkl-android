@@ -1,0 +1,6 @@
+[main aa18ff1] docs: record wave 2 build, commit hook and agent host facts in kenkeep
+ Date: Sun Oct 18 01:10:31 2026 +0200
+ 8 files changed, 157 insertions(+), 24 deletions(-)
+ create mode 100644 .ai/kenkeep/nodes/map-gradle-build-sdk-levels-kotlin-and-memory.md
+ create mode 100644 .ai/kenkeep/nodes/map-t3-daily-restart-stops-agent-sessions.md
+ create mode 100644 .ai/kenkeep/nodes/practice-gradle-no-daemon-in-parallel-worktrees.md

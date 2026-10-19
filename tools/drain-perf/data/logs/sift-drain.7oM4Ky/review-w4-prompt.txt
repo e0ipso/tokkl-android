@@ -1,0 +1,76 @@
+You are an independent code reviewer for Wave 4 of the sift roadmap in
+/home/e0ipso/workspace/apps/tokkl-android--review-w4. Other agents wrote this code. The orchestrator turns your findings
+into tickets for other agents to verify and fix.
+
+Read project agent instructions and relevant knowledge entries. Verify every named path
+against the live tree. Bound aggregate tool output to 8000 content bytes per call.
+
+WAVE 4 SHIPPED:
+- TKA-0070: time/Snap.kt ports Tokkl's isTimeResolution and snapSpan; snapUnsent for phone-side snapping.
+- TKA-0098: time/TimeZone.kt parseTimeZone resolves the /me timezone name as leniently as Tokkl's Intl check.
+[credential-related line omitted]
+- TKA-0017: ConfiguredServerGuard on SharedHttpClient refuses other hosts and cross-host redirects; SingleHttpClientTest.
+- TKA-0097: sendNoContent KDoc corrected.
+- TKA-0020: release signing from TOKKL_RELEASE_* env vars, build-tools pin, scripts/reproducible-release.sh, README Release builds.
+- TKA-0099: scripts/instrumented-tests.sh boots the emulator in its own systemd scope (OOMPolicy=continue).
+- TKA-0094: test credentials travel in a mode-600 device file read by TokklTestServer.
+- TKA-0093: script hides error dialogs on an emulator it booted.
+- TKA-0019: ci.yml instrumented job with the KVM udev rule and android-emulator-runner.
+- TKA-0018: .github/dependabot.yml.
+- TKA-0086: .gitattributes for the wrapper scripts.
+- TKA-0101: script fails when a test device goes away mid-run.
+- TKA-0100: ci.yml reproducible-release job.
+- TKA-0095: ui-test-manifest and ClockAndTotalStylesFitTest.
+- TKA-0015: settings screen with theme mode and opt-in dynamic colour, persisted and applied without restart.
+
+SHIPPED TICKETS (read each for the requirement it states):
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/tracking/feature/TKA-0070--local-snap.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/hardening/TKA-0098--lenient-account-zone.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/feature/TKA-0016--sign-in.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/hardening/TKA-0017--single-host-guard.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/server-connection/docs/TKA-0097--send-no-content-kdoc.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/release/TKA-0020--signed-reproducible-apk.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/hardening/TKA-0099--emulator-own-scope-oom.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/hardening/TKA-0094--harness-secrets-out-of-argv.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/dx/TKA-0093--harness-close-systemui-anr.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/test/TKA-0019--emulator-ci-job.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/hardening/TKA-0018--dependabot.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/dx/TKA-0086--gitattributes-wrapper-eol.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/foundation/bug/TKA-0101--fail-run-when-device-dies-mid-run.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/ci-and-release/release/TKA-0100--reproducible-release-ci-job.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/test/TKA-0095--clock-totals-font-scale-test.md
+/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/archive/look-and-feel/feature/TKA-0015--theme-settings.md
+
+TASK
+Run `git diff 6810108f23f13975fb69e3db1cf4717bc568760e HEAD` in /home/e0ipso/workspace/apps/tokkl-android--review-w4 and read the whole diff. For each
+symbol the diff renamed, removed, re-signatured or gave new behaviour, search the repository
+and read the callers outside the diff.
+
+Report a finding only when it is one of these:
+- defect: a crash, wrong behaviour, a broken declared contract, a security hole, data loss,
+  or breakage of other code.
+- requirement: the code does not do what its ticket's Acceptance criteria ask.
+Each finding names the file and line and the concrete input or state that fails. Skip style,
+naming, design preferences, speculative hardening and missing tests. Zero findings is a
+valid result; do not invent findings to justify the run.
+
+This review is read-only. Do not edit, create or delete files. Do not commit. Do not merge.
+Never `git push`. Never run `git checkout`, `git switch`, `git reset`, `git clean`,
+`git stash` or `git add`: ignored tracker files have no history to restore them from.
+Do not write tracker state. Do not edit the sift-drain skill. Never file,
+comment on, or patch an external tracker. Report upstream proposals as type: dx findings.
+Do not write patches; describe the fix in one line.
+
+REPORT (only this, as plain text):
+  status: done | blocked
+  reviewed: 6810108f23f13975fb69e3db1cf4717bc568760e..<HEAD hash>, <N> files
+  findings: <count>
+  one block per finding:
+  - severity: blocker | major | minor
+    confidence: high | medium | low
+    category: defect | requirement | dx
+    ticket: <shipped ticket ID the change belongs to> | unknown
+    location: <repository-relative path>:<line>
+    problem: <one sentence>
+    evidence: <the input or state, and what happens>
+    fix: <one line>

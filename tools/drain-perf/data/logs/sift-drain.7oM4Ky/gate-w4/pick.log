@@ -1,0 +1,4 @@
+[main 9bdd1c1] test: pin the JavaScript Date range in the snapSpan port
+ Date: Sun Oct 18 15:34:13 2026 +0200
+ 1 file changed, 143 insertions(+)
+ create mode 100644 app/src/test/java/com/github/e0ipso/tokkl/time/SnapJsDateRangeTest.kt
