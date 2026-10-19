@@ -93,6 +93,11 @@ sealed interface OlderDays {
  * when no older day has entries. A server without it, such as Toggl Track, gets pages until one
  * comes back empty, and then more only on a tap.
  *
+ * The cache's window moves on with the date, and a refresh then drops the days that fell out of
+ * it. The older days end where the window began when they first loaded, so the days the cache
+ * drops after that stay in the list as the cache last held them, with no request, and the list
+ * keeps every day from today to the oldest day loaded.
+ *
  * Call [loadOlder] on the main thread.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
@@ -115,13 +120,21 @@ class HistoryModel(
     /** Where the account's history starts, once the server has said or shown that it cannot. */
     private var bounds: Bounds? = null
 
+    /**
+     * The entries of the days the cache dropped between [Older.until] and its first day, and the
+     * cached entries as [state] last saw them. Only [state]'s upstream reads and writes these, one
+     * emission at a time.
+     */
+    private var dropped: List<CachedTimeEntry> = emptyList()
+    private var lastCached: List<CachedTimeEntry> = emptyList()
+
     val state: StateFlow<HistoryState> = combine(entries, projects, tasks, accountSettings, older) { cached, projectRows, taskRows, settings, loaded ->
         val time = settings?.time(clock)
         when {
             settings == null -> HistoryState.Loading
             time == null -> HistoryState.NoAccountTime(settings.timeZone)
             else -> HistoryState.Shown(
-                days = historyDays(cached, loaded.entries, projectRows, taskRows, time),
+                days = historyDays(cached, daysTheCacheDropped(cached, loaded.until, time) + loaded.entries, projectRows, taskRows, time),
                 today = time.today(),
                 zone = time.zone,
                 settings = settings,
@@ -147,11 +160,39 @@ class HistoryModel(
         scope.launch {
             val (page, read) = withContext(io) { fetch(time, before, known) }
             bounds = read
+            val loaded = older.value
             older.value = when (page) {
-                is Page.Loaded -> Older(older.value.entries + page.entries, page.from, page.status)
-                is Page.NotLoaded -> older.value.copy(status = page.status)
+                is Page.Loaded -> Older(loaded.entries + page.entries, page.from, loaded.until ?: before, page.status)
+                is Page.NotLoaded -> loaded.copy(
+                    // The server's word that no entry comes before the cache fixes where the older days end too.
+                    until = loaded.until ?: before.takeIf { page.status == OlderDays.End },
+                    status = page.status,
+                )
             }
         }
+    }
+
+    /**
+     * The entries of the days from [until] to the day before the cache's first day: days the
+     * cache held when the older days first loaded and has since dropped, or will drop, as its
+     * window moved on with the date. They come from the cache as [state] last saw it, the newest
+     * version of each entry winning, and none when no older days have loaded.
+     */
+    private fun daysTheCacheDropped(cached: List<EntryWithSendState>, until: LocalDate?, time: AccountTime): List<CachedTimeEntry> {
+        val now = cached.map { it.entry }
+        val before = lastCached
+        lastCached = now
+        val firstCached = firstCachedDay(time)
+        dropped = if (until == null || until >= firstCached) {
+            emptyList()
+        } else {
+            (dropped + before + now)
+                .filter { time.local(it.start).toLocalDate().let { day -> day >= until && day < firstCached } }
+                .associateBy { it.id }
+                .values
+                .toList()
+        }
+        return dropped
     }
 
     /** The page of days before [before], and where the history starts, [known] or read now. */
@@ -204,10 +245,15 @@ class HistoryModel(
         is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> OlderDays.Failed(null)
     }
 
-    /** The older days loaded so far: their [entries], from the day [from] on, and what comes next. */
+    /**
+     * The older days loaded so far: their [entries], from the day [from] on, and what comes next.
+     * They end the day before [until], the cache's first day when the first page loaded or the
+     * server said no entry comes before it, and null until then.
+     */
     private data class Older(
         val entries: List<CachedTimeEntry> = emptyList(),
         val from: LocalDate? = null,
+        val until: LocalDate? = null,
         val status: OlderDays = OlderDays.More(auto = true),
     )
 

@@ -41,8 +41,9 @@ data class HistoryDay(val date: LocalDate, val entries: List<HistoryEntry>) {
  * The history's days, newest first, as EntryList.tsx in the web app groups them: each stopped
  * entry goes under the day of its start in the account's timezone, and the running entry stays
  * out, since the timer shows it. [cached] comes from the phone, with queued changes applied, and
- * [older] from the server for the days before the cache, oldest page last. An entry in both shows
- * as cached, and one in two pages as the later page has it.
+ * [older] holds the days before the cache: those the cache has dropped since the older days
+ * loaded, then the pages from the server, oldest page last. An entry in both shows as cached, and
+ * one in two pages as the later page has it.
  *
  * Stopped entries show the times the server returned, snapped or not. An entry with a change the
  * server has not received shows [AccountTime.snapUnsent] of its times instead, the times the
