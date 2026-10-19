@@ -24,6 +24,10 @@ sealed interface CatalogChange {
     data class Archived(override val name: String) : CatalogChange
 
     data class Restored(override val name: String) : CatalogChange
+
+    data class Renamed(override val name: String) : CatalogChange
+
+    data class Deleted(override val name: String) : CatalogChange
 }
 
 /**

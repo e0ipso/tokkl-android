@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.signin.SignInViewModel
+import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
     private val calendarViewModel: CalendarViewModel by viewModels()
     private val projectsViewModel: ProjectsViewModel by viewModels()
     private val clientsViewModel: ClientsViewModel by viewModels()
+    private val tagsViewModel: TagsViewModel by viewModels()
 
     /** Whether a time entry runs, from the phone's cache, which the bottom bar marks on Timer. */
     private val timerRunning: Flow<Boolean> by lazy {
@@ -64,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     calendar = calendarViewModel.model,
                     projects = projectsViewModel.model,
                     clients = clientsViewModel.model,
+                    tags = tagsViewModel.model,
                     timerView = (application as TokklApplication).timerView,
                     timerRunning = timerRunning,
                 )

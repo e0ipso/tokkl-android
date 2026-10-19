@@ -33,6 +33,8 @@ fun changeText(change: CatalogChange): String = when (change) {
     is CatalogChange.Saved -> stringResource(R.string.catalog_saved, change.name)
     is CatalogChange.Archived -> stringResource(R.string.catalog_archived, change.name)
     is CatalogChange.Restored -> stringResource(R.string.catalog_restored, change.name)
+    is CatalogChange.Renamed -> stringResource(R.string.catalog_renamed, change.name)
+    is CatalogChange.Deleted -> stringResource(R.string.catalog_deleted, change.name)
 }
 
 /** What [problem] means for the user, in a sentence. */

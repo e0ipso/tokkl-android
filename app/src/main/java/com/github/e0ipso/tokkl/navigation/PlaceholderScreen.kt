@@ -23,8 +23,8 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
  * A page whose feature is not built yet: its [title] and a [message] that says what the page
- * will hold, so no item in the bottom bar or the More sheet leads nowhere. Tags (TKA-0033) and
- * the trash (TKA-0053) replace theirs.
+ * will hold, so no item in the bottom bar or the More sheet leads nowhere. Only the trash still
+ * shows one, until TKA-0053 replaces it.
  */
 @Composable
 fun PlaceholderScreen(@StringRes title: Int, @StringRes message: Int, modifier: Modifier = Modifier) {

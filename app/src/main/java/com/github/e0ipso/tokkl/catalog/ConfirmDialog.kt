@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
+import com.github.e0ipso.tokkl.ui.TokklDangerButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
@@ -24,7 +25,9 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  * a heading, the [paragraphs] that say what the change does, and [problem] when the last try
  * failed. Cancel and [confirmLabel] sit in one slot, stacked at full width, so they cannot overlap
  * at any font scale; AlertDialog's own button row put one over the other at 200%. Back and a tap
- * outside cancel. [canConfirm] is false while the change cannot go to the server.
+ * outside cancel. [canConfirm] is false while the change cannot go to the server. A [danger]
+ * change, one that cannot be undone, gets the danger colours, as the web app's ConfirmModal gives
+ * it.
  */
 @Composable
 fun ConfirmDialog(
@@ -35,6 +38,7 @@ fun ConfirmDialog(
     problem: ServerProblem?,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
+    danger: Boolean = false,
 ) {
     AlertDialog(
         onDismissRequest = onCancel,
@@ -53,8 +57,11 @@ fun ConfirmDialog(
                 TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)
                 }
-                TokklButton(onClick = onConfirm, enabled = canConfirm, modifier = Modifier.fillMaxWidth()) {
-                    Text(confirmLabel, textAlign = TextAlign.Center)
+                val label = @Composable { Text(confirmLabel, textAlign = TextAlign.Center) }
+                if (danger) {
+                    TokklDangerButton(onClick = onConfirm, enabled = canConfirm, modifier = Modifier.fillMaxWidth()) { label() }
+                } else {
+                    TokklButton(onClick = onConfirm, enabled = canConfirm, modifier = Modifier.fillMaxWidth()) { label() }
                 }
             }
         },

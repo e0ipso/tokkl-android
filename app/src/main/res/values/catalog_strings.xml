@@ -10,6 +10,8 @@
     <string name="catalog_saved">Saved %1$s</string>
     <string name="catalog_archived">Archived %1$s</string>
     <string name="catalog_restored">Restored %1$s</string>
+    <string name="catalog_renamed">Renamed to %1$s</string>
+    <string name="catalog_deleted">Deleted %1$s</string>
     <string name="catalog_error_unreachable">The server can\'t be reached, so nothing changed. Check the connection and try again.</string>
     <string name="catalog_error_auth">The server didn\'t accept this phone\'s API token. Sign in again.</string>
     <string name="catalog_error_trust">The app sends nothing to the server until you review its connection.</string>

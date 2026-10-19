@@ -39,6 +39,8 @@ import com.github.e0ipso.tokkl.settings.SettingsScreen
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
+import com.github.e0ipso.tokkl.tags.TagsModel
+import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
@@ -78,6 +80,7 @@ fun TokklNavHost(
     calendar: CalendarModel,
     projects: ProjectsModel,
     clients: ClientsModel,
+    tags: TagsModel,
     timerView: TimerViewSetting,
     timerRunning: Flow<Boolean> = flowOf(false),
 ) {
@@ -107,7 +110,7 @@ fun TokklNavHost(
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
     SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open, timerRunning = running) {
-        Screen(destination, backStack, themeSettings, reports, history, calendar, projects, clients, view, onTimerViewChange = timerView::choose)
+        Screen(destination, backStack, themeSettings, reports, history, calendar, projects, clients, tags, view, onTimerViewChange = timerView::choose)
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -149,6 +152,7 @@ private fun Screen(
     calendar: CalendarModel,
     projects: ProjectsModel,
     clients: ClientsModel,
+    tags: TagsModel,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
 ) {
@@ -164,7 +168,7 @@ private fun Screen(
         Destination.REPORTS -> ReportsScreen(model = reports)
         Destination.PROJECTS -> ProjectsScreen(model = projects)
         Destination.CLIENTS -> ClientsScreen(model = clients)
-        Destination.TAGS -> PlaceholderScreen(title = R.string.nav_tags, message = R.string.tags_later)
+        Destination.TAGS -> TagsScreen(model = tags)
         Destination.TRASH -> PlaceholderScreen(title = R.string.nav_trash, message = R.string.trash_later)
         Destination.SETTINGS -> SettingsScreen(
             model = themeSettings,

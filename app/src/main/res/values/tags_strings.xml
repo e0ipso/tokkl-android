@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The tags page (docs/PRD.md P4), in the web app's words. -->
+<resources>
+    <string name="tags_new_name">New tag</string>
+    <string name="tags_add">Add tag</string>
+    <string name="tags_name_missing">Enter a tag name</string>
+    <string name="tags_loading">Loading tags…</string>
+    <string name="tags_server_needed_title">Tags need the server</string>
+    <string name="tags_server_needed_message">The server can\'t be reached, so these are the tags on this phone. Creating, renaming and deleting them needs the server.</string>
+    <string name="tags_empty_title">No tags yet</string>
+    <string name="tags_empty_message">Tags label entries across projects, like \"meeting\" or \"review\". Add one above.</string>
+    <string name="tags_rename_hint">Tap a tag to rename it. Renaming updates every entry that uses it.</string>
+    <!-- What TalkBack says a tap on a tag's name does. -->
+    <string name="tags_rename">Rename</string>
+    <!-- Rename focus -->
+    <string name="tags_rename_title">Rename %1$s</string>
+    <string name="tags_rename_field">New name</string>
+    <string name="tags_rename_note">Renaming updates every entry that uses it.</string>
+    <string name="tags_rename_save">Save</string>
+    <string name="tags_delete">Delete</string>
+    <!-- Delete focus -->
+    <string name="tags_delete_named">Delete %1$s</string>
+    <!-- Delete focus? -->
+    <string name="tags_delete_title">Delete %1$s?</string>
+    <string name="tags_delete_message">The tag comes off every time entry that has it. The entries stay. You can\'t undo this.</string>
+    <string name="tags_delete_confirm">Delete tag</string>
+</resources>

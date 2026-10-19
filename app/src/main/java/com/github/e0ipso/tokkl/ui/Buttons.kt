@@ -52,3 +52,27 @@ fun TokklGhostButton(
         content = content,
     )
 }
+
+/**
+ * A filled button in the danger colours, on-danger on danger, as the web app's `.button-danger`,
+ * for the confirm button of a change that cannot be undone, such as deleting a tag. Its label
+ * says what it does, so the colour is never the only sign.
+ */
+@Composable
+fun TokklDangerButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable RowScope.() -> Unit,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = LocalMinimumInteractiveComponentSize.current),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError,
+        ),
+        content = content,
+    )
+}
