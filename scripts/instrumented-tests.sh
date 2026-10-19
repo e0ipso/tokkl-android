@@ -27,18 +27,20 @@
 #
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
 # attached, the script boots the AVD named by TOKKL_TEST_AVD (default
-# tokkl-api36) without a window and with 2 GB of guest RAM, turns off error
-# dialogs on it, sets its font scale to 1.0, lets its soft keyboard open, and
-# stops it at the end. It changes no setting on a device it did not boot. It
-# also stops the adb server if that was not running before.
+# tokkl-api36) without a window, with 2.5 GB of guest RAM, 4 cores and the
+# lavapipe renderer, turns off error dialogs on it, sets its font scale to 1.0,
+# lets its soft keyboard open, makes apps draw with Vulkan, and stops it at the
+# end. It changes no setting on a device it did not boot. It also stops the adb
+# server if that was not running before.
 #
-# qemu holds up to 5 GB, and its oom_score_adj of 800 makes it the kernel OOM
-# killer's first pick. When the user's systemd manager is reachable, the
-# emulator runs in a scope of its own with OOMPolicy=continue, so an OOM kill
-# ends only qemu and this script, not the caller's scope with everything else
-# in it, such as an agent session. The scope is PartOf the caller's unit, so
-# stopping the caller still stops the emulator. Without a user manager, as in
-# CI, the emulator starts as a plain child process.
+# qemu peaks at about 3.5 GB in a full run, and its oom_score_adj of 800 makes
+# it the kernel OOM killer's first pick. When the user's systemd manager is
+# reachable, the emulator runs in a scope of its own with OOMPolicy=continue
+# and at most EMULATOR_MEMORY_MAX of memory, so an OOM kill ends only qemu and
+# this script, not the caller's scope with everything else in it, such as an
+# agent session. The scope is PartOf the caller's unit, so stopping the caller
+# still stops the emulator. Without a user manager, as in CI, the emulator
+# starts as a plain child process with no memory limit.
 #
 # Arguments go to Gradle, for example to run one class:
 #   scripts/instrumented-tests.sh \
@@ -62,6 +64,9 @@ readonly CREDENTIALS_PREFIX='tokkl-test-credentials-'
 # A run takes minutes, so a credentials file this many hours old belongs to a
 # run that ended without its cleanup, never to one still reading it.
 readonly STALE_CREDENTIALS_HOURS=6
+# The most memory the emulator's scope may use, swap included. A full run
+# peaks below 4 GB.
+readonly EMULATOR_MEMORY_MAX=6G
 
 cd "$(dirname "$0")/.."
 
@@ -91,6 +96,9 @@ report_emulator_exit() {
     if [ "$status" -eq 137 ]; then
         echo "$0: the emulator was killed with SIGKILL, most likely by the kernel's OOM killer." >&2
         echo "$0: \`journalctl -k --grep=oom\` shows OOM kills. Free memory before running the tests again." >&2
+        if [ -n "$emulator_unit" ]; then
+            echo "$0: \"Memory cgroup out of memory\" there means qemu outgrew the $EMULATOR_MEMORY_MAX its scope may use, whatever memory was free." >&2
+        fi
     else
         echo "$0: the emulator exited with status $status. Last emulator output:" >&2
         tail -n 20 "$work_dir/emulator.log" >&2
@@ -171,12 +179,16 @@ boot_emulator() {
     emulator_serial="emulator-$port"
     if command -v systemd-run >/dev/null && systemctl --user show --property=Version >/dev/null 2>&1; then
         emulator_unit="tokkl-emulator-$port-$(random_hex 4).scope"
-        launch=(systemd-run --user --scope --quiet --collect --unit="$emulator_unit" -p OOMPolicy=continue)
+        launch=(systemd-run --user --scope --quiet --collect --unit="$emulator_unit"
+            -p OOMPolicy=continue -p "MemoryMax=$EMULATOR_MEMORY_MAX" -p MemorySwapMax=0)
         if caller=$(systemctl --user whoami 2>/dev/null); then launch+=(-p "PartOf=$caller"); fi
         launch+=(--)
     fi
     echo "Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit}"
-    "${launch[@]}" emulator -avd "$AVD" -port "$port" -memory 2048 \
+    # The emulator raises any smaller -memory to 2560 MB for an API 34 or later
+    # image. lavapipe is the renderer it picked on its own, which drew the
+    # screenshot references.
+    "${launch[@]}" emulator -avd "$AVD" -port "$port" -memory 2560 -cores 4 -gpu lavapipe \
         -no-window -no-audio -no-boot-anim -no-snapshot -accel on >"$log" 2>&1 &
     emulator_pid=$!
     export ANDROID_SERIAL="$emulator_serial"
@@ -206,6 +218,12 @@ boot_emulator() {
     # emulator, so no test saw a screen with the keyboard open. With this
     # setting, which shows it alongside a hardware keyboard, it opens.
     adb -s "$emulator_serial" shell settings put secure show_ime_with_hard_keyboard 1
+    # qemu kept about 100 MB each time an app process that drew with OpenGL
+    # ended, with lavapipe and with swiftshader, and the test orchestrator
+    # starts a process for every test, so one full run took qemu to 11 GB. A
+    # process that draws with Vulkan leaves about 5 MB. HWUI reads this when a
+    # process starts, so it applies to every test.
+    adb -s "$emulator_serial" shell setprop debug.hwui.renderer skiavk
 }
 
 if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then
