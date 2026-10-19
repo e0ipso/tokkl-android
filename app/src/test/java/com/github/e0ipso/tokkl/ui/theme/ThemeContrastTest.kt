@@ -137,15 +137,18 @@ class ThemeContrastTest {
 
     /**
      * The pairs styles.css lists for the report chart and the project dots, on the report card's
-     * surface. A bar's billable part is solid chartBillable, and the chartOther stripes draw a
-     * non-billable part's edge; the stripes on their wash are texture inside one part and need no
-     * ratio. A project's dot is its colour mixed with projectMix, as the reports screen draws it,
-     * for every colour of Tokkl's project palette and for the muted dot of a project without one.
+     * surface and on the bar track, which is chartBand. A bar's billable part is solid
+     * chartBillable, and the chartOther stripes draw a non-billable part's edge; the stripes on
+     * their wash are texture inside one part and need no ratio. A project's dot is its colour mixed
+     * with projectMix, as the reports screen draws it, for every colour of Tokkl's project palette
+     * and for the muted dot of a project without one.
      */
     private fun reportPairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
         val marks = listOf(
             Pair("chartBillable on surface", x.chartBillable, s.surface, Kind.NON_TEXT),
             Pair("chartOther on surface", x.chartOther, s.surface, Kind.NON_TEXT),
+            Pair("chartBillable on the bar track, chartBand", x.chartBillable, x.chartBand, Kind.NON_TEXT),
+            Pair("chartOther on the bar track, chartBand", x.chartOther, x.chartBand, Kind.NON_TEXT),
         )
         val dots = (PROJECT_COLOURS + null).map { hex ->
             val dot = projectMark(hex, x.projectMix, s.onSurfaceVariant)

@@ -41,6 +41,7 @@ private class Tokens(
     val chartBillable: Color,
     val chartOther: Color,
     val chartOtherWash: Color,
+    val chartBand: Color,
     val projectMix: Color,
 )
 
@@ -73,6 +74,7 @@ private val Light = Tokens(
     chartBillable = Color(0xFF0091A8), // --chart-billable
     chartOther = Color(0xFFE0601D), // --chart-other
     chartOtherWash = Color(0xFFF6CCB1), // --chart-other-wash
+    chartBand = Color(0xFFF6EBD8), // --chart-band
     projectMix = Color(0xFF000000), // --project-mix
 )
 
@@ -105,6 +107,7 @@ private val Dark = Tokens(
     chartBillable = Color(0xFF0F9BB3), // --chart-billable
     chartOther = Color(0xFFE46A2A), // --chart-other
     chartOtherWash = Color(0xFF523232), // --chart-other-wash
+    chartBand = Color(0xFF19203F), // --chart-band
     projectMix = Color(0xFFFFFFFF), // --project-mix
 )
 
@@ -216,6 +219,11 @@ class TokklExtraColors(
     /** `--chart-other-wash`, the wash behind [chartOther]'s stripes. */
     val chartOtherWash: Color,
     /**
+     * `--chart-band`, the faint track behind a report chart's bars. [chartBillable] and
+     * [chartOther] reach 3:1 on it in light and dark, which they do not on surface-2 in light.
+     */
+    val chartBand: Color,
+    /**
      * `--project-mix`, what a project's colour is mixed with, 40% of it, for its dot, so every
      * colour of Tokkl's project palette reaches 3:1 as a mark. Black in light, white in dark.
      */
@@ -236,6 +244,7 @@ internal val TokklLightExtraColors = TokklExtraColors(
     chartBillable = Light.chartBillable,
     chartOther = Light.chartOther,
     chartOtherWash = Light.chartOtherWash,
+    chartBand = Light.chartBand,
     projectMix = Light.projectMix,
 )
 
@@ -253,5 +262,6 @@ internal val TokklDarkExtraColors = TokklExtraColors(
     chartBillable = Dark.chartBillable,
     chartOther = Dark.chartOther,
     chartOtherWash = Dark.chartOtherWash,
+    chartBand = Dark.chartBand,
     projectMix = Dark.projectMix,
 )

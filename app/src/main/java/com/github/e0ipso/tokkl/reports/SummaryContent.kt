@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
+import com.github.e0ipso.tokkl.ui.theme.TokklExtraColors
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.text.NumberFormat
 
@@ -174,7 +175,7 @@ private fun SeriesChart(report: SummaryReport, settings: AccountSettings) {
                             textAlign = TextAlign.End,
                         )
                     }
-                    Bar(point, longest, colours.chartBillable, colours.chartOther, colours.chartOtherWash)
+                    Bar(point, longest, colours)
                 }
             }
         }
@@ -216,25 +217,28 @@ private fun LegendKey(label: String, swatch: DrawScope.() -> Unit) {
     }
 }
 
-/** A point's bar, as long as its share of the [longest] bucket, on a track as wide as the chart. */
+/**
+ * A point's bar, as long as its share of the [longest] bucket, on a track as wide as the chart.
+ * The track is Tokkl's chart band, the colour behind the web chart's focused column. Both bar
+ * colours keep 3:1 against it in light and dark, which surface-2 does not give in light.
+ */
 @Composable
-private fun Bar(point: SeriesPoint, longest: Long, billable: Color, other: Color, wash: Color) {
-    val track = MaterialTheme.colorScheme.surfaceVariant
+private fun Bar(point: SeriesPoint, longest: Long, colours: TokklExtraColors) {
     Canvas(
         Modifier
             .fillMaxWidth()
             .height(BAR_HEIGHT)
             .clip(MaterialTheme.shapes.extraSmall),
     ) {
-        drawRect(track)
+        drawRect(colours.chartBand)
         val billableWidth = size.width * point.billableSeconds / longest
         val otherSeconds = point.seconds - point.billableSeconds
         val gap = if (point.billableSeconds > 0 && otherSeconds > 0) SEGMENT_GAP.toPx() else 0f
         val otherWidth = (size.width * otherSeconds / longest - gap).coerceAtLeast(0f)
-        if (billableWidth > 0) drawRect(billable, size = Size(billableWidth, size.height))
+        if (billableWidth > 0) drawRect(colours.chartBillable, size = Size(billableWidth, size.height))
         if (otherWidth > 0) {
             val left = billableWidth + gap
-            clipRect(left = left, right = left + otherWidth) { stripes(other, wash) }
+            clipRect(left = left, right = left + otherWidth) { stripes(colours.chartOther, colours.chartOtherWash) }
         }
     }
 }
