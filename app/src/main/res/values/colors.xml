@@ -8,9 +8,9 @@
     <color name="window_background">#F4E7CF</color>
 
     <!--
-        The launcher icon's background layer, in light and dark alike: the dark bg token at
-        styles.css:161. Tokkl's maskable icon (docs/brand/icon-maskable-512.png) sits on a
-        similar navy, #01013A, which is not a palette token.
+        The launcher icon's background layer, in light and dark alike: the wordmark's dark plum
+        from Tokkl's icon pack, ../tokkl/docs/brand/icon-pack (android/res/values and
+        checks.json). It is not a palette token.
     -->
-    <color name="ic_launcher_background">#0B1026</color>
+    <color name="ic_launcher_background">#291329</color>
 </resources>

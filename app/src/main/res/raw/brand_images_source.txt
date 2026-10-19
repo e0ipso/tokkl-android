@@ -7,9 +7,8 @@ at 36bcba9), PNG only:
   e3653f852d75bc2786ea5acbef7a3aebd396223c5188a24fde1eaf9195beb7b7
   tokkl-icon-v4-1024.png, 1024x1024 RGBA, SHA-256
   874f7ec9ccb91c4c60b426a4aa75827db1ed96833cdfbcd3b7e24edb3efe3aae
-The icon is the launcher icon's source too (res/mipmap-anydpi/ic_launcher.xml). The
-launcher layers carry padding for the adaptive icon mask, so the brand icon is cut
-from the source again.
+The launcher icon does not come from these sources: res/mipmap-anydpi/ic_launcher.xml
+takes its layers from Tokkl's icon pack, ../tokkl/docs/brand/icon-pack.
 
 Crop: Tokkl's WORDMARK_CROP in ../tokkl/scripts/icons.ts, 1645x709+80+91, the
 letters and paint spots inside the source's transparent margin, plus 4 px.
@@ -34,7 +33,7 @@ tokkl_wordmark_sm, _md, _lg to the width the table gives for that bucket, and
 ui/Brand.kt asks only for those names. The images sit in drawable-nodpi, not in
 the density folders, so lint's IconDuplicates check finds no file twice, and its
 IconDensities check, which wants each density folder to hold the same images,
-does not ask for the launcher layers that live only in drawable-xxxhdpi. Android
+finds no drawable density folder to compare. Android
 does not rescale a nodpi image when it loads it; Brand.kt draws it at its dp size.
 
 Built with ImageMagick 7.1.1-43 with Tokkl's own steps from scripts/icons.ts:

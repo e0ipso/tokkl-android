@@ -29,7 +29,7 @@ class LauncherIconTest {
         icon as AdaptiveIconDrawable
         // The app's own layers, not a platform wrapper around a legacy icon.
         assertEquals(context.getColor(R.color.ic_launcher_background), (icon.background as? ColorDrawable)?.color)
-        val artwork = (context.getDrawable(R.drawable.ic_launcher_foreground) as BitmapDrawable).bitmap
+        val artwork = (context.getDrawable(R.mipmap.ic_launcher_foreground) as BitmapDrawable).bitmap
         val foreground = (icon.foreground as? BitmapDrawable)?.bitmap
         assertTrue("the foreground is not Tokkl's artwork", foreground?.sameAs(artwork) == true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
