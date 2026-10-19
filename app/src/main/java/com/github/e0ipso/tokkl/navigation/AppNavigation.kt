@@ -21,6 +21,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -28,11 +29,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.TokklNavigationBarDefaults
@@ -143,6 +147,7 @@ private fun MoreSheet(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, onC
         scope.launch { sheetState.hide() }.invokeOnCompletion { if (!sheetState.isVisible) onClose() }
     }
     ModalBottomSheet(onDismissRequest = onClose, sheetState = sheetState, dragHandle = null) {
+        SheetWindowEdgeToEdge()
         Column(
             modifier = Modifier.padding(
                 start = TokklTheme.spacing.space2,
@@ -192,5 +197,21 @@ private fun MoreSheet(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, onC
                 }
             }
         }
+    }
+}
+
+/**
+ * Gives the sheet's window the edge-to-edge setup of MainActivity's. ModalBottomSheet opens in a
+ * window of its own, and that window keeps Android's navigation bar contrast enforcement, which
+ * paints a translucent band over a three-button navigation bar: near white under the light sheet,
+ * a lighter navy under the dark one. With it off, the sheet's own colour shows behind the
+ * navigation bar, as every screen's does. The sheet's content still keeps above the bar.
+ */
+@Composable
+private fun SheetWindowEdgeToEdge() {
+    val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+    DisposableEffect(window) {
+        window?.let(WindowCompat::enableEdgeToEdge)
+        onDispose {}
     }
 }
