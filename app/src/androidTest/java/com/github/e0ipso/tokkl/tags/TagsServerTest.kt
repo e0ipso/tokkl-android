@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.tags
 
+import android.os.SystemClock
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -14,11 +18,15 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
@@ -66,7 +74,7 @@ import org.junit.rules.RuleChain
  */
 class TagsServerTest {
 
-    private val composeRule = createComposeRule()
+    private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(composeRule)
@@ -112,10 +120,11 @@ class TagsServerTest {
     @Test
     fun createRenameAndDeleteATagAndTheCacheAndHistoryFollow() {
         show()
-        field(R.string.tags_new_name).performTextInput("focus")
-        button(R.string.tags_add).performClick()
+        field(R.string.tags_new_name).type("focus")
+        button(R.string.tags_add).tap()
 
         awaitText(string(R.string.catalog_created, "focus"))
+        awaitMessageGone(string(R.string.catalog_created, "focus"))
         val id = tag("focus")!!.getValue("id").jsonPrimitive.long
         awaitCache("the cache holds the new tag") { tags, _ -> tags.any { it.id == id && it.name == "focus" } }
         field(R.string.tags_new_name).assert(SemanticsMatcher("an empty field") { it.config.getOrNull(SemanticsProperties.EditableText)?.text == "" })
@@ -123,22 +132,23 @@ class TagsServerTest {
         entry("focus")
         runBlocking { app.accountSettings.refresh().join() }
 
-        row("focus").performClick()
+        row("focus").tap(scroll = false)
         awaitText(string(R.string.tags_rename_title, "focus"))
-        field(R.string.tags_rename_field).performTextClearance()
-        field(R.string.tags_rename_field).performTextInput("deep work")
-        composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        field(R.string.tags_rename_field).clear()
+        field(R.string.tags_rename_field).type("deep work")
+        composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
 
         awaitText(string(R.string.catalog_renamed, "deep work"))
+        awaitMessageGone(string(R.string.catalog_renamed, "deep work"))
         assertEquals(null, tag("focus"))
         assertEquals(id, tag("deep work")!!.getValue("id").jsonPrimitive.long)
         awaitCache("the cache and the history hold the new name") { tags, entries ->
             tags.any { it.id == id && it.name == "deep work" } && entries.single().tags == listOf("deep work")
         }
 
-        composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "deep work"))).performClick()
+        composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "deep work"))).tap()
         awaitText(string(R.string.tags_delete_title, "deep work"))
-        composeRule.onNode(hasText(string(R.string.tags_delete_confirm)) and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(R.string.tags_delete_confirm)) and hasClickAction()).tap(scroll = false)
 
         awaitText(string(R.string.catalog_deleted, "deep work"))
         assertEquals(null, tag("deep work"))
@@ -158,8 +168,8 @@ class TagsServerTest {
             show()
             awaitEnabled(button(R.string.tags_add))
             relay.dropAnswerTo("POST /api/v9/workspaces/$workspace/tags HTTP/1.1")
-            field(R.string.tags_new_name).performTextInput("focus")
-            button(R.string.tags_add).performClick()
+            field(R.string.tags_new_name).type("focus")
+            button(R.string.tags_add).tap()
 
             awaitText(string(R.string.catalog_created, "focus"))
             assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
@@ -174,8 +184,8 @@ class TagsServerTest {
         create("focus")
         show()
         awaitText("focus")
-        field(R.string.tags_new_name).performTextInput("focus")
-        button(R.string.tags_add).performClick()
+        field(R.string.tags_new_name).type("focus")
+        button(R.string.tags_add).tap()
         awaitText("A tag with the same name already exists")
         assertEquals("one copy on the server", 1, tags().count { it.getValue("name").jsonPrimitive.content == "focus" })
     }
@@ -185,9 +195,9 @@ class TagsServerTest {
         create("keep")
         show()
         awaitText("keep")
-        composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "keep"))).performClick()
+        composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "keep"))).tap()
         awaitText(string(R.string.tags_delete_title, "keep"))
-        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
         composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
             composeRule.onAllNodesWithText(string(R.string.tags_delete_title, "keep")).fetchSemanticsNodes().isEmpty()
         }
@@ -201,10 +211,10 @@ class TagsServerTest {
         create("two")
         show()
         awaitText("two")
-        row("two").performClick()
-        field(R.string.tags_rename_field).performTextClearance()
-        field(R.string.tags_rename_field).performTextInput("one")
-        composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        row("two").tap(scroll = false)
+        field(R.string.tags_rename_field).clear()
+        field(R.string.tags_rename_field).type("one")
+        composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
         awaitText("A tag with the same name already exists")
         assertTrue(tag("two") != null)
     }
@@ -249,7 +259,7 @@ class TagsServerTest {
         show()
         awaitText("focus")
         assertEveryControlHasALabel()
-        row("focus").performClick()
+        row("focus").tap(scroll = false)
         awaitText(string(R.string.tags_rename_title, "focus"))
         assertEveryControlHasALabel()
     }
@@ -293,8 +303,73 @@ class TagsServerTest {
         assertEquals("\"$text\" shows", 0, composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
     }
 
+    /**
+     * Shows the page in a window laid out as MainActivity's: edge to edge, and resized for the
+     * keyboard, never panned, as ProjectsServerTest does. Below Android 15 a plain
+     * ComponentActivity keeps the keyboard's insets from the page, which then keeps its full
+     * height, so a control scrolled into view sits at the bottom of the window, under the
+     * snackbar of the change before, and a touch there lands on the snackbar.
+     */
     private fun show() {
+        composeRule.runOnUiThread {
+            val window = composeRule.activity.window
+            WindowCompat.enableEdgeToEdge(window)
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        }
         composeRule.setContent { TokklTheme { TagsScreen(model) } }
+    }
+
+    /** Types [text] into the field, as a user does, and waits until the keyboard it opens takes up room. */
+    private fun SemanticsNodeInteraction.type(text: String) {
+        performScrollTo().performTextInput(text)
+        awaitKeyboard()
+    }
+
+    /** Clears the field, as a user does, and waits until the keyboard it opens takes up room. */
+    private fun SemanticsNodeInteraction.clear() {
+        performScrollTo().performTextClearance()
+        awaitKeyboard()
+    }
+
+    /**
+     * Taps the control, scrolled into view unless [scroll] is false, once it has kept still for
+     * [STILL_MS]. While the keyboard slides in or out, the page shrinks or grows above it frame
+     * by frame, and a tap aimed at where a control near the bottom was lands beside it.
+     */
+    private fun SemanticsNodeInteraction.tap(scroll: Boolean = true) {
+        if (scroll) performScrollTo()
+        var bounds: Rect? = null
+        var since = SystemClock.uptimeMillis()
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            val now = fetchSemanticsNode().boundsInRoot
+            if (now != bounds) {
+                bounds = now
+                since = SystemClock.uptimeMillis()
+            }
+            SystemClock.uptimeMillis() - since >= STILL_MS
+        }
+        performClick()
+    }
+
+    /** Waits until the keyboard takes up room at the bottom of the window. */
+    private fun awaitKeyboard() {
+        val decor = composeRule.activity.window.decorView
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            var height = 0
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                height = ViewCompat.getRootWindowInsets(decor)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+            }
+            height > 0
+        }
+    }
+
+    /**
+     * Waits until the snackbar that says [text] has gone, as it does after four seconds, so that it
+     * covers no control a later tap aims at.
+     */
+    private fun awaitMessageGone(text: String) {
+        composeRule.mainClock.advanceTimeBy(SNACKBAR_MS)
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun button(id: Int) = composeRule.onNode(hasText(string(id)) and hasClickAction())
@@ -338,9 +413,13 @@ class TagsServerTest {
         composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
     }
 
-
-
     private companion object {
         val NETWORK_TIMEOUT: Duration = Duration.ofSeconds(30)
+
+        /** Longer than a snackbar stays, SnackbarDuration.Short, with its exit. */
+        const val SNACKBAR_MS = 5_000L
+
+        /** How long a control keeps still before a tap, longer than the keyboard takes to slide. */
+        const val STILL_MS = 500L
     }
 }

@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.clients
 
+import android.os.SystemClock
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -15,12 +19,15 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
@@ -65,7 +72,7 @@ import org.junit.rules.RuleChain
  */
 class ClientsServerTest {
 
-    private val composeRule = createComposeRule()
+    private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(composeRule)
@@ -111,13 +118,14 @@ class ClientsServerTest {
     @Test
     fun createEditArchiveAndRestoreAClientAndTheCacheFollowsEachChange() {
         show()
-        button(R.string.clients_new).performClick()
+        button(R.string.clients_new).tap()
         awaitText(string(R.string.client_form_new))
-        field(R.string.client_name).performTextInput("Acme")
-        field(R.string.client_notes).performTextInput("Pays late")
-        button(R.string.client_create).performScrollTo().performClick()
+        field(R.string.client_name).type("Acme")
+        field(R.string.client_notes).type("Pays late")
+        button(R.string.client_create).tap()
 
         awaitText(string(R.string.catalog_created, "Acme"))
+        awaitMessageGone(string(R.string.catalog_created, "Acme"))
         var server = client("Acme")
         assertEquals("Pays late", server.string("notes"))
         val id = server.id()
@@ -129,25 +137,27 @@ class ClientsServerTest {
         composeRule.runOnUiThread { model.retry() }
         awaitText(context.resources.getQuantityString(R.plurals.clients_projects, 1, 1))
 
-        row("Acme").performClick()
+        row("Acme").tap(scroll = false)
         awaitText(string(R.string.client_form_edit))
-        field(R.string.client_name).performTextClearance()
-        field(R.string.client_name).performTextInput("Acme Inc")
-        field(R.string.client_notes).performTextClearance()
-        button(R.string.client_save).performScrollTo().performClick()
+        field(R.string.client_name).clear()
+        field(R.string.client_name).type("Acme Inc")
+        field(R.string.client_notes).clear()
+        button(R.string.client_save).tap()
 
         awaitText(string(R.string.catalog_saved, "Acme Inc"))
+        awaitMessageGone(string(R.string.catalog_saved, "Acme Inc"))
         server = client("Acme Inc")
         assertEquals(id, server.id())
         assertEquals(null, server.string("notes"))
         awaitCache("the cache holds the new name") { clients, _ -> clients.any { it.id == id && it.name == "Acme Inc" } }
 
-        composeRule.onNode(hasContentDescription(string(R.string.clients_archive_named, "Acme Inc"))).performScrollTo().performClick()
+        composeRule.onNode(hasContentDescription(string(R.string.clients_archive_named, "Acme Inc"))).tap()
         awaitText(string(R.string.clients_archive_title, "Acme Inc"))
         awaitText(context.resources.getQuantityString(R.plurals.clients_archive_projects, 1, 1))
-        composeRule.onNode(hasText(string(R.string.clients_archive)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        composeRule.onNode(hasText(string(R.string.clients_archive)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
 
         awaitText(string(R.string.clients_archived_done, "Acme Inc"))
+        awaitMessageGone(string(R.string.clients_archived_done, "Acme Inc"))
         assertEquals("true", client("Acme Inc").getValue("archived").jsonPrimitive.content)
         composeRule.onNode(hasText(string(R.string.clients_archived)) and isHeading()).assertExists()
         composeRule.onNode(hasText("Acme Inc") and hasClickAction()).assert(hasText(string(R.string.clients_archived)))
@@ -155,7 +165,7 @@ class ClientsServerTest {
             clients.any { it.id == id && it.archived } && projects.none { it.id == project && it.active }
         }
 
-        composeRule.onNode(hasContentDescription(string(R.string.clients_restore_named, "Acme Inc"))).performScrollTo().performClick()
+        composeRule.onNode(hasContentDescription(string(R.string.clients_restore_named, "Acme Inc"))).tap()
         awaitText(string(R.string.clients_restored_done, "Acme Inc"))
         assertEquals("false", client("Acme Inc").getValue("archived").jsonPrimitive.content)
         awaitCache("the cache holds the restored client and project") { clients, projects ->
@@ -174,10 +184,10 @@ class ClientsServerTest {
             show()
             awaitEnabled(button(R.string.clients_new))
             relay.dropAnswerTo("POST /api/v9/workspaces/$workspace/clients HTTP/1.1")
-            button(R.string.clients_new).performClick()
+            button(R.string.clients_new).tap()
             awaitText(string(R.string.client_form_new))
-            field(R.string.client_name).performTextInput("Acme")
-            button(R.string.client_create).performScrollTo().performClick()
+            field(R.string.client_name).type("Acme")
+            button(R.string.client_create).tap()
 
             awaitText(string(R.string.catalog_created, "Acme"))
             assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
@@ -192,10 +202,10 @@ class ClientsServerTest {
         create("clients", buildJsonObject { put("name", "Acme") })
         show()
         awaitText("Acme")
-        button(R.string.clients_new).performClick()
+        button(R.string.clients_new).tap()
         awaitText(string(R.string.client_form_new))
-        field(R.string.client_name).performTextInput("Acme")
-        button(R.string.client_create).performScrollTo().performClick()
+        field(R.string.client_name).type("Acme")
+        button(R.string.client_create).tap()
 
         awaitText("Name has already been taken")
         composeRule.onNode(hasText(string(R.string.client_form_new))).assertExists()
@@ -207,9 +217,9 @@ class ClientsServerTest {
         create("clients", buildJsonObject { put("name", "Keep") })
         show()
         awaitText("Keep")
-        composeRule.onNode(hasContentDescription(string(R.string.clients_archive_named, "Keep"))).performClick()
+        composeRule.onNode(hasContentDescription(string(R.string.clients_archive_named, "Keep"))).tap()
         awaitText(string(R.string.clients_archive_no_projects))
-        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
         composeRule.waitForIdle()
         assertEquals("false", client("Keep").getValue("archived").jsonPrimitive.content)
     }
@@ -254,7 +264,7 @@ class ClientsServerTest {
         show()
         awaitText("Acme")
         assertEveryControlHasALabel()
-        button(R.string.clients_new).performClick()
+        button(R.string.clients_new).tap()
         awaitText(string(R.string.client_form_new))
         assertEveryControlHasALabel()
     }
@@ -298,8 +308,73 @@ class ClientsServerTest {
         assertEquals("\"$text\" shows", 0, composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
     }
 
+    /**
+     * Shows the page in a window laid out as MainActivity's: edge to edge, and resized for the
+     * keyboard, never panned, as ProjectsServerTest does. Below Android 15 a plain
+     * ComponentActivity keeps the keyboard's insets from the page, which then keeps its full
+     * height, so a control scrolled into view sits at the bottom of the window, under the
+     * snackbar of the change before, and a touch there lands on the snackbar.
+     */
     private fun show() {
+        composeRule.runOnUiThread {
+            val window = composeRule.activity.window
+            WindowCompat.enableEdgeToEdge(window)
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        }
         composeRule.setContent { TokklTheme { ClientsScreen(model) } }
+    }
+
+    /** Types [text] into the field, as a user does, and waits until the keyboard it opens takes up room. */
+    private fun SemanticsNodeInteraction.type(text: String) {
+        performScrollTo().performTextInput(text)
+        awaitKeyboard()
+    }
+
+    /** Clears the field, as a user does, and waits until the keyboard it opens takes up room. */
+    private fun SemanticsNodeInteraction.clear() {
+        performScrollTo().performTextClearance()
+        awaitKeyboard()
+    }
+
+    /**
+     * Taps the control, scrolled into view unless [scroll] is false, once it has kept still for
+     * [STILL_MS]. While the keyboard slides in or out, the page shrinks or grows above it frame
+     * by frame, and a tap aimed at where a control near the bottom was lands beside it.
+     */
+    private fun SemanticsNodeInteraction.tap(scroll: Boolean = true) {
+        if (scroll) performScrollTo()
+        var bounds: Rect? = null
+        var since = SystemClock.uptimeMillis()
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            val now = fetchSemanticsNode().boundsInRoot
+            if (now != bounds) {
+                bounds = now
+                since = SystemClock.uptimeMillis()
+            }
+            SystemClock.uptimeMillis() - since >= STILL_MS
+        }
+        performClick()
+    }
+
+    /** Waits until the keyboard takes up room at the bottom of the window. */
+    private fun awaitKeyboard() {
+        val decor = composeRule.activity.window.decorView
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            var height = 0
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                height = ViewCompat.getRootWindowInsets(decor)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+            }
+            height > 0
+        }
+    }
+
+    /**
+     * Waits until the snackbar that says [text] has gone, as it does after four seconds, so that it
+     * covers no control a later tap aims at.
+     */
+    private fun awaitMessageGone(text: String) {
+        composeRule.mainClock.advanceTimeBy(SNACKBAR_MS)
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun button(id: Int) = composeRule.onNode(hasText(string(id)) and hasClickAction())
@@ -344,9 +419,13 @@ class ClientsServerTest {
         }
     }
 
-
-
     private companion object {
         val NETWORK_TIMEOUT: Duration = Duration.ofSeconds(30)
+
+        /** Longer than a snackbar stays, SnackbarDuration.Short, with its exit. */
+        const val SNACKBAR_MS = 5_000L
+
+        /** How long a control keeps still before a tap, longer than the keyboard takes to slide. */
+        const val STILL_MS = 500L
     }
 }
