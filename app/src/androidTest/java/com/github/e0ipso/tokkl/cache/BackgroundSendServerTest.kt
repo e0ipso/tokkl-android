@@ -8,6 +8,7 @@ import androidx.work.WorkQuery
 import androidx.work.testing.TestDriver
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -59,6 +60,7 @@ class BackgroundSendServerTest {
     private val driver: TestDriver get() = checkNotNull(WorkManagerTestInitHelper.getTestDriver(context)) { "no test WorkManager" }
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
+    private var relay: HangingRelay? = null
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
@@ -78,6 +80,7 @@ class BackgroundSendServerTest {
     @After
     fun cleanUp() {
         try {
+            relay?.close()
             AirplaneMode.off()
         } finally {
             try {
@@ -193,6 +196,62 @@ class BackgroundSendServerTest {
         assertEquals("still one work", listOf(work.id), allWork().map { it.id })
     }
 
+    /**
+     * The worker's run fails for want of a server and waits out its backoff. Then the app sends
+     * the queue itself, after a change or a refresh, and that drain cancels the waiting retry, so
+     * it never wakes the phone to find the queue empty.
+     */
+    @Test
+    fun anAppDrainThatEmptiesTheQueueCancelsTheWaitingRetry() {
+        signIn(NO_ROUTE, account.apiToken)
+        val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Sent by the app"), stop.minusSeconds(600), stop) }
+        runBlocking { app.sender.send().join() }
+        val work = queueWork().single()
+        driver.setAllConstraintsMet(work.id)
+        awaitWork(work.id) { it.runAttemptCount == 1 && it.state == WorkInfo.State.ENQUEUED }
+
+        signIn(TokklTestServer.url, account.apiToken)
+        runBlocking { app.sender.send().join() }
+
+        assertEquals(0, unsentCount())
+        assertEquals("Sent by the app", serverEntry(serverId(id)).string("description"))
+        assertEquals("no work waits once the app has sent the queue", WorkInfo.State.CANCELLED, queueWork().single().state)
+    }
+
+    /**
+     * A worker that starts while the app's drain is on its way joins that drain. The drain empties
+     * the queue, and the worker ends as succeeded, not cancelled.
+     */
+    @Test
+    fun aRunningWorkerThatJoinedTheAppsDrainSucceeds() {
+        val relay = HangingRelay(TokklTestServer.url).also { this.relay = it }
+        signIn(relay.url, account.apiToken)
+        relay.holdAnswerTo(CREATE)
+        val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        runBlocking { app.changes.create(workspace, EntryFields(description = "Joined"), stop.minusSeconds(600), stop) }
+        awaitCondition("the server stored the entry and its answer is held") { relay.holdsAnswer }
+        val work = queueWork().single()
+
+        driver.setAllConstraintsMet(work.id)
+        awaitWork(work.id) { it.state == WorkInfo.State.RUNNING }
+        // The worker joins the drain as soon as it runs; the held answer keeps the drain open.
+        Thread.sleep(JOIN_MS)
+        relay.releaseAnswer()
+
+        assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
+        assertEquals(0, unsentCount())
+        assertEquals("one run", 1, queueWork().single().runAttemptCount)
+    }
+
+    private fun awaitCondition(what: String, condition: () -> Boolean) {
+        val deadline = System.nanoTime() + WORK_TIMEOUT.toNanos()
+        while (!condition()) {
+            if (System.nanoTime() > deadline) throw AssertionError("timed out: $what")
+            Thread.sleep(POLL_MS)
+        }
+    }
+
     private fun signIn(server: ServerUrl, token: String) {
         ServerTrustStore(context).confirmCleartext(server)
         Session(context).save(server, token)
@@ -221,6 +280,14 @@ class BackgroundSendServerTest {
 
     private companion object {
         val WORK_TIMEOUT: Duration = Duration.ofSeconds(60)
+
+        /** Long enough for a worker that has started to call the sender. */
+        const val JOIN_MS = 1_000L
+
+        const val POLL_MS = 50L
+
+        /** The start of a create's request. */
+        const val CREATE = "POST /api/v9/workspaces/"
 
         /** An id the cache holds no entry under. */
         const val NOT_CACHED = 987_654_321L

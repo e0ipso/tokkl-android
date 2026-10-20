@@ -71,6 +71,9 @@ import okhttp3.HttpUrl
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
  * @param onSent runs on [io] once a drain has sent at least one change, so the app can refresh:
  *   after the drain's last pass, not after each change or pass. It runs after a restore too.
+ * @param onEmptied runs on [io] once a drain that sent at least one change has left the queue
+ *   empty, inside the drain's job and before [onSent], so the app can cancel a background retry
+ *   that would find nothing to send.
  * @param serverStart where the server puts a start once the entry is stopped: Tokkl snaps it to
  *   the account's time resolution, and Toggl keeps it. Finds the entry a lost create made.
  */
@@ -80,6 +83,7 @@ class ChangeSender(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val onSent: () -> Unit = {},
+    private val onEmptied: () -> Unit = {},
     private val clock: Clock = Clock.systemUTC(),
     private val serverStart: (Instant) -> Instant = { it },
 ) {
@@ -206,6 +210,7 @@ class ChangeSender(
             // A cancelled or failed drain lets the next call start another.
             if (drainAgain) synchronized(lock) { sending = null }
         }
+        if (sent > 0 && lastOutcome is Outcome.Empty) onEmptied()
         // One refresh for the whole drain, however many changes and passes it took.
         if (sent > 0) onSent()
     }

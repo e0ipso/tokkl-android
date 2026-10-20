@@ -7,17 +7,19 @@ import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ApiError
 import java.time.Duration
+import java.util.concurrent.ExecutionException
 
 /**
  * Sends the queue in the background once the phone has a network, also with the app closed
  * (docs/PRD.md O4). The app calls [schedule] from [ChangeQueue]'s onQueued, which runs only while
- * the queue holds a change. The work runs once, so nothing wakes the phone while the queue is
- * empty, and no periodic work comes from here: the only periodic job in the app is the running
+ * the queue holds a change, and [cancelWaiting] once a drain has emptied the queue. The work runs
+ * once, so nothing wakes the phone while the queue is empty, and no periodic work comes from here: the only periodic job in the app is the running
  * entry's check (TKA-0074).
  */
 object BackgroundSend {
@@ -42,6 +44,29 @@ object BackgroundSend {
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF)
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
+    }
+
+    /**
+     * Cancels the work while it waits, once a drain has left the queue empty, so a retry waiting
+     * out its backoff never wakes the phone to find nothing to send. A running worker stays: it
+     * joined that same drain through [ChangeSender.sendAndWait] and ends on its own. When
+     * [queueEmpty] turns false after the cancel, a change came meanwhile and the work is
+     * scheduled again. Blocks on WorkManager and [queueEmpty], so call it off the main thread.
+     *
+     * A worker that starts between the check and the cancel ends as cancelled. Its drain runs on
+     * the app's scope and goes on, and the check after the cancel keeps a queued change covered.
+     */
+    fun cancelWaiting(context: Context, queueEmpty: () -> Boolean) {
+        val workManager = WorkManager.getInstance(context)
+        try {
+            val waiting = workManager.getWorkInfosForUniqueWork(WORK_NAME).get().any { it.state == WorkInfo.State.ENQUEUED }
+            if (!waiting) return
+            workManager.cancelUniqueWork(WORK_NAME).result.get()
+        } catch (e: ExecutionException) {
+            // WorkManager could not read or write its database. The work may still wait, and at
+            // worst wakes the phone once; or the cancel went through, which the check below covers.
+        }
+        if (!queueEmpty()) schedule(context)
     }
 
     /**

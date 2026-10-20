@@ -130,15 +130,18 @@ class TokklApplication : Application() {
     /**
      * Sends the queued changes in order. Once it has sent some, the account refreshes with a read
      * that starts after the send, so a refresh that read the server before it cannot put the
-     * cache back.
+     * cache back. A drain that empties the queue cancels the background send's waiting retry.
      */
     val sender: ChangeSender by lazy {
+        val store = RoomChangeStore(cacheDatabase)
         ChangeSender(
-            RoomChangeStore(cacheDatabase),
+            store,
             client = Session(this)::client,
             scope = MainScope(),
             io = Dispatchers.IO,
             onSent = { accountSettings.refreshAfterChange() },
+            // A queue the disk cannot read counts as holding a change, so the work stays.
+            onEmptied = { BackgroundSend.cancelWaiting(this) { runCatching { store.first() == null }.getOrDefault(false) } },
             serverStart = { start -> accountSettings.state.value?.time()?.snapUnsent(start, start)?.start ?: start },
         )
     }

@@ -378,6 +378,43 @@ class ChangeSenderTest {
     }
 
     /**
+     * A drain that sends the queue and leaves it empty runs onEmptied once, before onSent, so the
+     * app can cancel the background send's waiting retry. One that stops at a failure or sends
+     * nothing does not.
+     */
+    @Test
+    fun onEmptiedRunsOnceWhenADrainSendsTheQueueEmpty() {
+        val calls = mutableListOf<String>()
+        val withOnEmptied = ChangeSender(
+            store,
+            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            scope = scope,
+            io = Dispatchers.IO,
+            onSent = { synchronized(calls) { calls += "onSent" } },
+            onEmptied = { synchronized(calls) { calls += "onEmptied with ${store.changes.size} queued" } },
+            clock = clock,
+        )
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "First")
+        store.queue(ChangeKind.CREATE, -2, TAP, stop = null, description = "Second")
+        server.enqueue(nothingRuns())
+        server.enqueue(entry(101, "First", stop = null))
+        server.enqueue(nothingRuns())
+        server.enqueue(MockResponse.Builder().code(503).build())
+
+        runBlocking { withOnEmptied.send().join() }
+        assertEquals("a drain that stops at a failure", listOf("onSent"), synchronized(calls) { calls.toList() })
+
+        server.enqueue(entries())
+        server.enqueue(nothingRuns())
+        server.enqueue(entry(102, "Second", stop = null))
+        runBlocking { withOnEmptied.send().join() }
+        assertEquals(listOf("onSent", "onEmptied with 0 queued", "onSent"), synchronized(calls) { calls.toList() })
+
+        runBlocking { withOnEmptied.send().join() }
+        assertEquals("a drain of an empty queue sends nothing", 3, synchronized(calls) { calls.size })
+    }
+
+    /**
      * The background send learns how the drain ended. A 503 may come after the server stored the
      * create, so the next drain looks for it before posting it again.
      */
