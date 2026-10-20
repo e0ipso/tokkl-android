@@ -93,9 +93,15 @@
 # script started it.
 #
 # A run killed with SIGKILL, or ended along with its session, skips its
-# cleanup, and its emulator's scope outlives it. So once a run holds its slot,
-# it stops every tokkl-emulator-*.scope that no run holding a slot names,
-# before it looks for attached devices. With TOKKL_TEST_AVD set, a run fails
+# cleanup, and its emulator's scope, its two containers and its work
+# directory outlive it. Each run keeps its temporary files in a work
+# directory of its own under $XDG_RUNTIME_DIR, and its slot file names that
+# directory and its server container before either exists. So once a run
+# holds its slot, before it looks for attached devices, it stops every
+# tokkl-emulator-*.scope, and removes every tokkl-android-tests-* container
+# and every work directory, that no run holding a slot names. A copy of the
+# script from before the work directories names no container, so while one
+# holds a slot the containers stay. With TOKKL_TEST_AVD set, a run fails
 # instead of testing on an attached device that is not an emulator of that
 # AVD, or that runs another API level than the AVD's image.
 #
@@ -230,6 +236,9 @@ fi
 # at a time, under the boot lock. The marker says that a run of this script
 # started the adb server, which the last run to end then stops.
 lock_prefix="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/tokkl-instrumented-tests-$(id -u)"
+# Each run keeps its temporary files in a directory of its own in here, which
+# its slot file names, so a later run can delete what a killed run left.
+runs_dir="$lock_prefix-runs"
 device_lock="$lock_prefix.lock"
 boot_lock="$lock_prefix-boot.lock"
 adb_marker="$lock_prefix-adb-started"
@@ -237,6 +246,13 @@ slot_file() { echo "$lock_prefix-slot-$1.lock"; }
 exec {device_fd}<>"$device_lock" {boot_fd}<>"$boot_lock"
 slot=''
 slot_fd=''
+run_testing=''
+work_dir=''
+container=''
+
+random_hex() {
+    od -An -N"$1" -tx1 /dev/urandom | tr -d ' \n'
+}
 
 # Prints the slot files that runs other than this one hold.
 held_slot_files() {
@@ -289,9 +305,13 @@ take_slot() {
     if [ -n "$waited_from" ]; then echo "Got slot $slot after $((SECONDS - waited_from)) s"; fi
 }
 
-# Writes what this run is, and $1 if given, to its slot file.
+# Writes what this run is to its slot file: what it tests on, from $1 if
+# given, its work directory and its server container. Each one is named here
+# before it exists, so no other run takes it for a killed run's leftover.
 describe_run() {
-    printf 'PID %s, started %s in %s%s\n' "$$" "$run_started" "$PWD" "${1:+, $1}" >"$(slot_file "$slot")"
+    if [ $# -gt 0 ]; then run_testing=$1; fi
+    printf 'PID %s, started %s in %s%s%s%s\n' "$$" "$run_started" "$PWD" "${run_testing:+, $run_testing}" \
+        "${work_dir:+, work directory $work_dir}" "${container:+, server $container}" >"$(slot_file "$slot")"
 }
 
 # Takes the device lock shared ($1 is --shared) or alone, saying who holds it
@@ -310,6 +330,9 @@ take_device_lock() {
 }
 
 run_started=$(date '+%F %T')
+# Named before the run takes a slot, so every slot file of this script names a
+# work directory. One that names none comes from an older copy of the script.
+work_dir="$runs_dir/$(random_hex 4)"
 take_slot
 describe_run
 take_device_lock --shared
@@ -319,8 +342,12 @@ without_locks() { "$@" {slot_fd}>&- {device_fd}>&- {boot_fd}>&-; }
 adb() { without_locks command adb "$@"; }
 if ! pgrep -x adb >/dev/null; then : >"$adb_marker"; fi
 
-work_dir=$(mktemp -d)
-container=''
+mkdir -m 700 "$runs_dir" 2>/dev/null || true
+if [ -L "$runs_dir" ] || [ ! -d "$runs_dir" ] || [ ! -O "$runs_dir" ]; then
+    echo "$0: $runs_dir is not a directory of your own" >&2
+    exit 1
+fi
+mkdir -m 700 "$work_dir"
 proxy=''
 emulator_pid=''
 emulator_serial=''
@@ -421,10 +448,6 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-
-random_hex() {
-    od -An -N"$1" -tx1 /dev/urandom | tr -d ' \n'
-}
 
 # A run killed with SIGKILL, or ended along with the session that started it,
 # skips the EXIT trap and leaves its credentials file on the device. This
@@ -671,7 +694,46 @@ check_test_devices() {
     for device in "${list[@]}"; do check_requested_avd "$device"; done
 }
 
+# Removes the server containers and the work directories that runs left
+# behind: every tokkl-android-tests-* container and every directory in
+# runs_dir that no run holding a slot names, but this run's own directory. A
+# killed run skips its cleanup, so its containers keep their ports and memory,
+# and its directory keeps the proxy's keys. Both are listed before the slot
+# files are read, as in stop_leftover_emulators.
+remove_leftover_runs() {
+    local containers dirs owned_servers owned_dirs name dir file
+    containers=$(docker ps --all --format '{{.Names}}' | grep -x 'tokkl-android-tests-[0-9a-f]*\(-tls\)\?' || true)
+    dirs=$(find "$runs_dir" -mindepth 1 -maxdepth 1 -type d)
+    owned_servers=$(while read -r file; do
+        sed -n 's/.*, server \(tokkl-android-tests-[0-9a-f]*\).*/\1/p' "$file"
+    done < <(held_slot_files))
+    owned_dirs=$(while read -r file; do
+        sed -n 's/.*, work directory \([^,]*\).*/\1/p' "$file"
+    done < <(held_slot_files))
+    # A copy of the script from before this names no work directory or
+    # server, so while one holds a slot no container counts as left behind.
+    while read -r file; do
+        if ! grep -qF ', work directory ' "$file"; then
+            echo "Leaving the server containers alone while an older copy of this script runs: $(cat "$file")"
+            containers=''
+        fi
+    done < <(held_slot_files)
+    while read -r name; do
+        if [ -z "$name" ] || grep -qxF -- "${name%-tls}" <<<"$owned_servers"; then continue; fi
+        echo "Removing container $name, which no running test run started"
+        docker rm --force --volumes "$name" >/dev/null 2>&1 || echo "$0: could not remove container $name" >&2
+    done <<<"$containers"
+    while read -r dir; do
+        if [ -z "$dir" ] || [ "$dir" = "$work_dir" ] || grep -qxF -- "$dir" <<<"$owned_dirs"; then
+            continue
+        fi
+        echo "Removing $dir, which no running test run uses"
+        rm -rf "$dir"
+    done <<<"$dirs"
+}
+
 stop_leftover_emulators
+remove_leftover_runs
 if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(foreign_devices)" ]; then
     boot_emulator
 else
@@ -709,6 +771,7 @@ fi
 setup_code=$(random_hex 16)
 password=$(random_hex 16)
 container="tokkl-android-tests-$(random_hex 4)"
+describe_run
 
 echo "Starting $IMAGE as $container"
 # The image runs as an unprivileged user, so the tmpfs must be writable by any
