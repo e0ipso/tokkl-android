@@ -46,6 +46,19 @@ object TokklTestServer {
     /** The proxy certificate's SHA-256 fingerprint, as `openssl x509 -noout -fingerprint -sha256` prints it. */
     val tlsFingerprint: String by lazy { argument("tokklTlsFingerprint") }
 
+    /**
+     * The same server behind the same proxy, on a port that serves a second certificate, such as
+     * `https://10.0.2.2:32771`. The script makes it for each run with the names and subject of
+     * the first and a key of its own, as after the server's key was regenerated.
+     */
+    val newKeyTlsUrl: ServerUrl by lazy {
+        val url = argument("tokklNewKeyTlsBaseUrl")
+        ServerUrl.parse(url) ?: error("tokklNewKeyTlsBaseUrl is not an https URL: $url")
+    }
+
+    /** The second certificate's SHA-256 fingerprint, in the form of [tlsFingerprint]. */
+    val newKeyTlsFingerprint: String by lazy { argument("tokklNewKeyTlsFingerprint") }
+
     val email: String by lazy { argument("tokklEmail") }
 
     val password: String by lazy { credential("tokklPassword") }

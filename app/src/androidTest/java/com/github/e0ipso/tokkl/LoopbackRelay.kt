@@ -22,11 +22,11 @@ import kotlin.concurrent.thread
  *
  * While [holdNewConnections] is set, the relay accepts each new connection and answers nothing, as
  * a network that has gone quiet does. [dropHeld] closes those, and [cutRelayed] closes the ones
- * it is passing on.
+ * it is passing on. [relayTo] sends new connections to another server at the same local port.
  */
 class LoopbackRelay(
-    private val host: String,
-    private val port: Int,
+    host: String,
+    port: Int,
     private val watchConnections: () -> ConnectionWatcher? = { null },
 ) : Closeable {
 
@@ -46,6 +46,10 @@ class LoopbackRelay(
     private val listener = ServerSocket(0, 0, InetAddress.getByAddress(byteArrayOf(127, 0, 0, 1)))
     private val relayed = CopyOnWriteArrayList<Socket>()
     private val held = CopyOnWriteArrayList<Socket>()
+
+    /** The server's host and port, for the connections the relay accepts next. */
+    @Volatile
+    private var target = host to port
 
     /** The port the relay listens on. */
     val localPort: Int = listener.localPort
@@ -77,6 +81,14 @@ class LoopbackRelay(
         }
     }
 
+    /**
+     * Relays the connections it accepts from now on to [host] and [port]. The open ones stay with
+     * the server they reached until [cutRelayed].
+     */
+    fun relayTo(host: String, port: Int) {
+        target = host to port
+    }
+
     /** Cuts the connections the relay is passing on, on both sides. */
     fun cutRelayed() {
         relayed.removeIf { it.close(); true }
@@ -88,6 +100,7 @@ class LoopbackRelay(
     }
 
     private fun relay(app: Socket) {
+        val (host, port) = target
         val server = try {
             Socket(host, port)
         } catch (e: IOException) {

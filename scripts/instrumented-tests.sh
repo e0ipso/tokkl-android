@@ -9,20 +9,23 @@
 # 3. Puts a TLS proxy, haproxy pinned by digest, in front of the same server,
 #    with a self-signed certificate made for this run. The certificate names
 #    10.0.2.2 and 127.0.0.1 as IP addresses, so host name checks pass. Its
-#    private key stays in this script's temporary directory. The same proxy
-#    serves Tokkl over http under the path prefix /tokkl on a port of its
-#    own, as a reverse proxy serves it beside other sites, and answers 404
-#    there to every path outside the prefix.
+#    private key stays in this script's temporary directory. On a second
+#    port the proxy serves a second certificate, with the same names and
+#    subject and a key of its own, as after the server's key was regenerated.
+#    The same proxy serves Tokkl over http under the path prefix /tokkl on a
+#    port of its own, as a reverse proxy serves it beside other sites, and
+#    answers 404 there to every path outside the prefix.
 # 4. Copies the password and the API token to each test device, in a file
 #    that only the shell user can read. Before that it deletes the
 #    credentials files that killed runs left behind, once they are older than
 #    any run lasts.
-# 5. Runs connectedDebugAndroidTest with the http, https and prefixed server
-#    URLs, the proxy certificate's SHA-256 fingerprint, the email and that file's path
-#    as instrumentation arguments. The emulator reaches the host's 127.0.0.1
-#    as 10.0.2.2. The credentials work only on this container. The run fails
-#    when a test device goes away during it, even if Gradle reports success.
-# 6. Removes both containers, the certificate's key, the credentials file and
+# 5. Runs connectedDebugAndroidTest with the http, both https and the prefixed
+#    server URLs, the SHA-256 fingerprints of both proxy certificates, the
+#    email and that file's path as instrumentation arguments. The emulator
+#    reaches the host's 127.0.0.1 as 10.0.2.2. The credentials work only on
+#    this container. The run fails when a test device goes away during it,
+#    even if Gradle reports success.
+# 6. Removes both containers, the certificates' keys, the credentials file and
 #    the test filter file, if any (see below), also when a step fails.
 #
 # The setup code, the password and the API token never appear in a process's
@@ -365,15 +368,18 @@ container="tokkl-android-tests-$(random_hex 4)"
 echo "Starting $IMAGE as $container"
 # The image runs as an unprivileged user, so the tmpfs must be writable by any
 # UID. --env without a value reads the setup code from the environment. The
-# proxy joins this container's network namespace, so its ports 8443 and 8081
-# are published here too.
+# proxy joins this container's network namespace, so its ports 8443, 8444 and
+# 8081 are published here too.
 TOKKL_SETUP_CODE="$setup_code" docker run --detach --name "$container" \
     --env TOKKL_SETUP_CODE --tmpfs /data:mode=1777 \
-    --publish 127.0.0.1::8080 --publish 127.0.0.1::8443 --publish 127.0.0.1::8081 "$IMAGE" >/dev/null
+    --publish 127.0.0.1::8080 --publish 127.0.0.1::8443 --publish 127.0.0.1::8444 \
+    --publish 127.0.0.1::8081 "$IMAGE" >/dev/null
 host_port=$(docker port "$container" 8080/tcp | head -n 1)
 host_port=${host_port##*:}
 tls_port=$(docker port "$container" 8443/tcp | head -n 1)
 tls_port=${tls_port##*:}
+new_key_port=$(docker port "$container" 8444/tcp | head -n 1)
+new_key_port=${new_key_port##*:}
 prefix_port=$(docker port "$container" 8081/tcp | head -n 1)
 prefix_port=${prefix_port##*:}
 server="http://127.0.0.1:$host_port"
@@ -385,24 +391,46 @@ if ! curl --silent --fail --output /dev/null \
     exit 1
 fi
 
-# The proxy's certificate and key, made for this run. HAProxy reads both from
-# one file, as an unprivileged user in its container, so the file is readable
-# by every user. Only this user can enter $work_dir, which holds it, and the
-# cleanup deletes it. The tests get the certificate's fingerprint, never the
-# key.
+# The proxy's certificates and keys, made for this run. HAProxy reads each
+# certificate and its key from one file, as an unprivileged user in its
+# container, so the file is readable by every user. Only this user can enter
+# $work_dir, which holds it, and the cleanup deletes it. The tests get the
+# certificates' fingerprints, never the keys.
 proxy_dir="$work_dir/proxy"
 mkdir -m 755 "$proxy_dir"
-(
-    umask 077
-    openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 2 \
-        -subj '/CN=Tokkl instrumented tests' -addext 'subjectAltName=IP:10.0.2.2,IP:127.0.0.1' \
-        -keyout "$work_dir/proxy-key.pem" -out "$proxy_dir/cert.pem" 2>/dev/null
-)
-cat "$proxy_dir/cert.pem" "$work_dir/proxy-key.pem" >"$proxy_dir/server.pem"
-rm -f "$work_dir/proxy-key.pem"
-chmod 644 "$proxy_dir/cert.pem" "$proxy_dir/server.pem"
-tls_fingerprint=$(openssl x509 -in "$proxy_dir/cert.pem" -noout -fingerprint -sha256)
-tls_fingerprint=${tls_fingerprint#*=}
+
+# Makes a self-signed certificate with a new key in $proxy_dir/$1-cert.pem,
+# and the file HAProxy reads, the certificate followed by its key, in
+# $proxy_dir/$1.pem.
+make_proxy_certificate() {
+    local name=$1
+    (
+        umask 077
+        openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 2 \
+            -subj '/CN=Tokkl instrumented tests' -addext 'subjectAltName=IP:10.0.2.2,IP:127.0.0.1' \
+            -keyout "$work_dir/$name-key.pem" -out "$proxy_dir/$name-cert.pem" 2>/dev/null
+    )
+    cat "$proxy_dir/$name-cert.pem" "$work_dir/$name-key.pem" >"$proxy_dir/$name.pem"
+    rm -f "$work_dir/$name-key.pem"
+    chmod 644 "$proxy_dir/$name-cert.pem" "$proxy_dir/$name.pem"
+}
+
+# Prints the SHA-256 fingerprint of the certificate in file $1, as AB:CD:...
+fingerprint() {
+    local line
+    line=$(openssl x509 -in "$1" -noout -fingerprint -sha256)
+    echo "${line#*=}"
+}
+
+# The certificate the TLS proxy serves, and a second one for the same names,
+# with a key of its own, as the server would serve after its key was
+# regenerated. The second one has a port of its own. To the app a port is a
+# server of its own, so a test that swaps the key relays one host and port to
+# the first port, then to the second.
+make_proxy_certificate tls
+make_proxy_certificate new-key
+tls_fingerprint=$(fingerprint "$proxy_dir/tls-cert.pem")
+new_key_fingerprint=$(fingerprint "$proxy_dir/new-key-cert.pem")
 cat >"$proxy_dir/haproxy.cfg" <<'CONFIG'
 global
     log stdout format raw local0 warning
@@ -415,7 +443,13 @@ defaults
     timeout server 30s
 
 frontend tls
-    bind :8443 ssl crt /usr/local/etc/haproxy/server.pem
+    bind :8443 ssl crt /usr/local/etc/haproxy/tls.pem
+    default_backend tokkl
+
+# The same server with the second certificate, as after its key was
+# regenerated.
+frontend new_key
+    bind :8444 ssl crt /usr/local/etc/haproxy/new-key.pem
     default_backend tokkl
 
 # Tokkl under /tokkl, with the prefix stripped on the way in. Every other path
@@ -437,11 +471,18 @@ proxy="$container-tls"
 echo "Starting $PROXY_IMAGE as $proxy"
 docker run --detach --name "$proxy" --network "container:$container" \
     --volume "$proxy_dir:/usr/local/etc/haproxy:ro" "$PROXY_IMAGE" >/dev/null
-# --cacert trusts this run's certificate alone, so curl checks it as the app does.
-if ! curl --silent --fail --output /dev/null --cacert "$proxy_dir/cert.pem" \
+# --cacert trusts one of this run's certificates alone, so curl checks it as
+# the app does.
+if ! curl --silent --fail --output /dev/null --cacert "$proxy_dir/tls-cert.pem" \
     --retry 30 --retry-delay 1 --retry-all-errors "https://127.0.0.1:$tls_port/healthz"; then
     echo "$0: the TLS proxy did not answer on https://127.0.0.1:$tls_port/healthz. Last proxy output:" >&2
     docker logs "$proxy" 2>&1 | tail -n 20 >&2
+    exit 1
+fi
+# The proxy is up, so the second certificate's port answers at once.
+if ! curl --silent --fail --output /dev/null --cacert "$proxy_dir/new-key-cert.pem" \
+    "https://127.0.0.1:$new_key_port/healthz"; then
+    echo "$0: the TLS proxy did not answer with the second certificate on https://127.0.0.1:$new_key_port/healthz" >&2
     exit 1
 fi
 # The proxy is up, so the prefix answers at once, and the root of its port
@@ -518,6 +559,8 @@ run_tests() {
         "-P$RUNNER_ARGS.tokklTlsBaseUrl=https://10.0.2.2:$tls_port" \
         "-P$RUNNER_ARGS.tokklPrefixedBaseUrl=http://10.0.2.2:$prefix_port/tokkl" \
         "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
+        "-P$RUNNER_ARGS.tokklNewKeyTlsBaseUrl=https://10.0.2.2:$new_key_port" \
+        "-P$RUNNER_ARGS.tokklNewKeyTlsFingerprint=$new_key_fingerprint" \
         "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
         "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
         "${gradle_args[@]}" 2>&1 | tee "$work_dir/gradle.log" || status=$?
@@ -558,6 +601,7 @@ run_tests() {
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
 echo "The TLS proxy is ready on https://127.0.0.1:$tls_port, with certificate SHA-256 $tls_fingerprint"
+echo "It serves its second certificate on https://127.0.0.1:$new_key_port, with SHA-256 $new_key_fingerprint"
 echo "The proxy serves Tokkl under $prefixed, which the emulator reaches as http://10.0.2.2:$prefix_port/tokkl"
 if [ "${#test_filter[@]}" -gt 0 ]; then
     printf '%s\n' "${test_filter[@]}" >"$filter"
