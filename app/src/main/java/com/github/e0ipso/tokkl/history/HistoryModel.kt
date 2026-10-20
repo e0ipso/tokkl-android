@@ -134,7 +134,14 @@ class HistoryModel(
             settings == null -> HistoryState.Loading
             time == null -> HistoryState.NoAccountTime(settings.timeZone)
             else -> HistoryState.Shown(
-                days = historyDays(cached, daysTheCacheDropped(cached, loaded.until, time) + loaded.entries, projectRows, taskRows, time),
+                days = historyDays(
+                    cached,
+                    daysTheCacheDropped(cached, loaded.until, time) + loaded.entries,
+                    projectRows,
+                    taskRows,
+                    time,
+                    collapse = settings.collapseSimilar,
+                ),
                 today = time.today(),
                 zone = time.zone,
                 settings = settings,

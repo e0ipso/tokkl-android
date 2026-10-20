@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A chevron that points forward, for the next period. It flips in right-to-left layouts. -->
+<!-- A chevron that points forward, for the next period and for a collapsed group of entries, which turns it down when it expands. It flips in right-to-left layouts. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

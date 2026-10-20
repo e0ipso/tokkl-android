@@ -134,9 +134,11 @@ class DuplicateServerTest {
             composeRule.onNode(hasText(context.getString(R.string.history_duplicate)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
 
-            composeRule.waitUntil("the copy shows at once, marked unsent", LOAD_TIMEOUT_MS) {
-                rowsIn("Paint the wall") == 2 &&
-                    composeRule.onAllNodes(hasText("Paint the wall") and hasText(unsent, ignoreCase = true)).fetchSemanticsNodes().size == 1
+            // The copy and its source are alike, so they share a row, as the web app groups them.
+            val group = hasText("Paint the wall") and hasText(unsent, ignoreCase = true) and
+                hasContentDescription(context.resources.getQuantityString(R.plurals.history_group_entries, 2, 2))
+            composeRule.waitUntil("the copy joins its source at once, marked unsent", LOAD_TIMEOUT_MS) {
+                rowsIn("Paint the wall") == 1 && composeRule.onAllNodes(group).fetchSemanticsNodes().size == 1
             }
             composeRule.waitUntil("the message says so", LOAD_TIMEOUT_MS) {
                 composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicated))).fetchSemanticsNodes().isNotEmpty()

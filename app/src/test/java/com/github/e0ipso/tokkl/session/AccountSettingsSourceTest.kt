@@ -262,6 +262,42 @@ class AccountSettingsSourceTest {
         }
     }
 
+    /** As the web app's `prefs.collapseTimeEntries ?? true`, with JavaScript's truthiness. */
+    @Test
+    fun theGroupingOfSimilarEntriesComesFromThePreferences() {
+        val cases = listOf(
+            """{"collapseTimeEntries":true}""" to true,
+            """{"collapseTimeEntries":false}""" to false,
+            """{"collapseTimeEntries":null}""" to true,
+            """{}""" to true,
+            """{"collapseTimeEntries":0}""" to false,
+            """{"collapseTimeEntries":1}""" to true,
+            """{"collapseTimeEntries":""}""" to false,
+            """{"collapseTimeEntries":"false"}""" to true,
+            """{"collapseTimeEntries":[]}""" to true,
+        )
+        for ((preferences, collapse) in cases) {
+            server.enqueue(json(MADRID_MONDAY))
+            server.enqueue(json(preferences))
+            val source = source(initial = MADRID_MONDAY_SETTINGS.copy(collapseSimilar = !collapse))
+
+            source.refresh()
+
+            assertEquals(preferences, collapse, source.state.value!!.collapseSimilar)
+        }
+    }
+
+    @Test
+    fun failedPreferencesKeepTheStoredGrouping() {
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(MockResponse.Builder().code(500).build())
+        val source = source(initial = MADRID_MONDAY_SETTINGS.copy(collapseSimilar = false))
+
+        source.refresh()
+
+        assertEquals(false, source.state.value!!.collapseSimilar)
+    }
+
     @Test
     fun failedPreferencesKeepTheStoredClockFormat() {
         server.enqueue(json(MADRID_MONDAY))

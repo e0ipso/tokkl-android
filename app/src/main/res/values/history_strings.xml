@@ -43,5 +43,16 @@
     <string name="history_delete_confirm_title">Delete this entry?</string>
     <string name="history_delete_confirm_message">This server can\'t restore deleted entries, so the delete can\'t be undone.</string>
     <string name="history_delete_confirm">Delete entry</string>
+    <!-- A group of similar entries (docs/PRD.md H4): what TalkBack reads for its count badge. -->
+    <plurals name="history_group_entries">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <!-- The state TalkBack reads for a group, and announces when it changes. -->
+    <string name="history_group_expanded">Expanded</string>
+    <string name="history_group_collapsed">Collapsed</string>
+    <!-- What a tap on a group does, as TalkBack reads it: double tap to show entries. -->
+    <string name="history_group_show">Show entries</string>
+    <string name="history_group_hide">Hide entries</string>
     <string name="history_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t group entries by day.</string>
 </resources>

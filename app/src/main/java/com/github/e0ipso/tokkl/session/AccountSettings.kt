@@ -16,8 +16,12 @@ import java.time.Instant
 import java.time.ZoneId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
 
 /**
  * The settings that decide how the app shows and reads times: those from `GET /api/v9/me`
@@ -38,6 +42,9 @@ import kotlinx.serialization.json.JsonPrimitive
  * @property twelveHour the preferences' `timeofday_format` asks for the 12-hour clock, as `h:mm A`
  *   does. False, the 24-hour clock, until a refresh reads the preferences, and when they leave it
  *   out, as in the web app.
+ * @property collapseSimilar the preferences' `collapseTimeEntries`: the history groups similar
+ *   entries of a day, as the web app's timer list does. True until a refresh reads the
+ *   preferences, and when they leave it out, as in the web app.
  */
 data class AccountSettings(
     val timeZone: String,
@@ -46,6 +53,7 @@ data class AccountSettings(
     val durationFormat: DurationFormat = DurationFormat.IMPROVED,
     val defaultWorkspaceId: Long? = null,
     val twelveHour: Boolean = false,
+    val collapseSimilar: Boolean = true,
 ) {
 
     /**
@@ -137,6 +145,23 @@ class MePreferences(val body: JsonObject) {
         get() {
             val format = (body["timeofday_format"] as? JsonPrimitive)?.takeIf { it.isString } ?: return false
             return isTwelveHourFormat(format.content)
+        }
+
+    /**
+     * `collapseTimeEntries`, read as the web app's `prefs.collapseTimeEntries ?? true` and its
+     * truthiness: missing or null groups, and so does any value JavaScript takes as true, such as
+     * a non-empty string or a non-zero number. False, 0 and an empty string do not.
+     */
+    val collapseSimilar: Boolean
+        get() {
+            val value = body["collapseTimeEntries"] ?: return true
+            if (value is JsonNull) return true
+            val primitive = value as? JsonPrimitive ?: return true
+            return when {
+                primitive.isString -> primitive.content.isNotEmpty()
+                primitive.booleanOrNull != null -> primitive.boolean
+                else -> primitive.doubleOrNull?.let { it != 0.0 } ?: true
+            }
         }
 }
 

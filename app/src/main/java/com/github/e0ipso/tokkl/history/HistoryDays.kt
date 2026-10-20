@@ -17,6 +17,8 @@ import java.time.LocalDate
  * @property unsent the queue holds a change to the entry that the server has not received.
  * @property cached the phone holds the entry, so the change queue can edit it. The older days
  *   that the server sent, and the days the cache dropped since, are not on the phone.
+ * @property projectId the project's id, which the grouping of similar entries compares.
+ * @property taskId the task's id, as [projectId].
  */
 data class HistoryEntry(
     val id: Long,
@@ -30,13 +32,23 @@ data class HistoryEntry(
     val stop: Instant,
     val unsent: Boolean,
     val cached: Boolean = true,
+    val projectId: Long? = null,
+    val taskId: Long? = null,
 ) {
     /** Whole seconds from [start] to [stop], as entrySeconds in the web app's lib/settings.ts. */
     val seconds: Long get() = maxOf(0L, Math.floorDiv(stop.toEpochMilli() - start.toEpochMilli(), 1000L))
 }
 
-/** One day of the history in the account's timezone, with its entries newest first. */
-data class HistoryDay(val date: LocalDate, val entries: List<HistoryEntry>) {
+/**
+ * One day of the history in the account's timezone, with its entries newest first, and the
+ * [rows] that show them: each entry on its own, or similar ones grouped as [rowsForDay] groups
+ * them.
+ */
+data class HistoryDay(
+    val date: LocalDate,
+    val entries: List<HistoryEntry>,
+    val rows: List<HistoryRow> = rowsForDay(entries, collapse = false),
+) {
     val totalSeconds: Long get() = entries.sumOf { it.seconds }
 }
 
@@ -51,6 +63,9 @@ data class HistoryDay(val date: LocalDate, val entries: List<HistoryEntry>) {
  * Stopped entries show the times the server returned, snapped or not. An entry with a change the
  * server has not received shows [AccountTime.snapUnsent] of its times instead, the times the
  * server will store, so they do not change when it answers. That snapped start decides its day.
+ *
+ * With [collapse], the account's `collapseTimeEntries` preference, similar entries of a day share
+ * a row, as the web app groups them.
  */
 fun historyDays(
     cached: List<EntryWithSendState>,
@@ -58,6 +73,7 @@ fun historyDays(
     projects: List<CachedProject>,
     tasks: List<CachedTask>,
     time: AccountTime,
+    collapse: Boolean = true,
 ): List<HistoryDay> {
     val cachedIds = cached.mapTo(HashSet()) { it.entry.id }
     // An entry edited between two pages can come in both; the later page has its newer values.
@@ -68,7 +84,7 @@ fun historyDays(
     return rows
         .mapNotNull { row -> row.entry.shown(row.unsent, row.cached, time, projectsById, tasksById) }
         .groupBy { time.local(it.start).toLocalDate() }
-        .map { (date, entries) -> HistoryDay(date, entries.sortedWith(NEWEST_FIRST)) }
+        .map { (date, entries) -> entries.sortedWith(NEWEST_FIRST).let { HistoryDay(date, it, rowsForDay(it, collapse)) } }
         .sortedByDescending { it.date }
 }
 
@@ -98,6 +114,8 @@ private fun CachedTimeEntry.shown(
         stop = span?.stop ?: stop,
         unsent = unsent,
         cached = cached,
+        projectId = projectId,
+        taskId = taskId,
     )
 }
 

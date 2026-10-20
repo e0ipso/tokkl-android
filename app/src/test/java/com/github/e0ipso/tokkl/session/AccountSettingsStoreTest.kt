@@ -76,6 +76,19 @@ class AccountSettingsStoreTest {
     }
 
     @Test
+    fun theGroupingReadsBackAsSavedAndSettingsWithoutItGroup() {
+        for (collapse in listOf(false, true)) {
+            val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null, collapseSimilar = collapse)
+
+            store.save(settings)
+
+            assertEquals(settings, store.load())
+        }
+        file.edit().remove("collapse_similar").commit()
+        assertTrue("settings stored before the app read the preference group, as the web app does", store.load()!!.collapseSimilar)
+    }
+
+    @Test
     fun clearRemovesTheDurationFormat() {
         store.save(AccountSettings("UTC", DayOfWeek.SUNDAY, null, DurationFormat.DECIMAL))
 

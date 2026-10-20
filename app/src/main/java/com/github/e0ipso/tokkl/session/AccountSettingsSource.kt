@@ -107,6 +107,7 @@ class AccountSettingsSource(
             val settings = fromMe.copy(
                 durationFormat = preferences?.durationFormat ?: stored?.durationFormat ?: DurationFormat.IMPROVED,
                 twelveHour = preferences?.twelveHour ?: stored?.twelveHour ?: false,
+                collapseSimilar = preferences?.collapseSimilar ?: stored?.collapseSimilar ?: true,
                 defaultWorkspaceId = fromMe.defaultWorkspaceId ?: stored?.defaultWorkspaceId,
             )
             if (settings != mutableState.value) {
