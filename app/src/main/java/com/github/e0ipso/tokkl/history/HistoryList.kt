@@ -56,6 +56,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.reports.projectMark
 import com.github.e0ipso.tokkl.reports.spokenDuration
@@ -71,8 +73,9 @@ import java.util.Locale
  * total, and at the end the older days, which load from the server as the end shows. A tap on an
  * entry hands its id to [onEdit] (docs/PRD.md H2), also on the older days. The menu of an entry the
  * phone holds duplicates, splits or deletes it through [actions], whose messages show at the
- * bottom of the list (H3, H5, H6). Its Continue button, on every entry and group, hands the
- * entry's id to [onContinue] (T2).
+ * bottom of the list (H3, H5, H6). When the server keeps Tokkl's [favorites], the menu also pins
+ * the entry as one (T5). Its Continue button, on every entry and group, hands the entry's id to
+ * [onContinue] (T2).
  */
 @Composable
 fun HistoryList(
@@ -81,9 +84,11 @@ fun HistoryList(
     onEdit: (Long) -> Unit,
     onContinue: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    favorites: FavoritesModel? = null,
 ) {
     val state by model.state.collectAsState()
     val actionsState by actions.state.collectAsState()
+    val pin = favorites?.let { pinAction(actions, it) }
     Box(modifier.fillMaxSize()) {
         HistoryContent(
             state = state,
@@ -93,6 +98,7 @@ fun HistoryList(
             onDuplicate = actions::duplicate,
             onSplit = actions::split,
             onDelete = actions::delete,
+            pin = pin,
         )
         EntryActionsHost(
             state = actionsState,
@@ -109,7 +115,22 @@ fun HistoryList(
     }
 }
 
-/** [HistoryList] without its models. */
+/**
+ * The menu's Pin as favorite: [onPin] gets the entry's id, and [enabled] is false while another
+ * change to the favorites is on its way to the server.
+ */
+internal class PinAction(val enabled: Boolean, val onPin: (Long) -> Unit)
+
+/** Pin as favorite through [favorites], or null when the server keeps no favorites. */
+@Composable
+internal fun pinAction(actions: EntryActionsModel, favorites: FavoritesModel): PinAction? {
+    val shown by favorites.state.collectAsState()
+    val offline = rememberOffline()
+    if (!shown.available) return null
+    return PinAction(enabled = !shown.saving) { entryId -> actions.pin(entryId, favorites, offline) }
+}
+
+/** [HistoryList] without its models. Without [pin], the menu offers no Pin as favorite. */
 @Composable
 internal fun HistoryContent(
     state: HistoryState,
@@ -120,6 +141,7 @@ internal fun HistoryContent(
     onDuplicate: (Long) -> Unit = {},
     onSplit: (Long) -> Unit = {},
     onDelete: (Long) -> Unit = {},
+    pin: PinAction? = null,
 ) {
     when (state) {
         // The cache reads in moments, so this shows nothing rather than a flash of a spinner.
@@ -127,7 +149,7 @@ internal fun HistoryContent(
         is HistoryState.NoAccountTime -> Column(modifier.fillMaxSize()) {
             Text(stringResource(R.string.history_unknown_time_zone, state.timeZone), style = MaterialTheme.typography.bodyLarge)
         }
-        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onContinue, onDuplicate, onSplit, onDelete), modifier)
+        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onContinue, onDuplicate, onSplit, onDelete, pin), modifier)
     }
 }
 
@@ -138,6 +160,7 @@ private class EntryCallbacks(
     val onDuplicate: (Long) -> Unit,
     val onSplit: (Long) -> Unit,
     val onDelete: (Long) -> Unit,
+    val pin: PinAction?,
 )
 
 @Composable
@@ -345,6 +368,19 @@ private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineM
                     callbacks.onSplit(entry.id)
                 },
             )
+            val pin = callbacks.pin
+            if (pin != null) {
+                // TalkBack reads the item's text as its label, after the menu button that names the entry.
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.history_pin)) },
+                    leadingIcon = { Icon(painterResource(R.drawable.ic_star), contentDescription = null) },
+                    enabled = pin.enabled,
+                    onClick = {
+                        open = false
+                        pin.onPin(entry.id)
+                    },
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.history_delete)) },
                 leadingIcon = { Icon(painterResource(R.drawable.ic_nav_trash), contentDescription = null) },

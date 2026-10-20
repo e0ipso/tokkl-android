@@ -10,15 +10,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
+import com.github.e0ipso.tokkl.catalog.problemText
+import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
 import com.github.e0ipso.tokkl.session.AccountSettings
 
 /**
  * The messages, the question and the dialog of the history's entry actions: a snackbar for
- * [EntryActionsState.notice], such as "Entry deleted" with Undo or "Entry duplicated", the question
- * before a delete that cannot be undone, and the split dialog, which needs the account's [settings].
+ * [EntryActionsState.notice], such as "Entry deleted" with Undo, "Entry duplicated" or "Pinned to
+ * favorites", the question before a delete that cannot be undone, and the split dialog, which
+ * needs the account's [settings].
  * The snackbar is a polite live region, as Material's SnackbarHost makes each one, so TalkBack
  * reads the message and its Undo button when it appears. A snackbar with Undo stays for
  * Material's long duration, which grows as Android's accessibility timeout asks.
@@ -76,7 +80,9 @@ internal fun EntryActionsHost(
 private fun EntryNotice.undoes(): Long? = when (this) {
     is EntryNotice.Deleted -> entryId.takeIf { undo }
     is EntryNotice.UndoNeedsServer -> entryId
-    is EntryNotice.UndoFailed, is EntryNotice.Duplicated, is EntryNotice.Split -> null
+    is EntryNotice.UndoFailed, is EntryNotice.Duplicated, is EntryNotice.Split,
+    is EntryNotice.Pinned, is EntryNotice.PinFull, is EntryNotice.PinNeedsServer, is EntryNotice.PinFailed,
+    -> null
 }
 
 @Composable
@@ -87,4 +93,8 @@ private fun noticeText(notice: EntryNotice): String = when (notice) {
         ?: stringResource(R.string.history_undo_failed)
     is EntryNotice.Duplicated -> stringResource(R.string.history_duplicated)
     is EntryNotice.Split -> stringResource(R.string.history_split_done)
+    is EntryNotice.Pinned -> stringResource(R.string.history_pinned)
+    is EntryNotice.PinFull -> pluralStringResource(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
+    is EntryNotice.PinNeedsServer -> stringResource(R.string.history_pin_needs_server)
+    is EntryNotice.PinFailed -> problemText(notice.problem)
 }

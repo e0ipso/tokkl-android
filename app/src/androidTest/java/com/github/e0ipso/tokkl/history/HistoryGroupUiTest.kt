@@ -32,7 +32,8 @@ import org.junit.rules.RuleChain
  * A group of similar entries in the history (docs/PRD.md H4): one line with the count, the total
  * and the time from the oldest start to the newest stop, which a tap expands to its members. To
  * TalkBack the line is a button whose state, Expanded or Collapsed, changes with each tap, which
- * TalkBack announces. At the largest font scale no text of the line is cut off.
+ * TalkBack announces. At the largest font scale no text of the line, or of an entry's menu, is
+ * cut off.
  */
 class HistoryGroupUiTest {
     private val composeRule = createComposeRule()
@@ -85,7 +86,29 @@ class HistoryGroupUiTest {
         }
     }
 
-    private fun show() {
+    /** The entry menu, Pin as favorite included, keeps every item whole and tappable at the largest font scale. */
+    @Test
+    fun noItemOfTheEntryMenuIsCutOffAtTheLargestFontScale() {
+        show(pin = PinAction(enabled = true) {})
+        composeRule.onNode(hasContentDescription(context.getString(R.string.history_more_actions, "Solo work")) and hasClickAction())
+            .performSemanticsAction(SemanticsActions.OnClick)
+
+        for (item in listOf(R.string.history_duplicate, R.string.history_split, R.string.history_pin, R.string.history_delete)) {
+            val text = context.getString(item)
+            composeRule.onNode(hasText(text) and hasClickAction()).assertExists()
+            val node = composeRule.onNode(hasText(text), useUnmergedTree = true)
+            node.textLayout()?.let { layout ->
+                assertFalse("text is cut off: $text", layout.didOverflowHeight)
+                // didOverflowWidth is true for one-line items that fit in this menu, so this
+                // checks that every line ends inside the text's own width instead.
+                for (line in 0 until layout.lineCount) {
+                    assertFalse("text runs past its edge: $text", layout.getLineRight(line) > layout.size.width)
+                }
+            }
+        }
+    }
+
+    private fun show(pin: PinAction? = null) {
         val entries = listOf(
             entry(4, "Solo work", 12, 13),
             entry(3, "Group work", 11, 12),
@@ -101,7 +124,7 @@ class HistoryGroupUiTest {
         )
         composeRule.setContent {
             TokklTheme {
-                HistoryContent(state = state, onLoadOlder = {}, onEdit = { edits += it })
+                HistoryContent(state = state, onLoadOlder = {}, onEdit = { edits += it }, pin = pin)
             }
         }
     }

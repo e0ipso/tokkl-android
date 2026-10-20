@@ -24,11 +24,13 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.favorites.FavoritesModel
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.DayOfWeek
@@ -36,6 +38,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,9 +49,10 @@ import org.junit.Test
 
 /**
  * The history's entry actions on screen, against a change queue and an Undo that record what they
- * are asked: the labels TalkBack reads for the menu, Duplicate, Split, the split time and Delete,
- * the message whose Undo TalkBack announces, and the question before a delete that a server
- * without restore cannot undo.
+ * are asked: the labels TalkBack reads for the menu, Duplicate, Split, the split time, Pin as
+ * favorite and Delete, the message whose Undo TalkBack announces, and the question before a delete
+ * that a server without restore cannot undo. Pin as favorite shows only with the favorites
+ * capability.
  */
 class EntryActionsUiTest {
     @get:Rule
@@ -56,6 +60,7 @@ class EntryActionsUiTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val calls = CopyOnWriteArrayList<String>()
+    private val saves = CopyOnWriteArrayList<List<EntryFields>>()
     private val scope = MainScope()
 
     @After
@@ -167,6 +172,52 @@ class EntryActionsUiTest {
         )
     }
 
+    @Test
+    fun pinAsFavoriteHasATalkBackLabelAndPinsTheEntry() {
+        show(canRestore = true, favorites = favorites(available = MutableStateFlow(true)))
+
+        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+            .performSemanticsAction(SemanticsActions.OnClick)
+        // TalkBack reads the item's text as its label.
+        composeRule.onNode(hasText(string(R.string.history_pin)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+
+        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_pinned)).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.onAllNodes(hasText(string(R.string.history_undo))).assertCountEquals(0)
+        assertEquals(listOf(listOf(EntryFields(description = DESCRIPTION))), saves)
+        assertEquals("nothing goes to the queue", emptyList<String>(), calls)
+    }
+
+    @Test
+    fun withoutTheFavoritesCapabilityTheMenuHasNoPin() {
+        val available = MutableStateFlow(false)
+        show(canRestore = true, favorites = favorites(available))
+
+        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+            .performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onAllNodes(hasText(string(R.string.history_duplicate)) and hasClickAction()).assertCountEquals(1)
+        composeRule.onAllNodes(hasText(string(R.string.history_pin))).assertCountEquals(0)
+
+        // The same menu offers it once the server has favorites, so the menu did draw its items.
+        available.value = true
+        composeRule.waitUntil("Pin as favorite shows", TIMEOUT_MS) {
+            composeRule.onAllNodes(hasText(string(R.string.history_pin)) and hasClickAction()).fetchSemanticsNodes().size == 1
+        }
+    }
+
+    /** Favorites with none pinned yet, whose server stores every list in [saves]. */
+    private fun favorites(available: MutableStateFlow<Boolean>) = FavoritesModel(
+        favorites = MutableStateFlow(emptyList()),
+        projects = MutableStateFlow(emptyList()),
+        tasks = MutableStateFlow(emptyList()),
+        available = available,
+        save = { list ->
+            saves += list
+            ApiResult.Success(Unit)
+        },
+        scope = scope,
+        io = Dispatchers.IO,
+    )
+
     private fun openMenuAndDelete() {
         composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
             .performSemanticsAction(SemanticsActions.OnClick)
@@ -177,7 +228,7 @@ class EntryActionsUiTest {
     private fun liveMessage(text: Int) =
         SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite) and hasAnyDescendant(hasText(string(text)))
 
-    private fun show(canRestore: Boolean, undo: UndoOutcome = UndoOutcome.Restored) {
+    private fun show(canRestore: Boolean, undo: UndoOutcome = UndoOutcome.Restored, favorites: FavoritesModel? = null) {
         val model = EntryActionsModel(
             entries = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false))),
             changes = RecordingChanges(),
@@ -193,7 +244,14 @@ class EntryActionsUiTest {
             TokklTheme {
                 val state by model.state.collectAsState()
                 Box(Modifier.fillMaxSize()) {
-                    HistoryContent(state = HISTORY, onLoadOlder = {}, onDuplicate = model::duplicate, onSplit = model::split, onDelete = model::delete)
+                    HistoryContent(
+                        state = HISTORY,
+                        onLoadOlder = {},
+                        onDuplicate = model::duplicate,
+                        onSplit = model::split,
+                        onDelete = model::delete,
+                        pin = favorites?.let { pinAction(model, it) },
+                    )
                     EntryActionsHost(
                         state = state,
                         onUndo = model::undo,

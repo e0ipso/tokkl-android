@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -38,6 +40,8 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -45,6 +49,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
@@ -62,9 +67,9 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 
 /**
- * The favorites on the Timer page against the real Tokkl container (docs/PRD.md T5). The test's
- * own requests stand in for the web app: they set favorites in `/me/preferences` as TimerPage.tsx
- * does, and read back what the phone stored. Each test signs in to an account of its own and
+ * The favorites on the Timer page against the real Tokkl container (docs/PRD.md T5), pinned from
+ * the timer or from a history entry's menu. The test's own requests stand in for the web app: they
+ * set favorites in `/me/preferences` as TimerPage.tsx does, and read back what the phone stored. Each test signs in to an account of its own and
  * deletes it after.
  */
 class FavoritesServerTest {
@@ -211,6 +216,67 @@ class FavoritesServerTest {
     }
 
     /**
+     * Pin as favorite in a history entry's menu adds the entry's fields after the web app's
+     * favorites, in its format, as its EntryList.tsx pins, and says so.
+     */
+    @Test
+    fun pinningAHistoryEntryReachesTheWebInItsFormat() {
+        val project = createProject("Pinned project")
+        createEntry("Pin me", project)
+        saveOnTheWeb("""{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
+        launch {
+            pinFromHistory("Pin me")
+            awaitShown("the message") { composeRule.onNode(hasText(string(R.string.history_pinned))) }
+            composeRule.waitUntil("the phone caches what it stored", NETWORK_TIMEOUT.toMillis()) {
+                runBlocking { app.cache.favorites.first() }.map { it.description } == listOf("Write the report", "Pin me")
+            }
+        }
+
+        val preferences = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+        assertEquals(
+            Json.parseToJsonElement(
+                """
+                [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false},
+                 {"description": "Pin me", "project_id": $project, "task_id": null, "tags": ["call"], "billable": true}]
+                """,
+            ),
+            preferences.getValue("favorites"),
+        )
+    }
+
+    @Test
+    fun pinningAHistoryEntryWithNineFavoritesSaysTheListIsFull() {
+        createEntry("Pin me", project = null)
+        val nine = (1..MAX_FAVORITES).joinToString(",") {
+            """{"description": "Favorite $it", "project_id": null, "task_id": null, "tags": [], "billable": false}"""
+        }
+        saveOnTheWeb("""{"favorites": [$nine]}""")
+        launch {
+            awaitShown("the ninth favorite") { favorite("Favorite 9") }
+            pinFromHistory("Pin me")
+            val full = context.resources.getQuantityString(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
+            awaitShown("the message") { composeRule.onNode(hasText(full)) }
+        }
+        val stored = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+        assertEquals(MAX_FAVORITES, stored.getValue("favorites").jsonArray.size)
+    }
+
+    @Test
+    fun pinningAHistoryEntryOfflineSaysItNeedsTheServer() {
+        createEntry("Pin me", project = null)
+        saveOnTheWeb("""{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
+        launch {
+            awaitShown("the favorite") { favorite("Write the report") }
+            AirplaneMode.set(true, web)
+            pinFromHistory("Pin me")
+            awaitShown("the message") { composeRule.onNode(hasText(string(R.string.history_pin_needs_server))) }
+            AirplaneMode.set(false, web)
+        }
+        val stored = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+        assertEquals(listOf("Write the report"), stored.getValue("favorites").jsonArray.map { it.jsonObject.getValue("description").jsonPrimitive.content })
+    }
+
+    /**
      * A server without Tokkl's favorites, such as Toggl Track, shows no favorites control. The
      * same favorites show once the capability is there, so the screen did draw.
      */
@@ -275,6 +341,36 @@ class FavoritesServerTest {
             buildJsonObject { put("name", name) },
             JsonObject.serializer(),
         ).orFail("POST a project").getValue("id").jsonPrimitive.long
+
+    /** A stopped entry an hour ago with [description], [project], the tag `call` and billable. */
+    private fun createEntry(description: String, project: Long?) {
+        val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS)
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                if (project != null) put("project_id", project)
+                put("tags", JsonArray(listOf(JsonPrimitive("call"))))
+                put("billable", true)
+                put("start", stop.minus(30, ChronoUnit.MINUTES).toString())
+                put("stop", stop.toString())
+            },
+            JsonObject.serializer(),
+        ).orFail("POST an entry")
+    }
+
+    /** Opens the menu of the history entry [description] and taps Pin as favorite. */
+    private fun pinFromHistory(description: String) {
+        val more = composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, description)) and hasClickAction())
+        awaitShown("the entry's menu button") { more }
+        more.performSemanticsAction(SemanticsActions.OnClick)
+        val pin = composeRule.onNode(hasText(string(R.string.history_pin)) and hasClickAction())
+        awaitShown("Pin as favorite") { pin }
+        pin.performSemanticsAction(SemanticsActions.OnClick)
+    }
 
     /** A favorite's start button, as TalkBack reads it for [spokenName]. */
     private fun favorite(spokenName: String): SemanticsNodeInteraction =

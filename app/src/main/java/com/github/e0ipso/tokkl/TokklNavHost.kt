@@ -176,6 +176,7 @@ fun TokklNavHost(
             timerView = view,
             onTimerViewChange = timerView::choose,
             onContinue = { entryId -> history.entry(entryId)?.let(timer::continueEntry) },
+            favorites = favorites,
         ) {
             TimerBar(timer, cache, favorites = favorites, onAddEntry = {
                 entryForm.new()
@@ -233,6 +234,7 @@ private fun Screen(
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
     onContinue: (Long) -> Unit,
+    favorites: FavoritesModel?,
     timer: @Composable () -> Unit,
 ) {
     when (destination) {
@@ -251,6 +253,7 @@ private fun Screen(
                         backStack.add(Destination.ENTRY)
                     },
                     onContinue = onContinue,
+                    favorites = favorites,
                 )
             },
             calendarContent = {

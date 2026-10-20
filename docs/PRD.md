@@ -111,7 +111,7 @@ The first release is feature complete: it ships every requirement below, so they
 | T2 | Continue a past entry. |
 | T3 | Show stopped entries as the server returns them, after it snaps them to `time_resolution_minutes`. Entries not yet sent are snapped on the phone with a port of `snapSpan` (`../tokkl/packages/common/snap.ts`) in the account timezone, so their times do not change when the server answers. A timer stopped on the phone goes on the grid as Tokkl 1.5.0 stops one (`stopEntryAt` in `../tokkl/packages/api/src/models/timeEntries.ts`): the start on the nearest grid point, and the stop on the grid point nearest the tap, at least one step after the start for a Stop, or where the new timer's start snaps when a new timer stopped it. The phone stores and sends that span, so the web app's Stop at the same moment stores the same one. The running clock is not snapped. |
 | T4 | Description autocomplete from recent entries. |
-| T5 | Favorites: start any of up to 9 pinned entries in one tap. They are the same favorites the web app shows, read from and written to `/me/preferences`. |
+| T5 | Favorites: start any of up to 9 pinned entries in one tap. They are the same favorites the web app shows, read from and written to `/me/preferences`. Pin what the timer shows, or a history entry from its menu. |
 
 ### 5.3 Manual entry
 

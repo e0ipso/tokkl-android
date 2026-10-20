@@ -20,6 +20,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -141,6 +142,31 @@ class FavoritesModelTest {
         assertEquals(listOf(REPORT.fields(), WEBSITE.fields()), shown.favorites.map { it.fields })
         assertFalse(shown.saving)
     }
+
+    /** The history's Pin as favorite learns how each add went, to say so. */
+    @Test
+    fun anAddTellsItsCallerHowItWent() {
+        awaitState("the favorites show") { it.favorites.size == 2 }
+        val outcomes = MutableStateFlow(emptyList<FavoritesProblem?>())
+        val record: (FavoritesProblem?) -> Unit = { problem -> outcomes.update { it + problem } }
+
+        onMain { model.add(EntryFields(description = "Stored"), record) }
+        assertEquals(listOf<FavoritesProblem?>(null), awaitOutcomes(outcomes, 1))
+
+        answer = ApiResult.Failure(ApiError.Network(IOException("offline")))
+        onMain { model.add(EntryFields(description = "Not stored"), record) }
+        assertEquals(FavoritesProblem.Server(ServerProblem.Unreachable), awaitOutcomes(outcomes, 2)[1])
+
+        cached.value = (0 until MAX_FAVORITES).map { EntryFields(description = "Favorite $it").cached(it) }
+        awaitState("nine favorites show") { it.full }
+        onMain { model.add(EntryFields(description = "Tenth"), record) }
+        assertEquals(FavoritesProblem.Full, awaitOutcomes(outcomes, 3)[2])
+        assertEquals("only the first two went to the server", 2, saved.size)
+    }
+
+    private fun awaitOutcomes(outcomes: MutableStateFlow<List<FavoritesProblem?>>, count: Int): List<FavoritesProblem?> =
+        runBlocking { withTimeoutOrNull(TIMEOUT_MS) { outcomes.first { it.size >= count } } }
+            ?: throw AssertionError("timed out waiting for $count outcomes; got ${outcomes.value}")
 
     /** The body Tokkl's web app sends from TimerPage.tsx: the favorites key alone, with every field of each. */
     @Test

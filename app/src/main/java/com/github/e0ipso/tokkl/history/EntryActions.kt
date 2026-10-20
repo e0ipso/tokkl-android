@@ -4,11 +4,14 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entry.SplitHalves
 import com.github.e0ipso.tokkl.entry.SplitProblem
 import com.github.e0ipso.tokkl.entry.SplitResult
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.entry.splitTimes
+import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.FavoritesProblem
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Clock
@@ -43,6 +46,18 @@ sealed interface EntryNotice {
 
     /** An entry is split in two on the phone, and both changes are queued for the server. */
     data class Split(override val serial: Long) : EntryNotice
+
+    /** The server stored an entry's fields as a new favorite. */
+    data class Pinned(override val serial: Long) : EntryNotice
+
+    /** Nothing was pinned, because the favorites already hold the most there can be. */
+    data class PinFull(override val serial: Long) : EntryNotice
+
+    /** Nothing was pinned, because pinning needs the server, which the phone cannot reach. */
+    data class PinNeedsServer(override val serial: Long) : EntryNotice
+
+    /** The server did not store the new favorite, for [problem]. */
+    data class PinFailed(override val serial: Long, val problem: ServerProblem) : EntryNotice
 }
 
 /**
@@ -81,8 +96,9 @@ data class EntryActionsState(val confirmDelete: Long? = null, val notice: EntryN
  * request, and asks the server to restore one it has sent. When the server cannot restore a
  * deleted entry, as Toggl Track, Delete asks first and the message offers no Undo
  * (docs/PRD.md section 8.3). Duplicate makes a copy through the queue too, so it works offline,
- * and so does Split (H6), which asks for a clock time and cuts the entry in two there. Call
- * everything on the main thread.
+ * and so does Split (H6), which asks for a clock time and cuts the entry in two there. Pin as
+ * favorite (T5) needs the server, as the web app's does, so offline it pins nothing and says so.
+ * Call everything on the main thread.
  *
  * @param entries the cached entries, as AccountCache.entries gives them, which Duplicate copies
  *   and Split cuts.
@@ -167,6 +183,36 @@ class EntryActionsModel(
             val stop = source.stop?.takeIf { !it.isBefore(source.start) } ?: return@launch
             val time = accountSettings.value?.time(clock) ?: return@launch
             mutableState.update { it.copy(split = SplitDialog(source, time.snapUnsent(source.start, stop), time.zone)) }
+        }
+    }
+
+    /**
+     * Pins the cached entry [entryId] as a favorite through [favorites]: its description, project,
+     * task, tags and billable, as `pin` in ../tokkl/packages/web/src/components/EntryList.tsx
+     * does. Favorites live on the server, so when the phone is [offline] nothing is tried and the
+     * message says the server is needed. A full list, or a server that cannot be reached or does
+     * not store the list, says why nothing was pinned. An entry the cache no longer holds pins
+     * nothing.
+     */
+    fun pin(entryId: Long, favorites: FavoritesModel, offline: Boolean) {
+        if (offline) {
+            mutableState.update { it.copy(notice = EntryNotice.PinNeedsServer(++serial)) }
+            return
+        }
+        scope.launch {
+            val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
+            favorites.add(source.fields()) { problem ->
+                val notice = when (problem) {
+                    null -> EntryNotice.Pinned(++serial)
+                    FavoritesProblem.Full -> EntryNotice.PinFull(++serial)
+                    is FavoritesProblem.Server -> if (problem.problem == ServerProblem.Unreachable) {
+                        EntryNotice.PinNeedsServer(++serial)
+                    } else {
+                        EntryNotice.PinFailed(++serial, problem.problem)
+                    }
+                }
+                mutableState.update { it.copy(notice = notice) }
+            }
         }
     }
 

@@ -85,8 +85,14 @@ class FavoritesModel(
         )
     }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FavoritesState())
 
-    /** Adds [fields] at the end of the list, as the web app's Pin as favorite does, unless it is full. */
-    fun add(fields: EntryFields) = change { list -> if (list.size >= MAX_FAVORITES) null else list + fields }
+    /**
+     * Adds [fields] at the end of the list, as the web app's Pin as favorite does, unless it is
+     * full. [onDone] gets null once the server has stored the list, or why nothing was pinned.
+     * Without the capability, or while another change is saving, nothing happens and [onDone]
+     * is not called.
+     */
+    fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {}) =
+        change(onDone) { list -> if (list.size >= MAX_FAVORITES) null else list + fields }
 
     /** Removes the favorite at [index]. */
     fun remove(index: Int) = change { list -> list.filterIndexed { at, _ -> at != index } }
@@ -105,23 +111,29 @@ class FavoritesModel(
     fun dismissProblem() = local.update { it.copy(problem = null) }
 
     /**
-     * Saves what [edit] makes of the shown list, or says the list is full when it returns null.
-     * Call it on the main thread.
+     * Saves what [edit] makes of the shown list, or says the list is full when it returns null,
+     * and tells [onDone] how it went. Call it on the main thread.
      */
-    private fun change(edit: (List<EntryFields>) -> List<EntryFields>?) {
+    private fun change(onDone: (FavoritesProblem?) -> Unit = {}, edit: (List<EntryFields>) -> List<EntryFields>?) {
         val shown = state.value
         if (!shown.available || local.value.saving) return
         val list = shown.favorites.map { it.fields }
         val next = edit(list)
         if (next == null) {
             local.update { it.copy(problem = FavoritesProblem.Full) }
+            onDone(FavoritesProblem.Full)
             return
         }
-        if (next == list) return
+        if (next == list) {
+            onDone(null)
+            return
+        }
         local.value = Local(saving = true)
         scope.launch {
             val result = withContext(io) { save(next) }
-            local.value = Local(problem = (result as? ApiResult.Failure)?.let { FavoritesProblem.Server(it.error.toServerProblem()) })
+            val problem = (result as? ApiResult.Failure)?.let { FavoritesProblem.Server(it.error.toServerProblem()) }
+            local.value = Local(problem = problem)
+            onDone(problem)
         }
     }
 
