@@ -2,7 +2,7 @@
 type: map
 title: 'Application ID, license and supported Android versions'
 description: >-
-  Application ID com.github.e0ipso.tokkl, MIT license, Android 8.0 (API 26) and
+  Application ID com.github.e0ipso.tokkl, MIT license, Android 12 (API 31) and
   later, one server and one account at a time.
 tags:
   - release
@@ -18,9 +18,9 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-The application ID is `com.github.e0ipso.tokkl`, the same ID as Tokkl's macOS and KDE companions. The license is MIT, like Tokkl. The repo is `github.com/e0ipso/tokkl-android`, which is public. Section 8.2 of `docs/PRD.md` still calls the repo local only.
+The application ID is `com.github.e0ipso.tokkl`, the same ID as Tokkl's macOS and KDE companions. The license is MIT, like Tokkl. The repo is `github.com/e0ipso/tokkl-android`, which is public, as section 8.2 of `docs/PRD.md` says.
 
-The app supports Android 8.0 (API 26) and later. Phones come first. Layouts adapt to tablets and foldables, with no separate design and no Wear OS app.
+The app supports Android 12 (API 31) and later. The owner raised `minSdk` from 26 to 31 on 2026-10-19, and the PRD's Compatibility row says the same. Code may use any API from Android 12 on without a version check, and the tests run on API 36 and API 31 only. Phones come first. Layouts adapt to tablets and foldables, with no separate design and no Wear OS app.
 
 On Android 16 and later the running-timer notification becomes a Live Update. Elsewhere it stays a regular ongoing notification, and it has to work without Live Updates because they depend on the device. On Android 13 and later the app asks for the notification permission when the first timer starts and says what is lost without it.
 

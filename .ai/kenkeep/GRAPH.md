@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:3a4b2d83f1dc6d64d6c3a3773dd0581dfc3d28df12cdb82f3d11cd7c3842081d'
-node_count: 41
+nodes_hash: 'sha256:08fc368274191e8ace24c90badf716ec5f13dce1623bfa3cf71f624beac3b439'
+node_count: 42
 ---
 # kenkeep Graph
 
-Total nodes: 41
+Total nodes: 42
 
 ## map-account-cache-and-capabilities
 
@@ -59,10 +59,10 @@ Total nodes: 41
 ## map-change-queue-sends-entry-changes-in-order
 
 - **kind:** map
-- **title:** Change queue: ChangeQueue, ChangeSender, PendingChange and the offline picker
+- **title:** Change queue: ChangeQueue, ChangeSender, BackgroundSend and the offline picker
 - **path:** data-and-offline/map-change-queue-sends-entry-changes-in-order.md
 - **tags:** offline, cache, room, api, queue
-- **relates_to:** practice-never-wait-for-server-on-start-stop, map-account-cache-and-capabilities, map-tokkl-toggl-api, practice-refresh-on-events-no-polling
+- **relates_to:** practice-never-wait-for-server-on-start-stop, map-account-cache-and-capabilities, map-tokkl-toggl-api, practice-refresh-on-events-no-polling, map-timer-entry-form-and-entry-menu, map-api-client-shared-okhttp-serverurl-and-errors, practice-test-real-tokkl-server-speed-regressions
 
 ## map-connection-trust-store-pinning-and-prompts
 
@@ -91,7 +91,7 @@ Total nodes: 41
 ## map-gradle-build-sdk-levels-kotlin-and-memory
 
 - **kind:** map
-- **title:** Gradle build settings: SDK levels, Kotlin version source and memory
+- **title:** Gradle build settings: SDK levels, Kotlin version, memory and build cache
 - **path:** build-and-tooling/map-gradle-build-sdk-levels-kotlin-and-memory.md
 - **tags:** android, build, gradle
 - **relates_to:** map-planned-android-stack, practice-emulator-plain-aosp-image-headless, map-jdk-android-sdk-and-agent-shells
@@ -114,7 +114,7 @@ Total nodes: 41
 ## map-planned-android-stack
 
 - **kind:** map
-- **title:** Android stack: Compose, Room and OkHttp built; Glance, tile and WorkManager next
+- **title:** Android stack: Compose, Room, WorkManager and OkHttp built; Glance and tile next
 - **path:** build-and-tooling/map-planned-android-stack.md
 - **tags:** architecture, android, offline
 - **derived_from:** docs/PRD.md
@@ -130,10 +130,10 @@ Total nodes: 41
 ## map-signin-session-settings-and-navigation-host
 
 - **kind:** map
-- **title:** Sign-in, the stored session, theme settings and the navigation host
+- **title:** Sign-in, sign-out, the stored session, settings and the navigation host
 - **path:** screens/map-signin-session-settings-and-navigation-host.md
 - **tags:** android, ui, credentials, navigation
-- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-api-token-store-and-backup-exclusion, map-tokkl-colour-tokens-and-font, map-account-settings-source-and-account-time, map-connection-trust-store-pinning-and-prompts, map-account-cache-and-capabilities, map-reports-summary-from-detailed-search
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-api-token-store-and-backup-exclusion, map-tokkl-colour-tokens-and-font, map-account-settings-source-and-account-time, map-connection-trust-store-pinning-and-prompts, map-account-cache-and-capabilities, map-reports-summary-from-detailed-search, map-change-queue-sends-entry-changes-in-order, map-ui-components-and-compose-layout-gotchas
 
 ## map-t3-daily-restart-stops-agent-sessions
 
@@ -143,13 +143,21 @@ Total nodes: 41
 - **tags:** agents, tooling, machine
 - **relates_to:** map-oom-kill-ends-agent-session, map-jdk-android-sdk-and-agent-shells
 
+## map-timer-entry-form-and-entry-menu
+
+- **kind:** map
+- **title:** Timer, entry form and entry menu: TimerModel, EntryFormModel, EntryActions
+- **path:** screens/map-timer-entry-form-and-entry-menu.md
+- **tags:** ui, timer, offline, queue, accessibility
+- **relates_to:** map-timer-page-history-calendar-and-timer-view, map-change-queue-sends-entry-changes-in-order, practice-never-wait-for-server-on-start-stop, practice-match-web-app-behavior-account-timezone, practice-check-capabilities-not-server-version
+
 ## map-timer-page-history-calendar-and-timer-view
 
 - **kind:** map
-- **title:** Timer page: the List history, the Calendar week and the timerView choice
+- **title:** Timer page: layout, the List history, the Calendar week and timerView
 - **path:** screens/map-timer-page-history-calendar-and-timer-view.md
 - **tags:** ui, history, calendar, offline, api
-- **relates_to:** map-account-cache-and-capabilities, map-change-queue-sends-entry-changes-in-order, practice-check-capabilities-not-server-version, map-account-settings-source-and-account-time
+- **relates_to:** map-account-cache-and-capabilities, map-change-queue-sends-entry-changes-in-order, practice-check-capabilities-not-server-version, map-account-settings-source-and-account-time, map-timer-entry-form-and-entry-menu, map-ui-components-and-compose-layout-gotchas
 
 ## map-tokkl-colour-tokens-and-font
 
@@ -171,7 +179,7 @@ Total nodes: 41
 ## map-ui-components-and-compose-layout-gotchas
 
 - **kind:** map
-- **title:** UI components: ErrorBanner, Scene, ScrollAwayColumn, and Compose layout gotchas
+- **title:** UI components: TopBar, ErrorBanner, Scene, ScrollAwayColumn, and Compose layout gotchas
 - **path:** design/map-ui-components-and-compose-layout-gotchas.md
 - **tags:** ui, android, accessibility, compose
 - **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-signin-session-settings-and-navigation-host
@@ -205,7 +213,7 @@ Total nodes: 41
 ## practice-instrumented-tests-on-every-api-level
 
 - **kind:** practice
-- **title:** Write instrumented tests that hold from API 26 to 36, with the shared helpers
+- **title:** Write instrumented tests that hold on API 31 and 36, with the shared helpers
 - **path:** testing/practice-instrumented-tests-on-every-api-level.md
 - **tags:** testing, android, emulator
 - **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-emulator-plain-aosp-image-headless, practice-screenshot-references-on-tokkl-api36
@@ -326,7 +334,7 @@ Total nodes: 41
 - **title:** Test against a real Tokkl server and catch speed regressions in CI
 - **path:** testing/practice-test-real-tokkl-server-speed-regressions.md
 - **tags:** testing, ci, performance
-- **relates_to:** practice-run-instrumented-tests-only-through-the-script
+- **relates_to:** practice-run-instrumented-tests-only-through-the-script, map-change-queue-sends-entry-changes-in-order
 - **derived_from:** docs/PRD.md
 
 ## practice-tokkl-palette-wcag-english-strings
@@ -344,4 +352,5 @@ Total nodes: 41
 - **title:** Show the wordmark only on sign-in and the launch splash, never in a header
 - **path:** design/practice-wordmark-only-on-sign-in-and-splash.md
 - **tags:** ui, brand, design
-- **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-tokkl-colour-tokens-and-font, map-timer-page-history-calendar-and-timer-view
+- **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-tokkl-colour-tokens-and-font, map-timer-page-history-calendar-and-timer-view, map-ui-components-and-compose-layout-gotchas
+- **derived_from:** docs/PRD.md

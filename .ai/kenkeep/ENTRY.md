@@ -1,7 +1,7 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:3a4b2d83f1dc6d64d6c3a3773dd0581dfc3d28df12cdb82f3d11cd7c3842081d'
-node_count: 41
+nodes_hash: 'sha256:08fc368274191e8ace24c90badf716ec5f13dce1623bfa3cf71f624beac3b439'
+node_count: 42
 ---
 # kenkeep
 
@@ -13,7 +13,7 @@ node_count: 41
 - Load [`data-and-offline/`](nodes/data-and-offline/index.md) for more information on account settings and time, the Room cache, the change queue and the TypeScript ports; read before changing what the phone stores or sends, or how it reads and writes times.
 - Load [`design/`](nodes/design/index.md) for more information on Tokkl's theme, palette, brand rules and shared UI components; read before changing how anything looks or reads to TalkBack.
 - Load [`release/`](nodes/release/index.md) for more information on the app ID, versioning, reproducible signed builds, CI jobs and F-Droid metadata; read before touching versions, signing, CI or store text.
-- Load [`screens/`](nodes/screens/index.md) for more information on sign-in, the navigation host and bottom bar, the Timer page, Reports and the catalog pages; read before changing a screen, its model or navigation.
+- Load [`screens/`](nodes/screens/index.md) for more information on sign-in and sign-out, the navigation host and its bars, the Timer page, the timer and entry form, Reports and the catalog pages; read before changing a screen, its model or navigation.
 - Load [`testing/`](nodes/testing/index.md) for more information on instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator.
 
 ## Conventions (how we build)

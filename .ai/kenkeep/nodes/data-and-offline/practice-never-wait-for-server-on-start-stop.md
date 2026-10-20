@@ -23,7 +23,7 @@ Each offline change waits in a queue on the phone, marked as not sent, and goes 
 
 The app has no sync engine and no full local copy of the account. The server is the source of truth. The phone keeps a cache of what it last loaded and the queue of unsent changes. The cache holds projects, clients, tags, tasks, favorites and about two weeks of history, all readable and editable offline. When the phone and another client both changed an entry, the change that reaches the server last wins. Signing out warns when unsent changes would be lost, then clears the cache and the queue.
 
-`cache/ChangeQueue` and `ChangeSender` build the cache-and-queue part (see the change queue node). Sending in the background with the app closed needs WorkManager, which TKA-0037 adds. Until then the queue drains when a change is queued, after each refresh and when a 429's wait ends.
+`cache/ChangeQueue`, `ChangeSender` and `BackgroundSend` build the cache-and-queue part, with WorkManager sending the queue when the network returns (see the change queue node). In the app, the Timer page's Start and Stop, its field edits and the entry form's Save go to the queue and return at once. `TimerModel` shows what a tap did until the cache shows it, and ignores Start and Stop taps in between, so a double tap starts one entry. The notification, widget and tile are not built yet. Sign-out asks first, with the count, when the queue holds unsent changes.
 
 Reports and history older than the cache need the server. With no connection the reports screen says so instead of showing stale numbers (R5).
 

@@ -17,7 +17,9 @@ kk_confidence: medium
 ---
 Store text and images go in the repo under `fastlane/metadata/android/en-US/`, which does not exist yet: `title.txt`, `short_description.txt` (80 characters at most), `full_description.txt` (4000 at most), `changelogs/<versionCode>.txt`, `images/icon.png` and `images/phoneScreenshots/`.
 
-With `UpdateCheckMode: Tags`, F-Droid checks every git tag for the highest version code. By default it reads the version code from the Gradle build, but this build computes it, so the metadata needs `UpdateCheckData: gradle/version.properties|versionCode=(\d+)|.|versionName=(\S+)` to read the stored values instead.
+With `UpdateCheckMode: Tags`, F-Droid checks every git tag for the highest version code. By default it reads the version code from the Gradle build, but this build computes it, so the metadata needs `UpdateCheckData: gradle/version.properties|versionCode=(\d+)|.|versionName=(\S+)` to read the stored values instead. A comment in `app/build.gradle.kts` quotes that line.
+
+None of this is set up yet. Section 8.2 of `docs/PRD.md` says releases are not set up, the repo has no tag, and there is no F-Droid metadata file or `fastlane/` directory.
 
 `Binaries` points at a versioned APK URL, such as the GitHub release asset that semantic-release attaches. `AllowedAPKSigningKeys` holds the SHA-256 fingerprint of the signing certificate.
 

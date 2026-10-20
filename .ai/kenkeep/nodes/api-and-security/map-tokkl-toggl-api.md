@@ -24,6 +24,10 @@ Tokkl adds `role` and `time_resolution_minutes` to `GET /api/v9/me`, and the ser
 
 A change Tokkl refuses comes back as a 4xx whose body is a JSON string with the reason, such as "Name has already been taken". The tests also call `POST /api/app/setup` to create the first account and `POST /api/app/report`, the web app's own report call.
 
+Report requests take the web app's filter fields: `project_ids`, `client_ids` and `tag_ids`, where a `null` in the list stands for none (no project, a project without a client, no tags), and `billable` as true or false. Tokkl reads them the same way on its v3 endpoints and on `/api/app/report`, and Toggl Track also takes `null` for "without".
+
+Tokkl trims each tag name a create sends and matches it to an existing tag with SQLite's `COLLATE NOCASE`, which folds ASCII letters only, so an entry created with "work" comes back tagged "Work". Tokkl 1.5.0 stops a running timer on the grid point nearest the stop. Tokkl 1.3.1, which the instrumented tests pin, keeps the snapped start and rounds the duration up.
+
 The first version targets Tokkl only. Toggl Track comes later by pointing the app at Toggl's base URL, and that version hides the Tokkl-only features.
 
 <!-- kk:citations:start -->
