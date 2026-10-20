@@ -33,6 +33,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -41,6 +42,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
@@ -210,6 +212,30 @@ class ProjectsServerTest {
         composeRule.onNode(hasText(string(R.string.project_form_new))).assertExists()
     }
 
+    /**
+     * The server stores a new project and the connection drops before its answer reaches the
+     * phone. The page takes the project it then finds under that name for the one it made and
+     * says so. It sends no second copy for the server to refuse as a duplicate name (TKA-0197).
+     */
+    @Test
+    fun aProjectWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy() {
+        throughARelay { relay ->
+            show()
+            awaitEnabled(button(R.string.projects_new))
+            relay.dropAnswerTo("POST /api/v9/workspaces/$workspace/projects HTTP/1.1")
+            button(R.string.projects_new).performClick()
+            composeRule.awaitText(string(R.string.project_form_new))
+            field(R.string.project_name).type("Website")
+            button(R.string.project_create).tap()
+
+            composeRule.awaitText(string(R.string.catalog_created, "Website"))
+            assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
+            row("Website").assertExists()
+            assertNoText("Name has already been taken")
+        }
+        assertEquals("one copy on the server", 1, projects().count { it.string("name") == "Website" })
+    }
+
     @Test
     fun anEmptyNameIsAMistakeUnderTheField() {
         show()
@@ -319,6 +345,31 @@ class ProjectsServerTest {
         assertEquals(emptyList<JsonObject>(), tasks(project))
         awaitTasksCache("the cache no longer has the deleted task") { cached -> cached.none { it.id == id } }
         composeRule.awaitText(string(R.string.project_tasks_empty))
+    }
+
+    /**
+     * The server stores a new task and the connection drops before its answer reaches the phone.
+     * The list takes the task it then finds under that name for the one it made and says so, and
+     * the server holds one copy (TKA-0197).
+     */
+    @Test
+    fun aTaskWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy() {
+        val project = create("projects", buildJsonObject { put("name", "Website") })
+        throughARelay { relay ->
+            show()
+            composeRule.awaitText("Website")
+            row("Website").tap(scroll = false)
+            composeRule.awaitText(string(R.string.project_tasks_empty))
+            relay.dropAnswerTo("POST /api/v9/workspaces/$workspace/projects/$project/tasks HTTP/1.1")
+            field(R.string.project_tasks_new_name).type("Design")
+            button(R.string.project_tasks_add).tap()
+
+            composeRule.awaitText(string(R.string.catalog_created, "Design"))
+            assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
+            row("Design").assertExists()
+            assertNoText("Name has already been taken")
+        }
+        assertEquals("one copy on the server", listOf("Design"), tasks(project).map { it.string("name") })
     }
 
     @Test
@@ -431,6 +482,35 @@ class ProjectsServerTest {
         }
     }
 
+    /**
+     * Runs [block] with the session on a [HangingRelay] to the test server, then puts the session
+     * back on the server. The account's client goes through the app's guard, which follows the
+     * session, so it reaches the server only outside [block].
+     */
+    private fun throughARelay(block: (HangingRelay) -> Unit) {
+        val relay = HangingRelay(TokklTestServer.url)
+        try {
+            ServerTrustStore(context).confirmCleartext(relay.url)
+            Session(context).save(relay.url, account.apiToken)
+            block(relay)
+        } finally {
+            relay.close()
+            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            Session(context).save(TokklTestServer.url, account.apiToken)
+        }
+    }
+
+    /** Waits until the page has loaded what it needs to enable [node]. */
+    private fun awaitEnabled(node: SemanticsNodeInteraction) {
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            node.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Disabled) == null
+        }
+    }
+
+    private fun assertNoText(text: String) {
+        assertEquals("\"$text\" shows", 0, composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
+    }
+
     private fun button(id: Int) = composeRule.onNode(hasText(string(id)) and hasClickAction())
 
     private fun field(id: Int) = composeRule.onNode(hasText(string(id)) and hasSetTextAction())
@@ -468,10 +548,10 @@ class ProjectsServerTest {
         assertTrue(message, check(runBlocking { app.cache.projects.first() }))
     }
 
-    private fun project(name: String): JsonObject {
-        val list = account.client.get(url("projects"), ListSerializer(JsonObject.serializer())).orFail("GET projects")
-        return list.single { it.getValue("name").jsonPrimitive.content == name }
-    }
+    private fun project(name: String): JsonObject = projects().single { it.getValue("name").jsonPrimitive.content == name }
+
+    private fun projects(): List<JsonObject> =
+        account.client.get(url("projects"), ListSerializer(JsonObject.serializer())).orFail("GET projects")
 
     private fun JsonObject.id() = getValue("id").jsonPrimitive.long
 

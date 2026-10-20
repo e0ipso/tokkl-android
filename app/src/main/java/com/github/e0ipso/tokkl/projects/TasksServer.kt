@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.projects
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.catalog.createOnce
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -26,8 +27,17 @@ class TasksServer(private val api: TogglApiClient, private val workspace: Long, 
     /** Every task of the project, done ones included, sorted by name. */
     fun list(): ApiResult<List<ProjectTask>> = api.get(url(), ListSerializer(ProjectTask.serializer()))
 
-    fun create(name: String): ApiResult<ProjectTask> =
-        api.send("POST", url(), buildJsonObject { put("name", name) }, ProjectTask.serializer())
+    /**
+     * Creates the task once, as [createOnce] does. When the answer was lost, the project's task
+     * named [name] whose id is not in [known] counts as the one it made.
+     *
+     * @param known the ids of the tasks the list shows, which the create cannot have made.
+     */
+    fun create(name: String, known: Set<Long>): ApiResult<ProjectTask> = createOnce(
+        create = { api.send("POST", url(), buildJsonObject { put("name", name) }, ProjectTask.serializer(), resend = false) },
+        list = ::list,
+        made = { it.id !in known && it.projectId == project && it.name == name },
+    )
 
     /** Renames the task and marks it done or not done, as the web app's task row does. */
     fun update(id: Long, name: String, done: Boolean): ApiResult<ProjectTask> =

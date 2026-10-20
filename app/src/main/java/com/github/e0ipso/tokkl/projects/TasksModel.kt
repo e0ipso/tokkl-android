@@ -88,8 +88,9 @@ class TasksModel(
     fun create(name: String) {
         val project = project ?: return
         val trimmed = name.trim()
+        val known = state.value.data?.tasks.orEmpty().mapTo(HashSet()) { it.id }
         catalog.send(
-            request = { api, workspace -> TasksServer(api, workspace, project).create(trimmed) },
+            request = { api, workspace -> TasksServer(api, workspace, project).create(trimmed, known) },
             apply = TasksData::with,
             done = { CatalogChange.Created(it.name) },
         )

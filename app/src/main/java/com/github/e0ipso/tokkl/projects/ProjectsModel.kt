@@ -96,11 +96,12 @@ class ProjectsModel(
     /** Creates the project, or saves the one the form edits, and closes the form once the server accepts it. */
     fun save(fields: ProjectFields) {
         val form = state.value.overlay ?: return
+        val known = state.value.data?.projects.orEmpty().mapTo(HashSet()) { it.id }
         catalog.send(
             request = { api, workspace ->
                 val server = ProjectsServer(api, workspace)
                 when (form) {
-                    ProjectForm.New -> server.create(fields)
+                    ProjectForm.New -> server.create(fields, known)
                     is ProjectForm.Edit -> server.update(form.project.id, fields)
                 }
             },

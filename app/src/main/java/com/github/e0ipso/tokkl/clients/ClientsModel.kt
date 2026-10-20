@@ -97,10 +97,11 @@ class ClientsModel(
         }
         val trimmed = name.trim()
         val note = notes.trim().ifEmpty { null }
+        val known = state.value.data?.clients.orEmpty().mapTo(HashSet()) { it.id }
         catalog.send(
             request = { api, workspace ->
                 val server = ClientsServer(api, workspace)
-                if (editing == null) server.create(trimmed, note) else server.update(editing.id, trimmed, note)
+                if (editing == null) server.create(trimmed, note, known) else server.update(editing.id, trimmed, note)
             },
             apply = ClientsData::with,
             done = { saved -> if (editing == null) CatalogChange.Created(saved.name) else CatalogChange.Saved(saved.name) },

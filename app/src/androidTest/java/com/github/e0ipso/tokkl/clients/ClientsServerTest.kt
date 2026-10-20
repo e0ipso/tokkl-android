@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -22,6 +23,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -30,6 +32,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
@@ -160,6 +163,45 @@ class ClientsServerTest {
         }
     }
 
+    /**
+     * The server stores a new client and the connection drops before its answer reaches the
+     * phone. The page takes the client it then finds under that name for the one it made and says
+     * so. It sends no second copy for the server to refuse as a duplicate name (TKA-0197).
+     */
+    @Test
+    fun aClientWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy() {
+        throughARelay { relay ->
+            show()
+            awaitEnabled(button(R.string.clients_new))
+            relay.dropAnswerTo("POST /api/v9/workspaces/$workspace/clients HTTP/1.1")
+            button(R.string.clients_new).performClick()
+            awaitText(string(R.string.client_form_new))
+            field(R.string.client_name).performTextInput("Acme")
+            button(R.string.client_create).performScrollTo().performClick()
+
+            awaitText(string(R.string.catalog_created, "Acme"))
+            assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
+            row("Acme").assertExists()
+            assertNoText("Name has already been taken")
+        }
+        assertEquals("one copy on the server", 1, clients().count { it.getValue("name").jsonPrimitive.content == "Acme" })
+    }
+
+    @Test
+    fun aRefusedCreateShowsTheServersReasonAndKeepsTheForm() {
+        create("clients", buildJsonObject { put("name", "Acme") })
+        show()
+        awaitText("Acme")
+        button(R.string.clients_new).performClick()
+        awaitText(string(R.string.client_form_new))
+        field(R.string.client_name).performTextInput("Acme")
+        button(R.string.client_create).performScrollTo().performClick()
+
+        awaitText("Name has already been taken")
+        composeRule.onNode(hasText(string(R.string.client_form_new))).assertExists()
+        assertEquals("one copy on the server", 1, clients().count { it.getValue("name").jsonPrimitive.content == "Acme" })
+    }
+
     @Test
     fun cancellingTheArchiveQuestionKeepsTheClient() {
         create("clients", buildJsonObject { put("name", "Keep") })
@@ -227,6 +269,35 @@ class ClientsServerTest {
         }
     }
 
+    /**
+     * Runs [block] with the session on a [HangingRelay] to the test server, then puts the session
+     * back on the server. The account's client goes through the app's guard, which follows the
+     * session, so it reaches the server only outside [block].
+     */
+    private fun throughARelay(block: (HangingRelay) -> Unit) {
+        val relay = HangingRelay(TokklTestServer.url)
+        try {
+            ServerTrustStore(context).confirmCleartext(relay.url)
+            Session(context).save(relay.url, account.apiToken)
+            block(relay)
+        } finally {
+            relay.close()
+            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            Session(context).save(TokklTestServer.url, account.apiToken)
+        }
+    }
+
+    /** Waits until the page has loaded what it needs to enable [node]. */
+    private fun awaitEnabled(node: SemanticsNodeInteraction) {
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            node.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Disabled) == null
+        }
+    }
+
+    private fun assertNoText(text: String) {
+        assertEquals("\"$text\" shows", 0, composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
+    }
+
     private fun show() {
         composeRule.setContent { TokklTheme { ClientsScreen(model) } }
     }
@@ -245,10 +316,11 @@ class ClientsServerTest {
         assertTrue(message, check(runBlocking { app.cache.clients.first() }, runBlocking { app.cache.projects.first() }))
     }
 
-    private fun client(name: String): JsonObject {
+    private fun client(name: String): JsonObject = clients().single { it.getValue("name").jsonPrimitive.content == name }
+
+    private fun clients(): List<JsonObject> {
         val url = url("clients").newBuilder().addQueryParameter("status", "both").build()
-        val list = account.client.get(url, ListSerializer(JsonObject.serializer())).orFail("GET clients")
-        return list.single { it.getValue("name").jsonPrimitive.content == name }
+        return account.client.get(url, ListSerializer(JsonObject.serializer())).orFail("GET clients")
     }
 
     private fun JsonObject.id() = getValue("id").jsonPrimitive.long

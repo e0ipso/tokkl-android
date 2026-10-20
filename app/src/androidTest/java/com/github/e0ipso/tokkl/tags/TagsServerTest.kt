@@ -4,6 +4,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -20,6 +21,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -28,6 +30,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
@@ -144,6 +147,39 @@ class TagsServerTest {
         }
     }
 
+    /**
+     * The server stores a new tag and the connection drops before its answer reaches the phone.
+     * The page takes the tag it then finds under that name for the one it made and says so. It
+     * sends no second copy for the server to refuse as a duplicate name (TKA-0197).
+     */
+    @Test
+    fun aTagWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy() {
+        throughARelay { relay ->
+            show()
+            awaitEnabled(button(R.string.tags_add))
+            relay.dropAnswerTo("POST /api/v9/workspaces/$workspace/tags HTTP/1.1")
+            field(R.string.tags_new_name).performTextInput("focus")
+            button(R.string.tags_add).performClick()
+
+            awaitText(string(R.string.catalog_created, "focus"))
+            assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
+            row("focus").assertExists()
+            assertNoText("A tag with the same name already exists")
+        }
+        assertEquals("one copy on the server", 1, tags().count { it.getValue("name").jsonPrimitive.content == "focus" })
+    }
+
+    @Test
+    fun aRefusedCreateShowsTheServersReason() {
+        create("focus")
+        show()
+        awaitText("focus")
+        field(R.string.tags_new_name).performTextInput("focus")
+        button(R.string.tags_add).performClick()
+        awaitText("A tag with the same name already exists")
+        assertEquals("one copy on the server", 1, tags().count { it.getValue("name").jsonPrimitive.content == "focus" })
+    }
+
     @Test
     fun cancellingTheDeleteQuestionKeepsTheTag() {
         create("keep")
@@ -228,6 +264,35 @@ class TagsServerTest {
         }
     }
 
+    /**
+     * Runs [block] with the session on a [HangingRelay] to the test server, then puts the session
+     * back on the server. The account's client goes through the app's guard, which follows the
+     * session, so it reaches the server only outside [block].
+     */
+    private fun throughARelay(block: (HangingRelay) -> Unit) {
+        val relay = HangingRelay(TokklTestServer.url)
+        try {
+            ServerTrustStore(context).confirmCleartext(relay.url)
+            Session(context).save(relay.url, account.apiToken)
+            block(relay)
+        } finally {
+            relay.close()
+            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            Session(context).save(TokklTestServer.url, account.apiToken)
+        }
+    }
+
+    /** Waits until the page has loaded what it needs to enable [node]. */
+    private fun awaitEnabled(node: SemanticsNodeInteraction) {
+        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
+            node.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Disabled) == null
+        }
+    }
+
+    private fun assertNoText(text: String) {
+        assertEquals("\"$text\" shows", 0, composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
+    }
+
     private fun show() {
         composeRule.setContent { TokklTheme { TagsScreen(model) } }
     }
@@ -244,10 +309,9 @@ class TagsServerTest {
         assertTrue(message, check(runBlocking { app.cache.tags.first() }, runBlocking { app.cache.timeEntries.first() }))
     }
 
-    private fun tag(name: String): JsonObject? {
-        val list = account.client.get(url("tags"), ListSerializer(JsonObject.serializer())).orFail("GET tags")
-        return list.singleOrNull { it.getValue("name").jsonPrimitive.content == name }
-    }
+    private fun tag(name: String): JsonObject? = tags().singleOrNull { it.getValue("name").jsonPrimitive.content == name }
+
+    private fun tags(): List<JsonObject> = account.client.get(url("tags"), ListSerializer(JsonObject.serializer())).orFail("GET tags")
 
     private fun entry(tag: String) {
         val start = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES)

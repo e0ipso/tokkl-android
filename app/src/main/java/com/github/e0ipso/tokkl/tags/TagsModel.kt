@@ -80,8 +80,9 @@ class TagsModel(
     /** Creates a tag named [name], trimmed. */
     fun create(name: String) {
         val trimmed = name.trim()
+        val known = state.value.data?.tags.orEmpty().mapTo(HashSet()) { it.id }
         catalog.send(
-            request = { api, workspace -> TagsServer(api, workspace).create(trimmed) },
+            request = { api, workspace -> TagsServer(api, workspace).create(trimmed, known) },
             apply = TagsData::with,
             done = { CatalogChange.Created(it.name) },
         )

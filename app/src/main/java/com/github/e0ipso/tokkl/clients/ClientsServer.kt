@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.clients
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.catalog.createOnce
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -40,8 +41,18 @@ class ClientsServer(private val api: TogglApiClient, private val workspace: Long
         return api.get(url, ListSerializer(ClientProject.serializer()))
     }
 
-    /** Blank [notes] go as null, as the web app sends them. */
-    fun create(name: String, notes: String?): ApiResult<Client> = api.send("POST", url(), body(name, notes), Client.serializer())
+    /**
+     * Creates the client once, as [createOnce] does. When the answer was lost, the client named
+     * [name] whose id is not in [known] counts as the one it made. Blank [notes] go as null, as
+     * the web app sends them.
+     *
+     * @param known the ids of the clients the page lists, which the create cannot have made.
+     */
+    fun create(name: String, notes: String?, known: Set<Long>): ApiResult<Client> = createOnce(
+        create = { api.send("POST", url(), body(name, notes), Client.serializer(), resend = false) },
+        list = ::list,
+        made = { it.id !in known && it.workspaceId == workspace && it.name == name },
+    )
 
     fun update(id: Long, name: String, notes: String?): ApiResult<Client> =
         api.send("PUT", url(id.toString()), body(name, notes), Client.serializer())
