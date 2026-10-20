@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
@@ -24,14 +26,18 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedInFrame
+import com.github.e0ipso.tokkl.SignedInPanes
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
@@ -51,6 +57,8 @@ import com.github.e0ipso.tokkl.history.HistoryDay
 import com.github.e0ipso.tokkl.history.HistoryEntry
 import com.github.e0ipso.tokkl.history.HistoryState
 import com.github.e0ipso.tokkl.history.OlderDays
+import com.github.e0ipso.tokkl.navigation.SampleEntryForm
+import com.github.e0ipso.tokkl.navigation.SampleTimerPage
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.projects.ProjectsActions
@@ -110,7 +118,8 @@ import org.junit.rules.RuleChain
  * day, the reports screen's three tabs fixed reports for a fixed day, the Projects, Clients and
  * Tags pages fixed lists, and each prompt fixed text, so no capture depends on the date, the
  * server's data, its port or its certificate. A capture holds the app's window, the dialog's or
- * the More sheet's, never the status bar.
+ * the More sheet's, never the status bar. Two captures force a wider window: the List view beside
+ * the navigation rail on a medium one, and the entry form beside the history on an expanded one.
  *
  * The references are in app/src/androidTest/assets/screenshots, recorded on tokkl-api36, since
  * density and system fonts change the pixels. They run only on its Android version, API 36: every
@@ -207,6 +216,51 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             composeRule.awaitTimerPage()
             composeRule.awaitText("Thu, 15 Oct")
             assertScreen("calendar")
+        }
+    }
+
+    /**
+     * The List view beside the navigation rail, on a medium window, such as an unfolded foldable
+     * held upright, with the status at the bottom beside the rail.
+     */
+    @SignedOut
+    @Test
+    fun timerBesideTheRail() {
+        show({
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(MEDIUM_WINDOW)) {
+                SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, syncStatus = SYNC_STATUS, syncStatusClock = TODAY) {
+                    TimerScreen(
+                        view = TimerView.LIST,
+                        onViewChange = {},
+                        timer = { Timer(IDLE_TIMER, elapsedSeconds = 0) },
+                        listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
+                        calendarContent = {},
+                    )
+                }
+            }
+        }) {
+            composeRule.awaitTimerPage()
+            composeRule.awaitText(string(R.string.history_today).uppercase(Locale.ROOT))
+            assertScreen("timer-rail")
+        }
+    }
+
+    /** On an expanded window, such as a tablet held sideways, the entry form beside the history. */
+    @SignedOut
+    @Test
+    fun entryBesideTheHistory() {
+        show({
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
+                SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+                    SignedInPanes(destination = Destination.ENTRY, entryBeside = true, entryKey = 0) { shown ->
+                        if (shown == Destination.ENTRY) SampleEntryForm() else SampleTimerPage(TimerView.LIST)
+                    }
+                }
+            }
+        }) {
+            composeRule.awaitTimerPage()
+            composeRule.awaitText(string(R.string.entry_form_edit))
+            assertScreen("entry-beside")
         }
     }
 
@@ -458,8 +512,14 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     private fun string(@StringRes id: Int): String =
         InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
 
-    private companion object {
+    internal companion object {
         const val TIMEOUT_MS = 5_000L
+
+        /** An unfolded foldable or a small tablet held upright, a medium width. */
+        val MEDIUM_WINDOW = DpSize(700.dp, 1000.dp)
+
+        /** A tablet held sideways, an expanded width. */
+        val EXPANDED_WINDOW = DpSize(1280.dp, 800.dp)
 
         val ACCOUNT = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
 
@@ -669,7 +729,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
-    private class Project(val id: Long, val name: String, val colour: String)
+    internal class Project(val id: Long, val name: String, val colour: String)
 }
 
 /**

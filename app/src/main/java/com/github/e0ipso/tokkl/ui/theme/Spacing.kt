@@ -39,6 +39,12 @@ object TokklSpacing {
     /** The widest a screen's single column gets. Wider windows centre it. */
     val contentMaxWidth: Dp = 600.dp
 
+    /**
+     * The widest the Timer page's Calendar view gets on an expanded window, which gives the week
+     * the extra width: 1100dp, as the web app's `.page` caps its pages.
+     */
+    val wideContentMaxWidth: Dp = 1100.dp
+
     /** The screen margin for a screen [width] wide. */
     fun screenMargin(width: Dp): Dp = if (isCompact(width)) compactMargin else mediumMargin
 
@@ -57,15 +63,15 @@ object TokklSpacing {
 
 /**
  * Lays out a screen's single column: [TokklSpacing.screenMargin] on both sides, at most
- * [TokklSpacing.contentMaxWidth] wide and centred. The margin follows the width the screen
- * gets. The column takes the whole content width, so a child that fills its width lines up
- * with the margin. Multi-pane layouts are TKA-0056's.
+ * [maxWidth] wide and centred. The margin follows the width the screen gets. The column takes the
+ * whole content width, so a child that fills its width lines up with the margin. TokklNavHost's
+ * SignedInPanes puts two screens side by side, each with its own column.
  */
-fun Modifier.screenContent(): Modifier = layout { measurable, constraints ->
+fun Modifier.screenContent(maxWidth: Dp = TokklSpacing.contentMaxWidth): Modifier = layout { measurable, constraints ->
     check(constraints.hasBoundedWidth) { "screenContent needs a bounded width" }
     val available = constraints.maxWidth
     val margin = TokklSpacing.screenMargin(available.toDp()).roundToPx()
-    val width = (available - 2 * margin).coerceIn(0, TokklSpacing.contentMaxWidth.roundToPx())
+    val width = (available - 2 * margin).coerceIn(0, maxWidth.roundToPx())
     val placeable = measurable.measure(
         Constraints(
             minWidth = width,

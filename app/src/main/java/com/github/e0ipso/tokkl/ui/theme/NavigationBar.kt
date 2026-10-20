@@ -11,6 +11,8 @@ import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemColors
 import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -50,6 +52,19 @@ internal fun navigationBarItemColors(scheme: ColorScheme) = NavigationBarItemCol
     disabledTextColor = scheme.onSurfaceVariant.copy(alpha = DisabledAlpha),
 )
 
+/** The colours of [navigationBarItemColors] for a navigation rail item, whose label also sits below its indicator. */
+internal fun navigationRailItemColors(scheme: ColorScheme) = navigationBarItemColors(scheme).let { bar ->
+    NavigationRailItemColors(
+        selectedIconColor = bar.selectedIconColor,
+        selectedTextColor = bar.selectedTextColor,
+        selectedIndicatorColor = bar.selectedIndicatorColor,
+        unselectedIconColor = bar.unselectedIconColor,
+        unselectedTextColor = bar.unselectedTextColor,
+        disabledIconColor = bar.disabledIconColor,
+        disabledTextColor = bar.disabledTextColor,
+    )
+}
+
 /**
  * The weight of an item's label. The active one is bold, 700, so that the weight and the
  * indicator's shape mark it without colour. An inactive label keeps the weight it inherits.
@@ -57,12 +72,17 @@ internal fun navigationBarItemColors(scheme: ColorScheme) = NavigationBarItemCol
 internal fun navigationBarLabelWeight(selected: Boolean): FontWeight? =
     if (selected) FontWeight.Bold else null
 
-/** What a screen needs to build a bottom bar item from [NavigationBarItem] in Tokkl's colours. */
+/** What a screen needs to build a bar or rail item from [NavigationBarItem] or [NavigationRailItem] in Tokkl's colours. */
 object TokklNavigationBarDefaults {
     /** The colours of [NavigationBarItem] in the current theme. */
     @Composable
     @ReadOnlyComposable
     fun itemColors(): NavigationBarItemColors = navigationBarItemColors(MaterialTheme.colorScheme)
+
+    /** The colours of [NavigationRailItem] in the current theme, the bar's colours. */
+    @Composable
+    @ReadOnlyComposable
+    fun railItemColors(): NavigationRailItemColors = navigationRailItemColors(MaterialTheme.colorScheme)
 
     /**
      * The colours of an item on the More sheet, a [NavigationDrawerItem], as `.more-sheet .nav-link`
@@ -107,21 +127,54 @@ fun RowScope.TokklNavigationBarItem(
         icon = icon,
         modifier = modifier,
         enabled = enabled,
-        label = {
-            // Every label is measured in the bolder of its two weights, so selecting an item
-            // changes no item's size.
-            val style = LocalTextStyle.current.let { it.copy(fontWeight = maxOf(it.fontWeight ?: FontWeight.Normal, FontWeight.Bold)) }
-            val measurer = rememberTextMeasurer(cacheSize = barLabels.size)
-            val fontScale = LocalDensity.current.fontScale
-            Text(
-                text = label,
-                fontWeight = navigationBarLabelWeight(selected),
-                maxLines = 1,
-                autoSize = remember(barLabels, style, measurer, fontScale) { SharedLabelSize(barLabels, style, measurer, fontScale) },
-            )
-        },
+        label = { ItemLabel(label, selected, barLabels) },
         alwaysShowLabel = true,
         colors = TokklNavigationBarDefaults.itemColors(),
+    )
+}
+
+/**
+ * A [NavigationRailItem] in Tokkl's colours, with the active label in bold, as
+ * [TokklNavigationBarItem] draws a bar item. Its label is always shown, on one line. [railLabels]
+ * are the labels of every item in the rail. The rail grows as wide as its widest label needs, so a
+ * label shrinks only where the window leaves the rail too little width.
+ */
+@Composable
+fun TokklNavigationRailItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    railLabels: List<String> = listOf(label),
+) {
+    NavigationRailItem(
+        selected = selected,
+        onClick = onClick,
+        icon = icon,
+        modifier = modifier,
+        label = { ItemLabel(label, selected, railLabels) },
+        alwaysShowLabel = true,
+        colors = TokklNavigationBarDefaults.railItemColors(),
+    )
+}
+
+/**
+ * The [label] of a bar or rail item, bold while [selected], on one line, at the size at which all
+ * of [labels] fit ([SharedLabelSize]).
+ */
+@Composable
+private fun ItemLabel(label: String, selected: Boolean, labels: List<String>) {
+    // Every label is measured in the bolder of its two weights, so selecting an item
+    // changes no item's size.
+    val style = LocalTextStyle.current.let { it.copy(fontWeight = maxOf(it.fontWeight ?: FontWeight.Normal, FontWeight.Bold)) }
+    val measurer = rememberTextMeasurer(cacheSize = labels.size)
+    val fontScale = LocalDensity.current.fontScale
+    Text(
+        text = label,
+        fontWeight = navigationBarLabelWeight(selected),
+        maxLines = 1,
+        autoSize = remember(labels, style, measurer, fontScale) { SharedLabelSize(labels, style, measurer, fontScale) },
     )
 }
 

@@ -22,9 +22,12 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.ScrollAwayColumn
 import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.TopBarStatusBand
+import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.compactHeightWindow
 import com.github.e0ipso.tokkl.ui.shortWindow
+import com.github.e0ipso.tokkl.ui.windowWidth
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
+import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
@@ -54,6 +57,10 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
  * On a phone held sideways the page opens in the Calendar view with all of that, the calendar's
  * toolbar too, already scrolled away, so the week shows at least four hour rows at once. A drag
  * on the day heads, or the grid back at midnight, brings them back, and TalkBack scrolls to them.
+ *
+ * On an expanded window the Calendar view takes the extra width, up to
+ * [TokklSpacing.wideContentMaxWidth], so the week's columns get the room, and the timer and the
+ * switch line up with it. The List view keeps a phone's column, so its lines stay short.
  */
 @Composable
 fun TimerScreen(
@@ -66,6 +73,11 @@ fun TimerScreen(
 ) {
     val title = stringResource(R.string.nav_timer)
     val scrollAway = compactHeightWindow()
+    val columnWidth = if (view == TimerView.CALENDAR && windowWidth() == WindowWidth.EXPANDED) {
+        TokklSpacing.wideContentMaxWidth
+    } else {
+        TokklSpacing.contentMaxWidth
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { if (scrollAway) TopBarStatusBand() else TokklTopBar(title) },
@@ -80,7 +92,7 @@ fun TimerScreen(
             startScrolledAway = view == TimerView.CALENDAR && shortWindow(),
             top = {
                 if (scrollAway) TokklTopBar(title, windowInsets = WindowInsets(0))
-                Column(Modifier.screenContent()) {
+                Column(Modifier.screenContent(columnWidth)) {
                     Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
                     timer()
                     Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
@@ -92,7 +104,7 @@ fun TimerScreen(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .screenContent(),
+                    .screenContent(columnWidth),
             ) {
                 when (view) {
                     TimerView.LIST -> listContent()

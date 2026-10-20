@@ -1,21 +1,36 @@
 package com.github.e0ipso.tokkl
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -24,8 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarModel
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
+import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.clients.ClientsModel
 import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entry.EntryFormModel
@@ -36,6 +51,7 @@ import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryModel
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
+import com.github.e0ipso.tokkl.navigation.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.projects.ProjectsModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
@@ -61,13 +77,15 @@ import com.github.e0ipso.tokkl.trash.TrashScreen
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import com.github.e0ipso.tokkl.trust.TrustPrompt
 import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
+import com.github.e0ipso.tokkl.ui.WindowWidth
+import com.github.e0ipso.tokkl.ui.windowWidth
+import java.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
-import java.time.Clock
 
 /** The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model holds. */
 enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, SETTINGS, LICENCES, ENTRY }
@@ -78,19 +96,22 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * Timer page after that. A restored signed-in back stack goes to sign-in when nobody is signed in
  * any more.
  *
- * Every signed-in screen has the bottom bar ([AppNavigationBar]). Opening a page from it puts
+ * Every signed-in screen has the bottom bar ([AppNavigationBar]), or on a medium or expanded
+ * window the navigation rail ([AppNavigationRail]) with the same items. Opening a page from it puts
  * that page right above Timer, so Back from any page in the bar or the More sheet goes to Timer,
  * and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a page, such as Licences from
  * Settings, stacks above that page, and the bar keeps marking the page. While [timerRunning] says
  * a time entry runs, the bar's Timer item carries a dot. The Timer page's [timer] picks projects,
  * tasks and tags from [cache]. A tap on an entry in the history, or on the Timer page's button for
- * a past entry, opens [entryForm] above the Timer page, an entry's menu deletes it through
+ * a past entry, opens [entryForm] above the Timer page, beside its List view on an expanded window
+ * ([SignedInPanes]), an entry's menu deletes it through
  * [entryActions], and its Continue button starts [timer] with its fields. Trash, on [trash], shows
  * only while the server's [capabilities] have it: when they lose it, the page goes back to Timer.
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
- * prompts. Above the bottom bar it shows [syncStatus] while changes wait to reach the server.
+ * prompts. Above the bottom bar, or at the bottom beside the rail, it shows [syncStatus] while
+ * changes wait to reach the server.
  */
 @Composable
 fun TokklNavHost(
@@ -158,48 +179,120 @@ fun TokklNavHost(
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
     val status by syncStatus.collectAsState(initial = null)
+    val width = windowWidth()
+    // Counts the openings of the entry form, so a form opened beside the history over another one
+    // starts afresh, as a form opened on its own screen does.
+    var entryOpenings by rememberSaveable { mutableIntStateOf(0) }
+    val openEntry: () -> Unit = {
+        entryOpenings++
+        if (backStack.lastOrNull() != Destination.ENTRY) backStack.add(Destination.ENTRY)
+    }
     SignedInFrame(
         current = backStack.currentPage(),
         onOpen = backStack::open,
         timerRunning = running,
         hidden = if (offersTrash) emptySet() else setOf(TopLevelPage.TRASH),
         syncStatus = status,
+        width = width,
     ) {
-        Screen(
+        SignedInPanes(
             destination = destination,
-            backStack = backStack,
-            themeSettings = themeSettings,
-            signOut = signOut,
-            reports = reports,
-            history = history,
-            entryActions = entryActions,
-            calendar = calendar,
-            projects = projects,
-            clients = clients,
-            tags = tags,
-            trash = trash,
-            entryForm = entryForm,
-            cache = cache,
-            timerView = view,
-            onTimerViewChange = timerView::choose,
-            onContinue = { entryId -> history.entry(entryId)?.let(timer::continueEntry) },
-            favorites = favorites,
-        ) {
-            TimerBar(timer, cache, favorites = favorites, onAddEntry = {
-                entryForm.new()
-                backStack.add(Destination.ENTRY)
-            })
+            entryBeside = showsEntryBeside(width, view, backStack),
+            entryKey = entryOpenings,
+        ) { shown ->
+            Screen(
+                destination = shown,
+                backStack = backStack,
+                themeSettings = themeSettings,
+                signOut = signOut,
+                reports = reports,
+                history = history,
+                entryActions = entryActions,
+                calendar = calendar,
+                projects = projects,
+                clients = clients,
+                tags = tags,
+                trash = trash,
+                entryForm = entryForm,
+                cache = cache,
+                timerView = view,
+                onTimerViewChange = timerView::choose,
+                onContinue = { entryId -> history.entry(entryId)?.let(timer::continueEntry) },
+                onOpenEntry = openEntry,
+                favorites = favorites,
+            ) {
+                TimerBar(timer, cache, favorites = favorites, onAddEntry = {
+                    entryForm.new()
+                    openEntry()
+                })
+            }
         }
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
 /**
- * A signed-in screen, [content], above the bottom bar, which marks [current] and opens pages with
- * [onOpen], leaves out the pages in [hidden], and puts a dot on Timer while [timerRunning]. Right
- * above the bar shows [syncStatus] when it is not null, and its "needs attention" button calls
+ * Whether the entry form on top of [backStack] shows beside the Timer page below it: on an expanded
+ * window ([width]) in the List [view], so the history and the form share the width. The Calendar
+ * view keeps the whole width for the week, so there the form takes the screen, as on a phone.
+ */
+internal fun showsEntryBeside(width: WindowWidth, view: TimerView, backStack: List<Destination>): Boolean =
+    width == WindowWidth.EXPANDED && view == TimerView.LIST &&
+        backStack.lastOrNull() == Destination.ENTRY && backStack.getOrNull(backStack.lastIndex - 1) == Destination.TIMER
+
+/**
+ * The signed-in screen on top, [destination], drawn by [screen]. With [entryBeside], which an
+ * expanded window allows for the entry form above the Timer page's List view, the Timer page and
+ * the form share the width, with a line between them, so the history stays in sight while an entry
+ * is edited ([showsEntryBeside]). Otherwise the screen on top has the whole width, as on a phone.
+ *
+ * The Timer page and the form each keep one place in the composition, whether they show side by
+ * side or alone, so a rotation or a fold that changes the layout keeps their saved state, and the
+ * page keeps its scroll as the form opens and closes beside it. [entryKey] changes with each
+ * opening of the form, so a form opened over one already beside the history starts afresh.
+ */
+@Composable
+internal fun SignedInPanes(
+    destination: Destination,
+    entryBeside: Boolean,
+    entryKey: Int,
+    screen: @Composable (Destination) -> Unit,
+) {
+    Row(Modifier.fillMaxSize()) {
+        val page = if (entryBeside) Destination.TIMER else destination
+        if (page != Destination.ENTRY) {
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .then(if (entryBeside) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.End)) else Modifier),
+            ) {
+                screen(page)
+            }
+        }
+        if (entryBeside) VerticalDivider()
+        if (destination == Destination.ENTRY) {
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .then(if (entryBeside) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start)) else Modifier),
+            ) {
+                key(entryKey) { screen(Destination.ENTRY) }
+            }
+        }
+    }
+}
+
+/**
+ * A signed-in screen, [content], with the navigation that fits [width]: above the bottom bar on a
+ * compact window, beside the navigation rail on wider ones. The bar or the rail marks [current]
+ * and opens pages with [onOpen], leaves out the pages in [hidden], and puts a dot on Timer while
+ * [timerRunning]. Right above the bar, or at the bottom of the screen beside the rail, shows
+ * [syncStatus] when it is not null, and its "needs attention" button calls
  * [onOpenNeedsAttention]. The bar's height, status and system navigation bar included, is padding
- * the screens consume, so their own navigation bar padding adds nothing above the bar.
+ * the screens consume, so their own navigation bar padding adds nothing above the bar. Beside the
+ * rail, which keeps clear of the system bars at its side, the screens consume that side's insets.
  */
 @Composable
 internal fun SignedInFrame(
@@ -210,24 +303,44 @@ internal fun SignedInFrame(
     syncStatus: SyncStatus? = null,
     onOpenNeedsAttention: (() -> Unit)? = null,
     syncStatusClock: Clock = Clock.systemUTC(),
+    width: WindowWidth = windowWidth(),
     content: @Composable BoxScope.() -> Unit,
 ) {
-    Scaffold(
-        bottomBar = {
-            Column {
-                if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, clock = syncStatusClock)
-                AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden)
-            }
-        },
-        contentWindowInsets = WindowInsets(0),
-    ) { innerPadding ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding),
-            content = content,
-        )
+    val rail = width != WindowWidth.COMPACT
+    Row(Modifier.fillMaxSize()) {
+        if (rail) {
+            AppNavigationRail(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden)
+        }
+        Scaffold(
+            modifier = Modifier
+                .weight(1f)
+                .then(if (rail) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start)) else Modifier),
+            bottomBar = {
+                Column {
+                    if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, clock = syncStatusClock)
+                    if (!rail) {
+                        AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden)
+                    } else if (syncStatus != null) {
+                        // Without the bar, the band keeps above the system navigation bar on its own.
+                        Spacer(
+                            Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface)
+                                .windowInsetsBottomHeight(WindowInsets.navigationBars),
+                        )
+                    }
+                }
+            },
+            contentWindowInsets = WindowInsets(0),
+        ) { innerPadding ->
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding),
+                content = content,
+            )
+        }
     }
 }
 
@@ -250,6 +363,7 @@ private fun Screen(
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
     onContinue: (Long) -> Unit,
+    onOpenEntry: () -> Unit,
     favorites: FavoritesModel?,
     timer: @Composable () -> Unit,
 ) {
@@ -266,7 +380,7 @@ private fun Screen(
                     entryActions,
                     onEdit = { entryId ->
                         entryForm.edit(entryId, older = history.entry(entryId))
-                        backStack.add(Destination.ENTRY)
+                        onOpenEntry()
                     },
                     onContinue = onContinue,
                     favorites = favorites,
@@ -277,11 +391,11 @@ private fun Screen(
                     model = calendar,
                     onEdit = { entryId, older ->
                         entryForm.edit(entryId, older)
-                        backStack.add(Destination.ENTRY)
+                        onOpenEntry()
                     },
                     onAdd = { day ->
                         entryForm.new(day)
-                        backStack.add(Destination.ENTRY)
+                        onOpenEntry()
                     },
                 )
             },

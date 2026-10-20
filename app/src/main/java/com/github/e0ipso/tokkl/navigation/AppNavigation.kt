@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,8 +19,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -41,6 +46,7 @@ import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.TokklNavigationBarDefaults
 import com.github.e0ipso.tokkl.ui.theme.TokklNavigationBarItem
+import com.github.e0ipso.tokkl.ui.theme.TokklNavigationRailItem
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.navigationBarLabelWeight
 import kotlinx.coroutines.launch
@@ -72,10 +78,10 @@ enum class TopLevelPage(
 }
 
 /**
- * The bottom bar of a signed-in screen: Timer, Reports, Projects, Settings and More, with
- * [current] marked. More opens a sheet with the other pages, and is marked while one of them
- * shows. [onOpen] opens a page. A 1dp line in the border colour sits above the bar, as the web
- * app draws it.
+ * The bottom bar of a signed-in screen on a compact window: Timer, Reports, Projects, Settings and
+ * More, with [current] marked. More opens a sheet with the other pages, and is marked while one of
+ * them shows. [onOpen] opens a page. A 1dp line in the border colour sits above the bar, as the
+ * web app draws it. Wider windows get [AppNavigationRail] with the same items.
  *
  * While [timerRunning] is true, because a time entry runs, the Timer item carries a dot, as the
  * web app's `.running-dot`, and TalkBack reads "Timer running" as its state, so the dot is not
@@ -90,45 +96,95 @@ fun AppNavigationBar(
     hidden: Set<TopLevelPage> = emptySet(),
 ) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
-    val pages = TopLevelPage.entries.filterNot { it.inMore || it in hidden }
-    val more = stringResource(R.string.nav_more)
-    val labels = pages.map { stringResource(it.label) } + more
-    val running = stringResource(R.string.nav_timer_running)
+    val items = navigationItems(hidden)
     Column(modifier) {
         HorizontalDivider()
         NavigationBar {
-            for ((page, label) in pages.zip(labels)) {
-                val selected = page == current
-                val dot = timerRunning && page == TopLevelPage.TIMER
+            for (item in items) {
                 TokklNavigationBarItem(
-                    selected = selected,
-                    onClick = { onOpen(page) },
-                    icon = {
-                        val icon = @Composable { Icon(painterResource(page.icon), contentDescription = null) }
-                        if (dot) BadgedBox(badge = { RunningDot(selected) }, content = { icon() }) else icon()
-                    },
-                    label = label,
-                    barLabels = labels,
-                    modifier = if (dot) Modifier.semantics { stateDescription = running } else Modifier,
+                    selected = item.selected(current),
+                    onClick = { if (item.page == null) moreOpen = true else onOpen(item.page) },
+                    icon = { ItemIcon(item, current, timerRunning) },
+                    label = item.label,
+                    barLabels = items.map { it.label },
+                    modifier = Modifier.runningState(item, timerRunning),
                 )
             }
-            TokklNavigationBarItem(
-                selected = current.inMore,
-                onClick = { moreOpen = true },
-                icon = { Icon(painterResource(R.drawable.ic_nav_more), contentDescription = null) },
-                label = more,
-                barLabels = labels,
-            )
         }
     }
-    if (moreOpen) {
-        MoreSheet(
-            current = current,
-            pages = TopLevelPage.entries.filter { it.inMore && it !in hidden },
-            onOpen = onOpen,
-            onClose = { moreOpen = false },
-        )
+    if (moreOpen) MoreSheet(current, hidden, onOpen, onClose = { moreOpen = false })
+}
+
+/**
+ * The navigation rail of a signed-in screen on a medium or expanded window, at the start of the
+ * screen: the items of [AppNavigationBar], top to bottom, with the same More sheet, the same
+ * marks and the same dot. A 1dp line in the border colour sits at its end, where the bar has its
+ * line above it. Where the window is too short for every item, as at the largest font scale on a
+ * phone held sideways, the items scroll.
+ */
+@Composable
+fun AppNavigationRail(
+    current: TopLevelPage,
+    onOpen: (TopLevelPage) -> Unit,
+    modifier: Modifier = Modifier,
+    timerRunning: Boolean = false,
+    hidden: Set<TopLevelPage> = emptySet(),
+) {
+    var moreOpen by rememberSaveable { mutableStateOf(false) }
+    val items = navigationItems(hidden)
+    Row(modifier) {
+        NavigationRail(containerColor = NavigationBarDefaults.containerColor) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .selectableGroup(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
+            ) {
+                for (item in items) {
+                    TokklNavigationRailItem(
+                        selected = item.selected(current),
+                        onClick = { if (item.page == null) moreOpen = true else onOpen(item.page) },
+                        icon = { ItemIcon(item, current, timerRunning) },
+                        label = item.label,
+                        railLabels = items.map { it.label },
+                        modifier = Modifier.runningState(item, timerRunning),
+                    )
+                }
+            }
+        }
+        VerticalDivider()
     }
+    if (moreOpen) MoreSheet(current, hidden, onOpen, onClose = { moreOpen = false })
+}
+
+/** An item of the bar or the rail: a [page], or More when [page] is null. */
+private class NavigationItem(val page: TopLevelPage?, val label: String, @param:DrawableRes val icon: Int, val runningLabel: String) {
+    /** Whether the item marks [current]: its own page, or for More a page on the sheet. */
+    fun selected(current: TopLevelPage): Boolean = if (page == null) current.inMore else page == current
+
+    /** Whether the item carries the running dot. */
+    fun dot(timerRunning: Boolean): Boolean = timerRunning && page == TopLevelPage.TIMER
+}
+
+/** TalkBack's "Timer running" state on [item], while it carries the dot. */
+private fun Modifier.runningState(item: NavigationItem, timerRunning: Boolean): Modifier =
+    if (item.dot(timerRunning)) semantics { stateDescription = item.runningLabel } else this
+
+/** The pages outside More, less those in [hidden], then More. */
+@Composable
+private fun navigationItems(hidden: Set<TopLevelPage>): List<NavigationItem> {
+    val running = stringResource(R.string.nav_timer_running)
+    val pages = TopLevelPage.entries.filterNot { it.inMore || it in hidden }
+        .map { NavigationItem(it, stringResource(it.label), it.icon, running) }
+    return pages + NavigationItem(null, stringResource(R.string.nav_more), R.drawable.ic_nav_more, running)
+}
+
+/** The [item]'s icon, with the running dot while [timerRunning] on Timer. */
+@Composable
+private fun ItemIcon(item: NavigationItem, current: TopLevelPage, timerRunning: Boolean) {
+    val icon = @Composable { Icon(painterResource(item.icon), contentDescription = null) }
+    if (item.dot(timerRunning)) BadgedBox(badge = { RunningDot(item.selected(current)) }, content = { icon() }) else icon()
 }
 
 /**
@@ -141,12 +197,14 @@ private fun RunningDot(selected: Boolean) {
 }
 
 /**
- * The web app's More sheet: a heading, a close button and the [pages] that do not fit in the bar.
+ * The web app's More sheet: a heading, a close button and the pages that do not fit in the bar,
+ * less those in [hidden].
  * Choosing a page opens it and closes the sheet. Back, a tap outside and a swipe down close it too.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MoreSheet(current: TopLevelPage, pages: List<TopLevelPage>, onOpen: (TopLevelPage) -> Unit, onClose: () -> Unit) {
+private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: (TopLevelPage) -> Unit, onClose: () -> Unit) {
+    val pages = TopLevelPage.entries.filter { it.inMore && it !in hidden }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val hide: () -> Unit = {
