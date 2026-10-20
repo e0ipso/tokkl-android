@@ -56,18 +56,39 @@
 # arguments, which every user on the machine can read with ps.
 #
 # The tests run on the devices adb lists, or on ANDROID_SERIAL. With no device
-# attached, the script boots the AVD named by TOKKL_TEST_AVD (default
-# tokkl-api36; tokkl-api31 runs Android 12, the oldest version the app
-# supports) without a window, with 2.5 GB of guest RAM, 4 cores and the
-# lavapipe renderer, or SwiftShader below API 36, turns off error dialogs on
-# it, sets its font scale to 1.0, lets its soft keyboard open, makes apps draw
-# with Vulkan, and stops it at the end. It refuses an AVD older than Android
-# 12, where the app does not install. It changes no setting on a device it did
-# not boot. It also stops the adb server if that was not running before.
+# attached but the emulators of other runs, the script boots the AVD named by
+# TOKKL_TEST_AVD (default tokkl-api36; tokkl-api31 runs Android 12, the oldest
+# version the app supports) without a window, with 2.5 GB of guest RAM, 4
+# cores and the lavapipe renderer, or SwiftShader below API 36, turns off
+# error dialogs on it, sets its font scale to 1.0, lets its soft keyboard
+# open, makes apps draw with Vulkan, and stops it at the end. It refuses an
+# AVD older than Android 12, where the app does not install. It changes no
+# setting on a device it did not boot.
 #
-# Runs take turns. Each run locks a file in $XDG_RUNTIME_DIR from its start
-# until its cleanup ends. A run that starts meanwhile prints the PID, start
-# time and directory of the run holding the lock, and waits for it to end.
+# Up to TOKKL_TEST_SLOTS runs (default 2) test at once, each on an emulator
+# of its own. Each run locks a slot file in $XDG_RUNTIME_DIR from its start
+# until its cleanup ends. A run that finds every slot taken prints the PID,
+# start time and directory of the runs holding them, and waits for one to
+# end. A run boots its emulator on a free console port and passes its serial
+# to Gradle as ANDROID_SERIAL, so Gradle never installs on another run's
+# emulator. Runs boot one at a time, and while another run holds a slot, a run
+# waits before booting until TOKKL_TEST_BOOT_MEMORY_MB of memory (default
+# 5000) is available, so two emulators never push the machine into an OOM.
+# Two emulators cannot both write to one AVD's disk, so with more than one
+# slot every emulator boots with -read-only, and drops what the run wrote to
+# the AVD when it exits. Each also gets an XDG_RUNTIME_DIR, and so a netsimd,
+# of its own, so that no emulator dies with another run's. With
+# TOKKL_TEST_SLOTS=1 runs take turns and keep writing to the AVD. Give every
+# run the same slot count: an emulator that writes to an AVD stops a
+# -read-only one of the same AVD from booting.
+#
+# A run that tests on a device it did not boot, an attached phone or the
+# emulator CI boots, waits until no other run tests, and then tests alone,
+# since two runs would install on the same device. It holds a lock file in
+# $XDG_RUNTIME_DIR alone, which every other run holds shared. A copy of this
+# script from before the slots takes that file alone, so it takes turns with
+# these runs. The last run to end stops the adb server, if a run of this
+# script started it.
 #
 # qemu peaks at about 3.5 GB in a full run on tokkl-api36 and at about 4 GB on
 # tokkl-api31. Its oom_score_adj of 800 makes it the kernel OOM killer's first
@@ -132,6 +153,11 @@ readonly USER_CA_ANNOTATION='com.github.e0ipso.tokkl.UserCaInstalled'
 # Whether the caller vouched that the attached devices are throwaway
 # emulators (see the header).
 readonly THROWAWAY_EMULATOR="${TOKKL_TEST_THROWAWAY_EMULATOR:-}"
+# How many runs may test at once, each on an emulator of its own, and the
+# memory, in MB, that must be available before a run boots an emulator while
+# another run holds a slot (see the header).
+readonly SLOTS="${TOKKL_TEST_SLOTS:-2}"
+readonly BOOT_MEMORY_MB="${TOKKL_TEST_BOOT_MEMORY_MB:-5000}"
 
 cd "$(dirname "$0")/.."
 
@@ -142,6 +168,14 @@ case $THROWAWAY_EMULATOR in
         exit 2
         ;;
 esac
+if ! [[ $SLOTS =~ ^[1-9][0-9]*$ ]]; then
+    echo "$0: TOKKL_TEST_SLOTS is \"$SLOTS\". Set it to the number of runs that may test at once, 1 or more." >&2
+    exit 2
+fi
+if ! [[ $BOOT_MEMORY_MB =~ ^[0-9]+$ ]]; then
+    echo "$0: TOKKL_TEST_BOOT_MEMORY_MB is \"$BOOT_MEMORY_MB\". Set it to a number of MB." >&2
+    exit 2
+fi
 
 for tool in docker adb curl jq openssl flock; do
     command -v "$tool" >/dev/null || { echo "$0: $tool is not on PATH" >&2; exit 1; }
@@ -177,23 +211,104 @@ if [ "${#test_filter[@]}" -gt 0 ]; then
         esac
     done
 fi
-# Runs take turns. A second run would test on the first one's emulator, which
-# the first one's cleanup then stops, along with an adb server it started. So
-# each run locks this file until it exits, after its cleanup, and a run that
-# starts meanwhile waits. The file names the run that holds the lock.
-lock_file="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/tokkl-instrumented-tests-$(id -u).lock"
-exec {lock_fd}<>"$lock_file"
-if ! flock --nonblock "$lock_fd"; then
-    holder=$(cat "$lock_file")
-    echo "Waiting for the instrumented tests run that holds $lock_file: ${holder:-unknown}"
-    waited_from=$SECONDS
-    flock "$lock_fd"
-    echo "Got $lock_file after $((SECONDS - waited_from)) s"
-fi
-printf 'PID %s, started %s in %s\n' "$$" "$(date '+%F %T')" "$PWD" >"$lock_file"
+# The lock files (see the header). A run holds a slot from here until it exits,
+# after its cleanup. Its slot file names the run, and the emulator it boots, so
+# a waiting run can say who holds the slots and no run tests on another one's
+# emulator. Every run holds the device lock too: shared while it tests on an
+# emulator it boots, alone when it tests on a device it did not boot. Before
+# slots, each run held the device lock alone, so a checkout with an older copy
+# of this script still takes turns with these runs. One run boots an emulator
+# at a time, under the boot lock. The marker says that a run of this script
+# started the adb server, which the last run to end then stops.
+lock_prefix="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/tokkl-instrumented-tests-$(id -u)"
+device_lock="$lock_prefix.lock"
+boot_lock="$lock_prefix-boot.lock"
+adb_marker="$lock_prefix-adb-started"
+slot_file() { echo "$lock_prefix-slot-$1.lock"; }
+exec {device_fd}<>"$device_lock" {boot_fd}<>"$boot_lock"
+slot=''
+slot_fd=''
+
+# Prints the slot files that runs other than this one hold.
+held_slot_files() {
+    local file
+    for file in "$lock_prefix"-slot-*.lock; do
+        if [ -e "$file" ] && [ "$file" != "$(slot_file "$slot")" ] &&
+            ! flock --nonblock --shared "$file" true; then
+            echo "$file"
+        fi
+    done
+}
+
+# Prints the run that holds each slot, as its slot file names it.
+print_slot_holders() {
+    local file n
+    while read -r file; do
+        n=${file##*-slot-}
+        printf '  slot %s: %s\n' "${n%.lock}" "$(cat "$file")"
+    done < <(held_slot_files)
+}
+
+# Prints the serials of the emulators that other runs booted.
+owned_serials() {
+    local file
+    while read -r file; do
+        sed -n 's/.*, testing on \(emulator-[0-9]*\).*/\1/p' "$file"
+    done < <(held_slot_files)
+}
+
+# Takes the first free of the SLOTS slots, or waits for one.
+take_slot() {
+    local n fd waited_from=''
+    while :; do
+        for ((n = 1; n <= SLOTS; n++)); do
+            exec {fd}<>"$(slot_file "$n")"
+            if flock --nonblock "$fd"; then
+                slot=$n
+                slot_fd=$fd
+                break 2
+            fi
+            exec {fd}>&-
+        done
+        if [ -z "$waited_from" ]; then
+            waited_from=$SECONDS
+            echo "Waiting for one of the $SLOTS instrumented tests slots, held by:"
+            print_slot_holders
+        fi
+        sleep 5
+    done
+    if [ -n "$waited_from" ]; then echo "Got slot $slot after $((SECONDS - waited_from)) s"; fi
+}
+
+# Writes what this run is, and $1 if given, to its slot file.
+describe_run() {
+    printf 'PID %s, started %s in %s%s\n' "$$" "$run_started" "$PWD" "${1:+, $1}" >"$(slot_file "$slot")"
+}
+
+# Takes the device lock shared ($1 is --shared) or alone, saying who holds it
+# while it waits.
+take_device_lock() {
+    local waited_from=$SECONDS
+    if flock --nonblock "$@" "$device_fd"; then return; fi
+    if [ "${1:-}" = --shared ]; then
+        echo "Waiting for the run that holds $device_lock alone: $(cat "$device_lock")"
+    else
+        echo "This run tests on a device it did not boot, so it waits until no other run tests. Other runs:"
+        print_slot_holders
+    fi
+    flock "$@" "$device_fd"
+    echo "Got $device_lock after $((SECONDS - waited_from)) s"
+}
+
+run_started=$(date '+%F %T')
+take_slot
+describe_run
+take_device_lock --shared
 # An adb server or emulator that this script starts can outlive it. Neither
-# gets the lock's descriptor, or the next run would wait for them too.
-adb() { command adb "$@" {lock_fd}>&-; }
+# gets the lock files' descriptors, or the next run would wait for them too.
+without_locks() { "$@" {slot_fd}>&- {device_fd}>&- {boot_fd}>&-; }
+adb() { without_locks command adb "$@"; }
+if ! pgrep -x adb >/dev/null; then : >"$adb_marker"; fi
 
 work_dir=$(mktemp -d)
 container=''
@@ -207,8 +322,6 @@ user_ca_on_device=''
 devices_with_credentials=()
 # The devices this run installed its CA on as a user CA.
 devices_with_user_ca=()
-adb_was_running=false
-if pgrep -x adb >/dev/null; then adb_was_running=true; fi
 
 # Reports why the emulator this script booted exited on its own, and forgets
 # it. The OOM killer ends qemu with SIGKILL, which wait reports as 137.
@@ -287,8 +400,11 @@ cleanup() {
     remove_device_files
     remove_user_ca
     if ! stop_emulator && [ "$status" -eq 0 ]; then status=1; fi
-    if [ "$adb_was_running" = false ]; then
+    # The last run to end stops the adb server that a run of this script
+    # started. A run that holds the device lock alone is the only one left.
+    if [ -e "$adb_marker" ] && flock --nonblock "$device_fd"; then
         adb kill-server >/dev/null 2>&1 || true
+        rm -f "$adb_marker"
     fi
     rm -rf "$work_dir"
     exit "$status"
@@ -331,12 +447,59 @@ attached_devices() {
     adb devices | awk 'NR > 1 && $2 == "device" { print $1 }'
 }
 
+# Prints the memory available, in MB.
+available_memory_mb() {
+    awk '/^MemAvailable:/ { print int($2 / 1024) }' /proc/meminfo
+}
+
+# Waits until BOOT_MEMORY_MB of memory is available, or no other run holds a
+# slot, so that another run's emulator and this one never push the machine
+# into an OOM.
+wait_for_memory() {
+    local available waited_from=''
+    available=$(available_memory_mb)
+    while [ "$available" -lt "$BOOT_MEMORY_MB" ] && [ -n "$(held_slot_files)" ]; do
+        if [ -z "$waited_from" ]; then
+            waited_from=$SECONDS
+            echo "Waiting for $BOOT_MEMORY_MB MB of available memory before booting a second emulator. $available MB are available."
+        fi
+        sleep 5
+        available=$(available_memory_mb)
+    done
+    if [ -n "$waited_from" ]; then
+        echo "Booting after waiting $((SECONDS - waited_from)) s for memory, with $available MB available"
+    fi
+}
+
 boot_emulator() {
     command -v emulator >/dev/null || { echo "$0: no device attached and emulator is not on PATH" >&2; exit 1; }
-    local port=5554 log="$work_dir/emulator.log" deadline=$((SECONDS + 300)) caller emulator_sdk gpu=lavapipe level
-    local -a launch=()
-    while adb devices | grep -q "^emulator-${port}[[:space:]]"; do port=$((port + 2)); done
+    local port=5554 log="$work_dir/emulator.log" deadline caller emulator_sdk gpu=lavapipe level waited_from=$SECONDS
+    local -a launch=() instance_args=() emulator_env=()
+    # One run boots at a time, so the next one sees this one's emulator in adb
+    # and in the memory it takes.
+    if ! flock --nonblock "$boot_fd"; then
+        echo "Waiting for another run to boot its emulator"
+        flock "$boot_fd"
+        echo "Got $boot_lock after $((SECONDS - waited_from)) s"
+    fi
+    wait_for_memory
+    deadline=$((SECONDS + 300))
+    while adb devices | grep -q "^emulator-${port}[[:space:]]" || owned_serials | grep -qx "emulator-$port"; do
+        port=$((port + 2))
+    done
     emulator_serial="emulator-$port"
+    # Two emulators cannot both write to one AVD's disk. With -read-only each
+    # keeps what it writes to itself, and drops it when it exits. An emulator
+    # also starts netsimd, which serves Wi-Fi and Bluetooth, unless it finds
+    # one in $XDG_RUNTIME_DIR/netsim.ini. A second emulator used the first
+    # one's, inside the first one's scope, and aborted when that scope
+    # stopped. So each emulator gets a runtime directory, and a netsimd, of
+    # its own.
+    if [ "$SLOTS" -gt 1 ]; then
+        instance_args=(-read-only)
+        mkdir -m 700 "$work_dir/runtime"
+        emulator_env=(env "XDG_RUNTIME_DIR=$work_dir/runtime")
+    fi
     if command -v systemd-run >/dev/null && systemctl --user show --property=Version >/dev/null 2>&1; then
         emulator_unit="tokkl-emulator-$port-$(random_hex 4).scope"
         launch=(systemd-run --user --scope --quiet --collect --unit="$emulator_unit"
@@ -351,12 +514,17 @@ boot_emulator() {
     # references' use SwiftShader.
     level=$(avd_api_level)
     if [[ $level =~ ^[0-9]+$ ]] && [ "$level" -lt 36 ]; then gpu=swiftshader_indirect; fi
-    echo "Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit} with the $gpu renderer"
+    # The slot file names the emulator before it starts, so another run never
+    # takes it for an attached device.
+    describe_run "testing on $emulator_serial${emulator_unit:+ in $emulator_unit}"
+    echo "Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit} with the $gpu renderer${instance_args[*]:+, ${instance_args[*]}}"
     # The emulator raises any smaller -memory to 2560 MB for an API 34 or later
     # image.
-    "${launch[@]}" emulator -avd "$AVD" -port "$port" -memory 2560 -cores 4 -gpu "$gpu" \
-        -no-window -no-audio -no-boot-anim -no-snapshot -accel on {lock_fd}>&- >"$log" 2>&1 &
+    "${launch[@]}" "${emulator_env[@]}" emulator -avd "$AVD" -port "$port" -memory 2560 -cores 4 -gpu "$gpu" \
+        -no-window -no-audio -no-boot-anim -no-snapshot "${instance_args[@]}" -accel on \
+        {slot_fd}>&- {device_fd}>&- {boot_fd}>&- >"$log" 2>&1 &
     emulator_pid=$!
+    # Gradle tests on this emulator alone, never on another run's.
     export ANDROID_SERIAL="$emulator_serial"
     until [ "$(adb -s "$emulator_serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
         if ! kill -0 "$emulator_pid" 2>/dev/null; then
@@ -408,6 +576,7 @@ boot_emulator() {
     # HWUI aborted every app at its first frame, missing
     # VK_KHR_external_semaphore_fd.
     adb -s "$emulator_serial" shell setprop debug.hwui.renderer skiavk
+    flock --unlock "$boot_fd"
 }
 
 # Refuses TOKKL_TEST_THROWAWAY_EMULATOR for device $1 unless it is an emulator
@@ -426,8 +595,26 @@ check_throwaway_emulator() {
     fi
 }
 
-if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then
+# Prints the attached devices that no other run booted.
+foreign_devices() {
+    attached_devices | grep -vxF -f <(owned_serials) || true
+}
+
+if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(foreign_devices)" ]; then
     boot_emulator
+else
+    if [ -n "${ANDROID_SERIAL:-}" ] && owned_serials | grep -qxF "$ANDROID_SERIAL"; then
+        echo "$0: ANDROID_SERIAL is $ANDROID_SERIAL, an emulator that another run booted and stops when it ends. Unset ANDROID_SERIAL to let this run boot an emulator of its own." >&2
+        exit 2
+    fi
+    # Other runs would install on the same device, so this run tests alone.
+    take_device_lock
+    printf 'PID %s, started %s in %s\n' "$$" "$run_started" "$PWD" >"$device_lock"
+    describe_run 'testing on devices it did not boot'
+    # The attached devices may have gone while this run waited.
+    if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then
+        boot_emulator
+    fi
 fi
 # The devices that get this run's CA as a user CA: the emulator this script
 # booted, or every test device the caller vouched for.
@@ -704,7 +891,7 @@ run_tests() {
         "-P$RUNNER_ARGS.tokklUserCaTlsBaseUrl=https://10.0.2.2:$user_ca_port" \
         "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
         "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
-        "${gradle_args[@]}" 2>&1 | tee "$work_dir/gradle.log" || status=$?
+        "${gradle_args[@]}" {slot_fd}>&- {device_fd}>&- {boot_fd}>&- 2>&1 | tee "$work_dir/gradle.log" || status=$?
     # AGP's test task can pass when a device dies between two tests. With the
     # emulator killed a second into the run, Gradle printed BUILD SUCCESSFUL
     # and had run none of the 32 tests. So every test device must still be
