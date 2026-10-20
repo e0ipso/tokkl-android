@@ -8,6 +8,11 @@
         it too, along with WAKE_LOCK, RECEIVE_BOOT_COMPLETED and FOREGROUND_SERVICE.
     -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!--
+        The running timer's notification (docs/PRD.md N1). Android 13 and later show it only once
+        the user allows it; asking is TKA-0058's.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!--
         No Android backup or device transfer (docs/PRD.md S8): Keystore keys
@@ -42,6 +47,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- The running timer notification's Stop action. Only its own PendingIntent reaches it. -->
+        <receiver
+            android:name=".notification.StopTimerReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

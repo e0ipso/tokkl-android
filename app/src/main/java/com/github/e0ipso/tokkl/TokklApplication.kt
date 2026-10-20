@@ -12,6 +12,10 @@ import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
+import com.github.e0ipso.tokkl.notification.RunningNotificationStore
+import com.github.e0ipso.tokkl.notification.RunningNotificationSync
+import com.github.e0ipso.tokkl.notification.RunningNotifier
+import com.github.e0ipso.tokkl.notification.runningNotificationContent
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -27,6 +31,7 @@ import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -131,6 +136,26 @@ class TokklApplication : Application() {
     }
 
     /**
+     * The running timer's notification (docs/PRD.md N1), which follows the cache's running entry
+     * from process start, so every start, stop and edit from any surface reaches it.
+     */
+    val runningNotification: RunningNotificationSync by lazy {
+        val store = RunningNotificationStore(this)
+        val notifier = RunningNotifier(this)
+        RunningNotificationSync(
+            running = combine(cache.running, cache.projects, cache.tasks) { running, projects, tasks ->
+                runningNotificationContent(running?.entry, projects, tasks)
+            },
+            loadShown = store::load,
+            saveShown = store::save,
+            post = notifier::post,
+            remove = notifier::remove,
+            scope = MainScope(),
+            io = Dispatchers.IO,
+        )
+    }
+
+    /**
      * The trust refusals of the signed-in session's requests, which every
      * [Session] reports and the navigation host prompts about. Accepting one
      * refreshes the account settings, the request that ran into it.
@@ -148,10 +173,10 @@ class TokklApplication : Application() {
      * Sign-out (docs/PRD.md S6). It forgets the server and the token with its Keystore key first,
      * so the app sends nothing new. Then it cancels the queue's background work and every call in
      * flight, waits for the refresh and the queue's drain to end, and clears the cache with the
-     * queue, the account settings, the capabilities, the Timer page's view and the trust
-     * decisions. MainActivity then drops its view models, and with them the history's older days
-     * and what every other screen loaded. The theme and the sign-in cooldowns stay: they belong to
-     * the phone and to a server, not to the account.
+     * queue, the running timer's notification, the account settings, the capabilities, the Timer
+     * page's view and the trust decisions. MainActivity then drops its view models, and with them
+     * the history's older days and what every other screen loaded. The theme and the sign-in
+     * cooldowns stay: they belong to the phone and to a server, not to the account.
      */
     val signOut: SignOut by lazy {
         SignOut(
@@ -162,6 +187,7 @@ class TokklApplication : Application() {
                 { accountSettings.forget() },
                 { sender.stop() },
                 { cache.clear() },
+                { runningNotification.forget() },
                 { AccountSettingsStore(this).clear() },
                 {
                     capabilities.forget()
@@ -189,5 +215,8 @@ class TokklApplication : Application() {
         ConfiguredServer.readStoredFrom(ServerConfigStore(this)::load)
         // A plain http:// server gets requests only once the user has confirmed it.
         ConfiguredTrust.readFrom(ServerTrustStore(this))
+        // Reads the cache off the main thread, and posts or removes nothing for the entry the
+        // notification already followed, so opening the app never brings back a dismissed one.
+        runningNotification.start()
     }
 }

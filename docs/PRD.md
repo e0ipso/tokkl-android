@@ -199,7 +199,7 @@ The app moves between pages as Tokkl's web app does on a phone (`NAV` and the Mo
 
 ## 6. Architecture
 
-Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2 and the Kotlin ports in 6.1. Not built: the notification, the Glance widget, the Quick Settings tile, and the running entry's check every 15 minutes in 6.3.
+Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2, the Kotlin ports in 6.1, and the running timer's notification (N1) without its Live Update. Not built: the Glance widget, the Quick Settings tile, and the running entry's check every 15 minutes in 6.3.
 
 ### 6.1 Stack
 

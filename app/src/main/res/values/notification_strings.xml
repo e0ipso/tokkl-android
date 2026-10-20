@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The running timer's notification (docs/PRD.md N1). -->
+<resources>
+    <!-- The notification channel, as the app's notification settings list it. -->
+    <string name="notification_channel_running">Running timer</string>
+    <string name="notification_channel_running_description">Shows the running timer with its elapsed time and a button to stop it.</string>
+    <!-- The title of a running entry without a description. -->
+    <string name="notification_no_description">No description</string>
+    <!-- A project and one of its tasks: Tokkl for Android · Design -->
+    <string name="notification_project_task">%1$s · %2$s</string>
+    <!--
+        The Stop action. Notification actions take no separate TalkBack label, so the button
+        says what TalkBack reads: a bare "Stop" among other notifications does not say what stops.
+    -->
+    <string name="notification_stop">Stop timer</string>
+</resources>
