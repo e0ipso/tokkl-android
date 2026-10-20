@@ -132,14 +132,14 @@ class BackgroundSendServerTest {
     }
 
     /**
-     * The worker's one run ends in a retry that waits out the backoff. The test stops there: the
-     * TestDriver could run the retry only once WorkManager has handed it to the test scheduler
-     * again, which happens on the worker's thread after the state this test can watch.
+     * The worker's one run ends in a retry that waits out the backoff. The test stops there: with
+     * the TestDriver's own delays, it could run the retry only once WorkManager has handed it to
+     * the test scheduler again, which happens on the worker's thread after the state this test
+     * can watch. [theRetryAfterTheBackoffSendsTheQueue] runs it in real time.
      */
     @Test
     fun aTransientFailureRetriesAfterABackoff() {
-        // Nothing listens on this port, so every request fails for want of a route.
-        signIn(checkNotNull(ServerUrl.parse("http://127.0.0.1:9")), account.apiToken)
+        signIn(NO_ROUTE, account.apiToken)
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
         runBlocking { app.changes.create(workspace, EntryFields(description = "Not sent"), stop.minusSeconds(600), stop) }
         runBlocking { app.sender.send().join() }
@@ -157,6 +157,42 @@ class BackgroundSendServerTest {
         assertEquals("still one work", listOf(work.id), allWork().map { it.id })
     }
 
+    /**
+     * The retry itself. The first run fails for want of a server and asks for a retry. The server
+     * answers again before the backoff ends, and once the backoff is over the retry sends the
+     * queue. Here the test WorkManager keeps real time, so WorkManager waits out the backoff and
+     * the TestDriver only reports the network. The first run used that report up, so the test
+     * gives it again. In real time the retry runs whichever comes first, that report or
+     * WorkManager handing the retry back to the test scheduler. The TestDriver's own delays
+     * needed the report to come second, and the test cannot see when that is.
+     */
+    @Test
+    fun theRetryAfterTheBackoffSendsTheQueue() {
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING)
+        signIn(NO_ROUTE, account.apiToken)
+        val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Sent by the retry"), stop.minusSeconds(600), stop) }
+        runBlocking { app.sender.send().join() }
+        val work = queueWork().single()
+
+        val ran = System.currentTimeMillis()
+        driver.setAllConstraintsMet(work.id)
+        awaitWork(work.id) { it.runAttemptCount == 1 && it.state == WorkInfo.State.ENQUEUED }
+        signIn(TokklTestServer.url, account.apiToken)
+        assertEquals("nothing but the retry sends the queue", 1, unsentCount())
+        driver.setAllConstraintsMet(work.id)
+
+        val done = awaitWork(work.id, BackgroundSend.BACKOFF.plus(WORK_TIMEOUT)) { it.state.isFinished }
+        val finished = System.currentTimeMillis()
+
+        assertEquals(WorkInfo.State.SUCCEEDED, done.state)
+        assertEquals("two runs: the one that failed and the retry", 2, done.runAttemptCount)
+        assertTrue("the retry waited out the backoff: ${finished - ran} ms", finished - ran >= BackgroundSend.BACKOFF.toMillis())
+        assertEquals(0, unsentCount())
+        assertEquals("Sent by the retry", serverEntry(serverId(id)).string("description"))
+        assertEquals("still one work", listOf(work.id), allWork().map { it.id })
+    }
+
     private fun signIn(server: ServerUrl, token: String) {
         ServerTrustStore(context).confirmCleartext(server)
         Session(context).save(server, token)
@@ -167,10 +203,10 @@ class BackgroundSendServerTest {
 
     private fun queueWork(): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(BackgroundSend.WORK_NAME).get()
 
-    /** The work [id] once it matches [done]. The worker sends on the app's own threads. */
-    private fun awaitWork(id: UUID, done: (WorkInfo) -> Boolean): WorkInfo =
+    /** The work [id] once it matches [done], within [timeout]. The worker sends on the app's own threads. */
+    private fun awaitWork(id: UUID, timeout: Duration = WORK_TIMEOUT, done: (WorkInfo) -> Boolean): WorkInfo =
         runBlocking {
-            withTimeout(WORK_TIMEOUT.toMillis()) { workManager.getWorkInfoByIdFlow(id).filterNotNull().first(done) }
+            withTimeout(timeout.toMillis()) { workManager.getWorkInfoByIdFlow(id).filterNotNull().first(done) }
         }
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
@@ -188,5 +224,8 @@ class BackgroundSendServerTest {
 
         /** An id the cache holds no entry under. */
         const val NOT_CACHED = 987_654_321L
+
+        /** Nothing listens on this port, so every request fails for want of a route. */
+        val NO_ROUTE: ServerUrl = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
     }
 }
