@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
+import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
@@ -124,6 +125,9 @@ class TokklApplication : Application() {
                 sender.send()
                 BackgroundSend.schedule(this)
             },
+            stopSpan = { start, at, oneStep ->
+                accountSettings.state.value?.time()?.snapStop(start, at, oneStep) ?: SnappedSpan(start, maxOf(at, start))
+            },
         )
     }
 
@@ -143,6 +147,7 @@ class TokklApplication : Application() {
             // A queue the disk cannot read counts as holding a change, so the work stays.
             onEmptied = { BackgroundSend.cancelWaiting(this) { runCatching { store.first() == null }.getOrDefault(false) } },
             serverStart = { start -> accountSettings.state.value?.time()?.snapUnsent(start, start)?.start ?: start },
+            switchSpan = { start, stop -> accountSettings.state.value?.time()?.snapStop(start, stop, oneStep = false) ?: SnappedSpan(start, stop) },
         )
     }
 

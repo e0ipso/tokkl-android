@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Clock
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
@@ -51,18 +52,27 @@ interface EntryChanges {
  * cache, so they follow at once.
  *
  * Start and Stop use the tap time, which each call reads from [clock] before anything else, so
- * call them from the tap's handler. A timer started offline keeps that start on the server.
+ * call them from the tap's handler. A timer started offline keeps that start on the server. A
+ * stop puts the entry where [stopSpan] says the server stores a timer stopped at the tap, so the
+ * phone shows that span at once and the server keeps it as sent.
  *
  * An entry created on the phone gets a negative local id. The calls take it, before and after the
  * server has answered the create with its own id.
  *
  * @param io where the database writes run.
+ * @param stopSpan the span the server stores for a running entry from `start` stopped at `at`:
+ *   with `oneStep` for a Stop, as Tokkl's stop endpoint does, and without it for a start that
+ *   stops the running entry. Tokkl puts both ends on the grid of the account's time resolution
+ *   (`AccountTime.snapStop`), and Toggl keeps the tap time.
  */
 class ChangeQueue(
     private val database: CacheDatabase,
     private val io: CoroutineContext,
     private val onQueued: () -> Unit,
     private val clock: Clock = Clock.systemUTC(),
+    private val stopSpan: (start: Instant, at: Instant, oneStep: Boolean) -> SnappedSpan = { start, at, _ ->
+        SnappedSpan(start, maxOf(at, start))
+    },
 ) : EntryChanges {
 
     private val dao = database.changes()
@@ -72,20 +82,21 @@ class ChangeQueue(
 
     /**
      * Starts a timer in [workspaceId] with [fields], at the tap time. A cached running entry
-     * stops at that time first, as the server does when a timer starts. Returns the new entry's
-     * local id. Pass the account's `AccountSettings.defaultWorkspaceId`, which the phone keeps,
-     * so it is there offline too.
+     * stops at that time first, as the server does when a timer starts, so the two are stored
+     * back to back. Returns the new entry's local id. Pass the account's
+     * `AccountSettings.defaultWorkspaceId`, which the phone keeps, so it is there offline too.
      */
     override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
         val at = clock.instant()
         return queue {
-            dao.runningEntries().forEach { running -> stopAt(running, at) }
+            dao.runningEntries().forEach { running -> stopAt(running, at, oneStep = false) }
             queueCreate(workspaceId, fields, at, stop = null)
         }
     }
 
     /**
-     * Stops the running entry [entryId] at the tap time, or at its start if the tap came earlier.
+     * Stops the running entry [entryId] at the tap time, or at its start if the tap came earlier,
+     * on the grid as the web app's Stop is stored: at least one step long on Tokkl.
      * With [fields], the stop also sets them, in the same change, such as a description still
      * being typed when Stop was tapped. Returns false when the entry is not cached or not running.
      */
@@ -94,7 +105,7 @@ class ChangeQueue(
         return queue {
             val running = dao.entry(resolve(entryId))?.takeIf { it.stop == null } ?: return@queue false
             val stopped = if (fields == null) running else entry(running.id, running.workspaceId, fields, running.start, stop = null)
-            stopAt(stopped, at)
+            stopAt(stopped, at, oneStep = true)
             true
         }
     }
@@ -163,8 +174,9 @@ class ChangeQueue(
         return result
     }
 
-    private fun stopAt(running: CachedTimeEntry, at: Instant) {
-        enqueue(ChangeKind.STOP, running.copy(stop = maxOf(at, running.start)))
+    private fun stopAt(running: CachedTimeEntry, at: Instant, oneStep: Boolean) {
+        val span = stopSpan(running.start, at, oneStep)
+        enqueue(ChangeKind.STOP, running.copy(start = span.start, stop = span.stop))
     }
 
     /**

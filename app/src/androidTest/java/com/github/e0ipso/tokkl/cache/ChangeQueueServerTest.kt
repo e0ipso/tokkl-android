@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.AccountTime
+import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -129,14 +130,20 @@ class ChangeQueueServerTest {
         assertTrue("Stop returned without waiting for the network: $stopTook", stopTook < AT_ONCE)
         assertNull("nothing runs at once", runBlocking { app.cache.running.first() })
         assertTrue("the stop is marked unsent", row.unsent)
-        assertTrue("the stop is the tap time", row.entry.stop!! in stopTap..afterStop)
+        // Tokkl stores a Stop on the grid point nearest the tap, so the phone puts it there at once.
+        val earliest = time().snapStop(running.entry.start, stopTap, oneStep = true)
+        val latest = time().snapStop(running.entry.start, afterStop, oneStep = true)
+        assertEquals("the start is on the grid", earliest.start, row.entry.start)
+        assertTrue("the stop is on the grid point nearest the tap", row.entry.stop!! in earliest.stop..latest.stop)
+        // The history shows an unsent entry's span as snapUnsent has it.
+        val shown = time().snapUnsent(row.entry.start, row.entry.stop)
+        assertEquals("the history shows the stop's span as it is", SnappedSpan(row.entry.start, row.entry.stop), shown)
 
         relay.release()
         drainUntilEmpty()
-        val snapped = app.accountSettings.state.value!!.time()!!.snapUnsent(row.entry.start, row.entry.stop)
         val stoppedOnServer = serverEntry(serverId(id))
-        assertEquals(snapped.start, stoppedOnServer.instant("start"))
-        assertEquals("the server snapped the tap time of the stop", snapped.stop, stoppedOnServer.instant("stop"))
+        assertEquals(shown.start, stoppedOnServer.instant("start"))
+        assertEquals("the server stored the stop the history showed", shown.stop, stoppedOnServer.instant("stop"))
     }
 
     @Test
@@ -265,8 +272,10 @@ class ChangeQueueServerTest {
     fun aQueuedStartEndsWhereALaterTimerOnTheServerStartsAndThatTimerKeepsRunning() {
         val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
         val queued = runBlocking { app.cache.running.first() }!!.entry
-        // Half an hour after the phone's start, which still waits in the queue, the laptop starts a timer.
-        val laterStart = queued.start.plus(Duration.ofMinutes(30)).truncatedTo(ChronoUnit.SECONDS)
+        // Half an hour and a second after the phone's start, which still waits in the queue, the
+        // laptop starts a timer. A span that rounded its duration up would end a step after where
+        // that start snaps, unless the phone's start is within a second of a half step.
+        val laterStart = queued.start.truncatedTo(ChronoUnit.SECONDS).plus(Duration.ofMinutes(30)).plusSeconds(1)
         val laptop = startOnTheWeb("Started on the laptop", laterStart)
 
         val reads = drainCountingRunningEntryReads()
@@ -275,15 +284,79 @@ class ChangeQueueServerTest {
         assertTrue("the later timer still runs: $later", later["stop"] is JsonNull)
         assertEquals(laterStart, later.instant("start"))
         val phone = serverEntry(serverId(id))
-        val snapped = time().snapUnsent(queued.start, laterStart)
-        assertEquals(snapped.start, phone.instant("start"))
-        assertEquals("the phone's entry ends where the later timer starts: $phone", snapped.stop, phone.instant("stop"))
+        assertEquals(time().snapUnsent(queued.start, queued.start).start, phone.instant("start"))
         assertEquals(
             "the phone shows the server's running entry without waiting for a refresh",
             laptop,
             runBlocking { app.cache.running.first() }?.entry?.id,
         )
         assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)
+
+        // Once the laptop stops its timer, its start snaps to the grid point where the phone's entry ends.
+        val laterStopped = stopOnTheWeb(laptop)
+        assertEquals("the phone's entry ends where the later timer's start snaps: $phone", laterStopped.instant("start"), phone.instant("stop"))
+    }
+
+    @Test
+    fun aTimerStartedOnThePhoneEndsTheRunningOneWhereItsOwnStartSnaps() {
+        // Ten seconds over the hour before the phone's start, so a span that rounded its duration
+        // up would end a step after the new timer's start snaps, unless the start is within ten
+        // seconds of a half step.
+        val start = Instant.now().minus(1, ChronoUnit.HOURS).minusSeconds(10).truncatedTo(ChronoUnit.SECONDS)
+        val earlier = startOnTheWeb("Started on the web", start)
+        runBlocking { app.accountSettings.refresh().join() }
+        assertEquals("the phone shows the timer", earlier, runBlocking { app.cache.running.first() }?.entry?.id)
+
+        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        drainUntilEmpty()
+
+        val stopped = serverEntry(earlier)
+        assertEquals(time().snapUnsent(start, start).start, stopped.instant("start"))
+        // Once the phone's timer stops, its start snaps to the grid point where the earlier one ends.
+        val later = stopOnTheWeb(serverId(id))
+        assertEquals("the two entries are back to back: $stopped, $later", later.instant("start"), stopped.instant("stop"))
+    }
+
+    @Test
+    fun aStopTappedOnThePhoneIsStoredAsTheWebAppStoresAStopAtTheSameMoment() {
+        // Ten seconds over the hour before the stops, so the timers run for no whole number of
+        // steps, and a span that rounded its duration up would end a step after the web app's
+        // stop, unless the start is within ten seconds of a half step.
+        val start = Instant.now().minus(1, ChronoUnit.HOURS).minusSeconds(10).truncatedTo(ChronoUnit.SECONDS)
+        val onPhone = startOnTheWeb("Stopped on the phone", start)
+        runBlocking { app.accountSettings.refresh().join() }
+        assertEquals("the phone shows the timer", onPhone, runBlocking { app.cache.running.first() }?.entry?.id)
+
+        relay.hang()
+        val before = Instant.now()
+        assertTrue(runBlocking { app.changes.stop(onPhone) })
+        // The web app starts a timer with the same start and stops it at once. Its start stops the
+        // phone's timer on the server, and the phone's stop, sent after, sets that entry's span.
+        val onWeb = startOnTheWeb("Stopped on the web", start)
+        val stoppedOnWeb = stopOnTheWeb(onWeb)
+        val after = Instant.now()
+        relay.release()
+        drainUntilEmpty()
+
+        val stoppedOnPhone = serverEntry(onPhone)
+        assertEquals("the same start: $stoppedOnPhone", stoppedOnWeb.instant("start"), stoppedOnPhone.instant("start"))
+        // The two stops came a moment apart, by the phone's clock and the server's. Only when no
+        // grid point's half step falls between them, with a margin for the clocks, do they share
+        // their nearest grid point.
+        val nearest = { at: Instant -> time().snapUnsent(at, at).start }
+        val earliest = nearest(before.minus(CLOCK_MARGIN))
+        val latest = nearest(after.plus(CLOCK_MARGIN))
+        for (stopped in listOf(stoppedOnPhone, stoppedOnWeb)) {
+            assertTrue("a stop on the grid point nearest the moment: $stopped", stopped.instant("stop") in earliest..latest)
+        }
+        if (earliest == latest) {
+            assertEquals("the same stop: $stoppedOnPhone", stoppedOnWeb.instant("stop"), stoppedOnPhone.instant("stop"))
+        }
+        assertEquals(
+            "after the refresh that follows the drain, the phone shows the span the server stored",
+            stoppedOnPhone.instant("start") to stoppedOnPhone.instant("stop"),
+            runBlocking { app.cache.entries.first() }.single { it.entry.id == onPhone }.entry.let { it.start to it.stop },
+        )
     }
 
     @Test
@@ -504,6 +577,16 @@ class ChangeQueueServerTest {
             JsonObject.serializer(),
         ).orFail("POST a running time entry").getValue("id").jsonPrimitive.long
 
+    /** The web app's Stop: Tokkl's `PATCH .../stop`, which stops [entry] at the server's clock. */
+    private fun stopOnTheWeb(entry: Long): JsonObject =
+        web.send(
+            "PATCH",
+            web.server.api("workspaces", workspace.toString(), "time_entries", entry.toString(), "stop"),
+            // OkHttp sends a PATCH only with a body. Tokkl reads none.
+            JsonObject(emptyMap()),
+            JsonObject.serializer(),
+        ).orFail("PATCH .../stop")
+
     private fun tagOnTheWeb(name: String) {
         web.send(
             "POST",
@@ -608,6 +691,9 @@ class ChangeQueueServerTest {
         /** Far below OkHttp's 10-second timeouts, which a call that waited for the network would hit. */
         val AT_ONCE: Duration = Duration.ofSeconds(2)
         val DRAIN_TIMEOUT: Duration = Duration.ofSeconds(60)
+
+        /** How far apart the phone's clock and the server's may be. */
+        val CLOCK_MARGIN: Duration = Duration.ofSeconds(2)
 
         /** The start of the cache refresh's request for the history window's entries. */
         const val TIME_ENTRIES = "GET /api/v9/me/time_entries?"

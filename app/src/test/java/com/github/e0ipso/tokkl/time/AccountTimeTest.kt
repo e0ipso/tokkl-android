@@ -68,6 +68,27 @@ class AccountTimeTest {
     }
 
     @Test
+    fun stopsOnTheAccountZonesGrid() {
+        // 10:10Z is 15:40 in Kolkata, so the start goes to 16:00 there, 10:30Z, and the stop at
+        // 10:50Z, 16:20 there, to 16:00 too. A Stop takes one step, and a new timer none.
+        val start = Instant.parse("2026-10-18T10:10:00Z")
+        val at = Instant.parse("2026-10-18T10:50:00Z")
+        val time = AccountSettings("Asia/Kolkata", DayOfWeek.MONDAY, timeResolutionMinutes = 60.0).time()!!
+
+        assertEquals(SnappedSpan(Instant.parse("2026-10-18T10:30:00Z"), Instant.parse("2026-10-18T11:30:00Z")), time.snapStop(start, at, oneStep = true))
+        assertEquals(SnappedSpan(Instant.parse("2026-10-18T10:30:00Z"), Instant.parse("2026-10-18T10:30:00Z")), time.snapStop(start, at, oneStep = false))
+    }
+
+    @Test
+    fun withoutATimeResolutionAStopKeepsTheTapTime() {
+        val start = Instant.parse("2026-10-18T10:10:07.250Z")
+        val at = Instant.parse("2026-10-18T10:52:41.900Z")
+        val time = AccountSettings("Asia/Kolkata", DayOfWeek.MONDAY, timeResolutionMinutes = null).time()!!
+
+        assertEquals(SnappedSpan(start, at), time.snapStop(start, at, oneStep = true))
+    }
+
+    @Test
     fun withoutATimeResolutionUnsentEntriesKeepTheirTimes() {
         val start = Instant.parse("2026-10-18T10:10:07.250Z")
         val stop = Instant.parse("2026-10-18T10:52:41.900Z")

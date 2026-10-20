@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.jsTrim
 import java.io.InterruptedIOException
 import java.net.ConnectException
@@ -80,6 +81,10 @@ import okhttp3.HttpUrl
  *   that would find nothing to send.
  * @param serverStart where the server puts a start once the entry is stopped: Tokkl snaps it to
  *   the account's time resolution, and Toggl keeps it. Finds the entry a lost create made.
+ * @param switchSpan the span the server stores for a running entry from `start` that a new timer
+ *   stopped at `stop`: Tokkl puts both ends on the grid, the stop where the new timer's start
+ *   snaps (`AccountTime.snapStop` without one step), and Toggl keeps them. A queued start ended
+ *   before a later timer goes this way, so it does not overlap that timer.
  */
 class ChangeSender(
     private val store: ChangeStore,
@@ -90,6 +95,7 @@ class ChangeSender(
     private val onEmptied: () -> Unit = {},
     private val clock: Clock = Clock.systemUTC(),
     private val serverStart: (Instant) -> Instant = { it },
+    private val switchSpan: (start: Instant, stop: Instant) -> SnappedSpan = ::SnappedSpan,
 ) {
 
     /** What one [drain] did. */
@@ -415,7 +421,7 @@ class ChangeSender(
             is ApiResult.Failure -> return current
         }
         val later = running?.takeIf { it.stop == null && it.start.isAfter(start.start.truncatedTo(ChronoUnit.SECONDS)) }
-        return ApiResult.Success(if (later == null) start else store.endBefore(start, later))
+        return ApiResult.Success(if (later == null) start else store.endBefore(start, later, switchSpan))
     }
 
     /** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */
@@ -496,7 +502,8 @@ internal const val CREATED_WITH = "Tokkl for Android"
 /**
  * The Toggl API v9 request for this change, under [server]. A create is a POST, an update and a
  * stop a PUT with every field, so the stop keeps the tap time where Tokkl's `PATCH .../stop`
- * would take the server's clock. A delete is a DELETE. Times go in whole seconds, the precision
+ * would take the server's clock. [ChangeQueue] has put a stop's span on the grid as that endpoint
+ * would, so Tokkl stores it as sent. A delete is a DELETE. Times go in whole seconds, the precision
  * the server stores; a running entry sends `duration: -1`, and a stopped one the duration that
  * matches its start and stop. Tags go by name.
  */

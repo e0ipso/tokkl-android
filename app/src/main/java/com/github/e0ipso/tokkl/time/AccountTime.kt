@@ -54,4 +54,13 @@ class AccountTime(
      */
     fun snapUnsent(start: Instant, stop: Instant): SnappedSpan =
         snapUnsent(start, stop, timeResolutionMinutes, zone)
+
+    /**
+     * The span the server will store for the running entry from [start] that stops at [at]. This
+     * is [snapStop][com.github.e0ipso.tokkl.time.snapStop] in the account's zone with the
+     * account's time resolution: [oneStep] for a Stop, not for a new timer that stops the running
+     * one. Without a resolution the entry stops at [at] as tapped.
+     */
+    fun snapStop(start: Instant, at: Instant, oneStep: Boolean): SnappedSpan =
+        snapStop(start, at, timeResolutionMinutes, zone, oneStep)
 }

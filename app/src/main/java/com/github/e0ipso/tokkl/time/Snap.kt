@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.time
 
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -16,6 +17,10 @@ import kotlin.math.floor
 // outside the range of a JavaScript Date behaves like an invalid Date.
 
 private const val MINUTE_MS = 60_000.0
+
+// MAX_DURATION_SECONDS in ../tokkl/packages/common/duration.ts: 999 hours, a whole number of steps
+// at every resolution.
+private val MAX_DURATION: Duration = Duration.ofHours(999)
 
 // A JavaScript Date holds up to 8.64e15 ms either side of the epoch.
 private const val MAX_TIME_MS = 8_640_000_000_000_000L
@@ -89,6 +94,59 @@ fun snapUnsent(
         timeResolutionMinutes,
         timeZone,
     )
+}
+
+/**
+ * The span Tokkl stores for a running entry from [start] that stops at [at], at a resolution of
+ * [minutes], which must divide 60, on the wall clock of [timeZone]. Port of stopEntryAt in
+ * ../tokkl/packages/api/src/models/timeEntries.ts at Tokkl 1.5.0 (tokkl commit 08802d4); StopSpanTest
+ * replays the cases of its tests in packages/api/test/timeEntries.test.ts.
+ *
+ * Both ends are cut to whole seconds first, as Tokkl's server does. The start moves to the grid
+ * point nearest it, and the stop to the grid point nearest [at], or to the start when that is
+ * later. With [oneStep], as Tokkl's stop endpoint and so the web app's Stop have it, a stop that
+ * lands on the start moves one step later. Without it, as when a new timer stops the running one,
+ * the entry ends where the new timer's start snaps once that stops too, which can leave it with
+ * no length. The stop never goes past 999 hours after the start.
+ *
+ * The result is on the grid and lasts a whole number of steps, so [snapSpan] leaves it as it is:
+ * a PUT of it is stored as sent.
+ */
+fun stopSpan(start: Instant, at: Instant, minutes: Double, timeZone: ZoneId, oneStep: Boolean): SnappedSpan {
+    val snappedStart = startGridPoint(start, minutes, timeZone)
+    var stop = maxOf(startGridPoint(at, minutes, timeZone), snappedStart)
+    if (oneStep && stop == snappedStart) stop = stop.plusMillis((minutes * MINUTE_MS).toLong())
+    stop = minOf(stop, snappedStart.plus(MAX_DURATION))
+    return SnappedSpan(snappedStart, stop)
+}
+
+/**
+ * The span the server will store for a running entry from [start] that the phone stops at [at],
+ * so the phone can store and send the span on the grid (docs/PRD.md T3). This is [stopSpan] with
+ * the account's [timeResolutionMinutes]. A server without Tokkl's `time_resolution_minutes`, or
+ * with a value that is not a resolution, does not snap, so the span stops at [at] as tapped, or at
+ * [start] when the tap came earlier.
+ */
+fun snapStop(
+    start: Instant,
+    at: Instant,
+    timeResolutionMinutes: Double?,
+    timeZone: ZoneId,
+    oneStep: Boolean,
+): SnappedSpan {
+    if (timeResolutionMinutes == null || !isTimeResolution(timeResolutionMinutes)) {
+        return SnappedSpan(start, maxOf(at, start))
+    }
+    return stopSpan(start, at, timeResolutionMinutes, timeZone, oneStep)
+}
+
+/**
+ * The grid point nearest [at], cut to whole seconds, where Tokkl's server snaps a start at [at]:
+ * nearestGridPoint in ../tokkl/packages/api/src/models/timeEntries.ts.
+ */
+private fun startGridPoint(at: Instant, minutes: Double, timeZone: ZoneId): Instant {
+    val time = at.truncatedTo(ChronoUnit.SECONDS)
+    return snapSpan(time, time, minutes, timeZone).start
 }
 
 /**

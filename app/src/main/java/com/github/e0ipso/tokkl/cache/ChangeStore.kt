@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Instant
 
 /** The queue as [ChangeSender] sees it: the next change, and the record of a sent one. */
@@ -23,11 +24,12 @@ interface ChangeStore {
      * timer's start, or the stop of a [ChangeKind.STOP] queued for the entry when that comes
      * earlier. Every later queued change to the entry that would leave it running, or stop it after
      * the later timer started, stops it there instead, so no change sent after the start stops the
-     * later timer. The cache shows the entry as the queue now leaves it, and [later] running unless
-     * the queue holds a change to it. Returns the start as it now stands, to send. Blocks on disk
-     * I/O.
+     * later timer. [onGrid] places each span this ends where the server stores an entry that a new
+     * timer stopped, so the entry ends where the later timer's start snaps and does not overlap it.
+     * The cache shows the entry as the queue now leaves it, and [later] running unless the queue
+     * holds a change to it. Returns the start as it now stands, to send. Blocks on disk I/O.
      */
-    fun endBefore(start: PendingChange, later: CachedTimeEntry): PendingChange
+    fun endBefore(start: PendingChange, later: CachedTimeEntry, onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange
 
     /**
      * Records [PendingChange.maybeSent] for the queued create or delete [change]. Returns false
@@ -90,12 +92,14 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
         }
     }
 
-    override fun endBefore(start: PendingChange, later: CachedTimeEntry): PendingChange =
+    override fun endBefore(start: PendingChange, later: CachedTimeEntry, onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange =
         database.runInTransaction<PendingChange> {
             val changes = dao.changesFor(start.entryId)
-            val ended = start.endedAt(later.start, changes)
+            val ended = start.endedAt(later.start, changes).placed(onGrid)
             dao.update(ended)
-            changes.filter { it.sequence > start.sequence }.forEach { change -> change.stoppedBy(later.start)?.let(dao::update) }
+            changes.filter { it.sequence > start.sequence }.forEach { change ->
+                change.stoppedBy(later.start)?.placed(onGrid)?.let(dao::update)
+            }
             dao.changesFor(start.entryId).last().cachedEntry()?.let(dao::upsertEntry)
             if (dao.countFor(later.id) == 0) dao.upsertEntry(later)
             ended
@@ -137,6 +141,12 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
 internal fun PendingChange.endedAt(laterStart: Instant, changes: List<PendingChange>): PendingChange {
     val queuedStop = changes.firstOrNull { it.kind == ChangeKind.STOP && it.sequence > sequence }?.stop
     return copy(stop = if (queuedStop != null && queuedStop.isBefore(laterStart)) queuedStop else laterStart)
+}
+
+/** This stopped change, with its start and stop where [onGrid] puts them. */
+internal fun PendingChange.placed(onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange {
+    val span = onGrid(start, checkNotNull(stop) { "A running entry has no span to place." })
+    return copy(start = span.start, stop = span.stop)
 }
 
 /**

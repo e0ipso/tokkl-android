@@ -8,6 +8,8 @@ import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.time.SnappedSpan
+import com.github.e0ipso.tokkl.time.stopSpan
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -615,6 +617,34 @@ class ChangeSenderTest {
     }
 
     @Test
+    fun aQueuedStartAndItsLaterChangesEndOnTheGridWhereTheLaterTimersStartSnaps() {
+        val gridded = ChangeSender(
+            store,
+            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            scope = scope,
+            io = Dispatchers.IO,
+            clock = clock,
+            switchSpan = { start, stop -> stopSpan(start, stop, 15.0, ZoneId.of("UTC"), oneStep = false) },
+        )
+        // 08:08 snaps to 08:15 and the later timer's 08:20 to 08:15 too, so the phone's entry is
+        // stored with no length. Sent as 08:08 to 08:20, Tokkl would store 08:15 to 08:30.
+        store.queue(ChangeKind.CREATE, LOCAL, TAP.plusSeconds(480).plusMillis(400), stop = null, description = "Phone")
+        store.queue(ChangeKind.STOP, LOCAL, TAP.plusSeconds(480).plusMillis(400), stop = TAP.plusSeconds(2700), description = "Phone")
+        server.enqueue(runs(900, start = "2026-10-19T08:20:00+00:00"))
+        server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:15:00+00:00"))
+        server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:15:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), gridded.drain())
+
+        val bodies = List(3) { server.takeRequest() }.drop(1).map { it.json()!! }
+        for (body in bodies) {
+            assertEquals("2026-10-19T08:15:00Z", body.string("start"))
+            assertEquals("2026-10-19T08:15:00Z", body.string("stop"))
+            assertEquals("0", body.string("duration"))
+        }
+    }
+
+    @Test
     fun aFailedReadOfTheRunningEntryKeepsTheStartQueuedAndSendsNothing() {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "Phone")
         server.enqueue(MockResponse.Builder().code(503).build())
@@ -1127,13 +1157,13 @@ class ChangeSenderTest {
 
         /** Rewrites the queue as [RoomChangeStore] does, and keeps [later] for the test. */
         @Synchronized
-        override fun endBefore(start: PendingChange, later: CachedTimeEntry): PendingChange {
+        override fun endBefore(start: PendingChange, later: CachedTimeEntry, onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange {
             val forEntry = changes.filter { it.entryId == start.entryId }
-            val ended = start.endedAt(later.start, forEntry)
+            val ended = start.endedAt(later.start, forEntry).placed(onGrid)
             changes.replaceAll { change ->
                 when {
                     change.sequence == start.sequence -> ended
-                    change.entryId == start.entryId && change.sequence > start.sequence -> change.stoppedBy(later.start) ?: change
+                    change.entryId == start.entryId && change.sequence > start.sequence -> change.stoppedBy(later.start)?.placed(onGrid) ?: change
                     else -> change
                 }
             }
