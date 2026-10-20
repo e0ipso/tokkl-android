@@ -302,7 +302,9 @@ class ChangeQueueServerTest {
 
     @Test
     fun aQueuedStartRunsAndTheServerStopsAnEarlierTimer() {
-        val earlierStart = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS)
+        // A second over the hour before the queued start, so the earlier timer runs for no whole
+        // number of steps, and a stop that rounded its duration up would end a step later.
+        val earlierStart = Instant.now().minus(1, ChronoUnit.HOURS).minusSeconds(1).truncatedTo(ChronoUnit.SECONDS)
         val laptop = startOnTheWeb("Started on the laptop", earlierStart)
         // The phone has not seen the laptop's timer, so its start queues no stop for it.
         val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
@@ -313,12 +315,12 @@ class ChangeQueueServerTest {
         val phone = serverEntry(serverId(id))
         assertTrue("the queued start runs", phone["stop"] is JsonNull)
         assertEquals(serverId(id), runningOnServer()?.getValue("id")?.jsonPrimitive?.long)
-        // Tokkl 1.3.1 snaps the span from the earlier start to the queued start as it snaps a
-        // stopped entry it receives: the start to the nearest grid point, the duration up.
+        // Tokkl 1.5.0 stops a running timer on the grid point nearest the moment it stops, where
+        // the queued start snaps once it stops too, so the two entries are stored back to back.
         val earlier = serverEntry(laptop)
         assertEquals(
             "the server stopped the earlier timer at the queued start: $earlier",
-            time().snapUnsent(earlierStart, queued.start).stop,
+            time().snapUnsent(queued.start, queued.start).start,
             earlier.instant("stop"),
         )
         assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)

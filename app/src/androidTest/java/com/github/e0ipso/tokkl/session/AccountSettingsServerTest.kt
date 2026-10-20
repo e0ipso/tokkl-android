@@ -47,14 +47,14 @@ class AccountSettingsServerTest {
 
     @Test
     fun refreshReadsTheSettingsFromTheServerAndKeepsThem() {
-        // Tokkl keeps the name as sent. Intl accepts it in any case, and so does parseTimeZone.
+        // Tokkl 1.5.0 stores the name Intl resolves, which accepts it in any case.
         putMe(timezone = "america/sao_paulo", beginningOfWeek = 0)
         val source = (context.applicationContext as TokklApplication).accountSettings
 
         runBlocking { source.refresh().join() }
 
         // Tokkl's instance time resolution is 5 minutes unless an admin changes it.
-        val expected = AccountSettings("america/sao_paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = defaultWorkspace())
+        val expected = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = defaultWorkspace())
         assertEquals(expected, source.state.value)
         assertEquals("the stored settings", expected, AccountSettingsStore(context).load())
         assertEquals(ZoneId.of("America/Sao_Paulo"), expected.time()?.zone)
