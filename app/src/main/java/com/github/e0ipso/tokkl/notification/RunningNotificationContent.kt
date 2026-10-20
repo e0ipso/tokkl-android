@@ -15,10 +15,12 @@ import java.time.Instant
  * @param entryId the id the cache held the entry under, which the Stop action stops.
  * @param description as typed; blank when the entry has none.
  * @param project null when the entry has no project or the cache does not know it.
- * @param key changes with every start, stop or edit of the running entry, and with what the
- *   notification shows. It stays when the server answers: an entry made on the phone gets the
- *   server's id, its start whole seconds, its description trimmed and its tags the case of the
- *   account's tags. It is a SHA-256 hash, so the store that keeps it holds no description or name.
+ * @param key changes with every edit of the running entry, with its start to the second, and with
+ *   what the notification shows. It stays when the server answers: an entry made on the phone
+ *   gets the server's id, its start whole seconds, its description trimmed and its tags the case
+ *   of the account's tags. So two starts with the same fields within one second give the same
+ *   key, and [entryId] tells them apart (see [runningNotificationChange]). It is a SHA-256 hash,
+ *   so the store that keeps it holds no description or name.
  */
 data class RunningNotificationContent(
     val entryId: Long,
@@ -69,16 +71,27 @@ sealed interface RunningNotificationChange {
 }
 
 /**
- * The change to make when the running entry is [content] and the notification last followed the
- * entry with the key [shownKey], null for none. Nothing, when the entry is the one the
- * notification last followed: the app opening, a refresh with the same entry, or the server
- * giving the entry its id. So a notification swiped away on Android 14 and later stays away
- * until the next start, stop or edit.
+ * The running entry the notification last followed.
+ *
+ * @param key the entry's [RunningNotificationContent.key].
+ * @param entryId the id the cache held the entry under. Null for a key kept before the store kept
+ *   the id too, which then matches any entry with that key.
  */
-fun runningNotificationChange(shownKey: String?, content: RunningNotificationContent?): RunningNotificationChange? =
+data class FollowedEntry(val key: String, val entryId: Long?)
+
+/**
+ * The change to make when the running entry is [content] and the notification last followed
+ * [followed], null for none, with [FollowedEntry.entryId] as the cache holds that entry now: the
+ * server's id once the server has answered the phone's create. Nothing, when the entry is the one
+ * the notification last followed: the app opening, a refresh with the same entry, or the server
+ * giving the entry its id. So a notification swiped away on Android 14 and later stays away
+ * until the next start, stop or edit. Two starts with the same fields within one second give the
+ * same key, so the id tells them apart, and the notification's Stop stops the newer one.
+ */
+fun runningNotificationChange(followed: FollowedEntry?, content: RunningNotificationContent?): RunningNotificationChange? =
     when {
-        content?.key == shownKey -> null
-        content == null -> RunningNotificationChange.Remove
+        content == null -> if (followed == null) null else RunningNotificationChange.Remove
+        followed?.key == content.key && (followed.entryId == null || followed.entryId == content.entryId) -> null
         else -> RunningNotificationChange.Post(content)
     }
 

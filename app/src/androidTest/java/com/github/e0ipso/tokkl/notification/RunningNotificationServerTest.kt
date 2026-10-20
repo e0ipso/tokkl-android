@@ -35,6 +35,7 @@ import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -185,6 +186,46 @@ class RunningNotificationServerTest {
             runBlocking { app.changes.start(workspace, EntryFields(description = "Started again")) }
             RunningNotifications.awaitShown("the next start") { it.title() == "Started again" }
         }
+    }
+
+    @Test
+    fun twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry() {
+        AirplaneMode.set(true, web)
+        val fields = EntryFields(description = "Started twice", projectId = project)
+        // Just as a second begins, so both starts fall in it.
+        Thread.sleep(1_000 - System.currentTimeMillis() % 1_000)
+        runBlocking { app.changes.start(workspace, fields) }
+        val firstShown = RunningNotifications.awaitShown("the first start")
+        // Read before the second start stops the first entry and puts its start on the grid.
+        val firstStart = runBlocking { app.cache.running.first() }!!.entry.start
+        val second = runBlocking { app.changes.start(workspace, fields) }
+        val secondStart = runBlocking { app.cache.running.first() }!!.entry.start
+        assertEquals("both starts fall in one second", firstStart.epochSecond, secondStart.epochSecond)
+
+        val shown = RunningNotifications.awaitShown("the second start") { it.postTime != firstShown.postTime }
+        shown.notification.actions.single().actionIntent.send()
+
+        runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it == null } } }
+        val stopped = runBlocking { app.cache.timeEntries.first() }.associateBy { it.id }
+        assertNotNull("the Stop stopped the second entry", stopped.getValue(second).stop)
+        RunningNotifications.awaitGone("the notification after its Stop")
+    }
+
+    @Test
+    fun aDismissedNotificationStaysGoneWhenTheServerAnswersAnOfflineStart() {
+        AirplaneMode.set(true, web)
+        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Answered later", projectId = project)) }
+        RunningNotifications.awaitShown("the offline start")
+        RunningNotifications.dismiss()
+
+        AirplaneMode.set(false, web)
+        runBlocking { app.sender.sendAndWait() }
+        assertEquals("the start reached the server", 0, unsentCount())
+        val serverId = runBlocking { app.changes.currentId(id) }
+        assertTrue("the server gave the entry its id", serverId > 0)
+        runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id == serverId } } }
+
+        RunningNotifications.assertStaysGone("the server's answer to the start")
     }
 
     private fun android.service.notification.StatusBarNotification.title(): String? =

@@ -119,16 +119,33 @@ class RunningNotificationTest {
     fun aStartPostsAndAStopRemoves() {
         val shown = content()!!
 
-        assertEquals(RunningNotificationChange.Post(shown), runningNotificationChange(shownKey = null, content = shown))
-        assertEquals(RunningNotificationChange.Remove, runningNotificationChange(shownKey = shown.key, content = null))
+        assertEquals(RunningNotificationChange.Post(shown), runningNotificationChange(followed = null, content = shown))
+        assertEquals(RunningNotificationChange.Remove, runningNotificationChange(followed = shown.followed(), content = null))
     }
 
     @Test
     fun theEntryTheNotificationFollowedChangesNothing() {
         val shown = content()!!
 
-        assertNull("the app opening, a swiped-away notification stays away", runningNotificationChange(shown.key, shown))
+        assertNull("the app opening, a swiped-away notification stays away", runningNotificationChange(shown.followed(), shown))
         assertNull("nothing runs, and nothing ran", runningNotificationChange(null, null))
+    }
+
+    @Test
+    fun anotherEntryWithTheSameKeyPostsAgain() {
+        val shown = content()!!
+        // A second start with the same fields within the same second.
+        val next = content(entry = running.copy(id = -4, start = start.plusMillis(400)))!!
+
+        assertEquals(shown.key, next.key)
+        assertEquals(RunningNotificationChange.Post(next), runningNotificationChange(shown.followed(), next))
+    }
+
+    @Test
+    fun aKeyKeptWithoutAnIdMatchesAnyEntryWithIt() {
+        val shown = content()!!
+
+        assertNull(runningNotificationChange(FollowedEntry(shown.key, entryId = null), content(entry = running.copy(id = -4))))
     }
 
     @Test
@@ -136,12 +153,12 @@ class RunningNotificationTest {
         val shown = content()!!
         val edited = content(entry = running.copy(description = "Edited"))!!
 
-        assertEquals(RunningNotificationChange.Post(edited), runningNotificationChange(shown.key, edited))
+        assertEquals(RunningNotificationChange.Post(edited), runningNotificationChange(shown.followed(), edited))
     }
 
     @Test
     fun theSyncPostsOnStartAndEditAndRemovesOnStop() {
-        val fake = FakeNotification()
+        val fake = FakeNotification(serverIds = mapOf(-3L to 4_200L))
         val first = content()!!
         val edited = content(entry = running.copy(description = "Edited"))!!
         // The server answered the create: the same entry under its own id.
@@ -150,24 +167,72 @@ class RunningNotificationTest {
 
         runBlocking { sync.follow() }
 
-        assertEquals(listOf("post Notification", "post Edited", "remove"), fake.calls)
+        assertEquals(listOf("post Notification -3", "post Edited -3", "remove"), fake.calls)
         assertNull(fake.shown)
+    }
+
+    @Test
+    fun twoStartsWithinOneSecondPostTheSecondForItsStop() {
+        val fake = FakeNotification()
+        val first = content()!!
+        val second = content(entry = running.copy(id = -4, start = start.plusMillis(400)))!!
+
+        runBlocking { fake.sync(flowOf(first, second)).follow() }
+
+        assertEquals(listOf("post Notification -3", "post Notification -4"), fake.calls)
+        assertEquals(second.followed(), fake.shown)
+    }
+
+    @Test
+    fun theServersIdForTheFollowedEntryPostsNothingAndIsKept() {
+        val first = content()!!
+        val answered = content(entry = running.copy(id = 4_200, start = start.truncatedTo(ChronoUnit.SECONDS)))!!
+        val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(-3L to 4_200L))
+
+        runBlocking { fake.sync(flowOf(answered)).follow() }
+
+        assertEquals("a dismissed notification stays dismissed", emptyList<String>(), fake.calls)
+        assertEquals(FollowedEntry(first.key, 4_200), fake.shown)
+    }
+
+    @Test
+    fun anotherServerEntryWithTheSameKeyPosts() {
+        val first = content()!!
+        // A refresh finds a timer started elsewhere with the same fields in the same second.
+        val elsewhere = content(entry = running.copy(id = 9_000))!!
+        val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(-3L to 4_200L))
+
+        runBlocking { fake.sync(flowOf(elsewhere)).follow() }
+
+        assertEquals(listOf("post Notification 9000"), fake.calls)
+        assertEquals(elsewhere.followed(), fake.shown)
+    }
+
+    @Test
+    fun aKeyKeptWithoutAnIdPostsNothingAndKeepsTheId() {
+        val first = content()!!
+        val fake = FakeNotification(shown = FollowedEntry(first.key, entryId = null))
+
+        runBlocking { fake.sync(flowOf(first)).follow() }
+
+        assertEquals(emptyList<String>(), fake.calls)
+        assertEquals(first.followed(), fake.shown)
     }
 
     @Test
     fun aNewProcessPostsNothingForTheEntryTheNotificationFollowed() {
         val first = content()!!
-        val fake = FakeNotification(shown = first.key)
+        val fake = FakeNotification(shown = first.followed())
 
         runBlocking { fake.sync(flowOf(first)).follow() }
 
         assertEquals("a dismissed notification stays dismissed", emptyList<String>(), fake.calls)
-        assertEquals(first.key, fake.shown)
+        assertEquals(first.followed(), fake.shown)
     }
 
     @Test
     fun aNewProcessRemovesTheNotificationOfAnEntryStoppedMeanwhile() {
-        val fake = FakeNotification(shown = content()!!.key)
+        val fake = FakeNotification(shown = content()!!.followed())
 
         runBlocking { fake.sync(flowOf(null)).follow() }
 
@@ -177,10 +242,10 @@ class RunningNotificationTest {
 
     @Test
     fun forgettingRemovesTheNotificationAndTheKey() {
-        val fake = FakeNotification(shown = content()!!.key)
+        val fake = FakeNotification(shown = content()!!.followed())
         val sync = fake.sync(flowOf())
 
-        sync.forget()
+        runBlocking { sync.forget() }
 
         assertEquals(listOf("remove"), fake.calls)
         assertNull(fake.shown)
@@ -193,18 +258,26 @@ class RunningNotificationTest {
 
         runBlocking { fake.sync(flowOf(first, null, first)).follow() }
 
-        assertEquals(listOf("post Notification", "post Notification"), fake.calls)
+        assertEquals(listOf("post Notification -3", "post Notification -3"), fake.calls)
     }
 
-    private class FakeNotification(var shown: String? = null, private val failWrites: Boolean = false) {
+    private fun RunningNotificationContent.followed() = FollowedEntry(key, entryId)
+
+    /** [serverIds] maps the local ids the server has answered to its own, as the queue's table does. */
+    private class FakeNotification(
+        var shown: FollowedEntry? = null,
+        private val failWrites: Boolean = false,
+        private val serverIds: Map<Long, Long> = emptyMap(),
+    ) {
         val calls = mutableListOf<String>()
 
         fun sync(running: Flow<RunningNotificationContent?>) =
             RunningNotificationSync(
                 running = running,
                 loadShown = { shown },
-                saveShown = { key -> if (failWrites) throw IOException("disk full") else shown = key },
-                post = { calls += "post ${it.description}" },
+                saveShown = { followed -> if (failWrites) throw IOException("disk full") else shown = followed },
+                currentId = { id -> serverIds[id] ?: id },
+                post = { calls += "post ${it.description} ${it.entryId}" },
                 remove = { calls += "remove" },
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 io = Dispatchers.Unconfined,

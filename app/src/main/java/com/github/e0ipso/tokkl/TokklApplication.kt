@@ -192,6 +192,7 @@ class TokklApplication : Application() {
             },
             loadShown = store::load,
             saveShown = store::save,
+            currentId = changes::currentId,
             post = notifier::post,
             remove = notifier::remove,
             scope = MainScope(),
