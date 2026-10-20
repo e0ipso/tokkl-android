@@ -108,9 +108,10 @@ class DetailedReportServerTest {
     }
 
     /**
-     * The first page holds 50 rows and the next loads only at the end of the list. Each row shows
-     * the account's day and clock: the entry at 00:10 today reads 12:10 AM under today's date. The
-     * rows of both pages are the web app's, in its order.
+     * The first page holds 50 rows and the next loads only at the end of the list. The rows of both
+     * pages are the web app's, in its order. Each row shows the account's day and clock: the entry
+     * at 00:10 today reads 12:10 AM under today's date. On the week's first day every entry is
+     * today and later than 00:10, so that one is on the second page then.
      */
     @Test
     fun rowsMatchTheWebAppAndTheEndLoadsTheNextPage() {
@@ -119,14 +120,6 @@ class DetailedReportServerTest {
         assertNotNull(first.nextRow)
         composeRule.waitForIdle()
         assertEquals("no page asked for before the end", 50, detailed().entries.size)
-
-        val midnight = first.entries.single { it.description == "Midnight" }
-        assertEquals(report.today, midnight.start.toLocalDate())
-        assertEquals("12:10 AM", settings().formatTime(midnight.start.toInstant(), midnight.start.zone))
-        list().performScrollToIndex(first.entries.indexOf(midnight) + 1)
-        composeRule.waitForIdle()
-        assertTrue("12:10 AM shows", exists(hasText("12:10 AM", substring = true)))
-        assertTrue("today's date shows", exists(hasText(DateWords(context.resources).day(report.today, report.today), substring = true)))
 
         var shown = first
         var pages = 1
@@ -139,6 +132,14 @@ class DetailedReportServerTest {
         }
         assertEquals(TOTAL, shown.entries.size)
         assertEquals(2, pages)
+
+        val midnight = shown.entries.single { it.description == "Midnight" }
+        assertEquals(report.today, midnight.start.toLocalDate())
+        assertEquals("12:10 AM", settings().formatTime(midnight.start.toInstant(), midnight.start.zone))
+        list().performScrollToIndex(shown.entries.indexOf(midnight) + 1)
+        composeRule.waitForIdle()
+        assertTrue("12:10 AM shows", exists(hasText("12:10 AM", substring = true)))
+        assertTrue("today's date shows", exists(hasText(DateWords(context.resources).day(report.today, report.today), substring = true)))
 
         val web = report.webReport(
             "entries",
