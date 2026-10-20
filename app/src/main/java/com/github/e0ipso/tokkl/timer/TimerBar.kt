@@ -51,6 +51,7 @@ import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
+import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
@@ -192,7 +193,10 @@ fun TimerBarContent(
     }
 }
 
-/** "Running" in the running colour beside a dot, and "Not sent" while the server lacks a change to the entry. */
+/**
+ * "Running" in the running colour beside a dot, and while the server lacks a change to the entry,
+ * the unsent icon and NOT SENT, as the history marks it. TalkBack reads the words.
+ */
 @Composable
 private fun RunningLabel(unsent: Boolean) {
     val locale = LocalConfiguration.current.locales[0]
@@ -201,11 +205,14 @@ private fun RunningLabel(unsent: Boolean) {
         Canvas(Modifier.size(TokklTheme.spacing.space2)) { drawCircle(colour) }
         Text(stringResource(R.string.timer_running), style = MaterialTheme.typography.labelLarge, color = colour)
         if (unsent) {
-            Text(
-                text = stringResource(R.string.history_unsent).uppercase(locale),
-                style = TokklTheme.smallCapsLabelTextStyle,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
+                UnsentIcon(TokklTheme.smallCapsLabelTextStyle)
+                Text(
+                    text = stringResource(R.string.history_unsent).uppercase(locale),
+                    style = TokklTheme.smallCapsLabelTextStyle,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
     }
 }

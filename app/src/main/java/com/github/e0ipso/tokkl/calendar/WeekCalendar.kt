@@ -114,6 +114,7 @@ import com.github.e0ipso.tokkl.reports.projectMark
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.ScrollAwayColumn
+import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SmallCorner
 import com.github.e0ipso.tokkl.ui.theme.SmallCornerShape
@@ -845,12 +846,7 @@ private fun BlockText(entry: CalendarEntry, heading: String, duration: String, t
 private fun MarkedLine(mark: Boolean, style: TextStyle, line: @Composable () -> Unit) {
     if (mark) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
-            Icon(
-                painterResource(R.drawable.ic_unsent),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(with(LocalDensity.current) { style.lineHeight.toDp() }),
-            )
+            UnsentIcon(style)
             line()
         }
     } else {
@@ -859,10 +855,11 @@ private fun MarkedLine(mark: Boolean, style: TextStyle, line: @Composable () -> 
 }
 
 /**
- * An unsent entry's text, marked as the history marks it, by more than colour: the history's NOT
- * SENT label under the text where the block has room for the whole label, or else the unsent icon
- * at the start of the first line. [text] draws the text, with the icon when it gets true. The
- * block keeps "Not sent" in what TalkBack reads, so the label and icon stay out of it.
+ * An unsent entry's text, marked as the history marks it, by more than colour: the unsent icon
+ * and the history's NOT SENT under the text where the block has room for the whole label. A block
+ * too short or narrow for the words gets the icon alone, at the start of the first line, since
+ * TalkBack still reads "Not sent" for it. [text] draws the text, with the icon when it gets true.
+ * The block keeps "Not sent" in what TalkBack reads, so the label and icon stay out of it.
  */
 @Composable
 private fun UnsentBlockText(text: @Composable (mark: Boolean) -> Unit) {
@@ -870,12 +867,15 @@ private fun UnsentBlockText(text: @Composable (mark: Boolean) -> Unit) {
     Layout(
         content = {
             text(false)
-            Text(
-                text = stringResource(R.string.history_unsent).uppercase(locale),
-                style = TokklTheme.smallCapsLabelTextStyle,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
+                UnsentIcon(TokklTheme.smallCapsLabelTextStyle)
+                Text(
+                    text = stringResource(R.string.history_unsent).uppercase(locale),
+                    style = TokklTheme.smallCapsLabelTextStyle,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                )
+            }
             text(true)
         },
     ) { measurables, constraints ->

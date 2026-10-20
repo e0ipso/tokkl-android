@@ -187,7 +187,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
     /**
      * The Calendar view at noon on [TODAY], one day on this upright phone under the strip of its
-     * week, with a running entry, which the timer shows and the bar marks on Timer.
+     * week, with a running entry the server has not received, which the timer shows and marks as
+     * not sent, and the bar marks on Timer.
      */
     @SignedOut
     @Test
@@ -520,7 +521,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
         /**
          * [WEEK] in the calendar with Thursday chosen: entries on four days, one across midnight
-         * into Thursday, two that overlap, one the server has not received and one running.
+         * into Thursday, two that overlap, and three the server has not received, one of them
+         * running. Write the history list has room for the unsent icon and words in the capture,
+         * where Code review sits at its bottom edge.
          */
         val CALENDAR = CalendarState.Shown(
             selected = LocalDate.of(2026, 10, 15),
@@ -533,9 +536,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 calendarEntry(2, "Sprint planning", APP, "2026-10-13T08:30", "2026-10-13T12:00"),
                 calendarEntry(3, "", project = null, "2026-10-14T23:00", "2026-10-15T01:00"),
                 calendarEntry(4, "Stand-up", APP, "2026-10-15T08:00", "2026-10-15T08:30"),
-                calendarEntry(5, "Write the history list", APP, "2026-10-15T09:00", "2026-10-15T10:30", task = "Design"),
+                calendarEntry(5, "Write the history list", APP, "2026-10-15T09:00", "2026-10-15T10:30", task = "Design", unsent = true),
                 calendarEntry(6, "Code review", WALL, "2026-10-15T10:45", "2026-10-15T11:50", unsent = true),
-                calendarEntry(7, "Calendar grid", APP, "2026-10-15T11:15", stop = null),
+                calendarEntry(7, "Calendar grid", APP, "2026-10-15T11:15", stop = null, unsent = true),
             ),
             week = WeekSource.Cached,
         )
@@ -543,7 +546,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         /** The timer with nothing running, in the account's workspace. */
         val IDLE_TIMER = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1)
 
-        /** The running entry of [CALENDAR], "Calendar grid" since 11:15, at noon on [TODAY]. */
+        /** The running entry of [CALENDAR], "Calendar grid" since 11:15, at noon on [TODAY], not sent. */
         val RUNNING_TIMER = TimerState.Running(
             entryId = 7,
             workspaceId = 1,
@@ -551,7 +554,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             fields = EntryFields(description = "Calendar grid", projectId = APP.id),
             labels = EntryLabels(project = APP.name, projectColor = APP.colour),
             original = Picked(projectId = APP.id),
-            unsent = false,
+            unsent = true,
         )
 
         /** From 11:15 to noon. */
