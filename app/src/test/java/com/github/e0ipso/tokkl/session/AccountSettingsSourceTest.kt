@@ -104,6 +104,58 @@ class AccountSettingsSourceTest {
         assertEquals(4, server.requestCount)
     }
 
+    /** The app-open refresh's `/me` left offline, and the network returns before it fails. */
+    @Test
+    fun aReconnectDuringARefreshThatFailsRefreshesOnceMore() {
+        server.enqueue(MockResponse.Builder().code(503).build())
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
+        val queued = ArrayDeque<Runnable>()
+        val source = source(initial = null, io = Executor { queued += it }.asCoroutineDispatcher())
+
+        val opening = source.refresh()
+        val reconnect = source.refreshOnReconnect()
+        queued.removeFirst().run()
+
+        assertTrue("the opening refresh failed and finished", opening.isCompleted)
+        assertNull(source.state.value)
+        assertEquals(1, server.requestCount)
+        while (queued.isNotEmpty()) queued.removeFirst().run()
+        assertTrue(reconnect.isCompleted)
+        assertEquals("the failed /me, then one more /me and /me/preferences", 3, server.requestCount)
+        assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
+    }
+
+    /** The network returns while the app-open refresh's `/me` is out, and it then answers. */
+    @Test
+    fun aReconnectDuringARefreshThatAnswersSendsNothingMore() {
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
+        val queued = ArrayDeque<Runnable>()
+        val source = source(initial = null, io = Executor { queued += it }.asCoroutineDispatcher())
+
+        source.refresh()
+        val reconnect = source.refreshOnReconnect()
+        while (queued.isNotEmpty()) queued.removeFirst().run()
+
+        assertTrue(reconnect.isCompleted)
+        assertEquals("one /me and one /me/preferences", 2, server.requestCount)
+        assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
+    }
+
+    @Test
+    fun aReconnectWithNoRefreshRunningRefreshesOnce() {
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
+        val source = source(initial = null)
+
+        val reconnect = source.refreshOnReconnect()
+
+        assertTrue(reconnect.isCompleted)
+        assertEquals(2, server.requestCount)
+        assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
+    }
+
     @Test
     fun settingsStoredWhileARefreshRunsAreNotReplacedByItsOlderAnswer() {
         val signedIn = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0)

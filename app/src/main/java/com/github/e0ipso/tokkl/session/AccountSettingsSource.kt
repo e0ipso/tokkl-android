@@ -47,11 +47,14 @@ class AccountSettingsSource(
     /** The stored settings, or null when none are stored yet. */
     val state: StateFlow<AccountSettings?> = mutableState.asStateFlow()
 
-    /** Guards [writes], [refreshing], and each write together with the state it sets. */
+    /** Guards [writes], [answers], [refreshing], and each write together with the state it sets. */
     private val lock = Any()
 
     /** Counts the writes, so a refresh drops an answer that a newer write has replaced. */
     private var writes = 0L
+
+    /** Counts the refreshes whose `GET /api/v9/me` answered, so [refreshOnReconnect] can tell. */
+    private var answers = 0L
 
     private var refreshing: Job? = null
 
@@ -94,6 +97,21 @@ class AccountSettingsSource(
     }
 
     /**
+     * A [refresh] for the network's return. A refresh that is running may have sent its request
+     * while the phone was offline, so when it ends without the server answering its `/me` after
+     * this call, one more refresh starts. Only one runs at a time. Returns the job that ends with
+     * the last of them.
+     */
+    fun refreshOnReconnect(): Job {
+        val (running, answersBefore) = synchronized(lock) { refreshing?.takeUnless { it.isCompleted } to answers }
+        running ?: return refresh()
+        return scope.launch(io) {
+            running.join()
+            if (synchronized(lock) { answers } == answersBefore) refresh().join()
+        }
+    }
+
+    /**
      * Shows no settings, and waits for a running refresh to end. That refresh drops its answer and
      * skips [onRefresh] unless it had already stored the answer. Signing out calls this once
      * [client] returns null, so no later refresh stores anything, and then deletes the stored
@@ -113,6 +131,7 @@ class AccountSettingsSource(
         val api = client() ?: return
         val url = api.server.api("me").newBuilder().addQueryParameter("with_related_data", "true").build()
         val me = (api.get(url, Me.serializer()) as? ApiResult.Success)?.value ?: return
+        synchronized(lock) { answers++ }
         val fromMe = me.accountSettings() ?: return
         val preferences = readPreferences(api)
         synchronized(lock) {

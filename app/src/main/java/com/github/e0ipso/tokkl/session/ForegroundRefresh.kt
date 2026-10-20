@@ -14,8 +14,10 @@ package com.github.e0ipso.tokkl.session
  * its configuration.
  *
  * @param refresh reads the running entry and the cached data again.
+ * @param refreshOnReconnect does the same when the network comes back, and once more after a
+ *   refresh that was running then ends without an answer.
  */
-class ForegroundRefresh(private val refresh: () -> Unit) {
+class ForegroundRefresh(private val refresh: () -> Unit, private val refreshOnReconnect: () -> Unit) {
 
     /** The activity stopped for a configuration change, so its next start is no trip back. */
     private var changingConfigurations = false
@@ -53,7 +55,7 @@ class ForegroundRefresh(private val refresh: () -> Unit) {
         val before = this.online ?: return false
         this.online = online
         val back = online && !before
-        if (back) refresh()
+        if (back) refreshOnReconnect()
         return back
     }
 }

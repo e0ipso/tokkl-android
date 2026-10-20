@@ -13,7 +13,8 @@ import org.junit.Test
 class ForegroundRefreshTest {
 
     private var refreshes = 0
-    private val foreground = ForegroundRefresh(refresh = { refreshes++ })
+    private var reconnects = 0
+    private val foreground = ForegroundRefresh(refresh = { refreshes++ }, refreshOnReconnect = { refreshes++; reconnects++ })
 
     @Test
     fun eachTripToTheForegroundRefreshesOnce() {
@@ -48,6 +49,7 @@ class ForegroundRefreshTest {
         assertTrue("back online", foreground.networkChanged(online = true))
         assertFalse("a second report of the same network", foreground.networkChanged(online = true))
         assertEquals(2, refreshes)
+        assertEquals("the return refreshes as a reconnect", 1, reconnects)
     }
 
     @Test

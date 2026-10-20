@@ -89,7 +89,9 @@ class TokklApplication : Application() {
      * to the foreground and each time the network comes back while it is there. MainActivity
      * reports its starts, stops and network changes. Nothing refreshes on a timer.
      */
-    val foregroundRefresh: ForegroundRefresh by lazy { ForegroundRefresh(refresh = { accountSettings.refresh() }) }
+    val foregroundRefresh: ForegroundRefresh by lazy {
+        ForegroundRefresh(refresh = { accountSettings.refresh() }, refreshOnReconnect = { accountSettings.refreshOnReconnect() })
+    }
 
     /** What the server offers. Loaded on first use from a file of four flags. */
     val capabilities: CapabilitiesSource by lazy {
