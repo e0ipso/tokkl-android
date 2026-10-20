@@ -75,7 +75,14 @@
 # to Gradle as ANDROID_SERIAL, so Gradle never installs on another run's
 # emulator. Runs boot one at a time, and while another run holds a slot, a run
 # waits before booting until TOKKL_TEST_BOOT_MEMORY_MB of memory (default
-# 5000) is available, so two emulators never push the machine into an OOM.
+# 9000) is available. A second emulator takes about 3.3 GB at once, and its
+# run's Gradle more. On 2026-10-20, with the earlier default of 5000, a second
+# emulator booted at 6.1 to 6.4 GB available left 2.9 GB, with under 900 MB of
+# swap free. Then the kernel stalled every task for most of the time
+# (/proc/pressure/memory "full" above 80%) for minutes, until the emulator's
+# hang detector ended qemu (see report_emulator_log). Over that day's logs a
+# paired emulator crashed 3.2 times an hour, one alone 0.4 times, and none in a
+# run under 5 minutes.
 # Two emulators cannot both write to one AVD's disk, so with more than one
 # slot every emulator boots with -read-only, and drops what the run wrote to
 # the AVD when it exits. Each also gets an XDG_RUNTIME_DIR, and so a netsimd,
@@ -172,7 +179,7 @@ readonly THROWAWAY_EMULATOR="${TOKKL_TEST_THROWAWAY_EMULATOR:-}"
 # memory, in MB, that must be available before a run boots an emulator while
 # another run holds a slot (see the header).
 readonly SLOTS="${TOKKL_TEST_SLOTS:-2}"
-readonly BOOT_MEMORY_MB="${TOKKL_TEST_BOOT_MEMORY_MB:-5000}"
+readonly BOOT_MEMORY_MB="${TOKKL_TEST_BOOT_MEMORY_MB:-9000}"
 
 cd "$(dirname "$0")/.."
 
@@ -374,9 +381,30 @@ report_emulator_exit() {
             echo "$0: \"Memory cgroup out of memory\" there means qemu outgrew the $EMULATOR_MEMORY_MAX its scope may use, whatever memory was free." >&2
         fi
     else
-        echo "$0: the emulator exited with status $status. Last emulator output:" >&2
-        tail -n 20 "$work_dir/emulator.log" >&2
+        echo "$0: the emulator exited with status $status." >&2
+        report_emulator_log
     fi
+}
+
+# Prints why the emulator ended, from its log. When a thread of qemu makes no
+# progress for about 15 s, the emulator's hang detector logs "detected a
+# hanging thread" and ends qemu with a crash dump, which the shell reports as
+# a segmentation fault. In the cores of 2026-10-20 the threads it waited for
+# held a lock while freeing memory or reading a file, so qemu had stalled as a
+# whole, as it does when the machine runs out of memory. Then crashpad fills
+# the end of the log with ptrace errors, which this leaves out. It also prints
+# the memory available and the memory pressure at that moment.
+report_emulator_log() {
+    local log="$work_dir/emulator.log" hangs
+    hangs=$(grep -E 'detected a hanging thread|FATAL' "$log" 2>/dev/null | tail -n 10) || true
+    if [ -n "$hangs" ]; then
+        echo "$0: qemu stopped responding, and its hang detector ended it:" >&2
+        echo "$hangs" >&2
+    fi
+    echo "$0: last emulator output:" >&2
+    grep -v 'scoped_ptrace_attach' "$log" 2>/dev/null | tail -n 20 >&2 || true
+    echo "$0: $(available_memory_mb) MB of memory available, $(awk '/^SwapFree:/ { print int($2 / 1024) }' /proc/meminfo) MB of swap free. Memory pressure:" >&2
+    cat /proc/pressure/memory >&2 2>/dev/null || true
 }
 
 # Deletes the credentials file, and the test list if any, from each device
