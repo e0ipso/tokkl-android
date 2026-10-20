@@ -1,7 +1,7 @@
-// Cases copied verbatim from ../tokkl/packages/web/src/lib/timeOfDay.test.ts at tokkl commit
-// 01d4d3475506b65dd7ad99434d4c307c74448373, for the port of parseTimeOfDay in
-// ../tokkl/packages/web/src/lib/timeOfDay.ts at the same commit.
-// Diff the TypeScript file against this one to spot drift.
+// The cases of ../tokkl/packages/common/fixtures/timeOfDay.json at tokkl commit
+// a5cadd1fc706bd8cefbe97ab8d573f84e2d06913, in its order, for the port of parseTimeOfDay in
+// ../tokkl/packages/common/timeOfDay.ts, which that commit left as it was. tokkl's
+// timeOfDay.test.ts runs every case in that file, so compare the file with this one to spot drift.
 package com.github.e0ipso.tokkl.time
 
 import org.junit.Assert.assertEquals
@@ -61,7 +61,6 @@ class TimeOfDayTest {
     @Test
     fun `an explicit suffix on an end time is never guessed`() = replay(
         // 10am to 9am: the end stays 9 AM, before the start, so it lands on the next day (23 hours).
-        // The TypeScript stores this first result as `start` and then asserts it equals 600.
         case("10am", Options(twelveHour = true, reference = 600), 600),
         case("9am", Options(twelveHour = true, after = 600), 540),
         case("9pm", Options(twelveHour = true, after = 1320), 1260),
