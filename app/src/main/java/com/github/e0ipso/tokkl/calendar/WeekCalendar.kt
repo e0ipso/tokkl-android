@@ -345,6 +345,8 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
 private fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant, onSelect: (LocalDate) -> Unit) {
     // --radius-md on the top corners, as the day heads.
     val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
+    val totals = state.weekDays.map { day -> if (state.week.shows) dayTotalSeconds(state.entries, day, state.zone, now) else null }
+    val widestTotal = rememberWidestStripTotal(totals.mapNotNull { it?.let(state.settings::formatDuration) }, stripTotalStyle())
     Row(
         Modifier
             .fillMaxWidth()
@@ -353,13 +355,13 @@ private fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant
             .padding(TokklTheme.spacing.space1 / 2)
             .selectableGroup(),
     ) {
-        for (day in state.weekDays) {
-            val total = if (state.week.shows) dayTotalSeconds(state.entries, day, state.zone, now) else null
+        for ((day, total) in state.weekDays.zip(totals)) {
             StripDay(
                 day = day,
                 selected = day == state.selected,
                 isToday = day == today,
                 totalSeconds = total,
+                widestTotal = widestTotal,
                 settings = state.settings,
                 onSelect = { onSelect(day) },
                 modifier = Modifier.weight(1f),
@@ -374,6 +376,7 @@ private fun StripDay(
     selected: Boolean,
     isToday: Boolean,
     totalSeconds: Long?,
+    widestTotal: Int,
     settings: AccountSettings,
     onSelect: () -> Unit,
     modifier: Modifier,
@@ -418,12 +421,41 @@ private fun StripDay(
             StripText(date, MaterialTheme.typography.bodySmall, scheme.onSurface)
         }
         if (totalSeconds != null) {
-            StripText(
-                text = settings.formatDuration(totalSeconds),
-                style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+            StripTotal(
+                full = settings.formatDuration(totalSeconds),
+                short = settings.formatDurationWithoutSeconds(totalSeconds),
+                widestFull = widestTotal,
                 color = scheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * A strip day's total: [full] when the week's widest total, [widestFull] pixels at
+ * [StripMinFontSize], fits the day on one line, else [short]. So a large font scale shows every
+ * total whole, without seconds on every day alike, instead of cutting one with an ellipsis.
+ * TalkBack reads the day's full total either way.
+ */
+@Composable
+private fun StripTotal(full: String, short: String, widestFull: Int, color: Color) {
+    BoxWithConstraints {
+        StripText(if (widestFull <= constraints.maxWidth) full else short, stripTotalStyle(), color)
+    }
+}
+
+/** The style of a strip day's total, with figures of one width so the totals line up. */
+@Composable
+private fun stripTotalStyle(): TextStyle = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum")
+
+/** The width in pixels of the widest of [totals] on one line in [style] at [StripMinFontSize]. */
+@Composable
+private fun rememberWidestStripTotal(totals: List<String>, style: TextStyle): Int {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    return remember(totals, style, measurer, density) {
+        val smallest = style.copy(fontSize = StripMinFontSize)
+        totals.maxOfOrNull { measurer.measure(it, smallest, softWrap = false, maxLines = 1, density = density).size.width } ?: 0
     }
 }
 

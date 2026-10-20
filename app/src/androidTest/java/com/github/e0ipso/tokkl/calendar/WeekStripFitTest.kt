@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -21,9 +22,11 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
@@ -49,9 +52,10 @@ import org.junit.rules.RuleChain
 /**
  * The strip of the week's days above the one-day calendar on an upright phone, at Android's
  * largest font scale, 200%, and at the width the Timer page gives the calendar. In each duration
- * format an account can choose, the seven days stay inside the screen, at least 48dp tall, and no
- * two overlap. The chosen day stays marked, selected for TalkBack and in Tokkl's frame, and the
- * others are neither. DayCalendarTest covers the strip at the usual size.
+ * format an account can choose, every day shows its weekday, date and total whole: no line ends
+ * in an ellipsis, is cut off or leaves its day, and no two days overlap. The chosen day stays
+ * marked, selected for TalkBack and in Tokkl's frame. DayCalendarTest covers the strip at the
+ * usual size.
  */
 class WeekStripFitTest {
     private val composeRule = createAndroidComposeRule<ComponentActivity>()
@@ -79,6 +83,19 @@ class WeekStripFitTest {
                 stripDay(other).assertIsNotSelected()
                 assertFalse("$other has no frame, $format", framed(stripDay(other)))
             }
+        }
+    }
+
+    @Test
+    fun everyDayShowsItsWeekdayDateAndTotalWhole() {
+        show()
+        for (format in DurationFormat.entries) {
+            settings = SETTINGS.copy(durationFormat = format)
+            composeRule.waitForIdle()
+
+            assertTextsWhole(days(), format)
+            // The strip may leave the seconds out where the total does not fit; TalkBack does not.
+            stripDay(string(R.string.history_day_spoken, "Mon, 12 Oct", "10 hours, 30 minutes, 15 seconds")).assertExists()
         }
     }
 
@@ -134,6 +151,31 @@ class WeekStripFitTest {
         }
     }
 
+    /**
+     * The weekday, the date and the total of each day: none ends in an ellipsis or is cut off,
+     * and each stays inside its day. The strip shrinks a line that does not fit, down to a
+     * smallest size, and cuts it short with an ellipsis only below that. TalkBack reads each day
+     * as one tab, so the lines show only in the unmerged tree.
+     */
+    private fun assertTextsWhole(days: List<SemanticsNode>, format: DurationFormat) {
+        for (day in days) {
+            val box = byId(day.id).getUnclippedBoundsInRoot()
+            val lines = composeRule.onAllNodes(
+                SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult) and hasAnyAncestor(byIdMatcher(day.id)),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
+            assertEquals("the weekday, date and total of ${day.spoken()}, $format", 3, lines.size)
+            for (line in lines) {
+                val text = line.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
+                val layout = layoutOf(line)
+                assertFalse("\"$text\" of ${day.spoken()} ends in an ellipsis, $format", layout.isLineEllipsized(layout.lineCount - 1))
+                assertFalse("\"$text\" of ${day.spoken()} is cut off, $format", layout.didOverflowHeight)
+                val lineBox = composeRule.onNode(byIdMatcher(line.id), useUnmergedTree = true).getUnclippedBoundsInRoot()
+                assertTrue("\"$text\" at $lineBox leaves ${day.spoken()} at $box, $format", lineBox.inside(box))
+            }
+        }
+    }
+
     /** Whether [day] draws Tokkl's frame along its start side, as DayCalendarTest checks it. */
     private fun framed(day: SemanticsNodeInteraction): Boolean {
         val pixels = day.captureToImage().toPixelMap()
@@ -143,6 +185,16 @@ class WeekStripFitTest {
 
     private fun close(a: Color, b: Color): Boolean =
         abs(a.red - b.red) < COLOUR_TOLERANCE && abs(a.green - b.green) < COLOUR_TOLERANCE && abs(a.blue - b.blue) < COLOUR_TOLERANCE
+
+    /**
+     * The strip's text sizes itself, and for such text semantics hands out the layout it drew,
+     * so the ellipsis and the height are the ones on screen.
+     */
+    private fun layoutOf(node: SemanticsNode): TextLayoutResult {
+        val results = mutableListOf<TextLayoutResult>()
+        checkNotNull(node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action) { "no text layout" }.invoke(results)
+        return results.single()
+    }
 
     private fun stripDay(spoken: String): SemanticsNodeInteraction =
         composeRule.onNode(stripDay and hasContentDescription(spoken, substring = true))
@@ -175,11 +227,11 @@ class WeekStripFitTest {
         val SETTINGS = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
 
         /**
-         * The longest totals of each format: a ten and a half hour Monday, 10:30:00 or 10.50 h,
+         * The longest totals of each format: a ten and a half hour Monday, 10:30:15 or 10.50 h,
          * a 45 minute Tuesday, 45:00 min in the classic format, and half an hour today.
          */
         val ENTRIES = listOf(
-            entry(1, "Long day", "2026-10-12T08:00:00Z", "2026-10-12T18:30:00Z"),
+            entry(1, "Long day", "2026-10-12T08:00:00Z", "2026-10-12T18:30:15Z"),
             entry(2, "Stand-up", "2026-10-13T09:00:00Z", "2026-10-13T09:45:00Z"),
             entry(3, "Review", "2026-10-15T08:00:00Z", "2026-10-15T08:30:00Z"),
         )

@@ -122,6 +122,22 @@ fun formatDuration(totalSeconds: Long, format: DurationFormat = DurationFormat.I
 }
 
 /**
+ * [totalSeconds] in [format] without its seconds, for a place too narrow for [formatDuration]:
+ * `1:05` for `1:05:06`, and `5 min` for the classic `5:06 min`. The web app has no such text. A
+ * classic duration under a minute keeps its seconds, its only unit, and a decimal one has none.
+ */
+fun formatDurationWithoutSeconds(totalSeconds: Long, format: DurationFormat = DurationFormat.IMPROVED): String {
+    val seconds = if (totalSeconds < 0) 0.0 else totalSeconds.toDouble()
+    val h = floor(seconds / 3600)
+    val m = floor((seconds % 3600) / 60)
+    return when {
+        format == DurationFormat.DECIMAL -> formatDuration(totalSeconds, format)
+        format == DurationFormat.CLASSIC && h == 0.0 -> if (m > 0) "${whole(m)} min" else formatDuration(totalSeconds, format)
+        else -> "${whole(h)}:${pad(m)}"
+    }
+}
+
+/**
  * JavaScript's `String(n)` for a whole [n] below 2^53. The hours of a Long's seconds stay below
  * that, and there both give the plain digits.
  */

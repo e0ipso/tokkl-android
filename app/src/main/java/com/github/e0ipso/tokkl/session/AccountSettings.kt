@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.ServerTask
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
+import com.github.e0ipso.tokkl.time.formatDurationWithoutSeconds
 import com.github.e0ipso.tokkl.time.formatTime
 import com.github.e0ipso.tokkl.time.isTwelveHourFormat
 import com.github.e0ipso.tokkl.time.parseTimeZone
@@ -62,6 +63,10 @@ data class AccountSettings(
      * [time] is null.
      */
     fun formatDuration(totalSeconds: Long): String = formatDuration(totalSeconds, durationFormat)
+
+    /** [totalSeconds] as [formatDuration] writes it, without the seconds, where that does not fit. */
+    fun formatDurationWithoutSeconds(totalSeconds: Long): String =
+        formatDurationWithoutSeconds(totalSeconds, durationFormat)
 
     /**
      * [instant] on the account's clock in [zone], the account's zone from [time], in the
