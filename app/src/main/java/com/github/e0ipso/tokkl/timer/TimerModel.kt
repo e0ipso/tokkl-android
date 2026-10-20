@@ -222,6 +222,13 @@ class TimerModel(
     fun setBillable(billable: Boolean) = edit(send = true) { it.copy(billable = billable) }
 
     /**
+     * Sets every field to [fields], as a picked description suggestion does: the web app's
+     * pickSuggestion in TimerBar.tsx (../tokkl/packages/web) fills the description, project, task,
+     * tags and billable, on the idle timer's draft or the running entry.
+     */
+    fun fill(fields: EntryFields) = edit(send = true) { fields }
+
+    /**
      * Changes the idle timer's draft, or the running entry's fields. While a Start or Stop the cache
      * does not show yet is pending, the running entry's fields stay as they are: its id is not
      * known yet, or it has stopped.

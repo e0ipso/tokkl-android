@@ -306,6 +306,25 @@ class TimerModelTest {
         assertEquals(emptyList<String>(), changes.calls)
     }
 
+    /** A picked suggestion fills every field, as the web app's pickSuggestion does. */
+    @Test
+    fun aSuggestionFillsEveryFieldOfTheDraftAndOfTheRunningEntry() {
+        awaitIdle()
+        val picked = EntryFields(description = "Write the report", projectId = APP.id, taskId = DESIGN.id, tags = listOf("call"), billable = true)
+        onMain {
+            model.editDescription("rep")
+            model.fill(picked)
+        }
+        awaitState("the draft has every picked field") { it is TimerState.Idle && it.fields == picked }
+        assertEquals("the idle timer keeps its draft on the phone", emptyList<String>(), changes.calls)
+
+        running.value = cachedRunning("Old")
+        awaitState("the running entry shows") { it is TimerState.Running && it.entryId == RUNNING_ID }
+        onMain { model.fill(picked) }
+        awaitCache("the running entry has every field") { it?.fields() == picked }
+        assertEquals(listOf("update $RUNNING_ID $picked"), changes.calls)
+    }
+
     @Test
     fun theClockCountsWholeSecondsFromTheStart() {
         val start = Instant.parse("2026-10-19T09:00:00Z")

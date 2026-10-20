@@ -38,8 +38,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.entry.DescriptionSuggestion
 import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
 import com.github.e0ipso.tokkl.entry.EntryLabels
+import com.github.e0ipso.tokkl.entry.descriptionSuggestions
 import com.github.e0ipso.tokkl.favorites.Favorites
 import com.github.e0ipso.tokkl.favorites.FavoritesModel
 import com.github.e0ipso.tokkl.picker.EntityPicker
@@ -96,7 +98,12 @@ fun TimerBar(
 
 @Composable
 private fun TimerBarCore(model: TimerModel, cache: AccountCache, state: TimerState, elapsed: Long, onAddEntry: () -> Unit) {
+    val entries by cache.timeEntries.collectAsState(initial = emptyList())
+    val projects by cache.projects.collectAsState(initial = emptyList())
+    val clients by cache.clients.collectAsState(initial = emptyList())
     TimerBarContent(
+        suggestions = { query -> descriptionSuggestions(entries, projects, clients, query) },
+        onSuggestion = { model.fill(it.fields) },
         state = state,
         elapsedSeconds = elapsed,
         onDescriptionChange = model::editDescription,
@@ -119,7 +126,8 @@ private fun TimerBarCore(model: TimerModel, cache: AccountCache, state: TimerSta
  * button's square say so too, so colour is never the only sign. Until the phone knows the
  * account's workspace, which the first account settings bring, the fields and Start are disabled.
  * After Start or Stop comes the button that adds a past entry by hand, as the web app's bar holds
- * its manual mode (M1), whether an entry runs or not.
+ * its manual mode (M1), whether an entry runs or not. With [suggestions], the description field
+ * suggests recent entries as it is typed in (T4), and a pick goes to [onSuggestion].
  */
 @Composable
 fun TimerBarContent(
@@ -134,6 +142,8 @@ fun TimerBarContent(
     onAddEntry: () -> Unit,
     picker: WorkspacePicker,
     modifier: Modifier = Modifier,
+    suggestions: ((String) -> List<DescriptionSuggestion>)? = null,
+    onSuggestion: (DescriptionSuggestion) -> Unit = {},
 ) {
     val running = state as? TimerState.Running
     val idle = state as? TimerState.Idle
@@ -159,6 +169,8 @@ fun TimerBarContent(
                 if (workspaceId != null) picker(workspaceId, original, picked, onPickedChange, pickerModifier)
             },
             enabled = workspaceId != null,
+            suggestions = suggestions,
+            onSuggestion = onSuggestion,
             modifier = Modifier.padding(spacing.space3),
         ) {
             if (running != null) {

@@ -15,4 +15,11 @@
     <string name="timer_elapsed_spoken">%1$s elapsed</string>
     <!-- The timer's button that opens the form for a past entry (docs/PRD.md M1). -->
     <string name="timer_add_entry">Add a past entry</string>
+    <!-- Above the timer's description suggestions; TalkBack announces it when they change. -->
+    <plurals name="timer_suggestions">
+        <item quantity="one">%d suggestion</item>
+        <item quantity="other">%d suggestions</item>
+    </plurals>
+    <!-- A suggestion from an entry with a project and no description, as the web app shows it. -->
+    <string name="timer_suggestion_no_description">(no description)</string>
 </resources>
