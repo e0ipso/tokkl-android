@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.jsTrim
+import java.io.InterruptedIOException
 import java.net.ConnectException
 import java.net.NoRouteToHostException
 import java.net.UnknownHostException
@@ -55,6 +56,9 @@ import okhttp3.HttpUrl
  * Each try sends its change once: creates, updates and deletes go out with `resend` false, so
  * OkHttp does not send one again on a new connection by itself, and a lost answer always reaches
  * the sender, whose marks account for its own retries. The sender's reads may still go out again.
+ * When a try's connection fails after the request left the phone ([worthAnotherTryAtOnce]), such
+ * as a pooled connection the server had closed while it sat idle, the drain tries that change once
+ * more at once, on a new connection, before it stops.
  *
  * [send] runs when a change is queued and after each refresh, and once more when a 429's wait
  * ends. When the network returns, [BackgroundSend]'s worker calls [sendAndWait], also with the
@@ -222,6 +226,8 @@ class ChangeSender(
      */
     fun drain(): Outcome {
         var sent = 0
+        // The change this drain already tried once more, by its queue sequence.
+        var triedAgain: Long? = null
         while (true) {
             val wait = retryAt
             if (wait != null) {
@@ -243,6 +249,11 @@ class ChangeSender(
                         val until = clock.instant().plusSeconds(error.retryAfterSeconds ?: DEFAULT_RETRY_AFTER.seconds)
                         retryAt = until
                         return Outcome.Waiting(sent, until)
+                    }
+                    // Read the change again: the failed try may have marked it maybeSent.
+                    if (error.worthAnotherTryAtOnce() && triedAgain != queued.sequence) {
+                        triedAgain = queued.sequence
+                        continue
                     }
                     return Outcome.Stopped(sent, error)
                 }
@@ -465,6 +476,16 @@ internal fun ApiError.leftNothingOnTheServer(): Boolean =
         is ApiError.InvalidResponse -> false
         is ApiError.HostNotAllowed, is ApiError.TrustRefused -> true
     }
+
+/**
+ * True when a request that failed with this error is worth sending again at once: its connection
+ * failed after the request left the phone, as a pooled connection does when the server closed it
+ * while it sat idle. Tokkl closes one after Node's keep-alive timeout of 5 seconds, and OkHttp
+ * checks a pooled connection only after 10. A timeout would wait as long again, and a server the
+ * phone cannot reach at all stays unreachable a moment later.
+ */
+internal fun ApiError.worthAnotherTryAtOnce(): Boolean =
+    this is ApiError.Network && cause !is InterruptedIOException && !leftNothingOnTheServer()
 
 /** One change as an HTTP request. */
 internal class ChangeRequest(val method: String, val url: HttpUrl, val body: JsonObject?)

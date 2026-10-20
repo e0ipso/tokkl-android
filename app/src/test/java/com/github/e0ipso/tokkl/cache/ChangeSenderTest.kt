@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
@@ -175,8 +176,9 @@ class ChangeSenderTest {
     fun aNetworkFailureStopsTheDrainAndKeepsTheChangeForTheNextDrain() {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "First")
         store.queue(ChangeKind.STOP, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "First")
-        // The start's read of the running entry is the drain's first request.
-        server.enqueue(MockResponse.Builder().onRequestStart(SocketEffect.CloseSocket()).build())
+        // The start's read of the running entry is the drain's first request. A dropped connection
+        // gets one more try at once, so it drops twice.
+        repeat(2) { server.enqueue(MockResponse.Builder().onRequestStart(SocketEffect.CloseSocket()).build()) }
 
         val outcome = sender.drain()
 
@@ -192,6 +194,61 @@ class ChangeSenderTest {
             listOf("POST /api/v9/workspaces/7/time_entries", "PUT /api/v9/workspaces/7/time_entries/101"),
             sent.map { "${it.method} ${it.url.encodedPath}" },
         )
+    }
+
+    @Test
+    fun aChangeWhosePooledConnectionTheServerClosedGoesOutOnANewOneInTheSameDrain() {
+        for ((kind, method) in listOf(ChangeKind.UPDATE to "PUT", ChangeKind.DELETE to "DELETE", ChangeKind.CREATE to "POST")) {
+            poolAConnectionTheServerCloses()
+            store.queue(kind, if (kind == ChangeKind.CREATE) LOCAL else 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
+            // A create that may have reached the server looks for the entry it made first.
+            if (kind == ChangeKind.CREATE) server.enqueue(entries())
+            server.enqueue(
+                if (kind == ChangeKind.DELETE) MockResponse.Builder().code(200).build() else entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"),
+            )
+
+            assertEquals(kind.name, ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+
+            assertEquals(kind.name, 1, remainingRequests().count { it.method == method })
+            assertTrue(kind.name, store.changes.isEmpty())
+        }
+    }
+
+    @Test
+    fun aConnectionThatDropsAfterTheServerAnsweredLeadsToOneMoreTryAtMost() {
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
+        // The server reads the update, then the connection drops before the answer, twice.
+        repeat(2) { server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build()) }
+
+        val outcome = sender.drain()
+
+        assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
+        assertEquals("the first try and one more, each once", listOf("PUT", "PUT"), remainingRequests().map { it.method })
+        assertEquals(listOf(ChangeKind.UPDATE), store.changes.map { it.kind })
+    }
+
+    @Test
+    fun onlyAConnectionThatFailedAfterTheRequestLeftThePhoneIsWorthAnotherTryAtOnce() {
+        val again = listOf(
+            ApiError.Network(java.io.IOException("unexpected end of stream on http://127.0.0.1/...")),
+            ApiError.Network(java.io.EOFException("\\n not found: limit=0")),
+            ApiError.Network(java.net.SocketException("Connection reset")),
+        )
+        val not = listOf(
+            ApiError.Network(java.net.SocketTimeoutException("timeout")),
+            ApiError.Network(java.io.InterruptedIOException("timeout")),
+            ApiError.Network(java.net.ConnectException("refused")),
+            ApiError.Network(java.net.UnknownHostException("tokkl.example")),
+            ApiError.Network(java.net.NoRouteToHostException("no route")),
+            ApiError.UnexpectedStatus(500),
+            ApiError.UnexpectedStatus(404),
+            ApiError.AuthFailed,
+            ApiError.RateLimited(30),
+            ApiError.InvalidResponse(IllegalArgumentException("not json")),
+            ApiError.HostNotAllowed("https://elsewhere.example"),
+        )
+        assertEquals(again.map { true }, again.map { it.worthAnotherTryAtOnce() })
+        assertEquals(not.map { false }, not.map { it.worthAnotherTryAtOnce() })
     }
 
     @Test
@@ -588,13 +645,30 @@ class ChangeSenderTest {
         server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
         // The server reads the create, then the connection drops before the answer.
         server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
+        // The drain's second try looks for the entry the post made, and that read fails.
+        server.enqueue(MockResponse.Builder().code(503).build())
         server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:01:00+00:00"))
 
         val outcome = sender.drain()
 
-        assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
-        assertEquals("the create went out once", listOf("PUT", "POST"), remainingRequests().map { it.method })
+        assertEquals(ChangeSender.Outcome.Stopped(sent = 1, ApiError.UnexpectedStatus(503)), outcome)
+        assertEquals("the create went out once", listOf("PUT", "POST", "GET"), remainingRequests().map { it.method })
         assertTrue("the server may hold it", store.changes.single().maybeSent)
+    }
+
+    @Test
+    fun aCreateWhoseAnswerIsLostIsLookedUpInTheSameDrainInsteadOfPostedAgain() {
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual")
+        server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
+        // The server reads the create, then the connection drops before the answer.
+        server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
+        server.enqueue(entries(listed(101, "Manual", start = "2026-10-19T08:00:00+00:00", stop = "2026-10-19T08:01:00+00:00")))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+
+        assertEquals("one post, then the lookup", listOf("PUT", "POST", "GET"), remainingRequests().map { it.method })
+        assertEquals(listOf(LOCAL to 101L), store.mapped)
     }
 
     @Test
@@ -806,8 +880,9 @@ class ChangeSenderTest {
     @Test
     fun undoOfADeleteWhoseAnswerWasLostAsksTheServerAndTakesItOutOfTheQueue() {
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
-        // The server reads the delete, then the connection drops before the answer.
-        server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
+        // The server reads the delete, then the connection drops before the answer, on the first
+        // try and on the drain's one more.
+        repeat(2) { server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build()) }
         val outcome = sender.drain()
         assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
         assertTrue("the server may have deleted it", store.changes.single().maybeSent)
@@ -909,6 +984,25 @@ class ChangeSenderTest {
     fun undoOfAnEntryMadeOnThePhoneThatNeitherQueueNorServerHasFails() {
         assertEquals(ChangeSender.UndoOutcome.Failed(status = null), runBlocking { sender.undoDelete(LOCAL) })
         assertEquals(0, server.requestCount)
+    }
+
+    /**
+     * Leaves a connection in OkHttp's pool that the server has closed, with no `Connection: close`,
+     * as Tokkl does to a connection idle for 5 seconds. OkHttp checks a pooled connection only once
+     * it has been idle for 10 seconds, so the next request goes out on this one.
+     */
+    private fun poolAConnectionTheServerCloses() {
+        server.enqueue(
+            MockResponse.Builder()
+                .code(200)
+                .addHeader("Content-Type", "application/json")
+                .body("{}")
+                .onResponseEnd(SocketEffect.CloseSocket())
+                .build(),
+        )
+        val read = TogglApiClient(url, ApiCredentials.ApiToken("tok-123")).get(url.api("me"), JsonObject.serializer())
+        assertTrue(read.toString(), read is ApiResult.Success)
+        assertEquals("GET", server.takeRequest().method)
     }
 
     private fun waitUntil(condition: () -> Boolean) {
