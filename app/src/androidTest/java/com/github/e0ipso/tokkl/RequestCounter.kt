@@ -28,7 +28,7 @@ class RequestCounter(server: ServerUrl, request: String) : Closeable {
     override fun close() = relay.close()
 
     /** Counts [request] in one connection's requests, once even when it is split across two chunks. */
-    private inner class OnOneConnection : LoopbackRelay.RequestWatcher {
+    private inner class OnOneConnection : LoopbackRelay.ConnectionWatcher {
         private var tail = ByteArray(0)
 
         override fun sent(bytes: ByteArray, count: Int) {
