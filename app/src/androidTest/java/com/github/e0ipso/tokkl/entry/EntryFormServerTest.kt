@@ -237,6 +237,35 @@ class EntryFormServerTest {
         assertEquals(at(olderDay, 15, 0), instant(saved.string("stop")))
     }
 
+    /**
+     * An older entry's form opened on the phone's copy of an offline edit still saves once the send
+     * and the refresh after it have dropped that copy, and the second edit reaches the server.
+     */
+    @Test
+    fun anOlderEntryReopenedBeforeItsEditWasSentSavesAfterTheRefreshDropsIt() {
+        val entry = createEntry("Old review", at(olderDay, 11, 0), at(olderDay, 12, 0))
+        launch {
+            showOlderEntry(entry)
+            AirplaneMode.set(true, web)
+            openEntry("Old review")
+            replace(R.string.entry_description, "Old review, first")
+            save()
+            openEntry("Old review, first")
+
+            AirplaneMode.set(false, web)
+            drainUntilEmpty()
+            assertTrue("the refresh dropped it from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id == entry })
+            replace(R.string.entry_description, "Old review, second")
+            save()
+            drainUntilEmpty()
+        }
+
+        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        assertEquals("Old review, second", saved.string("description"))
+        assertEquals(at(olderDay, 11, 0), instant(saved.string("start")))
+        assertEquals(at(olderDay, 12, 0), instant(saved.string("stop")))
+    }
+
     @Test
     fun timesThatCannotBeReadShowAMessageAndQueueNothing() {
         createEntry("Wrong times", at(day, 8, 0), at(day, 9, 0))

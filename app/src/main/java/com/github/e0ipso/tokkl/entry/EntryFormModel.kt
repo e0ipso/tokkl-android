@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -109,7 +110,9 @@ sealed interface EntryFormState {
  * once it differs from what the form last derived.
  *
  * The form opens on the cache's copy of an entry, or on the copy the history holds of an entry from
- * the older days the server sent, which the phone does not keep.
+ * the older days the server sent, which the phone does not keep. The cache holds an older entry
+ * edited on the phone only until the send and the refresh after it, so a form opened on that copy
+ * saves as on the older days' copy once the cache has dropped it.
  *
  * Save checks the times. A field that cannot be read, or a span the server would refuse, gets a
  * [TimeMistake] and nothing is queued. Otherwise the change goes to [changes], the change queue,
@@ -208,11 +211,14 @@ class EntryFormModel(
                     changes.create(workspaceId, form.fields, span.start, span.stop)
                     true
                 }
-                is Target.Edit -> if (target.onPhone) {
-                    changes.update(target.entryId, form.fields, span.start, span.stop)
-                } else {
-                    changes.updateOlder(target.entryId, target.workspaceId, form.fields, span.start, span.stop)
-                    true
+                is Target.Edit -> when {
+                    target.onPhone && changes.update(target.entryId, form.fields, span.start, span.stop) -> true
+                    // An older entry goes whole, also one whose copy the refresh after its send dropped.
+                    !target.onPhone || target.start < HistoryWindow.endingToday(time).start -> {
+                        changes.updateOlder(target.entryId, target.workspaceId, form.fields, span.start, span.stop)
+                        true
+                    }
+                    else -> false
                 }
             }
             phase.update { current ->

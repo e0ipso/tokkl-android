@@ -274,6 +274,30 @@ class EntryFormModelTest {
         awaitState("the form says the entry is gone") { it == EntryFormState.Missing }
     }
 
+    /**
+     * The form opened on the cache's copy of an older entry edited on the phone, and the refresh
+     * after the send dropped that copy before the save, so the save goes whole, as from the older days.
+     */
+    @Test
+    fun anOlderEntryTheCacheDroppedBeforeTheSaveSavesAsAnOlderOne() {
+        entries.value = listOf(EntryWithSendState(OLDER, unsent = true))
+        onMain { model.edit(OLDER.id) }
+        awaitOpen("the form opens on the cache's copy") { it.fields.description == "Plan the sprint" }
+        changes.updates = false
+        onMain { model.setDescription("Plan the sprint, again") }
+
+        save()
+
+        val fields = EntryFields(description = "Plan the sprint, again", projectId = APP.id)
+        assertEquals(
+            listOf(
+                "update ${OLDER.id} $fields ${OLDER.start} ${OLDER.stop}",
+                "updateOlder ${OLDER.id} $OLDER_WORKSPACE $fields ${OLDER.start} ${OLDER.stop}",
+            ),
+            changes.calls,
+        )
+    }
+
     @Test
     fun withoutTheAccountsTimezoneTheFormTakesNoTimes() {
         settings.value = SETTINGS.copy(timeZone = "Mars/Olympus_Mons")
