@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
@@ -90,6 +91,7 @@ fun TimerBar(
         model.shown(state)
     }
     val elapsed = rememberElapsedSeconds((state as? TimerState.Running)?.start, clock)
+    val focusManager = LocalFocusManager.current
     Column(modifier) {
         TimerBarCore(model, cache, state, elapsed, onAddEntry)
         if (favorites != null) {
@@ -97,12 +99,26 @@ fun TimerBar(
             Favorites(
                 model = favorites,
                 timerFields = (shown as? TimerState.Running)?.fields ?: (shown as? TimerState.Idle)?.fields,
-                onStart = model::startFrom,
+                onStart = { fields ->
+                    model.startFrom(fields)
+                    settleDescription(focusManager)
+                },
                 modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),
             )
         }
     }
 }
+
+/**
+ * Ends typing in the timer's description after a favorite or Continue has started an entry, as
+ * Start and Stop do. A tap on those buttons leaves focus in the field, which keeps showing what
+ * was typed, and would hand that text on to the new entry when it lost focus later. The start has
+ * already given the text to the running entry it was typed for, which it stopped, or dropped the
+ * idle timer's draft that the started entry replaces. Clear focus only after the start: then the
+ * field's text matches what it last showed, so losing focus hands nothing on, and the field
+ * shows the started entry's description.
+ */
+fun settleDescription(focusManager: FocusManager) = focusManager.clearFocus()
 
 @Composable
 private fun TimerBarCore(model: TimerModel, cache: AccountCache, state: TimerState, elapsed: Long, onAddEntry: () -> Unit) {

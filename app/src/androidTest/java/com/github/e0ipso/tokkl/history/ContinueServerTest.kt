@@ -1,12 +1,20 @@
 package com.github.e0ipso.tokkl.history
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToKeyAction
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -130,6 +138,55 @@ class ContinueServerTest {
         assertEquals(setOf("outdoor", "spray"), current.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet())
         assertEquals("true", current.string("billable"))
         assertTrue("the entry that ran has stopped", account.entry(running)["stop"] !is JsonNull)
+    }
+
+    /**
+     * Continue tapped while a description is still being typed for the running entry gives that
+     * entry the typed text as it stops, and the continued entry keeps its own description, also
+     * when the keyboard's Done is pressed after the start (TKA-0237).
+     */
+    @Test
+    fun continueWhileADescriptionIsTypedKeepsTheContinuedEntrysDescription() {
+        val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(2, ChronoUnit.HOURS)
+        postEntry("Paint the wall", project = null, task = null, tags = emptyList(), billable = false, stop.minus(45, ChronoUnit.MINUTES), stop)
+        val running = account.createEntry("Answer email", Instant.now().minus(10, ChronoUnit.MINUTES))
+        runBlocking { app.accountSettings.refresh().join() }
+
+        ActivityScenario.launch(MainActivity::class.java).use {
+            composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
+            val continueButton = hasContentDescription(context.getString(R.string.history_continue, "Paint the wall")) and hasClickAction()
+            composeRule.waitUntil("the entry shows with its Continue button", LOAD_TIMEOUT_MS) {
+                composeRule.onAllNodes(continueButton and hasAnyAncestor(hasScrollToKeyAction())).fetchSemanticsNodes().size == 1
+            }
+            val description = hasSetTextAction() and hasText(context.getString(R.string.entry_description))
+            composeRule.waitUntil("the running entry's description shows", LOAD_TIMEOUT_MS) {
+                composeRule.onAllNodes(description and hasText("Answer email")).fetchSemanticsNodes().size == 1
+            }
+            composeRule.onNode(description).performTextClearance()
+            composeRule.onNode(description).performTextInput("Draft")
+
+            // A touch, as a finger taps, which leaves focus in the description field.
+            composeRule.onNode(continueButton).performScrollTo().performClick()
+            composeRule.waitUntil("the phone runs the continued entry", LOAD_TIMEOUT_MS) {
+                runBlocking { app.cache.running.first() }?.entry?.description == "Paint the wall"
+            }
+            // Once the server has the start, the timer shows the cache's entry, not the tap's.
+            sendTheQueue()
+            composeRule.waitUntil("the timer shows every change sent", LOAD_TIMEOUT_MS) {
+                composeRule.onAllNodes(hasText(context.getString(R.string.history_unsent), ignoreCase = true)).fetchSemanticsNodes().isEmpty()
+            }
+            composeRule.onNode(description).performImeAction()
+            sendTheQueue()
+
+            assertEquals("Paint the wall", runBlocking { app.cache.running.first() }?.entry?.description)
+            val shown = composeRule.onNode(description).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+            assertEquals("the description field shows the continued entry's", "Paint the wall", shown)
+        }
+
+        assertEquals("Paint the wall", currentEntry().string("description"))
+        val stopped = account.entry(running)
+        assertEquals("the entry it was typed for has it", "Draft", stopped.string("description"))
+        assertTrue("the entry that ran has stopped", stopped["stop"] !is JsonNull)
     }
 
     @Test

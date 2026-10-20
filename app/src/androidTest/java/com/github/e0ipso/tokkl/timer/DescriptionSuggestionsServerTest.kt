@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyChild
@@ -144,6 +145,7 @@ class DescriptionSuggestionsServerTest {
             } catch (e: Throwable) {
                 throw AssertionError("the pick did not fill the description: ${fieldsAndPopups()}", e)
             }
+            composeRule.onNode(hasSetTextAction() and hasText("Write the report")).assertIsFocused()
             awaitShown("the picked project") { composeRule.onNode(hasContentDescription(string(R.string.entry_project_spoken, "Website"))) }
             awaitShown("the picked tags") { composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call"))) }
             assertEquals(

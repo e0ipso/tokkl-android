@@ -144,6 +144,39 @@ class FavoritesServerTest {
     }
 
     /**
+     * A favorite tapped while the idle timer's description is still being typed starts with its
+     * own description. The typed text makes way for it and does not come back when the keyboard's
+     * Done is pressed after the start (TKA-0237).
+     */
+    @Test
+    fun aFavoriteTappedWhileADescriptionIsTypedRunsWithItsOwnDescription() {
+        saveOnTheWeb("""{"favorites": [{"description": "Report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
+        launch {
+            awaitShown("the favorite") { favorite("Report") }
+            description().performTextInput("Draft")
+            favorite("Report").performClick()
+            composeRule.waitUntil("the phone runs the favorite", NETWORK_TIMEOUT.toMillis()) {
+                runBlocking { app.cache.running.first() }?.entry?.description == "Report"
+            }
+            // Once the server has the start, the timer shows the cache's entry, not the tap's.
+            drainUntilEmpty()
+            composeRule.waitUntil("the timer shows every change sent", NETWORK_TIMEOUT.toMillis()) {
+                count(hasText(string(R.string.history_unsent), ignoreCase = true)) == 0
+            }
+            description().performImeAction()
+            drainUntilEmpty()
+
+            assertEquals("Report", runBlocking { app.cache.running.first() }?.entry?.description)
+            val shown = description().fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+            assertEquals("the description field shows the favorite's", "Report", shown)
+        }
+
+        val entry = serverEntries().single()
+        assertEquals("Report", entry.getValue("description").jsonPrimitive.content)
+        assertTrue("running", entry["stop"] == null || entry["stop"] is JsonNull)
+    }
+
+    /**
      * Pinning, moving and removing on the phone store the list in the web app's format, and leave
      * every other preference key as it was.
      */

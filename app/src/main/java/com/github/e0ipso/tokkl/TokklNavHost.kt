@@ -36,6 +36,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarModel
@@ -72,6 +73,7 @@ import com.github.e0ipso.tokkl.timer.TimerModel
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
+import com.github.e0ipso.tokkl.timer.settleDescription
 import com.github.e0ipso.tokkl.trash.TrashModel
 import com.github.e0ipso.tokkl.trash.TrashScreen
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
@@ -137,6 +139,7 @@ fun TokklNavHost(
     syncStatus: Flow<SyncStatus?> = flowOf(null),
 ) {
     val appContext = LocalContext.current.applicationContext
+    val focusManager = LocalFocusManager.current
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
     // A signed-in page restored from saved state can outlive its session: a sign-out that finished
     // in the background before the process died, or a token that no longer decrypts. The page
@@ -217,7 +220,12 @@ fun TokklNavHost(
                 cache = cache,
                 timerView = view,
                 onTimerViewChange = timerView::choose,
-                onContinue = { entryId -> history.entry(entryId)?.let(timer::continueEntry) },
+                onContinue = { entryId ->
+                    history.entry(entryId)?.let { source ->
+                        timer.continueEntry(source)
+                        settleDescription(focusManager)
+                    }
+                },
                 onOpenEntry = openEntry,
                 favorites = favorites,
             ) {
