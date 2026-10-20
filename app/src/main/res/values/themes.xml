@@ -7,8 +7,17 @@
         which the app sets to the theme setting on Android 12 and later. Below that it knows
         only the system's mode, so when the setting picks the other one, MainActivity repaints
         the window before its first frame.
+
+        The launch splash, which Android 12 and later draw from this theme before the app runs,
+        shows the wordmark on the same background instead of the launcher icon, with no icon
+        background and no branding image, so the logo never sits beside the wordmark
+        (docs/PRD.md, Visual direction). Android 12 is the oldest version the app runs on, so
+        the platform's own attributes do this without core-splashscreen. Nothing holds the
+        splash: it goes with the app's first frame.
     -->
     <style name="Theme.Tokkl" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:windowSplashScreenBackground">@color/window_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_wordmark</item>
     </style>
 </resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The launch splash's icon: the wordmark alone, never the logo (docs/PRD.md, Visual direction,
+    Wordmark and Logo). Android 12 and later draw a splash icon with no background on a 288dp
+    square and show only the 192dp circle in its middle, scaling the drawable to whatever size
+    it draws at. So the wordmark takes a share of the square, not a size in dp: 178dp of 288dp,
+    as wide as the circle allows the wordmark's 2059x769 shape with room for the dark halo.
+    The insets are fractions of the square for the same reason. drawable-night adds the halo.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <inset
+            android:insetLeft="19.097%"
+            android:insetTop="38.458%"
+            android:insetRight="19.097%"
+            android:insetBottom="38.458%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg" />
+        </inset>
+    </item>
+</layer-list>

@@ -8,6 +8,13 @@
     <color name="window_background">#F4E7CF</color>
 
     <!--
+        The 1dp outline around the wordmark, the wordmark-halo token of styles.css: transparent
+        in light, where the splash icon draws none. The same values as wordmarkHalo in
+        ui/theme/Color.kt.
+    -->
+    <color name="wordmark_halo">#00000000</color>
+
+    <!--
         The launcher icon's background layer, in light and dark alike: the wordmark's dark plum
         from Tokkl's icon pack, ../tokkl/docs/brand/icon-pack (android/res/values and
         checks.json). It is not a palette token.

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The launch splash's icon in dark: drawable/splash_wordmark.xml with the 1dp halo in
+    wordmark_halo that ui/Brand.kt draws at run time, because the artwork's navy outline matches
+    the dark background. As in Brand.kt, the halo is the wordmark's silhouette moved 1dp, 1/288 of
+    the square, in each of the eight directions, under the wordmark.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <inset
+            android:insetLeft="18.75%"
+            android:insetTop="38.111%"
+            android:insetRight="19.444%"
+            android:insetBottom="38.806%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg"
+                android:tint="@color/wordmark_halo"
+                android:tintMode="src_in" />
+        </inset>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="18.75%"
+            android:insetTop="38.458%"
+            android:insetRight="19.444%"
+            android:insetBottom="38.458%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg"
+                android:tint="@color/wordmark_halo"
+                android:tintMode="src_in" />
+        </inset>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="18.75%"
+            android:insetTop="38.806%"
+            android:insetRight="19.444%"
+            android:insetBottom="38.111%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg"
+                android:tint="@color/wordmark_halo"
+                android:tintMode="src_in" />
+        </inset>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="19.097%"
+            android:insetTop="38.111%"
+            android:insetRight="19.097%"
+            android:insetBottom="38.806%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg"
+                android:tint="@color/wordmark_halo"
+                android:tintMode="src_in" />
+        </inset>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="19.097%"
+            android:insetTop="38.806%"
+            android:insetRight="19.097%"
+            android:insetBottom="38.111%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg"
+                android:tint="@color/wordmark_halo"
+                android:tintMode="src_in" />
+        </inset>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="19.444%"
+            android:insetTop="38.111%"
+            android:insetRight="18.75%"
+            android:insetBottom="38.806%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg"
+                android:tint="@color/wordmark_halo"
+                android:tintMode="src_in" />
+        </inset>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="19.444%"
+            android:insetTop="38.458%"
+            android:insetRight="18.75%"
+            android:insetBottom="38.458%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg"
+                android:tint="@color/wordmark_halo"
+                android:tintMode="src_in" />
+        </inset>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="19.444%"
+            android:insetTop="38.806%"
+            android:insetRight="18.75%"
+            android:insetBottom="38.111%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg"
+                android:tint="@color/wordmark_halo"
+                android:tintMode="src_in" />
+        </inset>
+    </item>
+    <item>
+        <inset
+            android:insetLeft="19.097%"
+            android:insetTop="38.458%"
+            android:insetRight="19.097%"
+            android:insetBottom="38.458%">
+            <bitmap
+                android:src="@drawable/tokkl_wordmark_lg" />
+        </inset>
+    </item>
+</layer-list>
