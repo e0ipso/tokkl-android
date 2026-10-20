@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A line with an arrow pointing away from it on each side, for the Split action on a history entry. The path is Tokkl's "split" icon, from Icon.tsx in the web app, drawn as it draws it:
+     a 2 unit stroke with round ends and joins on a 24 unit grid. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12 3v18M5 8l-3 4 3 4M19 8l3 4-3 4" />
+</vector>

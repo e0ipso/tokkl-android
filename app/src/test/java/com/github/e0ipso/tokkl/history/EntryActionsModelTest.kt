@@ -5,6 +5,10 @@ import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.entry.SplitProblem
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.time.SnappedSpan
+import java.time.DayOfWeek
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
@@ -28,7 +32,8 @@ import org.junit.Test
  * The history's entry actions against a cache the test fills and a change queue and an Undo that
  * record what they are asked to do. With Tokkl's restore endpoint a delete offers Undo at once, as
  * the web app's EntryList.tsx does; without it the delete asks first and offers none. Duplicate
- * copies a stopped entry's fields and times, as the web app's duplicate does.
+ * copies a stopped entry's fields and times, as the web app's duplicate does, and Split cuts one
+ * in two at a clock time in the account's timezone, as the web app's editor does.
  */
 class EntryActionsModelTest {
 
@@ -195,6 +200,93 @@ class EntryActionsModelTest {
         assertEquals(EntryActionsState(), model.state.value)
     }
 
+    @Test
+    fun splitCutsTheEntryInTwoThroughTheQueueAndTheHalvesAddUpToTheWhole() {
+        val model = model(canRestore = true)
+
+        onMain { model.split(STOPPED.id) }
+        val dialog = awaitSplit(model)
+        // At 15 minutes, 08:00:12 to 09:05:40 stores as 08:00 to 09:15.
+        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T09:15:00Z")), dialog.whole)
+
+        // 10:30 in Madrid, CEST.
+        onMain { model.setSplitText("10:30") }
+        val halves = model.state.value.split?.halves ?: throw AssertionError("no preview for 10:30")
+        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T08:30:00Z")), halves.first)
+        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:30:00Z"), Instant.parse("2026-10-19T09:15:00Z")), halves.second)
+
+        onMain { model.confirmSplit() }
+
+        awaitNotice(model) { it is EntryNotice.Split }
+        assertNull("the dialog closes", model.state.value.split)
+        val fields = EntryFields(description = "Code review", projectId = 3, taskId = 4, tags = listOf("review", "remote"), billable = true)
+        assertEquals(
+            "the second half first, with the source's workspace and fields, then the original ends at the split",
+            listOf(
+                "create 10 $fields 2026-10-19T08:30:00Z 2026-10-19T09:15:00Z",
+                "update 70 $fields 2026-10-19T08:00:00Z 2026-10-19T08:30:00Z",
+            ),
+            calls,
+        )
+    }
+
+    @Test
+    fun aSplitTimeOutsideTheEntryOrUnreadableIsRefusedAndNothingIsQueued() {
+        val model = model(canRestore = true)
+        onMain { model.split(STOPPED.id) }
+        awaitSplit(model)
+
+        for ((text, problem) in listOf("11:30" to SplitProblem.OUTSIDE, "10:00" to SplitProblem.OUTSIDE, "noon" to SplitProblem.UNREADABLE)) {
+            onMain { model.setSplitText(text) }
+            assertNull("no preview for $text", model.state.value.split?.halves)
+            onMain { model.confirmSplit() }
+            awaitState(model) { it.split?.problem == problem }
+            onMain { model.setSplitText(text) }
+            assertNull("typing clears the problem", model.state.value.split?.problem)
+        }
+
+        onMain { model.cancelSplit() }
+        assertEquals(EntryActionsState(), model.state.value)
+        assertEquals(emptyList<String>(), calls)
+    }
+
+    @Test
+    fun aRunningEntryOrOneTheCacheDroppedOpensNoSplit() {
+        val model = model(canRestore = true)
+
+        onMain {
+            model.split(RUNNING.id)
+            model.split(DROPPED)
+        }
+        onMain {}
+
+        assertEquals(EntryActionsState(), model.state.value)
+    }
+
+    @Test
+    fun whenTheOriginalLeftTheCacheTheSecondHalfGoesToo() {
+        cached = false
+        val model = model(canRestore = true)
+        onMain { model.split(STOPPED.id) }
+        awaitSplit(model)
+        onMain { model.setSplitText("10:30") }
+
+        onMain { model.confirmSplit() }
+
+        awaitCalls(3)
+        assertEquals("delete -1", calls.last())
+        assertNull(model.state.value.notice)
+    }
+
+    private fun awaitSplit(model: EntryActionsModel): SplitDialog = awaitState(model) { it.split != null }.split!!
+
+    private fun awaitState(model: EntryActionsModel, condition: (EntryActionsState) -> Boolean): EntryActionsState {
+        var last: EntryActionsState? = null
+        return runBlocking {
+            withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first(condition) }
+        } ?: throw AssertionError("timed out; the last state was $last, after $calls")
+    }
+
     private fun model(canRestore: Boolean) = EntryActionsModel(
         entries = entries,
         changes = FakeChanges(),
@@ -203,6 +295,7 @@ class EntryActionsModelTest {
             undoOutcome
         },
         canRestore = { canRestore },
+        accountSettings = MutableStateFlow(SETTINGS),
         scope = scope,
     )
 
@@ -239,8 +332,10 @@ class EntryActionsModelTest {
             return -1
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
-            throw AssertionError("nothing is edited")
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+            calls += "update $entryId $fields $start $stop"
+            return cached
+        }
     }
 
     private companion object {
@@ -265,5 +360,8 @@ class EntryActionsModelTest {
         )
 
         val RUNNING = STOPPED.copy(id = 71, stop = null)
+
+        /** Madrid at a resolution of 15 minutes, on a 24-hour clock. */
+        val SETTINGS = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, timeResolutionMinutes = 15.0)
     }
 }

@@ -35,6 +35,20 @@
     <string name="history_more_actions">More actions for %1$s</string>
     <string name="history_duplicate">Duplicate</string>
     <string name="history_duplicated">Entry duplicated</string>
+    <string name="history_split">Split</string>
+    <!-- The dialog that splits an entry in two at a clock time (docs/PRD.md H6), as the web app's editor does. -->
+    <string name="history_split_title">Split entry</string>
+    <!-- The entry the dialog splits: Code review, 09:00 – 10:30 -->
+    <string name="history_split_entry">%1$s, %2$s</string>
+    <string name="history_split_field">Split at</string>
+    <string name="history_split_placeholder">e.g. 10:30</string>
+    <!-- The durations of the two halves: Splits into 0:30:00 and 1:00:00. -->
+    <string name="history_split_preview">Splits into %1$s and %2$s.</string>
+    <string name="history_split_confirm">Split</string>
+    <string name="history_split_unreadable">Enter a split time like 10:30</string>
+    <string name="history_split_outside">The split time must fall inside the entry</string>
+    <string name="history_split_clock_change">The clocks change during this entry, so it can\'t be split at that time</string>
+    <string name="history_split_done">Entry split in two</string>
     <string name="history_delete">Delete</string>
     <string name="history_deleted">Entry deleted</string>
     <string name="history_undo">Undo</string>

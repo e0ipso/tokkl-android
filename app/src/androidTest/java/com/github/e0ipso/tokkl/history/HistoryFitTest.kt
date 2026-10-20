@@ -26,6 +26,8 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -38,7 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.entry.SplitHalves
+import com.github.e0ipso.tokkl.entry.SplitProblem
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -55,7 +61,8 @@ import org.junit.rules.RuleChain
 
 /**
  * The history's entry actions and grouped rows at Android's largest font scale, 200%, at the
- * Timer page's width: the row menu with Duplicate and Delete, the message with Undo after a
+ * Timer page's width: the row menu with Duplicate, Split and Delete, the split dialog with its
+ * preview and its longest message, the message with Undo after a
  * delete and the longer one when Undo needs the server, and a group of similar entries, collapsed
  * and expanded, with the Continue buttons of the group and its members. No text is cut off or
  * leaves the screen, no two parts overlap, and every button keeps a 48dp touch target. EntryActionsUiTest and HistoryGroupUiTest check what TalkBack reads.
@@ -72,16 +79,19 @@ class HistoryFitTest {
     /** The message over the list, which a test changes after the first check. */
     private var notice by mutableStateOf<EntryNotice?>(null)
 
+    /** The split dialog over the list, which a test changes after the first check. */
+    private var split by mutableStateOf<SplitDialog?>(null)
+
     @Test
     fun theRowMenuFits() {
         show(SOLO)
         composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION)) and hasClickAction())
             .performScrollTo()
             .performClick()
-        val items = listOf(R.string.history_duplicate, R.string.history_delete).map { label ->
+        val items = listOf(R.string.history_duplicate, R.string.history_split, R.string.history_delete).map { label ->
             "${string(label)} item" to composeRule.onNode(hasText(string(label)) and hasClickAction())
         }
-        val labels = listOf(R.string.history_duplicate, R.string.history_delete).map { label -> inside(label, hasClickAction()) }
+        val labels = listOf(R.string.history_duplicate, R.string.history_split, R.string.history_delete).map { label -> inside(label, hasClickAction()) }
         val menu = composeRule.onNode(isRoot() and hasAnyDescendant(hasText(string(R.string.history_duplicate))))
         val page = composeRule.onNode(isRoot() and hasAnyDescendant(hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION))))
 
@@ -102,6 +112,18 @@ class HistoryFitTest {
 
         notice = EntryNotice.UndoNeedsServer(serial = 2, entryId = SOLO_ID)
         assertMessageFits(R.string.history_undo_needs_server)
+    }
+
+    @Test
+    fun theSplitDialogFitsWithItsPreviewAndItsLongestMessage() {
+        show(SOLO)
+        val halves = SplitHalves(SnappedSpan(SOLO_START, SOLO_START.plusSeconds(45 * 60)), SnappedSpan(SOLO_START.plusSeconds(45 * 60), SOLO_STOP))
+
+        split = SplitDialog(SOLO_CACHED, SnappedSpan(SOLO_START, SOLO_STOP), ZoneOffset.UTC, text = "13:45", halves = halves)
+        assertSplitDialogFits(string(R.string.history_split_preview, SETTINGS.formatDuration(45 * 60L), SETTINGS.formatDuration(45 * 60L)))
+
+        split = SplitDialog(SOLO_CACHED, SnappedSpan(SOLO_START, SOLO_STOP), ZoneOffset.UTC, text = "13:45", problem = SplitProblem.CLOCK_CHANGE)
+        assertSplitDialogFits(string(R.string.history_split_clock_change))
     }
 
     @Test
@@ -143,12 +165,13 @@ class HistoryFitTest {
                 ) {
                     HistoryContent(state = state, onLoadOlder = {})
                     EntryActionsHost(
-                        state = EntryActionsState(notice = notice),
+                        state = EntryActionsState(notice = notice, split = split),
                         onUndo = {},
                         onNoticeDone = { done -> if (notice == done) notice = null },
                         onConfirmDelete = {},
                         onCancelDelete = {},
                         modifier = Modifier.align(Alignment.BottomCenter),
+                        settings = SETTINGS,
                     )
                 }
             }
@@ -183,6 +206,33 @@ class HistoryFitTest {
         assertNoOverlap(listOf(message, undo, dismiss))
         assertWithin(listOf(undoLabel), listOf(undo))
         assertTouchTargets(listOf(undo, dismiss))
+    }
+
+    /**
+     * The split dialog with [note] under its field: the dialog stays on the screen, its title, the
+     * entry, the field, the note and its buttons show in full inside it, no text is cut off, no two
+     * of them overlap, and both buttons keep a touch target.
+     */
+    private fun assertSplitDialogFits(note: String) {
+        composeRule.waitUntil("the dialog shows $note", TIMEOUT_MS) {
+            composeRule.onAllNodes(hasText(note), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.waitForIdle()
+        val dialogWindow = composeRule.onNode(isRoot() and hasAnyDescendant(isDialog()))
+        val page = composeRule.onNode(isRoot() and hasAnyDescendant(hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION))))
+        assertTrue("the dialog's window leaves the screen", dialogWindow.screenRect().inside(page.screenRect()))
+        val dialog = composeRule.onNode(isDialog()).getUnclippedBoundsInRoot()
+        val range = string(R.string.history_time_range, "13:00", "14:30")
+        val blocks = listOf(
+            "title" to text(string(R.string.history_split_title)),
+            "entry" to text(string(R.string.history_split_entry, SOLO_DESCRIPTION, range)),
+            "field" to composeRule.onNode(hasSetTextAction() and hasText(string(R.string.history_split_field))),
+            "cancel button" to composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()),
+            "split button" to composeRule.onNode(hasText(string(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog())),
+        )
+        assertFit(blocks + ("note" to text(note)) + inside(R.string.history_split_confirm, hasClickAction() and hasAnyAncestor(isDialog())), area = dialog)
+        assertNoOverlap(blocks)
+        assertTouchTargets(blocks.takeLast(2))
     }
 
     /** The group's own line: its count, description, total, project, time range, tags and billable mark. */
@@ -341,6 +391,23 @@ class HistoryFitTest {
                 projectId = 7,
                 taskId = 70,
             ),
+        )
+
+        val SOLO_START: Instant = Instant.parse("2026-10-15T13:00:00Z")
+        val SOLO_STOP: Instant = Instant.parse("2026-10-15T14:30:00Z")
+
+        /** The cache's row of [SOLO], which the split dialog opens on. */
+        val SOLO_CACHED = CachedTimeEntry(
+            id = SOLO_ID,
+            workspaceId = 1,
+            projectId = 7,
+            taskId = 70,
+            description = SOLO_DESCRIPTION,
+            start = SOLO_START,
+            stop = SOLO_STOP,
+            billable = true,
+            tags = listOf("writing", "documentation"),
+            tagIds = emptyList(),
         )
 
         /** Each member's start and stop, newest first. */

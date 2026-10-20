@@ -31,6 +31,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
             changes = app.changes,
             undoDelete = app.sender::undoDelete,
             canRestore = { app.capabilities.state.value.restore },
+            accountSettings = app.accountSettings.state,
             scope = viewModelScope,
         )
     }

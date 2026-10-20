@@ -12,13 +12,16 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -43,8 +46,9 @@ import org.junit.Test
 
 /**
  * The history's entry actions on screen, against a change queue and an Undo that record what they
- * are asked: the labels TalkBack reads for the menu, Duplicate and Delete, the message whose Undo
- * TalkBack announces, and the question before a delete that a server without restore cannot undo.
+ * are asked: the labels TalkBack reads for the menu, Duplicate, Split, the split time and Delete,
+ * the message whose Undo TalkBack announces, and the question before a delete that a server
+ * without restore cannot undo.
  */
 class EntryActionsUiTest {
     @get:Rule
@@ -140,6 +144,29 @@ class EntryActionsUiTest {
         assertEquals(listOf("create 10 ${CACHED.start} ${CACHED.stop}"), calls)
     }
 
+    @Test
+    fun splitAndItsTimeFieldHaveTalkBackLabelsAndSplitCutsTheEntry() {
+        show(canRestore = true)
+
+        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+            .performSemanticsAction(SemanticsActions.OnClick)
+        // TalkBack reads the item's text as its label, and the field's label with the field.
+        composeRule.onNode(hasText(string(R.string.history_split)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.waitUntil("the dialog shows", TIMEOUT_MS) {
+            composeRule.onAllNodes(isDialog() and hasAnyDescendant(hasText(string(R.string.history_split_title)))).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(hasSetTextAction() and hasText(string(R.string.history_split_field))).performTextReplacement("11:15")
+        composeRule.onNode(hasText(string(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog()))
+            .performSemanticsAction(SemanticsActions.OnClick)
+
+        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_split_done)).fetchSemanticsNodes().isNotEmpty() }
+        assertEquals(0, composeRule.onAllNodes(isDialog()).fetchSemanticsNodes().size)
+        assertEquals(
+            listOf("create 10 2026-10-15T11:15:00Z ${CACHED.stop}", "update $ENTRY ${CACHED.start} 2026-10-15T11:15:00Z"),
+            calls,
+        )
+    }
+
     private fun openMenuAndDelete() {
         composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
             .performSemanticsAction(SemanticsActions.OnClick)
@@ -159,13 +186,14 @@ class EntryActionsUiTest {
                 undo
             },
             canRestore = { canRestore },
+            accountSettings = MutableStateFlow(HISTORY.settings),
             scope = scope,
         )
         composeRule.setContent {
             TokklTheme {
                 val state by model.state.collectAsState()
                 Box(Modifier.fillMaxSize()) {
-                    HistoryContent(state = HISTORY, onLoadOlder = {}, onDuplicate = model::duplicate, onDelete = model::delete)
+                    HistoryContent(state = HISTORY, onLoadOlder = {}, onDuplicate = model::duplicate, onSplit = model::split, onDelete = model::delete)
                     EntryActionsHost(
                         state = state,
                         onUndo = model::undo,
@@ -173,6 +201,10 @@ class EntryActionsUiTest {
                         onConfirmDelete = model::confirmDelete,
                         onCancelDelete = model::cancelDelete,
                         modifier = Modifier.align(Alignment.BottomCenter),
+                        settings = HISTORY.settings,
+                        onSplitTextChange = model::setSplitText,
+                        onConfirmSplit = model::confirmSplit,
+                        onCancelSplit = model::cancelSplit,
                     )
                 }
             }
@@ -196,8 +228,10 @@ class EntryActionsUiTest {
             return -1
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
-            throw AssertionError("nothing is edited")
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+            calls += "update $entryId $start $stop"
+            return true
+        }
     }
 
     private companion object {

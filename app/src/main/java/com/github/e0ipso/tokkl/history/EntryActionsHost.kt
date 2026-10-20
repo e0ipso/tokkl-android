@@ -13,10 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
+import com.github.e0ipso.tokkl.session.AccountSettings
 
 /**
- * The messages and the question of the history's entry actions: a snackbar for [EntryActionsState.notice],
- * such as "Entry deleted" with Undo or "Entry duplicated", and the question before a delete that cannot be undone.
+ * The messages, the question and the dialog of the history's entry actions: a snackbar for
+ * [EntryActionsState.notice], such as "Entry deleted" with Undo or "Entry duplicated", the question
+ * before a delete that cannot be undone, and the split dialog, which needs the account's [settings].
  * The snackbar is a polite live region, as Material's SnackbarHost makes each one, so TalkBack
  * reads the message and its Undo button when it appears. A snackbar with Undo stays for
  * Material's long duration, which grows as Android's accessibility timeout asks.
@@ -29,6 +31,10 @@ internal fun EntryActionsHost(
     onConfirmDelete: () -> Unit,
     onCancelDelete: () -> Unit,
     modifier: Modifier = Modifier,
+    settings: AccountSettings? = null,
+    onSplitTextChange: (String) -> Unit = {},
+    onConfirmSplit: () -> Unit = {},
+    onCancelSplit: () -> Unit = {},
 ) {
     val host = remember { SnackbarHostState() }
     val notice = state.notice
@@ -60,13 +66,17 @@ internal fun EntryActionsHost(
             danger = true,
         )
     }
+    val split = state.split
+    if (split != null && settings != null) {
+        SplitEntryDialog(split, settings, onTextChange = onSplitTextChange, onConfirm = onConfirmSplit, onCancel = onCancelSplit)
+    }
 }
 
 /** The entry whose delete Undo takes back, or null when the notice offers no Undo. */
 private fun EntryNotice.undoes(): Long? = when (this) {
     is EntryNotice.Deleted -> entryId.takeIf { undo }
     is EntryNotice.UndoNeedsServer -> entryId
-    is EntryNotice.UndoFailed, is EntryNotice.Duplicated -> null
+    is EntryNotice.UndoFailed, is EntryNotice.Duplicated, is EntryNotice.Split -> null
 }
 
 @Composable
@@ -76,4 +86,5 @@ private fun noticeText(notice: EntryNotice): String = when (notice) {
     is EntryNotice.UndoFailed -> notice.status?.let { stringResource(R.string.history_undo_failed_status, it) }
         ?: stringResource(R.string.history_undo_failed)
     is EntryNotice.Duplicated -> stringResource(R.string.history_duplicated)
+    is EntryNotice.Split -> stringResource(R.string.history_split_done)
 }

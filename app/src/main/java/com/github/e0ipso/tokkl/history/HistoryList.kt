@@ -69,9 +69,9 @@ import java.util.Locale
 /**
  * The history in the Timer page's List view: the days with entries, newest first, each with its
  * total, and at the end the older days, which load from the server as the end shows. A tap on an
- * entry the phone holds hands its id to [onEdit] (docs/PRD.md H2). Its menu duplicates or deletes
- * it through [actions], whose messages show at the bottom of the list (H3, H5). Its Continue
- * button, on every entry and group, hands the entry's id to [onContinue] (T2).
+ * entry the phone holds hands its id to [onEdit] (docs/PRD.md H2). Its menu duplicates, splits or
+ * deletes it through [actions], whose messages show at the bottom of the list (H3, H5, H6). Its
+ * Continue button, on every entry and group, hands the entry's id to [onContinue] (T2).
  */
 @Composable
 fun HistoryList(
@@ -90,6 +90,7 @@ fun HistoryList(
             onEdit = onEdit,
             onContinue = onContinue,
             onDuplicate = actions::duplicate,
+            onSplit = actions::split,
             onDelete = actions::delete,
         )
         EntryActionsHost(
@@ -99,6 +100,10 @@ fun HistoryList(
             onConfirmDelete = actions::confirmDelete,
             onCancelDelete = actions::cancelDelete,
             modifier = Modifier.align(Alignment.BottomCenter),
+            settings = (state as? HistoryState.Shown)?.settings,
+            onSplitTextChange = actions::setSplitText,
+            onConfirmSplit = actions::confirmSplit,
+            onCancelSplit = actions::cancelSplit,
         )
     }
 }
@@ -112,6 +117,7 @@ internal fun HistoryContent(
     onEdit: (Long) -> Unit = {},
     onContinue: (Long) -> Unit = {},
     onDuplicate: (Long) -> Unit = {},
+    onSplit: (Long) -> Unit = {},
     onDelete: (Long) -> Unit = {},
 ) {
     when (state) {
@@ -120,7 +126,7 @@ internal fun HistoryContent(
         is HistoryState.NoAccountTime -> Column(modifier.fillMaxSize()) {
             Text(stringResource(R.string.history_unknown_time_zone, state.timeZone), style = MaterialTheme.typography.bodyLarge)
         }
-        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onContinue, onDuplicate, onDelete), modifier)
+        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onContinue, onDuplicate, onSplit, onDelete), modifier)
     }
 }
 
@@ -129,6 +135,7 @@ private class EntryCallbacks(
     val onEdit: (Long) -> Unit,
     val onContinue: (Long) -> Unit,
     val onDuplicate: (Long) -> Unit,
+    val onSplit: (Long) -> Unit,
     val onDelete: (Long) -> Unit,
 )
 
@@ -212,9 +219,9 @@ private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettin
 /**
  * One stopped entry, one item to TalkBack, and beside it the buttons that continue it and open its
  * actions, in the web app's order. Its marks are words, never a colour alone. A tap on an entry the
- * phone holds opens it for editing, and its menu duplicates or deletes it, in the order of the web
- * app's menu. The older days the server sent are not on the phone, so the change queue cannot
- * change them, and their rows take no tap and have no menu. Continue needs only the entry's
+ * phone holds opens it for editing, and its menu duplicates, splits or deletes it, in the order of
+ * the web app's editor. The older days the server sent are not on the phone, so the change queue
+ * cannot change them, and their rows take no tap and have no menu. Continue needs only the entry's
  * fields, so every row has it.
  */
 @Composable
@@ -327,6 +334,14 @@ private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineM
                 onClick = {
                     open = false
                     callbacks.onDuplicate(entry.id)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.history_split)) },
+                leadingIcon = { Icon(painterResource(R.drawable.ic_split), contentDescription = null) },
+                onClick = {
+                    open = false
+                    callbacks.onSplit(entry.id)
                 },
             )
             DropdownMenuItem(
