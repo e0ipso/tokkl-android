@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -65,7 +66,8 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
 /**
  * The app's navigation host: a back stack of [Destination]s that survives configuration changes
  * and process death. It starts at sign-in until a server and its token are stored, and at the
- * Timer page after that.
+ * Timer page after that. A restored signed-in back stack goes to sign-in when nobody is signed in
+ * any more.
  *
  * Every signed-in screen has the bottom bar ([AppNavigationBar]). Opening a page from it puts
  * that page right above Timer, so Back from any page in the bar or the More sheet goes to Timer,
@@ -101,6 +103,19 @@ fun TokklNavHost(
 ) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
+    // A signed-in page restored from saved state can outlive its session: a sign-out that finished
+    // in the background before the process died, or a token that no longer decrypts. The page
+    // shows while the stores are read, once per composition of the host, so sign-in pays nothing.
+    val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && it != Destination.SIGN_IN } }
+    if (restoredSignedIn) {
+        LaunchedEffect(Unit) {
+            val signedIn = withContext(Dispatchers.IO) { Session(appContext).isSignedIn() }
+            if (!signedIn) {
+                backStack.clear()
+                backStack.add(Destination.SIGN_IN)
+            }
+        }
+    }
     if (backStack.isEmpty()) {
         // Shows the window background, which matches the theme, while the
         // stores are read off the main thread.
