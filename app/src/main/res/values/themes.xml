@@ -4,16 +4,16 @@
         The window theme. Compose draws everything else through TokklTheme; this only paints
         the window in the scheme's background before the first frame, starting window included.
         Android picks res/values or res/values-night by the night mode it keeps for the app,
-        which the app sets to the theme setting on Android 12 and later. Below that it knows
-        only the system's mode, so when the setting picks the other one, MainActivity repaints
-        the window before its first frame.
+        which the app sets to the theme setting (ApplicationNightMode), so the starting window
+        already has the chosen mode's background. MainActivity then paints the window again from
+        the scheme in use before its first frame.
 
-        The launch splash, which Android 12 and later draw from this theme before the app runs,
-        shows the wordmark on the same background instead of the launcher icon, with no icon
-        background and no branding image, so the logo never sits beside the wordmark
-        (docs/PRD.md, Visual direction). Android 12 is the oldest version the app runs on, so
-        the platform's own attributes do this without core-splashscreen. Nothing holds the
-        splash: it goes with the app's first frame.
+        The launch splash, which Android draws from this theme before the app runs, shows the
+        wordmark on the same background instead of the launcher icon, with no icon background
+        and no branding image, so the logo never sits beside the wordmark (docs/PRD.md, Visual
+        direction). The platform's own attributes do this without core-splashscreen, because
+        every supported release (minSdk 31) has them. Nothing holds the splash: it goes with the
+        app's first frame.
     -->
     <style name="Theme.Tokkl" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>

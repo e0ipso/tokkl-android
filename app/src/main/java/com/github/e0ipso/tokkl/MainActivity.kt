@@ -183,9 +183,9 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Paints the window in the scheme's background and picks system bar icons that show on it.
-     * The window theme follows a light or dark setting only from Android 12 on, once Android has
-     * the app's night mode, and never knows the wallpaper's colours, so this sets the background
-     * and the icons from the chosen theme. Effects run before the first frame draws.
+     * The window theme follows the light or dark setting through the app's night mode, but never
+     * knows the wallpaper's colours, so this sets the background and the icons from the chosen
+     * theme. Effects run before the first frame draws.
      */
     @Composable
     private fun WindowFollowsTheme(darkTheme: Boolean) {
@@ -202,7 +202,7 @@ class MainActivity : ComponentActivity() {
      * off, so the screen's own background shows under both bars.
      *
      * With enforcement on, which androidx.activity's `enableEdgeToEdge` turns on for
-     * `SystemBarStyle.auto`, Android 10 and later paint a translucent scrim over a three-button
+     * `SystemBarStyle.auto`, Android paints a translucent scrim over a three-button
      * navigation bar: a near-white band on the light background, a lighter one on the dark.
      * `enableEdgeToEdge` also reapplies its first call's styles after every configuration change,
      * whatever later calls set. `WindowCompat.enableEdgeToEdge` sets the window flags once, with

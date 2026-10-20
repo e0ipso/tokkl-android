@@ -2,8 +2,9 @@ package com.github.e0ipso.tokkl.time
 
 import kotlin.math.abs
 
-// Port of parseTimeOfDay in ../tokkl/packages/web/src/lib/timeOfDay.ts at tokkl commit
-// 01d4d3475506b65dd7ad99434d4c307c74448373. TimeOfDayTest replays the cases from timeOfDay.test.ts.
+// Port of parseTimeOfDay in ../tokkl/packages/common/timeOfDay.ts at tokkl commit
+// c8dd0fd9bf5f9f67ccbf59079dacbf43c94c480f, where the parser moved from packages/web/src/lib
+// unchanged. TimeOfDayTest replays the cases tokkl's timeOfDay.test.ts held at 01d4d34.
 
 // The TypeScript anchors this with ^ and $; matchEntire does the same here.
 private val TIME_OF_DAY = Regex("""(\d{1,2})(?:[:.]?(\d{2}))?(?::\d{2})?(a|am|p|pm)?""")

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Lets the app reach any Tokkl server (docs/PRD.md S2 and S4). Tokkl itself
-    listens on plain HTTP, so cleartext must be allowed; Android 9 and later
-    block it unless the app opts in. Android 7 and later trust only system CAs
-    unless the app also trusts the CAs the user installed.
+    listens on plain HTTP, so cleartext must be allowed; Android blocks it
+    unless the app opts in. Android also trusts only system CAs unless the
+    app trusts the CAs the user installed too.
 
     A self-signed certificate is pinned in app code (TKA-0021), never here. The
     shared HTTP client sends nothing to an http:// server until the user has
