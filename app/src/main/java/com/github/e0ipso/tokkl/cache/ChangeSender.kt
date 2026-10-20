@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.time.jsTrim
 import java.net.ConnectException
 import java.net.NoRouteToHostException
 import java.net.UnknownHostException
@@ -418,9 +419,10 @@ class ChangeSender(
 
 /**
  * True when [entry] could be the one this create made: same workspace, description, project, task
- * and tags, and a start among [starts], the create's own and where the server snaps it. Tokkl
- * leaves `created_with` out of its answers, so that cannot tell entries apart. Billable and the
- * stop do not count, so the entry still matches after the server or another client changed them.
+ * and tags, the tags as [tagKey] compares them, and a start among [starts], the create's own and
+ * where the server snaps it. Tokkl leaves `created_with` out of its answers, so that cannot tell
+ * entries apart. Billable and the stop do not count, so the entry still matches after the server
+ * or another client changed them.
  */
 internal fun PendingChange.couldHaveMade(entry: ServerTimeEntry, starts: Set<Instant>): Boolean {
     val made = entry.toCached() ?: return false
@@ -428,9 +430,19 @@ internal fun PendingChange.couldHaveMade(entry: ServerTimeEntry, starts: Set<Ins
         made.description == description &&
         made.projectId == projectId &&
         made.taskId == taskId &&
-        made.tags.toSet() == tags.toSet() &&
+        made.tags.mapTo(HashSet(), ::tagKey) == tags.mapTo(HashSet(), ::tagKey) &&
         made.start in starts
 }
+
+/**
+ * The tag [name] as Tokkl matches it to a tag it has: trimmed, with A to Z in lower case. Tokkl
+ * 1.3.1 trims each name a create sends (`requireName` in packages/api/src/lib/values.ts) and looks
+ * it up with SQLite's `COLLATE NOCASE` (`findByName` in packages/api/src/models/tags.ts), which
+ * folds ASCII letters only. So an entry queued with "work" comes back tagged "Work" when the
+ * server has that tag.
+ */
+private fun tagKey(name: String): String =
+    buildString { name.jsTrim().forEach { append(if (it in 'A'..'Z') it.lowercaseChar() else it) } }
 
 /**
  * True when the request that failed with this error cannot have changed anything on the server:
