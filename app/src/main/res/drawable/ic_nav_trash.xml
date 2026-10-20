@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A bin, for the Trash page. The path is Tokkl's own, from Icon.tsx in the web app, drawn as it draws it:
+<!-- A bin, for the Trash page and the Delete action on a history entry. The path is Tokkl's own, from Icon.tsx in the web app, drawn as it draws it:
      a 2 unit stroke with round ends and joins on a 24 unit grid. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.JsonArray
@@ -54,10 +55,17 @@ import okhttp3.HttpUrl
  * ends. When the network returns, [BackgroundSend]'s worker calls [sendAndWait], also with the
  * app closed.
  *
+ * [undoDelete] takes a delete back (docs/PRD.md H3). A delete still in the queue leaves it with no
+ * request. One the server has, or may have, comes back through Tokkl's
+ * `POST /api/app/time_entries/{id}/restore`, which needs the server. The sender marks a delete
+ * [PendingChange.maybeSent] before sending it, and sends it holding the lock that [undoDelete]
+ * holds, so Undo never decides while a delete is on its way, and a delete that Undo took back
+ * never goes out.
+ *
  * @param client the signed-in account's client, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
  * @param onSent runs on [io] once a drain has sent at least one change, so the app can refresh:
- *   after the drain's last pass, not after each change or pass.
+ *   after the drain's last pass, not after each change or pass. It runs after a restore too.
  * @param serverStart where the server puts a start once the entry is stopped: Tokkl snaps it to
  *   the account's time resolution, and Toggl keeps it. Finds the entry a lost create made.
  */
@@ -89,8 +97,30 @@ class ChangeSender(
         data class SignedOut(override val sent: Int) : Outcome
     }
 
+    /** What [undoDelete] did. */
+    sealed interface UndoOutcome {
+        /** The delete had not gone out. It left the queue and the entry is back, with no request. */
+        data object Cancelled : UndoOutcome
+
+        /** The server restored the entry. */
+        data object Restored : UndoOutcome
+
+        /**
+         * The delete reached the server, or may have, and the server cannot be reached: no
+         * network, a proxy whose server is down, a 429, a refused trust check or no session.
+         * The delete stays as it was, so Undo can be tried again.
+         */
+        data object NeedsServer : UndoOutcome
+
+        /** The server did not restore the entry. [status] is its HTTP status, or null without one. */
+        data class Failed(val status: Int?) : UndoOutcome
+    }
+
     /** Guards [sending], [again] and [retry]. */
     private val lock = Any()
+
+    /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
+    private val deletes = Any()
 
     private var sending: Job? = null
 
@@ -175,6 +205,8 @@ class ChangeSender(
             val queued = store.first() ?: return Outcome.Empty(sent)
             val api = client() ?: return Outcome.SignedOut(sent)
             when (val result = send(api, queued)) {
+                // Undo took the delete back before it went out.
+                null -> Unit
                 is ApiResult.Success -> {
                     store.sent(result.value.change, result.value.serverId, result.value.entry)
                     sent++
@@ -203,15 +235,11 @@ class ChangeSender(
         }
     }
 
-    private fun send(api: TogglApiClient, change: PendingChange): ApiResult<Sent> {
+    /** Sends [change], or returns null when it left the queue before it went out. */
+    private fun send(api: TogglApiClient, change: PendingChange): ApiResult<Sent>? {
         if (change.kind == ChangeKind.CREATE) return create(api, change)
+        if (change.kind == ChangeKind.DELETE) return delete(api, change)
         val request = change.request(api.server)
-        if (change.kind == ChangeKind.DELETE) {
-            return when (val result = api.sendNoContent(request.method, request.url, request.body)) {
-                is ApiResult.Success -> ApiResult.Success(Sent(change, change.entryId, entry = null))
-                is ApiResult.Failure -> result
-            }
-        }
         return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer())) {
             is ApiResult.Success -> ApiResult.Success(Sent(change, result.value.id, result.value.toCached()))
             is ApiResult.Failure -> result
@@ -244,6 +272,68 @@ class ChangeSender(
             is ApiResult.Failure -> {
                 if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
                 result
+            }
+        }
+    }
+
+    /**
+     * Sends the queued delete [change], marked [PendingChange.maybeSent] first, or returns null
+     * when Undo took it back before then. The mark clears when the failure shows that the server
+     * deleted nothing.
+     */
+    private fun delete(api: TogglApiClient, change: PendingChange): ApiResult<Sent>? =
+        synchronized(deletes) {
+            if (!store.maybeSent(change, true)) return null
+            val request = change.request(api.server)
+            when (val result = api.sendNoContent(request.method, request.url, request.body)) {
+                is ApiResult.Success -> ApiResult.Success(Sent(change, change.entryId, entry = null))
+                is ApiResult.Failure -> {
+                    if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
+                    result
+                }
+            }
+        }
+
+    /**
+     * Takes back the delete of the entry [entryId], the id the phone deleted it under. A delete
+     * the sender has not sent leaves the queue, with no request. Otherwise the server restores the
+     * entry with `POST /api/app/time_entries/{id}/restore`, a Tokkl-only endpoint, so call this
+     * only when `Capabilities.restore` is true. Blocks the sender's deletes meanwhile.
+     */
+    suspend fun undoDelete(entryId: Long): UndoOutcome {
+        val outcome = withContext(io) {
+            synchronized(deletes) {
+                when (val found = store.takeBackDelete(entryId)) {
+                    TakenBack.Unsent -> UndoOutcome.Cancelled
+                    is TakenBack.OnServer -> restore(found.serverId)
+                    TakenBack.Unknown -> UndoOutcome.Failed(status = null)
+                }
+            }
+        }
+        if (outcome == UndoOutcome.Restored) withContext(io) { onSent() }
+        return outcome
+    }
+
+    /** Asks the server to restore its entry [serverId], and records the answer. */
+    private fun restore(serverId: Long): UndoOutcome {
+        val api = client() ?: return UndoOutcome.NeedsServer
+        val url = api.server.app("time_entries", serverId.toString(), "restore")
+        // OkHttp sends a POST only with a body. Tokkl reads none.
+        return when (val result = api.send("POST", url, JsonObject(emptyMap()), ServerTimeEntry.serializer())) {
+            is ApiResult.Success -> {
+                store.restored(serverId, result.value.toCached())
+                UndoOutcome.Restored
+            }
+            is ApiResult.Failure -> when (val error = result.error) {
+                // A 2xx: the server restored it, in an answer the phone cannot read.
+                is ApiError.InvalidResponse -> {
+                    store.restored(serverId, answer = null)
+                    UndoOutcome.Restored
+                }
+                is ApiError.Network, is ApiError.RateLimited, is ApiError.TrustRefused -> UndoOutcome.NeedsServer
+                is ApiError.UnexpectedStatus -> if (error.status in PROXY_UNREACHABLE) UndoOutcome.NeedsServer else UndoOutcome.Failed(error.status)
+                ApiError.AuthFailed -> UndoOutcome.Failed(ApiError.AuthFailed.status)
+                is ApiError.HostNotAllowed -> UndoOutcome.Failed(status = null)
             }
         }
     }
@@ -291,6 +381,9 @@ class ChangeSender(
 
         /** Twice the farthest a snap moves a start: half of Tokkl's coarsest time resolution, an hour. */
         val LOOKUP_MARGIN: Duration = Duration.ofHours(1)
+
+        /** Bad gateway, service unavailable and gateway timeout, which a proxy answers while its server is down. */
+        private val PROXY_UNREACHABLE = setOf(502, 503, 504)
     }
 }
 

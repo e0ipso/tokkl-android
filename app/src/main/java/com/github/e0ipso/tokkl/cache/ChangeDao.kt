@@ -50,8 +50,13 @@ abstract class ChangeDao {
     @Query("SELECT EXISTS(SELECT 1 FROM entry_ids WHERE serverId = :serverId)")
     abstract fun isMapped(serverId: Long): Boolean
 
+    /** Returns how many changes it marked: none when the change has left the queue. */
     @Query("UPDATE pending_changes SET maybeSent = :maybeSent WHERE sequence = :sequence")
-    abstract fun setMaybeSent(sequence: Long, maybeSent: Boolean)
+    abstract fun setMaybeSent(sequence: Long, maybeSent: Boolean): Int
+
+    /** The queued delete of the entry [entryId], or null when the queue holds none. */
+    @Query("SELECT * FROM pending_changes WHERE entryId = :entryId AND kind = 'DELETE' ORDER BY sequence DESC LIMIT 1")
+    abstract fun queuedDelete(entryId: Long): PendingChange?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract fun insertMapping(mapping: EntryIdMapping)

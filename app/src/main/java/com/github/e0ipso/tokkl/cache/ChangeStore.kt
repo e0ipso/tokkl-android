@@ -29,11 +29,43 @@ interface ChangeStore {
      */
     fun endBefore(start: PendingChange, later: CachedTimeEntry): PendingChange
 
-    /** Records [PendingChange.maybeSent] for the queued create [change]. Blocks on disk I/O. */
-    fun maybeSent(change: PendingChange, maybeSent: Boolean)
+    /**
+     * Records [PendingChange.maybeSent] for the queued create or delete [change]. Returns false
+     * when [change] has left the queue, as a delete does when Undo takes it back. Blocks on disk
+     * I/O.
+     */
+    fun maybeSent(change: PendingChange, maybeSent: Boolean): Boolean
 
     /** True when a create from the phone already maps to the server's entry [serverId]. Blocks on disk I/O. */
     fun isMapped(serverId: Long): Boolean
+
+    /**
+     * Takes back the delete of the entry [entryId], the id the phone deleted it under, in one
+     * transaction: a queued delete that the sender has not sent leaves the queue, and the entry is
+     * back in the cache as the delete found it. Otherwise the server has the delete, or may have
+     * it, and only the server can restore the entry. Blocks on disk I/O.
+     */
+    fun takeBackDelete(entryId: Long): TakenBack
+
+    /**
+     * Records that the server restored its entry [serverId], in one transaction: a delete of it
+     * still queued leaves the queue, and [answer], the entry as the server sent it back, goes to
+     * the cache unless more changes to the entry wait in the queue. [answer] is null when the
+     * phone could not read it. Blocks on disk I/O.
+     */
+    fun restored(serverId: Long, answer: CachedTimeEntry?)
+}
+
+/** What [ChangeStore.takeBackDelete] found. */
+sealed interface TakenBack {
+    /** The delete had not gone out. It left the queue and the entry is back, with no request. */
+    data object Unsent : TakenBack
+
+    /** The delete reached the server, or may have, so the server has to restore [serverId]. */
+    data class OnServer(val serverId: Long) : TakenBack
+
+    /** Neither the queue nor the server can have a delete of the entry, so nothing comes back. */
+    data object Unknown : TakenBack
 }
 
 /** The queue in [database]. */
@@ -69,9 +101,33 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
             ended
         }
 
-    override fun maybeSent(change: PendingChange, maybeSent: Boolean) = dao.setMaybeSent(change.sequence, maybeSent)
+    override fun maybeSent(change: PendingChange, maybeSent: Boolean): Boolean = dao.setMaybeSent(change.sequence, maybeSent) > 0
 
     override fun isMapped(serverId: Long): Boolean = dao.isMapped(serverId)
+
+    override fun takeBackDelete(entryId: Long): TakenBack =
+        database.runInTransaction<TakenBack> {
+            // The server's id once the server has answered the create of an entry made on the phone.
+            val id = if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
+            val delete = dao.queuedDelete(id)
+            when {
+                delete != null && !delete.maybeSent -> {
+                    dao.delete(delete.sequence)
+                    dao.upsertEntry(delete.entry())
+                    TakenBack.Unsent
+                }
+                // A delete goes out after the create of its entry, so it carries the server's id.
+                id > 0 -> TakenBack.OnServer(id)
+                else -> TakenBack.Unknown
+            }
+        }
+
+    override fun restored(serverId: Long, answer: CachedTimeEntry?) {
+        database.runInTransaction {
+            dao.queuedDelete(serverId)?.let { dao.delete(it.sequence) }
+            if (answer != null && dao.countFor(serverId) == 0) dao.upsertEntry(answer)
+        }
+    }
 }
 
 /**

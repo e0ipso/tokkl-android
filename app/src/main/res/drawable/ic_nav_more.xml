@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Three dots, for the More item that opens the sheet with the other pages. The path is Tokkl's own, from Icon.tsx in the web app, drawn as it draws it:
+<!-- Three dots, for the More item that opens the sheet with the other pages, and for the menu of actions on a history entry. The path is Tokkl's own, from Icon.tsx in the web app, drawn as it draws it:
      a 2 unit stroke with round ends and joins on a 24 unit grid. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

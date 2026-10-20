@@ -38,10 +38,12 @@ enum class ChangeKind {
  * @property stop the stop the user gave or the tap time of Stop, or null while the entry runs.
  * @property tags tag names. The server creates any it does not know.
  * @property tagIds the cached ids of [tags], for the cache row only. The server gets the names.
- * @property maybeSent the sender posted this create and the server may have stored it, because
- *   no answer came back that rules it out: the connection dropped, the read timed out, the app
- *   died mid-request, the server answered 5xx or the phone could not read its 2xx. Before posting
- *   it again the sender looks for the entry that post made. Only a create sets it.
+ * @property maybeSent the sender sent this create or delete and the server may have stored it,
+ *   because no answer came back that rules it out: the connection dropped, the read timed out, the
+ *   app died mid-request, the server answered 5xx or the phone could not read its 2xx. Before
+ *   posting a create again the sender looks for the entry that post made. Undo of a marked delete
+ *   asks the server to restore the entry, since the server may have deleted it. Only a create and
+ *   a delete set it.
  */
 @Entity(tableName = "pending_changes", indices = [Index("entryId")])
 data class PendingChange(
@@ -61,12 +63,11 @@ data class PendingChange(
 ) {
 
     /** The cache row this change leaves, or null for a delete. */
-    fun cachedEntry(): CachedTimeEntry? =
-        if (kind == ChangeKind.DELETE) {
-            null
-        } else {
-            CachedTimeEntry(entryId, workspaceId, projectId, taskId, description, start, stop, billable, tags, tagIds)
-        }
+    fun cachedEntry(): CachedTimeEntry? = if (kind == ChangeKind.DELETE) null else entry()
+
+    /** The entry as this change has it: for a delete, as it was when the delete was queued. */
+    fun entry(): CachedTimeEntry =
+        CachedTimeEntry(entryId, workspaceId, projectId, taskId, description, start, stop, billable, tags, tagIds)
 
     companion object {
         /** A change of [kind] that leaves [entry] as it is given. */

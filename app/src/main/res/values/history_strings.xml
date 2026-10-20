@@ -29,5 +29,17 @@
     <string name="history_error_status">The server answered with HTTP %d, so older days can\'t load.</string>
     <string name="history_error_unreadable">The server\'s answer wasn\'t a list of time entries the app can read.</string>
     <string name="history_retry">Try again</string>
+    <!-- The button that opens the actions on an entry, with its description or history_no_description. -->
+    <string name="history_more_actions">More actions for %1$s</string>
+    <string name="history_delete">Delete</string>
+    <string name="history_deleted">Entry deleted</string>
+    <string name="history_undo">Undo</string>
+    <string name="history_undo_needs_server">Undo needs the server. Tap Undo again once this phone can reach it.</string>
+    <string name="history_undo_failed">The server didn\'t restore the entry.</string>
+    <string name="history_undo_failed_status">The server answered with HTTP %d, so the entry wasn\'t restored.</string>
+    <!-- Asked before a delete on a server that can't restore deleted entries, such as Toggl Track. -->
+    <string name="history_delete_confirm_title">Delete this entry?</string>
+    <string name="history_delete_confirm_message">This server can\'t restore deleted entries, so the delete can\'t be undone.</string>
+    <string name="history_delete_confirm">Delete entry</string>
     <string name="history_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t group entries by day.</string>
 </resources>

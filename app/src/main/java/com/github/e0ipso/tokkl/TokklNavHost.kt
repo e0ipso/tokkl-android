@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.clients.ClientsModel
 import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entry.EntryFormModel
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
+import com.github.e0ipso.tokkl.history.EntryActionsModel
 import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryModel
 import com.github.e0ipso.tokkl.licences.LicencesScreen
@@ -71,7 +72,8 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * Settings, stacks above that page, and the bar keeps marking the page. While [timerRunning] says
  * a time entry runs, the bar's Timer item carries a dot. The Timer page's [timer] picks projects,
  * tasks and tags from [cache]. A tap on an entry in the history, or on the Timer page's button for
- * a past entry, opens [entryForm] above the Timer page.
+ * a past entry, opens [entryForm] above the Timer page, and an entry's menu deletes it through
+ * [entryActions].
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -84,6 +86,7 @@ fun TokklNavHost(
     sessionTrust: SessionTrustModel,
     reports: ReportsModel,
     history: HistoryModel,
+    entryActions: EntryActionsModel,
     calendar: CalendarModel,
     projects: ProjectsModel,
     clients: ClientsModel,
@@ -126,6 +129,7 @@ fun TokklNavHost(
             themeSettings = themeSettings,
             reports = reports,
             history = history,
+            entryActions = entryActions,
             calendar = calendar,
             projects = projects,
             clients = clients,
@@ -178,6 +182,7 @@ private fun Screen(
     themeSettings: ThemeSettingsModel,
     reports: ReportsModel,
     history: HistoryModel,
+    entryActions: EntryActionsModel,
     calendar: CalendarModel,
     projects: ProjectsModel,
     clients: ClientsModel,
@@ -196,7 +201,7 @@ private fun Screen(
             onViewChange = onTimerViewChange,
             timer = timer,
             listContent = {
-                HistoryList(history, onEdit = { entryId ->
+                HistoryList(history, entryActions, onEdit = { entryId ->
                     entryForm.edit(entryId)
                     backStack.add(Destination.ENTRY)
                 })

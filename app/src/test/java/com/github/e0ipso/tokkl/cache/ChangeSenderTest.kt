@@ -679,6 +679,171 @@ class ChangeSenderTest {
         assertEquals(maybe.map { false }, maybe.map { it.leftNothingOnTheServer() })
     }
 
+    @Test
+    fun undoOfAnUnsentDeleteTakesItOutOfTheQueueWithNoRequest() {
+        store.queue(ChangeKind.UPDATE, 54, TAP, stop = TAP.plusSeconds(60), description = "Other")
+        store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
+
+        assertEquals(ChangeSender.UndoOutcome.Cancelled, runBlocking { sender.undoDelete(55) })
+
+        assertEquals("no request", 0, server.requestCount)
+        assertEquals("the other change stays queued", listOf(54L), store.changes.map { it.entryId })
+        assertEquals("the entry is back as the delete found it", listOf(55L to "Deleted"), store.putBack.map { it.id to it.description })
+    }
+
+    @Test
+    fun undoOfAnUnsentDeleteOfAnEntryMadeOnThePhoneLeavesItsCreateQueued() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
+        store.queue(ChangeKind.DELETE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
+
+        assertEquals(ChangeSender.UndoOutcome.Cancelled, runBlocking { sender.undoDelete(LOCAL) })
+
+        assertEquals(0, server.requestCount)
+        assertEquals(listOf(ChangeKind.CREATE), store.changes.map { it.kind })
+        assertEquals(listOf(LOCAL), store.putBack.map { it.id })
+    }
+
+    @Test
+    fun undoOfASentDeleteRestoresTheEntryThroughTokklsRestoreEndpoint() {
+        store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
+        server.enqueue(MockResponse.Builder().code(200).build())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
+
+        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { sender.undoDelete(55) })
+
+        val (delete, restore) = List(2) { server.takeRequest() }
+        assertEquals("DELETE /api/v9/workspaces/7/time_entries/55", "${delete.method} ${delete.url.encodedPath}")
+        assertEquals("POST /api/app/time_entries/55/restore", "${restore.method} ${restore.url.encodedPath}")
+        assertEquals("Basic ${java.util.Base64.getEncoder().encodeToString("tok-123:api_token".toByteArray())}", restore.headers["Authorization"])
+        val (id, answer) = store.restores.single()
+        assertEquals(55L, id)
+        assertEquals("the cache gets the entry as the server restored it", "Deleted", answer?.description)
+    }
+
+    @Test
+    fun undoOfASentDeleteOfAnEntryMadeOnThePhoneRestoresItUnderTheServerId() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
+        store.queue(ChangeKind.DELETE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
+        server.enqueue(entry(101, "Made offline", stop = "2026-10-19T08:01:00+00:00"))
+        server.enqueue(MockResponse.Builder().code(200).build())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        server.enqueue(entry(101, "Made offline", stop = "2026-10-19T08:01:00+00:00"))
+
+        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { sender.undoDelete(LOCAL) })
+
+        val restore = remainingRequests().last()
+        assertEquals("POST /api/app/time_entries/101/restore", "${restore.method} ${restore.url.encodedPath}")
+    }
+
+    @Test
+    fun undoOfADeleteWhoseAnswerWasLostAsksTheServerAndTakesItOutOfTheQueue() {
+        store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
+        // The server reads the delete, then the connection drops before the answer.
+        server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
+        val outcome = sender.drain()
+        assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
+        assertTrue("the server may have deleted it", store.changes.single().maybeSent)
+        server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
+
+        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { sender.undoDelete(55) })
+
+        val restore = remainingRequests().last()
+        assertEquals("POST /api/app/time_entries/55/restore", "${restore.method} ${restore.url.encodedPath}")
+        assertTrue("the delete never goes out again", store.changes.isEmpty())
+        assertTrue("nothing put back without the server", store.putBack.isEmpty())
+    }
+
+    @Test
+    fun aDeleteThatFailedWithoutReachingTheServerStaysUnmarkedSoUndoNeedsNoRequest() {
+        store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
+        server.enqueue(MockResponse.Builder().code(404).build())
+        assertEquals(ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(404)), sender.drain())
+        assertFalse("a 4xx deleted nothing", store.changes.single().maybeSent)
+
+        assertEquals(ChangeSender.UndoOutcome.Cancelled, runBlocking { sender.undoDelete(55) })
+
+        assertEquals("only the refused delete", 1, server.requestCount)
+    }
+
+    @Test
+    fun aDeleteThatUndoTookBackBeforeItsMarkNeverGoesOut() {
+        store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
+        store.queue(ChangeKind.UPDATE, 54, TAP, stop = TAP.plusSeconds(60), description = "Other")
+        // Undo runs after the sender read the delete and before it marked it.
+        store.afterFirst = { runBlocking { assertEquals(ChangeSender.UndoOutcome.Cancelled, sender.undoDelete(it.entryId)) } }
+        server.enqueue(entry(54, "Other", stop = "2026-10-19T08:01:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+
+        assertEquals(listOf("PUT /api/v9/workspaces/7/time_entries/54"), remainingRequests().map { "${it.method} ${it.url.encodedPath}" })
+    }
+
+    @Test
+    fun undoOfASentDeleteNeedsTheServerOfflineAndSignedOut() {
+        // The delete went out in an earlier drain, so the queue holds nothing. The first request
+        // opens a new connection, which OkHttp does not try again after it fails.
+        server.enqueue(MockResponse.Builder().onRequestStart(SocketEffect.CloseSocket()).build())
+        server.enqueue(MockResponse.Builder().code(503).build())
+        server.enqueue(MockResponse.Builder().code(429).build())
+
+        assertEquals("no network", ChangeSender.UndoOutcome.NeedsServer, runBlocking { sender.undoDelete(55) })
+        assertEquals("a proxy whose server is down", ChangeSender.UndoOutcome.NeedsServer, runBlocking { sender.undoDelete(55) })
+        assertEquals("too many requests", ChangeSender.UndoOutcome.NeedsServer, runBlocking { sender.undoDelete(55) })
+        signedIn = false
+        assertEquals("signed out", ChangeSender.UndoOutcome.NeedsServer, runBlocking { sender.undoDelete(55) })
+
+        assertTrue(store.restores.isEmpty())
+    }
+
+    @Test
+    fun aRestoreTheServerRefusesFailsWithItsStatus() {
+        store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
+        server.enqueue(MockResponse.Builder().code(200).build())
+        sender.drain()
+        server.enqueue(MockResponse.Builder().code(404).addHeader("Content-Type", "application/json").body("\"Time entry not found\"").build())
+        server.enqueue(MockResponse.Builder().code(403).build())
+
+        assertEquals(ChangeSender.UndoOutcome.Failed(404), runBlocking { sender.undoDelete(55) })
+        assertEquals(ChangeSender.UndoOutcome.Failed(403), runBlocking { sender.undoDelete(55) })
+        assertTrue(store.restores.isEmpty())
+    }
+
+    @Test
+    fun aRestoreAnsweredWithAnUnreadableBodyStillCountsAsRestored() {
+        server.enqueue(MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("[]").build())
+
+        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { sender.undoDelete(55) })
+
+        assertEquals(listOf(55L to null), store.restores)
+    }
+
+    @Test
+    fun aRestoreRefreshesTheAccountOnceAndACancelledDeleteDoesNot() {
+        val refreshes = java.util.concurrent.atomic.AtomicInteger()
+        val refreshing = ChangeSender(
+            store,
+            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            scope = scope,
+            io = Dispatchers.IO,
+            onSent = { refreshes.incrementAndGet() },
+            clock = clock,
+        )
+        store.queue(ChangeKind.DELETE, 54, TAP, stop = TAP.plusSeconds(60), description = "Unsent")
+        assertEquals(ChangeSender.UndoOutcome.Cancelled, runBlocking { refreshing.undoDelete(54) })
+        assertEquals(0, refreshes.get())
+
+        server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
+        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { refreshing.undoDelete(55) })
+        assertEquals(1, refreshes.get())
+    }
+
+    @Test
+    fun undoOfAnEntryMadeOnThePhoneThatNeitherQueueNorServerHasFails() {
+        assertEquals(ChangeSender.UndoOutcome.Failed(status = null), runBlocking { sender.undoDelete(LOCAL) })
+        assertEquals(0, server.requestCount)
+    }
+
     private fun waitUntil(condition: () -> Boolean) {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
         while (!condition()) {
@@ -746,7 +911,12 @@ class ChangeSenderTest {
         val mapped = mutableListOf<Pair<Long, Long>>()
         val answers = mutableListOf<CachedTimeEntry>()
         val later = mutableListOf<CachedTimeEntry>()
+        val putBack = mutableListOf<CachedTimeEntry>()
+        val restores = mutableListOf<Pair<Long, CachedTimeEntry?>>()
         var onFirstSent: (() -> Unit)? = null
+
+        /** Runs once, after the next read of the oldest change and outside the store's lock. */
+        var afterFirst: ((PendingChange) -> Unit)? = null
         private var sequence = 0L
 
         fun queue(
@@ -775,8 +945,11 @@ class ChangeSenderTest {
             )
         }
 
-        @Synchronized
-        override fun first(): PendingChange? = changes.firstOrNull()
+        override fun first(): PendingChange? {
+            val change = synchronized(this) { changes.firstOrNull() }
+            if (change != null) afterFirst?.also { afterFirst = null }?.invoke(change)
+            return change
+        }
 
         @Synchronized
         override fun sent(change: PendingChange, serverId: Long, answer: CachedTimeEntry?) {
@@ -806,12 +979,36 @@ class ChangeSenderTest {
         }
 
         @Synchronized
-        override fun maybeSent(change: PendingChange, maybeSent: Boolean) {
+        override fun maybeSent(change: PendingChange, maybeSent: Boolean): Boolean {
+            val queued = changes.any { it.sequence == change.sequence }
             changes.replaceAll { if (it.sequence == change.sequence) it.copy(maybeSent = maybeSent) else it }
+            return queued
         }
 
         @Synchronized
         override fun isMapped(serverId: Long): Boolean = mapped.any { it.second == serverId }
+
+        /** Takes a delete back as [RoomChangeStore] does, and keeps the entry it puts back for the test. */
+        @Synchronized
+        override fun takeBackDelete(entryId: Long): TakenBack {
+            val id = if (entryId < 0) mapped.firstOrNull { it.first == entryId }?.second ?: entryId else entryId
+            val delete = changes.lastOrNull { it.entryId == id && it.kind == ChangeKind.DELETE }
+            return when {
+                delete != null && !delete.maybeSent -> {
+                    changes.remove(delete)
+                    putBack += delete.entry()
+                    TakenBack.Unsent
+                }
+                id > 0 -> TakenBack.OnServer(id)
+                else -> TakenBack.Unknown
+            }
+        }
+
+        @Synchronized
+        override fun restored(serverId: Long, answer: CachedTimeEntry?) {
+            changes.removeAll { it.entryId == serverId && it.kind == ChangeKind.DELETE }
+            restores += serverId to answer
+        }
     }
 
     private companion object {

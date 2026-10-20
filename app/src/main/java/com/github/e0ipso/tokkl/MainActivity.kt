@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
                     sessionTrust = (application as TokklApplication).sessionTrust,
                     reports = reportsViewModel.model,
                     history = historyViewModel.model,
+                    entryActions = historyViewModel.actions,
                     calendar = calendarViewModel.model,
                     projects = projectsViewModel.model,
                     clients = clientsViewModel.model,

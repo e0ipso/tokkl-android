@@ -1,0 +1,214 @@
+package com.github.e0ipso.tokkl.history
+
+import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
+import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.EntryFields
+import java.time.Instant
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+/**
+ * The history's entry actions against a change queue and an Undo that record what they are asked
+ * to do. With Tokkl's restore endpoint a delete offers Undo at once, as the web app's EntryList.tsx
+ * does; without it the delete asks first and offers none.
+ */
+class EntryActionsModelTest {
+
+    private val main: ExecutorService = Executors.newSingleThreadExecutor()
+    private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
+    private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
+    private val calls = CopyOnWriteArrayList<String>()
+
+    @Volatile
+    private var undoOutcome: UndoOutcome = UndoOutcome.Restored
+
+    @Volatile
+    private var cached = true
+
+    @After
+    fun tearDown() {
+        scope.cancel()
+        main.shutdown()
+    }
+
+    @Test
+    fun withRestoreADeleteGoesAtOnceAndOffersUndo() {
+        val model = model(canRestore = true)
+
+        onMain { model.delete(ENTRY) }
+
+        val notice = awaitNotice(model) { it is EntryNotice.Deleted } as EntryNotice.Deleted
+        assertEquals(ENTRY to true, notice.entryId to notice.undo)
+        assertNull("nothing to confirm", model.state.value.confirmDelete)
+        assertEquals(listOf("delete $ENTRY"), calls)
+    }
+
+    @Test
+    fun withoutRestoreADeleteAsksFirstAndOffersNoUndo() {
+        val model = model(canRestore = false)
+
+        onMain { model.delete(ENTRY) }
+
+        assertEquals(EntryActionsState(confirmDelete = ENTRY), model.state.value)
+        assertEquals("nothing deleted before the answer", emptyList<String>(), calls)
+
+        onMain { model.confirmDelete() }
+
+        val notice = awaitNotice(model) { it is EntryNotice.Deleted } as EntryNotice.Deleted
+        assertEquals(ENTRY to false, notice.entryId to notice.undo)
+        assertNull(model.state.value.confirmDelete)
+        assertEquals(listOf("delete $ENTRY"), calls)
+    }
+
+    @Test
+    fun cancellingTheQuestionDeletesNothing() {
+        val model = model(canRestore = false)
+
+        onMain {
+            model.delete(ENTRY)
+            model.cancelDelete()
+            model.confirmDelete()
+        }
+
+        assertEquals(EntryActionsState(), model.state.value)
+        assertEquals(emptyList<String>(), calls)
+    }
+
+    @Test
+    fun aDeleteOfAnEntryTheCacheNoLongerHoldsShowsNothing() {
+        cached = false
+        val model = model(canRestore = true)
+
+        onMain { model.delete(ENTRY) }
+
+        awaitCalls(1)
+        onMain {}
+        assertEquals(EntryActionsState(), model.state.value)
+    }
+
+    @Test
+    fun undoTakesTheDeleteBackAndClearsTheMessage() {
+        for (outcome in listOf(UndoOutcome.Cancelled, UndoOutcome.Restored)) {
+            calls.clear()
+            undoOutcome = outcome
+            val model = model(canRestore = true)
+            onMain { model.delete(ENTRY) }
+            awaitNotice(model) { it is EntryNotice.Deleted }
+
+            onMain { model.undo(ENTRY) }
+
+            awaitCalls(2)
+            onMain {}
+            assertEquals("after $outcome", EntryActionsState(), model.state.value)
+            assertEquals(listOf("delete $ENTRY", "undo $ENTRY"), calls)
+        }
+    }
+
+    @Test
+    fun undoOfflineSaysItNeedsTheServerAndCanBeTriedAgain() {
+        undoOutcome = UndoOutcome.NeedsServer
+        val model = model(canRestore = true)
+
+        onMain { model.undo(ENTRY) }
+        val first = awaitNotice(model) { it is EntryNotice.UndoNeedsServer } as EntryNotice.UndoNeedsServer
+        assertEquals(ENTRY, first.entryId)
+
+        onMain { model.undo(ENTRY) }
+        val second = awaitNotice(model) { it is EntryNotice.UndoNeedsServer && it != first }
+
+        assertEquals("the same message shows again, as a new one", first.copy(serial = second.serial), second)
+        assertEquals(listOf("undo $ENTRY", "undo $ENTRY"), calls)
+    }
+
+    @Test
+    fun aRefusedRestoreSaysSo() {
+        undoOutcome = UndoOutcome.Failed(404)
+        val model = model(canRestore = true)
+
+        onMain { model.undo(ENTRY) }
+
+        val notice = awaitNotice(model) { it is EntryNotice.UndoFailed } as EntryNotice.UndoFailed
+        assertEquals(404, notice.status)
+    }
+
+    @Test
+    fun aDismissedMessageGoesAndALaterOneStays() {
+        val model = model(canRestore = true)
+        onMain { model.delete(ENTRY) }
+        val first = awaitNotice(model) { it is EntryNotice.Deleted }
+        onMain { model.delete(OTHER) }
+        val second = awaitNotice(model) { it is EntryNotice.Deleted && it.entryId == OTHER }
+
+        onMain { model.noticeDone(first) }
+        assertEquals("a message that went already leaves the new one", second, model.state.value.notice)
+
+        onMain { model.noticeDone(second) }
+        assertNull(model.state.value.notice)
+    }
+
+    private fun model(canRestore: Boolean) = EntryActionsModel(
+        changes = FakeChanges(),
+        undoDelete = { entryId ->
+            calls += "undo $entryId"
+            undoOutcome
+        },
+        canRestore = { canRestore },
+        scope = scope,
+    )
+
+    private fun awaitNotice(model: EntryActionsModel, condition: (EntryNotice) -> Boolean): EntryNotice {
+        var last: EntryActionsState? = null
+        return runBlocking {
+            withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first { it.notice?.let(condition) == true } }
+        }?.notice ?: throw AssertionError("timed out; the last state was $last, after $calls")
+    }
+
+    private fun awaitCalls(count: Int) {
+        val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
+        while (calls.size < count) {
+            if (System.nanoTime() > deadline) throw AssertionError("timed out after $calls")
+            Thread.sleep(POLL_MS)
+        }
+    }
+
+    /** The model's handlers run on the main thread, which [scope] stands in for. */
+    private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
+
+    private inner class FakeChanges : EntryChanges {
+        override suspend fun delete(entryId: Long): Boolean {
+            calls += "delete $entryId"
+            return cached
+        }
+
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("no timer starts")
+
+        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
+
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
+            throw AssertionError("nothing is created")
+
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
+            throw AssertionError("nothing is edited")
+    }
+
+    private companion object {
+        const val TIMEOUT_MS = 5_000L
+        const val POLL_MS = 10L
+        const val ENTRY = 55L
+        const val OTHER = 56L
+    }
+}
