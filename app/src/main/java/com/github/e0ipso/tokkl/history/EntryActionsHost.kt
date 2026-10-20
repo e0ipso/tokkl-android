@@ -16,7 +16,7 @@ import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 
 /**
  * The messages and the question of the history's entry actions: a snackbar for [EntryActionsState.notice],
- * with Undo when the notice offers it, and the question before a delete that cannot be undone.
+ * such as "Entry deleted" with Undo or "Entry duplicated", and the question before a delete that cannot be undone.
  * The snackbar is a polite live region, as Material's SnackbarHost makes each one, so TalkBack
  * reads the message and its Undo button when it appears. A snackbar with Undo stays for
  * Material's long duration, which grows as Android's accessibility timeout asks.
@@ -66,7 +66,7 @@ internal fun EntryActionsHost(
 private fun EntryNotice.undoes(): Long? = when (this) {
     is EntryNotice.Deleted -> entryId.takeIf { undo }
     is EntryNotice.UndoNeedsServer -> entryId
-    is EntryNotice.UndoFailed -> null
+    is EntryNotice.UndoFailed, is EntryNotice.Duplicated -> null
 }
 
 @Composable
@@ -75,4 +75,5 @@ private fun noticeText(notice: EntryNotice): String = when (notice) {
     is EntryNotice.UndoNeedsServer -> stringResource(R.string.history_undo_needs_server)
     is EntryNotice.UndoFailed -> notice.status?.let { stringResource(R.string.history_undo_failed_status, it) }
         ?: stringResource(R.string.history_undo_failed)
+    is EntryNotice.Duplicated -> stringResource(R.string.history_duplicated)
 }

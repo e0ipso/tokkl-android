@@ -579,6 +579,36 @@ class ChangeSenderTest {
     }
 
     @Test
+    fun aLostDuplicateIsPostedInsteadOfTakingItsSource() {
+        // A duplicate has every field and time of its source, entry 100, which the server held
+        // when the phone queued the copy, so the lookup for a lost copy must leave it out.
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(1800), description = "Manual", maybeSent = true, existingIds = listOf(100))
+        server.enqueue(entries(listed(100, "Manual", start = "2026-10-19T08:00:00+00:00")))
+        server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:30:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+
+        assertEquals("a lookup and a post", 2, server.requestCount)
+        val (lookup, post) = List(2) { server.takeRequest() }
+        assertEquals("GET /api/v9/me/time_entries", "${lookup.method} ${lookup.url.encodedPath}")
+        assertEquals("POST /api/v9/workspaces/7/time_entries", "${post.method} ${post.url.encodedPath}")
+        assertEquals("the copy, not its source", listOf(LOCAL to 101L), store.mapped)
+    }
+
+    @Test
+    fun aLostDuplicateTakesTheCopyItsPostMadeBesideItsSource() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(1800), description = "Manual", maybeSent = true, existingIds = listOf(100))
+        server.enqueue(
+            entries(listed(100, "Manual", start = "2026-10-19T08:00:00+00:00"), listed(101, "Manual", start = "2026-10-19T08:00:00+00:00")),
+        )
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+
+        assertEquals(listOf(LOCAL to 101L), store.mapped)
+        assertEquals("no second post", 1, server.requestCount)
+    }
+
+    @Test
     fun aLostCreateMatchesTheStartWhereTheServerSnappedIt() {
         val snapping = ChangeSender(
             store,
@@ -927,6 +957,7 @@ class ChangeSenderTest {
             description: String,
             tags: List<String> = emptyList(),
             maybeSent: Boolean = false,
+            existingIds: List<Long> = emptyList(),
         ) {
             changes += PendingChange(
                 sequence = ++sequence,
@@ -942,6 +973,7 @@ class ChangeSenderTest {
                 tags = tags,
                 tagIds = emptyList(),
                 maybeSent = maybeSent,
+                existingIds = existingIds,
             )
         }
 

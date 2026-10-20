@@ -64,15 +64,21 @@ import java.util.Locale
 /**
  * The history in the Timer page's List view: the days with entries, newest first, each with its
  * total, and at the end the older days, which load from the server as the end shows. A tap on an
- * entry the phone holds hands its id to [onEdit] (docs/PRD.md H2). Its menu deletes it through
- * [actions], whose messages show at the bottom of the list (H3).
+ * entry the phone holds hands its id to [onEdit] (docs/PRD.md H2). Its menu duplicates or deletes
+ * it through [actions], whose messages show at the bottom of the list (H3, H5).
  */
 @Composable
 fun HistoryList(model: HistoryModel, actions: EntryActionsModel, onEdit: (Long) -> Unit, modifier: Modifier = Modifier) {
     val state by model.state.collectAsState()
     val actionsState by actions.state.collectAsState()
     Box(modifier.fillMaxSize()) {
-        HistoryContent(state = state, onLoadOlder = model::loadOlder, onEdit = onEdit, onDelete = actions::delete)
+        HistoryContent(
+            state = state,
+            onLoadOlder = model::loadOlder,
+            onEdit = onEdit,
+            onDuplicate = actions::duplicate,
+            onDelete = actions::delete,
+        )
         EntryActionsHost(
             state = actionsState,
             onUndo = actions::undo,
@@ -91,6 +97,7 @@ internal fun HistoryContent(
     onLoadOlder: () -> Unit,
     modifier: Modifier = Modifier,
     onEdit: (Long) -> Unit = {},
+    onDuplicate: (Long) -> Unit = {},
     onDelete: (Long) -> Unit = {},
 ) {
     when (state) {
@@ -99,12 +106,12 @@ internal fun HistoryContent(
         is HistoryState.NoAccountTime -> Column(modifier.fillMaxSize()) {
             Text(stringResource(R.string.history_unknown_time_zone, state.timeZone), style = MaterialTheme.typography.bodyLarge)
         }
-        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onDelete), modifier)
+        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onDuplicate, onDelete), modifier)
     }
 }
 
 /** What a tap on an entry the phone holds, or on one of its actions, does with the entry's id. */
-private class EntryCallbacks(val onEdit: (Long) -> Unit, val onDelete: (Long) -> Unit)
+private class EntryCallbacks(val onEdit: (Long) -> Unit, val onDuplicate: (Long) -> Unit, val onDelete: (Long) -> Unit)
 
 @Composable
 private fun Days(state: HistoryState.Shown, onLoadOlder: () -> Unit, callbacks: EntryCallbacks, modifier: Modifier) {
@@ -177,7 +184,7 @@ private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettin
 /**
  * One stopped entry, one item to TalkBack, and beside it the button for its actions. Its marks
  * are words, never a colour alone. A tap on an entry the phone holds opens it for editing, and its
- * menu deletes it. The older days the server sent are not on the phone, so the change queue
+ * menu duplicates or deletes it, in the order of the web app's menu. The older days the server sent are not on the phone, so the change queue
  * cannot change them, and their rows take no tap and have no menu.
  */
 @Composable
@@ -206,6 +213,14 @@ private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineM
             )
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.history_duplicate)) },
+                leadingIcon = { Icon(painterResource(R.drawable.ic_copy), contentDescription = null) },
+                onClick = {
+                    open = false
+                    callbacks.onDuplicate(entry.id)
+                },
+            )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.history_delete)) },
                 leadingIcon = { Icon(painterResource(R.drawable.ic_nav_trash), contentDescription = null) },

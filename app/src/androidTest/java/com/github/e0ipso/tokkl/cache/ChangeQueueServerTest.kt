@@ -370,6 +370,41 @@ class ChangeQueueServerTest {
     }
 
     /**
+     * A duplicate has every field and time of its source, so the lookup for a create that may
+     * have reached the server must leave out the source, which the server held when the phone
+     * queued the copy. Otherwise the copy would never be posted.
+     */
+    @Test
+    fun aDuplicateThatNeverReachedTheServerIsPostedBesideItsSource() {
+        val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
+        val stop = start.plus(Duration.ofMinutes(30))
+        val source = web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", "Copied")
+                put("start", start.toString())
+                put("stop", stop.toString())
+            },
+            JsonObject.serializer(),
+        ).orFail("POST a time entry").getValue("id").jsonPrimitive.long
+        runBlocking { app.accountSettings.refresh().join() }
+        relay.hang()
+        val copy = runBlocking { app.changes.create(workspace, EntryFields(description = "Copied"), start, stop) }
+        runBlocking { app.sender.send().join() }
+        assertEquals("the copy stays queued", 1, unsentCount())
+        relay.release()
+        drainUntilEmpty()
+
+        val entries = serverEntriesAround(start)
+        assertEquals("the source and its copy: $entries", 2, entries.size)
+        assertTrue("the copy is an entry of its own", serverId(copy) != source)
+        assertEquals(setOf(source, serverId(copy)), entries.map { it.getValue("id").jsonPrimitive.long }.toSet())
+    }
+
+    /**
      * Queues [change] with no route to the server, as with no network, and waits until the drain
      * it starts has failed. The app is signed in through no relay afterwards: sign it in again.
      */

@@ -27,6 +27,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
 
     val actions = (application as TokklApplication).let { app ->
         EntryActionsModel(
+            entries = app.cache.entries,
             changes = app.changes,
             undoDelete = app.sender::undoDelete,
             canRestore = { app.capabilities.state.value.restore },

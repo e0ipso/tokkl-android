@@ -12,10 +12,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * A cache written by version 1, before the queue, or by version 2, before
- * `pending_changes.maybeSent`, opens under the current version through Room's migrations, keeps
- * its rows and its queue, and takes queued changes. Room checks the migrated tables against the
- * exported schema when it opens the file, so a migration that left them wrong fails here.
+ * A cache written by version 1, before the queue, by version 2, before
+ * `pending_changes.maybeSent`, or by version 3, before `pending_changes.existingIds`, opens under
+ * the current version through Room's migrations, keeps its rows and its queue, and takes queued
+ * changes. Room checks the migrated tables against the exported schema when it opens the file, so
+ * a migration that left them wrong fails here.
  */
 class CacheDatabaseMigrationTest {
 
@@ -87,6 +88,41 @@ class CacheDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun version3MigratesKeepsTheMarkedQueueAndRecordsTheServersEntriesOnANewCreate() {
+        context.deleteDatabase(FILE)
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+            VERSION_3.forEach(db::execSQL)
+            db.execSQL(
+                "INSERT INTO time_entries VALUES " +
+                    "(42, 7, NULL, NULL, 'From the server', ${START.toEpochMilli()}, ${START.plusSeconds(1800).toEpochMilli()}, 0, '[]', '[]')",
+            )
+            db.execSQL(
+                "INSERT INTO pending_changes VALUES " +
+                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Queued before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]', 1)",
+            )
+            db.version = 3
+        }
+
+        val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            val store = RoomChangeStore(database)
+            val queued = PendingChange(1, ChangeKind.CREATE, -1, 7, null, null, "Queued before the update", START, null, false, emptyList(), emptyList(), maybeSent = true)
+            assertEquals("the queued create survived, marked, with no ids", queued, store.first())
+
+            val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            val copy = runBlocking { queue.create(7, EntryFields(description = "From the server"), START, START.plusSeconds(1800)) }
+            assertEquals(
+                "a create queued now records the server's entry around its start",
+                listOf(42L),
+                database.changes().changesFor(copy).single().existingIds,
+            )
+        } finally {
+            database.close()
+            context.deleteDatabase(FILE)
+        }
+    }
+
     private companion object {
         const val FILE = "cache-migration-test.db"
         val START: Instant = Instant.parse("2026-10-19T08:00:00Z")
@@ -125,6 +161,20 @@ class CacheDatabaseMigrationTest {
             "CREATE INDEX IF NOT EXISTS `index_pending_changes_entryId` ON `pending_changes` (`entryId`)",
             "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
             "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '885651807ba8ad3b390113ed5f804c2f')",
+        )
+
+        /**
+         * The tables of version 3, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/3.json:
+         * those of version 2, with `pending_changes.maybeSent`.
+         */
+        val VERSION_3 = VERSION_1.dropLast(1) + listOf(
+            "CREATE TABLE IF NOT EXISTS `pending_changes` (`sequence` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` INTEGER, " +
+                "`taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, `stop` INTEGER, " +
+                "`billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, `maybeSent` INTEGER NOT NULL DEFAULT 0)",
+            "CREATE INDEX IF NOT EXISTS `index_pending_changes_entryId` ON `pending_changes` (`entryId`)",
+            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3c6b11c6c52fc8eca243b7d3d98dae21')",
         )
     }
 }

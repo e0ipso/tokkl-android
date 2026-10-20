@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -63,6 +64,10 @@ abstract class ChangeDao {
 
     @Query("SELECT * FROM time_entries WHERE id = :id")
     abstract fun entry(id: Long): CachedTimeEntry?
+
+    /** The ids of the cached entries from the server, not made on the phone, that start from [from] to [to]. */
+    @Query("SELECT id FROM time_entries WHERE id > 0 AND start BETWEEN :from AND :to")
+    abstract fun serverEntryIds(from: Instant, to: Instant): List<Long>
 
     @Query("SELECT * FROM time_entries WHERE stop IS NULL")
     abstract fun runningEntries(): List<CachedTimeEntry>

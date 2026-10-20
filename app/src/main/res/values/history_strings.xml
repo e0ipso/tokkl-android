@@ -31,6 +31,8 @@
     <string name="history_retry">Try again</string>
     <!-- The button that opens the actions on an entry, with its description or history_no_description. -->
     <string name="history_more_actions">More actions for %1$s</string>
+    <string name="history_duplicate">Duplicate</string>
+    <string name="history_duplicated">Entry duplicated</string>
     <string name="history_delete">Delete</string>
     <string name="history_deleted">Entry deleted</string>
     <string name="history_undo">Undo</string>

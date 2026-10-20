@@ -21,9 +21,11 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.DayOfWeek
@@ -33,6 +35,7 @@ import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -40,8 +43,8 @@ import org.junit.Test
 
 /**
  * The history's entry actions on screen, against a change queue and an Undo that record what they
- * are asked: the labels TalkBack reads for the menu and Delete, the message whose Undo TalkBack
- * announces, and the question before a delete that a server without restore cannot undo.
+ * are asked: the labels TalkBack reads for the menu, Duplicate and Delete, the message whose Undo
+ * TalkBack announces, and the question before a delete that a server without restore cannot undo.
  */
 class EntryActionsUiTest {
     @get:Rule
@@ -123,6 +126,20 @@ class EntryActionsUiTest {
         assertEquals(listOf("delete $ENTRY", "undo $ENTRY", "undo $ENTRY"), calls)
     }
 
+    @Test
+    fun duplicateHasATalkBackLabelAndCopiesTheEntry() {
+        show(canRestore = true)
+
+        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+            .performSemanticsAction(SemanticsActions.OnClick)
+        // TalkBack reads the item's text as its label.
+        composeRule.onNode(hasText(string(R.string.history_duplicate)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+
+        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_duplicated)).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.onAllNodes(hasText(string(R.string.history_undo))).assertCountEquals(0)
+        assertEquals(listOf("create 10 ${CACHED.start} ${CACHED.stop}"), calls)
+    }
+
     private fun openMenuAndDelete() {
         composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
             .performSemanticsAction(SemanticsActions.OnClick)
@@ -135,6 +152,7 @@ class EntryActionsUiTest {
 
     private fun show(canRestore: Boolean, undo: UndoOutcome = UndoOutcome.Restored) {
         val model = EntryActionsModel(
+            entries = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false))),
             changes = RecordingChanges(),
             undoDelete = { entryId ->
                 calls += "undo $entryId"
@@ -147,7 +165,7 @@ class EntryActionsUiTest {
             TokklTheme {
                 val state by model.state.collectAsState()
                 Box(Modifier.fillMaxSize()) {
-                    HistoryContent(state = HISTORY, onLoadOlder = {}, onDelete = model::delete)
+                    HistoryContent(state = HISTORY, onLoadOlder = {}, onDuplicate = model::duplicate, onDelete = model::delete)
                     EntryActionsHost(
                         state = state,
                         onUndo = model::undo,
@@ -173,8 +191,10 @@ class EntryActionsUiTest {
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
-            throw AssertionError("nothing is created")
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+            calls += "create $workspaceId $start $stop"
+            return -1
+        }
 
         override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
             throw AssertionError("nothing is edited")
@@ -199,6 +219,20 @@ class EntryActionsUiTest {
             zone = ZoneOffset.UTC,
             settings = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null),
             older = OlderDays.End,
+        )
+
+        /** The cache's row of the first entry in [HISTORY]. */
+        val CACHED = CachedTimeEntry(
+            id = ENTRY,
+            workspaceId = 10,
+            projectId = null,
+            taskId = null,
+            description = DESCRIPTION,
+            start = Instant.parse("2026-10-15T10:45:00Z"),
+            stop = Instant.parse("2026-10-15T11:50:00Z"),
+            billable = false,
+            tags = emptyList(),
+            tagIds = emptyList(),
         )
 
         fun entry(id: Long, description: String, start: String, stop: String) = HistoryEntry(

@@ -44,6 +44,10 @@ enum class ChangeKind {
  *   posting a create again the sender looks for the entry that post made. Undo of a marked delete
  *   asks the server to restore the entry, since the server may have deleted it. Only a create and
  *   a delete set it.
+ * @property existingIds for a create, the ids of the server's entries the phone held within
+ *   [ChangeSender.LOOKUP_MARGIN] of its start when it was queued. None of them can be the entry a
+ *   post of this create made, so the sender never takes one for it, as it would take the source
+ *   of a duplicate, which has every field and time of the copy.
  */
 @Entity(tableName = "pending_changes", indices = [Index("entryId")])
 data class PendingChange(
@@ -60,6 +64,7 @@ data class PendingChange(
     val tags: List<String>,
     val tagIds: List<Long>,
     @ColumnInfo(defaultValue = "0") val maybeSent: Boolean = false,
+    @ColumnInfo(defaultValue = "[]") val existingIds: List<Long> = emptyList(),
 ) {
 
     /** The cache row this change leaves, or null for a delete. */

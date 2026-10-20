@@ -142,15 +142,22 @@ class ChangeQueue(
         enqueue(ChangeKind.STOP, running.copy(stop = maxOf(at, running.start)))
     }
 
-    private fun queueCreate(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant?): Long =
-        enqueue(ChangeKind.CREATE, entry(id = 0, workspaceId, fields, start, stop))
+    /**
+     * Queues a create, with the server's entries the phone holds around its start, which a lost
+     * post's lookup must not take for it (see [PendingChange.existingIds]).
+     */
+    private fun queueCreate(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant?): Long {
+        val margin = ChangeSender.LOOKUP_MARGIN
+        val existing = dao.serverEntryIds(start.minus(margin), start.plus(margin))
+        return enqueue(ChangeKind.CREATE, entry(id = 0, workspaceId, fields, start, stop), existing)
+    }
 
     /**
      * Queues a change that leaves [entry] as given and applies it to the cache. A create gets its
      * local id here. Returns the entry's id.
      */
-    private fun enqueue(kind: ChangeKind, entry: CachedTimeEntry): Long {
-        val change = PendingChange.of(kind, entry)
+    private fun enqueue(kind: ChangeKind, entry: CachedTimeEntry, existingIds: List<Long> = emptyList()): Long {
+        val change = PendingChange.of(kind, entry).copy(existingIds = existingIds)
         val sequence = dao.insert(change)
         val queued = if (kind == ChangeKind.CREATE) {
             change.copy(sequence = sequence, entryId = -sequence).also(dao::update)

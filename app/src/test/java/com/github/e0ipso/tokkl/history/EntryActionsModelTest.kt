@@ -1,8 +1,10 @@
 package com.github.e0ipso.tokkl.history
 
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import java.time.Instant
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
@@ -12,6 +14,7 @@ import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
@@ -22,9 +25,10 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * The history's entry actions against a change queue and an Undo that record what they are asked
- * to do. With Tokkl's restore endpoint a delete offers Undo at once, as the web app's EntryList.tsx
- * does; without it the delete asks first and offers none.
+ * The history's entry actions against a cache the test fills and a change queue and an Undo that
+ * record what they are asked to do. With Tokkl's restore endpoint a delete offers Undo at once, as
+ * the web app's EntryList.tsx does; without it the delete asks first and offers none. Duplicate
+ * copies a stopped entry's fields and times, as the web app's duplicate does.
  */
 class EntryActionsModelTest {
 
@@ -38,6 +42,8 @@ class EntryActionsModelTest {
 
     @Volatile
     private var cached = true
+
+    private val entries = MutableStateFlow(listOf(EntryWithSendState(STOPPED, unsent = true), EntryWithSendState(RUNNING, unsent = false)))
 
     @After
     fun tearDown() {
@@ -160,7 +166,37 @@ class EntryActionsModelTest {
         assertNull(model.state.value.notice)
     }
 
+    @Test
+    fun duplicateCopiesTheFieldsAndTimesOfAStoppedEntry() {
+        val model = model(canRestore = true)
+
+        onMain { model.duplicate(STOPPED.id) }
+
+        awaitNotice(model) { it is EntryNotice.Duplicated }
+        val fields = EntryFields(description = "Code review", projectId = 3, taskId = 4, tags = listOf("review", "remote"), billable = true)
+        assertEquals(
+            "the source's workspace, fields, start and stop, as the web app posts them",
+            listOf("create 10 $fields ${STOPPED.start} ${STOPPED.stop}"),
+            calls,
+        )
+    }
+
+    @Test
+    fun aRunningEntryOrOneTheCacheDroppedMakesNoCopy() {
+        val model = model(canRestore = true)
+
+        onMain {
+            model.duplicate(RUNNING.id)
+            model.duplicate(DROPPED)
+        }
+        onMain {}
+
+        assertEquals(emptyList<String>(), calls)
+        assertEquals(EntryActionsState(), model.state.value)
+    }
+
     private fun model(canRestore: Boolean) = EntryActionsModel(
+        entries = entries,
         changes = FakeChanges(),
         undoDelete = { entryId ->
             calls += "undo $entryId"
@@ -198,8 +234,10 @@ class EntryActionsModelTest {
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
-            throw AssertionError("nothing is created")
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+            calls += "create $workspaceId $fields $start $stop"
+            return -1
+        }
 
         override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
             throw AssertionError("nothing is edited")
@@ -210,5 +248,22 @@ class EntryActionsModelTest {
         const val POLL_MS = 10L
         const val ENTRY = 55L
         const val OTHER = 56L
+        const val DROPPED = 57L
+
+        /** An entry with a change the server lacks: the copy takes its times as the cache holds them. */
+        val STOPPED = CachedTimeEntry(
+            id = 70,
+            workspaceId = 10,
+            projectId = 3,
+            taskId = 4,
+            description = "Code review",
+            start = Instant.parse("2026-10-19T08:00:12.250Z"),
+            stop = Instant.parse("2026-10-19T09:05:40.500Z"),
+            billable = true,
+            tags = listOf("review", "remote"),
+            tagIds = listOf(1, 2),
+        )
+
+        val RUNNING = STOPPED.copy(id = 71, stop = null)
     }
 }

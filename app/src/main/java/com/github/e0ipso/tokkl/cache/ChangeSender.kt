@@ -48,7 +48,8 @@ import okhttp3.HttpUrl
  * on disk, and clears the mark when a failure shows the server stored nothing, such as a 4xx or
  * no route. Neither Tokkl nor Toggl takes an idempotency key on a create, so before posting a
  * marked create again the sender reads the entries around its start, one more GET, and when one
- * matches it ([couldHaveMade]) it takes that entry's id instead of posting. OkHttp may not send the
+ * that the phone did not know when it queued the create matches it ([couldHaveMade]) it takes
+ * that entry's id instead of posting. OkHttp may not send the
  * create again on a new connection by itself either, so a lost answer always reaches the sender.
  *
  * [send] runs when a change is queued and after each refresh, and once more when a 429's wait
@@ -340,8 +341,9 @@ class ChangeSender(
 
     /**
      * The entry an earlier post of [create] made, or null when the server has none: one that
-     * [couldHaveMade] it, among the entries that start within [LOOKUP_MARGIN] of it, and that no
-     * other create from the phone maps to already.
+     * [couldHaveMade] it, among the entries that start within [LOOKUP_MARGIN] of it, that the
+     * server did not hold already when the create was queued ([PendingChange.existingIds]), such
+     * as a duplicate's source, and that no other create from the phone maps to already.
      */
     private fun earlierCopy(api: TogglApiClient, create: PendingChange): ApiResult<ServerTimeEntry?> {
         val start = create.start.truncatedTo(ChronoUnit.SECONDS)
@@ -354,7 +356,9 @@ class ChangeSender(
             is ApiResult.Failure -> return result
         }
         val starts = setOf(start, serverStart(start))
-        return ApiResult.Success(entries.firstOrNull { create.couldHaveMade(it, starts) && !store.isMapped(it.id) })
+        return ApiResult.Success(
+            entries.firstOrNull { create.couldHaveMade(it, starts) && it.id !in create.existingIds && !store.isMapped(it.id) },
+        )
     }
 
     /**
