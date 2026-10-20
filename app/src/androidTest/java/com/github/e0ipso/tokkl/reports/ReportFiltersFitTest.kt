@@ -15,6 +15,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
@@ -48,7 +49,8 @@ import org.junit.rules.RuleChain
 /**
  * The report filters at Android's largest font scale, 200%, with every kind of filter active, one
  * of them negated: the text on the reports screen that names each active filter, and the filter
- * sheet with its top row, its headings, "Is" and "Is not", every choice and Clear filters. No text is cut off or leaves its control or
+ * sheet with its top row, its search field, its headings, "Is" and "Is not", every choice and
+ * Clear filters. No text is cut off or leaves its control or
  * the screen, no two parts of the sheet's top row overlap, and every control keeps a 48dp touch
  * target. ReportFiltersTest checks what the filters do against the server.
  */
@@ -94,8 +96,13 @@ class ReportFiltersFitTest {
             "heading" to composeRule.onNode(hasText(string(R.string.reports_filters)) and isHeading() and inDialog()),
             "Apply button" to composeRule.onNode(hasText(string(R.string.reports_apply)) and hasClickAction() and inDialog()),
         )
-        assertFit(topRow, area = dialog)
-        assertNoOverlap(topRow + ("list" to list()))
+        val search = "search field" to composeRule.onNode(hasSetTextAction() and inDialog())
+        assertFit(topRow + search, area = dialog)
+        assertNoOverlap(topRow + search + ("list" to list()))
+        val searchLabel = composeRule.onNode(hasText(string(R.string.reports_filter_search)) and inDialog(), useUnmergedTree = true)
+        searchLabel.textLayout()?.let { assertFalse("text is cut off: search label", it.didOverflowHeight) }
+        assertTrue("the search label leaves its field", searchLabel.getUnclippedBoundsInRoot().inside(search.second.getUnclippedBoundsInRoot()))
+        assertTouchTargets(listOf(search))
         val apply = "Apply label" to composeRule.onNode(
             hasText(string(R.string.reports_apply)) and hasAnyAncestor(hasClickAction() and inDialog()),
             useUnmergedTree = true,

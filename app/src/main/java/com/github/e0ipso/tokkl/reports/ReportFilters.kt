@@ -73,6 +73,14 @@ fun List<Long?>.toggled(id: Long?): List<Long?> = if (id in this) this - id else
 data class FilterOption(val id: Long, val name: String)
 
 /**
+ * The options whose name holds [search], ignoring case, as the web app's filter menus narrow
+ * theirs, and those [picked] holds, so a search never hides what is ticked. A blank [search]
+ * keeps them all. Trim [search] first, as the web app does.
+ */
+fun List<FilterOption>.matching(search: String, picked: List<Long?>): List<FilterOption> =
+    if (search.isEmpty()) this else filter { it.id in picked || it.name.contains(search, ignoreCase = true) }
+
+/**
  * The projects, clients and tags the filter sheet offers, read from the phone's cache, so opening
  * the sheet sends nothing. As in the web app, archived projects and clients are offered too, and
  * active projects come before archived ones. [negation] offers "Is" and "Is not" on each of the

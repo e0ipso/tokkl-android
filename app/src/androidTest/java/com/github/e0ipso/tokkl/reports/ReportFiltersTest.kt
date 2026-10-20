@@ -4,12 +4,14 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
@@ -18,6 +20,9 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -241,6 +246,52 @@ class ReportFiltersTest {
         for (filter in listOf(R.string.reports_filter_project, R.string.reports_filter_client, R.string.reports_filter_tag)) {
             assertFalse("no \"Is not\" for ${string(filter)}", exists(inSheet(modeSwitch(R.string.reports_filter_mode_not_description, string(filter)))))
         }
+    }
+
+    /**
+     * The search field narrows the projects, clients and tags by name, ignoring case, as the web
+     * app's "Find project…" does. The "without" choices and a ticked choice stay, and typing
+     * asks nothing.
+     */
+    @Test
+    fun theSearchNarrowsTheChoicesAndAsksNothing() {
+        val relay = RequestCounter(TokklTestServer.url, " HTTP/1.1").also { this.relay = it }
+        ServerTrustStore(context).confirmCleartext(relay.url)
+        Session(context).save(relay.url, report.account.apiToken)
+        openReports()
+        Thread.sleep(SETTLE_MS)
+        val before = relay.count
+
+        openSheet()
+        val internal = inSheet(hasText("Internal") and isToggleable())
+        sheet().performScrollToNode(internal)
+        composeRule.onNode(internal).performClick().assertIsOn()
+        val search = inSheet(hasSetTextAction())
+        composeRule.onNode(search).assertIsDisplayed().performTextInput("  WEB ")
+        composeRule.waitForIdle()
+
+        val shown = listOf(
+            string(R.string.reports_without_project), "Website", "Internal",
+            string(R.string.reports_filter_without_client), string(R.string.reports_filter_without_tags),
+        )
+        for (choice in shown) sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
+        for (hidden in listOf("Acme", "deep", "meeting")) {
+            assertFalse("$hidden does not match", exists(inSheet(hasText(hidden) and isToggleable())))
+        }
+
+        composeRule.onNode(search).performTextReplacement("me")
+        composeRule.waitForIdle()
+        for (choice in listOf("Acme", "meeting", "Internal")) sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
+        for (hidden in listOf("Website", "deep")) {
+            assertFalse("$hidden does not match", exists(inSheet(hasText(hidden) and isToggleable())))
+        }
+
+        composeRule.onNode(search).performTextClearance()
+        composeRule.waitForIdle()
+        for (choice in listOf("Website", "Acme", "deep")) sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
+        Thread.sleep(SETTLE_MS)
+        assertEquals("searching asks nothing", before, relay.count)
+        assertEquals("the relay reached the server each time", emptyList<String>(), relay.failures)
     }
 
     /** The sheet offers the cached projects, clients and tags, and opening or closing it sends nothing. */

@@ -123,6 +123,8 @@
     <!-- An active "Is not" filter, as the web app's "not Website": Project: not Website, Internal. -->
     <string name="reports_filter_line_not">%1$s: not %2$s</string>
     <!-- The web app's choice between keeping the entries that match a filter and dropping them. -->
+    <!-- The field that narrows the sheet's projects, clients and tags by name. -->
+    <string name="reports_filter_search">Find a project, client or tag</string>
     <string name="reports_filter_mode_is">Is</string>
     <string name="reports_filter_mode_not">Is not</string>
     <!-- What TalkBack reads for each mode: %1$s is the filter, such as Project. -->

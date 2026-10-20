@@ -15,7 +15,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -38,10 +40,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.time.jsTrim
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
@@ -125,12 +129,16 @@ private fun idLine(@StringRes name: Int, @StringRes without: Int, ids: List<Long
 /**
  * The filters on a full screen, as the custom range, since a long list of projects needs the
  * room. Each list starts with its "without" choice, as in the web app, under the web app's "Is"
- * and "Is not" where the server honours them. Nothing applies until Apply, so the report is asked
- * for once; the close button leaves the filters as they were.
+ * and "Is not" where the server honours them. The search field above the lists narrows the
+ * projects, clients and tags by name, as the web app's "Find project…" does, and asks nothing.
+ * Nothing applies until Apply, so the report is asked for once; the close button leaves the
+ * filters as they were.
  */
 @Composable
 private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply: (ReportFilters) -> Unit, onDismiss: () -> Unit) {
     var draft by rememberSaveable(stateSaver = FILTERS_SAVER) { mutableStateOf(initial) }
+    var query by rememberSaveable { mutableStateOf("") }
+    val search = query.jsTrim()
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         FillScreenWindow()
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
@@ -153,12 +161,23 @@ private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply:
                         Text(stringResource(R.string.reports_apply))
                     }
                 }
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text(stringResource(R.string.reports_filter_search)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    modifier = Modifier
+                        .screenContent()
+                        .fillMaxWidth()
+                        .padding(bottom = TokklTheme.spacing.inGroup),
+                )
                 LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
                     idSection(
                         key = "project",
                         heading = R.string.reports_filter_project,
                         without = R.string.reports_without_project,
-                        options = options.projects,
+                        options = options.projects.matching(search, draft.projects),
                         picked = draft.projects,
                         negated = draft.projectsNot.takeIf { options.negation },
                         onNegatedChange = { draft = draft.copy(projectsNot = it) },
@@ -168,7 +187,7 @@ private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply:
                         key = "client",
                         heading = R.string.reports_filter_client,
                         without = R.string.reports_filter_without_client,
-                        options = options.clients,
+                        options = options.clients.matching(search, draft.clients),
                         picked = draft.clients,
                         negated = draft.clientsNot.takeIf { options.negation },
                         onNegatedChange = { draft = draft.copy(clientsNot = it) },
@@ -178,7 +197,7 @@ private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply:
                         key = "tag",
                         heading = R.string.reports_filter_tag,
                         without = R.string.reports_filter_without_tags,
-                        options = options.tags,
+                        options = options.tags.matching(search, draft.tags),
                         picked = draft.tags,
                         negated = draft.tagsNot.takeIf { options.negation },
                         onNegatedChange = { draft = draft.copy(tagsNot = it) },

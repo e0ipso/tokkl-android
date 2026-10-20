@@ -40,6 +40,17 @@ class ReportFiltersTest {
         assertEquals(emptyList<Long?>(), listOf<Long?>(null).toggled(null))
     }
 
+    /** As the web app's filter menus: the name holds the text, ignoring case, and a ticked option always stays. */
+    @Test
+    fun aSearchKeepsTheNamesHoldingItAndThePickedOnes() {
+        val options = listOf(FilterOption(1, "Website"), FilterOption(2, "Internal"), FilterOption(3, "Web shop"))
+
+        assertEquals(listOf(1L, 3L), options.matching("WEB", picked = emptyList()).map { it.id })
+        assertEquals(listOf(1L, 2L), options.matching("site", picked = listOf(null, 2L)).map { it.id })
+        assertEquals(emptyList<Long>(), options.matching("zzz", picked = listOf(null)).map { it.id })
+        assertEquals("a blank search keeps them all", options, options.matching("", picked = emptyList()))
+    }
+
     /** Toggl's Reports API v3 takes the same fields, with null for "without". */
     @Test
     fun theFieldsAreTheWebAppsAndOnlyForFiltersInUse() {
