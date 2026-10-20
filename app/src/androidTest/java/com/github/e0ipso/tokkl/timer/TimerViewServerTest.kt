@@ -8,6 +8,7 @@ import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -118,10 +119,15 @@ class TimerViewServerTest {
         }
     }
 
-    /** Offline, a tap shows the view at once and stays on the phone until the next refresh sends it. */
+    /**
+     * Offline, a tap shows the view at once and stays on the phone until the next refresh sends it.
+     * On screen, the network's return is such a refresh (MainActivity.networkChanged), so the
+     * network comes back while the app is in the background, which watches none, and the trip
+     * back to the foreground is the refresh that sends it.
+     */
     @Test
     fun anOfflineTapGoesWithTheNextRefresh() {
-        launch {
+        launch { scenario ->
             refresh()
             AirplaneMode.set(true, account.client)
 
@@ -131,10 +137,12 @@ class TimerViewServerTest {
                 TimerViewStore(context).load() == StoredTimerView(TimerView.CALENDAR, unsent = true)
             }
 
+            scenario.moveToState(Lifecycle.State.CREATED)
             AirplaneMode.set(false, account.client)
             assertEquals("nothing reached the server", null, serverView())
-            refresh()
+            assertEquals("the phone still keeps it unsent", StoredTimerView(TimerView.CALENDAR, unsent = true), TimerViewStore(context).load())
 
+            scenario.moveToState(Lifecycle.State.RESUMED)
             composeRule.waitUntil("the server has calendar", TIMEOUT_MS) { serverView() == "calendar" }
             composeRule.waitUntil("the phone marks it sent", TIMEOUT_MS) {
                 TimerViewStore(context).load() == StoredTimerView(TimerView.CALENDAR, unsent = false)
@@ -143,10 +151,10 @@ class TimerViewServerTest {
         }
     }
 
-    private fun launch(steps: () -> Unit) {
+    private fun launch(steps: (ActivityScenario<MainActivity>) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(TIMEOUT_MS)
-            steps()
+            steps(it)
         }
     }
 
