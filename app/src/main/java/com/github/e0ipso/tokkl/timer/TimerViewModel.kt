@@ -24,6 +24,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
             accountSettings = app.accountSettings.state,
             changes = app.changes,
             scope = viewModelScope,
+            trace = TapTrace.System,
         )
     }
 

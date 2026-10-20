@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -82,6 +83,12 @@ fun TimerBar(
     clock: Clock = Clock.systemUTC(),
 ) {
     val state by model.state.collectAsState()
+    // The next frame starts once the frame that composed a new state has drawn it. That ends the
+    // trace section of the Start or Stop tap that made the state.
+    LaunchedEffect(model, state) {
+        withFrameNanos {}
+        model.shown(state)
+    }
     val elapsed = rememberElapsedSeconds((state as? TimerState.Running)?.start, clock)
     Column(modifier) {
         TimerBarCore(model, cache, state, elapsed, onAddEntry)

@@ -83,6 +83,8 @@ sealed interface TimerState {
  * @param running the running entry with its send state, as AccountCache.running gives it.
  * @param accountSettings for the default workspace, where Start starts.
  * @param clock the time a Start tap shows until the cache has the queue's own tap time.
+ * @param trace marks each Start and Stop tap until the screen reports with [shown] that it drew
+ *   what the tap did.
  */
 class TimerModel(
     running: Flow<EntryWithSendState?>,
@@ -92,7 +94,11 @@ class TimerModel(
     private val changes: EntryChanges,
     private val scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),
+    private val trace: TapTrace = TapTrace.None,
 ) {
+
+    /** The trace section of the last Start or Stop tap, until the screen shows what it did. */
+    private var openTap: OpenTap? = null
 
     private val cached: StateFlow<CachedRunning> = running
         .map<EntryWithSendState?, CachedRunning> { CachedRunning.Read(it) }
@@ -112,7 +118,26 @@ class TimerModel(
         if (local.value.pending != null) return
         val shown = snapshot() as? TimerState.Idle ?: return
         val workspaceId = shown.workspaceId ?: return
+        beginTap(TapTrace.START) { it is TimerState.Running }
         startWith(workspaceId, shown.fields, typed = null)
+    }
+
+    /**
+     * Tells the model that the screen has drawn [state], which ends the trace section of a Start
+     * or Stop tap once [state] shows what the tap did. Call it on the main thread.
+     */
+    fun shown(state: TimerState) {
+        val tap = openTap ?: return
+        if (tap.done(state)) {
+            openTap = null
+            tap.end()
+        }
+    }
+
+    private fun beginTap(section: String, done: (TimerState) -> Boolean) {
+        // A screen that stopped showing the timer never reported the last tap's state.
+        openTap?.end()
+        openTap = OpenTap(trace.begin(section), done)
     }
 
     /**
@@ -190,6 +215,7 @@ class TimerModel(
         val shown = snapshot() as? TimerState.Running ?: return
         val entryId = shown.entryId ?: return
         val edited = local.value.edit?.takeIf { it.start == shown.start }?.fields
+        beginTap(TapTrace.STOP) { it is TimerState.Idle }
         val stopping = Pending.Stopping(shown.start)
         local.update { it.copy(pending = stopping, edit = null) }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -337,6 +363,9 @@ class TimerModel(
 
     /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
     private data class Edit(val start: Instant, val fields: EntryFields, val sent: Boolean)
+
+    /** A tap's open trace section, which [end] closes once the screen shows a state that is [done]. */
+    private class OpenTap(val end: () -> Unit, val done: (TimerState) -> Boolean)
 
     /** An [edit] not queued yet for the running entry [entryId], which a Continue or a favorite stops. */
     private data class Typed(val entryId: Long, val edit: Edit)

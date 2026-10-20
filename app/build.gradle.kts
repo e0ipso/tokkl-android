@@ -1,3 +1,4 @@
+import com.android.build.api.variant.HostTestBuilder
 import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
@@ -121,6 +122,15 @@ android {
         getByName("release") {
             signingConfig = signingConfigs.findByName("release")
         }
+        // The release build for the macrobenchmark module: not debuggable, so it runs as fast as
+        // a release does, but profileable, so the benchmark can record its trace, and signed with
+        // the debug key, so a test device installs it. Nothing ships it.
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            isProfileable = true
+        }
     }
 
     // When signing, AGP adds the dependency list to the APK signing block,
@@ -184,6 +194,11 @@ dependencies {
 // The dependency graph of the release runtime classpath, for the check below.
 val releaseDependencyGraph = objects.property(ResolvedComponentResult::class.java)
 androidComponents {
+    // The benchmark build runs the same code as the release build, whose unit tests `check`
+    // already runs.
+    beforeVariants(selector().withBuildType("benchmark")) { variant ->
+        variant.hostTests[HostTestBuilder.UNIT_TEST_TYPE]?.enable = false
+    }
     onVariants(selector().withBuildType("release")) { variant ->
         releaseDependencyGraph.set(
             variant.runtimeConfiguration.incoming.resolutionResult.rootComponent,

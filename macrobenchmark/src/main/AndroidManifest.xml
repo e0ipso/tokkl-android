@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Lets the benchmarks find the app's launcher activity. -->
+    <queries>
+        <package android:name="com.github.e0ipso.tokkl" />
+    </queries>
+
+</manifest>

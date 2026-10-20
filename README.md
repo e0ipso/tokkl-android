@@ -185,6 +185,19 @@ cp app/build/outputs/connected_android_test_additional_output/debugAndroidTest/c
   app/src/androidTest/assets/screenshots/
 ```
 
+### Benchmarks
+
+`macrobenchmark/` measures the app with [Jetpack Macrobenchmark](https://developer.android.com/topic/performance/benchmarking/macrobenchmark-overview). `StartupBenchmark` measures the cold start of the signed-in app to the Timer page with `StartupTimingMetric`. `TimerTapBenchmark` measures, with `TraceSectionMetric`, the app's `TimerStart` and `TimerStop` trace sections (`TapTrace` in `app/`), which run from a Start or Stop tap until the screen has drawn what the tap did. Both measure the app's `benchmark` build type: the release build, profileable and signed with the debug key. The module has no other variant, so `connectedDebugAndroidTest` leaves it out.
+
+The benchmarks sign in to the Tokkl server that `scripts/instrumented-tests.sh` starts, so run them through the script. The script fails a run in which the app's tests did not run, so the command also runs the app's tests in the `api` package, which check that server:
+
+```sh
+scripts/instrumented-tests.sh :macrobenchmark:connectedBenchmarkAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.benchmark,com.github.e0ipso.tokkl.api
+```
+
+The results land as `*-benchmarkData.json` under `macrobenchmark/build/outputs/connected_android_test_additional_output/benchmark/connected/<device>/`. `scripts/compare-benchmarks.sh BASELINE_DIR CURRENT_DIR` compares the medians of two runs and fails when one is more than 10% above the baseline's, or missing. The `benchmarks` job in `.github/workflows/ci.yml` compares each run with the last green run on `main`, and stores the results of each run on `main` that passes. The goals of 1.5 s for a cold start and 200 ms from tap to new state are for a mid-range phone, so they guide design and gate nothing. An emulator's medians compare only with other runs on the same emulator.
+
 ## Release builds
 
 F-Droid builds the app from source and compares its unsigned APK with the signed APK on the GitHub release. It publishes the APK signed with the project's key only when the two match apart from the signature ([reproducible builds](https://f-droid.org/docs/Reproducible_Builds/)). People who sideload install the same APK from the GitHub release.

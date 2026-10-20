@@ -57,6 +57,12 @@ class TimerModelTest {
     private val running = MutableStateFlow<EntryWithSendState?>(null)
     private val settings = MutableStateFlow<AccountSettings?>(SETTINGS)
     private val changes = FakeChanges()
+    private val taps = CopyOnWriteArrayList<String>()
+    private val trace = TapTrace { section ->
+        taps += "begin $section"
+        val end = { taps += "end $section" }
+        end
+    }
     private lateinit var model: TimerModel
 
     @Before
@@ -69,6 +75,7 @@ class TimerModelTest {
             changes = changes,
             scope = scope,
             clock = clock,
+            trace = trace,
         )
         // The screen collects the state while it shows.
         scope.launch { model.state.collect {} }
@@ -131,6 +138,43 @@ class TimerModelTest {
         onMain { model.start() }
 
         assertEquals("one entry started", 1, changes.calls.count { it.startsWith("start") })
+    }
+
+    @Test
+    fun startAndStopTapsAreTracedUntilTheScreenShowsWhatTheyDid() {
+        val idle = awaitIdle()
+        changes.gate = CompletableDeferred()
+        onMain {
+            model.start()
+            model.start()
+        }
+        assertEquals("one section for the Start that acted", listOf("begin TimerStart"), taps)
+        onMain { model.shown(idle) }
+        assertEquals("the idle timer is not what Start did", listOf("begin TimerStart"), taps)
+
+        val starting = awaitState("the draft runs") { it is TimerState.Running }
+        onMain { model.shown(starting) }
+        assertEquals(listOf("begin TimerStart", "end TimerStart"), taps)
+        changes.gate.complete(Unit)
+        val cached = awaitState("the cache's entry shows") { it is TimerState.Running && it.entryId != null }
+        onMain { model.shown(cached) }
+        assertEquals("a state with no tap open ends nothing", 2, taps.size)
+
+        onMain { model.stop() }
+        onMain { model.shown(cached) }
+        assertEquals("the running timer is not what Stop did", listOf("begin TimerStart", "end TimerStart", "begin TimerStop"), taps)
+        val stopped = awaitIdle()
+        onMain { model.shown(stopped) }
+        assertEquals(listOf("begin TimerStart", "end TimerStart", "begin TimerStop", "end TimerStop"), taps)
+    }
+
+    @Test
+    fun aTapTheScreenNeverShowedEndsAtTheNextTap() {
+        awaitIdle()
+        onMain { model.start() }
+        awaitState("the cache's entry shows") { it is TimerState.Running && it.entryId != null }
+        onMain { model.stop() }
+        assertEquals(listOf("begin TimerStart", "end TimerStart", "begin TimerStop"), taps)
     }
 
     @Test
