@@ -19,6 +19,7 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
@@ -338,14 +339,22 @@ class CalendarServerTest {
         withCalendar { model ->
             show(model, day)
             awaitBlock(spoken("Anchor", day.atTime(9, 0), day.atTime(9, 30)))
-            // From 08:00, an hour over the anchor's top, down half an hour. With the anchor scrolled
-            // into view at the grid's bottom, that is on screen in the little grid an upright phone
-            // shows under the timer and the favorites.
-            dragOnGrid(blockOf("Anchor"), from = { Offset(centerX, -HOUR.toPx()) }, dy = { HOUR.toPx() / 2 })
+            // Down half an hour from 08:00, an hour over the anchor's top, or where the anchor
+            // scrolled into view at the grid's top, from 10:00, half an hour under its bottom.
+            var start = day.atTime(8, 0)
+            dragOnGrid(blockOf("Anchor"), from = { onGrid ->
+                val above = Offset(centerX, -HOUR.toPx())
+                if (above.y in onGrid) {
+                    above
+                } else {
+                    start = day.atTime(10, 0)
+                    Offset(centerX, height + HOUR.toPx() / 2)
+                }
+            }, dy = { HOUR.toPx() / 2 })
 
-            val created = awaitCached("the created entry") { it.entry.start == instant(day.atTime(8, 0)) }
+            val created = awaitCached("the created entry") { it.entry.start == instant(start) }
             assertTrue("unsent offline", created.unsent)
-            assertEquals(instant(day.atTime(8, 30)), created.entry.stop)
+            assertEquals(instant(start.plusMinutes(30)), created.entry.stop)
             composeRule.waitUntil("the entry form opens", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.entry_save))) }
         }
     }
@@ -382,13 +391,23 @@ class CalendarServerTest {
     private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
 
     /**
-     * Scrolls the grid until [anchor]'s block shows, then holds and drags from [from], relative to
-     * the block, by [dy]. A press is a touch on the screen, so it must land on the part of the
-     * grid that shows: under the timer and the favorites, an upright phone shows under two hours
-     * of it, and a block below that is clipped to nothing, which puts its touch in the screen's
-     * corner. The press point is checked against the grid on screen first.
+     * Scrolls the Timer page's top away and the grid until [anchor]'s block shows, then holds and
+     * drags from [from], relative to the block, by [dy]. [from] gets the block's y range that the
+     * grid shows on screen. A press is a touch on the screen, so it must land on the part of the
+     * grid that shows: a block clipped to nothing puts its touch in the screen's corner. The press
+     * point is checked against the grid on screen first.
      */
-    private fun dragOnGrid(anchor: SemanticsMatcher, from: TouchInjectionScope.() -> Offset, dy: TouchInjectionScope.() -> Float) {
+    private fun dragOnGrid(
+        anchor: SemanticsMatcher,
+        from: TouchInjectionScope.(onGrid: ClosedFloatingPointRange<Float>) -> Offset,
+        dy: TouchInjectionScope.() -> Float,
+    ) {
+        // As under a thumb, the Timer page's title, timer, favorites and switch scroll away first,
+        // so the grid gets the page's height. A semantics scroll alone would spend part of the
+        // grid's scroll on the page's top and leave the block off the screen.
+        composeRule.onNode(hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable()))
+            .performTouchInput { swipeUp(startY = bottom - 1f, endY = top, durationMillis = SWIPE_MS) }
+        composeRule.waitForIdle()
         val block = composeRule.onNode(anchor)
         block.performScrollTo()
         // The grid is the innermost scrolling node around the block; the page may scroll too.
@@ -396,7 +415,7 @@ class CalendarServerTest {
             .minBy { it.boundsInRoot.height }.boundsInRoot
         val shown = block.fetchSemanticsNode().boundsInRoot
         block.performTouchInput {
-            val press = from()
+            val press = from((grid.top - shown.top)..(grid.bottom - shown.top))
             val y = shown.top + press.y
             check(y in grid.top..grid.bottom) { "the press at $y px is off the grid on screen, ${grid.top} to ${grid.bottom} px" }
             holdAndDrag(press, dy())
@@ -493,6 +512,7 @@ class CalendarServerTest {
     private companion object {
         const val ZONE = "Europe/Madrid"
         const val LOAD_TIMEOUT_MS = 30_000L
+        const val SWIPE_MS = 400L
 
         /** How long the offline foreground test watches the week stay as it was. */
         const val STAYS_MS = 3_000L
