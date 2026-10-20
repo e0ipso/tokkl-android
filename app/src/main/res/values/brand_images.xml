@@ -4,7 +4,5 @@
     mdpi, so ldpi screens get it too. raw/brand_images_source.txt says why they are aliases.
 -->
 <resources>
-    <drawable name="tokkl_wordmark_sm">@drawable/tokkl_wordmark_84px</drawable>
-    <drawable name="tokkl_wordmark_md">@drawable/tokkl_wordmark_130px</drawable>
     <drawable name="tokkl_wordmark_lg">@drawable/tokkl_wordmark_260px</drawable>
 </resources>

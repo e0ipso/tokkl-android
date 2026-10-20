@@ -22,22 +22,18 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
- * The sizes of [Brand], Tokkl's sm, md and lg in Brand.tsx, as the wordmark's width. Each has its
- * own images, so none is drawn scaled down from a larger size. The image names are aliases:
- * brand_images.xml in res/values and in each density's values folder points them at one file per
- * density. res/raw/brand_images_source.txt records where the files come from.
+ * The sizes of [Brand], as the wordmark's width. Only Tokkl's lg from Brand.tsx ships: the wordmark
+ * shows on sign-in and the launch splash only, never in a page header or a top bar, so sm and md
+ * had no screen. Each size has its own images, so none is drawn scaled down from a larger size.
+ * The image names are aliases: brand_images.xml in res/values and in each density's values folder
+ * points them at one file per density. res/raw/brand_images_source.txt records where the files
+ * come from.
  */
 enum class BrandSize(
     internal val wordmarkWidth: Dp,
     @DrawableRes internal val wordmark: Int,
 ) {
-    /** Tokkl's sm. No screen shows it: the wordmark never sits in a page header or a top bar. */
-    SMALL(84.dp, R.drawable.tokkl_wordmark_sm),
-
-    /** Tokkl's md. No screen shows it either. */
-    MEDIUM(130.dp, R.drawable.tokkl_wordmark_md),
-
-    /** On its own above a screen's content, as on sign-in. */
+    /** Tokkl's lg, on its own above a screen's content, as on sign-in. */
     LARGE(260.dp, R.drawable.tokkl_wordmark_lg),
 }
 

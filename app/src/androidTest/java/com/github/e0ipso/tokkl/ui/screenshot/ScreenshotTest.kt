@@ -10,15 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.semantics.SemanticsActions
@@ -92,8 +84,6 @@ import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
-import com.github.e0ipso.tokkl.ui.Brand
-import com.github.e0ipso.tokkl.ui.BrandSize
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
@@ -339,31 +329,6 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             composeRule.waitForIdle()
             check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { "PixelCopy copies a window from Android 14 on" }
             ReferenceImages.assertMatches("more-sheet-$variant", copyTheWindowOverTheActivity())
-        }
-    }
-
-    /**
-     * The brand's two smaller sizes, each with its own image. No screen shows them, since the
-     * wordmark stays out of page headers and top bars. Sign-in shows the large one.
-     */
-    @SignedOut
-    @Test
-    fun brandSizes() {
-        show({
-            Column(
-                verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .safeDrawingPadding()
-                    .padding(TokklTheme.spacing.space4),
-            ) {
-                Brand(BrandSize.SMALL)
-                Brand(BrandSize.MEDIUM)
-            }
-        }) {
-            composeRule.waitForIdle()
-            assertScreen("brand-sizes")
         }
     }
 
