@@ -326,6 +326,32 @@ class CalendarServerTest {
     }
 
     /**
+     * A drag on a block of a week only the server has keeps the new times once the change is sent
+     * and the refresh after it drops the entry from the phone, and a second drag starts from them.
+     */
+    @Test
+    fun aDragOnAnOlderWeekKeepsItsTimesAfterTheSend() {
+        val day = olderWeek.plusDays(2)
+        val description = "Moved on an older week"
+        val id = seed(description, day.atTime(9, 0), day.atTime(10, 0))
+        refresh()
+
+        withCalendar { model ->
+            show(model, day)
+            awaitBlock(spoken(description, day.atTime(9, 0), day.atTime(10, 0)))
+
+            dragOnGrid(blockOf(description), from = { center }, dy = { HOUR.toPx() })
+            awaitStoredAndDropped(id, day.atTime(10, 0), day.atTime(11, 0))
+            awaitBlock(spoken(description, day.atTime(10, 0), day.atTime(11, 0)))
+            assertTrue("the server week's old copy is gone", !exists(hasContentDescription(spoken(description, day.atTime(9, 0), day.atTime(10, 0)))))
+
+            dragOnGrid(blockOf(description), from = { center }, dy = { HOUR.toPx() })
+            awaitStoredAndDropped(id, day.atTime(11, 0), day.atTime(12, 0))
+            awaitBlock(spoken(description, day.atTime(11, 0), day.atTime(12, 0)))
+        }
+    }
+
+    /**
      * Offline, a long press and a drag on a cached day's empty space queues a new entry from where
      * the press was, and the entry form opens on it, as the web app's editor does.
      */
@@ -438,6 +464,24 @@ class CalendarServerTest {
             found != null
         }
         return checkNotNull(found)
+    }
+
+    /**
+     * Waits until the queue has sent the entry [id] and the server stores it from [start] to
+     * [stop], then until the refresh after the send has dropped it from the phone, as it does an
+     * entry that starts before the cache.
+     */
+    private fun awaitStoredAndDropped(id: Long, start: LocalDateTime, stop: LocalDateTime) {
+        val span = instant(start) to instant(stop)
+        composeRule.waitUntil("the server stores the entry from $start to $stop", LOAD_TIMEOUT_MS) {
+            sendTheQueue()
+            val stored = account.entry(id)
+            val times = listOf("start", "stop").map { OffsetDateTime.parse(stored.getValue(it).jsonPrimitive.content).toInstant() }
+            times == span.toList()
+        }
+        composeRule.waitUntil("the refresh drops the entry from the phone", LOAD_TIMEOUT_MS) {
+            runBlocking { app.cache.entries.first() }.none { it.entry.id == id }
+        }
     }
 
     private fun instant(at: LocalDateTime): Instant = at.atZone(zone).toInstant()

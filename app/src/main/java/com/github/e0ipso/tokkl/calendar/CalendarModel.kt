@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
@@ -121,7 +122,9 @@ enum class ResizeEdge { START, END }
  *
  * The calendar's drags create, move and resize entries (K2) through [changes], the change queue,
  * so they show at once and work offline on the weeks the phone keeps. An entry from a week the
- * server sent goes to the queue whole, whether the phone keeps it or not.
+ * server sent goes to the queue whole, whether the phone keeps it or not. The cache keeps one from
+ * before its window only until the send and the refresh after it, and the week then shows the copy
+ * the cache last held, until the week loads again.
  *
  * Call [step], [showToday], [loadWeek], [wentToBackground], [cameToForeground], [reconnected],
  * [create], [move] and [resize] on the main thread.
@@ -148,6 +151,14 @@ class CalendarModel(
     /** What the server sent, by the span it covers, as far as it has loaded. */
     private val loaded = MutableStateFlow<Map<Span, ServerWeek>>(emptyMap())
 
+    /**
+     * The newest copy the cache has shown of each entry from [loaded] that it held before its
+     * window, as after a drag on an older week, which the cache keeps only until the send and the
+     * refresh after it. [Edit.held] says whether the cache still held it when [state] last read
+     * the cache. A load that starts once the cache no longer holds an entry replaces its copy.
+     */
+    private val edited = MutableStateFlow<Map<Long, Edit>>(emptyMap())
+
     private val choice = combine(selected, loaded) { day, weeks -> day to weeks }
 
     /** The app went to the background, and has not come back yet. */
@@ -171,13 +182,14 @@ class CalendarModel(
                 val shown = day ?: today
                 val weekStart = time.startOfWeek(shown)
                 val server = weeks[spanOf(time, weekStart, today)]
+                val edits = keepEdits(cached, weeks, time)
                 CalendarState.Shown(
                     selected = shown,
                     weekStart = weekStart,
                     today = today,
                     zone = time.zone,
                     settings = settings,
-                    entries = weekEntries(cached, server?.entries.orEmpty(), projectRows, taskRows, time, weekStart),
+                    entries = weekEntries(cached, server?.entries.orEmpty().map { edits[it.id]?.entry ?: it }, projectRows, taskRows, time, weekStart),
                     week = if (isCached(weekStart, today)) WeekSource.Cached else server?.status ?: WeekSource.Loading,
                 )
             }
@@ -218,9 +230,15 @@ class CalendarModel(
         if (known != null && (known.status == WeekSource.Loading || known.status == WeekSource.Loaded && !known.stale)) return
         val before = known?.takeIf { it.status == WeekSource.Loaded }
         loaded.update { it + (span to (before?.copy(stale = false) ?: ServerWeek(emptyList(), WeekSource.Loading))) }
+        // The server has every edit that the cache no longer holds, so this load's copies replace them.
+        val sent = edited.value.filterValues { !it.held }
         scope.launch {
             val week = withContext(io) { fetch(span) }
             val kept = before?.takeIf { week.status == WeekSource.Unreachable }?.copy(stale = true)
+            if (kept == null && week.status == WeekSource.Loaded) {
+                val ids = week.entries.mapTo(HashSet()) { it.id }
+                edited.update { edits -> edits.filterNot { (id, edit) -> id in ids && sent[id] == edit } }
+            }
             loaded.update { it + (span to (kept ?: week)) }
         }
     }
@@ -260,6 +278,24 @@ class CalendarModel(
      */
     fun serverEntry(id: Long): CachedTimeEntry? =
         loaded.value.values.firstNotNullOfOrNull { week -> week.entries.firstOrNull { it.id == id } }
+            ?.let { edited.value[id]?.entry ?: it }
+
+    /**
+     * Updates [edited] from [cached] and returns it. An entry of [weeks] that the cache holds from
+     * before its window was changed on the phone, and its copy goes in, with the times the server
+     * stores for it. One that the cache holds inside its window shows from the cache, and one that
+     * the cache dropped keeps its copy, no longer held.
+     */
+    private fun keepEdits(cached: List<EntryWithSendState>, weeks: Map<Span, ServerWeek>, time: AccountTime): Map<Long, Edit> {
+        val ids = weeks.values.flatMapTo(HashSet()) { week -> week.entries.map { it.id } }
+        val windowStart = HistoryWindow.endingToday(time).start
+        val held = cached.filter { it.entry.id in ids }.associateBy { it.entry.id }
+        return edited.updateAndGet { edits ->
+            val dropped = edits.filterKeys { it !in held }.mapValues { (_, edit) -> edit.copy(held = false) }
+            val kept = held.values.filter { it.entry.start < windowStart }.associate { it.entry.id to Edit(it.entry.stored(time), held = true) }
+            dropped + kept
+        }
+    }
 
     /**
      * Queues the entry that a drag from clock minute [fromMinute] to [toMinute] on [day] makes, in
@@ -358,6 +394,9 @@ class CalendarModel(
      */
     private data class ServerWeek(val entries: List<CachedTimeEntry>, val status: WeekSource, val stale: Boolean = false)
 
+    /** The copy of an entry changed on the phone, and whether the cache [held] it when last read. */
+    private data class Edit(val entry: CachedTimeEntry, val held: Boolean)
+
     companion object {
         /** Bad gateway, service unavailable and gateway timeout. */
         private val PROXY_UNREACHABLE = setOf(502, 503, 504)
@@ -404,6 +443,13 @@ internal fun weekEntries(
     return rows
         .map { (entry, unsent) -> entry.shown(unsent, time, projectsById, tasksById) }
         .filter { it.start < to && (it.stop == null || it.stop > from) }
+}
+
+/** The entry with the times the server stores once it gets it: a stopped entry's span snapped. */
+private fun CachedTimeEntry.stored(time: AccountTime): CachedTimeEntry {
+    val stop = stop?.takeIf { !it.isBefore(start) } ?: return this
+    val span = time.snapUnsent(start, stop)
+    return copy(start = span.start, stop = span.stop)
 }
 
 private fun CachedTimeEntry.shown(

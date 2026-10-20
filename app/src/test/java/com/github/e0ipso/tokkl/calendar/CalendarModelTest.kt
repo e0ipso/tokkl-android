@@ -19,6 +19,7 @@ import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -333,6 +334,47 @@ class CalendarModelTest {
         assertEquals(8L, model.serverEntry(8)?.id)
     }
 
+    /**
+     * The cache holds an entry from a week only the server has from the drag until the send and
+     * the refresh after it drop it. The week keeps the moved times after that, a second drag starts
+     * from them, and the week's next load replaces them with the server's copy.
+     */
+    @Test
+    fun aMovedEntryOfAWeekFromTheServerKeepsItsTimesOnceTheCacheDropsIt() {
+        answer = json(Triple(8L, "2026-10-06T09:00:00Z", "2026-10-06T10:00:00Z"))
+        val cache = MutableStateFlow(emptyList<EntryWithSendState>())
+        val model = model(cached = emptyList(), settings = DRAG_SETTINGS, cache = cache)
+        model.select(OCTOBER_5)
+        model.loadWeek(OCTOBER_5)
+        val block = shown(model) { it.week == WeekSource.Loaded }.entries.single()
+
+        model.move(block, OCTOBER_5.plusDays(1), deltaMinutes = 60, dayMode = false)
+        val moved = entry(8, "2026-10-06T10:00:00Z", "2026-10-06T11:00:00Z")
+        cache.value = listOf(EntryWithSendState(moved, unsent = true))
+        shown(model) { it.entries.single().unsent }
+        cache.value = emptyList()
+        val kept = shown(model) { !it.entries.single().unsent }.entries.single()
+
+        assertEquals(Instant.parse("2026-10-06T10:00:00Z") to Instant.parse("2026-10-06T11:00:00Z"), kept.start to kept.stop)
+        assertEquals(moved, model.serverEntry(8))
+
+        model.move(kept, OCTOBER_5.plusDays(1), deltaMinutes = 60, dayMode = false)
+        assertEquals(
+            listOf(
+                "updateOlder 8 1 ${EntryFields(description = "e8")} 2026-10-06T10:00:00Z 2026-10-06T11:00:00Z",
+                "updateOlder 8 1 ${EntryFields(description = "e8")} 2026-10-06T11:00:00Z 2026-10-06T12:00:00Z",
+            ),
+            changes.calls,
+        )
+
+        answer = json(Triple(8L, "2026-10-06T13:00:00Z", "2026-10-06T14:00:00Z"))
+        model.wentToBackground()
+        model.cameToForeground()
+        model.loadWeek(OCTOBER_5)
+        val reloaded = shown(model) { it.entries.singleOrNull()?.start == Instant.parse("2026-10-06T13:00:00Z") }.entries.single()
+        assertEquals(Instant.parse("2026-10-06T14:00:00Z"), reloaded.stop)
+    }
+
     /** The timer edits the running entry, so no drag changes it, and nothing is created without a default workspace. */
     @Test
     fun theRunningEntryAndAnAccountWithoutAWorkspaceQueueNothing() {
@@ -346,8 +388,12 @@ class CalendarModelTest {
         assertEquals(emptyList<String>(), changes.calls)
     }
 
-    private fun model(cached: List<CachedTimeEntry>, settings: AccountSettings = SETTINGS) = CalendarModel(
-        entries = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
+    private fun model(
+        cached: List<CachedTimeEntry>,
+        settings: AccountSettings = SETTINGS,
+        cache: Flow<List<EntryWithSendState>> = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
+    ) = CalendarModel(
+        entries = cache,
         projects = flowOf(emptyList()),
         tasks = flowOf(emptyList()),
         accountSettings = MutableStateFlow(settings),
