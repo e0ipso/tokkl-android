@@ -1,13 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!--
         Lets the picker say when the phone is offline (docs/PRD.md P1), and lets the
         queue's background send wait for a network (O4). WorkManager's own manifest adds
-        it too, along with WAKE_LOCK, RECEIVE_BOOT_COMPLETED and FOREGROUND_SERVICE.
+        it too.
     -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!--
+        WorkManager's manifest adds these two, and the background send (O4) needs both:
+        WAKE_LOCK keeps the phone awake while the worker sends the queue, and
+        RECEIVE_BOOT_COMPLETED lets WorkManager schedule the waiting send again after a
+        reboot, so queued changes still go out. Declared here only to say why they stay.
+    -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!--
+        WorkManager's manifest also adds FOREGROUND_SERVICE and its SystemForegroundService,
+        which serve only workers that call setForeground. The queue's worker never does, and
+        the running timer's notification runs no foreground service (N1), so both go.
+    -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE"
+        tools:node="remove" />
     <!--
         The running timer's notification (docs/PRD.md N1). Android 13 and later show it only once
         the user allows it; asking is TKA-0058's.
@@ -47,6 +64,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- See FOREGROUND_SERVICE above: no worker runs in the foreground. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            tools:node="remove" />
         <!-- The running timer notification's Stop action. Only its own PendingIntent reaches it. -->
         <receiver
             android:name=".notification.StopTimerReceiver"

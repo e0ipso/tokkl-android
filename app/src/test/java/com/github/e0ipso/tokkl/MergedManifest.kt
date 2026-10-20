@@ -15,13 +15,15 @@ internal object MergedManifest {
 
     private const val TEST_CONFIG = "com/android/tools/test_config.properties"
 
-    /** The merged manifest's `<application>` element. */
-    fun application(): Element {
+    /** The merged manifest's root `<manifest>` element. */
+    fun manifest(): Element {
         val path = testConfig().getProperty("android_merged_manifest")
             ?: error("test_config.properties has no android_merged_manifest")
-        val manifest = parseXml(File(path))
-        return manifest.childElements().single { it.tagName == "application" }
+        return parseXml(File(path))
     }
+
+    /** The merged manifest's `<application>` element. */
+    fun application(): Element = manifest().childElements().single { it.tagName == "application" }
 
     /** Resolves `@xml/name` to the source file. The app has a single resource directory. */
     fun xmlResource(reference: String): Element {
