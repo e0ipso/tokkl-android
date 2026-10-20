@@ -37,7 +37,8 @@ class LoopbackRelay(
 
         /**
          * The server's answer goes on with the first [count] bytes of [bytes] once this returns, so
-         * a watcher can hold it back. The relay reuses [bytes] for the next chunk.
+         * a watcher can hold it back. An [IOException] thrown here cuts the connection on both
+         * sides and the chunk never reaches the app. The relay reuses [bytes] for the next chunk.
          */
         fun answering(bytes: ByteArray, count: Int) {}
     }

@@ -8,9 +8,10 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 
 /**
- * The app's only [OkHttpClient]. Every request goes through it, so its
- * connection pool, dispatcher and security settings apply everywhere.
- * SingleHttpClientTest fails when other app code builds an HTTP client.
+ * The app's only [OkHttpClient]. Every request goes through it, or through
+ * a client [sendingOnce] derives from it, so its connection pool, dispatcher
+ * and security settings apply everywhere. SingleHttpClientTest fails when
+ * other app code builds an HTTP client.
  *
  * Every request and redirect must stay on [ConfiguredServer.current], and a
  * plain `http://` server needs the user's confirmation in
@@ -30,6 +31,17 @@ object SharedHttpClient {
     fun cancelAll() {
         instance.dispatcher.cancelAll()
     }
+
+    /**
+     * [client] made to send each request once. OkHttp sends a request again on a new connection
+     * when one fails, also after the server has answered, so a request whose answer was lost
+     * would reach the server twice and its caller would read only the second answer. The derived
+     * client fails the call instead, and leaves recovery to the caller, also from a stale pooled
+     * connection. It shares the rest with [client]: connection pool, dispatcher, interceptors and
+     * trust checks, so the guard, the pinning and [cancelAll] cover it as they cover [client].
+     */
+    fun sendingOnce(client: OkHttpClient): OkHttpClient =
+        client.newBuilder().retryOnConnectionFailure(false).build()
 
     private fun build(): OkHttpClient {
         val trustManager = PinningTrustManager(platformTrustManager()) { host, port ->

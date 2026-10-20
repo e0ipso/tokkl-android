@@ -50,8 +50,11 @@ import okhttp3.HttpUrl
  * no route. Neither Tokkl nor Toggl takes an idempotency key on a create, so before posting a
  * marked create again the sender reads the entries around its start, one more GET, and when one
  * that the phone did not know when it queued the create matches it ([couldHaveMade]) it takes
- * that entry's id instead of posting. OkHttp may not send the
- * create again on a new connection by itself either, so a lost answer always reaches the sender.
+ * that entry's id instead of posting.
+ *
+ * Each try sends its change once: creates, updates and deletes go out with `resend` false, so
+ * OkHttp does not send one again on a new connection by itself, and a lost answer always reaches
+ * the sender, whose marks account for its own retries. The sender's reads may still go out again.
  *
  * [send] runs when a change is queued and after each refresh, and once more when a 429's wait
  * ends. When the network returns, [BackgroundSend]'s worker calls [sendAndWait], also with the
@@ -258,7 +261,7 @@ class ChangeSender(
         if (change.kind == ChangeKind.CREATE) return create(api, change)
         if (change.kind == ChangeKind.DELETE) return delete(api, change)
         val request = change.request(api.server)
-        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer())) {
+        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
             is ApiResult.Success -> ApiResult.Success(Sent(change, result.value.id, result.value.toCached()))
             is ApiResult.Failure -> result
         }
@@ -305,7 +308,7 @@ class ChangeSender(
         synchronized(deletes) {
             if (!store.maybeSent(change, true)) return null
             val request = change.request(api.server)
-            when (val result = api.sendNoContent(request.method, request.url, request.body)) {
+            when (val result = api.sendNoContent(request.method, request.url, request.body, resend = false)) {
                 is ApiResult.Success -> ApiResult.Success(Sent(change, change.entryId, entry = null))
                 is ApiResult.Failure -> when {
                     !change.maybeSent -> {

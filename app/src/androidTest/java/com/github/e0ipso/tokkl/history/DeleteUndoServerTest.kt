@@ -189,6 +189,43 @@ class DeleteUndoServerTest {
     }
 
     /**
+     * A delete whose connection dropped once the server had put the entry in the trash, on a
+     * connection OkHttp reused, while the network stays up (TKA-0208). OkHttp sent such a request
+     * again on its own, so the sender's first try got the 404 and kept the delete queued, and Undo
+     * left the entry in the trash. The queue's requests now go out once per try: the sender sees
+     * the dropped connection, its retry's 404 counts as sent, and Undo restores the entry.
+     */
+    @Test
+    fun undoOfADeleteWhoseConnectionDroppedAfterTheAnswerRestoresTheEntry() {
+        val id = recentEntry("Connection dropped")
+        refresh()
+        assertTrue("the server offers restore", app.capabilities.state.value.restore)
+
+        HangingRelay(TokklTestServer.url).use { relay ->
+            RequestCounter(relay.url, DELETE).use { deletes ->
+                signIn(deletes.url)
+                // A read right before, so the delete goes out on a pooled connection.
+                refresh()
+                relay.dropAnswerTo(DELETE)
+                assertTrue(runBlocking { app.changes.delete(id) })
+                sendTheQueue()
+
+                assertEquals("the relay dropped the delete's answer", 1, relay.droppedAnswers)
+                assertEquals("one DELETE per try: the dropped one and the retry", 2, deletes.count)
+                assertEquals(emptyList<String>(), deletes.failures)
+            }
+        }
+        signIn(TokklTestServer.url)
+        assertEquals("the server put it in the trash", listOf(id), trash())
+
+        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { app.sender.undoDelete(id) })
+        val restored = serverEntry(id)
+        assertTrue("the server has it again: $restored", restored is ApiResult.Success)
+        assertEquals("Connection dropped", (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content)
+        assertEquals("out of the trash", emptyList<Long>(), trash())
+    }
+
+    /**
      * In the app, the entry's menu deletes it and the message's Undo brings it back, on the phone
      * and on the server, whether the delete had gone out by then or not.
      */

@@ -2,7 +2,9 @@ package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.ServerUrl
 import java.io.Closeable
+import java.io.IOException
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -12,12 +14,17 @@ import java.util.concurrent.atomic.AtomicReference
  * the app sees as a network failure, and relays again.
  *
  * It can also hold one answer: [holdAnswerTo] lets a request through to the server and keeps the
- * server's answer from the app until [releaseAnswer], as a slow network does.
+ * server's answer from the app until [releaseAnswer], as a slow network does. Or drop one:
+ * [dropAnswerTo] lets a request through and cuts its connection when the answer comes, while new
+ * connections relay as before, as a network that fails for a moment does.
  */
 class HangingRelay(server: ServerUrl) : Closeable {
 
-    /** The start of the request whose answer to hold, until a connection sends it. */
-    private val awaited = AtomicReference<ByteArray?>()
+    /** The request whose answer to hold or drop, until a connection sends it. */
+    private val awaited = AtomicReference<Awaited?>()
+
+    /** How many answers the relay dropped. */
+    private val dropped = AtomicInteger()
 
     /** Opens when [releaseAnswer] lets the held answer through. */
     @Volatile
@@ -37,6 +44,9 @@ class HangingRelay(server: ServerUrl) : Closeable {
     /** The relay holds the answer that [holdAnswerTo] asked for. */
     val holdsAnswer: Boolean get() = holding
 
+    /** How many answers [dropAnswerTo] has cut so far. */
+    val droppedAnswers: Int get() = dropped.get()
+
     /**
      * Holds the server's answer to the next request that starts with [request], such as
      * `GET /api/v9/me/time_entries?`, until [releaseAnswer]. The server reads and answers the
@@ -44,10 +54,19 @@ class HangingRelay(server: ServerUrl) : Closeable {
      */
     fun holdAnswerTo(request: String) {
         answerGate = CountDownLatch(1)
-        awaited.set(request.toByteArray(Charsets.US_ASCII))
+        awaited.set(Awaited(request.toByteArray(Charsets.US_ASCII), drop = false))
     }
 
-    /** Passes the held answer on to the app, and holds no later one. */
+    /**
+     * Lets the next request that starts with [request] through to the server and cuts its
+     * connection on both sides once the server's answer starts, so the server acts on the request
+     * and the app never reads the answer. Plain http only, since the relay reads the request.
+     */
+    fun dropAnswerTo(request: String) {
+        awaited.set(Awaited(request.toByteArray(Charsets.US_ASCII), drop = true))
+    }
+
+    /** Passes the held answer on to the app, and holds or drops no later one. */
     fun releaseAnswer() {
         awaited.set(null)
         answerGate.countDown()
@@ -73,19 +92,23 @@ class HangingRelay(server: ServerUrl) : Closeable {
         private var tail = ByteArray(0)
 
         @Volatile
-        private var holdNext = false
+        private var next: Awaited? = null
 
         override fun sent(bytes: ByteArray, count: Int) {
             val seen = tail + bytes.copyOf(count)
             val request = awaited.get()
-            if (request != null && seen.contains(request) && awaited.compareAndSet(request, null)) holdNext = true
+            if (request != null && seen.contains(request.start) && awaited.compareAndSet(request, null)) next = request
             tail = seen.copyOfRange(maxOf(0, seen.size - TAIL_SIZE), seen.size)
         }
 
-        /** Waits while the answer is held. */
+        /** Waits while the answer is held, or cuts the connection to drop it. */
         override fun answering(bytes: ByteArray, count: Int) {
-            if (!holdNext) return
-            holdNext = false
+            val request = next ?: return
+            next = null
+            if (request.drop) {
+                dropped.incrementAndGet()
+                throw IOException("the relay drops the answer")
+            }
             holding = true
             try {
                 answerGate.await()
@@ -94,6 +117,9 @@ class HangingRelay(server: ServerUrl) : Closeable {
             }
         }
     }
+
+    /** The [start] of a request whose answer to hold, or to [drop]. */
+    private class Awaited(val start: ByteArray, val drop: Boolean)
 
     private fun ByteArray.contains(part: ByteArray): Boolean =
         (0..size - part.size).any { start -> part.indices.all { this[start + it] == part[it] } }
