@@ -16,6 +16,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
             projects = app.cache.projects,
             tasks = app.cache.tasks,
             accountSettings = app.accountSettings.state,
+            changes = app.changes,
             client = Session(application)::client,
             scope = viewModelScope,
             io = Dispatchers.IO,

@@ -13,6 +13,8 @@
     <string name="calendar_block_separator">" · "</string>
     <!-- What TalkBack reads for the running entry's start: from 09:00, running -->
     <string name="calendar_running_spoken">from %1$s, running</string>
+    <!-- TalkBack's action on a day's head. %1$s is the day, such as "Tue, 20 Oct". -->
+    <string name="calendar_add_entry">Add an entry on %1$s</string>
     <string name="calendar_loading">Loading the week…</string>
     <string name="calendar_offline_title">This week needs the server</string>
     <string name="calendar_offline_message">This phone keeps this week and last week. Other weeks load from the server once it can be reached.</string>

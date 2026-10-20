@@ -7,6 +7,8 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.Clock
@@ -53,6 +55,8 @@ class CalendarModelTest {
     private var status: Int = 200
 
     private lateinit var url: ServerUrl
+
+    private val changes = RecordingChanges()
 
     @Before
     fun setUp() {
@@ -279,11 +283,75 @@ class CalendarModelTest {
         assertEquals(WeekSource.Loading, monday.week)
     }
 
-    private fun model(cached: List<CachedTimeEntry>) = CalendarModel(
+    /** A drag on empty space queues an entry in the default workspace, on whole steps of 15 minutes, and hands back its id. */
+    @Test
+    fun aCreateDragQueuesAnEntryInTheDefaultWorkspace() {
+        val model = model(cached = emptyList(), settings = DRAG_SETTINGS)
+        val created = mutableListOf<Long>()
+
+        model.create(OCTOBER_20, fromMinute = 600, toMinute = 690) { created += it }
+        model.create(OCTOBER_20, fromMinute = 600, toMinute = 600) { created += it }
+
+        assertEquals(listOf("create 7 ${EntryFields()} 2026-10-20T10:00:00Z 2026-10-20T11:30:00Z"), changes.calls)
+        assertEquals(listOf(LOCAL_ID), created)
+    }
+
+    /** A move and a resize of a cached entry queue it with every field, from the times its block shows. */
+    @Test
+    fun aMoveAndAResizeQueueTheCachedEntry() {
+        val cached = entry(4, "2026-10-20T09:00:00Z", "2026-10-20T10:00:00Z").copy(description = "Plan", billable = true)
+        val model = model(cached = listOf(cached), settings = DRAG_SETTINGS)
+        val block = shown(model) { true }.entries.single()
+        val fields = EntryFields(description = "Plan", billable = true)
+
+        model.move(block, OCTOBER_20, deltaMinutes = 60, dayMode = true)
+        model.resize(block, ResizeEdge.END, deltaMinutes = 30)
+        model.resize(block, ResizeEdge.START, deltaMinutes = -45)
+
+        assertEquals(
+            listOf(
+                "update 4 $fields 2026-10-20T10:00:00Z 2026-10-20T11:00:00Z",
+                "update 4 $fields 2026-10-20T09:00:00Z 2026-10-20T10:30:00Z",
+                "update 4 $fields 2026-10-20T08:15:00Z 2026-10-20T10:00:00Z",
+            ),
+            changes.calls,
+        )
+    }
+
+    /** An entry from a week only the server has goes to the queue whole, in its own workspace. */
+    @Test
+    fun aMoveInAWeekFromTheServerQueuesTheServersEntry() {
+        answer = json(Triple(8L, "2026-10-06T09:00:00Z", "2026-10-06T10:00:00Z"))
+        val model = model(cached = emptyList(), settings = DRAG_SETTINGS)
+        model.select(OCTOBER_5)
+        model.loadWeek(OCTOBER_5)
+        val block = shown(model) { it.week == WeekSource.Loaded }.entries.single()
+
+        model.move(block, OCTOBER_5.plusDays(1), deltaMinutes = -30, dayMode = false)
+
+        assertEquals(listOf("updateOlder 8 1 ${EntryFields(description = "e8")} 2026-10-06T08:30:00Z 2026-10-06T09:30:00Z"), changes.calls)
+        assertEquals(8L, model.serverEntry(8)?.id)
+    }
+
+    /** The timer edits the running entry, so no drag changes it, and nothing is created without a default workspace. */
+    @Test
+    fun theRunningEntryAndAnAccountWithoutAWorkspaceQueueNothing() {
+        val model = model(cached = listOf(entry(5, "2026-10-25T09:00:00Z", stop = null)), settings = DRAG_SETTINGS.copy(defaultWorkspaceId = null))
+        val running = shown(model) { true }.entries.single()
+
+        model.move(running, OCTOBER_25, deltaMinutes = 60, dayMode = true)
+        model.resize(running, ResizeEdge.START, deltaMinutes = 15)
+        model.create(OCTOBER_25, fromMinute = 600, toMinute = 660)
+
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
+    private fun model(cached: List<CachedTimeEntry>, settings: AccountSettings = SETTINGS) = CalendarModel(
         entries = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
         projects = flowOf(emptyList()),
         tasks = flowOf(emptyList()),
-        accountSettings = MutableStateFlow(SETTINGS),
+        accountSettings = MutableStateFlow(settings),
+        changes = changes,
         client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = Dispatchers.Unconfined,
@@ -312,9 +380,38 @@ class CalendarModelTest {
         """{"id":$id,"workspace_id":1,"description":"e$id","start":"$start","stop":"$stop","duration":60,"tag_ids":[],"billable":false}"""
     }
 
+    /** Records what the calendar queues. */
+    private class RecordingChanges : EntryChanges {
+        val calls = CopyOnWriteArrayList<String>()
+
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+            calls += "create $workspaceId $fields $start $stop"
+            return LOCAL_ID
+        }
+
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+            calls += "update $entryId $fields $start $stop"
+            return true
+        }
+
+        override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) {
+            calls += "updateOlder $entryId $workspaceId $fields $start $stop"
+        }
+
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("the calendar starts no timer")
+
+        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("the calendar stops no timer")
+
+        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the calendar deletes nothing")
+    }
+
     private companion object {
         const val TIMEOUT_MS = 5_000L
+        const val LOCAL_ID = -3L
         val SETTINGS = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null)
+
+        /** Tokkl's default resolution of 5 minutes, so drags step by 15, and a default workspace. */
+        val DRAG_SETTINGS = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = 7)
 
         /** Sunday 25 October at noon. */
         val CLOCK: Clock = Clock.fixed(Instant.parse("2026-10-25T12:00:00Z"), ZoneOffset.UTC)
@@ -325,5 +422,7 @@ class CalendarModelTest {
         val OCTOBER_5: LocalDate = LocalDate.of(2026, 10, 5)
         val OCTOBER_12: LocalDate = LocalDate.of(2026, 10, 12)
         val OCTOBER_19: LocalDate = LocalDate.of(2026, 10, 19)
+        val OCTOBER_20: LocalDate = LocalDate.of(2026, 10, 20)
+        val OCTOBER_25: LocalDate = LocalDate.of(2026, 10, 25)
     }
 }

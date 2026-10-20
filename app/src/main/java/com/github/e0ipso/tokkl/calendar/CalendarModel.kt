@@ -7,9 +7,13 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.entry.TimeRange
+import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Clock
@@ -25,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -91,6 +96,9 @@ sealed interface WeekSource {
     val shows: Boolean get() = this == Cached || this == Loaded
 }
 
+/** The edge of a block that a resize drags. */
+enum class ResizeEdge { START, END }
+
 /**
  * The calendar on the Timer page (docs/PRD.md K1): a week at a time, from the account's first day
  * of the week, in the account's timezone. Today's week and the week before it come from the
@@ -111,18 +119,23 @@ sealed interface WeekSource {
  * and stay when the phone is offline. When the network comes back, [reconnected] loads the week on
  * screen again if it failed or kept old entries.
  *
- * Call [step], [showToday], [loadWeek], [wentToBackground], [cameToForeground] and [reconnected]
- * on the main thread.
+ * The calendar's drags create, move and resize entries (K2) through [changes], the change queue,
+ * so they show at once and work offline on the weeks the phone keeps. An entry from a week the
+ * server sent goes to the queue whole, whether the phone keeps it or not.
+ *
+ * Call [step], [showToday], [loadWeek], [wentToBackground], [cameToForeground], [reconnected],
+ * [create], [move] and [resize] on the main thread.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
  */
 class CalendarModel(
-    entries: Flow<List<EntryWithSendState>>,
+    private val entries: Flow<List<EntryWithSendState>>,
     projects: Flow<List<CachedProject>>,
     tasks: Flow<List<CachedTask>>,
     private val accountSettings: StateFlow<AccountSettings?>,
+    private val changes: EntryChanges,
     private val client: () -> TogglApiClient?,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -239,6 +252,61 @@ class CalendarModel(
         backgrounded = false
         loaded.update { weeks -> weeks.mapValues { (_, week) -> if (week.status == WeekSource.Loaded) week.copy(stale = true) else week } }
         foregroundCount.update { it + 1 }
+    }
+
+    /**
+     * The entry [id] as the server sent it for a week the phone does not keep, or null. The entry
+     * form opens on this copy of an entry the cache lacks.
+     */
+    fun serverEntry(id: Long): CachedTimeEntry? =
+        loaded.value.values.firstNotNullOfOrNull { week -> week.entries.firstOrNull { it.id == id } }
+
+    /**
+     * Queues the entry that a drag from clock minute [fromMinute] to [toMinute] on [day] makes, in
+     * the account's default workspace and with no description, and calls [onCreated] with its id
+     * so the entry form can open on it, as the web app's editor opens after a drag. A drag that
+     * never grew makes nothing.
+     */
+    fun create(day: LocalDate, fromMinute: Int, toMinute: Int, onCreated: (Long) -> Unit = {}) {
+        val settings = accountSettings.value ?: return
+        val time = settings.time(clock) ?: return
+        val workspaceId = settings.defaultWorkspaceId ?: return
+        val range = createdRange(day, fromMinute, toMinute, dragStep(settings.dragResolution), time) ?: return
+        scope.launch { onCreated(changes.create(workspaceId, EntryFields(), range.start, range.stop)) }
+    }
+
+    /**
+     * Queues the stopped [entry] moved [deltaMinutes] on the account's clock, from its block on
+     * [day]. In [dayMode] the calendar shows [day] alone, and the entry stays on it.
+     */
+    fun move(entry: CalendarEntry, day: LocalDate, deltaMinutes: Int, dayMode: Boolean) =
+        change(entry) { stop, time, _ -> movedRange(entry.start, stop, deltaMinutes, day, dayMode, time) }
+
+    /** Queues the stopped [entry] with its [edge] moved [deltaMinutes] on the account's clock. */
+    fun resize(entry: CalendarEntry, edge: ResizeEdge, deltaMinutes: Int) = change(entry) { stop, time, step ->
+        when (edge) {
+            ResizeEdge.START -> startResizedRange(entry.start, stop, deltaMinutes, step, time)
+            ResizeEdge.END -> endResizedRange(entry.start, stop, deltaMinutes, step, time)
+        }
+    }
+
+    /**
+     * Queues [entry] with the span [range] gives for it, with every other field as the phone or
+     * the server has it. The span starts from the times the block shows, which for an unsent entry
+     * are the ones the server will store.
+     */
+    private fun change(entry: CalendarEntry, range: (stop: Instant, time: AccountTime, step: Int) -> TimeRange) {
+        val stop = entry.stop ?: return
+        val settings = accountSettings.value ?: return
+        val time = settings.time(clock) ?: return
+        val span = range(stop, time, dragStep(settings.dragResolution))
+        scope.launch {
+            val cached = entries.first().firstOrNull { it.entry.id == entry.id }?.entry
+            when {
+                cached != null -> changes.update(cached.id, cached.fields(), span.start, span.stop)
+                else -> serverEntry(entry.id)?.let { changes.updateOlder(it.id, it.workspaceId, it.fields(), span.start, span.stop) }
+            }
+        }
     }
 
     /**

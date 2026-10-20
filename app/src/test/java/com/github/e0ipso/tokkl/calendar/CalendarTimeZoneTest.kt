@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.calendar
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.Clock
@@ -47,6 +49,7 @@ class CalendarTimeZoneTest {
             projects = flowOf(emptyList()),
             tasks = flowOf(emptyList()),
             accountSettings = MutableStateFlow(TOKYO_SUNDAY),
+            changes = NoChanges,
             client = { null },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
@@ -90,5 +93,20 @@ class CalendarTimeZoneTest {
             tags = emptyList(),
             tagIds = emptyList(),
         )
+    }
+
+    /** The calendar only shows entries here. */
+    private object NoChanges : EntryChanges {
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("nothing starts")
+
+        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("nothing stops")
+
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
+            throw AssertionError("nothing is created")
+
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
+            throw AssertionError("nothing is edited")
+
+        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")
     }
 }

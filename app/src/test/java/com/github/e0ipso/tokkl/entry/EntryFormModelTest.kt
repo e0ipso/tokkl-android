@@ -435,6 +435,24 @@ class EntryFormModelTest {
         assertEquals("nothing queued", emptyList<String>(), changes.calls)
     }
 
+    /** The calendar's action on a day's head opens the form for a past entry on that day. */
+    @Test
+    fun aNewEntryOpensOnTheDayItIsGiven() {
+        val day = LocalDate.of(2026, 9, 2)
+        onMain { model.new(day) }
+        val form = awaitOpen("the form opens on the day") { !it.editing }
+        assertEquals(day, form.date)
+
+        onMain {
+            model.setStart("9")
+            model.setEnd("10")
+        }
+        save()
+
+        // 09:00 to 10:00 in Madrid's summer time.
+        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-09-02T07:00:00Z 2026-09-02T08:00:00Z"), changes.calls)
+    }
+
     private fun openNew(): EntryFormState.Open {
         onMain { model.new() }
         return awaitOpen("the form for a past entry opens") { !it.editing && it.start.isEmpty() }

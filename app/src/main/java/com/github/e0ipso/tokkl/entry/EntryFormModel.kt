@@ -148,8 +148,8 @@ class EntryFormModel(
      */
     fun edit(entryId: Long, older: CachedTimeEntry? = null) = open(Opening.Edit(entryId, older?.takeIf { it.id == entryId }))
 
-    /** Opens the form for a manual entry, on today's date in the account's timezone. */
-    fun new() = open(Opening.New)
+    /** Opens the form for a manual entry on [date], or on today's date in the account's timezone. */
+    fun new(date: LocalDate? = null) = open(Opening.New(date))
 
     fun close() {
         phase.value = Phase.Closed
@@ -233,7 +233,7 @@ class EntryFormModel(
             val next = when (val time = settings.time(clock)) {
                 null -> Phase.NoAccountTime
                 else -> when (opening) {
-                    Opening.New -> Phase.Open(newForm(time))
+                    is Opening.New -> Phase.Open(newForm(time, opening.date))
                     is Opening.Edit -> {
                         val cached = entries.first().firstOrNull { it.entry.id == opening.entryId }
                         val form = when {
@@ -249,8 +249,8 @@ class EntryFormModel(
         }
     }
 
-    private fun newForm(time: AccountTime): Form =
-        Form(target = Target.New, fields = EntryFields(), date = time.today(), start = "", end = "", duration = "", syncedDuration = "")
+    private fun newForm(time: AccountTime, date: LocalDate?): Form =
+        Form(target = Target.New, fields = EntryFields(), date = date ?: time.today(), start = "", end = "", duration = "", syncedDuration = "")
 
     /**
      * The form on [cached], or null while it runs. An entry with a change the server lacks shows
@@ -403,7 +403,7 @@ class EntryFormModel(
     }
 
     private sealed interface Opening {
-        data object New : Opening
+        data class New(val date: LocalDate?) : Opening
 
         data class Edit(val entryId: Long, val older: CachedTimeEntry?) : Opening
     }

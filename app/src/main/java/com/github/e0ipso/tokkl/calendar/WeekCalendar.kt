@@ -47,6 +47,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -66,23 +67,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -101,6 +108,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.reports.projectMark
 import com.github.e0ipso.tokkl.reports.spokenDuration
@@ -130,9 +138,39 @@ import kotlinx.coroutines.delay
  * on, after the Timer page's top bar, timer and switch, and the day heads stay. When the page
  * opens with those scrolled away, the toolbar starts scrolled away too. The running entry's block
  * grows with the phone's clock, once a minute while the page shows, and sends no request.
+ *
+ * A tap on a stopped entry's block calls [onEdit] with its id, and with the server's copy when
+ * the phone does not keep it, so the entry form opens on it. In both views a long press then a
+ * drag on empty space creates an entry (K2), which then opens in the form; on a block it moves
+ * the entry, and on the block's top or bottom edge it moves that end. Each change goes to the
+ * change queue through [model]. TalkBack gets the form instead: a block's click opens it, and each
+ * day's head has an action that calls [onAdd] with the day for a new entry.
  */
 @Composable
-fun WeekCalendar(model: CalendarModel, modifier: Modifier = Modifier, clock: Clock = Clock.systemUTC()) {
+fun WeekCalendar(
+    model: CalendarModel,
+    onEdit: (entryId: Long, older: CachedTimeEntry?) -> Unit,
+    onAdd: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+    clock: Clock = Clock.systemUTC(),
+) {
+    val edit by rememberUpdatedState(onEdit)
+    val add by rememberUpdatedState(onAdd)
+    val editing = remember(model) {
+        object : CalendarEditing {
+            override fun create(day: LocalDate, fromMinute: Int, toMinute: Int) =
+                model.create(day, fromMinute, toMinute) { id -> edit(id, null) }
+
+            override fun move(entry: CalendarEntry, day: LocalDate, deltaMinutes: Int, dayMode: Boolean) =
+                model.move(entry, day, deltaMinutes, dayMode)
+
+            override fun resize(entry: CalendarEntry, edge: ResizeEdge, deltaMinutes: Int) = model.resize(entry, edge, deltaMinutes)
+
+            override fun edit(entry: CalendarEntry) = edit(entry.id, model.serverEntry(entry.id))
+
+            override fun add(day: LocalDate) = add(day)
+        }
+    }
     val state by model.state.collectAsState()
     when (val current = state) {
         // The cache reads in moments, so this shows nothing rather than a flash of a spinner.
@@ -154,6 +192,7 @@ fun WeekCalendar(model: CalendarModel, modifier: Modifier = Modifier, clock: Clo
                 onToday = model::showToday,
                 onRetry = { model.loadWeek(current.weekStart) },
                 modifier = modifier,
+                editing = editing,
             )
         }
     }
@@ -164,7 +203,9 @@ fun WeekCalendar(model: CalendarModel, modifier: Modifier = Modifier, clock: Clo
  * [onSelect] chooses a day of the week, [onToday] goes back to today, and [onRetry] loads the
  * shown week again after it failed. With [dayMode], the grid shows the chosen day alone, under a
  * strip of the seven days of its week in place of the day heads, and the day slides in from the
- * side it comes from, unless the system asks for reduced motion.
+ * side it comes from, unless the system asks for reduced motion. With [editing], taps, drags
+ * and TalkBack actions change entries, while the week's entries are known; without it the
+ * calendar only shows them.
  */
 @Composable
 internal fun CalendarContent(
@@ -176,7 +217,11 @@ internal fun CalendarContent(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     dayMode: Boolean = compactWindow(),
+    editing: CalendarEditing? = null,
 ) {
+    val edits = editing?.takeIf { state.week.shows }
+    val gesture = remember { HeldGesture() }
+    val drags = remember(edits, state.settings, dayMode) { edits?.let { CalendarDrags(it, state.settings, dayMode, gesture) } }
     val days = if (dayMode) listOf(state.selected) else state.weekDays
     val stepDays = if (dayMode) 1L else 7L
     val today = now.atZone(state.zone).toLocalDate()
@@ -194,14 +239,25 @@ internal fun CalendarContent(
         },
     ) {
         Column(Modifier.fillMaxSize()) {
-            if (dayMode) WeekStrip(state, today, now, onSelect) else DayHeads(days, today, state, now, gutter)
+            if (dayMode) WeekStrip(state, today, now, onSelect, edits) else DayHeads(days, today, state, now, gutter, edits)
             Box(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .pointerInput(Unit) { detectSwipes { swipe(it) } },
+                    .pointerInput(Unit) { detectSwipes(gesture) { swipe(it) } },
             ) {
-                Grid(days, today, blocks, state.settings, state.zone, now, labels, labelStyle, gutter, slide)
+                Grid(
+                    days = days,
+                    today = today,
+                    blocks = blocks,
+                    state = state,
+                    now = now,
+                    labels = labels,
+                    labelStyle = labelStyle,
+                    gutter = gutter,
+                    slide = slide,
+                    drags = drags,
+                )
                 if (!state.week.shows) WeekProblem(state.week, onRetry, Modifier.matchParentSize())
             }
         }
@@ -271,7 +327,7 @@ private fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant, 
  * and, once the week's entries are known, its total.
  */
 @Composable
-private fun DayHeads(days: List<LocalDate>, today: LocalDate, state: CalendarState.Shown, now: Instant, gutter: Dp) {
+private fun DayHeads(days: List<LocalDate>, today: LocalDate, state: CalendarState.Shown, now: Instant, gutter: Dp, editing: CalendarEditing?) {
     // --radius-md on the top corners, as the web app's .calendar-head.
     val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
     Row(
@@ -283,19 +339,20 @@ private fun DayHeads(days: List<LocalDate>, today: LocalDate, state: CalendarSta
         Spacer(Modifier.width(gutter))
         for (day in days) {
             val total = if (state.week.shows) dayTotalSeconds(state.entries, day, state.zone, now) else null
-            DayHead(day, day == today, total, state.settings, Modifier.weight(1f))
+            DayHead(day, day == today, total, state.settings, editing, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, settings: AccountSettings, modifier: Modifier) {
+private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, settings: AccountSettings, editing: CalendarEditing?, modifier: Modifier) {
     val resources = LocalResources.current
     val locale = LocalConfiguration.current.locales[0]
     val words = remember(resources) { DateWords(resources) }
     val line = MaterialTheme.colorScheme.outlineVariant
     val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(R.string.history_day, words.weekday(day), words.short(day))
     val spoken = totalSeconds?.let { stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it)) } ?: label
+    val addAction = addEntryAction(day, editing)
     Column(
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1 / 2),
         modifier = modifier
@@ -304,6 +361,7 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
             .clearAndSetSemantics {
                 heading()
                 contentDescription = spoken
+                if (addAction != null) customActions = listOf(addAction)
             },
     ) {
         val headStyle = MaterialTheme.typography.labelMedium
@@ -339,10 +397,11 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
  * The seven days of the chosen day's week, from the account's first day of the week, each with
  * its weekday, its date and, once the week's entries are known, its total. A tap on a day shows
  * it. The chosen day sits in Tokkl's frame and today's date in a filled circle, so neither is
- * told by colour alone. TalkBack reads each day as a tab, with its date and total.
+ * told by colour alone. TalkBack reads each day as a tab, with its date and total, and with
+ * [editing] offers an action that adds an entry on the day.
  */
 @Composable
-private fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant, onSelect: (LocalDate) -> Unit) {
+private fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant, onSelect: (LocalDate) -> Unit, editing: CalendarEditing?) {
     // --radius-md on the top corners, as the day heads.
     val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
     val totals = state.weekDays.map { day -> if (state.week.shows) dayTotalSeconds(state.entries, day, state.zone, now) else null }
@@ -364,6 +423,7 @@ private fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant
                 widestTotal = widestTotal,
                 settings = state.settings,
                 onSelect = { onSelect(day) },
+                addAction = addEntryAction(day, editing),
                 modifier = Modifier.weight(1f),
             )
         }
@@ -379,6 +439,7 @@ private fun StripDay(
     widestTotal: Int,
     settings: AccountSettings,
     onSelect: () -> Unit,
+    addAction: CustomAccessibilityAction?,
     modifier: Modifier,
 ) {
     val resources = LocalResources.current
@@ -402,7 +463,10 @@ private fun StripDay(
             .clip(SmallCornerShape)
             .then(frame)
             .selectable(selected = selected, role = Role.Tab, onClick = onSelect)
-            .clearAndSetSemantics { contentDescription = spoken }
+            .clearAndSetSemantics {
+                contentDescription = spoken
+                if (addAction != null) customActions = listOf(addAction)
+            }
             .padding(horizontal = TokklTheme.spacing.space1 / 2, vertical = TokklTheme.spacing.space1),
     ) {
         StripText(words.weekday(day).uppercase(locale), MaterialTheme.typography.labelMedium, scheme.onSurface)
@@ -475,20 +539,24 @@ private fun StripText(text: String, style: TextStyle, color: Color) {
     )
 }
 
-/** The hour labels and a column for each of [days], scrolled to the morning when it first shows. */
+/**
+ * The hour labels and a column for each of [days], scrolled to the morning when it first shows.
+ * With [drags], each column takes taps and drags, and holds the drag in progress.
+ */
 @Composable
 private fun Grid(
     days: List<LocalDate>,
     today: LocalDate,
     blocks: List<CalendarBlock>,
-    settings: AccountSettings,
-    zone: ZoneId,
+    state: CalendarState.Shown,
     now: Instant,
     labels: List<String>,
     labelStyle: TextStyle,
     gutter: Dp,
     slide: Animatable<Float, AnimationVector1D>,
+    drags: CalendarDrags?,
 ) {
+    val drag = remember { mutableStateOf<CalendarDrag?>(null) }
     val scroll = rememberScrollState()
     val distance = with(LocalDensity.current) { SlideDistance.toPx() }
     val hour = with(LocalDensity.current) { HourHeight.roundToPx() }
@@ -508,11 +576,14 @@ private fun Grid(
             Gutter(labels, labelStyle, Modifier.width(gutter))
             for (day in days) {
                 DayColumn(
+                    day = day,
                     isToday = day == today,
                     blocks = blocks.filter { it.day == day },
-                    settings = settings,
-                    zone = zone,
+                    settings = state.settings,
+                    zone = state.zone,
                     now = now,
+                    drag = drag,
+                    drags = drags,
                     modifier = Modifier
                         .weight(1f)
                         .graphicsLayer {
@@ -549,16 +620,52 @@ private fun Gutter(labels: List<String>, style: TextStyle, modifier: Modifier) {
     }
 }
 
-/** One day: its hour lines, today's tint and now line, and its blocks side by side where they overlap. */
+/**
+ * One day: its hour lines, today's tint and now line, and its blocks side by side where they
+ * overlap. With [drags], a tap on a stopped entry's block opens it, and a long press starts a
+ * drag that [drag] holds for every column: on empty space a new entry, on a block a move, and on
+ * its own top or bottom edge a resize of that end. The dragged block, or the new entry's outline,
+ * shows where the drag would save it.
+ */
 @Composable
 private fun DayColumn(
+    day: LocalDate,
     isToday: Boolean,
     blocks: List<CalendarBlock>,
     settings: AccountSettings,
     zone: ZoneId,
     now: Instant,
+    drag: MutableState<CalendarDrag?>,
+    drags: CalendarDrags?,
     modifier: Modifier,
 ) {
+    val density = LocalDensity.current
+    val haptics = LocalHapticFeedback.current
+    val geometry = remember(density) { with(density) { BlockGeometry(HourHeight.toPx(), BlockGap.toPx(), TokklSpacing.space1.toPx(), EdgeZone.toPx()) } }
+    val shown by rememberUpdatedState(blocks)
+    val gestures = if (drags == null) {
+        Modifier
+    } else {
+        Modifier.pointerInput(day, drags, geometry) {
+            detectCalendarGestures(
+                targetAt = { position -> geometry.targetAt(position, size.width.toFloat(), shown, day, zone, drags.step) },
+                onTap = drags.editing::edit,
+                onHold = { target, position ->
+                    drags.gesture.held = true
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    drag.value = target.drag(day, position.y)
+                },
+                // The handlers read and write the state itself, since events can come faster than frames.
+                onMove = { position -> drag.value = drag.value?.let { drags.moved(it, position.y, geometry.hour) } },
+                onLift = {
+                    val done = drag.value
+                    drag.value = null
+                    done?.let(drags::finish)
+                },
+                onCancel = { drag.value = null },
+            )
+        }
+    }
     val line = MaterialTheme.colorScheme.outlineVariant
     val tint = mix(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.surface, TODAY_TINT)
     val running = TokklTheme.extraColors.running
@@ -580,18 +687,55 @@ private fun DayColumn(
                     drawLine(running, Offset(0f, y), Offset(size.width, y), FrameWidth.toPx())
                     drawCircle(running, radius = TokklSpacing.space1.toPx(), center = Offset(0f, y))
                 }
-            },
+            }
+            .then(gestures),
     ) {
-        for (block in blocks) Block(block, maxWidth, settings, zone, now)
+        val current = drag.value
+        for (block in blocks) {
+            // A move takes every block of the entry along; a resize only the block of the edge.
+            val change = (current as? CalendarDrag.Change)?.takeIf { it.entry.id == block.entry.id && (it.kind == DragKind.MOVE || it.day == block.day) }
+            val dragged = change != null
+            val placed = if (change != null && drags != null) drags.preview(block, change) else block
+            val onEdit = drags?.takeIf { !block.entry.running }?.let { { it.editing.edit(block.entry) } }
+            Block(placed, maxWidth, settings, zone, now, dragged, onEdit)
+        }
+        if (current is CalendarDrag.Create && current.day == day && current.fromMinute != current.toMinute) NewEntryOutline(current)
     }
+}
+
+/** Where a new entry's drag would put it: an outline in Tokkl's frame, which TalkBack skips. */
+@Composable
+private fun NewEntryOutline(drag: CalendarDrag.Create) {
+    val top = minOf(drag.fromMinute, drag.toMinute)
+    val minutes = abs(drag.toMinute - drag.fromMinute)
+    Box(
+        Modifier
+            .offset(x = BlockGap, y = HourHeight * (top / 60f))
+            .fillMaxWidth()
+            .padding(end = BlockGap * 2)
+            .height(HourHeight * (minutes / 60f))
+            .background(MaterialTheme.colorScheme.primaryContainer, SmallCornerShape)
+            .border(FrameWidth, MaterialTheme.colorScheme.outline, SmallCornerShape)
+            .clearAndSetSemantics {},
+    )
 }
 
 /**
  * An entry's block: its description, project and duration as far as they fit, marked when the
- * server does not have the entry yet, and all of it, with its times, to TalkBack.
+ * server does not have the entry yet, and all of it, with its times, to TalkBack. A block being
+ * [dragged] sits in Tokkl's frame. With [onEdit], TalkBack's click on it opens the entry form,
+ * where its times change as a drag would change them.
  */
 @Composable
-private fun Block(block: CalendarBlock, columnWidth: Dp, settings: AccountSettings, zone: ZoneId, now: Instant) {
+private fun Block(
+    block: CalendarBlock,
+    columnWidth: Dp,
+    settings: AccountSettings,
+    zone: ZoneId,
+    now: Instant,
+    dragged: Boolean,
+    onEdit: (() -> Unit)?,
+) {
     val resources = LocalResources.current
     val entry = block.entry
     val scheme = MaterialTheme.colorScheme
@@ -605,6 +749,8 @@ private fun Block(block: CalendarBlock, columnWidth: Dp, settings: AccountSettin
     val heading = entry.description.ifBlank { entry.project ?: noDescription }
     val duration = settings.formatDuration(entry.seconds(now))
     val spoken = spokenBlock(resources, entry, settings, zone, now)
+    val editLabel = stringResource(R.string.entry_edit_action)
+    val frame = if (dragged) Modifier.border(FrameWidth, scheme.outline, SmallCornerShape) else Modifier
     Box(
         Modifier
             .offset(x = laneWidth * block.lane + BlockGap, y = HourHeight * (block.top / 60).toFloat())
@@ -628,8 +774,17 @@ private fun Block(block: CalendarBlock, columnWidth: Dp, settings: AccountSettin
                     )
                 }
             }
+            .then(frame)
             .padding(start = BlockBar + TokklTheme.spacing.space1, end = TokklTheme.spacing.space1)
-            .clearAndSetSemantics { contentDescription = spoken },
+            .clearAndSetSemantics {
+                contentDescription = spoken
+                if (onEdit != null) {
+                    onClick(label = editLabel) {
+                        onEdit()
+                        true
+                    }
+                }
+            },
     ) {
         val twoLines = block.bottom - block.top >= TWO_LINE_MINUTES
         if (entry.unsent) {
@@ -806,16 +961,31 @@ private fun Problem(title: String?, message: String, onRetry: () -> Unit) {
     OutlinedButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
 }
 
+/** TalkBack's action on [day]'s head that opens the entry form for a new entry on the day, with [editing]. */
+@Composable
+private fun addEntryAction(day: LocalDate, editing: CalendarEditing?): CustomAccessibilityAction? {
+    if (editing == null) return null
+    val resources = LocalResources.current
+    val words = remember(resources) { DateWords(resources) }
+    val label = stringResource(R.string.calendar_add_entry, resources.getString(R.string.history_day, words.weekday(day), words.short(day)))
+    return CustomAccessibilityAction(label) {
+        editing.add(day)
+        true
+    }
+}
+
 /**
  * Calls [onSwipe] with 1 after a swipe to the left and -1 after one to the right, as classifySwipe
  * in the web app's lib/calendarDay.ts: at least [SwipeMinDistance] sideways and [SWIPE_RATIO]
  * times further sideways than up or down, so scrolling the grid never changes the week. It only
- * watches, so the grid still scrolls under it.
+ * watches, so the grid still scrolls under it. A touch that [gesture] says was held for a drag is
+ * no swipe, as gestureEditsNothing in the web app's WeekCalendar.tsx.
  */
-private suspend fun PointerInputScope.detectSwipes(onSwipe: (Long) -> Unit) {
+private suspend fun PointerInputScope.detectSwipes(gesture: HeldGesture, onSwipe: (Long) -> Unit) {
     val minDistance = SwipeMinDistance.toPx()
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        gesture.held = false
         var last = down.position
         while (true) {
             val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: break
@@ -824,7 +994,7 @@ private suspend fun PointerInputScope.detectSwipes(onSwipe: (Long) -> Unit) {
         }
         val dx = last.x - down.position.x
         val dy = last.y - down.position.y
-        if (abs(dx) >= minDistance && abs(dx) >= SWIPE_RATIO * abs(dy)) onSwipe(if (dx < 0) 1L else -1L)
+        if (!gesture.held && abs(dx) >= minDistance && abs(dx) >= SWIPE_RATIO * abs(dy)) onSwipe(if (dx < 0) 1L else -1L)
     }
 }
 
@@ -932,6 +1102,9 @@ private const val SWIPE_RATIO = 1.5f
 
 /** The gap on each side of a block, 2px in WeekCalendar.tsx: half of --space-1. */
 private val BlockGap: Dp = TokklSpacing.space1 / 2
+
+/** How far into a block from its top or bottom a press takes that edge for a resize, a 15-minute row. */
+private val EdgeZone: Dp = TokklSpacing.space3
 
 /** The bar in the project's colour on a block's start side, --space-1. The web app's is 5px. */
 private val BlockBar: Dp = TokklSpacing.space1

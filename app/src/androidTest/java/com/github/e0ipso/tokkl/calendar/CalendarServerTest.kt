@@ -2,10 +2,12 @@ package com.github.e0ipso.tokkl.calendar
 
 import android.os.SystemClock
 import androidx.annotation.StringRes
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -17,6 +19,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -30,18 +33,22 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.Session
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -285,6 +292,61 @@ class CalendarServerTest {
         }
     }
 
+    /**
+     * Offline, a long press and a drag on a cached day's block moves the entry an hour through the
+     * queue (docs/PRD.md K2): the cache has it at once, unsent, and the server once the network
+     * is back.
+     */
+    @Test
+    fun offlineADragMovesACachedEntryThroughTheQueue() {
+        val day = today.minusDays(1)
+        val id = seed("Moved offline", day.atTime(9, 0), day.atTime(10, 0))
+        refresh()
+        AirplaneMode.set(true, account.client)
+
+        withCalendar { model ->
+            show(model, day)
+            awaitBlock(spoken("Moved offline", day.atTime(9, 0), day.atTime(10, 0)))
+            composeRule.onNode(blockOf("Moved offline")).performTouchInput { holdAndDrag(center, HOUR.toPx()) }
+
+            val moved = awaitCached("the moved entry") { it.entry.id == id && it.entry.start == instant(day.atTime(10, 0)) }
+            assertTrue("unsent offline", moved.unsent)
+            assertEquals(instant(day.atTime(11, 0)), moved.entry.stop)
+            awaitBlock("${spoken("Moved offline", day.atTime(10, 0), day.atTime(11, 0))}, ${string(R.string.history_unsent)}")
+
+            AirplaneMode.set(false, account.client)
+            sendTheQueue()
+            val stored = account.entry(id)
+            assertEquals(instant(day.atTime(10, 0)), OffsetDateTime.parse(stored.getValue("start").jsonPrimitive.content).toInstant())
+            assertEquals(instant(day.atTime(11, 0)), OffsetDateTime.parse(stored.getValue("stop").jsonPrimitive.content).toInstant())
+        }
+    }
+
+    /**
+     * Offline, a long press and a drag on a cached day's empty space queues a new entry from where
+     * the press was, and the entry form opens on it, as the web app's editor does.
+     */
+    @Test
+    fun offlineADragOnEmptySpaceCreatesAnEntryAndOpensTheForm() {
+        val day = today.minusDays(1)
+        seed("Anchor", day.atTime(9, 0), day.atTime(10, 0))
+        refresh()
+        AirplaneMode.set(true, account.client)
+
+        withCalendar { model ->
+            show(model, day)
+            awaitBlock(spoken("Anchor", day.atTime(9, 0), day.atTime(10, 0)))
+            // From 07:30, an hour and a half over the anchor's top, near the top of the grid as it
+            // opens, down an hour, so the drag stays on screen under the Timer page's top.
+            composeRule.onNode(blockOf("Anchor")).performTouchInput { holdAndDrag(Offset(centerX, -1.5f * HOUR.toPx()), HOUR.toPx()) }
+
+            val created = awaitCached("the created entry") { it.entry.start == instant(day.atTime(7, 30)) }
+            assertTrue("unsent offline", created.unsent)
+            assertEquals(instant(day.atTime(8, 30)), created.entry.stop)
+            composeRule.waitUntil("the entry form opens", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.entry_save))) }
+        }
+    }
+
     /** Back in the foreground offline, an older week keeps the entries it loaded, with no message. */
     @Test
     fun offlineTheForegroundKeepsAnOlderWeek() {
@@ -315,6 +377,26 @@ class CalendarServerTest {
     }
 
     private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+
+    /** Presses at [from], holds past the long-press time, drags [dy] down in a few moves, and lifts. */
+    private fun TouchInjectionScope.holdAndDrag(from: Offset, dy: Float) {
+        down(from)
+        advanceEventTime(viewConfiguration.longPressTimeoutMillis + HOLD_MARGIN_MS)
+        repeat(MOVES) { moveBy(Offset(0f, dy / MOVES), delayMillis = MOVE_MS) }
+        up()
+    }
+
+    /** Waits until the cache holds an entry that [matches], and returns it. */
+    private fun awaitCached(what: String, matches: (EntryWithSendState) -> Boolean): EntryWithSendState {
+        var found: EntryWithSendState? = null
+        composeRule.waitUntil(what, LOAD_TIMEOUT_MS) {
+            found = runBlocking { app.cache.entries.first() }.firstOrNull(matches)
+            found != null
+        }
+        return checkNotNull(found)
+    }
+
+    private fun instant(at: LocalDateTime): Instant = at.atZone(zone).toInstant()
 
     /** Sends the queue until it is empty, as the next refresh would. */
     private fun sendTheQueue() {
@@ -390,5 +472,11 @@ class CalendarServerTest {
         /** How long the offline foreground test watches the week stay as it was. */
         const val STAYS_MS = 3_000L
         const val POLL_MS = 200L
+
+        /** An hour row of the grid. */
+        val HOUR = 48.dp
+        const val HOLD_MARGIN_MS = 100L
+        const val MOVES = 4
+        const val MOVE_MS = 30L
     }
 }

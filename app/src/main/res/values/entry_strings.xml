@@ -47,6 +47,6 @@
     <string name="entry_mistake_too_long">Entries can\'t be longer than 999 hours</string>
     <string name="entry_form_missing">This entry isn\'t on the phone any more, or it\'s running. The timer edits a running entry.</string>
     <string name="entry_form_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t read times.</string>
-    <!-- What TalkBack says a tap on a history row does. -->
+    <!-- What TalkBack says a tap on a history row or a calendar block does. -->
     <string name="entry_edit_action">Edit entry</string>
 </resources>

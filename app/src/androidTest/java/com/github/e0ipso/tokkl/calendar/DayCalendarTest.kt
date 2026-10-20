@@ -306,7 +306,7 @@ class DayCalendarTest {
 
 /** [content] in a window of [size], as a device of that size lays it out, or in the real window. */
 @Composable
-private fun WindowOfSize(size: DpSize?, content: @Composable () -> Unit) {
+internal fun WindowOfSize(size: DpSize?, content: @Composable () -> Unit) {
     if (size == null) {
         content()
         return

@@ -251,7 +251,19 @@ private fun Screen(
                     onContinue = onContinue,
                 )
             },
-            calendarContent = { WeekCalendar(calendar) },
+            calendarContent = {
+                WeekCalendar(
+                    model = calendar,
+                    onEdit = { entryId, older ->
+                        entryForm.edit(entryId, older)
+                        backStack.add(Destination.ENTRY)
+                    },
+                    onAdd = { day ->
+                        entryForm.new(day)
+                        backStack.add(Destination.ENTRY)
+                    },
+                )
+            },
         )
         Destination.REPORTS -> ReportsScreen(model = reports)
         Destination.PROJECTS -> ProjectsScreen(model = projects)
