@@ -4,6 +4,8 @@
 #
 # 1. Starts ghcr.io/e0ipso/tokkl, pinned by digest, on a free port of
 #    127.0.0.1 with its database on a tmpfs, and waits until it answers.
+#    When Docker cannot bind a port it picked, the script removes the
+#    container and tries once more.
 # 2. Creates the first account with a random setup code and password, and
 #    reads its API token from GET /api/v9/me.
 # 3. Puts a TLS proxy, haproxy pinned by digest, in front of the same server,
@@ -89,6 +91,13 @@
 # script from before the slots takes that file alone, so it takes turns with
 # these runs. The last run to end stops the adb server, if a run of this
 # script started it.
+#
+# A run killed with SIGKILL, or ended along with its session, skips its
+# cleanup, and its emulator's scope outlives it. So once a run holds its slot,
+# it stops every tokkl-emulator-*.scope that no run holding a slot names,
+# before it looks for attached devices. With TOKKL_TEST_AVD set, a run fails
+# instead of testing on an attached device that is not an emulator of that
+# AVD, or that runs another API level than the AVD's image.
 #
 # qemu peaks at about 3.5 GB in a full run on tokkl-api36 and at about 4 GB on
 # tokkl-api31. Its oom_score_adj of 800 makes it the kernel OOM killer's first
@@ -568,6 +577,14 @@ boot_emulator() {
         echo "$0: $AVD runs API $emulator_sdk, but the app needs Android 12 (API 31) or later." >&2
         exit 1
     fi
+    # Gradle tests on whatever answers as this serial, so it must be the
+    # emulator this run booted.
+    read_device "$emulator_serial"
+    if [ "$device_avd" != "$AVD" ]; then
+        echo "$0: $emulator_serial runs ${device_avd:-no AVD that it names}, not $AVD." >&2
+        exit 1
+    fi
+    echo "$emulator_serial runs $device_avd on API $emulator_sdk"
     # qemu kept about 100 MB each time an app process that drew with OpenGL
     # ended, with lavapipe and with swiftshader, and the test orchestrator
     # starts a process for every test, so one full run took qemu to 11 GB. A
@@ -600,6 +617,61 @@ foreign_devices() {
     attached_devices | grep -vxF -f <(owned_serials) || true
 }
 
+# Stops the emulators that runs left behind: every tokkl-emulator-*.scope that
+# no run holding a slot names. A run killed with SIGKILL, or ended along with
+# its session, skips its cleanup, and its emulator's scope outlives it. Every
+# other run would then take that emulator for a device the user attached. The
+# scopes are listed before the slot files are read, so an emulator that
+# another run starts meanwhile is named in its slot file by then.
+stop_leftover_emulators() {
+    local units unit owned serial deadline file
+    if ! command -v systemctl >/dev/null || ! systemctl --user show --property=Version >/dev/null 2>&1; then
+        return
+    fi
+    units=$(systemctl --user list-units --type=scope --plain --no-legend 'tokkl-emulator-*.scope' | awk '{ print $1 }')
+    owned=$(while read -r file; do grep -o 'tokkl-emulator-[0-9]*-[0-9a-f]*\.scope' "$file" || true; done < <(held_slot_files))
+    while read -r unit; do
+        if [ -z "$unit" ] || grep -qxF "$unit" <<<"$owned"; then continue; fi
+        echo "Stopping $unit, an emulator that no running test run booted"
+        systemctl --user stop "$unit" >/dev/null 2>&1 || echo "$0: could not stop $unit" >&2
+        serial=${unit#tokkl-emulator-}
+        serial="emulator-${serial%%-*}"
+        deadline=$((SECONDS + 30))
+        while [ "$(adb -s "$serial" get-state 2>/dev/null)" = device ] && [ "$SECONDS" -lt "$deadline" ]; do
+            sleep 1
+        done
+    done <<<"$units"
+}
+
+# Sets device_avd to the name of the AVD that device $1 runs, or to nothing
+# when it is not an emulator, and device_sdk to its API level.
+read_device() {
+    device_avd=$(adb -s "$1" emu avd name 2>/dev/null | sed -n 1p | tr -d '\r') || device_avd=''
+    device_sdk=$(adb -s "$1" shell getprop ro.build.version.sdk 2>/dev/null | tr -d '\r') || device_sdk=''
+}
+
+# Fails the run when TOKKL_TEST_AVD names an AVD and test device $1 is not an
+# emulator of that AVD, or runs another API level than the AVD's image.
+check_requested_avd() {
+    local device=$1 level what
+    if [ -z "${TOKKL_TEST_AVD:-}" ]; then return; fi
+    read_device "$device"
+    level=$(avd_api_level)
+    if [ "$device_avd" = "$AVD" ] && { [ -z "$level" ] || [ "$device_sdk" = "$level" ]; }; then return; fi
+    what=${device_avd:+an emulator of $device_avd}
+    echo "$0: TOKKL_TEST_AVD is $AVD${level:+, API $level}, but the attached $device is ${what:-not an emulator of an AVD} on API ${device_sdk:-unknown}. Stop that device, or unset TOKKL_TEST_AVD to test on it." >&2
+    exit 2
+}
+
+# Checks the requested AVD on each device this run would test on.
+check_test_devices() {
+    local device
+    local -a list=()
+    if [ -n "${ANDROID_SERIAL:-}" ]; then list=("$ANDROID_SERIAL"); else mapfile -t list < <("$@"); fi
+    for device in "${list[@]}"; do check_requested_avd "$device"; done
+}
+
+stop_leftover_emulators
 if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(foreign_devices)" ]; then
     boot_emulator
 else
@@ -607,6 +679,8 @@ else
         echo "$0: ANDROID_SERIAL is $ANDROID_SERIAL, an emulator that another run booted and stops when it ends. Unset ANDROID_SERIAL to let this run boot an emulator of its own." >&2
         exit 2
     fi
+    # Fails before waiting for a device that waiting does not change.
+    check_test_devices foreign_devices
     # Other runs would install on the same device, so this run tests alone.
     take_device_lock
     printf 'PID %s, started %s in %s\n' "$$" "$run_started" "$PWD" >"$device_lock"
@@ -614,6 +688,8 @@ else
     # The attached devices may have gone while this run waited.
     if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then
         boot_emulator
+    else
+        check_test_devices attached_devices
     fi
 fi
 # The devices that get this run's CA as a user CA: the emulator this script
@@ -639,10 +715,30 @@ echo "Starting $IMAGE as $container"
 # UID. --env without a value reads the setup code from the environment. The
 # proxy joins this container's network namespace, so its ports 8443, 8444,
 # 8445 and 8081 are published here too.
-TOKKL_SETUP_CODE="$setup_code" docker run --detach --name "$container" \
-    --env TOKKL_SETUP_CODE --tmpfs /data:mode=1777 \
-    --publish 127.0.0.1::8080 --publish 127.0.0.1::8443 --publish 127.0.0.1::8444 \
-    --publish 127.0.0.1::8445 --publish 127.0.0.1::8081 "$IMAGE" >/dev/null
+# Docker picks the host ports, and another container on the machine can take
+# one it picked before it binds it. So a bind error gets one more try, after
+# removing the container that the failed try created.
+start_server() {
+    local attempt errors="$work_dir/docker-run.log"
+    for attempt in 1 2; do
+        if TOKKL_SETUP_CODE="$setup_code" docker run --detach --name "$container" \
+            --env TOKKL_SETUP_CODE --tmpfs /data:mode=1777 \
+            --publish 127.0.0.1::8080 --publish 127.0.0.1::8443 --publish 127.0.0.1::8444 \
+            --publish 127.0.0.1::8445 --publish 127.0.0.1::8081 "$IMAGE" >/dev/null 2>"$errors"; then
+            return 0
+        fi
+        cat "$errors" >&2
+        if [ "$attempt" -eq 2 ] || ! grep -q -e 'address already in use' -e 'port is already allocated' "$errors"; then
+            return 1
+        fi
+        echo "Docker could not bind a host port it picked. Removing $container and starting it again."
+        docker rm --force --volumes "$container" >/dev/null 2>&1 || true
+    done
+}
+if ! start_server; then
+    echo "$0: could not start $container" >&2
+    exit 1
+fi
 host_port=$(docker port "$container" 8080/tcp | head -n 1)
 host_port=${host_port##*:}
 tls_port=$(docker port "$container" 8443/tcp | head -n 1)
