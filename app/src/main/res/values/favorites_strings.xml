@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The favorites on the Timer page (docs/PRD.md T5), the same ones the web app shows. -->
+<resources>
+    <string name="favorites_title">Favorites</string>
+    <string name="favorites_edit">Edit</string>
+    <string name="favorites_edit_spoken">Edit favorites</string>
+    <string name="favorites_done">Done</string>
+    <string name="favorites_done_spoken">Done editing favorites</string>
+    <string name="favorites_empty">No favorites yet. Use Edit to pin the timer\'s entry, then start it here in one tap.</string>
+    <!-- A favorite with neither a description nor a project, as the web app names it. -->
+    <string name="favorites_untitled">Untitled</string>
+    <!-- What TalkBack reads for a favorite's button: Start Write the report, Website -->
+    <string name="favorites_start_spoken">Start %1$s</string>
+    <!-- A favorite's description and its project, as the web app's label joins them: Write the report, Website -->
+    <string name="favorites_with_project">%1$s, %2$s</string>
+    <string name="favorites_pin">Pin the timer\'s entry</string>
+    <string name="favorites_pin_hint">Type a description or pick a project in the timer to pin it.</string>
+    <!-- What TalkBack reads for the buttons beside a favorite while editing: Move Write the report up -->
+    <string name="favorites_move_up">Move %1$s up</string>
+    <string name="favorites_move_down">Move %1$s down</string>
+    <string name="favorites_remove">Remove %1$s from favorites</string>
+    <!-- As the web app says it: You can pin up to 9 favorites -->
+    <plurals name="favorites_full">
+        <item quantity="one">You can pin up to %d favorite</item>
+        <item quantity="other">You can pin up to %d favorites</item>
+    </plurals>
+    <string name="favorites_offline">Changing favorites needs the server, which can\'t be reached now. Your favorites still start offline.</string>
+</resources>

@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +40,8 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
 import com.github.e0ipso.tokkl.entry.EntryLabels
+import com.github.e0ipso.tokkl.favorites.Favorites
+import com.github.e0ipso.tokkl.favorites.FavoritesModel
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.reports.spokenDuration
@@ -63,7 +66,8 @@ typealias WorkspacePicker =
  * The timer at the top of the Timer page (docs/PRD.md T1), from [model], with the cached
  * projects, tasks and tags of [cache] in its picker. While an entry runs, the clock counts from
  * its start on the phone, a tick at each whole second while the screen shows, and asks the server
- * nothing (principle 3). Its button for a past entry calls [onAddEntry] (M1).
+ * nothing (principle 3). Its button for a past entry calls [onAddEntry] (M1). Under it come the
+ * [favorites] (T5), which start through the timer and pin what it shows.
  */
 @Composable
 fun TimerBar(
@@ -71,10 +75,27 @@ fun TimerBar(
     cache: AccountCache,
     onAddEntry: () -> Unit,
     modifier: Modifier = Modifier,
+    favorites: FavoritesModel? = null,
     clock: Clock = Clock.systemUTC(),
 ) {
     val state by model.state.collectAsState()
     val elapsed = rememberElapsedSeconds((state as? TimerState.Running)?.start, clock)
+    Column(modifier) {
+        TimerBarCore(model, cache, state, elapsed, onAddEntry)
+        if (favorites != null) {
+            val shown = state
+            Favorites(
+                model = favorites,
+                timerFields = (shown as? TimerState.Running)?.fields ?: (shown as? TimerState.Idle)?.fields,
+                onStart = model::startFrom,
+                modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimerBarCore(model: TimerModel, cache: AccountCache, state: TimerState, elapsed: Long, onAddEntry: () -> Unit) {
     TimerBarContent(
         state = state,
         elapsedSeconds = elapsed,
@@ -88,7 +109,6 @@ fun TimerBar(
         picker = { workspaceId, original, picked, onPickedChange, pickerModifier ->
             EntityPicker(cache, workspaceId, original, picked, onPickedChange, pickerModifier)
         },
-        modifier = modifier,
     )
 }
 

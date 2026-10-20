@@ -100,6 +100,7 @@ class MainActivity : ComponentActivity() {
                         trash = trashViewModel.model,
                         timerRunning = timerRunning,
                         capabilities = (application as TokklApplication).capabilities.state,
+                        favorites = timerViewModel.favorites,
                     )
                 }
             }

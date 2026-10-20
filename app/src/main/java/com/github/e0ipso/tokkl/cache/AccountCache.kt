@@ -57,6 +57,14 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     }
 
     /**
+     * Replaces the cached favorites with [favorites], in the user's order, once the server has
+     * stored them. Blocks, so call it off the main thread.
+     */
+    fun replaceFavorites(favorites: List<CachedFavorite>) {
+        dao.replaceFavorites(favorites.mapIndexed { position, favorite -> favorite.copy(position = position) })
+    }
+
+    /**
      * Deletes every cached row and the queue of unsent changes. Signing out calls this, together
      * with clearing the stored session and settings. Blocks, so call it off the main thread.
      */

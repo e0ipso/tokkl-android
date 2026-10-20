@@ -29,6 +29,7 @@ import com.github.e0ipso.tokkl.clients.ClientsModel
 import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entry.EntryFormModel
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
+import com.github.e0ipso.tokkl.favorites.FavoritesModel
 import com.github.e0ipso.tokkl.history.EntryActionsModel
 import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryModel
@@ -107,6 +108,7 @@ fun TokklNavHost(
     trash: TrashModel,
     timerRunning: Flow<Boolean> = flowOf(false),
     capabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
+    favorites: FavoritesModel? = null,
 ) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
@@ -175,7 +177,7 @@ fun TokklNavHost(
             onTimerViewChange = timerView::choose,
             onContinue = { entryId -> history.entry(entryId)?.let(timer::continueEntry) },
         ) {
-            TimerBar(timer, cache, onAddEntry = {
+            TimerBar(timer, cache, favorites = favorites, onAddEntry = {
                 entryForm.new()
                 backStack.add(Destination.ENTRY)
             })

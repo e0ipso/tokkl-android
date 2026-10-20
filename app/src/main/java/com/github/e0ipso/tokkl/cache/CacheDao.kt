@@ -72,6 +72,13 @@ abstract class CacheDao {
         insertFavorites(next.favorites)
     }
 
+    /** Replaces the favorites with [rows] in one transaction, as a saved edit of the list leaves them. */
+    @Transaction
+    open fun replaceFavorites(rows: List<CachedFavorite>) {
+        deleteFavorites()
+        insertFavorites(rows)
+    }
+
     @Query("SELECT * FROM time_entries")
     protected abstract fun allTimeEntries(): List<CachedTimeEntry>
 

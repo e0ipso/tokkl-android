@@ -127,12 +127,32 @@ class TimerModel(
         val typed = when (val shown = snapshot()) {
             TimerState.Loading -> return
             is TimerState.Idle -> null
-            is TimerState.Running -> local.value.edit?.takeIf { it.start == shown.start && !it.sent }?.let { edit ->
-                shown.entryId?.let { Typed(it, edit) }
-            }
+            is TimerState.Running -> typedFor(shown)
         }
         startWith(source.workspaceId, source.fields(), typed)
     }
+
+    /**
+     * Starts a timer with [fields] at once, as a favorite does (docs/PRD.md T5), in the account's
+     * default workspace, through the same start as Continue: a running entry stops at the new
+     * one's start, with a description still being typed for it, as the server does for the web
+     * app's favorites (TimerBar.tsx in ../tokkl/packages/web). Does nothing until a workspace is
+     * known, or while a Start or Stop is pending.
+     */
+    fun startFrom(fields: EntryFields) {
+        if (local.value.pending != null) return
+        when (val shown = snapshot()) {
+            TimerState.Loading -> Unit
+            is TimerState.Idle -> shown.workspaceId?.let { startWith(it, fields, typed = null) }
+            is TimerState.Running -> startWith(accountSettings.value?.defaultWorkspaceId ?: shown.workspaceId, fields, typedFor(shown))
+        }
+    }
+
+    /** The description still being typed for the running entry [shown], not queued yet. */
+    private fun typedFor(shown: TimerState.Running): Typed? =
+        local.value.edit?.takeIf { it.start == shown.start && !it.sent }?.let { edit ->
+            shown.entryId?.let { Typed(it, edit) }
+        }
 
     /**
      * Starts a timer with [fields] in [workspaceId], after queuing the [typed] description of the
@@ -311,7 +331,7 @@ class TimerModel(
     /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
     private data class Edit(val start: Instant, val fields: EntryFields, val sent: Boolean)
 
-    /** An [edit] not queued yet for the running entry [entryId], which a Continue stops. */
+    /** An [edit] not queued yet for the running entry [entryId], which a Continue or a favorite stops. */
     private data class Typed(val entryId: Long, val edit: Edit)
 
     /** A Start or Stop tap that the cache may not show yet. */

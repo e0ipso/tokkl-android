@@ -258,6 +258,55 @@ class TimerModelTest {
     }
 
     @Test
+    fun aFavoriteStartsAtOnceAndTheDraftGoes() {
+        awaitIdle()
+        onMain { model.editDescription("A draft") }
+        val favorite = EntryFields(description = "Write the report", projectId = APP.id, tags = listOf("call"), billable = true)
+
+        changes.gate = CompletableDeferred()
+        onMain { model.startFrom(favorite) }
+        val shown = awaitState("the favorite runs before the queue has written it") { it is TimerState.Running } as TimerState.Running
+        assertEquals(favorite, shown.fields)
+        assertEquals(TAP, shown.start)
+        assertEquals("the queue read the tap time on the tap", listOf("start $WORKSPACE $favorite at $TAP"), changes.calls)
+
+        changes.gate.complete(Unit)
+        awaitState("the cache's entry shows") { it is TimerState.Running && it.entryId != null }
+        onMain { model.stop() }
+        assertEquals("the draft has gone, as after Start", EntryFields(), awaitIdle().fields)
+    }
+
+    /**
+     * While an entry runs, a favorite starts anyway, and the description still being typed for
+     * the running entry reaches it before the start, which stops it.
+     */
+    @Test
+    fun aFavoriteStartsWhileAnEntryRunsAfterItsTypedDescription() {
+        running.value = cachedRunning("Old")
+        awaitState("the running entry shows") { it is TimerState.Running && it.entryId == RUNNING_ID }
+        onMain { model.editDescription("Old, typed") }
+        val favorite = EntryFields(description = "Write the report")
+
+        onMain { model.startFrom(favorite) }
+        awaitCache("the favorite runs") { it?.description == "Write the report" }
+        assertEquals(
+            listOf("update $RUNNING_ID ${cachedRunning("Old, typed").entry.fields()}", "start $WORKSPACE $favorite at $TAP"),
+            changes.calls,
+        )
+        val shown = awaitState("the favorite shows running") { it is TimerState.Running && it.entryId != RUNNING_ID } as TimerState.Running
+        assertEquals(favorite, shown.fields)
+    }
+
+    @Test
+    fun aFavoriteWaitsForTheWorkspace() {
+        settings.value = null
+        awaitIdle()
+        onMain { model.startFrom(EntryFields(description = "Write the report")) }
+        Thread.sleep(SETTLE_PAUSE_MS)
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
+    @Test
     fun theClockCountsWholeSecondsFromTheStart() {
         val start = Instant.parse("2026-10-19T09:00:00Z")
         assertEquals(0L, elapsedSeconds(start, start.plusMillis(999)))
