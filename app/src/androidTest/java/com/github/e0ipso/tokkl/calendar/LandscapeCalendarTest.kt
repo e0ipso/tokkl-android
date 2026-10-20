@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasAnyDescendant
@@ -58,8 +59,9 @@ import org.junit.rules.RuleChain
  * On a phone held sideways the view opens with the top bar, the timer, the view switch and the
  * toolbar scrolled away, so the grid shows at least [hourRows] whole hour rows at once. Once the
  * calendar scrolls on, those have scrolled away in every case, and the grid shows at least
- * [hourRows] whole hour rows under the day heads, which stay in the window. The view switch and
- * every toolbar control scroll back into the window whole, as TalkBack scrolls to them.
+ * [hourRows] whole hour rows under the day heads, or upright the strip of the week's days, which
+ * stay in the window. The view switch and every toolbar control scroll back into the window
+ * whole, as TalkBack scrolls to them.
  */
 abstract class LandscapeCalendarTest(
     private val fontScale: Float,
@@ -82,8 +84,13 @@ abstract class LandscapeCalendarTest(
         listOf(R.string.calendar_previous_day, R.string.calendar_next_day)
     }
 
-    /** How TalkBack reads a day head: Monday's, a day that is not today, or today's alone. */
-    private val headLabel get() = if (landscape) MONDAY else string(R.string.history_today)
+    /** The head of Monday, a day that is not today, or upright today's day in the week's strip. */
+    private val dayHead: SemanticsMatcher
+        get() = if (landscape) {
+            isHeading() and hasContentDescription(MONDAY, substring = true)
+        } else {
+            isSelectable() and hasContentDescription(string(R.string.history_today), substring = true)
+        }
 
     @SignedOut
     @Test
@@ -136,7 +143,7 @@ abstract class LandscapeCalendarTest(
                 "the grid shows $hourRows whole hour rows: ${shown.height()} tall after the scroll, ${before.height()} before",
                 shown.height() >= HOUR_ROW * hourRows,
             )
-            val head = composeRule.onNode(isHeading() and hasContentDescription(headLabel, substring = true))
+            val head = composeRule.onNode(dayHead)
             assertTrue("the day heads show whole", shownWhole(head))
             assertTrue("the day heads stay above the grid", head.getBoundsInRoot().bottom <= shown.top)
 
@@ -224,7 +231,7 @@ private fun CalendarPage() {
                 )
             },
             listContent = {},
-            calendarContent = { CalendarContent(state = WEEK, now = NOON, onStep = {}, onToday = {}, onRetry = {}) },
+            calendarContent = { CalendarContent(state = WEEK, now = NOON, onStep = {}, onSelect = {}, onToday = {}, onRetry = {}) },
         )
     }
 }

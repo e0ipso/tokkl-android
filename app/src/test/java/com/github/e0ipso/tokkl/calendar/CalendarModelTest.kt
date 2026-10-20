@@ -235,6 +235,24 @@ class CalendarModelTest {
         assertEquals(listOf(3L), week.entries.map { it.id })
     }
 
+    /**
+     * A day chosen in the strip shows with its week, and a step goes on from it: a day forward
+     * from Sunday 4 October is Monday 5 October, in the next week, which the phone does not keep.
+     */
+    @Test
+    fun aChosenDayShowsWithItsWeekAndAStepCrossesIntoTheNext() {
+        val model = model(cached = emptyList())
+
+        model.select(OCTOBER_4)
+        val sunday = shown(model) { it.selected == OCTOBER_4 }
+        model.step(1)
+        val monday = shown(model) { it.selected == OCTOBER_5 }
+
+        assertEquals(SEPTEMBER_28, sunday.weekStart)
+        assertEquals(OCTOBER_5, monday.weekStart)
+        assertEquals(WeekSource.Loading, monday.week)
+    }
+
     private fun model(cached: List<CachedTimeEntry>) = CalendarModel(
         entries = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
         projects = flowOf(emptyList()),
@@ -277,6 +295,8 @@ class CalendarModelTest {
 
         val SEPTEMBER_21: LocalDate = LocalDate.of(2026, 9, 21)
         val SEPTEMBER_28: LocalDate = LocalDate.of(2026, 9, 28)
+        val OCTOBER_4: LocalDate = LocalDate.of(2026, 10, 4)
+        val OCTOBER_5: LocalDate = LocalDate.of(2026, 10, 5)
         val OCTOBER_12: LocalDate = LocalDate.of(2026, 10, 12)
         val OCTOBER_19: LocalDate = LocalDate.of(2026, 10, 19)
     }

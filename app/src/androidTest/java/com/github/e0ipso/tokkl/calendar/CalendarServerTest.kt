@@ -2,8 +2,11 @@ package com.github.e0ipso.tokkl.calendar
 
 import android.os.SystemClock
 import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -28,6 +31,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.Session
 import java.time.LocalDate
@@ -186,6 +190,46 @@ class CalendarServerTest {
     }
 
     /**
+     * The arrow back from the cache's first day, the first day of last week, crosses into the week
+     * before, which loads from the server, and its strip shows that week's days with their totals.
+     * A tap on a day of the strip shows it, and the arrow forward crosses back into last week.
+     */
+    @Test
+    fun theArrowsAndTheStripCrossIntoAWeekOnlyTheServerHas() {
+        val cacheStart = today.minusDays(13)
+        val dayBefore = cacheStart.minusDays(1)
+        val weekBefore = cacheStart.minusDays(7)
+        seed("On the cache's first day", cacheStart.atTime(9, 0), cacheStart.atTime(10, 0))
+        seed("On the server", dayBefore.atTime(9, 0), dayBefore.atTime(10, 0))
+        seed("Early in the week before", weekBefore.atTime(9, 0), weekBefore.atTime(9, 30))
+        refresh()
+
+        withCalendar { model ->
+            show(model, cacheStart)
+            awaitBlock(spoken("On the cache's first day", cacheStart.atTime(9, 0), cacheStart.atTime(10, 0)))
+
+            composeRule.onNode(hasContentDescription(string(R.string.calendar_previous_day)) and hasClickAction())
+                .performSemanticsAction(SemanticsActions.OnClick)
+
+            awaitBlock(spoken("On the server", dayBefore.atTime(9, 0), dayBefore.atTime(10, 0)))
+            assertEquals(dayBefore, (model.state.value as CalendarState.Shown).selected)
+            composeRule.onNode(stripDay(dayBefore, minutes = 60)).assertIsSelected()
+
+            composeRule.onNode(stripDay(weekBefore, minutes = 30)).performSemanticsAction(SemanticsActions.OnClick)
+
+            awaitBlock(spoken("Early in the week before", weekBefore.atTime(9, 0), weekBefore.atTime(9, 30)))
+            assertEquals(weekBefore, (model.state.value as CalendarState.Shown).selected)
+
+            composeRule.onNode(stripDay(dayBefore, minutes = 60)).performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.onNode(hasContentDescription(string(R.string.calendar_next_day)) and hasClickAction())
+                .performSemanticsAction(SemanticsActions.OnClick)
+
+            awaitBlock(spoken("On the cache's first day", cacheStart.atTime(9, 0), cacheStart.atTime(10, 0)))
+            composeRule.onNode(stripDay(cacheStart, minutes = 60)).assertIsSelected()
+        }
+    }
+
+    /**
      * The cache keeps entries by their start, so an entry from the evening before its first day
      * that runs past midnight is not in it. Last week, which starts on that first day, still
      * shows it.
@@ -321,6 +365,14 @@ class CalendarServerTest {
 
     private fun awaitBlock(spoken: String) {
         composeRule.waitUntil("a block reads \"$spoken\"", LOAD_TIMEOUT_MS) { exists(hasContentDescription(spoken)) }
+    }
+
+    /** The day of the week's strip that TalkBack reads as [day] with [minutes] in total, once the week has loaded. */
+    private fun stripDay(day: LocalDate, minutes: Long): SemanticsMatcher {
+        val words = DateWords(context.resources)
+        val label = context.getString(R.string.history_day, words.weekday(day), words.short(day))
+        val spoken = context.getString(R.string.history_day_spoken, label, spokenDuration(context.resources, minutes * 60))
+        return hasContentDescription(spoken) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
     }
 
     /** The block of the entry described [description], which TalkBack reads first. */

@@ -1,6 +1,12 @@
 package com.github.e0ipso.tokkl.calendar
 
+import android.content.Context
 import android.content.res.Resources
+import android.provider.Settings
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -17,24 +23,31 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.ZeroCornerSize
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,17 +65,20 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -80,6 +96,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -100,13 +117,15 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlin.math.abs
+import kotlin.math.sign
 import kotlinx.coroutines.delay
 
 /**
  * The calendar in the Timer page's Calendar view (docs/PRD.md K1): the week from the account's
  * first day of the week, with an hour row for each hour of the day, and each entry as a block as
  * long as it lasts, in the account's timezone. On a compact window, a phone held upright, it
- * shows the chosen day alone, and the arrows and a swipe move a day instead of a week. On a
+ * shows the chosen day alone under a strip of its week's days and their totals, a tap on a day
+ * of the strip shows it, and the arrows and a swipe move a day instead of a week. On a
  * window of compact height, a phone held sideways, the toolbar scrolls away as the grid scrolls
  * on, after the Timer page's top bar, timer and switch, and the day heads stay. When the page
  * opens with those scrolled away, the toolbar starts scrolled away too. The running entry's block
@@ -131,6 +150,7 @@ fun WeekCalendar(model: CalendarModel, modifier: Modifier = Modifier, clock: Clo
                 state = current,
                 now = rememberMinuteClock(clock, ticking),
                 onStep = model::step,
+                onSelect = model::select,
                 onToday = model::showToday,
                 onRetry = { model.loadWeek(current.weekStart) },
                 modifier = modifier,
@@ -141,14 +161,17 @@ fun WeekCalendar(model: CalendarModel, modifier: Modifier = Modifier, clock: Clo
 
 /**
  * [WeekCalendar] without its model, at [now]. [onStep] moves the chosen day by the days it gets,
- * [onToday] goes back to today, and [onRetry] loads the shown week again after it failed. With
- * [dayMode], the grid shows the chosen day alone.
+ * [onSelect] chooses a day of the week, [onToday] goes back to today, and [onRetry] loads the
+ * shown week again after it failed. With [dayMode], the grid shows the chosen day alone, under a
+ * strip of the seven days of its week in place of the day heads, and the day slides in from the
+ * side it comes from, unless the system asks for reduced motion.
  */
 @Composable
 internal fun CalendarContent(
     state: CalendarState.Shown,
     now: Instant,
     onStep: (Long) -> Unit,
+    onSelect: (LocalDate) -> Unit,
     onToday: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
@@ -162,6 +185,7 @@ internal fun CalendarContent(
     val labelStyle = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum")
     val gutter = rememberGutterWidth(labels, labelStyle)
     val swipe by rememberUpdatedState<(Long) -> Unit> { onStep(it * stepDays) }
+    val slide = rememberDaySlide(state.selected, dayMode)
     ScrollAwayColumn(
         modifier = modifier.fillMaxSize(),
         top = {
@@ -170,14 +194,14 @@ internal fun CalendarContent(
         },
     ) {
         Column(Modifier.fillMaxSize()) {
-            DayHeads(days, today, state, now, gutter)
+            if (dayMode) WeekStrip(state, today, now, onSelect) else DayHeads(days, today, state, now, gutter)
             Box(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .pointerInput(Unit) { detectSwipes { swipe(it) } },
             ) {
-                Grid(days, today, blocks, state.settings, state.zone, now, labels, labelStyle, gutter)
+                Grid(days, today, blocks, state.settings, state.zone, now, labels, labelStyle, gutter, slide)
                 if (!state.week.shows) WeekProblem(state.week, onRetry, Modifier.matchParentSize())
             }
         }
@@ -311,6 +335,114 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
     }
 }
 
+/**
+ * The seven days of the chosen day's week, from the account's first day of the week, each with
+ * its weekday, its date and, once the week's entries are known, its total. A tap on a day shows
+ * it. The chosen day sits in Tokkl's frame and today's date in a filled circle, so neither is
+ * told by colour alone. TalkBack reads each day as a tab, with its date and total.
+ */
+@Composable
+private fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant, onSelect: (LocalDate) -> Unit) {
+    // --radius-md on the top corners, as the day heads.
+    val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(TokklTheme.spacing.space1 / 2)
+            .selectableGroup(),
+    ) {
+        for (day in state.weekDays) {
+            val total = if (state.week.shows) dayTotalSeconds(state.entries, day, state.zone, now) else null
+            StripDay(
+                day = day,
+                selected = day == state.selected,
+                isToday = day == today,
+                totalSeconds = total,
+                settings = state.settings,
+                onSelect = { onSelect(day) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun StripDay(
+    day: LocalDate,
+    selected: Boolean,
+    isToday: Boolean,
+    totalSeconds: Long?,
+    settings: AccountSettings,
+    onSelect: () -> Unit,
+    modifier: Modifier,
+) {
+    val resources = LocalResources.current
+    val locale = LocalConfiguration.current.locales[0]
+    val words = remember(resources) { DateWords(resources) }
+    val scheme = MaterialTheme.colorScheme
+    val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(R.string.history_day, words.weekday(day), words.short(day))
+    val spoken = totalSeconds?.let { stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it)) } ?: label
+    val frame = if (selected) {
+        Modifier
+            .background(scheme.secondaryContainer, SmallCornerShape)
+            .border(FrameWidth, scheme.outline, SmallCornerShape)
+    } else {
+        Modifier
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1 / 2),
+        modifier = modifier
+            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .clip(SmallCornerShape)
+            .then(frame)
+            .selectable(selected = selected, role = Role.Tab, onClick = onSelect)
+            .clearAndSetSemantics { contentDescription = spoken }
+            .padding(horizontal = TokklTheme.spacing.space1 / 2, vertical = TokklTheme.spacing.space1),
+    ) {
+        StripText(words.weekday(day).uppercase(locale), MaterialTheme.typography.labelMedium, scheme.onSurface)
+        val date = day.dayOfMonth.toString()
+        if (isToday) {
+            // A filled circle, so today is marked by its shape as well as its colour.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .background(scheme.primary, CircleShape)
+                    .padding(horizontal = TokklTheme.spacing.space1),
+            ) {
+                StripText(date, MaterialTheme.typography.bodySmall, scheme.onPrimary)
+            }
+        } else {
+            StripText(date, MaterialTheme.typography.bodySmall, scheme.onSurface)
+        }
+        if (totalSeconds != null) {
+            StripText(
+                text = settings.formatDuration(totalSeconds),
+                style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                color = scheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/**
+ * A line of a strip day, as large as [style] where it fits and smaller where it does not, since a
+ * seventh of a phone's width holds little at large font scales. TalkBack reads the day whole.
+ */
+@Composable
+private fun StripText(text: String, style: TextStyle, color: Color) {
+    Text(
+        text = text,
+        style = style,
+        color = color,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = TextAutoSize.StepBased(minFontSize = StripMinFontSize, maxFontSize = style.fontSize),
+    )
+}
+
 /** The hour labels and a column for each of [days], scrolled to the morning when it first shows. */
 @Composable
 private fun Grid(
@@ -323,8 +455,10 @@ private fun Grid(
     labels: List<String>,
     labelStyle: TextStyle,
     gutter: Dp,
+    slide: Animatable<Float, AnimationVector1D>,
 ) {
     val scroll = rememberScrollState()
+    val distance = with(LocalDensity.current) { SlideDistance.toPx() }
     val hour = with(LocalDensity.current) { HourHeight.roundToPx() }
     // The hour's line sits a little under the top, so its label shows whole.
     val above = with(LocalDensity.current) { TokklSpacing.space4.roundToPx() }
@@ -347,7 +481,12 @@ private fun Grid(
                     settings = settings,
                     zone = zone,
                     now = now,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .graphicsLayer {
+                            translationX = slide.value * distance
+                            alpha = 1f - abs(slide.value)
+                        },
                 )
             }
         }
@@ -675,6 +814,32 @@ private fun rememberMinuteClock(clock: Clock, ticking: Boolean): Instant {
     return now
 }
 
+/**
+ * Where the column of [day] is on its way in, from 1 or -1, [SlideDistance] towards the end or
+ * the start, to 0 in place. After a step forward it comes from the end, as a swipe to the start
+ * pulls it, and after a step back from the start. It fades in on the way. Only in [dayMode], and
+ * not when the system asks for reduced motion, where the day changes at once.
+ */
+@Composable
+private fun rememberDaySlide(day: LocalDate, dayMode: Boolean): Animatable<Float, AnimationVector1D> {
+    val context = LocalContext.current
+    val shown = remember { ShownDay(day) }
+    val slide = remember(day) {
+        val side = day.compareTo(shown.day).sign
+        Animatable(if (dayMode && side != 0 && !reducedMotion(context)) side.toFloat() else 0f)
+    }
+    SideEffect { shown.day = day }
+    LaunchedEffect(slide) { slide.animateTo(0f, tween(SLIDE_MS, easing = FastOutSlowInEasing)) }
+    return slide
+}
+
+/** The day the calendar last showed. */
+private class ShownDay(var day: LocalDate)
+
+/** Whether the system asks for reduced motion: Remove animations sets the animator duration scale to 0. */
+private fun reducedMotion(context: Context): Boolean =
+    Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+
 /** Whether the window is compact, a phone held upright, by Material's window size classes. */
 @Composable
 private fun compactWindow(): Boolean {
@@ -741,6 +906,16 @@ private val BlockBar: Dp = TokklSpacing.space1
 
 /** `--radius-pill`. */
 private val PillShape = RoundedCornerShape(percent = 50)
+
+/** How far a day's column travels as it slides in: Material's shared axis transition moves 30dp. */
+private val SlideDistance: Dp = 30.dp
+
+/** How long a day's column takes to slide in: Material's shared axis transition takes 300ms. */
+private const val SLIDE_MS = 300
+
+/** The smallest a line of a strip day shrinks to. */
+private val StripMinFontSize = 6.sp
+
 
 private const val MINUTE_MS = 60_000L
 

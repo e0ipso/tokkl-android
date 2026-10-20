@@ -194,8 +194,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     }
 
     /**
-     * The Calendar view at noon on [TODAY], one day on this upright phone, with a running entry,
-     * which the timer shows and the bar marks on Timer.
+     * The Calendar view at noon on [TODAY], one day on this upright phone under the strip of its
+     * week, with a running entry, which the timer shows and the bar marks on Timer.
      */
     @SignedOut
     @Test
@@ -207,7 +207,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                     onViewChange = {},
                     timer = { Timer(RUNNING_TIMER, elapsedSeconds = RUNNING_SECONDS) },
                     listContent = {},
-                    calendarContent = { CalendarContent(state = CALENDAR, now = TODAY.instant(), onStep = {}, onToday = {}, onRetry = {}) },
+                    calendarContent = { CalendarContent(state = CALENDAR, now = TODAY.instant(), onStep = {}, onSelect = {}, onToday = {}, onRetry = {}) },
                 )
             }
         }) {

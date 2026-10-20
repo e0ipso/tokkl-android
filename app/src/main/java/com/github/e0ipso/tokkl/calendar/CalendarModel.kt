@@ -175,6 +175,11 @@ class CalendarModel(
         selected.value = (selected.value ?: time.today()).plusDays(days)
     }
 
+    /** Shows [day], as a tap on it in the week's strip does. */
+    fun select(day: LocalDate) {
+        selected.value = day
+    }
+
     /** Shows today, and follows it from then on. */
     fun showToday() {
         selected.value = null
