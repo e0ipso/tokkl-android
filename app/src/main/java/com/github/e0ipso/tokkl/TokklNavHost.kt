@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarModel
+import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
 import com.github.e0ipso.tokkl.clients.ClientsModel
 import com.github.e0ipso.tokkl.clients.ClientsScreen
@@ -33,7 +34,6 @@ import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryModel
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
-import com.github.e0ipso.tokkl.navigation.PlaceholderScreen
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.projects.ProjectsModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
@@ -52,11 +52,15 @@ import com.github.e0ipso.tokkl.timer.TimerModel
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
+import com.github.e0ipso.tokkl.trash.TrashModel
+import com.github.e0ipso.tokkl.trash.TrashScreen
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import com.github.e0ipso.tokkl.trust.TrustPrompt
 import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 
@@ -76,7 +80,8 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * a time entry runs, the bar's Timer item carries a dot. The Timer page's [timer] picks projects,
  * tasks and tags from [cache]. A tap on an entry in the history, or on the Timer page's button for
  * a past entry, opens [entryForm] above the Timer page, an entry's menu deletes it through
- * [entryActions], and its Continue button starts [timer] with its fields.
+ * [entryActions], and its Continue button starts [timer] with its fields. Trash, on [trash], shows
+ * only while the server's [capabilities] have it: when they lose it, the page goes back to Timer.
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -99,7 +104,9 @@ fun TokklNavHost(
     timer: TimerModel,
     entryForm: EntryFormModel,
     cache: AccountCache,
+    trash: TrashModel,
     timerRunning: Flow<Boolean> = flowOf(false),
+    capabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
 ) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
@@ -137,9 +144,18 @@ fun TokklNavHost(
         )
         return
     }
+    val offersTrash = capabilities.collectAsState().value.trash
+    LaunchedEffect(offersTrash) {
+        if (!offersTrash && Destination.TRASH in backStack) backStack.open(TopLevelPage.TIMER)
+    }
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
-    SignedInFrame(current = backStack.currentPage(), onOpen = backStack::open, timerRunning = running) {
+    SignedInFrame(
+        current = backStack.currentPage(),
+        onOpen = backStack::open,
+        timerRunning = running,
+        hidden = if (offersTrash) emptySet() else setOf(TopLevelPage.TRASH),
+    ) {
         Screen(
             destination = destination,
             backStack = backStack,
@@ -152,6 +168,7 @@ fun TokklNavHost(
             projects = projects,
             clients = clients,
             tags = tags,
+            trash = trash,
             entryForm = entryForm,
             cache = cache,
             timerView = view,
@@ -169,19 +186,20 @@ fun TokklNavHost(
 
 /**
  * A signed-in screen, [content], above the bottom bar, which marks [current] and opens pages with
- * [onOpen], and puts a dot on Timer while [timerRunning]. The bar's height, system navigation bar
- * included, is padding the screens consume, so their own navigation bar padding adds nothing
- * above the bar.
+ * [onOpen], leaves out the pages in [hidden], and puts a dot on Timer while [timerRunning]. The
+ * bar's height, system navigation bar included, is padding the screens consume, so their own
+ * navigation bar padding adds nothing above the bar.
  */
 @Composable
 internal fun SignedInFrame(
     current: TopLevelPage,
     onOpen: (TopLevelPage) -> Unit,
     timerRunning: Boolean = false,
+    hidden: Set<TopLevelPage> = emptySet(),
     content: @Composable BoxScope.() -> Unit,
 ) {
     Scaffold(
-        bottomBar = { AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning) },
+        bottomBar = { AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden) },
         contentWindowInsets = WindowInsets(0),
     ) { innerPadding ->
         Box(
@@ -207,6 +225,7 @@ private fun Screen(
     projects: ProjectsModel,
     clients: ClientsModel,
     tags: TagsModel,
+    trash: TrashModel,
     entryForm: EntryFormModel,
     cache: AccountCache,
     timerView: TimerView,
@@ -238,7 +257,7 @@ private fun Screen(
         Destination.PROJECTS -> ProjectsScreen(model = projects)
         Destination.CLIENTS -> ClientsScreen(model = clients)
         Destination.TAGS -> TagsScreen(model = tags)
-        Destination.TRASH -> PlaceholderScreen(title = R.string.nav_trash, message = R.string.trash_later)
+        Destination.TRASH -> TrashScreen(model = trash)
         Destination.SETTINGS -> SettingsScreen(
             model = themeSettings,
             signOut = signOut,

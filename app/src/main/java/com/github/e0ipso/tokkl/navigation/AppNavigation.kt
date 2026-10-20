@@ -79,7 +79,7 @@ enum class TopLevelPage(
  *
  * While [timerRunning] is true, because a time entry runs, the Timer item carries a dot, as the
  * web app's `.running-dot`, and TalkBack reads "Timer running" as its state, so the dot is not
- * the only sign.
+ * the only sign. The pages in [hidden], such as Trash on a server without it, show nowhere.
  */
 @Composable
 fun AppNavigationBar(
@@ -87,9 +87,10 @@ fun AppNavigationBar(
     onOpen: (TopLevelPage) -> Unit,
     modifier: Modifier = Modifier,
     timerRunning: Boolean = false,
+    hidden: Set<TopLevelPage> = emptySet(),
 ) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
-    val pages = TopLevelPage.entries.filterNot { it.inMore }
+    val pages = TopLevelPage.entries.filterNot { it.inMore || it in hidden }
     val more = stringResource(R.string.nav_more)
     val labels = pages.map { stringResource(it.label) } + more
     val running = stringResource(R.string.nav_timer_running)
@@ -121,7 +122,12 @@ fun AppNavigationBar(
         }
     }
     if (moreOpen) {
-        MoreSheet(current = current, onOpen = onOpen, onClose = { moreOpen = false })
+        MoreSheet(
+            current = current,
+            pages = TopLevelPage.entries.filter { it.inMore && it !in hidden },
+            onOpen = onOpen,
+            onClose = { moreOpen = false },
+        )
     }
 }
 
@@ -135,12 +141,12 @@ private fun RunningDot(selected: Boolean) {
 }
 
 /**
- * The web app's More sheet: a heading, a close button and the pages that do not fit in the bar.
+ * The web app's More sheet: a heading, a close button and the [pages] that do not fit in the bar.
  * Choosing a page opens it and closes the sheet. Back, a tap outside and a swipe down close it too.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MoreSheet(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, onClose: () -> Unit) {
+private fun MoreSheet(current: TopLevelPage, pages: List<TopLevelPage>, onOpen: (TopLevelPage) -> Unit, onClose: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val hide: () -> Unit = {
@@ -175,7 +181,7 @@ private fun MoreSheet(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, onC
                     .selectableGroup(),
                 verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
             ) {
-                for (page in TopLevelPage.entries.filter { it.inMore }) {
+                for (page in pages) {
                     val selected = page == current
                     NavigationDrawerItem(
                         label = {

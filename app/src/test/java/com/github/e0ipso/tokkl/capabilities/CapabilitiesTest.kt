@@ -158,6 +158,28 @@ class CapabilitiesTest {
         assertEquals(listOf(ALL), saved)
     }
 
+    /** The trash page's own 404 hides the trash and restore, and stores that, as the probe would. */
+    @Test
+    fun aMissingTrashTurnsTrashAndRestoreOffAndStoresThem() {
+        val source = source(initial = ALL)
+
+        source.trashMissing()
+
+        val expected = ALL.copy(trash = false, restore = false)
+        assertEquals(expected, source.state.value)
+        assertEquals(listOf(expected), saved)
+    }
+
+    @Test
+    fun aMissingTrashWritesNothingWhenTheFlagsAlreadySaySo() {
+        val source = source()
+
+        source.trashMissing()
+
+        assertEquals(Capabilities.NONE, source.state.value)
+        assertTrue("nothing was written", saved.isEmpty())
+    }
+
     private fun source(initial: Capabilities? = null) = CapabilitiesSource(initial) { saved += it }
 
     private fun me(body: String): Me = Json { ignoreUnknownKeys = true }.decodeFromString(Me.serializer(), body)

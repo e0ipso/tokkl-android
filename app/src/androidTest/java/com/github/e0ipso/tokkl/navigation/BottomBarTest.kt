@@ -116,6 +116,8 @@ class BottomBarTest {
     @Test
     fun theMoreSheetListsClientsTagsAndTrashAndOpensEach() {
         launch { scenario ->
+            // The sheet lists Trash once the refresh's probe has found it.
+            composeRule.waitUntil("the refresh finds the trash", NETWORK_TIMEOUT_MS) { app.capabilities.state.value.trash }
             for (page in listOf(TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
                 openMore()
                 val items = composeRule.onAllNodes(sheetItem())

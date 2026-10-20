@@ -29,6 +29,7 @@ import com.github.e0ipso.tokkl.session.NetworkWatch
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
+import com.github.e0ipso.tokkl.trash.TrashViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
     private val projectsViewModel: ProjectsViewModel get() = viewModel()
     private val clientsViewModel: ClientsViewModel get() = viewModel()
     private val tagsViewModel: TagsViewModel get() = viewModel()
+    private val trashViewModel: TrashViewModel get() = viewModel()
     private val timerViewModel: TimerViewModel get() = viewModel()
     private val entryFormViewModel: EntryFormViewModel get() = viewModel()
 
@@ -95,7 +97,9 @@ class MainActivity : ComponentActivity() {
                         timer = timerViewModel.model,
                         entryForm = entryFormViewModel.model,
                         cache = (application as TokklApplication).cache,
+                        trash = trashViewModel.model,
                         timerRunning = timerRunning,
+                        capabilities = (application as TokklApplication).capabilities.state,
                     )
                 }
             }

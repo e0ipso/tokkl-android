@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The bottom bar and its More sheet, the Timer page, and the pages they open before their features exist. -->
+<!-- The bottom bar and its More sheet, and the Timer page. -->
 <resources>
     <string name="nav_timer">Timer</string>
     <string name="nav_projects">Projects</string>
@@ -13,6 +13,4 @@
 
     <string name="timer_view_list">List</string>
     <string name="timer_view_calendar">Calendar</string>
-
-    <string name="trash_later">Restoring and purging deleted time entries comes in a later version.</string>
 </resources>

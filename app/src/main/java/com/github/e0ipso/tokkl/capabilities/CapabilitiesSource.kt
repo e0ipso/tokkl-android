@@ -30,8 +30,21 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
      * and the disk, so call it off the main thread. Returns the new flags.
      */
     @Synchronized
-    fun refresh(api: TogglApiClient, me: Me): Capabilities {
-        val next = mutableState.value.updatedWith(me, probeTrash(api))
+    fun refresh(api: TogglApiClient, me: Me): Capabilities = update(mutableState.value.updatedWith(me, probeTrash(api)))
+
+    /**
+     * A trash call outside the probe got the probe's answer for a server without the trash, a 404
+     * or a body that is not a list. Turns the trash and restore flags off and stores them, as the
+     * probe would. Flags that already say so, as after a sign-out, stay as they are and unwritten.
+     * Writes to the disk, so call it off the main thread.
+     */
+    @Synchronized
+    fun trashMissing() {
+        val current = mutableState.value
+        if (current.trash || current.restore) update(current.copy(trash = false, restore = false))
+    }
+
+    private fun update(next: Capabilities): Capabilities {
         if (next != stored) {
             try {
                 save(next)

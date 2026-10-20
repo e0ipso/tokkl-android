@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The trash page (docs/PRD.md H7), in the web app's words. -->
+<resources>
+    <string name="trash_intro">Deleted time entries stay here until you restore them or delete them for good.</string>
+    <string name="trash_loading">Loading the trash…</string>
+    <string name="trash_server_needed_title">The trash needs the server</string>
+    <string name="trash_server_needed_message">The server can\'t be reached. The trash is kept on the server, so it shows, and its entries can be restored or deleted, only once the phone reaches it again.</string>
+    <string name="trash_empty_title">The trash is empty</string>
+    <string name="trash_empty_message">Deleted entries wash up here until you restore them or delete them for good.</string>
+    <!-- Tokkl lists no more than 1000 deleted entries, TrashServer.LIST_LIMIT. -->
+    <string name="trash_limit">Showing the 1000 most recently deleted entries.</string>
+    <string name="trash_no_description">No description</string>
+    <string name="trash_no_project">No project</string>
+    <string name="trash_running">Running</string>
+    <!-- When the entry started: the date, then the clock time. -->
+    <string name="trash_started">Started %1$s %2$s</string>
+    <!-- When the entry went to the trash: the date, then the clock time. -->
+    <string name="trash_deleted_at">Deleted %1$s %2$s</string>
+    <string name="trash_restore">Restore</string>
+    <!-- What TalkBack says for an entry's Restore button, with the entry's description. -->
+    <string name="trash_restore_named">Restore %1$s</string>
+    <string name="trash_purge">Delete forever</string>
+    <!-- What TalkBack says for an entry's Delete forever button, with the entry's description. -->
+    <string name="trash_purge_named">Delete %1$s forever</string>
+    <string name="trash_empty_trash">Empty trash</string>
+    <string name="trash_empty_confirm_title">Empty the trash?</string>
+    <plurals name="trash_empty_confirm_message">
+        <item quantity="one">This deletes %1$d entry in the trash for good. You can\'t undo this.</item>
+        <item quantity="other">This deletes %1$d entries in the trash for good. You can\'t undo this.</item>
+    </plurals>
+    <string name="trash_empty_confirm_every">This deletes every entry in the trash for good. You can\'t undo this.</string>
+    <string name="trash_restored">Entry restored</string>
+    <string name="trash_purged">Deleted the entry for good</string>
+    <plurals name="trash_emptied">
+        <item quantity="one">Deleted %1$d entry for good</item>
+        <item quantity="other">Deleted %1$d entries for good</item>
+    </plurals>
+</resources>
