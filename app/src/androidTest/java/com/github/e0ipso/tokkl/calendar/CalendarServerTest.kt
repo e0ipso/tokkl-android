@@ -9,8 +9,10 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -307,7 +309,7 @@ class CalendarServerTest {
         withCalendar { model ->
             show(model, day)
             awaitBlock(spoken("Moved offline", day.atTime(9, 0), day.atTime(10, 0)))
-            composeRule.onNode(blockOf("Moved offline")).performTouchInput { holdAndDrag(center, HOUR.toPx()) }
+            dragOnGrid(blockOf("Moved offline"), from = { center }, dy = { HOUR.toPx() })
 
             val moved = awaitCached("the moved entry") { it.entry.id == id && it.entry.start == instant(day.atTime(10, 0)) }
             assertTrue("unsent offline", moved.unsent)
@@ -329,18 +331,19 @@ class CalendarServerTest {
     @Test
     fun offlineADragOnEmptySpaceCreatesAnEntryAndOpensTheForm() {
         val day = today.minusDays(1)
-        seed("Anchor", day.atTime(9, 0), day.atTime(10, 0))
+        seed("Anchor", day.atTime(9, 0), day.atTime(9, 30))
         refresh()
         AirplaneMode.set(true, account.client)
 
         withCalendar { model ->
             show(model, day)
-            awaitBlock(spoken("Anchor", day.atTime(9, 0), day.atTime(10, 0)))
-            // From 07:30, an hour and a half over the anchor's top, near the top of the grid as it
-            // opens, down an hour, so the drag stays on screen under the Timer page's top.
-            composeRule.onNode(blockOf("Anchor")).performTouchInput { holdAndDrag(Offset(centerX, -1.5f * HOUR.toPx()), HOUR.toPx()) }
+            awaitBlock(spoken("Anchor", day.atTime(9, 0), day.atTime(9, 30)))
+            // From 08:00, an hour over the anchor's top, down half an hour. With the anchor scrolled
+            // into view at the grid's bottom, that is on screen in the little grid an upright phone
+            // shows under the timer and the favorites.
+            dragOnGrid(blockOf("Anchor"), from = { Offset(centerX, -HOUR.toPx()) }, dy = { HOUR.toPx() / 2 })
 
-            val created = awaitCached("the created entry") { it.entry.start == instant(day.atTime(7, 30)) }
+            val created = awaitCached("the created entry") { it.entry.start == instant(day.atTime(8, 0)) }
             assertTrue("unsent offline", created.unsent)
             assertEquals(instant(day.atTime(8, 30)), created.entry.stop)
             composeRule.waitUntil("the entry form opens", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.entry_save))) }
@@ -377,6 +380,28 @@ class CalendarServerTest {
     }
 
     private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+
+    /**
+     * Scrolls the grid until [anchor]'s block shows, then holds and drags from [from], relative to
+     * the block, by [dy]. A press is a touch on the screen, so it must land on the part of the
+     * grid that shows: under the timer and the favorites, an upright phone shows under two hours
+     * of it, and a block below that is clipped to nothing, which puts its touch in the screen's
+     * corner. The press point is checked against the grid on screen first.
+     */
+    private fun dragOnGrid(anchor: SemanticsMatcher, from: TouchInjectionScope.() -> Offset, dy: TouchInjectionScope.() -> Float) {
+        val block = composeRule.onNode(anchor)
+        block.performScrollTo()
+        // The grid is the innermost scrolling node around the block; the page may scroll too.
+        val grid = composeRule.onAllNodes(hasScrollAction() and hasAnyDescendant(anchor)).fetchSemanticsNodes()
+            .minBy { it.boundsInRoot.height }.boundsInRoot
+        val shown = block.fetchSemanticsNode().boundsInRoot
+        block.performTouchInput {
+            val press = from()
+            val y = shown.top + press.y
+            check(y in grid.top..grid.bottom) { "the press at $y px is off the grid on screen, ${grid.top} to ${grid.bottom} px" }
+            holdAndDrag(press, dy())
+        }
+    }
 
     /** Presses at [from], holds past the long-press time, drags [dy] down in a few moves, and lifts. */
     private fun TouchInjectionScope.holdAndDrag(from: Offset, dy: Float) {
