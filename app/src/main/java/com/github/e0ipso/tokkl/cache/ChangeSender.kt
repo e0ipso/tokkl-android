@@ -161,6 +161,22 @@ class ChangeSender(
         return lastOutcome
     }
 
+    /**
+     * Cancels the wait after a 429 and forgets it, then waits for a running drain to end. Signing
+     * out calls this once [client] returns null, so the drain ends at its next change and nothing
+     * it writes lands after the cache is cleared.
+     */
+    suspend fun stop() {
+        val running = synchronized(lock) {
+            retry?.cancel()
+            retry = null
+            sending
+        }
+        running?.join()
+        retryAt = null
+        lastOutcome = null
+    }
+
     private fun drainUntilQuiet() {
         var drainAgain = true
         var sent = 0

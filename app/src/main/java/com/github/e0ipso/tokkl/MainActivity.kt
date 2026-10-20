@@ -1,19 +1,23 @@
 package com.github.e0ipso.tokkl
 
+import android.app.Application
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
@@ -26,6 +30,8 @@ import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -33,20 +39,24 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    private val signInViewModel: SignInViewModel by viewModels()
-    private val reportsViewModel: ReportsViewModel by viewModels()
-    private val historyViewModel: HistoryViewModel by viewModels()
-    private val calendarViewModel: CalendarViewModel by viewModels()
-    private val projectsViewModel: ProjectsViewModel by viewModels()
-    private val clientsViewModel: ClientsViewModel by viewModels()
-    private val tagsViewModel: TagsViewModel by viewModels()
-    private val timerViewModel: TimerViewModel by viewModels()
-    private val entryFormViewModel: EntryFormViewModel by viewModels()
+    // Read from the store on every use, never kept: a sign-out replaces them all.
+    private val signInViewModel: SignInViewModel get() = viewModel()
+    private val reportsViewModel: ReportsViewModel get() = viewModel()
+    private val historyViewModel: HistoryViewModel get() = viewModel()
+    private val calendarViewModel: CalendarViewModel get() = viewModel()
+    private val projectsViewModel: ProjectsViewModel get() = viewModel()
+    private val clientsViewModel: ClientsViewModel get() = viewModel()
+    private val tagsViewModel: TagsViewModel get() = viewModel()
+    private val timerViewModel: TimerViewModel get() = viewModel()
+    private val entryFormViewModel: EntryFormViewModel get() = viewModel()
 
     /** Whether a time entry runs, from the phone's cache, which the bottom bar marks on Timer. */
     private val timerRunning: Flow<Boolean> by lazy {
         (application as TokklApplication).cache.running.map { it != null }.distinctUntilChanged()
     }
+
+    /** The sign-outs the view models and the screens on show came after. */
+    private lateinit var shownSignOuts: MutableStateFlow<Int>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,32 +65,62 @@ class MainActivity : ComponentActivity() {
         // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
         val systemIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         showSystemBarIconsFor(darkTheme = themeSettings.state.value.mode.isDark(systemIsDark))
+        followSignOuts()
         refreshOnSignIn()
         setContent {
             val settings by themeSettings.state.collectAsState()
             val darkTheme = settings.mode.isDark(systemIsDark = isSystemInDarkTheme())
+            val signOuts by shownSignOuts.collectAsState()
             TokklTheme(darkTheme = darkTheme, dynamicColor = settings.dynamicColor) {
                 WindowFollowsTheme(darkTheme)
-                TokklNavHost(
-                    signInModel = signInViewModel.model,
-                    themeSettings = themeSettings,
-                    sessionTrust = (application as TokklApplication).sessionTrust,
-                    reports = reportsViewModel.model,
-                    history = historyViewModel.model,
-                    entryActions = historyViewModel.actions,
-                    calendar = calendarViewModel.model,
-                    projects = projectsViewModel.model,
-                    clients = clientsViewModel.model,
-                    tags = tagsViewModel.model,
-                    timerView = (application as TokklApplication).timerView,
-                    timer = timerViewModel.model,
-                    entryForm = entryFormViewModel.model,
-                    cache = (application as TokklApplication).cache,
-                    timerRunning = timerRunning,
-                )
+                // A sign-out starts the navigation over, at sign-in, with new view models.
+                key(signOuts) {
+                    TokklNavHost(
+                        signInModel = signInViewModel.model,
+                        themeSettings = themeSettings,
+                        signOut = (application as TokklApplication).signOutModel,
+                        sessionTrust = (application as TokklApplication).sessionTrust,
+                        reports = reportsViewModel.model,
+                        history = historyViewModel.model,
+                        entryActions = historyViewModel.actions,
+                        calendar = calendarViewModel.model,
+                        projects = projectsViewModel.model,
+                        clients = clientsViewModel.model,
+                        tags = tagsViewModel.model,
+                        timerView = (application as TokklApplication).timerView,
+                        timer = timerViewModel.model,
+                        entryForm = entryFormViewModel.model,
+                        cache = (application as TokklApplication).cache,
+                        timerRunning = timerRunning,
+                    )
+                }
             }
         }
     }
+
+    /**
+     * Drops every view model after a sign-out, and with them what each screen loaded, such as the
+     * history's older days and the reports. The view models outlive a configuration change, so
+     * [ViewModelsAfterSignOuts] records which sign-out they came after, and a sign-out that
+     * finished while the activity was being made again counts too.
+     */
+    private fun followSignOuts() {
+        val signOuts = (application as TokklApplication).signOut.finished
+        dropViewModelsBefore(signOuts.value)
+        shownSignOuts = MutableStateFlow(signOuts.value)
+        lifecycleScope.launch {
+            signOuts.collect { finished ->
+                dropViewModelsBefore(finished)
+                shownSignOuts.value = finished
+            }
+        }
+    }
+
+    private fun dropViewModelsBefore(signOuts: Int) {
+        if (viewModel<ViewModelsAfterSignOuts>().signOuts != signOuts) viewModelStore.clear()
+    }
+
+    private inline fun <reified T : ViewModel> viewModel(): T = ViewModelProvider(this)[T::class.java]
 
     /**
      * Coming to the foreground reads the account settings again (docs/PRD.md S7) and refreshes the
@@ -105,11 +145,14 @@ class MainActivity : ComponentActivity() {
     /** A sign-in loads the account settings and the cache, as coming to the foreground does. */
     private fun refreshOnSignIn() {
         lifecycleScope.launch {
-            signInViewModel.model.state
-                .map { it.signedIn }
-                .distinctUntilChanged()
-                .filter { it }
-                .collect { (application as TokklApplication).accountSettings.refresh() }
+            // Each sign-out brings a new sign-in view model.
+            shownSignOuts.collectLatest {
+                signInViewModel.model.state
+                    .map { it.signedIn }
+                    .distinctUntilChanged()
+                    .filter { it }
+                    .collect { (application as TokklApplication).accountSettings.refresh() }
+            }
         }
     }
 
@@ -151,4 +194,12 @@ class MainActivity : ComponentActivity() {
             isAppearanceLightNavigationBars = !darkTheme
         }
     }
+}
+
+/**
+ * Made along with MainActivity's other view models, so it tells which sign-out they came after:
+ * [SignOut.finished][com.github.e0ipso.tokkl.session.SignOut.finished] as it stood then.
+ */
+class ViewModelsAfterSignOuts(application: Application) : AndroidViewModel(application) {
+    val signOuts: Int = (application as TokklApplication).signOut.finished.value
 }

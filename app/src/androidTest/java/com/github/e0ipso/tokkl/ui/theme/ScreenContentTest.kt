@@ -20,6 +20,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.settings.SettingsContent
+import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettings
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -70,6 +71,10 @@ class ScreenContentTest {
             settings = ThemeSettings(),
             onModeChange = {},
             onDynamicColorChange = {},
+            signOut = SignOutModel.State(),
+            onSignOut = {},
+            onConfirmSignOut = {},
+            onCancelSignOut = {},
             onOpenLicences = {},
         )
     }

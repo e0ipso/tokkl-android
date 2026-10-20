@@ -30,9 +30,11 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -117,10 +119,35 @@ class SettingsScreenTest {
             ).joinToString(" ")
         }
         assertTrue("a control without a label among $labels", labels.none { it.isBlank() })
-        // Three theme modes, the wallpaper colours switch, Licences and the bottom bar's five items.
-        assertEquals(labels.toString(), 3 + 1 + 1 + 5, controls.size)
+        // Three theme modes, the wallpaper colours switch, Sign out, Licences and the bottom bar's five items.
+        assertEquals(labels.toString(), 3 + 1 + 1 + 1 + 5, controls.size)
         assertEquals(3, composeRule.onAllNodes(hasRole(Role.RadioButton)).fetchSemanticsNodes().size)
         assertEquals(1, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
+        val signOut = signOutRow().fetchSemanticsNode().config
+        assertEquals(Role.Button, signOut.getOrNull(SemanticsProperties.Role))
+        assertEquals(listOf(string(R.string.settings_sign_out)), signOut.getOrNull(SemanticsProperties.Text)?.map { it.text })
+    }
+
+    /**
+     * With nothing in the queue, Sign out asks nothing: it goes straight to sign-in, and the
+     * phone holds no session. The row is at least 48dp tall, as Licences.
+     */
+    @Test
+    fun signOutWithAnEmptyQueueGoesStraightToSignIn() {
+        composeRule.openSettings()
+        composeRule.onNode(hasText(string(R.string.settings_account)) and isHeading()).performScrollTo().assertIsDisplayed()
+        val row = signOutRow().performScrollTo()
+        val height = row.getUnclippedBoundsInRoot().let { it.bottom - it.top }
+        assertTrue("the Sign out row is $height tall", height >= MIN_TOUCH_TARGET - SLACK)
+
+        row.performClick()
+
+        composeRule.awaitText(string(R.string.sign_in_title))
+        assertTrue(
+            "no warning without unsent changes",
+            composeRule.onAllNodes(hasText(string(R.string.settings_sign_out_title))).fetchSemanticsNodes().isEmpty(),
+        )
+        assertFalse(Session(InstrumentationRegistry.getInstrumentation().targetContext).isSignedIn())
     }
 
     /**
@@ -182,6 +209,9 @@ class SettingsScreenTest {
 
     private fun licencesRow(): SemanticsNodeInteraction =
         composeRule.onNode(hasText(string(R.string.licences)) and hasClickAction())
+
+    private fun signOutRow(): SemanticsNodeInteraction =
+        composeRule.onNode(hasText(string(R.string.settings_sign_out)) and hasClickAction())
 
     private fun hasRole(role: Role) = SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
 

@@ -112,6 +112,20 @@ class TimerViewSetting(
         if (sendNow) scope.launch(io) { send() }
     }
 
+    /**
+     * Goes back to List with nothing unsent. Signing out calls this once the client is gone, so no
+     * send can succeed, and then deletes the stored view.
+     */
+    fun forget() {
+        synchronized(storing) {
+            synchronized(lock) {
+                mutableView.value = TimerView.LIST
+                unsent = false
+                chosenSinceRefresh = false
+            }
+        }
+    }
+
     /** Posts the view on show while it is unsent. A failure leaves it unsent for the next refresh. */
     private suspend fun send() = sending.withLock {
         val view = synchronized(lock) { mutableView.value.takeIf { unsent } } ?: return@withLock

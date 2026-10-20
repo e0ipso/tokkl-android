@@ -93,6 +93,21 @@ class AccountSettingsSource(
         refresh().join()
     }
 
+    /**
+     * Shows no settings, and waits for a running refresh to end. That refresh drops its answer and
+     * skips [onRefresh] unless it had already stored the answer. Signing out calls this once
+     * [client] returns null, so no later refresh stores anything, and then deletes the stored
+     * settings.
+     */
+    suspend fun forget() {
+        val running = synchronized(lock) {
+            writes++
+            mutableState.value = null
+            refreshing
+        }
+        running?.join()
+    }
+
     private fun refreshNow() {
         val writesBefore = synchronized(lock) { writes }
         val api = client() ?: return

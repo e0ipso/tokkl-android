@@ -26,11 +26,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.catalog.ConfirmDialog
+import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
@@ -38,32 +41,42 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The app's settings: the theme, then About, which opens the licences through [onOpenLicences].
- * Sign-out (TKA-0038) goes in a section of its own between the two. Every change applies at once.
- * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
+ * The app's settings: the theme, the account with its sign-out ([signOut]), then About, which opens
+ * the licences through [onOpenLicences]. Every theme change applies at once. It is a page of the
+ * bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable
 fun SettingsScreen(
     model: ThemeSettingsModel,
+    signOut: SignOutModel,
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val settings by model.state.collectAsState()
+    val signOutState by signOut.state.collectAsState()
     SettingsContent(
         settings = settings,
         onModeChange = model::onModeChange,
         onDynamicColorChange = model::onDynamicColorChange,
+        signOut = signOutState,
+        onSignOut = signOut::signOut,
+        onConfirmSignOut = signOut::confirm,
+        onCancelSignOut = signOut::cancel,
         onOpenLicences = onOpenLicences,
         modifier = modifier,
     )
 }
 
-/** [SettingsScreen] without its model. */
+/** [SettingsScreen] without its models. */
 @Composable
 internal fun SettingsContent(
     settings: ThemeSettings,
     onModeChange: (ThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
+    signOut: SignOutModel.State,
+    onSignOut: () -> Unit,
+    onConfirmSignOut: () -> Unit,
+    onCancelSignOut: () -> Unit,
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -84,8 +97,22 @@ internal fun SettingsContent(
         ) {
             ThemeSection(settings, onModeChange, onDynamicColorChange)
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+            AccountSection(signOut, onSignOut)
+            Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
             AboutSection(onOpenLicences)
         }
+    }
+    signOut.unsentToConfirm?.let { unsent ->
+        ConfirmDialog(
+            title = stringResource(R.string.settings_sign_out_title),
+            paragraphs = listOf(pluralStringResource(R.plurals.settings_sign_out_unsent, unsent, unsent)),
+            confirmLabel = stringResource(R.string.settings_sign_out),
+            canConfirm = true,
+            problem = null,
+            onConfirm = onConfirmSignOut,
+            onCancel = onCancelSignOut,
+            danger = true,
+        )
     }
 }
 
@@ -129,6 +156,35 @@ private fun ThemeSection(
         }
         Spacer(Modifier.width(TokklTheme.spacing.space3))
         Switch(checked = settings.dynamicColor, onCheckedChange = null)
+    }
+}
+
+/**
+ * One row that signs out, clickable across its width, which TalkBack reads as a button. It says
+ * that it is signing out until the phone is clear, and shows a failed sign-out below it.
+ */
+@Composable
+private fun AccountSection(signOut: SignOutModel.State, onSignOut: () -> Unit) {
+    Text(
+        text = stringResource(R.string.settings_account),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics { heading() },
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .clickable(enabled = !signOut.signingOut, role = Role.Button, onClick = onSignOut),
+    ) {
+        Text(
+            text = stringResource(if (signOut.signingOut) R.string.settings_signing_out else R.string.settings_sign_out),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+    }
+    if (signOut.failed) {
+        Spacer(Modifier.height(TokklTheme.spacing.inGroup))
+        ErrorBanner(stringResource(R.string.settings_sign_out_failed), Modifier.fillMaxWidth())
     }
 }
 

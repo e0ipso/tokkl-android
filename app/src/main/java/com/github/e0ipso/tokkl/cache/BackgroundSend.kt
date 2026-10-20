@@ -43,6 +43,14 @@ object BackgroundSend {
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
+
+    /**
+     * Cancels the work, waiting or running, and returns once WorkManager has recorded that.
+     * Signing out calls this. Blocks, so call it off the main thread.
+     */
+    fun cancel(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME).result.get()
+    }
 }
 
 /**

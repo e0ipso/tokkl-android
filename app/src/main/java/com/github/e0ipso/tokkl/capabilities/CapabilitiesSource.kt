@@ -43,4 +43,14 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
         mutableState.value = next
         return next
     }
+
+    /**
+     * Goes back to [Capabilities.NONE], after a refresh that is running. Signing out calls this,
+     * then deletes the stored flags.
+     */
+    @Synchronized
+    fun forget() {
+        mutableState.value = Capabilities.NONE
+        stored = null
+    }
 }

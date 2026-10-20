@@ -23,6 +23,14 @@ object SharedHttpClient {
 
     val instance: OkHttpClient by lazy { build() }
 
+    /**
+     * Cancels every call in flight. Signing out calls this once it has forgotten the server, so no
+     * answer for the old account arrives after the phone has cleared its data.
+     */
+    fun cancelAll() {
+        instance.dispatcher.cancelAll()
+    }
+
     private fun build(): OkHttpClient {
         val trustManager = PinningTrustManager(platformTrustManager()) { host, port ->
             ConfiguredTrust.current.pinnedSha256(host, port)

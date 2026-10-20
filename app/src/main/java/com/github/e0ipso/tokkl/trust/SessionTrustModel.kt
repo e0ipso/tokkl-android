@@ -89,6 +89,11 @@ class SessionTrustModel(
         mutableState.update { it.copy(promptOpen = false) }
     }
 
+    /** Drops the refusal and its prompt. Signing out calls this, so the next account starts clean. */
+    fun forget() {
+        mutableState.value = State()
+    }
+
     /** Opens the prompt again for the refusal the user cancelled. */
     fun reopen() {
         mutableState.update { if (it.refusal is ApiError.TrustQuestion) it.copy(promptOpen = true) else it }

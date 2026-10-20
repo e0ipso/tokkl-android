@@ -15,7 +15,9 @@ import java.util.concurrent.Executor
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -23,6 +25,7 @@ import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -121,6 +124,37 @@ class AccountSettingsSourceTest {
         assertEquals(2, server.requestCount)
         assertEquals(signedIn, source.state.value)
         assertEquals("only sign-in wrote", listOf(signedIn), saved)
+    }
+
+    /** Sign-out forgets the settings while a refresh's request is out. */
+    @Test
+    fun aRefreshThatAnswersAfterForgetStoresNothingAndRefreshesNothingElse() {
+        var onRefreshRuns = 0
+        lateinit var source: AccountSettingsSource
+        lateinit var forgetting: Job
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.url.encodedPath == "/api/v9/me/preferences") return json(IMPROVED)
+                forgetting = CoroutineScope(Dispatchers.Unconfined).launch { source.forget() }
+                return json(MADRID_MONDAY)
+            }
+        }
+        source = AccountSettingsSource(
+            initial = MADRID_MONDAY_SETTINGS,
+            save = { saved += it },
+            client = { client },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
+            onRefresh = { _, _, _ -> onRefreshRuns++ },
+        )
+
+        val refresh = source.refresh()
+
+        assertTrue("the refresh finished", refresh.isCompleted)
+        assertTrue("forget waited for it and returned", forgetting.isCompleted)
+        assertNull(source.state.value)
+        assertEquals("nothing written", emptyList<AccountSettings>(), saved)
+        assertEquals("no cache or capabilities refresh", 0, onRefreshRuns)
     }
 
     @Test

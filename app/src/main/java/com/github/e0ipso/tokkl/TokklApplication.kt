@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl
 import android.app.Application
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
+import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.CacheDatabase
@@ -16,6 +17,8 @@ import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignOut
+import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
@@ -24,6 +27,7 @@ import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class TokklApplication : Application() {
@@ -138,6 +142,45 @@ class TokklApplication : Application() {
             scope = MainScope(),
             io = Dispatchers.IO,
         )
+    }
+
+    /**
+     * Sign-out (docs/PRD.md S6). It forgets the server and the token with its Keystore key first,
+     * so the app sends nothing new. Then it cancels the queue's background work and every call in
+     * flight, waits for the refresh and the queue's drain to end, and clears the cache with the
+     * queue, the account settings, the capabilities, the Timer page's view and the trust
+     * decisions. MainActivity then drops its view models, and with them the history's older days
+     * and what every other screen loaded. The theme and the sign-in cooldowns stay: they belong to
+     * the phone and to a server, not to the account.
+     */
+    val signOut: SignOut by lazy {
+        SignOut(
+            steps = listOf(
+                { Session(this).clear() },
+                { BackgroundSend.cancel(this) },
+                { SharedHttpClient.cancelAll() },
+                { accountSettings.forget() },
+                { sender.stop() },
+                { cache.clear() },
+                { AccountSettingsStore(this).clear() },
+                {
+                    capabilities.forget()
+                    CapabilitiesStore(this).clear()
+                },
+                {
+                    timerView.forget()
+                    TimerViewStore(this).clear()
+                },
+                { ServerTrustStore(this).clear() },
+                { sessionTrust.forget() },
+            ),
+            io = Dispatchers.IO,
+        )
+    }
+
+    /** The Settings page's sign-out button and its warning about unsent changes. */
+    val signOutModel: SignOutModel by lazy {
+        SignOutModel(unsentCount = { changes.unsentCount.first() }, clear = signOut::run, scope = MainScope())
     }
 
     override fun onCreate() {

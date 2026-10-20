@@ -72,4 +72,14 @@ class Session(
         tokens.save(token)
         servers.save(server)
     }
+
+    /**
+     * Forgets the server, then the token and its Keystore key. Without the server the app counts
+     * as signed out and sends nothing, so that goes first: a failure after it still signs out.
+     */
+    @Throws(GeneralSecurityException::class, IOException::class)
+    fun clear() {
+        servers.clear()
+        tokens.clear()
+    }
 }

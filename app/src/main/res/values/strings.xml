@@ -14,6 +14,15 @@
     <string name="settings_dynamic_colour">Wallpaper colours</string>
     <string name="settings_dynamic_colour_summary">Use colours from your wallpaper instead of Tokkl\'s.</string>
     <string name="settings_about">About</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_signing_out">Signing out…</string>
+    <string name="settings_sign_out_title">Sign out and lose unsent changes?</string>
+    <plurals name="settings_sign_out_unsent">
+        <item quantity="one">%d change hasn\'t reached the server yet. Signing out deletes it from this phone, along with everything else of this account.</item>
+        <item quantity="other">%d changes haven\'t reached the server yet. Signing out deletes them from this phone, along with everything else of this account.</item>
+    </plurals>
+    <string name="settings_sign_out_failed">Sign-out didn\'t finish, so some of this account\'s data may still be on the phone. Try again.</string>
 
     <string name="sign_in_title">Sign in</string>
     <string name="sign_in_server_url">Server URL</string>

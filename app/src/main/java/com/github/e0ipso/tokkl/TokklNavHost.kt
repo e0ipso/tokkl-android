@@ -40,6 +40,7 @@ import com.github.e0ipso.tokkl.reports.ReportsModel
 import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.SettingsScreen
+import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
@@ -83,6 +84,7 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
 fun TokklNavHost(
     signInModel: SignInModel,
     themeSettings: ThemeSettingsModel,
+    signOut: SignOutModel,
     sessionTrust: SessionTrustModel,
     reports: ReportsModel,
     history: HistoryModel,
@@ -127,6 +129,7 @@ fun TokklNavHost(
             destination = destination,
             backStack = backStack,
             themeSettings = themeSettings,
+            signOut = signOut,
             reports = reports,
             history = history,
             entryActions = entryActions,
@@ -180,6 +183,7 @@ private fun Screen(
     destination: Destination,
     backStack: SnapshotStateList<Destination>,
     themeSettings: ThemeSettingsModel,
+    signOut: SignOutModel,
     reports: ReportsModel,
     history: HistoryModel,
     entryActions: EntryActionsModel,
@@ -215,6 +219,7 @@ private fun Screen(
         Destination.TRASH -> PlaceholderScreen(title = R.string.nav_trash, message = R.string.trash_later)
         Destination.SETTINGS -> SettingsScreen(
             model = themeSettings,
+            signOut = signOut,
             onOpenLicences = { backStack.add(Destination.LICENCES) },
         )
         Destination.LICENCES -> LicencesScreen(onBack = { backStack.removeAt(backStack.lastIndex) })
