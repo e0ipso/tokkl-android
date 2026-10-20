@@ -56,16 +56,19 @@ class ServerUrl private constructor(private val base: HttpUrl) {
 
         /**
          * Returns null unless [url] is an absolute `http` or `https` URL with
-         * no user name, password, query or fragment. The app stores the URL in
-         * plain text, so it must not carry credentials. Empty path segments are
-         * dropped, so `https://example.com/tokkl/` and
-         * `https://example.com/tokkl` are the same server.
+         * no user name or password. The app stores the URL in plain text, so it
+         * must not carry credentials. The base URL keeps only the scheme, host,
+         * port and path, so a query or fragment, as in a URL copied from the
+         * browser's address bar, is dropped. Empty path segments are dropped
+         * too, so `https://example.com/tokkl/` and `https://example.com/tokkl`
+         * are the same server.
          */
         fun parse(url: String): ServerUrl? {
             val parsed = url.toHttpUrlOrNull() ?: return null
             if (parsed.encodedUsername.isNotEmpty() || parsed.encodedPassword.isNotEmpty()) return null
-            if (parsed.encodedQuery != null || parsed.encodedFragment != null) return null
             val base = parsed.newBuilder()
+                .query(null)
+                .fragment(null)
                 .encodedPath("/")
                 .apply { parsed.encodedPathSegments.filter { it.isNotEmpty() }.forEach(::addEncodedPathSegment) }
                 .build()

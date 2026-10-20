@@ -76,12 +76,30 @@ class ServerUrlTest {
         assertEquals("https://example.com/tokkl", parse("https://example.com/tokkl/").toString())
     }
 
+    /** A URL copied from the browser's address bar names the server, whatever follows the path. */
+    @Test
+    fun dropsTheQueryAndTheFragment() {
+        val server = parse("https://example.com/tokkl")
+        for (url in listOf(
+            "https://example.com/tokkl/?from=2026-10-01",
+            "https://example.com/tokkl?x=1&y=2",
+            "https://example.com/tokkl#top",
+            "https://example.com/tokkl/?from=2026-10-01#week",
+            "https://example.com/tokkl?",
+            "https://example.com/tokkl#",
+        )) {
+            assertEquals(url, server, parse(url))
+            assertEquals(url, "https://example.com/tokkl/api/v9/me", parse(url).api("me").toString())
+        }
+        assertEquals(parse("https://example.com"), parse("https://example.com/#top"))
+    }
+
     @Test
     fun rejectsWhatIsNotAnHttpBaseUrl() {
         val bad = listOf(
             "", "example.com", "ftp://example.com", "https://",
-            "https://example.com/tokkl?x=1", "https://example.com/#top",
             "https://ana@example.com/tokkl", "https://ana:secret@example.com/tokkl",
+            "https://ana:secret@example.com/tokkl?x=1",
         )
         for (url in bad) {
             assertNull(url, ServerUrl.parse(url))

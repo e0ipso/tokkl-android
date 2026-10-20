@@ -104,6 +104,37 @@ class SignInModelTest {
         assertTrue(model.state.value.signedIn)
     }
 
+    /** A URL copied from the browser's address bar signs in to the server it names. */
+    @Test
+    fun aQueryAndAFragmentInTheServerUrlAreDropped() {
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
+        model.onServerUrlChange(baseUrl("/tokkl/") + "?from=2026-10-01#week")
+        model.onApiTokenChange(TOKEN)
+
+        model.submit()
+
+        val request = server.takeRequest()
+        assertEquals("/tokkl/api/v9/me", request.url.encodedPath)
+        assertNull(request.url.query)
+        assertEquals(listOf(ServerUrl.parse(baseUrl("/tokkl"))!! to TOKEN), saved)
+        assertTrue(model.state.value.signedIn)
+    }
+
+    /** The app stores the URL in plain text, so a user name or password in it stays refused. */
+    @Test
+    fun aUserNameOrPasswordInTheServerUrlIsRefused() {
+        for (url in listOf("https://ana@example.com/tokkl", "https://ana:secret@example.com/tokkl?from=2026-10-01")) {
+            model.onServerUrlChange(url)
+            model.onApiTokenChange(TOKEN)
+
+            model.submit()
+
+            assertEquals(url, setOf(InputError.SERVER_URL), model.state.value.inputErrors)
+        }
+        assertEquals("nothing sent", 0, server.requestCount)
+        assertEquals(emptyList<Pair<ServerUrl, String>>(), saved)
+    }
+
     @Test
     fun meWithoutTimeResolutionSignsInWithNoSnapping() {
         server.enqueue(me("""{"id":7,"api_token":"$TOKEN","timezone":"Europe/Madrid","beginning_of_week":1}"""))

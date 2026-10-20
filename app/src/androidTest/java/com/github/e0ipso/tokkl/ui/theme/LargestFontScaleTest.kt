@@ -49,6 +49,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.signin.assertFieldErrorsLeaveTheFormInPlace
+import com.github.e0ipso.tokkl.signin.assertServerUrlErrorFitsTheHint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -338,6 +339,16 @@ class LargestFontScaleTest {
         composeRule.awaitText(string(R.string.sign_in_server_url))
 
         composeRule.assertFieldErrorsLeaveTheFormInPlace()
+    }
+
+    /** The server URL error takes no more lines than the hint, two at this scale on tokkl-api36. */
+    @SignedOut
+    @Test
+    fun signInServerUrlErrorFitsInTheHintsLines() {
+        assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
+        composeRule.awaitText(string(R.string.sign_in_server_url))
+
+        composeRule.assertServerUrlErrorFitsTheHint()
     }
 
     private fun assertFieldAtTheEdgeStaysAboveTheKeyboard(pixels: Int) {

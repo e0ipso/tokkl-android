@@ -220,6 +220,11 @@ class SignInScreenTest {
     }
 
     @Test
+    fun theServerUrlErrorFitsInTheHintsLines() {
+        composeRule.assertServerUrlErrorFitsTheHint()
+    }
+
+    @Test
     fun everyFieldAndButtonHasATalkBackLabel() {
         assertEveryControlIsLabelled()
 

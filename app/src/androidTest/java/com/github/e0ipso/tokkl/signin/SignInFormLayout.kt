@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.signin
 
 import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -11,10 +12,12 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 
 /**
  * Checks, at the device's font scale, that every field of the sign-in form keeps its height and
@@ -49,6 +52,30 @@ internal fun ComposeTestRule.assertFieldErrorsLeaveTheFormInPlace() {
             assertEquals("$name moved when the errors cleared", before[index].top.value, cleared[index].top.value, SLACK_DP)
         }
     }
+}
+
+/**
+ * Checks, at the device's font scale, that the server URL error takes no more lines than the hint
+ * it replaces, as TKA-0158 budgeted. A URL with a user name is the one refusal left, since a
+ * query or a fragment is dropped.
+ */
+internal fun ComposeTestRule.assertServerUrlErrorFitsTheHint() {
+    val hintLines = lineCount(R.string.sign_in_server_url_hint)
+    field(R.string.sign_in_server_url).performTextClearance()
+    field(R.string.sign_in_server_url).performTextInput("https://ana@tokkl.example.com")
+    onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+    waitUntil("the server URL error shows", TIMEOUT_MS) { shows(R.string.sign_in_error_server_url) }
+
+    val errorLines = lineCount(R.string.sign_in_error_server_url)
+    assertTrue("the error takes $errorLines lines, the hint $hintLines", errorLines <= hintLines)
+}
+
+/** How many lines the text [id] takes on screen. */
+private fun ComposeTestRule.lineCount(@StringRes id: Int): Int {
+    val node = onNode(hasText(string(id)), useUnmergedTree = true).fetchSemanticsNode()
+    val layouts = mutableListOf<TextLayoutResult>()
+    node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+    return layouts.single().lineCount
 }
 
 /** A field's height, and its top below the server URL field's. */

@@ -68,6 +68,19 @@ class SignInUnderPathPrefixTest {
         assertSignedInThroughThePrefix()
     }
 
+    /** A URL copied from the browser's address bar, query and fragment included, signs in to its server. */
+    @Test
+    fun aQueryAndAFragmentAfterThePrefixAreDropped() {
+        field(R.string.sign_in_server_url).performTextInput("$server/?from=2026-10-01#week")
+        field(R.string.sign_in_api_token).performTextInput(TokklTestServer.apiToken)
+
+        submit()
+        confirmHttpWarning()
+
+        composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
+        assertSignedInThroughThePrefix()
+    }
+
     @Test
     fun emailAndPasswordSignInReadsMeThroughThePrefix() {
         field(R.string.sign_in_server_url).performTextInput(server.toString())
