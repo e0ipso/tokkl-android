@@ -15,8 +15,10 @@ import java.time.LocalDate
  *   has not received, the start the server will store, snapped on the phone.
  * @property stop as [start].
  * @property unsent the queue holds a change to the entry that the server has not received.
- * @property cached the phone holds the entry, so the change queue can edit it. The older days
- *   that the server sent, and the days the cache dropped since, are not on the phone.
+ * @property cached the phone holds the entry in its two weeks, so the menu's actions can change
+ *   it. The older days that the server sent, and the days the cache dropped since, are not on the
+ *   phone, and an entry from before the two weeks that the cache holds only until its next refresh
+ *   counts as theirs. The entry form edits both kinds.
  * @property projectId the project's id, which the grouping of similar entries compares.
  * @property taskId the task's id, as [projectId].
  */
@@ -66,6 +68,9 @@ data class HistoryDay(
  *
  * With [collapse], the account's `collapseTimeEntries` preference, similar entries of a day share
  * a row, as the web app groups them.
+ *
+ * A cached entry that starts before [windowStart], the first day of the cache's two weeks, shows as
+ * not cached: the cache holds it only until a refresh drops it, as after an edit of an older entry.
  */
 fun historyDays(
     cached: List<EntryWithSendState>,
@@ -74,11 +79,13 @@ fun historyDays(
     tasks: List<CachedTask>,
     time: AccountTime,
     collapse: Boolean = true,
+    windowStart: LocalDate? = null,
 ): List<HistoryDay> {
     val cachedIds = cached.mapTo(HashSet()) { it.entry.id }
     // An entry edited between two pages can come in both; the later page has its newer values.
     val olderOnly = older.associateBy { it.id }.values.filter { it.id !in cachedIds }
-    val rows = cached.map { Row(it.entry, it.unsent, cached = true) } + olderOnly.map { Row(it, unsent = false, cached = false) }
+    val inWindow = { entry: CachedTimeEntry -> windowStart == null || time.local(entry.start).toLocalDate() >= windowStart }
+    val rows = cached.map { Row(it.entry, it.unsent, cached = inWindow(it.entry)) } + olderOnly.map { Row(it, unsent = false, cached = false) }
     val projectsById = projects.associateBy { it.id }
     val tasksById = tasks.associateBy { it.id }
     return rows

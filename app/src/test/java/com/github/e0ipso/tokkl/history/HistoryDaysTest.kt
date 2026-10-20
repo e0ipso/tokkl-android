@@ -110,6 +110,23 @@ class HistoryDaysTest {
         assertFalse("only the server has it, so the queue cannot edit it", days[1].entries.single().cached)
     }
 
+    @Test
+    fun aCachedEntryFromBeforeTheWindowShowsAsNotCached() {
+        val days = historyDays(
+            cached = listOf(sent(entry(1, "2026-10-14T08:00:00Z", "2026-10-14T09:00:00Z")), unsent(entry(2, "2026-09-01T08:00:00Z", "2026-09-01T09:00:00Z"))),
+            older = emptyList(),
+            projects = emptyList(),
+            tasks = emptyList(),
+            time = time(resolution = null),
+            windowStart = LocalDate.of(2026, 10, 2),
+        )
+
+        assertTrue("inside the cache's two weeks", days[0].entries.single().cached)
+        val older = days[1].entries.single()
+        assertFalse("the cache holds it only until its next refresh", older.cached)
+        assertTrue("and it still shows its change as not sent", older.unsent)
+    }
+
     private fun time(resolution: Double?) = AccountTime(MADRID, DayOfWeek.MONDAY, resolution, CLOCK)
 
     private fun sent(entry: CachedTimeEntry) = EntryWithSendState(entry, unsent = false)

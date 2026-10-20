@@ -441,6 +441,42 @@ class EntryFormModelTest {
     }
 
     /** What a test types into the form, and the span it saves. */
+    @Test
+    fun anEntryFromTheOlderDaysOpensAsTheHistoryHoldsItAndSavesWithEveryField() {
+        onMain { model.edit(OLDER.id, older = OLDER) }
+        val form = awaitOpen("the form opens on the older entry") { true }
+        assertEquals(LocalDate.of(2026, 9, 2), form.date)
+        assertEquals("08:00" to "09:15", form.start to form.end)
+        assertEquals(OLDER_WORKSPACE, form.workspaceId)
+
+        onMain { model.setDescription("Plan the sprint, again") }
+        save()
+
+        assertEquals(
+            "a full update for an entry the cache does not hold, in its own workspace",
+            listOf("updateOlder ${OLDER.id} $OLDER_WORKSPACE ${EntryFields(description = "Plan the sprint, again", projectId = APP.id)} ${OLDER.start} ${OLDER.stop}"),
+            changes.calls,
+        )
+    }
+
+    @Test
+    fun theCachesCopyWinsOverTheOlderDaysOne() {
+        onMain { model.edit(ENTRY_ID, older = ENTRY.copy(description = "An older copy")) }
+        val form = awaitOpen("the form opens") { true }
+        assertEquals("Write the form", form.fields.description)
+
+        save()
+
+        assertEquals(listOf("update $ENTRY_ID $ENTRY_FIELDS ${ENTRY.start} ${ENTRY.stop}"), changes.calls)
+    }
+
+    @Test
+    fun anEntryNeitherTheCacheNorTheHistoryHoldsIsMissing() {
+        onMain { model.edit(OLDER.id, older = ENTRY) }
+
+        awaitState("the form says the entry is gone") { it == EntryFormState.Missing }
+    }
+
     private data class Typed(
         val date: LocalDate = LocalDate.of(2026, 10, 19),
         val start: String,
@@ -494,6 +530,10 @@ class EntryFormModelTest {
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("the form stops no timer")
 
+        override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) {
+            calls += "updateOlder $entryId $workspaceId $fields $start $stop"
+        }
+
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the form deletes nothing")
     }
 
@@ -529,5 +569,20 @@ class EntryFormModelTest {
             tagIds = emptyList(),
         )
         val ENTRY_FIELDS = EntryFields(description = "Write the form")
+        const val OLDER_WORKSPACE = 20L
+
+        /** 08:00 to 09:15 in Madrid on Wednesday 2 September 2026, a day older than the cache. */
+        val OLDER = CachedTimeEntry(
+            id = 300,
+            workspaceId = OLDER_WORKSPACE,
+            projectId = APP.id,
+            taskId = null,
+            description = "Plan the sprint",
+            start = Instant.parse("2026-09-02T06:00:00Z"),
+            stop = Instant.parse("2026-09-02T07:15:00Z"),
+            billable = false,
+            tags = emptyList(),
+            tagIds = emptyList(),
+        )
     }
 }

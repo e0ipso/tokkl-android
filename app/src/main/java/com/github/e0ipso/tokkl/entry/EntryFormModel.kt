@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.entry
 
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
@@ -107,6 +108,9 @@ sealed interface EntryFormState {
  * left as it opened keeps the entry's own instant, with its seconds, and the duration counts only
  * once it differs from what the form last derived.
  *
+ * The form opens on the cache's copy of an entry, or on the copy the history holds of an entry from
+ * the older days the server sent, which the phone does not keep.
+ *
  * Save checks the times. A field that cannot be read, or a span the server would refuse, gets a
  * [TimeMistake] and nothing is queued. Otherwise the change goes to [changes], the change queue,
  * with every field, so it is on the phone at once, works offline, and the last write to reach the
@@ -137,8 +141,12 @@ class EntryFormModel(
     /** Whether a form is open, or opening. False after [close], and in a new process. */
     val isOpen: Boolean get() = phase.value != Phase.Closed
 
-    /** Opens the form on the cached entry [entryId]. */
-    fun edit(entryId: Long) = open(Opening.Edit(entryId))
+    /**
+     * Opens the form on the entry [entryId]: the cache's copy, or [older] when the cache does not
+     * hold it, such as an entry from the older days the history holds in memory. A save of [older]
+     * goes to the queue as [EntryChanges.updateOlder], with every field.
+     */
+    fun edit(entryId: Long, older: CachedTimeEntry? = null) = open(Opening.Edit(entryId, older?.takeIf { it.id == entryId }))
 
     /** Opens the form for a manual entry, on today's date in the account's timezone. */
     fun new() = open(Opening.New)
@@ -200,7 +208,12 @@ class EntryFormModel(
                     changes.create(workspaceId, form.fields, span.start, span.stop)
                     true
                 }
-                is Target.Edit -> changes.update(target.entryId, form.fields, span.start, span.stop)
+                is Target.Edit -> if (target.onPhone) {
+                    changes.update(target.entryId, form.fields, span.start, span.stop)
+                } else {
+                    changes.updateOlder(target.entryId, target.workspaceId, form.fields, span.start, span.stop)
+                    true
+                }
             }
             phase.update { current ->
                 when {
@@ -221,10 +234,15 @@ class EntryFormModel(
                 null -> Phase.NoAccountTime
                 else -> when (opening) {
                     Opening.New -> Phase.Open(newForm(time))
-                    is Opening.Edit -> entries.first().firstOrNull { it.entry.id == opening.entryId }
-                        ?.let { editForm(it, settings, time) }
-                        ?.let { Phase.Open(it) }
-                        ?: Phase.Missing
+                    is Opening.Edit -> {
+                        val cached = entries.first().firstOrNull { it.entry.id == opening.entryId }
+                        val form = when {
+                            cached != null -> editForm(cached, settings, time, onPhone = true)
+                            opening.older != null -> editForm(EntryWithSendState(opening.older, unsent = false), settings, time, onPhone = false)
+                            else -> null
+                        }
+                        form?.let { Phase.Open(it) } ?: Phase.Missing
+                    }
                 }
             }
             phase.update { if (it == waiting) next else it }
@@ -236,9 +254,9 @@ class EntryFormModel(
 
     /**
      * The form on [cached], or null while it runs. An entry with a change the server lacks shows
-     * the times the server will store, as the history does.
+     * the times the server will store, as the history does. [onPhone] says the cache holds it.
      */
-    private fun editForm(cached: EntryWithSendState, settings: AccountSettings, time: AccountTime): Form? {
+    private fun editForm(cached: EntryWithSendState, settings: AccountSettings, time: AccountTime, onPhone: Boolean): Form? {
         val entry = cached.entry
         val stop = entry.stop ?: return null
         val shown = if (cached.unsent && !stop.isBefore(entry.start)) time.snapUnsent(entry.start, stop) else SnappedSpan(entry.start, stop)
@@ -247,7 +265,7 @@ class EntryFormModel(
         val end = settings.formatTime(shown.stop, time.zone)
         val duration = formatDuration(snappedSeconds(shown.start, shown.stop, time))
         val fields = entry.fields()
-        val target = Target.Edit(entry.id, entry.workspaceId, entry.start, stop, date, start, end, fields.picked)
+        val target = Target.Edit(entry.id, entry.workspaceId, entry.start, stop, date, start, end, fields.picked, onPhone)
         return Form(target, fields, date, start, end, duration, syncedDuration = duration)
     }
 
@@ -367,8 +385,9 @@ class EntryFormModel(
         data object New : Target
 
         /**
-         * The cached entry [entryId], which spans [start] to [stop] and opened on [date] with
-         * [startText] and [endText].
+         * The entry [entryId], which spans [start] to [stop] and opened on [date] with [startText]
+         * and [endText]. [onPhone] when the cache held it, and false for an entry from the older
+         * days, which the queue edits with [EntryChanges.updateOlder].
          */
         data class Edit(
             val entryId: Long,
@@ -379,13 +398,14 @@ class EntryFormModel(
             val startText: String,
             val endText: String,
             val original: Picked,
+            val onPhone: Boolean,
         ) : Target
     }
 
     private sealed interface Opening {
         data object New : Opening
 
-        data class Edit(val entryId: Long) : Opening
+        data class Edit(val entryId: Long, val older: CachedTimeEntry?) : Opening
     }
 
     private sealed interface Phase {

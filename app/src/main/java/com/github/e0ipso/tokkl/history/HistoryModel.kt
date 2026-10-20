@@ -93,6 +93,10 @@ sealed interface OlderDays {
  * when no older day has entries. A server without it, such as Toggl Track, gets pages until one
  * comes back empty, and then more only on a tap.
  *
+ * A tap on any entry opens the entry form, also on the older days, whose entries the form edits
+ * through the queue as the history holds them. Such an edit sits in the cache until the send and
+ * the refresh after it, and the history then keeps showing the edited entry.
+ *
  * The cache's window moves on with the date, and a refresh then drops the days that fell out of
  * it. The older days end where the window began when they first loaded, so the days the cache
  * drops after that stay in the list as the cache last held them, with no request, and the list
@@ -128,6 +132,13 @@ class HistoryModel(
     private var dropped: List<CachedTimeEntry> = emptyList()
     private var lastCached: List<CachedTimeEntry> = emptyList()
 
+    /**
+     * The newest copy the cache has shown of each entry from the older pages that it held before
+     * its window, as after an edit on the phone, which the cache keeps until the send and the
+     * refresh after it. Only [state]'s upstream reads and writes it.
+     */
+    private var edited: Map<Long, CachedTimeEntry> = emptyMap()
+
     /** Each entry [state] last showed, by id, as [historyDays] picks the copy it shows. */
     @Volatile
     private var shownEntries: Map<Long, CachedTimeEntry> = emptyMap()
@@ -138,10 +149,19 @@ class HistoryModel(
             settings == null -> HistoryState.Loading
             time == null -> HistoryState.NoAccountTime(settings.timeZone)
             else -> {
-                val olderEntries = daysTheCacheDropped(cached, loaded.until, time) + loaded.entries
+                val firstCached = firstCachedDay(time)
+                val olderEntries = daysTheCacheDropped(cached, loaded.until, time) + withEdits(cached, loaded.entries, firstCached, time)
                 shownEntries = olderEntries.associateBy { it.id } + cached.associate { it.entry.id to it.entry }
                 HistoryState.Shown(
-                    days = historyDays(cached, olderEntries, projectRows, taskRows, time, collapse = settings.collapseSimilar),
+                    days = historyDays(
+                        cached,
+                        olderEntries,
+                        projectRows,
+                        taskRows,
+                        time,
+                        collapse = settings.collapseSimilar,
+                        windowStart = firstCached,
+                    ),
                     today = time.today(),
                     zone = time.zone,
                     settings = settings,
@@ -207,6 +227,26 @@ class HistoryModel(
                 .toList()
         }
         return dropped
+    }
+
+    /**
+     * The [pages]' entries, each as the cache last showed it while holding it before [firstCached],
+     * the first day of its window: an entry from the older days edited on the phone. The refresh
+     * after the send drops it from the cache, and the history keeps showing the edit rather than
+     * the page's older copy. An entry the cache holds inside its window shows from the cache, so
+     * the page's copy stays for it.
+     */
+    private fun withEdits(cached: List<EntryWithSendState>, pages: List<CachedTimeEntry>, firstCached: LocalDate, time: AccountTime): List<CachedTimeEntry> {
+        if (pages.isEmpty()) return pages
+        val ids = pages.mapTo(HashSet()) { it.id }
+        var edits = edited
+        for (row in cached) {
+            val entry = row.entry
+            if (entry.id !in ids) continue
+            edits = if (time.local(entry.start).toLocalDate() < firstCached) edits + (entry.id to entry) else edits - entry.id
+        }
+        edited = edits
+        return if (edits.isEmpty()) pages else pages.map { edits[it.id] ?: it }
     }
 
     /** The page of days before [before], and where the history starts, [known] or read now. */

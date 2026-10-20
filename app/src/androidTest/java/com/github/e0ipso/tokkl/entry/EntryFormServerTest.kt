@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
@@ -58,6 +60,7 @@ import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -66,7 +69,8 @@ import org.junit.rules.RuleChain
 
 /**
  * The entry form against the real Tokkl container: an entry the web app made, opened from the
- * history, edited and saved through the change queue (docs/PRD.md H2), and past entries added
+ * history, edited and saved through the change queue (docs/PRD.md H2), also from an older day than
+ * the phone keeps, and past entries added
  * from the Timer page (M1), online and in airplane mode. The test's own requests stand in for the web app and go straight to the server. Each test
  * signs in to an account of its own, in Madrid, and deletes it after.
  */
@@ -88,6 +92,9 @@ class EntryFormServerTest {
 
     /** Two days ago in Madrid, inside the two weeks the phone keeps. */
     private val day: LocalDate = ZonedDateTime.now(MADRID).toLocalDate().minusDays(2)
+
+    /** Twenty days ago in Madrid, before the two weeks the phone keeps, on the history's first older page. */
+    private val olderDay: LocalDate = ZonedDateTime.now(MADRID).toLocalDate().minusDays(20)
 
     @Before
     fun signIn() {
@@ -173,6 +180,61 @@ class EntryFormServerTest {
         assertEquals("Offline edit, saved", saved.string("description"))
         assertEquals(at(day, 14, 0), instant(saved.string("start")))
         assertEquals(at(day, 16, 15), instant(saved.string("stop")))
+    }
+
+    /**
+     * An entry from a day older than the cache opens from the history's older days, and its save
+     * reaches the server. The refresh after the send drops it from the phone again, and the
+     * history then shows the edit, not the older page's copy.
+     */
+    @Test
+    fun anEntryFromAnOlderDayOpensAndTheHistoryShowsItsEditAfterTheRefresh() {
+        val entry = createEntry("Old plan", at(olderDay, 9, 0), at(olderDay, 10, 0))
+        launch {
+            showOlderEntry(entry)
+            openEntry("Old plan")
+            field(R.string.entry_description).performTextClearance()
+            field(R.string.entry_description).performTextInput("Old plan, fixed")
+            replace(R.string.entry_end, "10:45")
+            save()
+
+            drainUntilEmpty()
+            composeRule.waitUntil("the history shows the edit after the refresh", NETWORK_TIMEOUT.toMillis()) {
+                shows(composeRule.onNode(hasText("Old plan, fixed") and hasClickAction()))
+            }
+            assertTrue("the refresh dropped it from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id == entry })
+            assertFalse("the server has it", shows(composeRule.onNode(hasText(string(R.string.history_unsent), ignoreCase = true))))
+            assertFalse("the older page's copy is gone", shows(composeRule.onNode(hasText("Old plan") and hasClickAction())))
+        }
+
+        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        assertEquals("Old plan, fixed", saved.string("description"))
+        assertEquals(at(olderDay, 9, 0), instant(saved.string("start")))
+        assertEquals(at(olderDay, 10, 45), instant(saved.string("stop")))
+    }
+
+    @Test
+    fun anOfflineEditOfAnOlderEntryShowsAsNotSentAndReachesTheServerWhenTheNetworkReturns() {
+        val entry = createEntry("Old call", at(olderDay, 14, 0), at(olderDay, 15, 0))
+        launch {
+            showOlderEntry(entry)
+            AirplaneMode.set(true, web)
+            openEntry("Old call")
+            field(R.string.entry_description).performTextClearance()
+            field(R.string.entry_description).performTextInput("Old call, noted")
+            save()
+            awaitShows("the history says the server lacks it") {
+                composeRule.onNode(hasText("Old call, noted") and hasText(string(R.string.history_unsent), ignoreCase = true))
+            }
+
+            AirplaneMode.set(false, web)
+            drainUntilEmpty()
+        }
+
+        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        assertEquals("Old call, noted", saved.string("description"))
+        assertEquals(at(olderDay, 14, 0), instant(saved.string("start")))
+        assertEquals(at(olderDay, 15, 0), instant(saved.string("stop")))
     }
 
     @Test
@@ -273,6 +335,20 @@ class EntryFormServerTest {
         composeRule.waitUntil("the entry shows in the history", NETWORK_TIMEOUT.toMillis()) { shows(composeRule.onNode(row)) }
         composeRule.onNode(row).performClick()
         awaitShows("the form opens") { field(R.string.entry_start) }
+    }
+
+    /** Scrolls the history to its end until the older day of the entry [entryId] has loaded and shows it. */
+    private fun showOlderEntry(entryId: Long) {
+        val list = composeRule.onNode(hasScrollToKeyAction())
+        composeRule.waitUntil("the older day loads", NETWORK_TIMEOUT.toMillis()) {
+            list.performScrollToKey(OLDER_KEY)
+            try {
+                list.performScrollToKey("entry-$entryId")
+                true
+            } catch (e: IllegalArgumentException) {
+                false
+            }
+        }
     }
 
     /**
@@ -414,6 +490,9 @@ class EntryFormServerTest {
     private companion object {
         val MADRID: ZoneId = ZoneId.of("Europe/Madrid")
         val AT_ONCE: Duration = Duration.ofSeconds(2)
+
+        /** The key of the history's row after the days, HistoryList's OLDER_KEY. */
+        const val OLDER_KEY = "older"
         val NETWORK_TIMEOUT: Duration = Duration.ofSeconds(60)
     }
 }

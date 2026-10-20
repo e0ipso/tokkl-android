@@ -69,9 +69,10 @@ import java.util.Locale
 /**
  * The history in the Timer page's List view: the days with entries, newest first, each with its
  * total, and at the end the older days, which load from the server as the end shows. A tap on an
- * entry the phone holds hands its id to [onEdit] (docs/PRD.md H2). Its menu duplicates, splits or
- * deletes it through [actions], whose messages show at the bottom of the list (H3, H5, H6). Its
- * Continue button, on every entry and group, hands the entry's id to [onContinue] (T2).
+ * entry hands its id to [onEdit] (docs/PRD.md H2), also on the older days. The menu of an entry the
+ * phone holds duplicates, splits or deletes it through [actions], whose messages show at the
+ * bottom of the list (H3, H5, H6). Its Continue button, on every entry and group, hands the
+ * entry's id to [onContinue] (T2).
  */
 @Composable
 fun HistoryList(
@@ -218,11 +219,11 @@ private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettin
 
 /**
  * One stopped entry, one item to TalkBack, and beside it the buttons that continue it and open its
- * actions, in the web app's order. Its marks are words, never a colour alone. A tap on an entry the
- * phone holds opens it for editing, and its menu duplicates, splits or deletes it, in the order of
- * the web app's editor. The older days the server sent are not on the phone, so the change queue
- * cannot change them, and their rows take no tap and have no menu. Continue needs only the entry's
- * fields, so every row has it.
+ * actions, in the web app's order. Its marks are words, never a colour alone. A tap opens the entry
+ * for editing, and the menu of an entry the phone holds duplicates, splits or deletes it, in the
+ * order of the web app's editor. The older days the server sent are not on the phone, so their
+ * rows have no menu, and the entry form edits them as the history holds them. Continue needs only
+ * the entry's fields, so every row has it.
  */
 @Composable
 private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSettings, locale: Locale, callbacks: EntryCallbacks) {
@@ -239,7 +240,7 @@ private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSetting
             onFirstLineMiddle = { firstLineMiddle = it },
             modifier = Modifier
                 .weight(1f)
-                .then(if (entry.cached) Modifier.clickable(onClickLabel = editLabel, role = Role.Button) { callbacks.onEdit(entry.id) } else Modifier)
+                .clickable(onClickLabel = editLabel, role = Role.Button) { callbacks.onEdit(entry.id) }
                 .semantics(mergeDescendants = true) {},
         )
         ContinueButton(entry, callbacks, firstLineMiddle)

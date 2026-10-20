@@ -211,7 +211,7 @@ private fun Screen(
                     history,
                     entryActions,
                     onEdit = { entryId ->
-                        entryForm.edit(entryId)
+                        entryForm.edit(entryId, older = history.entry(entryId))
                         backStack.add(Destination.ENTRY)
                     },
                     onContinue = onContinue,

@@ -254,6 +254,41 @@ class HistoryModelTest {
         assertEquals("a day the history does not show", null, model.entry(LocalDate.parse("2026-09-01").toEpochDay()))
     }
 
+    /**
+     * An entry from the older days edited on the phone sits in the cache, marked unsent, until
+     * the send and the refresh after it drop it again, as it starts before the cache's window. The
+     * history shows the edit all along, never the page's older copy, and offers no menu for it.
+     */
+    @Test
+    fun anOlderEntryEditedOnThePhoneKeepsShowingTheEditAfterTheCacheDropsIt() {
+        val window = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        cached.value = window
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+        onMain { model.loadOlder() }
+        awaitShown(model) { it.days.size == 28 }
+        val day = LocalDate.parse("2026-09-25")
+        val edited = entryOn(day).copy(description = "Worked on $day, fixed")
+
+        cached.value = window + EntryWithSendState(edited, unsent = true)
+        val queued = awaitShown(model) { shown -> shown.entryOn(day).description == edited.description }.entryOn(day)
+        assertEquals(true to false, queued.unsent to queued.cached)
+
+        cached.value = window + EntryWithSendState(edited, unsent = false)
+        awaitShown(model) { !it.entryOn(day).unsent }
+
+        // The refresh after the send drops it, and brings an entry the server has since today.
+        val later = entryOn(LocalDate.parse("2026-10-19")).copy(id = 999, description = "Later")
+        cached.value = window + EntryWithSendState(later, unsent = false)
+        val refreshed = awaitShown(model) { shown -> shown.days.first().entries.any { it.id == later.id } }
+        val shown = refreshed.entryOn(day)
+        assertEquals(edited.description, shown.description)
+        assertEquals(false to false, shown.unsent to shown.cached)
+        assertEquals("the edit, for the form and Continue", edited, model.entry(edited.id))
+    }
+
+    private fun HistoryState.Shown.entryOn(day: LocalDate): HistoryEntry = days.single { it.date == day }.entries.single()
+
     /** A reverse proxy answers 502, 503 or 504 while the server behind it is down. */
     @Test
     fun aProxyThatCannotReachTheServerIsUnreachable() {

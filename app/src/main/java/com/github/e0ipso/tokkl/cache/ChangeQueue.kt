@@ -30,6 +30,15 @@ interface EntryChanges {
 
     suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean
 
+    /**
+     * Sets every field of the stopped entry [entryId] in [workspaceId], whether the phone holds it
+     * or not, such as an entry from the older days the history pages from the server. A stand-in
+     * with no cache of its own treats it as [update].
+     */
+    suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) {
+        update(entryId, fields, start, stop)
+    }
+
     suspend fun delete(entryId: Long): Boolean
 }
 
@@ -109,6 +118,22 @@ class ChangeQueue(
             val current = dao.entry(resolve(entryId)) ?: return@queue false
             enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop))
             true
+        }
+    }
+
+    /**
+     * Sets every field of the stopped entry [entryId] in [workspaceId], which the cache need not
+     * hold, such as an entry from the older days the history pages from the server. The change
+     * goes to the queue with every field, so the sender's PUT sends it as it is, and the cache
+     * holds the entry from now on, marked unsent until the server has it. A refresh drops it again
+     * when it starts before the cache's window. The workspace of a cached entry wins over
+     * [workspaceId].
+     */
+    override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) {
+        require(!stop.isBefore(start)) { "The stop comes before the start." }
+        queue {
+            val id = resolve(entryId)
+            enqueue(ChangeKind.UPDATE, entry(id, dao.entry(id)?.workspaceId ?: workspaceId, fields, start, stop))
         }
     }
 
