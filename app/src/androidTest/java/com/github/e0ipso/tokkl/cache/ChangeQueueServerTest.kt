@@ -36,6 +36,7 @@ import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -270,11 +271,14 @@ class ChangeQueueServerTest {
 
     @Test
     fun aQueuedStartEndsWhereALaterTimerOnTheServerStartsAndThatTimerKeepsRunning() {
+        // A phone start in the second before a half step would make the laptop's start below snap
+        // a step later, where a span that rounded its duration up ends too.
+        awayFromAHalfStep()
         val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
         val queued = runBlocking { app.cache.running.first() }!!.entry
         // Half an hour and a second after the phone's start, which still waits in the queue, the
         // laptop starts a timer. A span that rounded its duration up would end a step after where
-        // that start snaps, unless the phone's start is within a second of a half step.
+        // that start snaps.
         val laterStart = queued.start.truncatedTo(ChronoUnit.SECONDS).plus(Duration.ofMinutes(30)).plusSeconds(1)
         val laptop = startOnTheWeb("Started on the laptop", laterStart)
 
@@ -295,19 +299,26 @@ class ChangeQueueServerTest {
         // Once the laptop stops its timer, its start snaps to the grid point where the phone's entry ends.
         val laterStopped = stopOnTheWeb(laptop)
         assertEquals("the phone's entry ends where the later timer's start snaps: $phone", laterStopped.instant("start"), phone.instant("stop"))
+        assertNotEquals(
+            "a span that rounded its duration up ends elsewhere, so this test tells the two apart",
+            time().snapUnsent(queued.start, laterStart).stop,
+            phone.instant("stop"),
+        )
     }
 
     @Test
     fun aTimerStartedOnThePhoneEndsTheRunningOneWhereItsOwnStartSnaps() {
-        // Ten seconds over the hour before the phone's start, so a span that rounded its duration
-        // up would end a step after the new timer's start snaps, unless the start is within ten
-        // seconds of a half step.
-        val start = Instant.now().minus(1, ChronoUnit.HOURS).minusSeconds(10).truncatedTo(ChronoUnit.SECONDS)
+        // A span from this start that rounded its duration up would end a step after the new
+        // timer's start snaps, as long as that start keeps clear of a half step.
+        val start = startPastAHalfStep(Duration.ofHours(1))
         val earlier = startOnTheWeb("Started on the web", start)
         runBlocking { app.accountSettings.refresh().join() }
         assertEquals("the phone shows the timer", earlier, runBlocking { app.cache.running.first() }?.entry?.id)
 
+        awayFromAHalfStep()
+        val before = Instant.now()
         val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        val started = Instant.now()
         drainUntilEmpty()
 
         val stopped = serverEntry(earlier)
@@ -315,21 +326,24 @@ class ChangeQueueServerTest {
         // Once the phone's timer stops, its start snaps to the grid point where the earlier one ends.
         val later = stopOnTheWeb(serverId(id))
         assertEquals("the two entries are back to back: $stopped, $later", later.instant("start"), stopped.instant("stop"))
+        assertRoundingUpEndsElsewhere(start, before..started, stopped.instant("stop"))
     }
 
     @Test
     fun aStopTappedOnThePhoneIsStoredAsTheWebAppStoresAStopAtTheSameMoment() {
-        // Ten seconds over the hour before the stops, so the timers run for no whole number of
-        // steps, and a span that rounded its duration up would end a step after the web app's
-        // stop, unless the start is within ten seconds of a half step.
-        val start = Instant.now().minus(1, ChronoUnit.HOURS).minusSeconds(10).truncatedTo(ChronoUnit.SECONDS)
+        // The timers run for no whole number of steps, and a span from this start that rounded its
+        // duration up would end a step after the web app's stop, as long as the stops keep clear
+        // of a half step.
+        val start = startPastAHalfStep(Duration.ofHours(1))
         val onPhone = startOnTheWeb("Stopped on the phone", start)
         runBlocking { app.accountSettings.refresh().join() }
         assertEquals("the phone shows the timer", onPhone, runBlocking { app.cache.running.first() }?.entry?.id)
 
         relay.hang()
+        awayFromAHalfStep()
         val before = Instant.now()
         assertTrue(runBlocking { app.changes.stop(onPhone) })
+        val tapped = Instant.now()
         // The web app starts a timer with the same start and stops it at once. Its start stops the
         // phone's timer on the server, and the phone's stop, sent after, sets that entry's span.
         val onWeb = startOnTheWeb("Stopped on the web", start)
@@ -352,6 +366,7 @@ class ChangeQueueServerTest {
         if (earliest == latest) {
             assertEquals("the same stop: $stoppedOnPhone", stoppedOnWeb.instant("stop"), stoppedOnPhone.instant("stop"))
         }
+        assertRoundingUpEndsElsewhere(start, before..tapped, stoppedOnPhone.instant("stop"))
         assertEquals(
             "after the refresh that follows the drain, the phone shows the span the server stored",
             stoppedOnPhone.instant("start") to stoppedOnPhone.instant("stop"),
@@ -626,6 +641,53 @@ class ChangeQueueServerTest {
 
     private fun time(): AccountTime = checkNotNull(app.accountSettings.state.value?.time()) { "no account time" }
 
+    /** One step of the account's grid: a second's span rounds up to it. */
+    private fun step(): Duration {
+        val at = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        val span = time().snapUnsent(at, at.plusSeconds(1))
+        return Duration.between(span.start, span.stop).also { check(it >= Duration.ofMinutes(1)) { "the account snaps to a grid: $it" } }
+    }
+
+    /** The grid point nearest [at], where Tokkl puts a start. */
+    private fun gridPoint(at: Instant): Instant = time().snapUnsent(at, at).start
+
+    /**
+     * A start about [ago] before now, a second after a half step, so its grid point is almost half
+     * a step later. A span from it that rounded its duration up ends a step after the grid point
+     * nearest its stop, unless the stop falls in the two seconds from a half step on, which
+     * [awayFromAHalfStep] keeps it out of.
+     */
+    private fun startPastAHalfStep(ago: Duration): Instant =
+        gridPoint(Instant.now().minus(ago)).minus(step().dividedBy(2)).plusSeconds(1)
+
+    /**
+     * Waits until the next tap is at least [HALF_STEP_MARGIN] from the two seconds that start at a
+     * half step of the grid, which takes a few seconds at most. A tap there could round to either
+     * grid point, so a test could not tell where a span that rounded its duration up ends from
+     * where the nearest grid point is.
+     */
+    private fun awayFromAHalfStep() {
+        val half = step().dividedBy(2)
+        while (true) {
+            val now = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+            val sinceHalfStep = Duration.between(gridPoint(now).minus(half), now)
+            val clear = sinceHalfStep > HALF_STEP_MARGIN.plusSeconds(1) && sinceHalfStep < half.multipliedBy(2).minus(HALF_STEP_MARGIN)
+            if (clear) return
+            Thread.sleep(200)
+        }
+    }
+
+    /**
+     * Fails unless [stop], stored for a timer from [start] stopped within [tapped], differs from
+     * where Tokkl puts a stop tapped then with the duration rounded up, as the phone's rule was
+     * before its Stop went on the grid point nearest the tap.
+     */
+    private fun assertRoundingUpEndsElsewhere(start: Instant, tapped: ClosedRange<Instant>, stop: Instant) {
+        for (at in listOf(tapped.start, tapped.endInclusive)) {
+            assertNotEquals("a span rounded up to $at ends elsewhere, so this test tells the rules apart", time().snapUnsent(start, at).stop, stop)
+        }
+    }
+
     private fun editOnTheWeb(entry: Long, description: String, billable: Boolean) {
         web.send(
             "PUT",
@@ -694,6 +756,9 @@ class ChangeQueueServerTest {
 
         /** How far apart the phone's clock and the server's may be. */
         val CLOCK_MARGIN: Duration = Duration.ofSeconds(2)
+
+        /** How far [awayFromAHalfStep] keeps a tap from a half step, for the calls between the wait and the tap. */
+        val HALF_STEP_MARGIN: Duration = Duration.ofSeconds(3)
 
         /** The start of the cache refresh's request for the history window's entries. */
         const val TIME_ENTRIES = "GET /api/v9/me/time_entries?"
