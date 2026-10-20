@@ -27,15 +27,22 @@ import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
+import com.github.e0ipso.tokkl.sync.LastAnswer
+import com.github.e0ipso.tokkl.sync.LastAnswerStore
+import com.github.e0ipso.tokkl.sync.SyncStatus
+import com.github.e0ipso.tokkl.sync.shownSyncStatus
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class TokklApplication : Application() {
 
@@ -152,6 +159,25 @@ class TokklApplication : Application() {
     }
 
     /**
+     * When the server last answered the signed-in session (docs/PRD.md O5), which every
+     * [Session]'s client reports. Loaded on the first answer or the first frame of a signed-in
+     * screen, from a file of one value.
+     */
+    val lastAnswer: LastAnswer by lazy {
+        val store = LastAnswerStore(this)
+        LastAnswer(initial = store.load(), save = store::save)
+    }
+
+    /**
+     * The status element above the bottom bar: the queue's unsent count and the server's last
+     * answer, once changes have waited long enough to show.
+     */
+    val syncStatus: StateFlow<SyncStatus?> by lazy {
+        shownSyncStatus(changes.unsentCount, lastAnswer.state, accountSettings.state)
+            .stateIn(MainScope(), SharingStarted.WhileSubscribed(STATUS_STOP_TIMEOUT_MS), null)
+    }
+
+    /**
      * The running timer's notification (docs/PRD.md N1), which follows the cache's running entry
      * from process start, so every start, stop and edit from any surface reaches it.
      */
@@ -190,7 +216,7 @@ class TokklApplication : Application() {
      * so the app sends nothing new. Then it cancels the queue's background work and every call in
      * flight, waits for the refresh and the queue's drain to end, and clears the cache with the
      * queue, the running timer's notification, the account settings, the capabilities, the Timer
-     * page's view and the trust decisions. MainActivity then drops its view models, and with them
+     * page's view, the trust decisions and the time the server last answered. MainActivity then drops its view models, and with them
      * the history's older days and what every other screen loaded. The theme and the sign-in
      * cooldowns stay: they belong to the phone and to a server, not to the account.
      */
@@ -215,6 +241,7 @@ class TokklApplication : Application() {
                 },
                 { ServerTrustStore(this).clear() },
                 { sessionTrust.forget() },
+                { lastAnswer.forget() },
             ),
             io = Dispatchers.IO,
         )
@@ -236,3 +263,6 @@ class TokklApplication : Application() {
         runningNotification.start()
     }
 }
+
+/** How long the status keeps following the queue after the last screen stops showing it, as through a rotation. */
+private const val STATUS_STOP_TIMEOUT_MS = 5_000L

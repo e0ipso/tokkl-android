@@ -23,6 +23,7 @@ class TogglApiClient(
     private val credentials: ApiCredentials,
     private val httpClient: OkHttpClient = SharedHttpClient.instance,
     private val trustListener: TrustListener? = null,
+    private val successListener: SuccessListener? = null,
 ) {
 
     /** [httpClient] for calls with `resend` false. */
@@ -96,7 +97,12 @@ class TogglApiClient(
             (if (resend) httpClient else sendingOnce).newCall(request).execute().use { response ->
                 // The server answered, so it passed the trust checks.
                 trustListener?.answered()
-                if (response.isSuccessful) onSuccess(response) else ApiResult.Failure(httpError(response))
+                if (response.isSuccessful) {
+                    successListener?.succeeded()
+                    onSuccess(response)
+                } else {
+                    ApiResult.Failure(httpError(response))
+                }
             }
         } catch (e: HostNotAllowedException) {
             ApiResult.Failure(ApiError.HostNotAllowed(e.origin))
@@ -178,4 +184,13 @@ interface TrustListener {
 
     /** The server answered a request, so it passes the trust checks again. */
     fun answered()
+}
+
+/**
+ * Hears each 2xx answer to the signed-in session's requests, so the app can say when the server
+ * last answered (docs/PRD.md O5). Called on the thread that made the request, before the body is
+ * read.
+ */
+fun interface SuccessListener {
+    fun succeeded()
 }

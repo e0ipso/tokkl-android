@@ -195,6 +195,24 @@ class TogglApiClientTest {
         assertTrue(error.toString(), error is ApiError.Network && error.cause is SocketTimeoutException)
     }
 
+    @Test
+    fun onlyA2xxAnswerReachesTheSuccessListener() {
+        var successes = 0
+        val counting = TogglApiClient(serverUrl(), credentials, successListener = { successes++ })
+        server.enqueue(json(200, """{"id":1,"email":"ana@example.com"}"""))
+        server.enqueue(json(500, "\"down\""))
+        server.enqueue(json(403, "\"Incorrect username and/or password\""))
+        server.enqueue(MockResponse.Builder().code(204).build())
+
+        counting.get(counting.server.api("me"), Me.serializer())
+        assertEquals("after a 200", 1, successes)
+        counting.get(counting.server.api("me"), Me.serializer())
+        counting.get(counting.server.api("me"), Me.serializer())
+        assertEquals("after a 500 and a 403", 1, successes)
+        counting.sendNoContent("DELETE", counting.server.api("me"))
+        assertEquals("after a 204", 2, successes)
+    }
+
     private fun serverUrl(): ServerUrl = ServerUrl.parse(server.url("/tokkl/").toString())!!
 
     private fun json(code: Int, body: String) = MockResponse.Builder()

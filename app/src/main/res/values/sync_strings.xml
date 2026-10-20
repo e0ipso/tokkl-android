@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The status element above the bottom bar (docs/PRD.md O5). -->
+<resources>
+    <!-- How many changes made on the phone the server has not received yet. -->
+    <plurals name="sync_unsent">
+        <item quantity="one">%d change not sent</item>
+        <item quantity="other">%d changes not sent</item>
+    </plurals>
+    <!-- When the server last answered, today, in the account's clock format: Server last answered at 14:05 -->
+    <string name="sync_last_answered_today">Server last answered at %1$s</string>
+    <string name="sync_last_answered_yesterday">Server last answered yesterday at %1$s</string>
+    <!-- On an older day, written as the history's day headers: Server last answered on Mon, 13 Oct 2026 at 14:05 -->
+    <string name="sync_last_answered_day">Server last answered on %1$s at %2$s</string>
+    <string name="sync_never_answered">The server hasn\'t answered since you signed in</string>
+    <!-- The button that opens the list of changes the server refused. -->
+    <plurals name="sync_needs_attention">
+        <item quantity="one">%d change needs attention</item>
+        <item quantity="other">%d changes need attention</item>
+    </plurals>
+</resources>

@@ -76,6 +76,7 @@ import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.applicationNightMode
 import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
 import com.github.e0ipso.tokkl.settings.systemIsDark
+import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.timer.TimerBarContent
@@ -163,11 +164,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
+    /** The List view, with the status above the bar for its entry the server has not received. */
     @SignedOut
     @Test
     fun timer() {
         show({
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, syncStatus = SYNC_STATUS, syncStatusClock = TODAY) {
                 TimerScreen(
                     view = TimerView.LIST,
                     onViewChange = {},
@@ -459,6 +461,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         const val TIMEOUT_MS = 5_000L
 
         val ACCOUNT = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+
+        /** One change not sent, the history's Code review, since the server answered at 11:52 on [TODAY]. */
+        val SYNC_STATUS = SyncStatus(unsent = 1, lastAnswered = Instant.parse("2026-10-15T11:52:00Z"), settings = ACCOUNT)
 
         /** A Thursday at noon, in the middle of [WEEK]. */
         val TODAY: Clock = Clock.fixed(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)

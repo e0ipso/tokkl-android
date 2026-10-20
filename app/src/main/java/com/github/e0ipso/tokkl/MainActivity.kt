@@ -101,6 +101,7 @@ class MainActivity : ComponentActivity() {
                         timerRunning = timerRunning,
                         capabilities = (application as TokklApplication).capabilities.state,
                         favorites = timerViewModel.favorites,
+                        syncStatus = (application as TokklApplication).syncStatus,
                     )
                 }
             }

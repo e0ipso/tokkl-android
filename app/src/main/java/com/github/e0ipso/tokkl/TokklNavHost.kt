@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,6 +47,8 @@ import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
+import com.github.e0ipso.tokkl.sync.SyncStatus
+import com.github.e0ipso.tokkl.sync.SyncStatusBand
 import com.github.e0ipso.tokkl.tags.TagsModel
 import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.timer.TimerBar
@@ -64,6 +67,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
+import java.time.Clock
 
 /** The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model holds. */
 enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, SETTINGS, LICENCES, ENTRY }
@@ -86,7 +90,7 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
- * prompts.
+ * prompts. Above the bottom bar it shows [syncStatus] while changes wait to reach the server.
  */
 @Composable
 fun TokklNavHost(
@@ -109,6 +113,7 @@ fun TokklNavHost(
     timerRunning: Flow<Boolean> = flowOf(false),
     capabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
     favorites: FavoritesModel? = null,
+    syncStatus: Flow<SyncStatus?> = flowOf(null),
 ) {
     val appContext = LocalContext.current.applicationContext
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
@@ -152,11 +157,13 @@ fun TokklNavHost(
     }
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
+    val status by syncStatus.collectAsState(initial = null)
     SignedInFrame(
         current = backStack.currentPage(),
         onOpen = backStack::open,
         timerRunning = running,
         hidden = if (offersTrash) emptySet() else setOf(TopLevelPage.TRASH),
+        syncStatus = status,
     ) {
         Screen(
             destination = destination,
@@ -189,9 +196,10 @@ fun TokklNavHost(
 
 /**
  * A signed-in screen, [content], above the bottom bar, which marks [current] and opens pages with
- * [onOpen], leaves out the pages in [hidden], and puts a dot on Timer while [timerRunning]. The
- * bar's height, system navigation bar included, is padding the screens consume, so their own
- * navigation bar padding adds nothing above the bar.
+ * [onOpen], leaves out the pages in [hidden], and puts a dot on Timer while [timerRunning]. Right
+ * above the bar shows [syncStatus] when it is not null, and its "needs attention" button calls
+ * [onOpenNeedsAttention]. The bar's height, status and system navigation bar included, is padding
+ * the screens consume, so their own navigation bar padding adds nothing above the bar.
  */
 @Composable
 internal fun SignedInFrame(
@@ -199,10 +207,18 @@ internal fun SignedInFrame(
     onOpen: (TopLevelPage) -> Unit,
     timerRunning: Boolean = false,
     hidden: Set<TopLevelPage> = emptySet(),
+    syncStatus: SyncStatus? = null,
+    onOpenNeedsAttention: (() -> Unit)? = null,
+    syncStatusClock: Clock = Clock.systemUTC(),
     content: @Composable BoxScope.() -> Unit,
 ) {
     Scaffold(
-        bottomBar = { AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden) },
+        bottomBar = {
+            Column {
+                if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, clock = syncStatusClock)
+                AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden)
+            }
+        },
         contentWindowInsets = WindowInsets(0),
     ) { innerPadding ->
         Box(

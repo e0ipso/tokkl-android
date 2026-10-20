@@ -62,6 +62,7 @@ import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.reports.projectMark
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -479,12 +480,19 @@ private fun EntryText(
                 Text(stringResource(R.string.history_billable), style = MaterialTheme.typography.bodyMedium, color = muted)
             }
             if (line.unsent) {
-                Text(
-                    text = stringResource(R.string.history_unsent).uppercase(locale),
-                    style = TokklTheme.smallCapsLabelTextStyle,
-                    color = MaterialTheme.colorScheme.onSurface,
+                // The icon and the words, so colour is never the only sign. TalkBack reads the words.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
                     modifier = Modifier.align(Alignment.CenterVertically),
-                )
+                ) {
+                    UnsentIcon(TokklTheme.smallCapsLabelTextStyle)
+                    Text(
+                        text = stringResource(R.string.history_unsent).uppercase(locale),
+                        style = TokklTheme.smallCapsLabelTextStyle,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
         }
     }
