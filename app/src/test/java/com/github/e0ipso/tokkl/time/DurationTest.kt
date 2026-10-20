@@ -42,6 +42,24 @@ class DurationTest {
         assertEquals("0:00:00", formatDuration(-5, "improved"))
     }
 
+    // Not in duration.test.ts: the web app has no duration without seconds. The week strip uses it.
+    @Test
+    fun `formatDurationWithoutSeconds drops the seconds in each duration format`() {
+        assertEquals("1:05", formatDurationWithoutSeconds(3906, DurationFormat.IMPROVED))
+        assertEquals("0:05", formatDurationWithoutSeconds(306, DurationFormat.IMPROVED))
+        assertEquals("0:00", formatDurationWithoutSeconds(59, DurationFormat.IMPROVED))
+        assertEquals("100:00", formatDurationWithoutSeconds(360_000, DurationFormat.IMPROVED))
+        assertEquals("0:00", formatDurationWithoutSeconds(-5, DurationFormat.IMPROVED))
+        assertEquals("1:05", formatDurationWithoutSeconds(3906, DurationFormat.CLASSIC))
+        assertEquals("5 min", formatDurationWithoutSeconds(306, DurationFormat.CLASSIC))
+        assertEquals("1 min", formatDurationWithoutSeconds(60, DurationFormat.CLASSIC))
+        assertEquals("under a minute, seconds are its only unit", "6 sec", formatDurationWithoutSeconds(6, DurationFormat.CLASSIC))
+        assertEquals("0 sec", formatDurationWithoutSeconds(-5, DurationFormat.CLASSIC))
+        assertEquals("0.79 h", formatDurationWithoutSeconds(2826, DurationFormat.DECIMAL))
+        assertEquals("1.50 h", formatDurationWithoutSeconds(5400, DurationFormat.DECIMAL))
+        assertEquals("improved is the default", "1:05", formatDurationWithoutSeconds(3906))
+    }
+
     /** Takes the format by the name the TypeScript cases use, and fails on a name it lacks. */
     private fun formatDuration(totalSeconds: Long, format: String): String =
         formatDuration(totalSeconds, DurationFormat.entries.single { it.togglName == format })
