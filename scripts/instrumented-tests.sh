@@ -12,21 +12,37 @@
 #    private key stays in this script's temporary directory. On a second
 #    port the proxy serves a second certificate, with the same names and
 #    subject and a key of its own, as after the server's key was regenerated.
-#    The same proxy serves Tokkl over http under the path prefix /tokkl on a
-#    port of its own, as a reverse proxy serves it beside other sites, and
-#    answers 404 there to every path outside the prefix.
+#    On a third port it serves a certificate for the same names that a CA
+#    made for this run signed; see the user CA below. The same proxy serves
+#    Tokkl over http under the path prefix /tokkl on a port of its own, as a
+#    reverse proxy serves it beside other sites, and answers 404 there to
+#    every path outside the prefix.
 # 4. Copies the password and the API token to each test device, in a file
 #    that only the shell user can read. Before that it deletes the
 #    credentials files that killed runs left behind, once they are older than
 #    any run lasts.
-# 5. Runs connectedDebugAndroidTest with the http, both https and the prefixed
-#    server URLs, the SHA-256 fingerprints of both proxy certificates, the
-#    email and that file's path as instrumentation arguments. The emulator
-#    reaches the host's 127.0.0.1 as 10.0.2.2. The credentials work only on
-#    this container. The run fails when a test device goes away during it,
-#    even if Gradle reports success.
-# 6. Removes both containers, the certificates' keys, the credentials file and
-#    the test filter file, if any (see below), also when a step fails.
+# 5. Runs connectedDebugAndroidTest with the http, the three https and the
+#    prefixed server URLs, the SHA-256 fingerprints of both self-signed proxy
+#    certificates, the email and that file's path as instrumentation
+#    arguments. The emulator reaches the host's 127.0.0.1 as 10.0.2.2. The
+#    credentials work only on this container. The run fails when a test
+#    device goes away during it, even if Gradle reports success.
+# 6. Removes both containers, the certificates' keys, the credentials file,
+#    the test filter file, if any (see below), and the user CA, if it
+#    installed one, also when a step fails.
+#
+# On an emulator it boots, the script installs this run's CA as a user CA, as
+# Settings > Security > Install a certificate would, so a test can check that
+# a server whose certificate a user CA signed connects with no prompt. Android
+# reads user CAs from /data/misc/user/0/cacerts-added, one file each, named
+# after the old OpenSSL hash of the CA's subject and .0, and only root may
+# write there. The AOSP images are userdebug builds, whose su runs a command
+# as root for the shell user, so the script copies the CA there with
+# `adb shell su 0`, readable by every app, and deletes it during cleanup. The
+# CA's subject never changes, so a run that died before its cleanup left its
+# CA under the same name, and the next run replaces it. On any other device
+# the script installs nothing, and the runner's notAnnotation argument leaves
+# out the tests marked @UserCaInstalled.
 #
 # The setup code, the password and the API token never appear in a process's
 # arguments, which every user on the machine can read with ps.
@@ -101,6 +117,10 @@ readonly EMULATOR_MEMORY_MAX=6G
 # Where Gradle puts the JUnit XML results of a run, one file for each test
 # device.
 readonly RESULTS='app/build/outputs/androidTest-results/connected/debug'
+# Where Android keeps the CAs that user 0 installed (see the header).
+readonly USER_CA_DIR='/data/misc/user/0/cacerts-added'
+# The annotation of the tests that need this run's CA as a user CA.
+readonly USER_CA_ANNOTATION='com.github.e0ipso.tokkl.UserCaInstalled'
 
 cd "$(dirname "$0")/.."
 
@@ -164,6 +184,7 @@ emulator_serial=''
 emulator_unit=''
 credentials_on_device=''
 filter_on_device=''
+user_ca_on_device=''
 devices_with_credentials=()
 adb_was_running=false
 if pgrep -x adb >/dev/null; then adb_was_running=true; fi
@@ -197,6 +218,16 @@ remove_device_files() {
             echo "$0: could not remove $credentials_on_device${filter_on_device:+ or $filter_on_device} from $device" >&2
     done
     devices_with_credentials=()
+}
+
+# Deletes the user CA that install_user_ca put on the emulator this script
+# booted, and the copy it staged beside the credentials file, then syncs, as
+# remove_device_files does.
+remove_user_ca() {
+    if [ -z "$user_ca_on_device" ]; then return; fi
+    adb -s "$emulator_serial" shell "su 0 rm -f $user_ca_on_device $CREDENTIALS_DIR/tokkl-test-user-ca.pem && sync" >/dev/null 2>&1 ||
+        echo "$0: could not remove the user CA $user_ca_on_device from $emulator_serial" >&2
+    user_ca_on_device=''
 }
 
 # Stops the emulator this script booted, if any, and its scope. Fails, after
@@ -233,6 +264,7 @@ cleanup() {
             echo "$0: could not remove container $container" >&2
     fi
     remove_device_files
+    remove_user_ca
     if ! stop_emulator && [ "$status" -eq 0 ]; then status=1; fi
     if [ "$adb_was_running" = false ]; then
         adb kill-server >/dev/null 2>&1 || true
@@ -368,18 +400,20 @@ container="tokkl-android-tests-$(random_hex 4)"
 echo "Starting $IMAGE as $container"
 # The image runs as an unprivileged user, so the tmpfs must be writable by any
 # UID. --env without a value reads the setup code from the environment. The
-# proxy joins this container's network namespace, so its ports 8443, 8444 and
-# 8081 are published here too.
+# proxy joins this container's network namespace, so its ports 8443, 8444,
+# 8445 and 8081 are published here too.
 TOKKL_SETUP_CODE="$setup_code" docker run --detach --name "$container" \
     --env TOKKL_SETUP_CODE --tmpfs /data:mode=1777 \
     --publish 127.0.0.1::8080 --publish 127.0.0.1::8443 --publish 127.0.0.1::8444 \
-    --publish 127.0.0.1::8081 "$IMAGE" >/dev/null
+    --publish 127.0.0.1::8445 --publish 127.0.0.1::8081 "$IMAGE" >/dev/null
 host_port=$(docker port "$container" 8080/tcp | head -n 1)
 host_port=${host_port##*:}
 tls_port=$(docker port "$container" 8443/tcp | head -n 1)
 tls_port=${tls_port##*:}
 new_key_port=$(docker port "$container" 8444/tcp | head -n 1)
 new_key_port=${new_key_port##*:}
+user_ca_port=$(docker port "$container" 8445/tcp | head -n 1)
+user_ca_port=${user_ca_port##*:}
 prefix_port=$(docker port "$container" 8081/tcp | head -n 1)
 prefix_port=${prefix_port##*:}
 server="http://127.0.0.1:$host_port"
@@ -431,6 +465,30 @@ make_proxy_certificate tls
 make_proxy_certificate new-key
 tls_fingerprint=$(fingerprint "$proxy_dir/tls-cert.pem")
 new_key_fingerprint=$(fingerprint "$proxy_dir/new-key-cert.pem")
+
+# A CA made for this run, which the script installs as a user CA (see the
+# header), and a certificate for the same names that it signs, which the
+# proxy serves on a third port. The CA's key signs that one certificate and is
+# deleted at once.
+(
+    umask 077
+    openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 2 \
+        -subj '/CN=Tokkl instrumented tests CA' \
+        -addext 'basicConstraints=critical,CA:TRUE' -addext 'keyUsage=critical,keyCertSign,cRLSign' \
+        -keyout "$work_dir/user-ca-key.pem" -out "$work_dir/user-ca.pem" 2>/dev/null
+    openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes \
+        -subj '/CN=Tokkl instrumented tests' \
+        -keyout "$work_dir/user-ca-leaf-key.pem" -out "$work_dir/user-ca-leaf.csr" 2>/dev/null
+    printf '%s\n' 'basicConstraints=critical,CA:FALSE' 'keyUsage=critical,digitalSignature' \
+        'extendedKeyUsage=serverAuth' 'subjectAltName=IP:10.0.2.2,IP:127.0.0.1' >"$work_dir/user-ca-leaf.ext"
+    openssl x509 -req -in "$work_dir/user-ca-leaf.csr" -days 2 -set_serial "0x$(random_hex 16)" \
+        -CA "$work_dir/user-ca.pem" -CAkey "$work_dir/user-ca-key.pem" -extfile "$work_dir/user-ca-leaf.ext" \
+        -out "$proxy_dir/user-ca-leaf-cert.pem" 2>/dev/null
+)
+rm -f "$work_dir/user-ca-key.pem" "$work_dir/user-ca-leaf.csr" "$work_dir/user-ca-leaf.ext"
+cat "$proxy_dir/user-ca-leaf-cert.pem" "$work_dir/user-ca-leaf-key.pem" >"$proxy_dir/user-ca-leaf.pem"
+rm -f "$work_dir/user-ca-leaf-key.pem"
+chmod 644 "$proxy_dir/user-ca-leaf-cert.pem" "$proxy_dir/user-ca-leaf.pem"
 cat >"$proxy_dir/haproxy.cfg" <<'CONFIG'
 global
     log stdout format raw local0 warning
@@ -450,6 +508,11 @@ frontend tls
 # regenerated.
 frontend new_key
     bind :8444 ssl crt /usr/local/etc/haproxy/new-key.pem
+    default_backend tokkl
+
+# The same server with the certificate that this run's CA signed.
+frontend user_ca
+    bind :8445 ssl crt /usr/local/etc/haproxy/user-ca-leaf.pem
     default_backend tokkl
 
 # Tokkl under /tokkl, with the prefix stripped on the way in. Every other path
@@ -483,6 +546,13 @@ fi
 if ! curl --silent --fail --output /dev/null --cacert "$proxy_dir/new-key-cert.pem" \
     "https://127.0.0.1:$new_key_port/healthz"; then
     echo "$0: the TLS proxy did not answer with the second certificate on https://127.0.0.1:$new_key_port/healthz" >&2
+    exit 1
+fi
+# Here curl trusts the CA alone, so the certificate it signed must pass as
+# one from a CA does.
+if ! curl --silent --fail --output /dev/null --cacert "$work_dir/user-ca.pem" \
+    "https://127.0.0.1:$user_ca_port/healthz"; then
+    echo "$0: the TLS proxy did not answer with the certificate this run's CA signed on https://127.0.0.1:$user_ca_port/healthz" >&2
     exit 1
 fi
 # The proxy is up, so the prefix answers at once, and the root of its port
@@ -546,6 +616,24 @@ push_to_devices() {
     done
 }
 
+# Installs this run's CA as a user CA on the emulator this script booted, as
+# the header says, in the place and under the name Android looks it up by,
+# readable by every app. Fails the run when su cannot.
+install_user_ca() {
+    local staged="$CREDENTIALS_DIR/tokkl-test-user-ca.pem" install
+    user_ca_on_device="$USER_CA_DIR/$(openssl x509 -in "$work_dir/user-ca.pem" -noout -subject_hash_old).0"
+    install="mkdir -p $USER_CA_DIR && cp $staged $user_ca_on_device && rm $staged"
+    install+=" && chown system:system $USER_CA_DIR $user_ca_on_device"
+    install+=" && chmod 755 $USER_CA_DIR && chmod 644 $user_ca_on_device"
+    # restorecon lists the file context files it read, whatever it does.
+    install+=" && restorecon -R $USER_CA_DIR >/dev/null 2>&1 && sync"
+    adb -s "$emulator_serial" push "$work_dir/user-ca.pem" "$staged" >/dev/null
+    if ! adb -s "$emulator_serial" shell "su 0 sh -c '$install'"; then
+        echo "$0: could not install this run's CA as a user CA on $emulator_serial with su" >&2
+        exit 1
+    fi
+}
+
 # Runs the tests once on every test device. Fails when Gradle fails, when a
 # test device went away during the run, and when Gradle passed without running
 # the tests on every device.
@@ -561,6 +649,7 @@ run_tests() {
         "-P$RUNNER_ARGS.tokklTlsFingerprint=$tls_fingerprint" \
         "-P$RUNNER_ARGS.tokklNewKeyTlsBaseUrl=https://10.0.2.2:$new_key_port" \
         "-P$RUNNER_ARGS.tokklNewKeyTlsFingerprint=$new_key_fingerprint" \
+        "-P$RUNNER_ARGS.tokklUserCaTlsBaseUrl=https://10.0.2.2:$user_ca_port" \
         "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
         "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
         "${gradle_args[@]}" 2>&1 | tee "$work_dir/gradle.log" || status=$?
@@ -602,11 +691,27 @@ run_tests() {
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
 echo "The TLS proxy is ready on https://127.0.0.1:$tls_port, with certificate SHA-256 $tls_fingerprint"
 echo "It serves its second certificate on https://127.0.0.1:$new_key_port, with SHA-256 $new_key_fingerprint"
+echo "It serves the certificate this run's CA signed on https://127.0.0.1:$user_ca_port"
 echo "The proxy serves Tokkl under $prefixed, which the emulator reaches as http://10.0.2.2:$prefix_port/tokkl"
 if [ "${#test_filter[@]}" -gt 0 ]; then
     printf '%s\n' "${test_filter[@]}" >"$filter"
     filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
     gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
+fi
+if [ -n "$emulator_serial" ]; then
+    install_user_ca
+    echo "Installed this run's CA as a user CA on $emulator_serial"
+else
+    for arg in "${gradle_args[@]}"; do
+        case $arg in
+            *"$RUNNER_ARGS.notAnnotation="*)
+                echo "$0: $arg cannot go with the notAnnotation argument that leaves out the user CA tests on a device this script did not boot." >&2
+                exit 2
+                ;;
+        esac
+    done
+    gradle_args+=("-P$RUNNER_ARGS.notAnnotation=$USER_CA_ANNOTATION")
+    echo "This script did not boot the test devices, so it installs no user CA and leaves out the tests marked @UserCaInstalled"
 fi
 push_to_devices
 run_tests

@@ -59,6 +59,16 @@ object TokklTestServer {
     /** The second certificate's SHA-256 fingerprint, in the form of [tlsFingerprint]. */
     val newKeyTlsFingerprint: String by lazy { argument("tokklNewKeyTlsFingerprint") }
 
+    /**
+     * The same server behind the same proxy, on a port whose certificate a CA made for the run
+     * signed, such as `https://10.0.2.2:32772`. The script installs that CA as a user CA on an
+     * emulator it boots; the tests that need it are marked [UserCaInstalled].
+     */
+    val userCaTlsUrl: ServerUrl by lazy {
+        val url = argument("tokklUserCaTlsBaseUrl")
+        ServerUrl.parse(url) ?: error("tokklUserCaTlsBaseUrl is not an https URL: $url")
+    }
+
     val email: String by lazy { argument("tokklEmail") }
 
     val password: String by lazy { credential("tokklPassword") }
@@ -84,3 +94,12 @@ object TokklTestServer {
                     "Run the instrumented tests with scripts/instrumented-tests.sh, which starts the server.",
             )
 }
+
+/**
+ * A test, or every test in a class, that needs the CA that scripts/instrumented-tests.sh installs
+ * as a user CA on an emulator it boots. On any other device the script installs nothing and leaves
+ * these tests out, with the runner's notAnnotation argument.
+ */
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class UserCaInstalled
