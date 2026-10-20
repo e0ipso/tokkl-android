@@ -51,7 +51,8 @@ import okhttp3.HttpUrl
  * create again on a new connection by itself either, so a lost answer always reaches the sender.
  *
  * [send] runs when a change is queued and after each refresh, and once more when a 429's wait
- * ends. Background sending when the network returns comes with WorkManager (TKA-0037).
+ * ends. When the network returns, [BackgroundSend]'s worker calls [sendAndWait], also with the
+ * app closed.
  *
  * @param client the signed-in account's client, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
@@ -102,6 +103,10 @@ class ChangeSender(
     @Volatile
     private var retryAt: Instant? = null
 
+    /** How the latest pass of a drain ended, or null when it failed on the disk. */
+    @Volatile
+    private var lastOutcome: Outcome? = null
+
     /**
      * Drains the queue in the background. While a drain runs, another call returns that one, which
      * then drains once more, so a change queued meanwhile does not wait for the next event.
@@ -115,6 +120,16 @@ class ChangeSender(
         return job
     }
 
+    /**
+     * Drains the queue as [send] does and waits for the drain to end. Returns how its last pass
+     * ended, or null when that pass failed on the disk. Cancelling the caller leaves the drain
+     * running.
+     */
+    suspend fun sendAndWait(): Outcome? {
+        send().join()
+        return lastOutcome
+    }
+
     private fun drainUntilQuiet() {
         var drainAgain = true
         var sent = 0
@@ -126,6 +141,7 @@ class ChangeSender(
                     // The queue stays on disk for the next try.
                     null
                 }
+                lastOutcome = outcome
                 sent += outcome?.sent ?: 0
                 if (outcome is Outcome.Waiting) retryAfterWait(outcome.until)
                 drainAgain = synchronized(lock) {

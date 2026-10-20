@@ -36,10 +36,10 @@ interface EntryChanges {
 /**
  * Starts, stops, creates, edits and deletes time entries on the phone (docs/PRD.md O1). Each call
  * changes the cached entry at once and queues the change, in one transaction, then asks [onQueued]
- * to send the queue. No call waits for the network. The cache marks the entry unsent until the
- * server has every queued change to it, and keeps showing the change over refreshed rows until
- * then. The notification, widget and tile read the running entry from the cache, so they follow at
- * once.
+ * to send the queue while it holds a change. No call waits for the network. The cache marks the
+ * entry unsent until the server has every queued change to it, and keeps showing the change over
+ * refreshed rows until then. The notification, widget and tile read the running entry from the
+ * cache, so they follow at once.
  *
  * Start and Stop use the tap time, which each call reads from [clock] before anything else, so
  * call them from the tap's handler. A timer started offline keeps that start on the server.
@@ -126,10 +126,15 @@ class ChangeQueue(
             true
         }
 
-    /** Runs [change] in one transaction on [io], then asks for the queue to be sent. */
+    /**
+     * Runs [change] in one transaction on [io], then asks for the queue to be sent. A call that
+     * queued nothing, such as a stop of an entry that does not run, leaves an empty queue alone.
+     */
     private suspend fun <T> queue(change: () -> T): T {
-        val result = withContext(io) { database.runInTransaction<T> { change() } }
-        onQueued()
+        val (result, holdsChanges) = withContext(io) {
+            database.runInTransaction<Pair<T, Boolean>> { change() to (dao.first() != null) }
+        }
+        if (holdsChanges) onQueued()
         return result
     }
 

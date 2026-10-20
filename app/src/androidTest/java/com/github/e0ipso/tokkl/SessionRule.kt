@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl
 
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
@@ -51,8 +52,14 @@ class SessionRule : TestRule {
          * the sign-in cooldowns.
          * A cooldown is kept by server origin, and every test signs in to the same few, so one
          * left by a test that ended early would block sign-in in every later test of the run.
+         *
+         * The queue's background work goes with the cache: a test WorkManager, empty and kept in
+         * memory, takes WorkManager's place in this process. Its work runs only when a test's
+         * TestDriver says the network is there, so work one test schedules never sends another
+         * test's queue, in this process or a later one.
          */
         fun signOut() {
+            WorkManagerTestInitHelper.initializeTestWorkManager(context)
             ServerConfigStore(context).clear()
             ApiTokenStore(context).clear()
             AccountSettingsStore(context).clear()

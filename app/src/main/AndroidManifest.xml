@@ -2,7 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Lets the picker say when the phone is offline (docs/PRD.md P1). -->
+    <!--
+        Lets the picker say when the phone is offline (docs/PRD.md P1), and lets the
+        queue's background send wait for a network (O4). WorkManager's own manifest adds
+        it too, along with WAKE_LOCK, RECEIVE_BOOT_COMPLETED and FOREGROUND_SERVICE.
+    -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--

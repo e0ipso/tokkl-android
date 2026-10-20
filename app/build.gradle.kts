@@ -165,6 +165,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime)
 
     // Declares the empty activity that createComposeRule() starts, in debug builds only.
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -175,6 +176,7 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.work.testing)
     androidTestUtil(libs.androidx.test.orchestrator)
 }
 

@@ -13,9 +13,12 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -372,6 +375,59 @@ class ChangeSenderTest {
 
         assertEquals(0, calls)
         assertEquals(1, store.changes.size)
+    }
+
+    /**
+     * The background send learns how the drain ended. A 503 may come after the server stored the
+     * create, so the next drain looks for it before posting it again.
+     */
+    @Test
+    fun sendAndWaitReturnsHowTheDrainEnded() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "First")
+        server.enqueue(MockResponse.Builder().code(503).build())
+
+        assertEquals(
+            ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(503)),
+            runBlocking { sender.sendAndWait() },
+        )
+        assertEquals(1, store.changes.size)
+
+        server.enqueue(entries())
+        server.enqueue(entry(101, "First", stop = "2026-10-19T08:01:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.sendAndWait() })
+        assertTrue(store.changes.isEmpty())
+    }
+
+    /**
+     * A sendAndWait call during a drain joins it and returns how its last pass ended, not the pass
+     * it came in. Here the first pass stops at a 503 and the second sends the rest.
+     */
+    @Test
+    fun sendAndWaitDuringADrainReturnsItsLastPass() {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "First")
+        store.queue(ChangeKind.CREATE, -2, TAP, stop = TAP.plusSeconds(60), description = "Second")
+        server.enqueue(entry(101, "First", stop = "2026-10-19T08:01:00+00:00"))
+        server.enqueue(MockResponse.Builder().code(503).build())
+        server.enqueue(entries())
+        server.enqueue(entry(102, "Second", stop = "2026-10-19T08:01:00+00:00"))
+        var joined: Deferred<ChangeSender.Outcome?>? = null
+        store.onFirstSent = { joined = scope.async(start = CoroutineStart.UNDISPATCHED) { sender.sendAndWait() } }
+
+        runBlocking { sender.send().join() }
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { checkNotNull(joined).await() })
+        assertEquals(4, server.requestCount)
+        assertTrue(store.changes.isEmpty())
+    }
+
+    @Test
+    fun sendAndWaitWhenSignedOutSendsNothing() {
+        signedIn = false
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "First")
+
+        assertEquals(ChangeSender.Outcome.SignedOut(sent = 0), runBlocking { sender.sendAndWait() })
+        assertEquals(0, server.requestCount)
     }
 
     @Test

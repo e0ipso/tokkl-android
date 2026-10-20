@@ -4,6 +4,7 @@ import android.app.Application
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
@@ -93,8 +94,21 @@ class TokklApplication : Application() {
     /** The offline cache. */
     val cache: AccountCache by lazy { AccountCache(cacheDatabase) }
 
-    /** Start, stop, create, edit and delete entries on the phone, which the [sender] then sends. */
-    val changes: ChangeQueue by lazy { ChangeQueue(cacheDatabase, Dispatchers.IO, onQueued = { sender.send() }) }
+    /**
+     * Start, stop, create, edit and delete entries on the phone. The [sender] sends each change at
+     * once, and [BackgroundSend] sends what is left when the network returns, also with the app
+     * closed.
+     */
+    val changes: ChangeQueue by lazy {
+        ChangeQueue(
+            cacheDatabase,
+            Dispatchers.IO,
+            onQueued = {
+                sender.send()
+                BackgroundSend.schedule(this)
+            },
+        )
+    }
 
     /**
      * Sends the queued changes in order. Once it has sent some, the account refreshes with a read
