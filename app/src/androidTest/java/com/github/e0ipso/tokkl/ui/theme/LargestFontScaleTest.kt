@@ -93,7 +93,7 @@ class LargestFontScaleTest {
         // The test account has no entries, so the history says so once the cache has loaded.
         composeRule.awaitText(string(R.string.history_empty_title), NETWORK_TIMEOUT_MS)
 
-        assertFitWithoutOverlap(*timerPageParts().toTypedArray(), text(R.string.history_empty_title))
+        assertFitWithoutOverlap(*(timerPageParts() + favoritesParts()).toTypedArray(), text(R.string.history_empty_title))
         assertLabelsWhole()
     }
 
@@ -674,8 +674,13 @@ class LargestFontScaleTest {
         }
     }
 
-    /** The notice sits over the Timer page, so it may cover none of the page's own parts or the bar either. */
+    /**
+     * The notice sits over the Timer page, so it may cover none of the page's own parts or the bar
+     * either. The refused session never reads `/me`, so the server's capabilities stay unknown and
+     * the page shows no favorites.
+     */
     private fun assertNoticeFits(@StringRes message: Int) {
+        composeRule.onNode(hasText(string(R.string.favorites_title)) and isHeading()).assertDoesNotExist()
         assertFitWithoutOverlap(
             *timerPageParts().toTypedArray(),
             text(message),
@@ -704,15 +709,22 @@ class LargestFontScaleTest {
             "billable" to composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable()),
             "start button" to composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()),
             "past entry button" to button(R.string.timer_add_entry),
-            // The test account has no favorites, so the favorites show their heading, Edit and a hint.
-            "favorites heading" to composeRule.onNode(hasText(string(R.string.favorites_title)) and isHeading()),
-            "edit favorites button" to composeRule.onNode(hasContentDescription(string(R.string.favorites_edit_spoken)) and hasClickAction()),
-            text(R.string.favorites_empty),
             "view switch" to composeRule.onNode(
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup) and
                     hasAnyDescendant(hasText(string(R.string.timer_view_list))),
             ),
         ) + BAR_LABELS.map { label -> "${string(label)} item" to button(label) }
+
+    /**
+     * The favorites under the idle timer, shown once the server says it keeps them. The test
+     * account has none, so they show their heading, Edit and a hint.
+     */
+    private fun favoritesParts(): List<Pair<String, SemanticsNodeInteraction>> =
+        listOf(
+            "favorites heading" to composeRule.onNode(hasText(string(R.string.favorites_title)) and isHeading()),
+            "edit favorites button" to composeRule.onNode(hasContentDescription(string(R.string.favorites_edit_spoken)) and hasClickAction()),
+            text(R.string.favorites_empty),
+        )
 
     /** Each timer control's, each segment's and each bar item's label shows in full, inside its control. */
     private fun assertLabelsWhole() {
