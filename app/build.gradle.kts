@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
@@ -258,4 +259,16 @@ val checkDeniedDependencies = tasks.register("checkDeniedDependencies") {
 
 tasks.named("check") {
     dependsOn(checkDeniedDependencies)
+}
+
+// Lint's analysis stores the files of this module relative to path variables,
+// but files outside it, such as gradle/libs.versions.toml and
+// gradle/wrapper/gradle-wrapper.properties, by absolute path: lint has no
+// variable for the root project, and AGP 9.4.1 passes it no --path-variables.
+// From the build cache, one checkout's analysis made another checkout's lint
+// report cite the first checkout's files. With the checkout's path as an
+// input, the analysis comes from the cache only for the checkout that ran it.
+val checkoutDir: String = rootDir.absolutePath
+tasks.withType<AndroidLintAnalysisTask>().configureEach {
+    inputs.property("checkoutDir", checkoutDir)
 }

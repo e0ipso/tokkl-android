@@ -163,7 +163,7 @@ No test may skip itself with a JUnit assumption. The Android Gradle plugin 9.4.1
 
 Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that need the server. To move to a newer Tokkl, put the digest from `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>` into `IMAGE` in the script. `PROXY_IMAGE` takes the digest of `haproxy:<version>-alpine` the same way.
 
-`gradle.properties` caps the Gradle heap at 2 GB and compiles Kotlin inside the Gradle daemon, so no separate Kotlin daemon starts. It also turns on Gradle's local build cache in `~/.gradle/caches/build-cache-1`, so a new clone or git worktree takes the outputs of tasks another checkout already ran with the same inputs instead of compiling everything again. Gradle deletes entries unused for 7 days. Add `--no-build-cache` to a command to build without it. The Gradle daemon itself stays in memory after the build. Stop it when you finish:
+`gradle.properties` caps the Gradle heap at 2 GB and compiles Kotlin inside the Gradle daemon, so no separate Kotlin daemon starts. It also turns on Gradle's local build cache in `~/.gradle/caches/build-cache-1`, so a new clone or git worktree takes the outputs of tasks another checkout already ran with the same inputs instead of compiling everything again. Lint's analysis is the exception: it stores the absolute paths of files outside `app/`, such as `gradle/libs.versions.toml`, so `app/build.gradle.kts` makes the checkout's path one of its inputs, and each checkout runs its own analysis once. Gradle deletes entries unused for 7 days. Add `--no-build-cache` to a command to build without it. The Gradle daemon itself stays in memory after the build. Stop it when you finish:
 
 ```sh
 ./gradlew --stop
