@@ -240,6 +240,31 @@ class HistoryModelTest {
     }
 
     @Test
+    fun theNetworksReturnLoadsOlderDaysThatFailedOfflineAndAsksNothingOtherwise() {
+        boundsAnswer = MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build()
+        cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+
+        onMain { model.reconnected() }
+        assertEquals("before any older day loads, the return asks nothing", emptyList<String>(), requests)
+
+        onMain { model.loadOlder() }
+        assertEquals(OlderDays.Unreachable, awaitShown(model) { it.older.settled() }.older)
+
+        boundsAnswer = null
+        onMain { model.reconnected() }
+        val loaded = awaitShown(model) { it.older != OlderDays.Loading && it.days.size > 14 }
+        assertEquals(days("2026-10-19", "2026-09-22"), loaded.days.map { it.date })
+        val asked = requests.toList()
+
+        onMain { model.reconnected() }
+        awaitShown(model) { it.older.settled() || it.older == OlderDays.More(auto = true) }
+        assertEquals("older days that loaded ask nothing", asked, requests.toList())
+        assertEquals(loaded.days, awaitShown(model) { true }.days)
+    }
+
+    @Test
     fun entryGivesTheCachesCopyOrTheOlderDaysOne() {
         cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
         val model = model()

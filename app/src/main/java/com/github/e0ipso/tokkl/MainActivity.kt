@@ -157,11 +157,12 @@ class MainActivity : ComponentActivity() {
 
     /**
      * The network came back while the app is on screen: the account refreshes once, and the
-     * calendar and the reports load again what they could not load offline. The projects, clients
-     * and tags pages watch the network themselves.
+     * history's older days, the calendar and the reports load again what they could not load
+     * offline. The projects, clients and tags pages watch the network themselves.
      */
     private fun networkChanged(online: Boolean) {
         if (!(application as TokklApplication).foregroundRefresh.networkChanged(online)) return
+        historyViewModel.model.reconnected()
         calendarViewModel.model.reconnected()
         reportsViewModel.model.reconnected()
     }

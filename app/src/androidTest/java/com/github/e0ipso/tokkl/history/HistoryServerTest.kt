@@ -145,12 +145,47 @@ class HistoryServerTest {
         }
     }
 
-    /** Offline, the older days say that they need the server, and Try again loads them once it can be reached. */
+    /**
+     * When the server cannot be reached while the phone keeps its network, the older days say
+     * that they need the server, and Try again loads them once it can be reached. The network
+     * never changes, so only the tap loads them.
+     */
     @Test
-    fun offlineOlderDaysNeedTheServerAndTryAgainLoadsThem() {
+    fun unreachableOlderDaysNeedTheServerAndTryAgainLoadsThem() {
         val now = Instant.now().truncatedTo(ChronoUnit.SECONDS)
         account.createEntry("Recent", now.minus(1, ChronoUnit.HOURS), now.minus(50, ChronoUnit.MINUTES))
         val older = now.minus(20, ChronoUnit.DAYS).let { account.createEntry("Older offline", it, it.plusSeconds(600)) }
+        val relay = HangingRelay(TokklTestServer.url).also { relay = it }
+        signIn(relay.url)
+        refresh()
+        // Before the launch, since the list's end shows at once and starts loading older days.
+        relay.hang()
+
+        ActivityScenario.launch(MainActivity::class.java).use {
+            composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
+            awaitText("Recent")
+            list().performScrollToKey(OLDER_KEY)
+            awaitText(context.getString(R.string.history_loading_older))
+            // The hung request fails as a network failure would, and the relay reaches the server again.
+            relay.release()
+            awaitText(context.getString(R.string.history_offline_title))
+
+            composeRule.onNode(hasText(string(R.string.history_retry)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+
+            awaitKey("entry-$older")
+            awaitText("Older offline")
+        }
+    }
+
+    /**
+     * Offline, the older days say that they need the server, and they load on their own once the
+     * network comes back with the app on screen, with no tap on Try again.
+     */
+    @Test
+    fun offlineOlderDaysLoadOnceTheNetworkComesBack() {
+        val now = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        account.createEntry("Recent", now.minus(1, ChronoUnit.HOURS), now.minus(50, ChronoUnit.MINUTES))
+        val older = now.minus(20, ChronoUnit.DAYS).let { account.createEntry("Older on reconnect", it, it.plusSeconds(600)) }
         refresh()
         AirplaneMode.set(true, direct)
 
@@ -161,10 +196,9 @@ class HistoryServerTest {
             awaitText(context.getString(R.string.history_offline_title))
 
             AirplaneMode.set(false, direct)
-            composeRule.onNode(hasText(string(R.string.history_retry)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
 
             awaitKey("entry-$older")
-            awaitText("Older offline")
+            awaitText("Older on reconnect")
         }
     }
 

@@ -207,6 +207,15 @@ class HistoryModel(
     }
 
     /**
+     * The network came back while the app is on screen. Older days that failed for want of an
+     * answer load again, as a tap on Try again would; older days that loaded, or any other state,
+     * ask nothing. Call it on the main thread.
+     */
+    fun reconnected() {
+        if (older.value.status == OlderDays.Unreachable) loadOlder()
+    }
+
+    /**
      * The entries of the days from [until] to the day before the cache's first day: days the
      * cache held when the older days first loaded and has since dropped, or will drop, as its
      * window moved on with the date. They come from the cache as [state] last saw it, the newest
