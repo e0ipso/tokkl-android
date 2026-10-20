@@ -41,17 +41,17 @@ class ReportsServer(private val api: TogglApiClient) {
     }
 
     /**
-     * Every entry of [range] in [workspace], oldest first, from the detailed search, with each
-     * entry's day in [zone]. Pages follow the `X-Next-Row-Number` the server sends.
+     * Every entry of [range] in [workspace] that passes [filters], oldest first, from the detailed
+     * search, with each entry's day in [zone]. Pages follow the `X-Next-Row-Number` the server sends.
      *
      * The request asks for the workspace's rounding. Tokkl's web app always applies it, while the
      * Reports API rounds only when asked, as in Toggl (Tokkl's docs/PRD.md R8).
      */
-    fun entries(workspace: ReportWorkspace, range: ReportRange, zone: ZoneId): ApiResult<List<ReportEntry>> {
+    fun entries(workspace: ReportWorkspace, range: ReportRange, zone: ZoneId, filters: ReportFilters = ReportFilters()): ApiResult<List<ReportEntry>> {
         val entries = mutableListOf<ReportEntry>()
         var firstRow = 1
         repeat(MAX_PAGES) {
-            val page = when (val answer = search(workspace, range, "ASC", PAGE_SIZE, firstRow)) {
+            val page = when (val answer = search(workspace, range, filters, "ASC", PAGE_SIZE, firstRow)) {
                 is ApiResult.Success -> answer.value
                 is ApiResult.Failure -> return answer
             }
@@ -71,12 +71,19 @@ class ReportsServer(private val api: TogglApiClient) {
     }
 
     /**
-     * One page of the detailed report of [range] in [workspace], newest first as the web app's
-     * detailed report lists them, starting at [firstRow]: 1 for the first page, then the row the
-     * server named for the next one. Times are in [zone]. The phone never works out a page itself.
+     * One page of the detailed report of [range] in [workspace], of the entries that pass
+     * [filters], newest first as the web app's detailed report lists them, starting at [firstRow]:
+     * 1 for the first page, then the row the server named for the next one. Times are in [zone].
+     * The phone never works out a page itself.
      */
-    fun detailedPage(workspace: ReportWorkspace, range: ReportRange, zone: ZoneId, firstRow: Int): ApiResult<DetailedPage> {
-        val page = when (val answer = search(workspace, range, "DESC", DETAILED_PAGE_SIZE, firstRow)) {
+    fun detailedPage(
+        workspace: ReportWorkspace,
+        range: ReportRange,
+        zone: ZoneId,
+        firstRow: Int,
+        filters: ReportFilters = ReportFilters(),
+    ): ApiResult<DetailedPage> {
+        val page = when (val answer = search(workspace, range, filters, "DESC", DETAILED_PAGE_SIZE, firstRow)) {
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return answer
         }
@@ -92,17 +99,18 @@ class ReportsServer(private val api: TogglApiClient) {
     }
 
     /**
-     * The weekly report of the seven days from [weekStart] in [workspace], from
-     * `POST /reports/api/v3/workspace/{id}/weekly/time_entries`: a row per project with its
-     * seconds on each day. The request asks for the workspace's rounding, as [entries] does.
+     * The weekly report of the seven days from [weekStart] in [workspace], of the entries that pass
+     * [filters], from `POST /reports/api/v3/workspace/{id}/weekly/time_entries`: a row per project
+     * with its seconds on each day. The request asks for the workspace's rounding, as [entries] does.
      */
-    fun weekly(workspace: ReportWorkspace, weekStart: LocalDate): ApiResult<List<WeeklyRow>> {
+    fun weekly(workspace: ReportWorkspace, weekStart: LocalDate, filters: ReportFilters = ReportFilters()): ApiResult<List<WeeklyRow>> {
         val url = api.server.reports("workspace", workspace.id.toString(), "weekly", "time_entries")
         val body = buildJsonObject {
             put("start_date", weekStart.toString())
             put("end_date", weekStart.plusDays(DAYS_IN_WEEK - 1L).toString())
             put("rounding", workspace.rounding)
             put("rounding_minutes", workspace.roundingMinutes)
+            filters.writeTo(this)
         }
         val rows = when (val answer = api.send("POST", url, body, WEEKLY_ROWS)) {
             is ApiResult.Success -> answer.value
@@ -117,12 +125,13 @@ class ReportsServer(private val api: TogglApiClient) {
     }
 
     /**
-     * A page of `POST /reports/api/v3/workspace/{id}/search/time_entries` by date in [direction],
-     * `ASC` or `DESC`, with the workspace's rounding.
+     * A page of `POST /reports/api/v3/workspace/{id}/search/time_entries` of the entries that pass
+     * [filters], by date in [direction], `ASC` or `DESC`, with the workspace's rounding.
      */
     private fun search(
         workspace: ReportWorkspace,
         range: ReportRange,
+        filters: ReportFilters,
         direction: String,
         pageSize: Int,
         firstRow: Int,
@@ -137,6 +146,7 @@ class ReportsServer(private val api: TogglApiClient) {
             put("order_dir", direction)
             put("page_size", pageSize)
             put("first_row_number", firstRow)
+            filters.writeTo(this)
         }
         return api.sendWithHeaders("POST", url, body, ROWS)
     }

@@ -208,6 +208,51 @@ class ReportTabsModelTest {
         assertEquals("the summary keeps the week", week("2026-09-02"), loadedRange())
     }
 
+    /**
+     * The filters go with the summary's search, every page of the detailed search and the weekly
+     * request, in the fields the web app sends, null for "without". Changing them asks again for
+     * the tab on screen, the same filters ask nothing, and they stay when the screen closes.
+     */
+    @Test
+    fun theFiltersGoWithEveryTabsRequest() {
+        model.open()
+        io.runAll()
+        val filters = ReportFilters(projects = listOf(3L, null), clients = listOf(8L), tags = listOf(null), billable = BillableFilter.BILLABLE)
+
+        model.applyFilters(filters)
+        assertTrue("the summary loads again", model.state.value is ReportsState.Loading)
+        io.runAll()
+        assertEquals(filters, model.filters.value)
+        assertEquals("ASC", searches.last().string("order_dir"))
+        assertEquals(FILTER_FIELDS, searches.last().filterFields())
+
+        model.selectTab(ReportTab.DETAILED)
+        io.runAll()
+        model.loadMore()
+        io.runAll()
+        assertEquals(listOf("1", "51"), searches.takeLast(2).map { it.string("first_row_number") })
+        assertEquals("both pages", listOf(FILTER_FIELDS, FILTER_FIELDS), searches.takeLast(2).map { it.filterFields() })
+
+        model.selectTab(ReportTab.WEEKLY)
+        io.runAll()
+        assertEquals(FILTER_FIELDS, weeklies.last().filterFields())
+        model.applyFilters(filters)
+        assertTrue("the same filters ask nothing", io.isEmpty())
+
+        model.close()
+        model.open()
+        io.runAll()
+        assertEquals("the filters stay", filters, model.filters.value)
+        assertEquals(FILTER_FIELDS, weeklies.last().filterFields())
+
+        model.applyFilters(ReportFilters(billable = BillableFilter.NON_BILLABLE))
+        io.runAll()
+        assertEquals(mapOf("billable" to "false"), weeklies.last().filterFields())
+        model.applyFilters(ReportFilters())
+        io.runAll()
+        assertEquals("no filter, no field", emptyMap<String, String>(), weeklies.last().filterFields())
+    }
+
     @Test
     fun aWeeklyRowWithoutSevenDaysIsAnUnexpectedAnswer() {
         weeklyBody = """[{"project_id":1,"project_name":"x","seconds":[1,2]}]"""
@@ -260,6 +305,10 @@ class ReportTabsModelTest {
 
     private fun JsonObject.strings(vararg keys: String): Map<String, String> = keys.associateWith { string(it) }
 
+    /** The filter fields of a request body, as JSON text. */
+    private fun JsonObject.filterFields(): Map<String, String> =
+        listOf("project_ids", "client_ids", "tag_ids", "billable").mapNotNull { key -> this[key]?.let { key to it.toString() } }.toMap()
+
     private fun rows(vararg rows: String) = rows.joinToString(",", "[", "]")
 
     /** A detailed row with one entry of 15 minutes, as Tokkl sends it. */
@@ -293,6 +342,9 @@ class ReportTabsModelTest {
     private companion object {
         const val ZONE = "Pacific/Kiritimati"
         const val NEXT_ROW = "X-Next-Row-Number"
+
+        /** Project 3 or none, client 8, no tags, billable only, as the web app's filterBody writes them. */
+        val FILTER_FIELDS = mapOf("project_ids" to "[3,null]", "client_ids" to "[8]", "tag_ids" to "[null]", "billable" to "true")
 
         /** Two rows of Beta to merge, ties by time to sort by title, a project_hex_color, and time without a project. */
         const val WEEKLY = """[

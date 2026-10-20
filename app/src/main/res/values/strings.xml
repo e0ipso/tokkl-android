@@ -96,6 +96,27 @@
     <string name="reports_apply">Apply</string>
     <string name="reports_cancel">Cancel</string>
 
+    <!-- The report filters, with the web app's words. -->
+    <string name="reports_filters">Filters</string>
+    <string name="reports_filters_change">change the filters</string>
+    <string name="reports_filters_clear">Clear filters</string>
+    <string name="reports_filter_project">Project</string>
+    <string name="reports_filter_client">Client</string>
+    <string name="reports_filter_tag">Tag</string>
+    <string name="reports_filter_billable">Billable</string>
+    <string name="reports_filter_without_client">Without client</string>
+    <string name="reports_filter_without_tags">Without tags</string>
+    <string name="reports_filter_billable_all">Billable and non-billable</string>
+    <string name="reports_filter_billable_only">Billable only</string>
+    <string name="reports_filter_non_billable_only">Non-billable only</string>
+    <!-- An active filter: %1$s is the filter, such as Project, and %2$s its values, such as Website, Internal. -->
+    <string name="reports_filter_line">%1$s: %2$s</string>
+    <!-- The values of a filter that holds one the phone no longer knows. -->
+    <plurals name="reports_filter_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+
     <!-- 13 Oct: the day of the month and the month's short name. -->
     <string name="reports_date">%1$d %2$s</string>
     <!-- 13 Oct 2026 -->
@@ -144,6 +165,8 @@
     <string name="reports_retry">Try again</string>
     <string name="reports_empty_title">No time tracked in this range</string>
     <string name="reports_empty_message">Pick another range with the arrows or the date range button.</string>
+    <string name="reports_empty_title_filtered">No time tracked in this range with these filters</string>
+    <string name="reports_empty_message_filtered">Loosen a filter, or pick another range with the arrows or the date range button.</string>
 
     <string name="reports_total_time">Total time</string>
     <string name="reports_billable_time">Billable time</string>

@@ -5,13 +5,16 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
@@ -183,7 +186,7 @@ class ReportsScreenTest {
 
     @AtLargestFontScale
     @Test
-    fun theScreenAndItsRangeDialogsFitAtTheLargestFontScale() {
+    fun theScreenItsRangeDialogsAndTheFilterSheetFitAtTheLargestFontScale() {
         assertEquals(SystemFontScale.LARGEST, context.resources.configuration.fontScale)
         openReports()
 
@@ -202,6 +205,17 @@ class ReportsScreenTest {
 
         compose.onNode(hasText(string(R.string.reports_apply)) and hasClickAction()).performClick()
         compose.waitUntil("the custom range dialog closes", LOAD_TIMEOUT_MS) { !hasNode(isDialog()) }
+
+        compose.onNode(hasText(string(R.string.reports_filters)) and hasClickAction()).performScrollTo().performClick()
+        compose.waitUntil("the filter sheet opens", LOAD_TIMEOUT_MS) { hasNode(isDialog()) }
+        compose.waitUntil("the sheet offers the cached projects", LOAD_TIMEOUT_MS) { hasNode(hasText("Consulting") and hasAnyAncestor(isDialog())) }
+        assertTextsFit()
+        assertControlsLabelled()
+        compose.onNode(hasScrollToIndexAction() and hasAnyAncestor(isDialog())).performScrollToNode(hasText(string(R.string.reports_filters_clear)))
+        assertTextsFit()
+        assertControlsLabelled()
+        compose.onNode(hasContentDescription(string(R.string.reports_cancel)) and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil("the filter sheet closes", LOAD_TIMEOUT_MS) { !hasNode(isDialog()) }
     }
 
     private fun assertMatchesTheWebApp(report: SummaryReport) {

@@ -72,11 +72,12 @@ sealed interface ReportFailure {
 }
 
 /**
- * The reports screen's state. Each time the screen opens, the tab or the range changes or the app
- * comes back to the foreground, it asks the configured server for the report, and it never asks
- * on a timer. The detailed tab asks for its next page when the list nears its end, and the
- * weekly tab always shows one whole week from the account's week start. Reports live
- * in memory while the screen is open; [close] drops them, and nothing is written to the phone.
+ * The reports screen's state. Each time the screen opens, the tab, the range or the filters change
+ * or the app comes back to the foreground, it asks the configured server for the report, and it
+ * never asks on a timer. Every tab's request carries the filters. The detailed tab asks for its
+ * next page when the list nears its end, and the weekly tab always shows one whole week from the
+ * account's week start. Reports live in memory while the screen is open; [close] drops them, and
+ * nothing is written to the phone.
  * When a request fails, the screen shows why and no numbers or entries, even those of pages that
  * loaded before.
  *
@@ -85,6 +86,7 @@ sealed interface ReportFailure {
  * @param accountSettings the account's timezone, week start and duration format.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
+ * @param filterOptions the projects, clients and tags the filter sheet offers, from the phone's cache.
  */
 class ReportsModel(
     val accountSettings: StateFlow<AccountSettings?>,
@@ -92,6 +94,7 @@ class ReportsModel(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),
+    val filterOptions: StateFlow<FilterOptions> = MutableStateFlow(FilterOptions.NONE),
 ) {
 
     private val mutableState = MutableStateFlow<ReportsState>(ReportsState.Closed)
@@ -101,6 +104,11 @@ class ReportsModel(
 
     /** The tab on screen. It stays when the screen closes and opens again. */
     val tab: StateFlow<ReportTab> = mutableTab.asStateFlow()
+
+    private val mutableFilters = MutableStateFlow(ReportFilters())
+
+    /** The filters every tab's report applies. They stay when the screen closes and opens again, as the tab does. */
+    val filters: StateFlow<ReportFilters> = mutableFilters.asStateFlow()
 
     /** The account's workspace and rounding, read once each time the screen opens. */
     private var workspace: ReportWorkspace? = null
@@ -146,6 +154,13 @@ class ReportsModel(
         selection()?.let(::load)
     }
 
+    /** Applies [filters] to every tab and asks for the report on screen again when they change. */
+    fun applyFilters(filters: ReportFilters) {
+        if (filters == mutableFilters.value) return
+        mutableFilters.value = filters
+        selection()?.let(::load)
+    }
+
     /**
      * Asks for the detailed report's next page, at the row the server named for it. Does nothing
      * while a page is on its way, after the last page, or on another tab.
@@ -159,7 +174,7 @@ class ReportsModel(
         mutableState.value = shown.copy(report = report.copy(loadingMore = true))
         loading = scope.launch {
             // A cancelled page drops its answer, as a cancelled load does.
-            mutableState.value = withContext(io) { nextPage(shown.selection, known, report, next) }
+            mutableState.value = withContext(io) { nextPage(shown.selection, known, report, next, mutableFilters.value) }
         }
     }
 
@@ -209,13 +224,14 @@ class ReportsModel(
 
     private fun load(requested: RangeSelection) {
         val tab = mutableTab.value
+        val filters = mutableFilters.value
         val selection = if (tab == ReportTab.WEEKLY) weekOf(requested) ?: return showNoAccountTime() else requested
         loading?.cancel()
         mutableState.value = ReportsState.Loading(selection)
         val known = workspace
         loading = scope.launch {
             // A cancelled load drops its answer: withContext throws once it returns.
-            val (shown, read) = withContext(io) { fetch(selection, known, tab) }
+            val (shown, read) = withContext(io) { fetch(selection, known, tab, filters) }
             workspace = read
             mutableState.value = shown
         }
@@ -231,8 +247,13 @@ class ReportsModel(
         return if (week == selection.range) selection else RangeSelection(week, preset = null)
     }
 
-    /** What [tab] shows for [selection], and the workspace, [known] or read from the server when null. */
-    private fun fetch(selection: RangeSelection, known: ReportWorkspace?, tab: ReportTab): Pair<ReportsState, ReportWorkspace?> {
+    /** What [tab] shows for [selection] with [filters], and the workspace, [known] or read from the server when null. */
+    private fun fetch(
+        selection: RangeSelection,
+        known: ReportWorkspace?,
+        tab: ReportTab,
+        filters: ReportFilters,
+    ): Pair<ReportsState, ReportWorkspace?> {
         val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone) to known
         val api = client() ?: return ReportsState.Failed(selection, ReportFailure.AuthFailed) to known
         val server = ReportsServer(api)
@@ -241,15 +262,15 @@ class ReportsModel(
             is ApiResult.Failure -> return ReportsState.Failed(selection, failureOf(answer.error)) to null
         }
         val shown = when (tab) {
-            ReportTab.SUMMARY -> when (val answer = server.entries(workspace, selection.range, time.zone)) {
+            ReportTab.SUMMARY -> when (val answer = server.entries(workspace, selection.range, time.zone, filters)) {
                 is ApiResult.Success -> ReportsState.Loaded(selection, SummaryReport.of(answer.value, selection.range, time.firstDayOfWeek))
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
-            ReportTab.DETAILED -> when (val answer = server.detailedPage(workspace, selection.range, time.zone, firstRow = 1)) {
+            ReportTab.DETAILED -> when (val answer = server.detailedPage(workspace, selection.range, time.zone, firstRow = 1, filters)) {
                 is ApiResult.Success -> ReportsState.Loaded(selection, DetailedReport(answer.value.entries, answer.value.nextRow))
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
-            ReportTab.WEEKLY -> when (val answer = server.weekly(workspace, selection.range.from)) {
+            ReportTab.WEEKLY -> when (val answer = server.weekly(workspace, selection.range.from, filters)) {
                 is ApiResult.Success -> ReportsState.Loaded(selection, WeeklyReport.of(selection.range.from, answer.value))
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
@@ -258,10 +279,16 @@ class ReportsModel(
     }
 
     /** [report] with the page that starts at [next] added, or why there is none. */
-    private fun nextPage(selection: RangeSelection, workspace: ReportWorkspace, report: DetailedReport, next: Int): ReportsState {
+    private fun nextPage(
+        selection: RangeSelection,
+        workspace: ReportWorkspace,
+        report: DetailedReport,
+        next: Int,
+        filters: ReportFilters,
+    ): ReportsState {
         val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone)
         val api = client() ?: return ReportsState.Failed(selection, ReportFailure.AuthFailed)
-        return when (val answer = ReportsServer(api).detailedPage(workspace, selection.range, time.zone, next)) {
+        return when (val answer = ReportsServer(api).detailedPage(workspace, selection.range, time.zone, next, filters)) {
             is ApiResult.Success -> ReportsState.Loaded(selection, DetailedReport(report.entries + answer.value.entries, answer.value.nextRow))
             is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
         }

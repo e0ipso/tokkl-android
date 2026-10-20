@@ -50,13 +50,13 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The reports screen (docs/PRD.md R1, R2, R3 and R5): a tab per report, the summary, the detailed
- * list and the weekly grid, under the range they share. On the weekly tab the range is always a
- * week from the account's week start, and the range button offers only the week presets. Opening
- * the screen asks the server for this week, and coming back to the foreground asks again for the
- * range on screen; leaving it forgets the report, while a configuration change keeps it and asks
- * nothing. Offline, it says that reports need the server and shows no numbers or entries. It is a
- * page of the bottom bar, so it has no back button; system Back goes to Timer.
+ * The reports screen (docs/PRD.md R1 to R5): a tab per report, the summary, the detailed list and
+ * the weekly grid, under the range and the filters they share. On the weekly tab the range is
+ * always a week from the account's week start, and the range button offers only the week presets.
+ * Opening the screen asks the server for this week, and coming back to the foreground asks again
+ * for the range on screen; leaving it forgets the report, while a configuration change keeps it
+ * and asks nothing. Offline, it says that reports need the server and shows no numbers or entries.
+ * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable
 fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
@@ -82,15 +82,20 @@ fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
     val tab by model.tab.collectAsState()
     val settings by model.accountSettings.collectAsState()
     val time = remember(settings) { model.accountTime() }
+    val filters by model.filters.collectAsState()
+    val filterOptions by model.filterOptions.collectAsState()
     ReportsContent(
         state = state,
         tab = tab,
         settings = settings,
         time = time,
+        filters = filters,
+        filterOptions = filterOptions,
         onTab = model::selectTab,
         onShift = model::shift,
         onPreset = model::select,
         onCustom = model::selectCustom,
+        onFilters = model::applyFilters,
         onRetry = model::retry,
         onLoadMore = model::loadMore,
         modifier = modifier,
@@ -99,8 +104,9 @@ fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
 
 /**
  * [ReportsScreen] without its model. [time] is null when the phone cannot resolve the account's
- * timezone. A detailed report with entries scrolls as a lazy list, so a long range composes only
- * the rows in view; everything else scrolls as one column.
+ * timezone. [filterOptions] are what the filter sheet offers. A detailed report with entries
+ * scrolls as a lazy list, so a long range composes only the rows in view; everything else scrolls
+ * as one column.
  */
 @Composable
 internal fun ReportsContent(
@@ -108,16 +114,21 @@ internal fun ReportsContent(
     tab: ReportTab,
     settings: AccountSettings?,
     time: AccountTime?,
+    filters: ReportFilters,
+    filterOptions: FilterOptions,
     onTab: (ReportTab) -> Unit,
     onShift: (Int) -> Unit,
     onPreset: (RangePreset) -> Unit,
     onCustom: (ReportRange) -> Unit,
+    onFilters: (ReportFilters) -> Unit,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val header: @Composable () -> Unit = {
         Header(state, tab, time, onTab, onShift, onPreset, onCustom)
+        FilterControl(filters, filterOptions, onFilters)
+        Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
     }
     val detailed = (state as? ReportsState.Loaded)?.report as? DetailedReport
     Scaffold(
@@ -149,13 +160,13 @@ internal fun ReportsContent(
                     .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
             ) {
                 header()
-                Body(state, settings, onRetry)
+                Body(state, settings, filtered = !filters.isEmpty, onRetry = onRetry)
             }
         }
     }
 }
 
-/** The tabs and the range, above every tab's report. */
+/** The tabs and the range, above the filters and every tab's report. */
 @Composable
 private fun Header(
     state: ReportsState,
@@ -176,7 +187,7 @@ private fun Header(
         onCustom = onCustom,
         presets = if (tab == ReportTab.WEEKLY) WEEK_PRESETS else RangePreset.entries,
     )
-    Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+    Spacer(Modifier.height(TokklTheme.spacing.inGroup))
 }
 
 /**
@@ -227,8 +238,9 @@ private val TAB_LABELS = mapOf(
 /** The presets that name a whole week, the only ranges the weekly tab shows. */
 private val WEEK_PRESETS = listOf(RangePreset.THIS_WEEK, RangePreset.LAST_WEEK)
 
+/** What the tab on screen shows under the header. [filtered] is true while any filter is active. */
 @Composable
-private fun Body(state: ReportsState, settings: AccountSettings?, onRetry: () -> Unit) {
+private fun Body(state: ReportsState, settings: AccountSettings?, filtered: Boolean, onRetry: () -> Unit) {
     when (state) {
         ReportsState.Closed, is ReportsState.Loading -> Loading()
         is ReportsState.NoAccountTime -> Problem(
@@ -244,14 +256,14 @@ private fun Body(state: ReportsState, settings: AccountSettings?, onRetry: () ->
         is ReportsState.Loaded -> when (val report = state.report) {
             is SummaryReport -> when {
                 settings == null -> Loading()
-                report.totals.entryCount == 0 -> Empty()
+                report.totals.entryCount == 0 -> Empty(filtered)
                 else -> SummaryContent(report, settings)
             }
             // A detailed report with entries shows as a list, once the settings and the zone are known.
-            is DetailedReport -> if (report.entries.isEmpty()) Empty() else Loading()
+            is DetailedReport -> if (report.entries.isEmpty()) Empty(filtered) else Loading()
             is WeeklyReport -> when {
                 settings == null -> Loading()
-                report.rows.isEmpty() -> Empty()
+                report.rows.isEmpty() -> Empty(filtered)
                 else -> WeeklyContent(report, settings)
             }
         }
@@ -304,14 +316,23 @@ private fun Problem(title: String?, message: String, onRetry: () -> Unit) {
     }
 }
 
-/** A range without time: what to do instead, as the web app's empty state. */
+/**
+ * A range without time: what to do instead, as the web app's empty state, which names the filters
+ * when [filtered].
+ */
 @Composable
-private fun Empty() {
+private fun Empty(filtered: Boolean) {
     Column(
         modifier = Modifier.semantics(mergeDescendants = true) {},
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
     ) {
-        Text(stringResource(R.string.reports_empty_title), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.reports_empty_message), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = stringResource(if (filtered) R.string.reports_empty_title_filtered else R.string.reports_empty_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            text = stringResource(if (filtered) R.string.reports_empty_message_filtered else R.string.reports_empty_message),
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 }

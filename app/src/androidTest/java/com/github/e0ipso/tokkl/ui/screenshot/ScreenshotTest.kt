@@ -65,9 +65,11 @@ import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
 import com.github.e0ipso.tokkl.reports.DetailedEntry
 import com.github.e0ipso.tokkl.reports.DetailedReport
+import com.github.e0ipso.tokkl.reports.FilterOptions
 import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.RangeSelection
 import com.github.e0ipso.tokkl.reports.ReportEntry
+import com.github.e0ipso.tokkl.reports.ReportFilters
 import com.github.e0ipso.tokkl.reports.ReportRange
 import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsContent
@@ -244,10 +246,13 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 tab = ReportTab.SUMMARY,
                 settings = ACCOUNT,
                 time = ACCOUNT.time(TODAY),
+                filters = ReportFilters(),
+                filterOptions = FilterOptions.NONE,
                 onTab = {},
                 onShift = {},
                 onPreset = {},
                 onCustom = {},
+                onFilters = {},
                 onRetry = {},
                 onLoadMore = {},
             )
@@ -441,10 +446,13 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             tab = tab,
             settings = ACCOUNT,
             time = ACCOUNT.time(TODAY),
+            filters = ReportFilters(),
+            filterOptions = FilterOptions.NONE,
             onTab = {},
             onShift = {},
             onPreset = {},
             onCustom = {},
+            onFilters = {},
             onRetry = {},
             onLoadMore = {},
         )

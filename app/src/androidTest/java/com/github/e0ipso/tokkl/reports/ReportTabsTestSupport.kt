@@ -10,10 +10,12 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -31,18 +33,33 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
 
     private val api get() = account.client
 
-    fun project(name: String, color: String): Long {
+    /** A project of [client] or none, whose entries are billable by default when [billable]. */
+    fun project(name: String, color: String, client: Long? = null, billable: Boolean = false): Long {
         val body = buildJsonObject {
             put("name", name)
             put("color", color)
+            if (client != null) put("client_id", client)
+            if (billable) put("billable", true)
         }
-        return api.send("POST", api.server.api("workspaces", account.workspaceId.toString(), "projects"), body, JsonObject.serializer())
-            .orFail("POST /api/v9/workspaces/<id>/projects")
-            .getValue("id").jsonPrimitive.long
+        return create("projects", body)
     }
 
-    /** An entry of [seconds] from [start] in the account's zone, with [project] or none. */
-    fun entry(start: LocalDateTime, seconds: Int, description: String, project: Long?) {
+    fun client(name: String): Long = create("clients", buildJsonObject { put("name", name) })
+
+    fun tag(name: String): Long = create("tags", buildJsonObject { put("name", name) })
+
+    /**
+     * An entry of [seconds] from [start] in the account's zone, with [project] or none and [tags].
+     * [billable] null leaves it to the project, as the web app does.
+     */
+    fun entry(
+        start: LocalDateTime,
+        seconds: Int,
+        description: String,
+        project: Long?,
+        tags: List<Long> = emptyList(),
+        billable: Boolean? = null,
+    ) {
         val body = buildJsonObject {
             put("workspace_id", account.workspaceId)
             put("created_with", "tokkl-android tests")
@@ -50,10 +67,18 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
             put("start", start.atZone(zone).toInstant().toString())
             put("duration", seconds)
             if (project != null) put("project_id", project)
+            if (tags.isNotEmpty()) putJsonArray("tag_ids") { tags.forEach { add(it) } }
+            if (billable != null) put("billable", billable)
         }
         api.send("POST", api.server.api("workspaces", account.workspaceId.toString(), "time_entries"), body, JsonObject.serializer())
             .orFail("POST /api/v9/workspaces/<id>/time_entries")
     }
+
+    /** POSTs [body] to `/api/v9/workspaces/<id>/<what>` and returns the new item's id. */
+    private fun create(what: String, body: JsonObject): Long =
+        api.send("POST", api.server.api("workspaces", account.workspaceId.toString(), what), body, JsonObject.serializer())
+            .orFail("POST /api/v9/workspaces/<id>/$what")
+            .getValue("id").jsonPrimitive.long
 
     /** POSTs [body] to Tokkl's own report endpoint `/api/app/report/<path>`, which the web app reads. */
     fun webReport(path: String, body: JsonObject): JsonObject =
