@@ -64,7 +64,10 @@ jobs:
   # Tokkl image that scripts/instrumented-tests.sh pins by digest.
   # android-emulator-runner boots the emulator; the script sees an attached
   # device, so it starts and seeds the server and runs the tests without
-  # booting one of its own. API 31 is Android 12, the oldest version the app
+  # booting one of its own. TOKKL_TEST_THROWAWAY_EMULATOR=1 tells it that the
+  # device is a throwaway emulator, so it installs the run's CA there as a
+  # user CA with the default image's su and runs UserCaCertificateTest too,
+  # as on an emulator it boots. API 31 is Android 12, the oldest version the app
   # supports, so it catches a call to an API newer than the device. The
   # screenshot tests do not run there, since their references come from API 36.
   instrumented-tests:
@@ -121,7 +124,7 @@ jobs:
             adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS
             adb shell settings put secure show_ime_with_hard_keyboard 1
             adb shell setprop debug.hwui.renderer skiavk
-            scripts/instrumented-tests.sh
+            TOKKL_TEST_THROWAWAY_EMULATOR=1 scripts/instrumented-tests.sh
 
   # Lints the commit messages and runs the tests of the commitlint rules. The
   # commit-msg hook never sees the message git revert or cherry-pick writes, a

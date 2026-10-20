@@ -44,6 +44,14 @@
 # the script installs nothing, and the runner's notAnnotation argument leaves
 # out the tests marked @UserCaInstalled.
 #
+# TOKKL_TEST_THROWAWAY_EMULATOR=1 vouches that every attached test device is
+# an emulator that is thrown away after the run, as in CI, where
+# android-emulator-runner boots it. The script then installs and removes the
+# user CA there too, and runs the @UserCaInstalled tests. It refuses the
+# variable, before it starts anything, for a device that is not an emulator
+# (neither ro.kernel.qemu nor ro.boot.qemu is 1) or whose su does not run a
+# command as root. It changes no other setting on such a device.
+#
 # The setup code, the password and the API token never appear in a process's
 # arguments, which every user on the machine can read with ps.
 #
@@ -121,8 +129,19 @@ readonly RESULTS='app/build/outputs/androidTest-results/connected/debug'
 readonly USER_CA_DIR='/data/misc/user/0/cacerts-added'
 # The annotation of the tests that need this run's CA as a user CA.
 readonly USER_CA_ANNOTATION='com.github.e0ipso.tokkl.UserCaInstalled'
+# Whether the caller vouched that the attached devices are throwaway
+# emulators (see the header).
+readonly THROWAWAY_EMULATOR="${TOKKL_TEST_THROWAWAY_EMULATOR:-}"
 
 cd "$(dirname "$0")/.."
+
+case $THROWAWAY_EMULATOR in
+    '' | 1) ;;
+    *)
+        echo "$0: TOKKL_TEST_THROWAWAY_EMULATOR is \"$THROWAWAY_EMULATOR\". Set it to 1 to vouch that the attached devices are throwaway emulators, or leave it unset." >&2
+        exit 2
+        ;;
+esac
 
 for tool in docker adb curl jq openssl flock; do
     command -v "$tool" >/dev/null || { echo "$0: $tool is not on PATH" >&2; exit 1; }
@@ -186,6 +205,8 @@ credentials_on_device=''
 filter_on_device=''
 user_ca_on_device=''
 devices_with_credentials=()
+# The devices this run installed its CA on as a user CA.
+devices_with_user_ca=()
 adb_was_running=false
 if pgrep -x adb >/dev/null; then adb_was_running=true; fi
 
@@ -220,14 +241,14 @@ remove_device_files() {
     devices_with_credentials=()
 }
 
-# Deletes the user CA that install_user_ca put on the emulator this script
-# booted, and the copy it staged beside the credentials file, then syncs, as
-# remove_device_files does.
+# Deletes the user CA that install_user_ca put on each device, and the copy it
+# staged beside the credentials file, then syncs, as remove_device_files does.
 remove_user_ca() {
-    if [ -z "$user_ca_on_device" ]; then return; fi
-    adb -s "$emulator_serial" shell "su 0 rm -f $user_ca_on_device $CREDENTIALS_DIR/tokkl-test-user-ca.pem && sync" >/dev/null 2>&1 ||
-        echo "$0: could not remove the user CA $user_ca_on_device from $emulator_serial" >&2
-    user_ca_on_device=''
+    for device in "${devices_with_user_ca[@]}"; do
+        adb -s "$device" shell "su 0 rm -f $user_ca_on_device $CREDENTIALS_DIR/tokkl-test-user-ca.pem && sync" >/dev/null 2>&1 ||
+            echo "$0: could not remove the user CA $user_ca_on_device from $device" >&2
+    done
+    devices_with_user_ca=()
 }
 
 # Stops the emulator this script booted, if any, and its scope. Fails, after
@@ -389,8 +410,37 @@ boot_emulator() {
     adb -s "$emulator_serial" shell setprop debug.hwui.renderer skiavk
 }
 
+# Refuses TOKKL_TEST_THROWAWAY_EMULATOR for device $1 unless it is an emulator
+# whose su runs a command as root (see the header).
+check_throwaway_emulator() {
+    local device=$1 qemu uid
+    qemu=$(adb -s "$device" shell 'getprop ro.kernel.qemu; getprop ro.boot.qemu' | tr -d '\r') || qemu=''
+    if ! grep -qx 1 <<<"$qemu"; then
+        echo "$0: TOKKL_TEST_THROWAWAY_EMULATOR is 1, but $device is not an emulator: neither ro.kernel.qemu nor ro.boot.qemu is 1. The script installs a user CA only on an emulator." >&2
+        exit 2
+    fi
+    uid=$(adb -s "$device" shell 'su 0 id -u' 2>/dev/null | tr -d '\r') || uid=''
+    if [ "$uid" != 0 ]; then
+        echo "$0: TOKKL_TEST_THROWAWAY_EMULATOR is 1, but su on $device does not run a command as root, so the script cannot install a user CA there. Use a userdebug image, such as the default system images." >&2
+        exit 2
+    fi
+}
+
 if [ -z "${ANDROID_SERIAL:-}" ] && [ -z "$(attached_devices)" ]; then
     boot_emulator
+fi
+# The devices that get this run's CA as a user CA: the emulator this script
+# booted, or every test device the caller vouched for.
+user_ca_devices=()
+if [ -n "$emulator_serial" ]; then
+    user_ca_devices=("$emulator_serial")
+elif [ "$THROWAWAY_EMULATOR" = 1 ]; then
+    if [ -n "${ANDROID_SERIAL:-}" ]; then
+        user_ca_devices=("$ANDROID_SERIAL")
+    else
+        mapfile -t user_ca_devices < <(attached_devices)
+    fi
+    for device in "${user_ca_devices[@]}"; do check_throwaway_emulator "$device"; done
 fi
 
 setup_code=$(random_hex 16)
@@ -616,20 +666,22 @@ push_to_devices() {
     done
 }
 
-# Installs this run's CA as a user CA on the emulator this script booted, as
-# the header says, in the place and under the name Android looks it up by,
-# readable by every app. Fails the run when su cannot.
+# Installs this run's CA as a user CA on device $1, an emulator this script
+# booted or one the caller vouched for, as the header says, in the place and
+# under the name Android looks it up by, readable by every app. Fails the run
+# when su cannot.
 install_user_ca() {
-    local staged="$CREDENTIALS_DIR/tokkl-test-user-ca.pem" install
+    local device=$1 staged="$CREDENTIALS_DIR/tokkl-test-user-ca.pem" install
     user_ca_on_device="$USER_CA_DIR/$(openssl x509 -in "$work_dir/user-ca.pem" -noout -subject_hash_old).0"
     install="mkdir -p $USER_CA_DIR && cp $staged $user_ca_on_device && rm $staged"
     install+=" && chown system:system $USER_CA_DIR $user_ca_on_device"
     install+=" && chmod 755 $USER_CA_DIR && chmod 644 $user_ca_on_device"
     # restorecon lists the file context files it read, whatever it does.
     install+=" && restorecon -R $USER_CA_DIR >/dev/null 2>&1 && sync"
-    adb -s "$emulator_serial" push "$work_dir/user-ca.pem" "$staged" >/dev/null
-    if ! adb -s "$emulator_serial" shell "su 0 sh -c '$install'"; then
-        echo "$0: could not install this run's CA as a user CA on $emulator_serial with su" >&2
+    devices_with_user_ca+=("$device")
+    adb -s "$device" push "$work_dir/user-ca.pem" "$staged" >/dev/null
+    if ! adb -s "$device" shell "su 0 sh -c '$install'"; then
+        echo "$0: could not install this run's CA as a user CA on $device with su" >&2
         exit 1
     fi
 }
@@ -698,9 +750,11 @@ if [ "${#test_filter[@]}" -gt 0 ]; then
     filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
     gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
 fi
-if [ -n "$emulator_serial" ]; then
-    install_user_ca
-    echo "Installed this run's CA as a user CA on $emulator_serial"
+if [ "${#user_ca_devices[@]}" -gt 0 ]; then
+    for device in "${user_ca_devices[@]}"; do
+        install_user_ca "$device"
+        echo "Installed this run's CA as a user CA on $device"
+    done
 else
     for arg in "${gradle_args[@]}"; do
         case $arg in
@@ -711,7 +765,7 @@ else
         esac
     done
     gradle_args+=("-P$RUNNER_ARGS.notAnnotation=$USER_CA_ANNOTATION")
-    echo "This script did not boot the test devices, so it installs no user CA and leaves out the tests marked @UserCaInstalled"
+    echo "This script did not boot the test devices and TOKKL_TEST_THROWAWAY_EMULATOR is not 1, so it installs no user CA and leaves out the tests marked @UserCaInstalled"
 fi
 push_to_devices
 run_tests
