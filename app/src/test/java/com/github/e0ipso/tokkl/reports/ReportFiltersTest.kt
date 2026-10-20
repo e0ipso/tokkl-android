@@ -24,12 +24,13 @@ class ReportFiltersTest {
         val clients = listOf(CachedClient(5, WORKSPACE, "Acme", archived = true), CachedClient(6, OTHER_WORKSPACE, "Elsewhere", archived = false))
         val tags = listOf(CachedTag(7, WORKSPACE, "deep"), CachedTag(8, OTHER_WORKSPACE, "other"))
 
-        val options = FilterOptions.of(projects, clients, tags, WORKSPACE)
+        val options = FilterOptions.of(projects, clients, tags, WORKSPACE, negation = true)
 
         assertEquals(listOf(2L to "Beta", 4L to "Zed", 1L to "Archive"), options.projects.map { it.id to it.name })
         assertEquals(listOf(5L to "Acme"), options.clients.map { it.id to it.name })
         assertEquals(listOf(7L to "deep"), options.tags.map { it.id to it.name })
-        assertEquals("every workspace while the default one is unknown", 4, FilterOptions.of(projects, clients, tags, null).projects.size)
+        assertTrue(options.negation)
+        assertEquals("every workspace while the default one is unknown", 4, FilterOptions.of(projects, clients, tags, null, negation = false).projects.size)
     }
 
     @Test
@@ -52,6 +53,32 @@ class ReportFiltersTest {
             buildJsonObject { filters.writeTo(this) }.toString(),
         )
         assertFalse(ReportFilters(billable = BillableFilter.BILLABLE).isEmpty)
+    }
+
+    /** As the web app's idFilter: "Is not" sends a list in its exclude field instead, null still for "without". */
+    @Test
+    fun aNegatedFilterSendsItsExcludeField() {
+        val filters = ReportFilters(
+            projects = listOf(9L),
+            clients = listOf(null, 5L),
+            tags = listOf(4L),
+            projectsNot = true,
+            clientsNot = true,
+        )
+        assertEquals(
+            """{"exclude_project_ids":[9],"exclude_client_ids":[null,5],"tag_ids":[4]}""",
+            buildJsonObject { filters.writeTo(this) }.toString(),
+        )
+        assertEquals(
+            "a negated filter with nothing picked filters nothing, as in the web app",
+            "{}",
+            buildJsonObject { ReportFilters(projectsNot = true, clientsNot = true, tagsNot = true).writeTo(this) }.toString(),
+        )
+        assertTrue(ReportFilters(tagsNot = true).isEmpty)
+        assertEquals(
+            """{"project_ids":[9],"client_ids":[null,5],"tag_ids":[4]}""",
+            buildJsonObject { filters.withoutNegation().writeTo(this) }.toString(),
+        )
     }
 
     private companion object {

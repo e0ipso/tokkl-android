@@ -69,6 +69,7 @@ class CapabilitiesTest {
         val capabilities = source().refresh(client, me("""{"id":1,"timezone":"UTC","beginning_of_week":1,"time_resolution_minutes":5}"""))
 
         assertFalse(capabilities.favorites)
+        assertFalse("Toggl Track's Reports API v3 has no exclude fields", capabilities.negatedFilters)
         assertTrue(capabilities.timeResolution)
     }
 
@@ -171,6 +172,6 @@ class CapabilitiesTest {
         const val TRASH = "/api/app/trash"
         const val TOKKL_ME = """{"id":1,"timezone":"UTC","beginning_of_week":1,"role":"user","time_resolution_minutes":5}"""
         const val TOGGL_ME = """{"id":1,"timezone":"UTC","beginning_of_week":1}"""
-        val ALL = Capabilities(trash = true, restore = true, favorites = true, timeResolution = true)
+        val ALL = Capabilities(trash = true, restore = true, favorites = true, timeResolution = true, negatedFilters = true)
     }
 }

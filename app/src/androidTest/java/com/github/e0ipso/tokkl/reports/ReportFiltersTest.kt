@@ -178,6 +178,71 @@ class ReportFiltersTest {
         for (line in last) assertFalse("\"$line\" goes once the filters are cleared", exists(hasText(line)))
     }
 
+    /**
+     * "Is not" drops the entries that match any picked value, null standing for "without", as the
+     * web app's exclude fields do, and the text on the screen says the filter is negated.
+     */
+    @Test
+    fun isNotDropsWhatTheWebAppDrops() {
+        openReports()
+        val withoutClient = string(R.string.reports_filter_without_client)
+        val withoutTags = string(R.string.reports_filter_without_tags)
+
+        checkFilter(
+            picks = listOf("Website"),
+            negate = listOf(R.string.reports_filter_project),
+            web = filter("exclude_project_ids" to ids(website)),
+            entries = 2,
+            lines = listOf(notLine(R.string.reports_filter_project, "Website")),
+        )
+        checkFilter(
+            picks = listOf(withoutClient),
+            negate = listOf(R.string.reports_filter_client),
+            web = filter("exclude_client_ids" to ids(null)),
+            entries = 2,
+            lines = listOf(notLine(R.string.reports_filter_client, withoutClient)),
+        )
+        checkFilter(
+            picks = listOf("meeting", withoutTags),
+            negate = listOf(R.string.reports_filter_tag),
+            web = filter("exclude_tag_ids" to ids(meeting, null)),
+            entries = 1,
+            lines = listOf(notLine(R.string.reports_filter_tag, "meeting, $withoutTags")),
+        )
+        // "Is" on one filter and "Is not" on another: Website's entries without meeting.
+        checkFilter(
+            picks = listOf("Website", "meeting"),
+            negate = listOf(R.string.reports_filter_tag),
+            web = filter("project_ids" to ids(website), "exclude_tag_ids" to ids(meeting)),
+            entries = 1,
+            lines = listOf(line(R.string.reports_filter_project, "Website"), notLine(R.string.reports_filter_tag, "meeting")),
+        )
+
+        checkFilter(picks = emptyList(), web = JsonObject(emptyMap()), entries = 4, lines = emptyList())
+        assertEquals("Clear filters turns \"Is not\" off too", ReportFilters(), model().filters.value)
+    }
+
+    /** Against a server that cannot negate, such as Toggl Track, the sheet offers no "Is not". */
+    @Test
+    fun theSheetOffersNoIsNotWhereTheServerCannotNegate() {
+        openReports()
+        val project = string(R.string.reports_filter_project)
+        openSheet()
+        sheet().performScrollToNode(inSheet(modeSwitch(R.string.reports_filter_mode_not_description, project)))
+        composeRule.onNode(inSheet(hasContentDescription(string(R.string.reports_cancel)) and hasClickAction())).performClick()
+        composeRule.waitUntil("the sheet closes", LOAD_TIMEOUT_MS) { !exists(sheetTitle()) }
+
+        // The refreshes as the app starts are over, so nothing turns the flag back on.
+        Thread.sleep(SETTLE_MS)
+        app.capabilities.forget()
+        assertFalse(app.capabilities.state.value.negatedFilters)
+        openSheet()
+        sheet().performScrollToNode(inSheet(hasText("Website") and isToggleable()))
+        for (filter in listOf(R.string.reports_filter_project, R.string.reports_filter_client, R.string.reports_filter_tag)) {
+            assertFalse("no \"Is not\" for ${string(filter)}", exists(inSheet(modeSwitch(R.string.reports_filter_mode_not_description, string(filter)))))
+        }
+    }
+
     /** The sheet offers the cached projects, clients and tags, and opening or closing it sends nothing. */
     @Test
     fun theSheetOffersTheCachedChoicesAndAsksNothing() {
@@ -209,12 +274,20 @@ class ReportFiltersTest {
     }
 
     /**
-     * Picks [picks], and [billable] when given, in a cleared sheet and applies them. Then the
-     * summary, the detailed list and the weekly grid have to be the web app's for the [web]
-     * filter fields and hold [entries] entries, and the screen has to show [lines].
+     * Picks [picks], "Is not" on each filter of [negate], and [billable] when given, in a cleared
+     * sheet and applies them. Then the summary, the detailed list and the weekly grid have to be
+     * the web app's for the [web] filter fields and hold [entries] entries, and the screen has to
+     * show [lines].
      */
-    private fun checkFilter(picks: List<String>, @StringRes billable: Int? = null, web: JsonObject, entries: Int, lines: List<String>) {
-        pickInTheSheet(picks, billable)
+    private fun checkFilter(
+        picks: List<String>,
+        @StringRes billable: Int? = null,
+        negate: List<Int> = emptyList(),
+        web: JsonObject,
+        entries: Int,
+        lines: List<String>,
+    ) {
+        pickInTheSheet(picks, billable, negate)
         val summary = awaitReport<SummaryReport>()
         for (line in lines) assertTrue("\"$line\" shows", exists(hasText(line)))
         val range = (state() as ReportsState.Loaded).selection.range
@@ -272,12 +345,17 @@ class ReportFiltersTest {
         awaitReport<SummaryReport>()
     }
 
-    /** Opens the sheet, clears it, picks [picks] and [billable], and applies them. */
-    private fun pickInTheSheet(picks: List<String>, @StringRes billable: Int?) {
+    /** Opens the sheet, clears it, picks [picks], "Is not" on each filter of [negate] and [billable], and applies them. */
+    private fun pickInTheSheet(picks: List<String>, @StringRes billable: Int?, negate: List<Int>) {
         openSheet()
         val clear = inSheet(hasText(string(R.string.reports_filters_clear)) and hasClickAction())
         sheet().performScrollToNode(clear)
         if (SemanticsProperties.Disabled !in composeRule.onNode(clear).fetchSemanticsNode().config) composeRule.onNode(clear).performClick()
+        for (filter in negate) {
+            val mode = inSheet(modeSwitch(R.string.reports_filter_mode_not_description, string(filter)))
+            sheet().performScrollToNode(mode)
+            composeRule.onNode(mode).performClick().assertIsSelected()
+        }
         for (pick in picks) {
             val row = inSheet(hasText(pick) and isToggleable())
             sheet().performScrollToNode(row)
@@ -362,6 +440,12 @@ class ReportFiltersTest {
     private fun day(index: Long): LocalDate = minOf(report.weekStart.plusDays(index), report.today)
 
     private fun line(@StringRes filter: Int, values: String): String = context.getString(R.string.reports_filter_line, string(filter), values)
+
+    private fun notLine(@StringRes filter: Int, values: String): String = context.getString(R.string.reports_filter_line_not, string(filter), values)
+
+    /** The "Is" or "Is not" segment, by [description], of the filter named [filter]. */
+    private fun modeSwitch(@StringRes description: Int, filter: String): SemanticsMatcher =
+        hasContentDescription(context.getString(description, filter)) and isSelectable()
 
     private fun exists(matcher: SemanticsMatcher) = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
 

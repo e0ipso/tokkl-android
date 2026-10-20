@@ -18,12 +18,16 @@ import kotlinx.serialization.json.JsonArray
  *   in `/me/preferences` means no favorites yet, not missing support. Tokkl's other preference
  *   keys that the app reads and writes, such as `timerView`, follow this flag too.
  * @property timeResolution `GET /api/v9/me` carries `time_resolution_minutes`.
+ * @property negatedFilters report requests take `exclude_project_ids`, `exclude_client_ids` and
+ *   `exclude_tag_ids`, the web app's "Is not" filters. Toggl Track's Reports API v3 has no
+ *   negation, and every Tokkl release takes them, so Tokkl's `role` in `GET /api/v9/me` decides it.
  */
 data class Capabilities(
     val trash: Boolean,
     val restore: Boolean,
     val favorites: Boolean,
     val timeResolution: Boolean,
+    val negatedFilters: Boolean,
 ) {
 
     /**
@@ -41,12 +45,13 @@ data class Capabilities(
             restore = if (trash == TrashProbe.UNKNOWN) restore else hasTrash,
             favorites = me.role != null,
             timeResolution = me.timeResolutionMinutes != null,
+            negatedFilters = me.role != null,
         )
     }
 
     companion object {
         /** Before the first refresh: every Tokkl-only feature hidden. */
-        val NONE = Capabilities(trash = false, restore = false, favorites = false, timeResolution = false)
+        val NONE = Capabilities(trash = false, restore = false, favorites = false, timeResolution = false, negatedFilters = false)
     }
 }
 

@@ -16,6 +16,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
@@ -89,14 +93,15 @@ internal fun FilterControl(
 }
 
 /**
- * One line per active filter, such as "Project: Website, Internal" or "Billable only". A filter
- * that holds an id the cache no longer has reads as the web app's "2 selected".
+ * One line per active filter, such as "Project: Website, Internal", "Tag: not meeting" or
+ * "Billable only". A filter that holds an id the cache no longer has reads as the web app's
+ * "2 selected".
  */
 @Composable
 private fun filterLines(filters: ReportFilters, options: FilterOptions): List<String> = buildList {
-    idLine(R.string.reports_filter_project, R.string.reports_without_project, filters.projects, options.projects)?.let(::add)
-    idLine(R.string.reports_filter_client, R.string.reports_filter_without_client, filters.clients, options.clients)?.let(::add)
-    idLine(R.string.reports_filter_tag, R.string.reports_filter_without_tags, filters.tags, options.tags)?.let(::add)
+    idLine(R.string.reports_filter_project, R.string.reports_without_project, filters.projects, filters.projectsNot, options.projects)?.let(::add)
+    idLine(R.string.reports_filter_client, R.string.reports_filter_without_client, filters.clients, filters.clientsNot, options.clients)?.let(::add)
+    idLine(R.string.reports_filter_tag, R.string.reports_filter_without_tags, filters.tags, filters.tagsNot, options.tags)?.let(::add)
     when (filters.billable) {
         BillableFilter.ALL -> Unit
         BillableFilter.BILLABLE, BillableFilter.NON_BILLABLE -> add(stringResource(BILLABLE_LABELS.getValue(filters.billable)))
@@ -104,7 +109,7 @@ private fun filterLines(filters: ReportFilters, options: FilterOptions): List<St
 }
 
 @Composable
-private fun idLine(@StringRes name: Int, @StringRes without: Int, ids: List<Long?>, options: List<FilterOption>): String? {
+private fun idLine(@StringRes name: Int, @StringRes without: Int, ids: List<Long?>, negated: Boolean, options: List<FilterOption>): String? {
     if (ids.isEmpty()) return null
     val names = options.associate { it.id to it.name }
     val withoutName = stringResource(without)
@@ -114,13 +119,14 @@ private fun idLine(@StringRes name: Int, @StringRes without: Int, ids: List<Long
     } else {
         picked.filterNotNull().joinToString(", ")
     }
-    return stringResource(R.string.reports_filter_line, stringResource(name), value)
+    return stringResource(if (negated) R.string.reports_filter_line_not else R.string.reports_filter_line, stringResource(name), value)
 }
 
 /**
  * The filters on a full screen, as the custom range, since a long list of projects needs the
- * room. Each list starts with its "without" choice, as in the web app. Nothing applies until
- * Apply, so the report is asked for once; the close button leaves the filters as they were.
+ * room. Each list starts with its "without" choice, as in the web app, under the web app's "Is"
+ * and "Is not" where the server honours them. Nothing applies until Apply, so the report is asked
+ * for once; the close button leaves the filters as they were.
  */
 @Composable
 private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply: (ReportFilters) -> Unit, onDismiss: () -> Unit) {
@@ -143,20 +149,41 @@ private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply:
                             .weight(1f)
                             .semantics { heading() },
                     )
-                    TextButton(onClick = { onApply(draft) }) {
+                    TextButton(onClick = { onApply(if (options.negation) draft else draft.withoutNegation()) }) {
                         Text(stringResource(R.string.reports_apply))
                     }
                 }
                 LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                    idSection("project", R.string.reports_filter_project, R.string.reports_without_project, options.projects, draft.projects) {
-                        draft = draft.copy(projects = draft.projects.toggled(it))
-                    }
-                    idSection("client", R.string.reports_filter_client, R.string.reports_filter_without_client, options.clients, draft.clients) {
-                        draft = draft.copy(clients = draft.clients.toggled(it))
-                    }
-                    idSection("tag", R.string.reports_filter_tag, R.string.reports_filter_without_tags, options.tags, draft.tags) {
-                        draft = draft.copy(tags = draft.tags.toggled(it))
-                    }
+                    idSection(
+                        key = "project",
+                        heading = R.string.reports_filter_project,
+                        without = R.string.reports_without_project,
+                        options = options.projects,
+                        picked = draft.projects,
+                        negated = draft.projectsNot.takeIf { options.negation },
+                        onNegatedChange = { draft = draft.copy(projectsNot = it) },
+                        onToggle = { draft = draft.copy(projects = draft.projects.toggled(it)) },
+                    )
+                    idSection(
+                        key = "client",
+                        heading = R.string.reports_filter_client,
+                        without = R.string.reports_filter_without_client,
+                        options = options.clients,
+                        picked = draft.clients,
+                        negated = draft.clientsNot.takeIf { options.negation },
+                        onNegatedChange = { draft = draft.copy(clientsNot = it) },
+                        onToggle = { draft = draft.copy(clients = draft.clients.toggled(it)) },
+                    )
+                    idSection(
+                        key = "tag",
+                        heading = R.string.reports_filter_tag,
+                        without = R.string.reports_filter_without_tags,
+                        options = options.tags,
+                        picked = draft.tags,
+                        negated = draft.tagsNot.takeIf { options.negation },
+                        onNegatedChange = { draft = draft.copy(tagsNot = it) },
+                        onToggle = { draft = draft.copy(tags = draft.tags.toggled(it)) },
+                    )
                     item(key = "billable") {
                         Column(Modifier.screenContent()) {
                             SectionHeading(R.string.reports_filter_billable)
@@ -175,7 +202,7 @@ private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply:
                     item(key = "clear") {
                         TextButton(
                             onClick = { draft = ReportFilters() },
-                            enabled = !draft.isEmpty,
+                            enabled = draft != ReportFilters(),
                             modifier = Modifier
                                 .screenContent()
                                 .padding(vertical = TokklTheme.spacing.inGroup),
@@ -189,16 +216,24 @@ private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply:
     }
 }
 
-/** A heading, the "without" choice and a checkbox for each option, each ticked when [picked] holds its id. */
+/**
+ * A heading, "Is" and "Is not" unless [negated] is null, the "without" choice and a checkbox for
+ * each option, each ticked when [picked] holds its id.
+ */
 private fun LazyListScope.idSection(
     key: String,
     @StringRes heading: Int,
     @StringRes without: Int,
     options: List<FilterOption>,
     picked: List<Long?>,
+    negated: Boolean?,
+    onNegatedChange: (Boolean) -> Unit,
     onToggle: (Long?) -> Unit,
 ) {
     item(key = "$key-heading") { SectionHeading(heading, Modifier.screenContent()) }
+    if (negated != null) {
+        item(key = "$key-mode") { ModeSwitch(heading, negated, onNegatedChange, Modifier.screenContent()) }
+    }
     item(key = "$key-none") {
         CheckboxOptionRow(
             label = stringResource(without),
@@ -214,6 +249,31 @@ private fun LazyListScope.idSection(
             onCheckedChange = { onToggle(option.id) },
             modifier = Modifier.screenContent(),
         )
+    }
+}
+
+/**
+ * The web app's "Is" and "Is not" for the filter named [filter]. Each segment is a radio button
+ * to TalkBack, read with the filter's name, and the chosen one carries a tick, so its colour is
+ * not the only sign.
+ */
+@Composable
+private fun ModeSwitch(@StringRes filter: Int, negated: Boolean, onNegatedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    val name = stringResource(filter)
+    SingleChoiceSegmentedButtonRow(modifier.fillMaxWidth().padding(bottom = TokklTheme.spacing.inGroup)) {
+        for ((index, mode) in listOf(false, true).withIndex()) {
+            val description = stringResource(
+                if (mode) R.string.reports_filter_mode_not_description else R.string.reports_filter_mode_is_description,
+                name,
+            )
+            SegmentedButton(
+                selected = negated == mode,
+                onClick = { onNegatedChange(mode) },
+                shape = SegmentedButtonDefaults.itemShape(index, 2),
+                modifier = Modifier.semantics { contentDescription = description },
+                label = { Text(stringResource(if (mode) R.string.reports_filter_mode_not else R.string.reports_filter_mode_is)) },
+            )
+        }
     }
 }
 
@@ -237,13 +297,19 @@ private val BILLABLE_LABELS = mapOf(
 
 /** Ids are positive on Tokkl and Toggl, so 0 can stand for null, the "without" choice, in a saved state. */
 private val FILTERS_SAVER: Saver<ReportFilters, Any> = listSaver(
-    save = { listOf(it.projects.saved(), it.clients.saved(), it.tags.saved(), it.billable.ordinal) },
+    save = {
+        listOf(it.projects.saved(), it.clients.saved(), it.tags.saved(), it.billable.ordinal, booleanArrayOf(it.projectsNot, it.clientsNot, it.tagsNot))
+    },
     restore = {
+        val negated = it[4] as BooleanArray
         ReportFilters(
             projects = (it[0] as LongArray).restored(),
             clients = (it[1] as LongArray).restored(),
             tags = (it[2] as LongArray).restored(),
             billable = BillableFilter.entries[it[3] as Int],
+            projectsNot = negated[0],
+            clientsNot = negated[1],
+            tagsNot = negated[2],
         )
     },
 )

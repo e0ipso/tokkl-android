@@ -23,6 +23,7 @@ class CapabilitiesStore(context: Context) {
             restore = preferences.getBoolean(KEY_RESTORE, false),
             favorites = preferences.getBoolean(KEY_FAVORITES, false),
             timeResolution = preferences.getBoolean(KEY_TIME_RESOLUTION, false),
+            negatedFilters = preferences.getBoolean(KEY_NEGATED_FILTERS, false),
         )
     }
 
@@ -34,6 +35,7 @@ class CapabilitiesStore(context: Context) {
             putBoolean(KEY_RESTORE, capabilities.restore)
             putBoolean(KEY_FAVORITES, capabilities.favorites)
             putBoolean(KEY_TIME_RESOLUTION, capabilities.timeResolution)
+            putBoolean(KEY_NEGATED_FILTERS, capabilities.negatedFilters)
         }
     }
 
@@ -52,5 +54,6 @@ class CapabilitiesStore(context: Context) {
         private const val KEY_RESTORE = "restore"
         private const val KEY_FAVORITES = "favorites"
         private const val KEY_TIME_RESOLUTION = "time_resolution"
+        private const val KEY_NEGATED_FILTERS = "negated_filters"
     }
 }

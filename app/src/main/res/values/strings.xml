@@ -120,6 +120,14 @@
     <string name="reports_filter_non_billable_only">Non-billable only</string>
     <!-- An active filter: %1$s is the filter, such as Project, and %2$s its values, such as Website, Internal. -->
     <string name="reports_filter_line">%1$s: %2$s</string>
+    <!-- An active "Is not" filter, as the web app's "not Website": Project: not Website, Internal. -->
+    <string name="reports_filter_line_not">%1$s: not %2$s</string>
+    <!-- The web app's choice between keeping the entries that match a filter and dropping them. -->
+    <string name="reports_filter_mode_is">Is</string>
+    <string name="reports_filter_mode_not">Is not</string>
+    <!-- What TalkBack reads for each mode: %1$s is the filter, such as Project. -->
+    <string name="reports_filter_mode_is_description">%1$s is</string>
+    <string name="reports_filter_mode_not_description">%1$s is not</string>
     <!-- The values of a filter that holds one the phone no longer knows. -->
     <plurals name="reports_filter_selected">
         <item quantity="one">%d selected</item>

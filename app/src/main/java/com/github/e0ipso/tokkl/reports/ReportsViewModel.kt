@@ -21,8 +21,14 @@ class ReportsViewModel(application: Application) : AndroidViewModel(application)
         scope = viewModelScope,
         io = Dispatchers.IO,
         // From the Room cache, never from the server, and only while the screen reads them.
-        filterOptions = combine(app.cache.projects, app.cache.clients, app.cache.tags, app.accountSettings.state) { projects, clients, tags, settings ->
-            FilterOptions.of(projects, clients, tags, settings?.defaultWorkspaceId)
+        filterOptions = combine(
+            app.cache.projects,
+            app.cache.clients,
+            app.cache.tags,
+            app.accountSettings.state,
+            app.capabilities.state,
+        ) { projects, clients, tags, settings, capabilities ->
+            FilterOptions.of(projects, clients, tags, settings?.defaultWorkspaceId, negation = capabilities.negatedFilters)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FilterOptions.NONE),
     )
 }
