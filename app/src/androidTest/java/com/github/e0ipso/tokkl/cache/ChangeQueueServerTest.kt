@@ -349,6 +349,64 @@ class ChangeQueueServerTest {
         assertEquals(start.plus(Duration.ofMinutes(45)), copy.instant("stop"))
     }
 
+    /**
+     * Tokkl matches the tag names a create sends to its tags with no regard to case, so an entry
+     * queued with "work" comes back tagged "Work" when the server has that tag (TKA-0206). The
+     * lookup for a create whose answer was lost matches tags the same way, finds that entry and
+     * posts no second copy.
+     */
+    @Test
+    fun aCreateWhoseAnswerWasLostIsStoredOnceWhenTheServerHasItsTagInAnotherCase() {
+        // Made on the web after the phone's refresh, so the phone does not know it.
+        tagOnTheWeb("Work")
+        val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
+        relay.holdAnswerTo(CREATE)
+        val id = runBlocking {
+            app.changes.create(workspace, EntryFields(description = "Tagged", tags = listOf("work")), start, start.plus(Duration.ofMinutes(30)))
+        }
+        waitUntil("the server stored the entry and its answer is held") { relay.holdsAnswer }
+        // The connection drops before the answer reaches the phone, and the network stays quiet.
+        relay.hang()
+        runBlocking { app.sender.sendAndWait() }
+        assertEquals("the create stays queued", 1, unsentCount())
+        relay.releaseAnswer()
+        relay.release()
+        drainUntilEmpty()
+
+        val copies = serverEntriesAround(start)
+        assertEquals("one copy on the server: $copies", 1, copies.size)
+        assertEquals(serverId(id), copies.single().getValue("id").jsonPrimitive.long)
+        assertEquals("tagged with the server's name for the tag", listOf("Work"), copies.single().tags())
+    }
+
+    /**
+     * An entry the web app made after the phone's refresh, with the description and times of a
+     * queued create and one of its tags in another case but a tag more, is not the one the create
+     * made. So the create, which may have reached the server and did not, is posted beside it.
+     */
+    @Test
+    fun aCreateThatNeverReachedTheServerIsNotTakenForAnEntryWithOtherTags() {
+        val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
+        val stop = start.plus(Duration.ofMinutes(30))
+        tagOnTheWeb("Work")
+        tagOnTheWeb("meeting")
+        val other = entryOnTheWeb("Tagged", start, stop, tags = listOf("Work", "meeting"))
+        relay.hang()
+        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Tagged", tags = listOf("work")), start, stop) }
+        // The relay drops the create on a connection it cut, or holds it on a new one until the
+        // read times out. Either way the phone cannot tell whether the server stored it.
+        runBlocking { app.sender.send().join() }
+        assertEquals("the create stays queued", 1, unsentCount())
+        relay.release()
+        drainUntilEmpty()
+
+        val entries = serverEntriesAround(start)
+        assertEquals("the web app's entry and the create's: $entries", 2, entries.size)
+        assertTrue("the create made an entry of its own", serverId(id) != other)
+        assertEquals(setOf(other, serverId(id)), entries.map { it.getValue("id").jsonPrimitive.long }.toSet())
+        assertEquals(listOf("Work"), serverEntry(serverId(id)).tags())
+    }
+
     @Test
     fun aCreateThatNeverReachedTheServerIsPostedOnce() {
         val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
@@ -444,6 +502,31 @@ class ChangeQueueServerTest {
             JsonObject.serializer(),
         ).orFail("POST a running time entry").getValue("id").jsonPrimitive.long
 
+    private fun tagOnTheWeb(name: String) {
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "tags"),
+            buildJsonObject { put("name", name) },
+            JsonObject.serializer(),
+        ).orFail("POST a tag")
+    }
+
+    /** A stopped entry the web app makes, tagged with the names in [tags]. */
+    private fun entryOnTheWeb(description: String, start: Instant, stop: Instant, tags: List<String>): Long =
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                put("start", start.toString())
+                put("stop", stop.toString())
+                put("tags", JsonArray(tags.map { JsonPrimitive(it) }))
+            },
+            JsonObject.serializer(),
+        ).orFail("POST a time entry").getValue("id").jsonPrimitive.long
+
     private fun runningOnServer(): JsonObject? =
         web.get(web.server.api("me", "time_entries", "current"), JsonObject.serializer().nullable).orFail("GET the running entry")
 
@@ -496,6 +579,8 @@ class ChangeQueueServerTest {
         web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET a time entry")
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
+
+    private fun JsonObject.tags(): List<String> = getValue("tags").jsonArray.map { it.jsonPrimitive.content }
 
     /**
      * Tokkl writes times with an offset, such as +00:00. On API 30 Instant.parse refused that and

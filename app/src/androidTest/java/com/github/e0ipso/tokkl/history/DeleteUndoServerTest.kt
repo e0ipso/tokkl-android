@@ -13,6 +13,7 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
@@ -49,8 +50,9 @@ import org.junit.rules.RuleChain
 
 /**
  * Delete with Undo against the real Tokkl container (docs/PRD.md H3). A delete the server has gets
- * the entry back through Tokkl's `POST /api/app/time_entries/{id}/restore`, out of the trash. A
- * delete still in the queue leaves it with no request. Each test signs in to an account of its own.
+ * the entry back through Tokkl's `POST /api/app/time_entries/{id}/restore`, out of the trash, also
+ * when the delete's answer was lost. A delete still in the queue leaves it with no request. Each
+ * test signs in to an account of its own.
  */
 class DeleteUndoServerTest {
     private val composeRule = createEmptyComposeRule()
@@ -139,6 +141,54 @@ class DeleteUndoServerTest {
     }
 
     /**
+     * A delete whose answer the network lost after the server had put the entry in the trash
+     * (TKA-0205). The retry gets 404, which Tokkl answers for an entry in its trash, and that
+     * counts as sent, so the queue moves on. Undo then goes through the server and restores the
+     * entry, which the phone shows again.
+     */
+    @Test
+    fun undoOfADeleteWhoseAnswerWasLostRestoresTheEntryThroughTheRestoreEndpoint() {
+        val id = recentEntry("Answer lost")
+        refresh()
+        assertTrue("the server offers restore", app.capabilities.state.value.restore)
+
+        HangingRelay(TokklTestServer.url).use { relay ->
+            signIn(relay.url)
+            relay.holdAnswerTo(DELETE)
+            assertTrue(runBlocking { app.changes.delete(id) })
+            waitUntil("the server deleted the entry and its answer is held") { relay.holdsAnswer }
+            assertEquals("the server put it in the trash", listOf(id), trash())
+            // The connection drops before the answer reaches the phone, and the network stays quiet.
+            relay.hang()
+            runBlocking { app.sender.sendAndWait() }
+            assertEquals("the delete waits in the queue", 1, unsentCount())
+            relay.releaseAnswer()
+            relay.release()
+
+            val retry = runBlocking { app.sender.sendAndWait() }
+            assertTrue("the retry's 404 counts as sent: $retry", retry is ChangeSender.Outcome.Empty)
+            assertEquals("the queue moved on", 0, unsentCount())
+        }
+
+        val outcome = RequestCounter(TokklTestServer.url, "/api/app/time_entries/$id/restore HTTP/1.1").use { counter ->
+            signIn(counter.url)
+            runBlocking { app.sender.undoDelete(id) }.also {
+                assertEquals("one restore request", 1, counter.count)
+                assertEquals(emptyList<String>(), counter.failures)
+            }
+        }
+
+        assertEquals(ChangeSender.UndoOutcome.Restored, outcome)
+        signIn(TokklTestServer.url)
+        val restored = serverEntry(id)
+        assertTrue("the server has it again: $restored", restored is ApiResult.Success)
+        assertEquals("Answer lost", (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content)
+        assertEquals("out of the trash", emptyList<Long>(), trash())
+        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
+        assertEquals("the phone shows it again, sent", "Answer lost" to false, cached.entry.description to cached.unsent)
+    }
+
+    /**
      * In the app, the entry's menu deletes it and the message's Undo brings it back, on the phone
      * and on the server, whether the delete had gone out by then or not.
      */
@@ -204,6 +254,14 @@ class DeleteUndoServerTest {
         Session(context).save(server, account.apiToken)
     }
 
+    private fun waitUntil(what: String, condition: () -> Boolean) {
+        val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
+        while (!condition()) {
+            if (System.nanoTime() > deadline) throw AssertionError("timed out: $what")
+            Thread.sleep(POLL_MS)
+        }
+    }
+
     private fun inList(text: String) =
         composeRule.onAllNodes(hasText(text) and hasAnyAncestor(hasScrollToKeyAction()), useUnmergedTree = true)
             .fetchSemanticsNodes().isNotEmpty()
@@ -211,5 +269,9 @@ class DeleteUndoServerTest {
     private companion object {
         const val LOAD_TIMEOUT_MS = 30_000L
         val NO_ROUTE: ServerUrl = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
+        const val POLL_MS = 50L
+
+        /** The start of a delete's request. */
+        const val DELETE = "DELETE /api/v9/workspaces/"
     }
 }
