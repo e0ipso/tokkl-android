@@ -207,6 +207,15 @@ class ReportFiltersTest {
             entries = 2,
             lines = listOf(notLine(R.string.reports_filter_client, withoutClient)),
         )
+        // Not Acme keeps the entries with no client, Standup's in Internal and Email's with no
+        // project, as Tokkl's exclusion keeps a row whose client is null.
+        checkFilter(
+            picks = listOf("Acme"),
+            negate = listOf(R.string.reports_filter_client),
+            web = filter("exclude_client_ids" to ids(acme)),
+            entries = 2,
+            lines = listOf(notLine(R.string.reports_filter_client, "Acme")),
+        )
         checkFilter(
             picks = listOf("meeting", withoutTags),
             negate = listOf(R.string.reports_filter_tag),
