@@ -17,9 +17,11 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: medium
 ---
-The source of truth for the app's colours is the colour tokens in `../tokkl/packages/web/src/styles.css`. The owner's Spectrum stickers palette changed that file in tokkl 524deaa (v1.5.0), and this app has not followed yet, as the palette practice node describes. So the app's tokens match `styles.css` from before that commit, not its current values.
+The source of truth for the app's colours is the colour tokens in `../tokkl/packages/web/src/styles.css`. `ui/theme/Color.kt` mirrors the Spectrum palette of tokkl 524deaa (v1.5.0, TT-0298), and its header comment records that commit. When `styles.css` changes again, take the new values from a recorded tokkl commit and update that comment.
 
-In the app today, the light theme has a sand background, ink text, a sunset orange primary, an aqua secondary, and hot pink and lime for states. The dark theme has a navy background with the neon counterparts.
+The light theme has an off-white `--bg` (#FFFDF7), ink text, an orange primary, a teal secondary, a yellow `--selected`, and hot pink and lime accents. The dark theme has a navy `--bg` (#08061F) with brighter counterparts.
+
+`styles.css` splits primary in two, and so does the app. `--primary` is a fill with `--on-primary` ink on it, and text in the primary colour reads `--primary-text`, because the light `--primary` is only 3.40:1 on surface. Material 3 draws text in its primary role, so the Material `primary` role is `--primary-text`. The `--primary` fill is `TokklTheme.extraColors.primaryFill` (with `onPrimaryFill`), which `TokklButton` in `ui/Buttons.kt` and the week strip's today badge use; paint any other `--primary` fill from it, never from `colorScheme.primary`. With wallpaper colours on, `TokklTheme` replaces `primaryFill` with the wallpaper scheme's primary through `withPrimaryFill` and keeps every other extra colour. `secondaryContainer` is `--selected`, the web's active segmented button fill, with `--on-selected` on it. Each role in `colorScheme` that has no token of its own says in a comment which token it borrows.
 
 The app bundles the Anybody font. Tokkl already ships it under the SIL Open Font License 1.1, with the license at `../tokkl/packages/web/public/fonts/OFL.txt`.
 

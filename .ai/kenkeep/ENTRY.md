@@ -1,7 +1,7 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:08fc368274191e8ace24c90badf716ec5f13dce1623bfa3cf71f624beac3b439'
-node_count: 42
+nodes_hash: 'sha256:586ce891e0b8a28a6625f8eff95be2a5205d242f5a651818e4e1f2c2df024d8b'
+node_count: 44
 ---
 # kenkeep
 
@@ -10,11 +10,12 @@ node_count: 42
 ## Branches
 - Load [`api-and-security/`](nodes/api-and-security/index.md) for more information on the Tokkl and Toggl APIs, the shared OkHttp client, certificate trust, token storage and request rules; read before adding a request or endpoint, or changing trust, credentials or privacy.
 - Load [`build-and-tooling/`](nodes/build-and-tooling/index.md) for more information on the JDK, Android SDK, Gradle build, Android stack, commit hook and agent host limits on this machine; read before building, committing, adding a dependency or running a long job.
-- Load [`data-and-offline/`](nodes/data-and-offline/index.md) for more information on account settings and time, the Room cache, the change queue and the TypeScript ports; read before changing what the phone stores or sends, or how it reads and writes times.
+- Load [`data-and-offline/`](nodes/data-and-offline/index.md) for more information on account settings and time, the Room cache, the change queue, the running timer's notification and the TypeScript ports; read before changing what the phone stores or sends, or how it reads and writes times.
 - Load [`design/`](nodes/design/index.md) for more information on Tokkl's theme, palette, brand rules and shared UI components; read before changing how anything looks or reads to TalkBack.
 - Load [`release/`](nodes/release/index.md) for more information on the app ID, versioning, reproducible signed builds, CI jobs and F-Droid metadata; read before touching versions, signing, CI or store text.
-- Load [`screens/`](nodes/screens/index.md) for more information on sign-in and sign-out, the navigation host and its bars, the Timer page, the timer and entry form, Reports and the catalog pages; read before changing a screen, its model or navigation.
+- Load [`screens/`](nodes/screens/index.md) for more information on sign-in and sign-out, the navigation host with its bar, rail and window sizes, the Timer page, the timer and entry form, Reports, Trash and the catalog pages; read before changing a screen, its model or navigation.
 - Load [`testing/`](nodes/testing/index.md) for more information on instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator.
 
 ## Conventions (how we build)
 - Open [**Reuse drain checks by content and test configuration**](nodes/practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents
+- Open [**Gate drain sittings on free memory, not on a sitting count**](nodes/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) to learn about: Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes. #sift #agents #memory

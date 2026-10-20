@@ -10,14 +10,15 @@ okf_version: '0.1'
 ## Subfolders
 - Load [`api-and-security/`](api-and-security/index.md) for more information on the Tokkl and Toggl APIs, the shared OkHttp client, certificate trust, token storage and request rules; read before adding a request or endpoint, or changing trust, credentials or privacy.
 - Load [`build-and-tooling/`](build-and-tooling/index.md) for more information on the JDK, Android SDK, Gradle build, Android stack, commit hook and agent host limits on this machine; read before building, committing, adding a dependency or running a long job.
-- Load [`data-and-offline/`](data-and-offline/index.md) for more information on account settings and time, the Room cache, the change queue and the TypeScript ports; read before changing what the phone stores or sends, or how it reads and writes times.
+- Load [`data-and-offline/`](data-and-offline/index.md) for more information on account settings and time, the Room cache, the change queue, the running timer's notification and the TypeScript ports; read before changing what the phone stores or sends, or how it reads and writes times.
 - Load [`design/`](design/index.md) for more information on Tokkl's theme, palette, brand rules and shared UI components; read before changing how anything looks or reads to TalkBack.
 - Load [`release/`](release/index.md) for more information on the app ID, versioning, reproducible signed builds, CI jobs and F-Droid metadata; read before touching versions, signing, CI or store text.
-- Load [`screens/`](screens/index.md) for more information on sign-in and sign-out, the navigation host and its bars, the Timer page, the timer and entry form, Reports and the catalog pages; read before changing a screen, its model or navigation.
+- Load [`screens/`](screens/index.md) for more information on sign-in and sign-out, the navigation host with its bar, rail and window sizes, the Timer page, the timer and entry form, Reports, Trash and the catalog pages; read before changing a screen, its model or navigation.
 - Load [`testing/`](testing/index.md) for more information on instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator.
 
 ## Conventions (how we build)
 - Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents
+- Open [**Gate drain sittings on free memory, not on a sitting count**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) to learn about: Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes. #sift #agents #memory
 
 ## Components (what exists)
 _None yet._
@@ -25,11 +26,16 @@ _None yet._
 ## By topic
 
 ### #agents
+- Open [**Gate drain sittings on free memory, not on a sitting count**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
 - Open [**T3 restarts daily and ends running agent sessions**](build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
-- Open [**JDK and Android SDK on this machine, and how agent shells reach them**](build-and-tooling/map-jdk-android-sdk-and-agent-shells.md) — Temurin 21 in ~/.local/share/jdk/21, SDK in ~/Android/Sdk. Agents reach java, adb and the SDK tools through wrappers in ~/.local/bin.
 - Open [**An OOM kill inside an agent session's scope ends the whole session**](build-and-tooling/map-oom-kill-ends-agent-session.md) — Agent sessions run in t3code-claude-*.scope with OOMPolicy=stop. Run Gradle and the test script in a scope of their own with choom 1000.
 ### #sift
 - Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
+- Open [**Gate drain sittings on free memory, not on a sitting count**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
+### #memory
+- Open [**An OOM kill inside an agent session's scope ends the whole session**](build-and-tooling/map-oom-kill-ends-agent-session.md) — Agent sessions run in t3code-claude-*.scope with OOMPolicy=stop. Run Gradle and the test script in a scope of their own with choom 1000.
+- Open [**Gate drain sittings on free memory, not on a sitting count**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
+- Open [**Test on plain AOSP emulators, headless, and stop them afterwards**](testing/practice-emulator-plain-aosp-image-headless.md) — tokkl-api36 and tokkl-api31 use plain AOSP images, since ATD drops SystemUI. Only the script boots them, headless and capped.
 ### #testing
 - Open [**Write instrumented tests that hold on API 31 and 36, with the shared helpers**](testing/practice-instrumented-tests-on-every-api-level.md) — Skip with @SdkSuppress, never an assumption. Rules set device state. Reuse LoopbackRelay, openBarPage, SessionRule, TestAccounts.
 - Open [**Run instrumented tests only through scripts/instrumented-tests.sh**](testing/practice-run-instrumented-tests-only-through-the-script.md) — It starts a pinned Tokkl container behind a TLS proxy, seeds an account, passes test filters as a file and fails a run Gradle passed without tests.

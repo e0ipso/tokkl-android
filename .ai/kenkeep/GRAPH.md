@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:08fc368274191e8ace24c90badf716ec5f13dce1623bfa3cf71f624beac3b439'
-node_count: 42
+nodes_hash: 'sha256:586ce891e0b8a28a6625f8eff95be2a5205d242f5a651818e4e1f2c2df024d8b'
+node_count: 44
 ---
 # kenkeep Graph
 
-Total nodes: 42
+Total nodes: 44
 
 ## map-account-cache-and-capabilities
 
@@ -127,6 +127,14 @@ Total nodes: 42
 - **tags:** reports, api, toggl, ui
 - **relates_to:** map-tokkl-toggl-api, practice-match-web-app-behavior-account-timezone, practice-refresh-on-events-no-polling, practice-port-tokkl-typescript-with-javascript-semantics
 
+## map-running-timer-notification-follows-the-cache
+
+- **kind:** map
+- **title:** Running timer notification follows the cache's running entry
+- **path:** data-and-offline/map-running-timer-notification-follows-the-cache.md
+- **tags:** notification, offline, android
+- **relates_to:** practice-never-wait-for-server-on-start-stop, map-change-queue-sends-entry-changes-in-order, practice-talk-only-to-configured-server
+
 ## map-signin-session-settings-and-navigation-host
 
 - **kind:** map
@@ -192,6 +200,14 @@ Total nodes: 42
 - **tags:** api, toggl, compatibility
 - **relates_to:** map-account-cache-and-capabilities
 - **derived_from:** docs/PRD.md
+
+## practice-drain-sittings-gate-on-memory-not-a-sitting-cap
+
+- **kind:** practice
+- **title:** Gate drain sittings on free memory, not on a sitting count
+- **path:** practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md
+- **tags:** sift, agents, memory
+- **relates_to:** practice-reuse-drain-checks-by-content-and-test-configuration, map-oom-kill-ends-agent-session, practice-emulator-plain-aosp-image-headless
 
 ## practice-emulator-plain-aosp-image-headless
 

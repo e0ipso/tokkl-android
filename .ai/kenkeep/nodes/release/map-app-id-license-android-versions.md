@@ -22,7 +22,7 @@ The application ID is `com.github.e0ipso.tokkl`, the same ID as Tokkl's macOS an
 
 The app supports Android 12 (API 31) and later. The owner raised `minSdk` from 26 to 31 on 2026-10-19, and the PRD's Compatibility row says the same. Code may use any API from Android 12 on without a version check, and the tests run on API 36 and API 31 only. Phones come first. Layouts adapt to tablets and foldables, with no separate design and no Wear OS app.
 
-On Android 16 and later the running-timer notification becomes a Live Update. Elsewhere it stays a regular ongoing notification, and it has to work without Live Updates because they depend on the device. On Android 13 and later the app asks for the notification permission when the first timer starts and says what is lost without it.
+The PRD plans the running-timer notification as a Live Update on Android 16 and later, and a regular ongoing notification elsewhere, which has to work without Live Updates because they depend on the device. The built notification is the regular one on every version; the Live Update is not built. On Android 13 and later the app is to ask for the notification permission when the first timer starts and say what is lost without it (TKA-0058); until then the notification shows only where the user allowed notifications in Settings.
 
 The app signs in to one server and one account at a time. Tokkl's admin pages, Toggl CSV import, JSON export and restore, and bulk edit stay in the web app.
 
