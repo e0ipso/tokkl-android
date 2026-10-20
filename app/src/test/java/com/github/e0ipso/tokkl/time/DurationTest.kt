@@ -1,6 +1,6 @@
 // Cases copied verbatim from ../tokkl/packages/common/duration.test.ts at tokkl commit
-// e41ead72c08bbb3e87bbe4146d7fd5d06565c924, for the ports of parseDuration and formatDuration in
-// ../tokkl/packages/common/duration.ts at tokkl commit ec84de60087b32e8279c74197bdc94e52164579b.
+// a4b825d70926f2f1deacbd0d205a7c2620b8adb4, for the ports of parseDuration and formatDuration in
+// ../tokkl/packages/common/duration.ts at that commit.
 // Diff the TypeScript file against this one to spot drift.
 package com.github.e0ipso.tokkl.time
 
@@ -25,6 +25,13 @@ class DurationTest {
             "1:75" to null,
             "1x" to null,
             "1h foo" to null,
+            "1 constructor" to null,
+            "2 CONSTRUCTOR" to null,
+            "9".repeat(310) to null,
+            "9".repeat(310) + "h" to null,
+            "999999999999" to null,
+            "999h" to 3596400,
+            "999:00:01" to null,
         )
         for ((input, expected) in cases) {
             assertEquals("input \"$input\"", expected, parseDuration(input))

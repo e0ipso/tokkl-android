@@ -196,7 +196,11 @@ class EntryFormModelTest {
         assertEquals("nothing queued", emptyList<String>(), changes.calls)
     }
 
-    /** The server refuses an entry that stops before it starts, and one longer than 999 hours. */
+    /**
+     * The server refuses an entry that stops before it starts, and one longer than 999 hours. Since
+     * tokkl a4b825d parseDuration reads a duration over 999 hours as no duration, so the web app
+     * asks to check the duration, and so does the form.
+     */
     @Test
     fun spansTheServerRefusesAreMarkedAndNothingIsQueued() {
         openEntry()
@@ -212,7 +216,7 @@ class EntryFormModelTest {
             model.setDuration("1000h")
             model.save()
         }
-        awaitOpen("the duration is marked") { it.mistakes == mapOf(TimeField.DURATION to TimeMistake.TOO_LONG) }
+        awaitOpen("the duration is marked") { it.mistakes == mapOf(TimeField.DURATION to TimeMistake.DURATION) }
         assertEquals("nothing queued", emptyList<String>(), changes.calls)
     }
 

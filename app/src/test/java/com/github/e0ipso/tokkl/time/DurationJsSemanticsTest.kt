@@ -1,6 +1,6 @@
 // Pins for the places where JavaScript and Kotlin disagree, for the ports of parseDuration and
 // formatDuration in ../tokkl/packages/common/duration.ts at tokkl commit
-// ec84de60087b32e8279c74197bdc94e52164579b.
+// a4b825d70926f2f1deacbd0d205a7c2620b8adb4.
 // Unlike DurationTest, these cases are not in duration.test.ts, so a later diff against tokkl
 // leaves them alone. Each expected value was checked by running that TypeScript file in Node 24
 // (`node file.mts` strips the types), except where a case says the port departs on purpose.
@@ -61,10 +61,10 @@ class DurationJsSemanticsTest {
     }
 
     @Test
-    fun `a unit named constructor is null where the TypeScript returns NaN`() {
-        // The TypeScript looks the unit up on a plain object, so `constructor` finds
-        // Object.prototype.constructor and the sum becomes NaN. The port returns null, as its KDoc
-        // says. No other all-lowercase letters name a key of Object.prototype.
+    fun `a unit named constructor is null, as in the TypeScript`() {
+        // Until tokkl a4b825d the TypeScript looked the unit up on a plain object, so `constructor`
+        // found Object.prototype.constructor and the sum became NaN, where the port returned null.
+        // a4b825d looks units up in a Map, as TKA-0088 proposed upstream, so both now return null.
         assertParses(
             listOf(
                 "1 constructor" to null,
@@ -78,7 +78,8 @@ class DurationJsSemanticsTest {
     }
 
     @Test
-    fun `a number that overflows a double is null where the TypeScript returns Infinity`() {
+    fun `a number that overflows a double is null`() {
+        // Until tokkl a4b825d the TypeScript returned Infinity here, where the port returned null.
         val nines = "9".repeat(400)
         assertParses(
             listOf(
@@ -94,20 +95,29 @@ class DurationJsSemanticsTest {
     }
 
     @Test
-    fun `a result of 2 to the power 63 or more is null`() {
-        // The TypeScript returns these as ordinary doubles, which a Long cannot hold. The largest
-        // double below 2^63 is 9223372036854773760, and both languages produce it exactly.
+    fun `a span over 999 hours is null on every branch`() {
+        // Since tokkl a4b825d the TypeScript returns null for any total over 999 hours, after the
+        // rounding, so these numbers never come near the 2^63 a Long holds.
         assertParses(
             listOf(
-                "9".repeat(300) to null,
-                "9".repeat(19) to null,
-                "9".repeat(18) to null,
-                "9".repeat(17) to 6_000_000_000_000_000_000,
-                "153722867280912900" to 9_223_372_036_854_773_760,
-                "153722867280912930" to null,
-                "2562047788015215h" to 9_223_372_036_854_773_760,
-                "2562047788015216h" to null,
-                "2562047788015215:00" to 9_223_372_036_854_773_760,
+                "999:00:00" to 3_596_400,
+                "998:59:59" to 3_596_399,
+                "1000:00" to null,
+                "59940" to 3_596_400,
+                "59941" to null,
+                "999.0" to 3_596_400,
+                "999.0001" to 3_596_400,
+                "999.0002" to null,
+                "998h 60m" to 3_596_400,
+                "59940m" to 3_596_400,
+                "999h 0.4s" to 3_596_400,
+                "999h 0.5s" to null,
+                "999h 1s" to null,
+                "1000h" to null,
+                "9".repeat(17) to null,
+                "153722867280912900" to null,
+                "2562047788015215h" to null,
+                "2562047788015215:00" to null,
             ),
         )
     }
