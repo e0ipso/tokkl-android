@@ -28,7 +28,7 @@ Tokkl set itself a bar: if starting a timer is slower than in Toggl, the owner d
 - Tokkl's admin pages, Toggl CSV import, JSON export and restore, and bulk edit. They stay in the web app.
 - A Wear OS app and a separate tablet design.
 - Client certificates (mTLS).
-- Reminders, idle detection and Pomodoro (Tokkl T13). A "forgot to start" reminder would need a wakeup while no timer runs, which section 7 rules out. If one comes later, it is the "timer still running after N hours" reminder.
+- Reminders and idle detection (Tokkl T13). The Pomodoro session in section 5.12 is in scope. A "forgot to start" reminder would need a wakeup while no timer runs, which section 7 rules out. If one comes later, it is the "timer still running after N hours" reminder.
 - Push from the server in the first version. The phone learns about changes made elsewhere on the events in section 6.3. UnifiedPush is a later option (risk 10).
 - Proprietary libraries, including Google Play Services and Firebase. There is no push through FCM.
 
@@ -67,7 +67,7 @@ Decisions:
 
 1. **Data stays between the phone and the server.** No telemetry, analytics, crash reporting or ads, and no request to any host other than the configured server. This carries Tokkl's first principle over and matches F-Droid's rules.
 2. **Offline first.** Tapping Start or Stop never fails because the server is out of reach. The change is kept on the phone and sent later.
-3. **Few requests.** The app refreshes on events (app opened, timer changed, network back), not on a short polling timer. The running clock ticks on the phone from the start time.
+3. **Few requests.** The app refreshes on events (app opened, timer changed, network back), not on a short polling timer. The running clock ticks on the phone from the start time. A Pomodoro session (section 5.12) adds no polling. It runs on the phone, its timing comes from alarms, and its only requests are the queued changes for the entries it saves or stops. The four defaults arrive with the preferences the app already reads, and changing one is a single write.
 4. **Tokkl behavior.** Same time parsing, favorites, grouping and undo as the web app, in the account's timezone, so moving between the laptop and the phone needs no relearning.
 5. **Loud look, plain function.** Tokkl's sixth principle applies as written: any style that costs a readable number, a reachable control or a passing test gets dropped.
 
@@ -162,7 +162,7 @@ The first release is feature complete: it ships every requirement below, so they
 
 | ID | Requirement |
 |---|---|
-| N1 | An ongoing notification while a timer runs, with the description, project, a ticking elapsed time and a Stop action. The system ticks the clock (`setUsesChronometer`), so no foreground service runs. Since Android 14 the user can swipe an ongoing notification away ([behavior changes](https://developer.android.com/about/versions/14/behavior-changes-all)). A dismissed notification comes back on the next start, stop or edit of the running entry from any surface, not when the app opens. |
+| N1 | An ongoing notification while a timer runs, with the description, project, a ticking elapsed time and a Stop action. The system ticks the clock (`setUsesChronometer`), so no foreground service runs. The one exception is the service that rings at a Pomodoro phase end, and it runs only while the alarm rings (W7). Since Android 14 the user can swipe an ongoing notification away ([behavior changes](https://developer.android.com/about/versions/14/behavior-changes-all)). A dismissed notification comes back on the next start, stop or edit of the running entry from any surface, not when the app opens. |
 | N2 | On Android 16 and later, promote that notification to a Live Update, which shows as a chip in the status bar, at the top of the notification drawer and on the lock screen. Elsewhere it stays a regular ongoing notification. A Live Update cannot be colorized ([Live Updates](https://developer.android.com/develop/ui/views/notifications/live-update)), so Tokkl's palette reaches only its icon and accent colour. |
 | N3 | A home screen widget with the running timer, Start and Stop, and the favorites. It updates on the same events as the notification and the tile (section 6.3). |
 | N4 | A Quick Settings tile that shows whether a timer runs. Tapping it stops the running timer, or continues the last entry when none runs. The tap acts on what the tile shows and never waits for the network. When the notification shade opens (`onStartListening`), the tile asks the server for the running entry, at most once a minute. |
@@ -186,6 +186,7 @@ The first release is feature complete: it ships every requirement below, so they
 |---|---|
 | G1 | Theme: light, dark, or follow the system. |
 | G2 | Opt-in dynamic color. |
+| G3 | The four Pomodoro defaults that the session's start form begins from (W3): work minutes (`pomodoro_focus_interval_in_minutes`, default 25, 1 to 180), short rest minutes (`pomodoro_break_interval_in_minutes`, 5, 1 to 60), long rest minutes (`pomodoro_long_break_interval_in_minutes`, 15, 1 to 60) and long rest every N work phases (`pomodoro_long_break_every`, 4, 1 to 12). On Tokkl they live in `/me/preferences` and the web app shares them. Toggl Track has no such keys, so there they are kept on the phone alone, with the same defaults and ranges. |
 
 ### 5.11 Navigation
 
@@ -193,13 +194,32 @@ The app moves between pages as Tokkl's web app does on a phone (`NAV` and the Mo
 
 | ID | Requirement |
 |---|---|
-| B1 | Every signed-in screen has a bottom navigation bar with Timer, Reports, Projects, Settings and More, in that order. On medium and expanded window widths a navigation rail at the side holds the same items. More opens a sheet with Clients, Tags and Trash. Admin stays out, since the app has no admin features. Sign-in has no bar. |
+| B1 | Every signed-in screen has a bottom navigation bar with Timer, Pomodoro, Projects, Settings and More, in that order. On medium and expanded window widths a navigation rail at the side holds the same items. More opens a sheet with Reports, Clients, Tags and Trash. The Pomodoro item carries a running mark while a session runs (W11). Admin stays out, since the app has no admin features. Sign-in has no bar. The web app's phone bar changes the same way (TT-0324 in `../tokkl`). |
 | B2 | Timer is the first page after sign-in. History (H1) and the calendar (K1) show on it, behind a List and Calendar switch, as on the web app's Timer page. |
-| B3 | Back from any page in the bar or the sheet goes to Timer, and Back from Timer leaves the app. A screen opened from a page, such as Licences from Settings, goes back to that page. |
+| B3 | Back from any page in the bar or the sheet, Pomodoro and Reports included, goes to Timer, and Back from Timer leaves the app. A screen opened from a page, such as Licences from Settings, goes back to that page. |
+
+### 5.12 Pomodoro
+
+The owner asked for a Pomodoro session on 2026-10-20 and made the decisions below. W1 to W11 state the owner's decisions S1 to S11 of that request, and W12 states S13. Tokkl's web app runs the same session (Tokkl T13), so the rules match on both clients.
+
+| ID | Requirement |
+|---|---|
+| W1 | Pomodoro is a mode the user picks on its own page, apart from the regular timer. There is no global on/off preference. |
+| W2 | Phases run work, then a short rest, or a long rest after every Nth work phase, then work again. A phase changes only when the user confirms it with Next phase. Next phase before the planned end skips the rest of the phase. After the planned length the phase counts overtime until the user confirms. Every ended work phase counts toward N, skipped ones too, and the count restarts after a long rest. There are four transitions: work to short rest, short rest to work, work to long rest, and long rest to work. End session works at any time. |
+| W3 | The start form sets this session's work, short rest and long rest minutes and the long rest every N. It begins from the four defaults in G3 and uses their ranges. |
+| W4 | The entry fields are description, project, task, tags and billable. The user sets them before the start and can edit them during the session. An edit applies to the pomodoro in progress and to later ones. There are no start or stop fields. |
+| W5 | Each pomodoro is one stopped entry. It covers a work phase and the rest after it, from the work start until the user confirms the next work phase or ends the session, and the phone saves it when that pomodoro ends. The phone snaps both ends to the nearest grid point of `time_resolution_minutes` in the account timezone, and a tie goes to the later point. The next pomodoro starts at the previous one's exact unsnapped end, so the entries share a boundary on Tokkl 1.5.0 and on 1.6.1 and later. A pomodoro whose ends snap to the same point is not saved, and the app tells the user. |
+| W6 | At each phase's planned end the transition's sound loops until the user confirms the next phase or ends the session. No control only silences it, and it has no time cap. Tokkl generates the four sounds, one per transition, with FFmpeg in `../tokkl`, under MIT and bitexact, and records them in its `docs/sounds/README.md`. Tokkl for Android copies the files. |
+| W7 | The sound plays on the alarm stream (`USAGE_ALARM`), so it rings in silent mode, and in Do Not Disturb when alarms are allowed. The phone vibrates in a repeating pattern with alarm attributes, shows a full-screen alarm over the lock screen and posts on a high-importance alarm channel. An exact alarm fires at each planned phase end. The app sets it again after a reboot, an app update, and a clock or timezone change. A foreground service runs only while the alarm rings (N1). The permissions and APIs this needs on API 31 to 36, in an app shipped on F-Droid, are not yet checked against the Android developer docs. |
+| W8 | For reference, the web app plays looped audio that the Start click unlocks, warns when the browser blocks playback, shows a notification that stays until the user acts and alerts again at each transition, and puts the phase in the tab title. |
+| W9 | One thing runs at a time. Starting a session stops the running timer at the session's start, with the rule a new timer uses to stop the running one (T3). Starting a regular timer from any surface during a session ends the session at that start and saves the partial pomodoro. A timer started on another client ends the session at that entry's start once the phone sees it (section 6.3). |
+| W10 | The session lives on the device only, with no server state or API. The phone keeps it in Room's `account_cache.db` and writes it in the same transaction as the queued entry. Signing out ends the session and cancels its alarm. |
+| W11 | The bar and the rail hold Timer, Pomodoro, Projects, Settings and More, and the More sheet holds Reports, Clients, Tags and Trash (B1). The web app's phone bar changes the same way (TT-0324 in `../tokkl`). The Pomodoro item carries a running mark during a session. Pomodoro gets its own hue, and Reports keeps its hue in More. |
+| W12 | Out of scope: syncing a session across devices, and a Live Update for the session notification. |
 
 ## 6. Architecture
 
-Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2, the Kotlin ports in 6.1, and the running timer's notification (N1) without its Live Update. Not built: the Glance widget, the Quick Settings tile, and the running entry's check every 15 minutes in 6.3.
+Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2, the Kotlin ports in 6.1, and the running timer's notification (N1) without its Live Update. Not built: the Glance widget, the Quick Settings tile, the running entry's check every 15 minutes in 6.3, and the Pomodoro session (section 5.12) with its settings (G3) and the new bar and More sheet (B1).
 
 ### 6.1 Stack
 
@@ -224,7 +244,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 - The server is the source of truth. The phone holds the cache and the queue.
 - The app refreshes the running entry and the visible data when it opens, after a change, and when the network comes back. It does not poll on a short timer.
 - The notification, widget and tile read the running entry from the phone, so they react at once, and the queue sends the change behind them.
-- No push reaches the phone, so it can miss a timer started or stopped on another client. Two more events cover that. Opening the notification shade makes the tile fetch `GET /me/time_entries/current`, at most once a minute (N4); the cap keeps Toggl's 30 requests an hour for `/me` endpoints in reach (risk 2). While a timer runs, a WorkManager job checks the running entry every 15 minutes, the shortest periodic interval WorkManager allows, and clears the notification and widget if the timer stopped elsewhere. Otherwise the phone learns of a timer started elsewhere only on one of these events.
+- No push reaches the phone, so it can miss a timer started or stopped on another client. Two more events cover that. Opening the notification shade makes the tile fetch `GET /me/time_entries/current`, at most once a minute (N4); the cap keeps Toggl's 30 requests an hour for `/me` endpoints in reach (risk 2). While a timer runs, a WorkManager job checks the running entry every 15 minutes, the shortest periodic interval WorkManager allows, and clears the notification and widget if the timer stopped elsewhere. Otherwise the phone learns of a timer started elsewhere only on one of these events. When it learns of one during a Pomodoro session, the session ends at that entry's start (W9).
 
 ## 7. Non-functional requirements
 
@@ -233,7 +253,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 | Speed | A tap on Start or Stop in the app, notification, widget or tile changes the state on the phone without waiting for the server. Tests prove it with a network that never answers. Jetpack Macrobenchmark runs cold start (`StartupTimingMetric`) and tap-to-state (`TraceSectionMetric`) on the CI emulator and fails a build that is slower than the previous one. The goals are 200 ms from tap to new state and 1.5 s cold start on a mid-range phone; no real phone checks them, so they guide design but do not gate releases. |
 | Compatibility | Android 12 (API 31) and later. Phones first; tablets and foldables get adaptive layouts. |
 | Privacy | No network traffic to any host but the configured server. |
-| Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. While a timer runs, one check every 15 minutes (section 6.3). |
+| Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. While a timer runs, one check every 15 minutes (section 6.3). While a Pomodoro session runs, one exact wakeup per planned phase end (W7). |
 | Accessibility | WCAG AA contrast, TalkBack labels on every control, colour never the only signal, layouts that survive the largest font scale. |
 | Language | English. All text lives in string resources. No other language is planned; contributors can add translations. |
 | Tests | JVM unit tests, Compose UI tests, and instrumented tests on an emulator against a real Tokkl server from the `ghcr.io/e0ipso/tokkl` image, never a fake one. |
