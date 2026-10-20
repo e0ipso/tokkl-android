@@ -68,9 +68,9 @@ sealed interface TimerState {
  * timer shows what the cache's [running] entry says, and from the tap until the cache shows it,
  * what the tap did. Start and Stop taps in between are ignored, so a double tap starts one entry.
  *
- * Start starts the draft that the idle timer holds. The cache keeps one running entry, and a
- * start on the phone stops a cached running entry first, as the server does, so one entry runs
- * at a time, offline too.
+ * Start starts the draft that the idle timer holds, and [continueEntry] starts a timer from a past
+ * entry. The cache keeps one running entry, and a start on the phone stops a cached running entry
+ * first, as the server does, so one entry runs at a time, offline too.
  *
  * A pick of project, task or tags, and billable, goes to the queue at once. A description goes
  * once typing ends, with [descriptionDone] or Stop, so the queue does not get a change for every
@@ -112,12 +112,42 @@ class TimerModel(
         if (local.value.pending != null) return
         val shown = snapshot() as? TimerState.Idle ?: return
         val workspaceId = shown.workspaceId ?: return
-        val starting = Pending.Starting(clock.instant().truncatedTo(ChronoUnit.MILLIS), shown.fields, workspaceId)
-        local.update { it.copy(pending = starting, draft = EntryFields()) }
+        startWith(workspaceId, shown.fields, typed = null)
+    }
+
+    /**
+     * Continues [source] (docs/PRD.md T2): starts a timer with its description, project, task,
+     * tags and billable, in its workspace, as the web app's Continue does. A running entry stops
+     * at the new one's start, with a description still being typed for it. Ignored while the
+     * cache is unread, and while a Start or Stop the cache does not show yet is pending, so a
+     * double tap starts one entry.
+     */
+    fun continueEntry(source: CachedTimeEntry) {
+        if (local.value.pending != null) return
+        val typed = when (val shown = snapshot()) {
+            TimerState.Loading -> return
+            is TimerState.Idle -> null
+            is TimerState.Running -> local.value.edit?.takeIf { it.start == shown.start && !it.sent }?.let { edit ->
+                shown.entryId?.let { Typed(it, edit) }
+            }
+        }
+        startWith(source.workspaceId, source.fields(), typed)
+    }
+
+    /**
+     * Starts a timer with [fields] in [workspaceId], after queuing the [typed] description of the
+     * running entry, which the start then stops. The idle timer's draft makes way for the new entry,
+     * and comes back when nothing starts.
+     */
+    private fun startWith(workspaceId: Long, fields: EntryFields, typed: Typed?) {
+        val draft = local.value.draft
+        val starting = Pending.Starting(clock.instant().truncatedTo(ChronoUnit.MILLIS), fields, workspaceId)
+        local.update { it.copy(pending = starting, draft = EntryFields(), edit = if (typed != null) null else it.edit) }
         // Undispatched, so the queue reads the tap time within the tap's handler.
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             var queued = false
             try {
+                if (typed != null) changes.update(typed.entryId, typed.edit.fields, typed.edit.start, stop = null)
                 changes.start(workspaceId, starting.fields)
                 queued = true
                 settle { entry -> entry != null && !entry.start.isBefore(starting.at) }
@@ -126,7 +156,7 @@ class TimerModel(
                     when {
                         taps.pending != starting -> taps
                         // Nothing started, so the draft comes back.
-                        !queued && taps.draft == EntryFields() -> taps.copy(pending = null, draft = starting.fields)
+                        !queued && taps.draft == EntryFields() -> taps.copy(pending = null, draft = draft)
                         else -> taps.copy(pending = null)
                     }
                 }
@@ -280,6 +310,9 @@ class TimerModel(
 
     /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
     private data class Edit(val start: Instant, val fields: EntryFields, val sent: Boolean)
+
+    /** An [edit] not queued yet for the running entry [entryId], which a Continue stops. */
+    private data class Typed(val entryId: Long, val edit: Edit)
 
     /** A Start or Stop tap that the cache may not show yet. */
     private sealed interface Pending {

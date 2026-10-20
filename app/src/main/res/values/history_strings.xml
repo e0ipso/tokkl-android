@@ -29,6 +29,8 @@
     <string name="history_error_status">The server answered with HTTP %d, so older days can\'t load.</string>
     <string name="history_error_unreadable">The server\'s answer wasn\'t a list of time entries the app can read.</string>
     <string name="history_retry">Try again</string>
+    <!-- The button on an entry that starts a new timer with its description, project, task, tags and billable (docs/PRD.md T2), with its description or history_no_description. -->
+    <string name="history_continue">Continue %1$s</string>
     <!-- The button that opens the actions on an entry, with its description or history_no_description. -->
     <string name="history_more_actions">More actions for %1$s</string>
     <string name="history_duplicate">Duplicate</string>

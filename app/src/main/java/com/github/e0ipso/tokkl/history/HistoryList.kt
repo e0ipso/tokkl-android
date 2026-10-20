@@ -70,10 +70,17 @@ import java.util.Locale
  * The history in the Timer page's List view: the days with entries, newest first, each with its
  * total, and at the end the older days, which load from the server as the end shows. A tap on an
  * entry the phone holds hands its id to [onEdit] (docs/PRD.md H2). Its menu duplicates or deletes
- * it through [actions], whose messages show at the bottom of the list (H3, H5).
+ * it through [actions], whose messages show at the bottom of the list (H3, H5). Its Continue
+ * button, on every entry and group, hands the entry's id to [onContinue] (T2).
  */
 @Composable
-fun HistoryList(model: HistoryModel, actions: EntryActionsModel, onEdit: (Long) -> Unit, modifier: Modifier = Modifier) {
+fun HistoryList(
+    model: HistoryModel,
+    actions: EntryActionsModel,
+    onEdit: (Long) -> Unit,
+    onContinue: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val state by model.state.collectAsState()
     val actionsState by actions.state.collectAsState()
     Box(modifier.fillMaxSize()) {
@@ -81,6 +88,7 @@ fun HistoryList(model: HistoryModel, actions: EntryActionsModel, onEdit: (Long) 
             state = state,
             onLoadOlder = model::loadOlder,
             onEdit = onEdit,
+            onContinue = onContinue,
             onDuplicate = actions::duplicate,
             onDelete = actions::delete,
         )
@@ -102,6 +110,7 @@ internal fun HistoryContent(
     onLoadOlder: () -> Unit,
     modifier: Modifier = Modifier,
     onEdit: (Long) -> Unit = {},
+    onContinue: (Long) -> Unit = {},
     onDuplicate: (Long) -> Unit = {},
     onDelete: (Long) -> Unit = {},
 ) {
@@ -111,12 +120,17 @@ internal fun HistoryContent(
         is HistoryState.NoAccountTime -> Column(modifier.fillMaxSize()) {
             Text(stringResource(R.string.history_unknown_time_zone, state.timeZone), style = MaterialTheme.typography.bodyLarge)
         }
-        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onDuplicate, onDelete), modifier)
+        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onContinue, onDuplicate, onDelete), modifier)
     }
 }
 
-/** What a tap on an entry the phone holds, or on one of its actions, does with the entry's id. */
-private class EntryCallbacks(val onEdit: (Long) -> Unit, val onDuplicate: (Long) -> Unit, val onDelete: (Long) -> Unit)
+/** What a tap on an entry, or on one of its actions, does with the entry's id. */
+private class EntryCallbacks(
+    val onEdit: (Long) -> Unit,
+    val onContinue: (Long) -> Unit,
+    val onDuplicate: (Long) -> Unit,
+    val onDelete: (Long) -> Unit,
+)
 
 @Composable
 private fun Days(state: HistoryState.Shown, onLoadOlder: () -> Unit, callbacks: EntryCallbacks, modifier: Modifier) {
@@ -196,11 +210,12 @@ private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettin
 }
 
 /**
- * One stopped entry, one item to TalkBack, and beside it the button for its actions. Its marks
- * are words, never a colour alone. A tap on an entry the phone holds opens it for editing, and its
- * menu duplicates or deletes it, in the order of the web app's menu. The older days the server
- * sent are not on the phone, so the change queue cannot change them, and their rows take no tap
- * and have no menu.
+ * One stopped entry, one item to TalkBack, and beside it the buttons that continue it and open its
+ * actions, in the web app's order. Its marks are words, never a colour alone. A tap on an entry the
+ * phone holds opens it for editing, and its menu duplicates or deletes it, in the order of the web
+ * app's menu. The older days the server sent are not on the phone, so the change queue cannot
+ * change them, and their rows take no tap and have no menu. Continue needs only the entry's
+ * fields, so every row has it.
  */
 @Composable
 private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSettings, locale: Locale, callbacks: EntryCallbacks) {
@@ -220,6 +235,7 @@ private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSetting
                 .then(if (entry.cached) Modifier.clickable(onClickLabel = editLabel, role = Role.Button) { callbacks.onEdit(entry.id) } else Modifier)
                 .semantics(mergeDescendants = true) {},
         )
+        ContinueButton(entry, callbacks, firstLineMiddle)
         if (entry.cached) EntryMenu(entry, callbacks, firstLineMiddle)
     }
 }
@@ -227,10 +243,10 @@ private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSetting
 /**
  * Similar entries of a day as one line, as the web app's timer list groups them (docs/PRD.md H4):
  * the newest member's fields, a badge with the count, the members' total, and the time from the
- * oldest member's start to the newest member's stop. A tap shows or hides the members, each with
- * its own tap and menu. TalkBack reads the line as one button with the count, the total and the
- * state, Expanded or Collapsed, and says the new state after a tap. A chevron shows the state
- * too, so it never rests on colour.
+ * oldest member's start to the newest member's stop, with a button that continues the newest
+ * member. A tap shows or hides the members, each with its own tap, Continue and menu. TalkBack
+ * reads the line as one button with the count, the total and the state, Expanded or Collapsed,
+ * and says the new state after a tap. A chevron shows the state too, so it never rests on colour.
  */
 @Composable
 private fun GroupRow(row: HistoryRow, zone: ZoneId, settings: AccountSettings, locale: Locale, callbacks: EntryCallbacks) {
@@ -253,7 +269,8 @@ private fun GroupRow(row: HistoryRow, zone: ZoneId, settings: AccountSettings, l
                 onFirstLineMiddle = { firstLineMiddle = it },
                 modifier = Modifier.weight(1f),
             )
-            val top = with(LocalDensity.current) { (firstLineMiddle.toDp() - MENU_BUTTON_SIZE / 2).coerceAtLeast(0.dp) }
+            ContinueButton(row.newest, callbacks, firstLineMiddle)
+            val top = buttonTop(firstLineMiddle)
             Box(Modifier.padding(top = top).size(MENU_BUTTON_SIZE), contentAlignment = Alignment.Center) {
                 Icon(
                     painter = painterResource(R.drawable.ic_chevron_right),
@@ -274,13 +291,28 @@ private fun GroupRow(row: HistoryRow, zone: ZoneId, settings: AccountSettings, l
     }
 }
 
+/**
+ * The button that continues [entry] (docs/PRD.md T2), Tokkl's play icon as on the web app's row,
+ * named for TalkBack with the entry's description.
+ */
+@Composable
+private fun ContinueButton(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineMiddle: Float) {
+    val name = entry.description.ifBlank { stringResource(R.string.history_no_description) }
+    IconButton(onClick = { callbacks.onContinue(entry.id) }, modifier = Modifier.padding(top = buttonTop(firstLineMiddle))) {
+        Icon(
+            painter = painterResource(R.drawable.ic_play),
+            contentDescription = stringResource(R.string.history_continue, name),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
 /** The menu of actions on the entry the phone holds, behind a button that names the entry. */
 @Composable
 private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineMiddle: Float) {
     var open by remember { mutableStateOf(false) }
     val name = entry.description.ifBlank { stringResource(R.string.history_no_description) }
-    val top = with(LocalDensity.current) { (firstLineMiddle.toDp() - MENU_BUTTON_SIZE / 2).coerceAtLeast(0.dp) }
-    Box(Modifier.padding(top = top)) {
+    Box(Modifier.padding(top = buttonTop(firstLineMiddle))) {
         IconButton(onClick = { open = true }) {
             Icon(
                 painter = painterResource(R.drawable.ic_nav_more),
@@ -487,6 +519,14 @@ private fun Empty() {
         Text(stringResource(R.string.history_empty_message), style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+/**
+ * How far below a row's top its buttons start, so their middles line up with the middle of the
+ * description's first line, [firstLineMiddle] pixels from the row's top, at any font scale.
+ */
+@Composable
+private fun buttonTop(firstLineMiddle: Float) =
+    with(LocalDensity.current) { (firstLineMiddle.toDp() - MENU_BUTTON_SIZE / 2).coerceAtLeast(0.dp) }
 
 /** The height Material gives an IconButton: its minimum touch target. */
 private val MENU_BUTTON_SIZE = 48.dp

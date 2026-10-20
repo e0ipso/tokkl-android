@@ -128,29 +128,36 @@ class HistoryModel(
     private var dropped: List<CachedTimeEntry> = emptyList()
     private var lastCached: List<CachedTimeEntry> = emptyList()
 
+    /** Each entry [state] last showed, by id, as [historyDays] picks the copy it shows. */
+    @Volatile
+    private var shownEntries: Map<Long, CachedTimeEntry> = emptyMap()
+
     val state: StateFlow<HistoryState> = combine(entries, projects, tasks, accountSettings, older) { cached, projectRows, taskRows, settings, loaded ->
         val time = settings?.time(clock)
         when {
             settings == null -> HistoryState.Loading
             time == null -> HistoryState.NoAccountTime(settings.timeZone)
-            else -> HistoryState.Shown(
-                days = historyDays(
-                    cached,
-                    daysTheCacheDropped(cached, loaded.until, time) + loaded.entries,
-                    projectRows,
-                    taskRows,
-                    time,
-                    collapse = settings.collapseSimilar,
-                ),
-                today = time.today(),
-                zone = time.zone,
-                settings = settings,
-                older = loaded.status,
-            )
+            else -> {
+                val olderEntries = daysTheCacheDropped(cached, loaded.until, time) + loaded.entries
+                shownEntries = olderEntries.associateBy { it.id } + cached.associate { it.entry.id to it.entry }
+                HistoryState.Shown(
+                    days = historyDays(cached, olderEntries, projectRows, taskRows, time, collapse = settings.collapseSimilar),
+                    today = time.today(),
+                    zone = time.zone,
+                    settings = settings,
+                    older = loaded.status,
+                )
+            }
         }
     }
         .flowOn(Dispatchers.Default)
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryState.Loading)
+
+    /**
+     * The entry [entryId] as the history last showed it: the cache's copy, or the older days' for
+     * an entry the phone does not hold. Null for an entry the history does not show.
+     */
+    fun entry(entryId: Long): CachedTimeEntry? = shownEntries[entryId]
 
     /**
      * Loads the [PAGE_DAYS] days before the oldest day loaded, or before the cached two weeks at

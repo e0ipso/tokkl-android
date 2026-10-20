@@ -239,6 +239,21 @@ class HistoryModelTest {
         assertEquals(days("2026-10-19", "2026-09-22"), loaded.days.map { it.date })
     }
 
+    @Test
+    fun entryGivesTheCachesCopyOrTheOlderDaysOne() {
+        cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+        onMain { model.loadOlder() }
+        awaitShown(model) { it.days.size == 28 }
+
+        val cachedDay = LocalDate.parse("2026-10-10")
+        assertEquals(entryOn(cachedDay), model.entry(cachedDay.toEpochDay()))
+        val olderDay = LocalDate.parse("2026-09-25")
+        assertEquals("from the page the server sent", entryOn(olderDay), model.entry(olderDay.toEpochDay()))
+        assertEquals("a day the history does not show", null, model.entry(LocalDate.parse("2026-09-01").toEpochDay()))
+    }
+
     /** A reverse proxy answers 502, 503 or 504 while the server behind it is down. */
     @Test
     fun aProxyThatCannotReachTheServerIsUnreachable() {

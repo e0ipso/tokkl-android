@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    A triangle pointing right, on the timer's Start button. It is Tokkl's "play" icon from
-    packages/web/src/components/Icon.tsx (github.com/e0ipso/tokkl, MIT), drawn the way that
-    component draws it: filled, with no stroke.
+    A triangle pointing right, on the timer's Start button and a history entry's Continue
+    button. It is Tokkl's "play" icon from packages/web/src/components/Icon.tsx
+    (github.com/e0ipso/tokkl, MIT), drawn the way that component draws it: filled, with no
+    stroke.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

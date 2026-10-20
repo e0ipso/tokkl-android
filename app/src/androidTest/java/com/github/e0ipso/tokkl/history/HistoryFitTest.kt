@@ -57,8 +57,8 @@ import org.junit.rules.RuleChain
  * The history's entry actions and grouped rows at Android's largest font scale, 200%, at the
  * Timer page's width: the row menu with Duplicate and Delete, the message with Undo after a
  * delete and the longer one when Undo needs the server, and a group of similar entries, collapsed
- * and expanded. No text is cut off or leaves the screen, no two parts overlap, and every button
- * keeps a 48dp touch target. EntryActionsUiTest and HistoryGroupUiTest check what TalkBack reads.
+ * and expanded, with the Continue buttons of the group and its members. No text is cut off or
+ * leaves the screen, no two parts overlap, and every button keeps a 48dp touch target. EntryActionsUiTest and HistoryGroupUiTest check what TalkBack reads.
  */
 class HistoryFitTest {
     private val composeRule = createAndroidComposeRule<ComponentActivity>()
@@ -112,6 +112,7 @@ class HistoryFitTest {
         val collapsed = groupLine()
         assertFit(collapsed, area = history())
         assertNoOverlap(collapsed)
+        assertTouchTargets(listOf("group continue button" to composeRule.onAllNodes(continueButton())[0]))
 
         group.performScrollTo().performClick()
         composeRule.onAllNodes(memberMenu()).assertCountEquals(3)
@@ -120,6 +121,7 @@ class HistoryFitTest {
         assertFit(expanded, area = history())
         assertNoOverlap(expanded)
         assertTouchTargets((0 until 3).map { "member $it menu button" to composeRule.onAllNodes(memberMenu())[it] })
+        assertTouchTargets((0 until 3).map { "member $it continue button" to composeRule.onAllNodes(continueButton())[it + 1] })
     }
 
     /** [entries] under today's heading, at the width the Timer page gives its history, with [notice] over them. */
@@ -194,6 +196,7 @@ class HistoryFitTest {
             "time range" to text(string(R.string.history_time_range, "09:00", "12:00")),
             "tags" to composeRule.onAllNodes(hasText(TAG), useUnmergedTree = true)[0],
             "billable mark" to composeRule.onAllNodes(hasText(string(R.string.history_billable)), useUnmergedTree = true)[0],
+            "continue button" to composeRule.onAllNodes(continueButton())[0],
         )
 
     /** The parts of the group's member [index], newest first, each found after the group's own line. */
@@ -206,9 +209,14 @@ class HistoryFitTest {
             "member $index time range" to text(string(R.string.history_time_range, start, stop)),
             "member $index tags" to composeRule.onAllNodes(hasText(TAG), useUnmergedTree = true)[index + 1],
             "member $index billable mark" to composeRule.onAllNodes(hasText(string(R.string.history_billable)), useUnmergedTree = true)[index + 1],
+            "member $index continue button" to composeRule.onAllNodes(continueButton())[index + 1],
             "member $index menu button" to composeRule.onAllNodes(memberMenu())[index],
         )
     }
+
+    /** The Continue buttons of the group and its members, the group's first. */
+    private fun continueButton(): SemanticsMatcher =
+        hasContentDescription(string(R.string.history_continue, GROUP_DESCRIPTION)) and hasClickAction()
 
     private fun memberMenu(): SemanticsMatcher =
         hasContentDescription(string(R.string.history_more_actions, GROUP_DESCRIPTION)) and hasClickAction()

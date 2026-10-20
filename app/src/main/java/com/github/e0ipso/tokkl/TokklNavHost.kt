@@ -73,8 +73,8 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * Settings, stacks above that page, and the bar keeps marking the page. While [timerRunning] says
  * a time entry runs, the bar's Timer item carries a dot. The Timer page's [timer] picks projects,
  * tasks and tags from [cache]. A tap on an entry in the history, or on the Timer page's button for
- * a past entry, opens [entryForm] above the Timer page, and an entry's menu deletes it through
- * [entryActions].
+ * a past entry, opens [entryForm] above the Timer page, an entry's menu deletes it through
+ * [entryActions], and its Continue button starts [timer] with its fields.
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -141,6 +141,7 @@ fun TokklNavHost(
             cache = cache,
             timerView = view,
             onTimerViewChange = timerView::choose,
+            onContinue = { entryId -> history.entry(entryId)?.let(timer::continueEntry) },
         ) {
             TimerBar(timer, cache, onAddEntry = {
                 entryForm.new()
@@ -195,6 +196,7 @@ private fun Screen(
     cache: AccountCache,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
+    onContinue: (Long) -> Unit,
     timer: @Composable () -> Unit,
 ) {
     when (destination) {
@@ -205,10 +207,15 @@ private fun Screen(
             onViewChange = onTimerViewChange,
             timer = timer,
             listContent = {
-                HistoryList(history, entryActions, onEdit = { entryId ->
-                    entryForm.edit(entryId)
-                    backStack.add(Destination.ENTRY)
-                })
+                HistoryList(
+                    history,
+                    entryActions,
+                    onEdit = { entryId ->
+                        entryForm.edit(entryId)
+                        backStack.add(Destination.ENTRY)
+                    },
+                    onContinue = onContinue,
+                )
             },
             calendarContent = { WeekCalendar(calendar) },
         )

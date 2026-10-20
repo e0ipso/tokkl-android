@@ -266,6 +266,74 @@ class TimerModelTest {
         assertEquals("a start after the phone's clock shows zero", 0L, elapsedSeconds(start, start.minusSeconds(5)))
     }
 
+    @Test
+    fun continueStartsThePastEntrysFieldsInItsWorkspaceAndStopsTheRunningOne() {
+        running.value = cachedRunning("Write the timer")
+        awaitState("the running entry shows") { it is TimerState.Running && it.entryId == RUNNING_ID }
+
+        changes.gate = CompletableDeferred()
+        onMain { model.continueEntry(PAST) }
+        val shown = awaitState("the continued entry runs before the queue has written it") {
+            it is TimerState.Running && it.entryId == null
+        } as TimerState.Running
+        assertEquals(PAST.fields(), shown.fields)
+        assertEquals("the past entry's workspace, where its project and tags are", OTHER_WORKSPACE, shown.workspaceId)
+        assertEquals(TAP, shown.start)
+        assertEquals(
+            "one queued start, which stops the running entry as the server does",
+            listOf("start $OTHER_WORKSPACE ${PAST.fields()} at $TAP"),
+            changes.calls,
+        )
+
+        changes.gate.complete(Unit)
+        val cached = awaitState("the cache's entry shows") { it is TimerState.Running && it.entryId != null } as TimerState.Running
+        assertEquals(PAST.fields(), cached.fields)
+    }
+
+    @Test
+    fun aSecondContinueBeforeTheCacheShowsTheFirstIsIgnored() {
+        awaitIdle()
+        changes.gate = CompletableDeferred()
+
+        onMain {
+            model.continueEntry(PAST)
+            model.continueEntry(PAST)
+            model.start()
+        }
+
+        assertEquals(listOf("start $OTHER_WORKSPACE ${PAST.fields()} at $TAP"), changes.calls)
+        changes.gate.complete(Unit)
+    }
+
+    @Test
+    fun continueKeepsTheDescriptionBeingTypedForTheRunningEntry() {
+        running.value = cachedRunning("Write the timer")
+        awaitState("the running entry shows") { it is TimerState.Running && it.entryId == RUNNING_ID }
+        onMain { model.editDescription("Write the timer model") }
+
+        onMain { model.continueEntry(PAST) }
+
+        awaitState("the continued entry shows") { it is TimerState.Running && it.entryId != null && it.entryId != RUNNING_ID }
+        val typed = cachedRunning("Write the timer").entry.fields().copy(description = "Write the timer model")
+        assertEquals(
+            "the typed description goes to the queue before the start stops its entry",
+            listOf("update $RUNNING_ID $typed", "start $OTHER_WORKSPACE ${PAST.fields()} at $TAP"),
+            changes.calls,
+        )
+    }
+
+    @Test
+    fun continueBringsTheDraftBackWhenNothingStarts() {
+        awaitIdle()
+        onMain { model.editDescription("A draft") }
+        changes.failStart = true
+
+        onMain { model.continueEntry(PAST) }
+
+        val idle = awaitState("the idle timer shows again") { it is TimerState.Idle && it.fields.description.isNotEmpty() } as TimerState.Idle
+        assertEquals(EntryFields(description = "A draft"), idle.fields)
+    }
+
     private fun awaitIdle(): TimerState.Idle = awaitState("the idle timer shows") { it is TimerState.Idle } as TimerState.Idle
 
     private fun awaitState(what: String, condition: (TimerState) -> Boolean): TimerState {
@@ -321,10 +389,15 @@ class TimerModelTest {
         var gate: CompletableDeferred<Unit> = CompletableDeferred(Unit)
         private var nextLocalId = -1L
 
+        /** Start throws, as a write to the phone's database that fails would. */
+        @Volatile
+        var failStart = false
+
         override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
             val at = clock.instant()
             calls += "start $workspaceId $fields at $at"
             gate.await()
+            if (failStart) throw IllegalStateException("the database refused the start")
             val id = nextLocalId--
             running.value = EntryWithSendState(
                 CachedTimeEntry(id, workspaceId, fields.projectId, fields.taskId, fields.description, at, null, fields.billable, fields.tags, emptyList()),
@@ -384,5 +457,20 @@ class TimerModelTest {
         val APP = CachedProject(1, WORKSPACE, clientId = null, name = "Tokkl for Android", color = "#0b83d9", active = true, billable = false)
         val CLIENT_WORK = CachedProject(2, WORKSPACE, clientId = null, name = "Client work", color = "#d94182", active = true, billable = true)
         val DESIGN = CachedTask(5, WORKSPACE, projectId = APP.id, name = "Design", active = true)
+        const val OTHER_WORKSPACE = 20L
+
+        /** A stopped entry in a workspace other than the default one, which Continue starts again. */
+        val PAST = CachedTimeEntry(
+            id = 7,
+            workspaceId = OTHER_WORKSPACE,
+            projectId = CLIENT_WORK.id,
+            taskId = DESIGN.id,
+            description = "Review the mockups",
+            start = Instant.parse("2026-10-18T08:00:00Z"),
+            stop = Instant.parse("2026-10-18T09:30:00Z"),
+            billable = true,
+            tags = listOf("review", "remote"),
+            tagIds = emptyList(),
+        )
     }
 }
