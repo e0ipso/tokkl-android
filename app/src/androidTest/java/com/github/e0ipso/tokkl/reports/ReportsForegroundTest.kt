@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.reports
 
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
@@ -22,6 +21,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -158,8 +158,7 @@ class ReportsForegroundTest {
     private fun openReports(): ReportsModel {
         runBlocking { app.accountSettings.refresh().join() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        compose.waitUntil("the Timer page shows", LOAD_TIMEOUT_MS) { hasNode(string(R.string.reports)) }
-        compose.onNode(hasText(string(R.string.reports)) and hasClickAction()).performClick()
+        compose.openBarPage(R.string.reports, LOAD_TIMEOUT_MS)
         return modelOf(resumedActivity()!!)
     }
 

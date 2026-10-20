@@ -1,9 +1,14 @@
 package com.github.e0ipso.tokkl
 
+import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.FutureTask
@@ -29,6 +34,22 @@ fun ComposeTestRule.awaitTimerPage(timeoutMillis: Long = START_TIMEOUT_MS) {
     waitUntil("the Timer page shows", timeoutMillis) {
         onAllNodes(hasText(timer) and isSelected()).fetchSemanticsNodes().isNotEmpty()
     }
+}
+
+/**
+ * The bottom bar's item named [label], found by its tab role. Text and a click action alone also
+ * match every cached history row whose description is that text, since each row is clickable.
+ */
+fun bottomBarItem(@StringRes label: Int): SemanticsMatcher {
+    val text = InstrumentationRegistry.getInstrumentation().targetContext.getString(label)
+    return hasText(text) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+}
+
+/** Waits until the bottom bar shows its item named [label], then taps it. */
+fun ComposeTestRule.openBarPage(@StringRes label: Int, timeoutMillis: Long = START_TIMEOUT_MS) {
+    val item = bottomBarItem(label)
+    waitUntil("the bar item shows", timeoutMillis) { onAllNodes(item).fetchSemanticsNodes().isNotEmpty() }
+    onNode(item).performClick()
 }
 
 /**

@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.finishWithin
+import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -228,8 +229,7 @@ class DetailedReportServerTest {
     /** Starts the app, opens Reports and its Detailed tab, and returns the first page. */
     private fun openDetailed(): DetailedReport {
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        composeRule.waitUntil("the app shows", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.reports))) }
-        composeRule.onNode(hasText(string(R.string.reports)) and hasClickAction()).performClick()
+        composeRule.openBarPage(R.string.reports, LOAD_TIMEOUT_MS)
         composeRule.waitUntil("the summary loads", LOAD_TIMEOUT_MS) { state() is ReportsState.Loaded }
         composeRule.onNode(hasText(string(R.string.reports_tab_detailed)) and hasClickAction()).performClick()
         composeRule.waitUntil("the Detailed tab loads", LOAD_TIMEOUT_MS) { (state() as? ReportsState.Loaded)?.report is DetailedReport }
