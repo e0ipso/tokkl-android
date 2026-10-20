@@ -204,7 +204,7 @@ private fun MoreSheet(current: TopLevelPage, onOpen: (TopLevelPage) -> Unit, onC
  * Gives the sheet's window the edge-to-edge setup of MainActivity's. ModalBottomSheet opens in a
  * window of its own, and that window keeps Android's navigation bar contrast enforcement, which
  * paints a translucent band over a three-button navigation bar: near white under the light sheet,
- * a lighter navy under the dark one. With it off, the sheet's own colour shows behind the
+ * a lighter tint under the dark one. With it off, the sheet's own colour shows behind the
  * navigation bar, as every screen's does. The sheet's content still keeps above the bar.
  */
 @Composable

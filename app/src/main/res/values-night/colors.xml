@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-        The dark bg token at styles.css:161, the same value as TokklDarkColorScheme.background
-        in ui/theme/Color.kt.
+        The dark value of the bg token in styles.css, the same value as
+        TokklDarkColorScheme.background in ui/theme/Color.kt.
     -->
-    <color name="window_background">#0B1026</color>
+    <color name="window_background">#08061F</color>
 
     <!-- The wordmark-halo token in dark, which drawable-night/splash_wordmark.xml traces the wordmark in. -->
-    <color name="wordmark_halo">#A9B0D6</color>
+    <color name="wordmark_halo">#B9B5D6</color>
 </resources>

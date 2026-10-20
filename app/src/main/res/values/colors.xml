@@ -2,10 +2,10 @@
 <resources>
     <!--
         The window behind Compose, so launch shows the theme's background with no flash.
-        The light bg token at styles.css:161, the same value as TokklLightColorScheme.background
-        in ui/theme/Color.kt.
+        The light value of the bg token in styles.css, the same value as
+        TokklLightColorScheme.background in ui/theme/Color.kt.
     -->
-    <color name="window_background">#F4E7CF</color>
+    <color name="window_background">#FFFDF7</color>
 
     <!--
         The 1dp outline around the wordmark, the wordmark-halo token of styles.css: transparent

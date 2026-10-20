@@ -29,7 +29,7 @@ class NavigationBarColoursTest {
         assertEquals(s.primary, item.selectedTextColor)
         assertEquals(s.onSurfaceVariant, item.unselectedIconColor)
         assertEquals(s.onSurfaceVariant, item.unselectedTextColor)
-        // Material 3's default indicator, which the colour scheme still maps to --state-selected.
+        // Material 3's default indicator, which the colour scheme maps to --selected.
         assertNotEquals(s.secondaryContainer, item.selectedIndicatorColor)
     }
 }

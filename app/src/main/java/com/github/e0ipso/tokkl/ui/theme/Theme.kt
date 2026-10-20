@@ -17,8 +17,9 @@ private val LocalTokklExtraColors = staticCompositionLocalOf { TokklLightExtraCo
  * Material 3 with Tokkl's palette, light or dark.
  *
  * [dynamicColor] takes the Material roles from the wallpaper instead. It stays off unless the
- * user turns on the opt-in setting (docs/PRD.md, Visual direction, Colour). The running and
- * billable colours stay Tokkl's either way.
+ * user turns on the opt-in setting (docs/PRD.md, Visual direction, Colour). The primary fill
+ * then follows the wallpaper's primary, and the other colours of [TokklTheme.extraColors], such
+ * as running and billable, stay Tokkl's.
  */
 @Composable
 fun TokklTheme(
@@ -34,7 +35,8 @@ fun TokklTheme(
         darkTheme -> TokklDarkColorScheme
         else -> TokklLightColorScheme
     }
-    val extraColors = if (darkTheme) TokklDarkExtraColors else TokklLightExtraColors
+    val tokklColors = if (darkTheme) TokklDarkExtraColors else TokklLightExtraColors
+    val extraColors = if (dynamicColor) tokklColors.withPrimaryFill(colorScheme.primary, colorScheme.onPrimary) else tokklColors
     CompositionLocalProvider(LocalTokklExtraColors provides extraColors) {
         MaterialTheme(colorScheme = colorScheme, shapes = TokklShapes, typography = TokklTypography, content = content)
     }

@@ -38,7 +38,7 @@ private const val DisabledAlpha = 0.38f
  * styles.css). Inactive icons and labels take on-surface-variant.
  *
  * The scheme's own roles stay as they are: Material 3 would have painted the indicator in
- * secondaryContainer, which Tokkl maps to --state-selected.
+ * secondaryContainer, which Tokkl maps to --selected.
  */
 internal fun navigationBarItemColors(scheme: ColorScheme) = NavigationBarItemColors(
     selectedIconColor = scheme.onPrimary,

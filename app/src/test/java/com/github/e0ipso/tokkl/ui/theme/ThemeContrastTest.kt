@@ -31,9 +31,9 @@ class ThemeContrastTest {
     fun contrastMatchesWcagReferenceValues() {
         assertRatio(21.0, Color.Black, Color.White)
         assertRatio(1.0, Color.White, Color.White)
-        // The contrast table at the top of styles.css records "text on bg" in light as 13.94,
+        // The contrast table at the top of styles.css records "text on bg" in light as 19.54,
         // rounded down.
-        assertRatio(13.94, Color(0xFF1C1A2B), Color(0xFFF4E7CF))
+        assertRatio(19.54, Color(0xFF08061F), Color(0xFFFFFDF7))
     }
 
     /**
@@ -46,13 +46,13 @@ class ThemeContrastTest {
         val light = sceneCorners(TokklLightColorScheme, TokklLightExtraColors)
         val dark = sceneCorners(TokklDarkColorScheme, TokklDarkExtraColors)
 
-        assertEquals("each channel's lowest of bg and the light scene", Color(0xFFB9B698), light.darkest)
-        assertEquals("each channel's highest of bg and the dark scene", Color(0xFF4F4354), dark.lightest)
-        assertRatio(8.28, TokklLightColorScheme.onSurface, light.darkest)
-        assertRatio(8.32, TokklDarkColorScheme.onSurface, dark.lightest)
-        assertRatio(4.36, TokklDarkExtraColors.wordmarkHalo, dark.lightest)
-        assertRatio(10.11, WORDMARK_OUTLINE, light.darkest)
-        assertRatio(9.77, WORDMARK_OUTLINE, TokklDarkExtraColors.wordmarkHalo)
+        assertEquals("each channel's lowest of bg and the light scene", Color(0xFFC2CFB2), light.darkest)
+        assertEquals("each channel's highest of bg and the dark scene", Color(0xFF4D3A4B), dark.lightest)
+        assertRatio(12.17, TokklLightColorScheme.onSurface, light.darkest)
+        assertRatio(10.38, TokklDarkColorScheme.onSurface, dark.lightest)
+        assertRatio(5.26, TokklDarkExtraColors.wordmarkHalo, dark.lightest)
+        assertRatio(12.74, WORDMARK_OUTLINE, light.darkest)
+        assertRatio(10.54, WORDMARK_OUTLINE, TokklDarkExtraColors.wordmarkHalo)
     }
 
     private enum class Kind(val minimum: Double) { TEXT(4.5), NON_TEXT(3.0) }
@@ -77,23 +77,30 @@ class ThemeContrastTest {
             Triple("onSurfaceVariant", s.onSurfaceVariant, Kind.TEXT),
             Triple("primary", s.primary, Kind.TEXT),
             Triple("error", s.error, Kind.TEXT),
-            Triple("secondary", s.secondary, Kind.NON_TEXT),
             Triple("tertiary", s.tertiary, Kind.NON_TEXT),
             Triple("outline", s.outline, Kind.NON_TEXT),
             Triple("outlineVariant", s.outlineVariant, Kind.NON_TEXT),
             Triple("running", x.running, Kind.NON_TEXT),
             Triple("billable", x.billable, Kind.NON_TEXT),
-            Triple("accentLime", x.accentLime, Kind.NON_TEXT),
         )
         val surfacePairs = surfaces.flatMap { (surfaceName, surface) ->
             onEverySurface.map { (name, colour, kind) -> Pair("$name on $surfaceName", colour, surface, kind) }
         }
+        // Marks styles.css draws only where its contrast table checks them: secondary on bg and
+        // surface, and the lime on surface. In light both fall under 3:1 on surface-2, and the lime
+        // on bg too, so neither may be drawn there.
+        val surfaceOnlyMarks = listOf(
+            Pair("secondary on background", s.secondary, s.background, Kind.NON_TEXT),
+            Pair("secondary on surface", s.secondary, s.surface, Kind.NON_TEXT),
+            Pair("accentLime on surface", x.accentLime, s.surface, Kind.NON_TEXT),
+        )
         val fills = listOf(
             Pair("onBackground on background", s.onBackground, s.background, Kind.TEXT),
-            Pair("secondary on background", s.secondary, s.background, Kind.TEXT),
-            Pair("secondary on surface", s.secondary, s.surface, Kind.TEXT),
             Pair("running on surface", x.running, s.surface, Kind.TEXT),
             Pair("onPrimary on primary", s.onPrimary, s.primary, Kind.TEXT),
+            Pair("onPrimaryFill on primaryFill", x.onPrimaryFill, x.primaryFill, Kind.TEXT),
+            Pair("primaryFill on surface", x.primaryFill, s.surface, Kind.NON_TEXT),
+            Pair("primaryFill on background", x.primaryFill, s.background, Kind.NON_TEXT),
             Pair("onSecondary on secondary", s.onSecondary, s.secondary, Kind.TEXT),
             Pair("onTertiary on tertiary", s.onTertiary, s.tertiary, Kind.TEXT),
             Pair("onError on error", s.onError, s.error, Kind.TEXT),
@@ -113,7 +120,23 @@ class ThemeContrastTest {
             Pair("onTertiaryFixed on tertiaryFixedDim", s.onTertiaryFixed, s.tertiaryFixedDim, Kind.TEXT),
             Pair("onTertiaryFixedVariant on tertiaryFixed", s.onTertiaryFixedVariant, s.tertiaryFixed, Kind.TEXT),
         )
-        return surfacePairs + fills + navigationBarPairs(s) + texturePairs(s, x) + sceneOverlapPairs(s, x) + reportPairs(s, x)
+        return surfacePairs + surfaceOnlyMarks + fills + huePairs() + navigationBarPairs(s) + texturePairs(s, x) + sceneOverlapPairs(s, x) +
+            reportPairs(s, x)
+    }
+
+    /**
+     * Text and icons on each section hue, the same in light and dark: the ink, on-hue, on every hue
+     * but violet, and white, on-hue-violet, on violet.
+     */
+    private fun huePairs(): List<Pair> {
+        val inked = listOf(
+            "orange" to TokklHues.orange,
+            "sky" to TokklHues.sky,
+            "yellow" to TokklHues.yellow,
+            "pink" to TokklHues.pink,
+        )
+        return inked.map { (name, hue) -> Pair("onHue on $name", TokklHues.onHue, hue, Kind.TEXT) } +
+            Pair("onHueViolet on violet", TokklHues.onHueViolet, TokklHues.violet, Kind.TEXT)
     }
 
     /**

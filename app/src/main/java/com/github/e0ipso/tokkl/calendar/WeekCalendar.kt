@@ -312,11 +312,11 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
             Text(
                 text = resources.getString(R.string.history_today).uppercase(locale),
                 style = headStyle,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = TokklTheme.extraColors.onPrimaryFill,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.primary, PillShape)
+                    .background(TokklTheme.extraColors.primaryFill, PillShape)
                     .padding(horizontal = TokklTheme.spacing.space1),
             )
         } else {
@@ -389,7 +389,7 @@ private fun StripDay(
     val spoken = totalSeconds?.let { stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it)) } ?: label
     val frame = if (selected) {
         Modifier
-            .background(scheme.secondaryContainer, SmallCornerShape)
+            .background(scheme.primaryContainer, SmallCornerShape)
             .border(FrameWidth, scheme.outline, SmallCornerShape)
     } else {
         Modifier

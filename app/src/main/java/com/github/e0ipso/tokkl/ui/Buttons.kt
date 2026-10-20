@@ -11,12 +11,16 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 // Tokkl's buttons, after .button in styles.css: pills at least Material's minimum interactive
 // size tall, so the drawn button is the whole touch target. Material sets their labels in
 // labelLarge, which TokklTypography maps to the button-label role, 14sp system font 700.
 
-/** A filled button, on-primary on primary, for a screen's one call to action. */
+/**
+ * A filled button, the web app's `.button-primary`: on-primary on the primary fill, for a
+ * screen's one call to action.
+ */
 @Composable
 fun TokklButton(
     onClick: () -> Unit,
@@ -28,6 +32,10 @@ fun TokklButton(
         onClick = onClick,
         modifier = modifier.heightIn(min = LocalMinimumInteractiveComponentSize.current),
         enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = TokklTheme.extraColors.primaryFill,
+            contentColor = TokklTheme.extraColors.onPrimaryFill,
+        ),
         content = content,
     )
 }
