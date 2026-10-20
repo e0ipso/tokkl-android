@@ -236,6 +236,32 @@ class CalendarModelTest {
     }
 
     /**
+     * The network's return counts as a foreground for the calendar on screen, which then loads
+     * its week again. A week that got no answer loads; one that loaded since asks nothing.
+     */
+    @Test
+    fun theNetworksReturnLoadsTheShownWeekOnlyWhenItGotNoAnswer() {
+        val model = model(cached = emptyList())
+        model.step(-27)
+        status = 503
+        model.loadWeek(SEPTEMBER_28)
+        shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Unreachable }
+
+        status = 200
+        answer = json(Triple(3L, "2026-09-29T10:00:00Z", "2026-09-29T11:00:00Z"))
+        model.reconnected()
+        assertEquals("the calendar on screen loads its week", 1, model.foregrounds.value)
+        model.loadWeek(SEPTEMBER_28)
+        val week = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
+        assertEquals(listOf(3L), week.entries.map { it.id })
+        assertEquals(2, requests.size)
+
+        model.reconnected()
+        model.loadWeek(SEPTEMBER_28)
+        assertEquals("a week loaded since asks nothing", 2, requests.size)
+    }
+
+    /**
      * A day chosen in the strip shows with its week, and a step goes on from it: a day forward
      * from Sunday 4 October is Monday 5 October, in the next week, which the phone does not keep.
      */

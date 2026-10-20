@@ -54,13 +54,19 @@ class ReportsModelTest {
     private val settings = MutableStateFlow<AccountSettings?>(AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null))
     private lateinit var model: ReportsModel
 
+    /** The search gets the 503 of a proxy whose server is down. */
+    @Volatile
+    private var searchUnreachable = false
+
     @Before
     fun setUp() {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.url.encodedPath) {
                 "/api/v9/me" -> json("""{"id":1,"default_workspace_id":7}""")
                 "/api/v9/workspaces/7" -> json("""{"id":7,"rounding":0,"rounding_minutes":0}""")
-                SEARCH -> {
+                SEARCH -> if (searchUnreachable) {
+                    MockResponse.Builder().code(503).build()
+                } else {
                     searches += Json.parseToJsonElement(request.body!!.utf8()).jsonObject
                     json("""[{"billable":false,"currency":"EUR","time_entries":[{"seconds":3600,"start":"2026-10-21T00:30:00+14:00"}]}]""")
                 }
@@ -206,6 +212,38 @@ class ReportsModelTest {
         io.runAll()
 
         assertEquals(ReportsState.Failed(shown.selection, ReportFailure.Unreachable), model.state.value)
+    }
+
+    @Test
+    fun theNetworksReturnAsksAgainForAReportThatGotNoAnswer() {
+        searchUnreachable = true
+        model.open()
+        io.runAll()
+        val failed = model.state.value
+        assertTrue("no answer: $failed", failed is ReportsState.Failed && failed.failure == ReportFailure.Unreachable)
+
+        searchUnreachable = false
+        model.reconnected()
+        assertEquals(ReportsState.Loading((failed as ReportsState.Failed).selection), model.state.value)
+        io.runAll()
+
+        assertEquals(failed.selection, loaded().selection)
+        assertEquals(1, searches.size)
+    }
+
+    @Test
+    fun theNetworksReturnAsksNothingForAShownOrClosedReport() {
+        model.reconnected()
+        assertEquals("a closed screen loads nothing", ReportsState.Closed, model.state.value)
+
+        model.open()
+        io.runAll()
+        val shown = loaded()
+        model.reconnected()
+
+        assertSame(shown, model.state.value)
+        assertTrue("nothing waits to run", io.isEmpty())
+        assertEquals(1, searches.size)
     }
 
     private fun loaded(): ReportsState.Loaded {

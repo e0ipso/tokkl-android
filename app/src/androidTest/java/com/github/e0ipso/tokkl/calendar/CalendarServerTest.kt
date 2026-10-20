@@ -139,10 +139,11 @@ class CalendarServerTest {
 
     /**
      * Offline, last week still shows from the phone, and an older week says that it needs the
-     * server. Once the server can be reached, Try again loads it.
+     * server, with Try again. Once the network comes back with the app on screen, the week loads
+     * without a tap.
      */
     @Test
-    fun offlineLastWeekShowsAndAnOlderWeekLoadsOnRetry() {
+    fun offlineLastWeekShowsAndAnOlderWeekLoadsWhenTheNetworkReturns() {
         val lastWeek = today.minusDays(10)
         val older = olderWeek.plusDays(2)
         seed("Kept on the phone", lastWeek.atTime(14, 0), lastWeek.atTime(15, 0))
@@ -157,9 +158,9 @@ class CalendarServerTest {
             show(model, older)
             composeRule.waitUntil("the week says it needs the server", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.calendar_offline_title))) }
             assertTrue("no block before the week loads", !exists(blockOf("Kept on the server")))
+            assertTrue("Try again shows", exists(hasText(string(R.string.history_retry)) and hasClickAction()))
 
             AirplaneMode.set(false, account.client)
-            composeRule.onNode(hasText(string(R.string.history_retry)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
 
             awaitBlock(spoken("Kept on the server", older.atTime(14, 0), older.atTime(15, 0)))
             assertTrue("the message goes", !exists(hasText(string(R.string.calendar_offline_title))))

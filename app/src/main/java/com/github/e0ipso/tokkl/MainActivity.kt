@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
+import com.github.e0ipso.tokkl.session.NetworkWatch
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
@@ -54,6 +55,9 @@ class MainActivity : ComponentActivity() {
     private val timerRunning: Flow<Boolean> by lazy {
         (application as TokklApplication).cache.running.map { it != null }.distinctUntilChanged()
     }
+
+    /** The default network, watched while the activity is started. */
+    private val network by lazy { NetworkWatch(this, ::networkChanged) }
 
     /** The sign-outs the view models and the screens on show came after. */
     private lateinit var shownSignOuts: MutableStateFlow<Int>
@@ -124,12 +128,13 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Coming to the foreground reads the account settings again (docs/PRD.md S7) and refreshes the
-     * offline cache with the same `GET /api/v9/me` (O2). After a trip to the background, the
-     * calendar loads its weeks from the server again. Nothing refreshes on a timer.
+     * offline cache with the same `GET /api/v9/me` (O2), but a rotation's start does not. After a
+     * trip to the background, the calendar loads its weeks from the server again. From here to
+     * [onStop] the network is watched, so its return refreshes too. Nothing refreshes on a timer.
      */
     override fun onStart() {
         super.onStart()
-        (application as TokklApplication).accountSettings.refresh()
+        (application as TokklApplication).foregroundRefresh.started(online = network.start())
         calendarViewModel.model.cameToForeground()
     }
 
@@ -139,7 +144,20 @@ class MainActivity : ComponentActivity() {
      */
     override fun onStop() {
         super.onStop()
+        network.stop()
+        (application as TokklApplication).foregroundRefresh.stopped(isChangingConfigurations)
         if (!isChangingConfigurations) calendarViewModel.model.wentToBackground()
+    }
+
+    /**
+     * The network came back while the app is on screen: the account refreshes once, and the
+     * calendar and the reports load again what they could not load offline. The projects, clients
+     * and tags pages watch the network themselves.
+     */
+    private fun networkChanged(online: Boolean) {
+        if (!(application as TokklApplication).foregroundRefresh.networkChanged(online)) return
+        calendarViewModel.model.reconnected()
+        reportsViewModel.model.reconnected()
     }
 
     /** A sign-in loads the account settings and the cache, as coming to the foreground does. */

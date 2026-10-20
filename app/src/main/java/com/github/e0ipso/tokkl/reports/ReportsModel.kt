@@ -203,6 +203,15 @@ class ReportsModel(
         retry()
     }
 
+    /**
+     * The network came back while the app is in the foreground. A report that failed for want of
+     * an answer asks again; any other state asks nothing.
+     */
+    fun reconnected() {
+        val failed = state.value as? ReportsState.Failed ?: return
+        if (failed.failure == ReportFailure.Unreachable) load(failed.selection)
+    }
+
     /** Closes the screen: stops waiting for an answer and forgets the report and the workspace. */
     fun close() {
         loading?.cancel()

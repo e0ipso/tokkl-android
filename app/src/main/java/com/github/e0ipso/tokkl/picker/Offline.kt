@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.github.e0ipso.tokkl.session.reachesInternet
 
 /**
  * True while the phone has no network that reaches the internet, as in airplane mode. Follows the
@@ -20,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 fun rememberOffline(): Boolean {
     val context = LocalContext.current
     val connectivity = remember(context) { context.getSystemService(ConnectivityManager::class.java) }
-    var offline by remember(connectivity) { mutableStateOf(connectivity.isOffline()) }
+    var offline by remember(connectivity) { mutableStateOf(!connectivity.reachesInternet()) }
     DisposableEffect(connectivity) {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
@@ -36,6 +37,3 @@ fun rememberOffline(): Boolean {
     }
     return offline
 }
-
-private fun ConnectivityManager.isOffline(): Boolean =
-    getNetworkCapabilities(activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) != true

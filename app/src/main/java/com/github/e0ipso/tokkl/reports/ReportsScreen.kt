@@ -55,7 +55,8 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
  * always a week from the account's week start, and the range button offers only the week presets.
  * Opening the screen asks the server for this week, and coming back to the foreground asks again
  * for the range on screen; leaving it forgets the report, while a configuration change keeps it
- * and asks nothing. Offline, it says that reports need the server and shows no numbers or entries.
+ * and asks nothing. Offline, it says that reports need the server and shows no numbers or entries,
+ * and once the network comes back with the app on screen it asks again.
  * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable

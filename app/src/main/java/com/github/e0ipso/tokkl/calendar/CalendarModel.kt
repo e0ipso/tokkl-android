@@ -108,10 +108,11 @@ sealed interface WeekSource {
  * Anything may change on the server while the app is in the background, so coming back to the
  * foreground makes every loaded week load again the next time it shows, and [foregrounds] tells
  * the calendar on screen to load its week at once. The old entries show until the new ones come,
- * and stay when the phone is offline.
+ * and stay when the phone is offline. When the network comes back, [reconnected] loads the week on
+ * screen again if it failed or kept old entries.
  *
- * Call [step], [showToday], [loadWeek], [wentToBackground] and [cameToForeground] on the main
- * thread.
+ * Call [step], [showToday], [loadWeek], [wentToBackground], [cameToForeground] and [reconnected]
+ * on the main thread.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
@@ -141,7 +142,10 @@ class CalendarModel(
 
     private val foregroundCount = MutableStateFlow(0)
 
-    /** How many times the app came back to the foreground; the calendar on screen loads its week again on each. */
+    /**
+     * How many times the app came back to the foreground or the network came back; the calendar
+     * on screen loads its week again on each when the week is due.
+     */
     val foregrounds: StateFlow<Int> = foregroundCount
 
     val state: StateFlow<CalendarState> = combine(entries, projects, tasks, accountSettings, choice) { cached, projectRows, taskRows, settings, (day, weeks) ->
@@ -214,6 +218,15 @@ class CalendarModel(
      */
     fun wentToBackground() {
         backgrounded = true
+    }
+
+    /**
+     * The network came back while the app is in the foreground. [foregrounds] counts up, so the
+     * calendar on screen loads its week again when it failed or when it kept old entries offline.
+     * A week that loaded since the last foreground asks nothing.
+     */
+    fun reconnected() {
+        foregroundCount.update { it + 1 }
     }
 
     /**

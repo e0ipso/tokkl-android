@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.notification.runningNotificationContent
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
+import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -74,6 +75,13 @@ class TokklApplication : Application() {
             },
         )
     }
+
+    /**
+     * Refreshes the account, and with it the running entry and the cache, each time the app comes
+     * to the foreground and each time the network comes back while it is there. MainActivity
+     * reports its starts, stops and network changes. Nothing refreshes on a timer.
+     */
+    val foregroundRefresh: ForegroundRefresh by lazy { ForegroundRefresh(refresh = { accountSettings.refresh() }) }
 
     /** What the server offers. Loaded on first use from a file of four flags. */
     val capabilities: CapabilitiesSource by lazy {
