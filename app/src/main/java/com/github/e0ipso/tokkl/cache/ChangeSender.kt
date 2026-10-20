@@ -295,8 +295,10 @@ class ChangeSender(
 
     /**
      * Sends the queued delete [change], marked [PendingChange.maybeSent] first, or returns null
-     * when Undo took it back before then. The mark clears when the failure shows that the server
-     * deleted nothing.
+     * when Undo took it back before then. On a first try, the mark clears when the failure shows
+     * that the server deleted nothing. Once a try may have reached the server, the mark stays
+     * whatever later tries get, so Undo goes through the server, and a 404 counts as sent: the
+     * server no longer has the entry, most likely because that earlier try deleted it.
      */
     private fun delete(api: TogglApiClient, change: PendingChange): ApiResult<Sent>? =
         synchronized(deletes) {
@@ -304,9 +306,13 @@ class ChangeSender(
             val request = change.request(api.server)
             when (val result = api.sendNoContent(request.method, request.url, request.body)) {
                 is ApiResult.Success -> ApiResult.Success(Sent(change, change.entryId, entry = null))
-                is ApiResult.Failure -> {
-                    if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
-                    result
+                is ApiResult.Failure -> when {
+                    !change.maybeSent -> {
+                        if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
+                        result
+                    }
+                    (result.error as? ApiError.Http)?.status == NOT_FOUND -> ApiResult.Success(Sent(change, change.entryId, entry = null))
+                    else -> result
                 }
             }
         }
@@ -404,6 +410,9 @@ class ChangeSender(
 
         /** Bad gateway, service unavailable and gateway timeout, which a proxy answers while its server is down. */
         private val PROXY_UNREACHABLE = setOf(502, 503, 504)
+
+        /** What Tokkl answers to a delete of an entry it does not have, or has in the trash. */
+        private const val NOT_FOUND = 404
     }
 }
 
