@@ -199,7 +199,7 @@ The app moves between pages as Tokkl's web app does on a phone (`NAV` and the Mo
 
 ## 6. Architecture
 
-Proposed, except Kotlin and Jetpack Compose, which the owner confirmed. Nothing here is built.
+Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2 and the Kotlin ports in 6.1. Not built: the notification, the Glance widget, the Quick Settings tile, and the running entry's check every 15 minutes in 6.3.
 
 ### 6.1 Stack
 
@@ -253,11 +253,14 @@ Decisions: the license is MIT, like Tokkl. The application ID is `com.github.e0i
 
 ### 8.2 GitHub and CI
 
-The repo is local only for now. When it moves to `github.com/e0ipso/tokkl-android`, it copies Tokkl's setup:
+The repo is public at `github.com/e0ipso/tokkl-android` and copies Tokkl's setup:
 
-- One `ci.yml` workflow on pull requests and pushes to `main`, with every action pinned to a commit SHA and its version in a comment, and Dependabot for updates.
-- commitlint with Tokkl's rules: Conventional Commits, no AI or co-author trailers, no ticket IDs in the subject. A husky hook runs it locally.
-- Jobs for the Gradle build, lint and unit tests, and for instrumented tests on an emulator. GitHub's Ubuntu runners need a udev rule before the emulator can use KVM ([android-emulator-runner](https://github.com/ReactiveCircus/android-emulator-runner)).
+- One `ci.yml` workflow on pull requests and pushes to `main`, with every action pinned to a commit SHA and its version in a comment. Dependabot updates the actions, the Gradle dependencies and the npm tooling weekly.
+- commitlint with Tokkl's rules: Conventional Commits, no AI or co-author trailers, no ticket IDs in the subject. A husky hook runs it locally, and a CI job lints the commits of each pull request and push.
+- CI jobs for the Gradle build with lint and the unit tests (`assembleDebug check`), for a release build made twice from clean and compared byte for byte (`scripts/reproducible-release.sh`), and for the instrumented tests on emulators at API 36 and 31. GitHub's Ubuntu runners need a udev rule before the emulator can use KVM ([android-emulator-runner](https://github.com/ReactiveCircus/android-emulator-runner)).
+
+Releases are not set up. The decisions for them:
+
 - semantic-release on pushes to `main` with Tokkl's release rules and `v${version}` tags. It writes `CHANGELOG.md` and the version into the Gradle build, derives `versionCode` from the version, and attaches the signed release APK to the GitHub release, where F-Droid's `Binaries` can find it.
 - The signing key lives in GitHub Actions secrets, never in the repo.
 

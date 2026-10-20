@@ -67,7 +67,7 @@ data class ReportRange(val from: LocalDate, val to: LocalDate) {
 
 /**
  * The web app's presets, in its order, without All time: that one needs Tokkl's own
- * `/api/app/entries/bounds` and spans up to ten years, more than the Reports API v3 accepts.
+ * `/api/app/bounds` and spans up to ten years, more than the Reports API v3 accepts.
  */
 enum class RangePreset {
     TODAY,
