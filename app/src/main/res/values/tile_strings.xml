@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Quick Settings tile (docs/PRD.md N4). -->
+<resources>
+    <!--
+        The tile's name in the Quick Settings editor, and its label until the app first sets it.
+        Android cuts this one off after 18 characters.
+    -->
+    <string name="tile_name">Tokkl timer</string>
+    <!-- The label while a timer runs, for an entry without a description. -->
+    <string name="tile_no_description">No description</string>
+    <!-- The second line while a timer runs. -->
+    <string name="tile_running_subtitle">Running · tap to stop</string>
+    <!-- The label while no timer runs; the second line is the entry a tap continues. -->
+    <string name="tile_continue">Continue last entry</string>
+    <!-- The second line when no timer runs and there is no entry to continue. -->
+    <string name="tile_nothing_subtitle">No entry to continue</string>
+    <!-- What TalkBack reads while a timer runs: Timer running: Design review. Tap to stop. -->
+    <string name="tile_running_description">Timer running: %1$s. Tap to stop.</string>
+    <!-- What TalkBack reads while no timer runs: No timer running. Tap to continue Design review. -->
+    <string name="tile_continue_description">No timer running. Tap to continue %1$s.</string>
+    <!-- What TalkBack reads when there is nothing to continue. -->
+    <string name="tile_nothing_description">No timer running and no entry to continue.</string>
+</resources>

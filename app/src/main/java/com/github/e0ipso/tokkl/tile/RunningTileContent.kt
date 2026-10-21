@@ -1,0 +1,57 @@
+package com.github.e0ipso.tokkl.tile
+
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.timer.continueEntry
+import com.github.e0ipso.tokkl.timer.lastStopped
+
+/**
+ * What the Quick Settings tile shows (docs/PRD.md N4), read from the phone's cache, and so what a
+ * tap on it does.
+ */
+sealed interface RunningTileContent {
+
+    /** A timer runs: the tile is active, and a tap stops [entry]. */
+    data class Running(val entry: CachedTimeEntry) : RunningTileContent
+
+    /** No timer runs: the tile is inactive, and a tap continues [last], the stopped entry that started last. */
+    data class Continue(val last: CachedTimeEntry) : RunningTileContent
+
+    /** No timer runs and no entry is cached to continue, as after sign-out: the tile is unavailable. */
+    data object Nothing : RunningTileContent
+}
+
+/** The tile for the cache's [running] entry, null when none runs, and its [entries]. */
+fun runningTileContent(running: CachedTimeEntry?, entries: List<CachedTimeEntry>): RunningTileContent =
+    when {
+        running != null -> RunningTileContent.Running(running)
+        else -> lastStopped(entries.sortedWith(newestCreatedFirst))?.let { RunningTileContent.Continue(it) } ?: RunningTileContent.Nothing
+    }
+
+/**
+ * Start times can tie after the account snaps stopped entries to minutes. Give lastStopped a
+ * newest-first list for those ties, as on the web: larger server IDs are newer, but local IDs
+ * are negative queue sequences, so a smaller local ID is newer. A local create is newer than
+ * the server rows already cached when it was queued.
+ */
+private val newestCreatedFirst = Comparator<CachedTimeEntry> { a, b ->
+    when {
+        a.id < 0 && b.id < 0 -> a.id.compareTo(b.id)
+        a.id < 0 -> -1
+        b.id < 0 -> 1
+        else -> b.id.compareTo(a.id)
+    }
+}
+
+/**
+ * A tap on the tile while it shows [shown]. It acts on what the tile shows, not on what the cache
+ * holds by now, and goes through the change queue, so it is on the phone at once and never waits
+ * for the network. A stop of an entry that no longer runs does nothing.
+ */
+suspend fun EntryChanges.tapTile(shown: RunningTileContent) {
+    when (shown) {
+        is RunningTileContent.Running -> stop(shown.entry.id)
+        is RunningTileContent.Continue -> continueEntry(shown.last)
+        RunningTileContent.Nothing -> Unit
+    }
+}
