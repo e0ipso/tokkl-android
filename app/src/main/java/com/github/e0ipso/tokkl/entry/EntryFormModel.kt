@@ -122,6 +122,9 @@ sealed interface EntryFormState {
  * with every field, so it is on the phone at once, works offline, and the last write to reach the
  * server wins (O3). Call everything on the main thread.
  *
+ * Like ../tokkl/packages/web/src/components/EntryEditor.tsx, closing or replacing the editor
+ * discards unsaved fields without asking or keeping a draft. Only Save queues a change.
+ *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param clock where now comes from, which a start without AM or PM is guessed against.
  */

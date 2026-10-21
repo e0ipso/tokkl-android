@@ -1,5 +1,33 @@
 package com.github.e0ipso.tokkl.entry
 
+import android.view.KeyEvent
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.WindowSize
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
+import com.github.e0ipso.tokkl.TokklNavHost
+import com.github.e0ipso.tokkl.calendar.CalendarViewModel
+import com.github.e0ipso.tokkl.clients.ClientsViewModel
+import com.github.e0ipso.tokkl.history.HistoryViewModel
+import com.github.e0ipso.tokkl.projects.ProjectsViewModel
+import com.github.e0ipso.tokkl.reports.ReportsViewModel
+import com.github.e0ipso.tokkl.signin.SignInViewModel
+import com.github.e0ipso.tokkl.tags.TagsViewModel
+import com.github.e0ipso.tokkl.timer.TimerViewModel
+import com.github.e0ipso.tokkl.trash.TrashViewModel
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -320,6 +348,54 @@ class EntryFormServerTest {
         }
     }
 
+    /**
+     * Back on a phone closes the form at once and drops what it held unsaved, as the web app's
+     * EntryEditor.tsx does on Escape, its close button or a click outside it: no question, no draft
+     * kept. Nothing is queued, the server keeps the entry, and the entry opens again as it was.
+     */
+    @Test
+    fun backOnAPhoneClosesTheFormAndDropsItsUnsavedEdits() {
+        createEntry("Plan the sprint", at(day, 9, 0), at(day, 10, 0))
+        launch { scenario ->
+            openEntry("Plan the sprint")
+            assertFalse("the form takes the screen, as on a phone", shows(listSwitch()))
+            makeUnsavedEdits("Plan the sprint, half typed")
+            hideKeyboard(scenario)
+            pressBack(scenario)
+
+            awaitFormCloses()
+            assertDroppedWithoutAWord()
+            openEntry("Plan the sprint")
+            assertOpensAsItWas("Plan the sprint")
+        }
+
+        assertServerKept("Plan the sprint")
+    }
+
+    /**
+     * On an expanded window, a tap on another entry in the history beside the form opens that
+     * entry and drops what the open form held unsaved. The web app's EntryEditor.tsx closes on a
+     * click outside it and drops its edits the same way, without a question or a kept draft.
+     */
+    @Test
+    fun anotherEntryOpenedBesideTheHistoryDropsTheOpenFormsUnsavedEdits() {
+        createEntry("Plan the sprint", at(day, 9, 0), at(day, 10, 0))
+        createEntry("Write the notes", at(day, 11, 0), at(day, 12, 0))
+        launchInAnExpandedWindow {
+            openEntry("Plan the sprint")
+            assertTrue("the form shows beside the history", shows(listSwitch()))
+            makeUnsavedEdits("Plan the sprint, half typed")
+            composeRule.onNode(historyRow("Write the notes")).performClick()
+
+            awaitShows("the other entry opens in the form") { composeRule.onNode(formDescription() and hasText("Write the notes")) }
+            assertDroppedWithoutAWord()
+            composeRule.onNode(historyRow("Plan the sprint")).performClick()
+            assertOpensAsItWas("Plan the sprint")
+        }
+
+        assertServerKept("Plan the sprint")
+    }
+
     /** docs/PRD.md M1: a past entry by a start and a duration, and one from 23:00 to 01:00. */
     @Test
     fun pastEntriesByDurationAndAcrossMidnightReachTheServer() {
@@ -489,10 +565,57 @@ class EntryFormServerTest {
         }
     }
 
-    private fun launch(steps: () -> Unit) {
-        ActivityScenario.launch(MainActivity::class.java).use {
+    private fun launch(steps: (ActivityScenario<MainActivity>) -> Unit) {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
+            runBlocking { app.accountSettings.refresh().join() }
+            steps(scenario)
+        }
+    }
+
+    /**
+     * The app's navigation host, with MainActivity's view models, in a window forced to
+     * [EXPANDED_WINDOW], where the entry form shows beside the Timer page's history. The phone's
+     * own window is too narrow for that.
+     */
+    private fun launchInAnExpandedWindow(steps: () -> Unit) {
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                WindowCompat.enableEdgeToEdge(activity.window)
+                activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                val models = ViewModelProvider(activity)
+                val history = models[HistoryViewModel::class.java]
+                val timer = models[TimerViewModel::class.java]
+                activity.setContent {
+                    DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
+                        TokklTheme(darkTheme = false) {
+                            TokklNavHost(
+                                signInModel = models[SignInViewModel::class.java].model,
+                                themeSettings = app.themeSettings,
+                                signOut = app.signOutModel,
+                                sessionTrust = app.sessionTrust,
+                                reports = models[ReportsViewModel::class.java].model,
+                                history = history.model,
+                                entryActions = history.actions,
+                                calendar = models[CalendarViewModel::class.java].model,
+                                projects = models[ProjectsViewModel::class.java].model,
+                                clients = models[ClientsViewModel::class.java].model,
+                                tags = models[TagsViewModel::class.java].model,
+                                timerView = app.timerView,
+                                timer = timer.model,
+                                entryForm = models[EntryFormViewModel::class.java].model,
+                                cache = app.cache,
+                                trash = models[TrashViewModel::class.java].model,
+                                capabilities = app.capabilities.state,
+                                favorites = timer.favorites,
+                            )
+                        }
+                    }
+                }
+            }
+            composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
+            // MainActivity refreshes on sign-in; this host does not, so the test fills the cache.
             runBlocking { app.accountSettings.refresh().join() }
             steps()
         }
@@ -505,7 +628,7 @@ class EntryFormServerTest {
 
     /** Opens the form from the history row of the entry described as [description]. */
     private fun openEntry(description: String) {
-        val row = hasText(description) and hasClickAction()
+        val row = historyRow(description)
         composeRule.waitUntil("the entry shows in the history", NETWORK_TIMEOUT.toMillis()) { shows(composeRule.onNode(row)) }
         composeRule.onNode(row).performClick()
         awaitShows("the form opens") { field(R.string.entry_start) }
@@ -587,6 +710,85 @@ class EntryFormServerTest {
 
     private fun SemanticsNodeInteraction.isEnabled(): Boolean =
         SemanticsProperties.Disabled !in fetchSemanticsNode().config
+
+    /**
+     * The history row of the entry described as [description]. The form's description field holds
+     * the same text and takes clicks too, so the row is what is clickable and not a text field.
+     */
+    private fun historyRow(description: String): SemanticsMatcher = hasText(description) and hasClickAction() and !hasSetTextAction()
+
+    /** The Timer page's List and Calendar switch, which shows only while the page does. */
+    private fun listSwitch(): SemanticsNodeInteraction = composeRule.onNode(hasText(string(R.string.timer_view_list)) and isSelectable())
+
+    /**
+     * In the form, not the timer beside it, which has a description field and billable too. The
+     * form is the scrolling column with Save in it.
+     */
+    private fun inForm(): SemanticsMatcher = hasAnyAncestor(hasScrollAction() and hasAnyDescendant(hasText(string(R.string.entry_save))))
+
+    private fun formDescription(): SemanticsMatcher = isField(R.string.entry_description) and inForm()
+
+    private fun formBillable(): SemanticsNodeInteraction =
+        composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable() and inForm()).performScrollTo()
+
+    /**
+     * Changes the open form's description to [description] and hands it to the form with the
+     * keyboard's Done, and turns billable on, without saving either.
+     */
+    private fun makeUnsavedEdits(description: String) {
+        composeRule.onNode(formDescription()).performScrollTo().performTextClearance()
+        composeRule.onNode(formDescription()).performTextInput(description)
+        composeRule.onNode(formDescription()).performImeAction()
+        formBillable().performClick()
+        awaitShows("the form holds the edits") { composeRule.onNode(formDescription() and hasText(description)) }
+        formBillable().assertIsOn()
+    }
+
+    /** Waits until the edit form's heading is gone. */
+    private fun awaitFormCloses() {
+        val heading = hasText(string(R.string.entry_form_edit)) and isHeading()
+        composeRule.waitUntil("the form closes within $AT_ONCE", AT_ONCE.toMillis()) {
+            composeRule.onAllNodes(heading).fetchSemanticsNodes().isEmpty()
+        }
+    }
+
+    /** No dialog asked about the unsaved edits, and nothing went to the queue. */
+    private fun assertDroppedWithoutAWord() {
+        composeRule.waitForIdle()
+        assertTrue("no dialog asks about the edits", composeRule.onAllNodes(isDialog()).fetchSemanticsNodes().isEmpty())
+        assertEquals("nothing queued", 0, runBlocking { app.changes.unsentCount.first() })
+    }
+
+    /** The open form shows the entry described as [description] as the server has it, unbillable. */
+    private fun assertOpensAsItWas(description: String) {
+        awaitShows("the form shows the entry as it was") { composeRule.onNode(formDescription() and hasText(description)) }
+        formBillable().assertIsOff()
+    }
+
+    /** The server still has the entry described as [description], unbillable. */
+    private fun assertServerKept(description: String) {
+        assertFalse("the server's entry stays unbillable", serverEntry(description).getValue("billable").jsonPrimitive.boolean)
+    }
+
+    /** Hides the keyboard and waits until it is gone, so the next Back reaches the app. */
+    private fun hideKeyboard(scenario: ActivityScenario<MainActivity>) {
+        scenario.onActivity { WindowCompat.getInsetsController(it.window, it.window.decorView).hide(WindowInsetsCompat.Type.ime()) }
+        composeRule.waitUntil("the keyboard hides", NETWORK_TIMEOUT.toMillis()) {
+            var shown = true
+            scenario.onActivity { shown = ViewCompat.getRootWindowInsets(it.window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) ?: false }
+            !shown
+        }
+    }
+
+    /** Presses the system Back key once the app's window has input focus, as BottomBarTest does. */
+    private fun pressBack(scenario: ActivityScenario<MainActivity>) {
+        composeRule.waitUntil("the app window has input focus", NETWORK_TIMEOUT.toMillis()) {
+            var focused = false
+            scenario.onActivity { focused = it.hasWindowFocus() }
+            focused
+        }
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+    }
 
     /** The entry described as [description], as the server keeps it. */
     private fun serverEntry(description: String, date: LocalDate? = null): JsonObject {
@@ -671,6 +873,9 @@ class EntryFormServerTest {
     private companion object {
         val MADRID: ZoneId = ZoneId.of("Europe/Madrid")
         val AT_ONCE: Duration = Duration.ofSeconds(2)
+
+        /** A tablet held sideways, an expanded width (docs/PRD.md, Devices). */
+        val EXPANDED_WINDOW = DpSize(1280.dp, 800.dp)
 
         /** The key of the history's row after the days, HistoryList's OLDER_KEY. */
         const val OLDER_KEY = "older"
