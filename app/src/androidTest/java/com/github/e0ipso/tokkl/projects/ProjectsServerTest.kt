@@ -454,18 +454,29 @@ class ProjectsServerTest {
      * Taps the control, scrolled into view unless [scroll] is false, once it has kept still for
      * [STILL_MS]. While the keyboard slides in or out, the page shrinks or grows above it frame
      * by frame, and a tap aimed at where a control near the bottom was lands beside it.
+     * If the keyboard returns after the scroll, scroll again: an empty clipped rectangle can
+     * keep still too, but cannot receive a touch.
      */
     private fun SemanticsNodeInteraction.tap(scroll: Boolean = true) {
         if (scroll) performScrollTo()
         var bounds: Rect? = null
         var since = SystemClock.uptimeMillis()
         composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
-            val now = fetchSemanticsNode().boundsInRoot
-            if (now != bounds) {
+            val node = fetchSemanticsNode()
+            val now = node.boundsInRoot
+            val fullyVisible = now.width > 0 && now.height > 0 &&
+                now.width >= node.size.width && now.height >= node.size.height
+            if (!fullyVisible) {
+                // A dialog can return focus to the form's field after the first scroll.
+                // Its keyboard then clips the control, sometimes to an empty rectangle.
+                if (scroll) performScrollTo()
+                bounds = null
+                since = SystemClock.uptimeMillis()
+            } else if (now != bounds) {
                 bounds = now
                 since = SystemClock.uptimeMillis()
             }
-            SystemClock.uptimeMillis() - since >= STILL_MS
+            fullyVisible && SystemClock.uptimeMillis() - since >= STILL_MS
         }
         performClick()
     }
