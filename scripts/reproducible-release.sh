@@ -39,8 +39,8 @@ revision=$(git -C "$repo" rev-parse --verify --quiet "${1:-HEAD}^{commit}") || {
     exit 2
 }
 
-mkdir -p "$repo/build"
-work_dir=$(mktemp -d "$repo/build/reproducible-release.XXXXXX")
+# Keep clones and build logs with the caller's temporary artifacts.
+work_dir=$(mktemp -d "${TMPDIR:-/tmp}/tokkl-reproducible-release.XXXXXX")
 trap 'rm -rf "$work_dir"' EXIT
 
 unset_signing=()

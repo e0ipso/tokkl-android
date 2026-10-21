@@ -114,14 +114,14 @@ class RunningCheckServerTest {
                 stop = null,
             )
         }
-        runBlocking { app.sender.sendAndWait() }
+        val initialDrain = runBlocking { app.sender.sendAndWait() }
         assertEquals("a second timer keeps the one check", listOf(check.id), checkWork().map { it.id })
         assertEquals(WorkInfo.State.ENQUEUED, checkWork().single().state)
 
         assertTrue(runBlocking { app.changes.stop(second) })
         assertEquals(WorkInfo.State.CANCELLED, awaitCheck("the stop cancels the check") { it.state.isFinished }.state)
-        runBlocking { app.sender.sendAndWait() }
-        assertEquals(0, unsentCount())
+        val stoppedDrain = runBlocking { app.sender.sendAndWait() }
+        assertEquals("long timers drain before Stop: $initialDrain; after Stop: $stoppedDrain", 0, unsentCount())
         assertTrue(
             "no work waits or runs with no timer running and the queue empty: ${allWork().map { it.tags to it.state }}",
             allWork().all { it.state.isFinished },

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -13,7 +13,7 @@ const prefix = 'com.github.e0ipso.tokkl';
 // Run the complete entry point. Any dependency invocation fails harmlessly,
 // including `id`, which is the first command used to name the slot files.
 // No Gradle, adb, emulator, Docker or real runtime directory can be reached.
-function refusesBeforeStartup(args, message, environment = {}) {
+function checkPreflight(args, message, environment = {}, reachesStartup = false) {
   const root = mkdtempSync(join(tmpdir(), 'tokkl-filter-preflight-'));
   try {
     const bin = join(root, 'bin');
@@ -40,9 +40,14 @@ function refusesBeforeStartup(args, message, environment = {}) {
       },
     });
     assert.ifError(result.error);
-    assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
-    assert.match(result.stderr, message);
-    assert.equal(existsSync(calls), false, 'preflight invoked an external dependency');
+    if (reachesStartup) {
+      assert.equal(result.status, 86, `${result.stdout}\n${result.stderr}`);
+      assert.equal(readFileSync(calls, 'utf8'), `${join(bin, 'id')}\n`, 'only the startup sentinel ran');
+    } else {
+      assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
+      assert.match(result.stderr, message);
+      assert.equal(existsSync(calls), false, 'preflight invoked an external dependency');
+    }
     assert.deepEqual(readdirSync(runtime), [], 'preflight created device or slot files');
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -50,7 +55,7 @@ function refusesBeforeStartup(args, message, environment = {}) {
 }
 
 test('rejects the mixed lists that passed with only 27 named-class tests', () => {
-  refusesBeforeStartup([
+  checkPreflight([
     runnerArg('package', `${prefix}.ui.screenshot,${prefix}.navigation`),
     runnerArg('class', `${prefix}.ui.TopBarTest,${prefix}.ui.StickerCardTest,${prefix}.ui.theme.LargestFontScaleTest`),
   ], /cannot combine class= and package= filters/);
@@ -68,7 +73,7 @@ for (const [classForm, classes] of [
     for (const reversed of [false, true]) {
       test(`rejects ${classForm} with ${packageForm}, ${reversed ? 'package' : 'class'} first`, () => {
         const args = [runnerArg('class', classes), runnerArg('package', packages)];
-        refusesBeforeStartup(reversed ? args.reverse() : args, /cannot combine class= and package= filters/);
+        checkPreflight(reversed ? args.reverse() : args, /cannot combine class= and package= filters/);
       });
     }
   }
@@ -79,24 +84,46 @@ for (const selector of ['class', 'package']) {
     const values = selector === 'class'
       ? `${prefix}.BackupRefusedTest,${prefix}.LauncherIconTest`
       : `${prefix}.capabilities,${prefix}.licences`;
-    refusesBeforeStartup([
+    checkPreflight([
       runnerArg(selector, values), runnerArg('testFile', '/data/local/tmp/custom-tests.txt'),
     ], /cannot go with a class= or package= list/);
   });
 }
 
 test('still refuses other comma-separated runner arguments', () => {
-  refusesBeforeStartup([runnerArg('annotation', 'example.First,example.Second')], /holds a comma/);
+  checkPreflight([runnerArg('annotation', 'example.First,example.Second')], /holds a comma/);
 });
 
 for (const args of [[], [runnerArg('package', `${prefix}.notification`)], [runnerArg('class', `${prefix}.notification.NativeNotificationPermissionTest`)]]) {
   test(`fresh notification permission refuses a non-isolated selection: ${JSON.stringify(args)}`, () => {
-    refusesBeforeStartup(args, /requires exactly one NativeNotificationPermissionTest method/, {
+    checkPreflight(args, /requires exactly one NativeNotificationPermissionTest method/, {
       TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '1',
     });
   });
 }
 
 test('fresh notification permission refuses an invalid switch before startup', () => {
-  refusesBeforeStartup([], /must be 0 or 1/, { TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '2' });
+  checkPreflight([], /must be 0 or 1/, { TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '2' });
 });
+
+const permissionTest = `${prefix}.notification.NativeNotificationPermissionTest`;
+const allow = `${permissionTest}#allowingTheNativeDialogPostsTheAlreadyRunningTimer`;
+const deny = `${permissionTest}#denyingTheNativeDialogKeepsTheTimerAndOpensItsSettings`;
+const freshPermission = { TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '1' };
+
+for (const method of [allow, deny]) {
+  test(`fresh notification permission admits the isolated native probe: ${method}`, () => {
+    // Stop at the fake id command, before creating locks or reaching a device.
+    checkPreflight([runnerArg('class', method)], null, freshPermission, true);
+  });
+}
+
+for (const [selection, args] of [
+  ['both native responses in one process', [runnerArg('class', `${allow},${deny}`)]],
+  ['an unknown native method', [runnerArg('class', `${permissionTest}#anotherResponse`)]],
+  ['an extra argument beside a valid probe', [runnerArg('class', allow), '--stacktrace']],
+]) {
+  test(`fresh notification permission refuses ${selection} before startup`, () => {
+    checkPreflight(args, /requires exactly one NativeNotificationPermissionTest method/, freshPermission);
+  });
+}
