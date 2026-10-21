@@ -37,6 +37,9 @@ import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
+import com.github.e0ipso.tokkl.pomodoro.StoredPomodoroDefaults
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
@@ -127,7 +130,9 @@ class SignOutServerTest {
         assertNotNull(AccountSettingsStore(context).load())
         assertNotNull(CapabilitiesStore(context).load())
         assertNotNull(TimerViewStore(context).load())
+        assertNotNull(PomodoroDefaultsStore(context).load())
         queueTwoUnsentChanges()
+        changeThePomodoroDefaults()
 
         scenario = ActivityScenario.launch(MainActivity::class.java)
         composeRule.openBarPage(R.string.settings)
@@ -178,6 +183,18 @@ class SignOutServerTest {
         assertEquals(WorkInfo.State.ENQUEUED, queueWork().single().state)
     }
 
+    /** Changes the Pomodoro defaults while the session points at the dead port, so they stay unsent. */
+    private fun changeThePomodoroDefaults() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync { app.pomodoroDefaults.change(PomodoroDefaults(40, 8, 20, 5)) }
+        val unsent = StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true)
+        // No activity runs yet, so this waits without the compose rule.
+        val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
+        while (PomodoroDefaultsStore(context).load() != unsent) {
+            if (System.nanoTime() > deadline) throw AssertionError("timed out: the phone keeps the change unsent")
+            Thread.sleep(100)
+        }
+    }
+
     private fun assertNothingOfTheAccountStays() {
         assertFalse(Session(context).isSignedIn())
         assertNull("the server", ServerConfigStore(context).load())
@@ -190,6 +207,8 @@ class SignOutServerTest {
         assertEquals("the capabilities in memory", Capabilities.NONE, app.capabilities.state.value)
         assertNull("the stored Timer view", TimerViewStore(context).load())
         assertEquals("the Timer view in memory", TimerView.LIST, app.timerView.view.value)
+        assertNull("the stored Pomodoro defaults", PomodoroDefaultsStore(context).load())
+        assertEquals("the Pomodoro defaults in memory", PomodoroDefaults.DEFAULT, app.pomodoroDefaults.defaults.value)
         assertFalse("the http confirmation", ServerTrustStore(context).isCleartextConfirmed(DEAD_SERVER))
         assertNull("the pinned certificate", ServerTrustStore(context).pinnedSha256(PINNED.host, PINNED.port))
         assertEquals("the trust prompt", SessionTrustModel.State(), app.sessionTrust.state.value)

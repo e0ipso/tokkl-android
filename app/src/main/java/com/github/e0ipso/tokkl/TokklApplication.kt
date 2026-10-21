@@ -18,6 +18,8 @@ import com.github.e0ipso.tokkl.notification.RunningNotificationStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.notification.runningNotificationContent
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
@@ -71,9 +73,9 @@ class TokklApplication : Application() {
      * Loaded on first use, which reads the stored settings from disk. That is usually
      * MainActivity's onStart on the main thread, and the file holds six short values. Each
      * refresh refreshes the [capabilities] and the [cache] too, with the same `GET /api/v9/me`,
-     * and the cache takes the favorites, and the [timerView] its view, from the settings'
-     * `GET /api/v9/me/preferences`. Then the [sender] sends the queue, since the server has just
-     * answered.
+     * and the cache takes the favorites, the [timerView] its view and [pomodoroDefaults] its
+     * lengths from the settings' `GET /api/v9/me/preferences`. Then the [sender] sends the queue,
+     * since the server has just answered.
      */
     val accountSettings: AccountSettingsSource by lazy {
         val store = AccountSettingsStore(this)
@@ -87,6 +89,7 @@ class TokklApplication : Application() {
                 val flags = capabilities.refresh(api, me)
                 cache.refresh(api, me, preferences, flags)
                 timerView.refreshed(preferences, keepsTimerView = flags.favorites)
+                pomodoroDefaults.refreshed(preferences, keepsPreferences = flags.favorites)
                 sender.send()
             },
         )
@@ -129,6 +132,23 @@ class TokklApplication : Application() {
             save = store::save,
             client = Session(this)::client,
             keepsTimerView = { capabilities.state.value.favorites },
+            scope = MainScope(),
+            io = Dispatchers.IO,
+        )
+    }
+
+    /**
+     * The lengths a Pomodoro session starts with, kept in Tokkl's four `pomodoro_*` length
+     * preferences, or on the phone only where the server lacks them. Loaded on first use, which
+     * reads a file of five values.
+     */
+    val pomodoroDefaults: PomodoroDefaultsSetting by lazy {
+        val store = PomodoroDefaultsStore(this)
+        PomodoroDefaultsSetting(
+            initial = store.load(),
+            save = store::save,
+            client = Session(this)::client,
+            keepsPreferences = { capabilities.state.value.favorites },
             scope = MainScope(),
             io = Dispatchers.IO,
         )
@@ -283,7 +303,7 @@ class TokklApplication : Application() {
      * so the app sends nothing new. Then it cancels the queue's background work and every call in
      * flight, waits for the refresh and the queue's drain to end, and clears the cache with the
      * queue, the running timer's notification, the account settings, the capabilities, the Timer
-     * page's view, the trust decisions, the time the server last answered and the count of
+     * page's view, the Pomodoro defaults, the trust decisions, the last answer and the count of
      * discarded changes. MainActivity then drops its view models, and with them
      * the history's older days and what every other screen loaded. The theme and the sign-in
      * cooldowns stay: they belong to the phone and to a server, not to the account.
@@ -307,6 +327,10 @@ class TokklApplication : Application() {
                 {
                     timerView.forget()
                     TimerViewStore(this).clear()
+                },
+                {
+                    pomodoroDefaults.forget()
+                    PomodoroDefaultsStore(this).clear()
                 },
                 { ServerTrustStore(this).clear() },
                 { sessionTrust.forget() },

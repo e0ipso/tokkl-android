@@ -5,6 +5,7 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -54,7 +55,7 @@ class SessionRule : TestRule {
 
         /**
          * Deletes the stored server, the token, its Keystore key, the account settings, the
-         * server's capabilities, the offline cache, the Timer page's view, the trust decisions and
+         * server's capabilities, the offline cache, the Timer view, the Pomodoro defaults, trust and
          * the sign-in cooldowns and the time the server last answered.
          * A cooldown is kept by server origin, and every test signs in to the same few, so one
          * left by a test that ended early would block sign-in in every later test of the run.
@@ -72,6 +73,7 @@ class SessionRule : TestRule {
             CapabilitiesStore(context).clear()
             (context.applicationContext as TokklApplication).cache.clear()
             TimerViewStore(context).clear()
+            PomodoroDefaultsStore(context).clear()
             ServerTrustStore(context).clear()
             SignInCooldownStore(context).run { load().keys.forEach(::clear) }
             LastAnswerStore(context).save(null)
