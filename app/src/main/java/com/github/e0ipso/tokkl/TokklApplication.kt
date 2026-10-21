@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
@@ -292,6 +293,7 @@ class TokklApplication : Application() {
             steps = listOf(
                 { Session(this).clear() },
                 { BackgroundSend.cancel(this) },
+                { RunningCheck.cancelAndWait(this) },
                 { SharedHttpClient.cancelAll() },
                 { accountSettings.forget() },
                 { sender.stop() },
@@ -332,6 +334,8 @@ class TokklApplication : Application() {
         // Reads the cache off the main thread, and posts or removes nothing for the entry the
         // notification already followed, so opening the app never brings back a dismissed one.
         runningNotification.start()
+        // Check every 15 minutes while the cache holds a running entry.
+        RunningCheck.follow(this, cache.running.map { it != null }, MainScope(), Dispatchers.IO)
     }
 }
 

@@ -103,8 +103,9 @@ class BackgroundSendServerTest {
         // The app's own send of both changes, which fails for want of a network.
         runBlocking { app.sender.send().join() }
         assertEquals(2, unsentCount())
-        val work = allWork().single()
-        assertEquals("one work for both changes", listOf(work.id), queueWork().map { it.id })
+        val work = queueWork().single()
+        // The start also scheduled the running entry's check, which the stop cancelled.
+        assertEquals("one work for both changes", listOf(work.id), allWork().filter { RunningCheckWorker::class.java.name !in it.tags }.map { it.id })
         assertEquals(WorkInfo.State.ENQUEUED, work.state)
         assertEquals("the work waits for a network", NetworkType.CONNECTED, work.constraints.requiredNetworkType)
         assertNull("one-time work", work.periodicityInfo)
