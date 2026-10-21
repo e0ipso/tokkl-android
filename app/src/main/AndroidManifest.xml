@@ -70,6 +70,8 @@
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />
+        <receiver android:name=".reminder.ReminderActionReceiver" android:exported="false" />
+
         <!-- The running timer notification's Stop action. Only its own PendingIntent reaches it. -->
         <receiver
             android:name=".notification.StopTimerReceiver"

@@ -11,8 +11,8 @@ import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.RoomChangeStore
+import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationStore
@@ -21,6 +21,12 @@ import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.notification.runningNotificationContent
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
+import com.github.e0ipso.tokkl.reminder.ReminderInput
+import com.github.e0ipso.tokkl.reminder.ReminderNotifier
+import com.github.e0ipso.tokkl.reminder.ReminderSetting
+import com.github.e0ipso.tokkl.reminder.ReminderStore
+import com.github.e0ipso.tokkl.reminder.ReminderSync
+import com.github.e0ipso.tokkl.reminder.ReminderWork
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
@@ -58,10 +64,10 @@ import java.security.GeneralSecurityException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -104,6 +110,7 @@ class TokklApplication : Application() {
                 cache.refresh(api, me, preferences, flags)
                 timerView.refreshed(preferences, keepsTimerView = flags.favorites)
                 pomodoroDefaults.refreshed(preferences, keepsPreferences = flags.favorites)
+                reminderSettings.refreshed(preferences, tokkl = flags.favorites)
                 sender.send()
             },
         )
@@ -165,6 +172,34 @@ class TokklApplication : Application() {
             keepsPreferences = { capabilities.state.value.favorites },
             scope = MainScope(),
             io = Dispatchers.IO,
+        )
+    }
+
+    /** Shared reminder settings where both keys exist, account-local on older servers. */
+    val reminderSettings: ReminderSetting by lazy {
+        val store = ReminderStore(this)
+        ReminderSetting(store.load(), store::save, Session(this)::client, MainScope(), Dispatchers.IO)
+    }
+
+    private suspend fun reminderInput(): ReminderInput = ReminderInput(
+        cache.running.first()?.entry?.takeIf { Session(this).isSignedIn() },
+        reminderSettings.state.value,
+    )
+
+    /** One reminder per running id/start, followed independently of any screen. */
+    val reminder: ReminderSync by lazy {
+        val store = ReminderStore(this)
+        val notifier = ReminderNotifier(this)
+        ReminderSync(
+            latest = ::reminderInput,
+            currentId = changes::currentId,
+            load = store::loadTimer,
+            save = store::saveTimer,
+            schedule = { ReminderWork.schedule(this, it) },
+            cancel = { ReminderWork.cancel(this) },
+            post = notifier::post,
+            remove = notifier::remove,
+            stop = { changes.stop(it) },
         )
     }
 
@@ -363,7 +398,7 @@ class TokklApplication : Application() {
      * so the app sends nothing new. Then it cancels the queue's background work and every call in
      * flight, waits for the refresh and the queue's drain to end, and clears the cache with the
      * queue, the running timer's notification, the launcher shortcuts, the account settings,
-     * the capabilities, the Timer page's view, the Pomodoro defaults, the trust decisions, the last answer and the count of
+     * the capabilities, the Timer page's view, the Pomodoro defaults, the reminder and its settings, the trust decisions, the last answer and the count of
      * discarded changes. MainActivity then drops its view models, and with them
      * the history's older days and what every other screen loaded. The theme and the sign-in
      * cooldowns stay: they belong to the phone and to a server, not to the account.
@@ -378,6 +413,11 @@ class TokklApplication : Application() {
                 { accountSettings.forget() },
                 { sender.stop() },
                 { cache.clear() },
+                { reminder.forget() },
+                {
+                    reminderSettings.forget()
+                    ReminderStore(this).clear()
+                },
                 { runningNotification.forget() },
                 { favoriteShortcuts.forget() },
                 { AccountSettingsStore(this).clear() },
@@ -419,6 +459,10 @@ class TokklApplication : Application() {
         // Reads the cache off the main thread, and posts or removes nothing for the entry the
         // notification already followed, so opening the app never brings back a dismissed one.
         runningNotification.start()
+        reminder.follow(
+            combine(cache.running, flow { emitAll(reminderSettings.state) }) { running, preferences -> running to preferences },
+            MainScope(), Dispatchers.IO,
+        )
         widgetSync.start()
         favoriteShortcuts.start()
         // Check every 15 minutes while the cache holds a running entry.

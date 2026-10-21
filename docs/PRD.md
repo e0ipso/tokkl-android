@@ -28,7 +28,7 @@ Tokkl set itself a bar: if starting a timer is slower than in Toggl, the owner d
 - Tokkl's admin pages, Toggl CSV import, JSON export and restore, and bulk edit. They stay in the web app.
 - A Wear OS app and a separate tablet design.
 - Client certificates (mTLS).
-- Reminders and idle detection (Tokkl T13). The Pomodoro session in section 5.12 is in scope. A "forgot to start" reminder would need a wakeup while no timer runs, which section 7 rules out. If one comes later, it is the "timer still running after N hours" reminder.
+- Idle detection and "forgot to start" reminders, which would need wakeups while no timer runs. The long-running timer reminder in N7, requested by the owner on 2026-10-20, and the Pomodoro session in section 5.12 are in scope.
 - Push from the server in the first version. The phone learns about changes made elsewhere on the events in section 6.3. UnifiedPush is a later option (risk 10).
 - Proprietary libraries, including Google Play Services and Firebase. There is no push through FCM.
 
@@ -169,6 +169,8 @@ The first release is feature complete: it ships every requirement below, so they
 | N5 | Ask for the notification permission on Android 13 and later when the first timer starts, and say what is lost without it. |
 | N6 | Launcher shortcuts (long-press the app icon) for the favorites. One tap starts that timer. |
 
+| N7 | Remind once per running entry id and start after a configurable 1–168 hours, enabled by default at 8 hours. Settings shares `long_timer_reminder_enabled` and `long_timer_reminder_hours` through `/me/preferences` when both keys exist; older Tokkl and Toggl keep them on the phone. One delayed, inexact WorkManager request needs no exact-alarm permission and can arrive a few minutes late. Stop or a different timer cancels it. The separate reminder channel asks "Is your timer still running on purpose?", with Keep running and offline Stop through the existing queue. Tapping opens Timer. Confirmation survives process death; correcting the start resets it. Sign-out clears its settings and confirmation. |
+
 ### 5.9 Offline
 
 | ID | Requirement |
@@ -187,6 +189,8 @@ The first release is feature complete: it ships every requirement below, so they
 | G1 | Theme: light, dark, or follow the system. |
 | G2 | Opt-in dynamic color. |
 | G3 | The four Pomodoro defaults that the session's start form begins from (W3): work minutes (`pomodoro_focus_interval_in_minutes`, default 25, 1 to 180), short rest minutes (`pomodoro_break_interval_in_minutes`, 5, 1 to 60), long rest minutes (`pomodoro_long_break_interval_in_minutes`, 15, 1 to 60) and long rest every N work phases (`pomodoro_long_break_every`, 4, 1 to 12). On Tokkl they live in `/me/preferences` and the web app shares them. Toggl Track has no such keys, so there they are kept on the phone alone, with the same defaults and ranges. |
+
+| G4 | Long-running timer reminders: an on/off switch and hours from 1 to 168, enabled at 8 hours by default (N7). These account settings work offline and clear on sign-out. |
 
 ### 5.11 Navigation
 
@@ -219,7 +223,7 @@ The owner asked for a Pomodoro session on 2026-10-20 and made the decisions belo
 
 ## 6. Architecture
 
-Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2, the Kotlin ports in 6.1, the running timer's notification (N1) without its Live Update, the Glance home screen widget with its running clock and offline Start, Stop and favorites (N3), the favorites' dynamic launcher shortcuts with offline starts and a short confirmation (N6), and the Quick Settings tile's cached state and offline Stop and Continue actions (N4). Not built: the tile's server refresh when the shade opens (N4), the running entry's check every 15 minutes in 6.3, and the Pomodoro session (section 5.12) with its settings (G3) and the new bar and More sheet (B1).
+Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2, the Kotlin ports in 6.1, the running timer's notification (N1) without its Live Update, the long-running timer reminder and its Settings controls (N7, G4), the Glance home screen widget with its running clock and offline Start, Stop and favorites (N3), the favorites' dynamic launcher shortcuts with offline starts and a short confirmation (N6), and the Quick Settings tile's cached state and offline Stop and Continue actions (N4). Not built: the tile's server refresh when the shade opens (N4), the running entry's check every 15 minutes in 6.3, and the Pomodoro session (section 5.12) with its settings (G3) and the new bar and More sheet (B1).
 
 ### 6.1 Stack
 
@@ -253,7 +257,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 | Speed | A tap on Start or Stop in the app, notification, widget or tile changes the state on the phone without waiting for the server. Tests prove it with a network that never answers. Jetpack Macrobenchmark runs cold start (`StartupTimingMetric`) and tap-to-state (`TraceSectionMetric`) on the CI emulator and fails a build that is slower than the previous one. The goals are 200 ms from tap to new state and 1.5 s cold start on a mid-range phone; no real phone checks them, so they guide design but do not gate releases. |
 | Compatibility | Android 12 (API 31) and later. Phones first; tablets and foldables get adaptive layouts. |
 | Privacy | No network traffic to any host but the configured server. |
-| Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. While a timer runs, one check every 15 minutes (section 6.3). While a Pomodoro session runs, one exact wakeup per planned phase end (W7). |
+| Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. While a timer runs, one check every 15 minutes (section 6.3), plus at most one delayed inexact wakeup for its long-running reminder (N7), cancelled when it stops or changes. The reminder adds no periodic job or idle wakeup. While a Pomodoro session runs, one exact wakeup per planned phase end (W7). |
 | Accessibility | WCAG AA contrast, TalkBack labels on every control, colour never the only signal, layouts that survive the largest font scale. |
 | Language | English. All text lives in string resources. No other language is planned; contributors can add translations. |
 | Tests | JVM unit tests, Compose UI tests, and instrumented tests on an emulator against a real Tokkl server from the `ghcr.io/e0ipso/tokkl` image, never a fake one. |

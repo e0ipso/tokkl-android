@@ -60,6 +60,7 @@ import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.projects.ProjectsModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
+import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.reports.ReportsModel
 import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -162,6 +163,8 @@ fun TokklNavHost(
     signedInAccount: () -> SignInAgain? = { null },
     notificationPermission: NotificationPermissionAsk? = null,
     onNotificationsAllowed: () -> Unit = {},
+    reminderSettings: ReminderSetting? = null,
+    openReminderTimer: Int = 0,
 ) {
     val appContext = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
@@ -200,6 +203,9 @@ fun TokklNavHost(
             },
         )
         return
+    }
+    LaunchedEffect(openReminderTimer) {
+        if (openReminderTimer > 0) backStack.open(TopLevelPage.TIMER)
     }
     val offersTrash = capabilities.collectAsState().value.trash
     LaunchedEffect(offersTrash) {
@@ -243,6 +249,7 @@ fun TokklNavHost(
                 destination = shown,
                 backStack = backStack,
                 themeSettings = themeSettings,
+                reminderSettings = reminderSettings,
                 signOut = signOut,
                 reports = reports,
                 history = history,
@@ -408,6 +415,7 @@ private fun Screen(
     destination: Destination,
     backStack: SnapshotStateList<Destination>,
     themeSettings: ThemeSettingsModel,
+    reminderSettings: ReminderSetting?,
     signOut: SignOutModel,
     reports: ReportsModel,
     history: HistoryModel,
@@ -468,6 +476,7 @@ private fun Screen(
         Destination.TRASH -> TrashScreen(model = trash)
         Destination.SETTINGS -> SettingsScreen(
             model = themeSettings,
+            reminder = reminderSettings,
             signOut = signOut,
             onOpenLicences = { backStack.add(Destination.LICENCES) },
         )

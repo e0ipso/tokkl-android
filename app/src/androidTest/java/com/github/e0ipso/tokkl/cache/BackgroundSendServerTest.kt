@@ -17,6 +17,8 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.reminder.ReminderWork
+import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Duration
@@ -104,8 +106,12 @@ class BackgroundSendServerTest {
         runBlocking { app.sender.send().join() }
         assertEquals(2, unsentCount())
         val work = queueWork().single()
-        // The start also scheduled the running entry's check, which the stop cancelled.
-        assertEquals("one work for both changes", listOf(work.id), allWork().filter { RunningCheckWorker::class.java.name !in it.tags }.map { it.id })
+        // Start also scheduled the running check and reminder; Stop must cancel the reminder.
+        runBlocking { app.reminder.reconcile() }
+        assertTrue("no reminder waits after Stop", workManager.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished })
+        assertEquals("one send work for both changes", listOf(work.id), allWork().filter {
+            RunningCheckWorker::class.java.name !in it.tags && ReminderWorker::class.java.name !in it.tags
+        }.map { it.id })
         assertEquals(WorkInfo.State.ENQUEUED, work.state)
         assertEquals("the work waits for a network", NetworkType.CONNECTED, work.constraints.requiredNetworkType)
         assertNull("one-time work", work.periodicityInfo)

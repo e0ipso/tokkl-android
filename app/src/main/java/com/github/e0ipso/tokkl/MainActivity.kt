@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl
 
 import android.Manifest
 import android.app.Application
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
@@ -15,6 +16,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
@@ -28,6 +31,7 @@ import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
+import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.NetworkWatch
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -67,6 +71,7 @@ class MainActivity : ComponentActivity() {
 
     private val notificationPermission by lazy { NotificationPermissionAsk.forApp(this) }
     private var notificationsAllowed = false
+    private var openReminderTimer by mutableIntStateOf(0)
 
     /** The default network, watched while the activity is started. */
     private val network by lazy { NetworkWatch(this, ::networkChanged) }
@@ -77,6 +82,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         drawEdgeToEdge()
+        if (intent?.getBooleanExtra(ReminderNotifier.OPEN_TIMER, false) == true) {
+            openReminderTimer++
+            intent.removeExtra(ReminderNotifier.OPEN_TIMER)
+        }
         notificationsAllowed = allowsNotifications()
         val themeSettings = (application as TokklApplication).themeSettings
         // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
@@ -95,6 +104,8 @@ class MainActivity : ComponentActivity() {
                     TokklNavHost(
                         signInModel = signInViewModel.model,
                         themeSettings = themeSettings,
+                        reminderSettings = (application as TokklApplication).reminderSettings,
+                        openReminderTimer = openReminderTimer,
                         signOut = (application as TokklApplication).signOutModel,
                         sessionTrust = (application as TokklApplication).sessionTrust,
                         reports = reportsViewModel.model,
@@ -123,6 +134,15 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(ReminderNotifier.OPEN_TIMER, false)) {
+            openReminderTimer++
+            intent.removeExtra(ReminderNotifier.OPEN_TIMER)
         }
     }
 

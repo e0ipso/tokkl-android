@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reminder_settings">Long-running timer</string>
+    <string name="reminder_enabled">Remind me about long timers</string>
+    <plurals name="reminder_after_hours">
+        <item quantity="one">After %1$d hour</item>
+        <item quantity="other">After %1$d hours</item>
+    </plurals>
+    <string name="reminder_hours_label">Hours before reminder</string>
+    <string name="reminder_hours_range">Enter a whole number from 1 to 168.</string>
+    <string name="reminder_save">Save</string>
+    <string name="reminder_cancel">Cancel</string>
+    <string name="reminder_channel">Long-running timer reminders</string>
+    <string name="reminder_question">Is your timer still running on purpose?</string>
+    <string name="reminder_summary">Keep it running or stop it now.</string>
+    <string name="reminder_keep_running">Keep running</string>
+</resources>

@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
+import com.github.e0ipso.tokkl.reminder.ReminderPreferences
+import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.TokklTopBar
@@ -51,7 +53,9 @@ fun SettingsScreen(
     signOut: SignOutModel,
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
+    reminder: ReminderSetting? = null,
 ) {
+    val reminderPreferences = reminder?.state?.collectAsState()?.value ?: ReminderPreferences()
     val settings by model.state.collectAsState()
     val signOutState by signOut.state.collectAsState()
     SettingsContent(
@@ -64,6 +68,8 @@ fun SettingsScreen(
         onCancelSignOut = signOut::cancel,
         onOpenLicences = onOpenLicences,
         modifier = modifier,
+        reminder = reminderPreferences,
+        onReminderChange = { reminder?.change(it) },
     )
 }
 
@@ -79,6 +85,8 @@ internal fun SettingsContent(
     onCancelSignOut: () -> Unit,
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
+    reminder: ReminderPreferences = ReminderPreferences(),
+    onReminderChange: (ReminderPreferences) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -96,6 +104,8 @@ internal fun SettingsContent(
                 .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
         ) {
             ThemeSection(settings, onModeChange, onDynamicColorChange)
+            Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+            ReminderSection(reminder, onReminderChange)
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
             AccountSection(signOut, onSignOut)
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))

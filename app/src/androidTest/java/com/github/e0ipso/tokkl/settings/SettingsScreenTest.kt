@@ -10,6 +10,18 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
+import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.reminder.ReminderPreferences
+import com.github.e0ipso.tokkl.reminder.ReminderNotifier
+import com.github.e0ipso.tokkl.reminder.ReminderTimer
+import com.github.e0ipso.tokkl.awaitTimerPage
+import kotlinx.coroutines.runBlocking
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -119,10 +131,10 @@ class SettingsScreenTest {
             ).joinToString(" ")
         }
         assertTrue("a control without a label among $labels", labels.none { it.isBlank() })
-        // Three theme modes, the wallpaper colours switch, Sign out, Licences and the bottom bar's five items.
-        assertEquals(labels.toString(), 3 + 1 + 1 + 1 + 5, controls.size)
+        // Theme modes, wallpaper and reminder switches, reminder hours, Sign out, Licences and the bar.
+        assertEquals(labels.toString(), 3 + 2 + 1 + 1 + 1 + 5, controls.size)
         assertEquals(3, composeRule.onAllNodes(hasRole(Role.RadioButton)).fetchSemanticsNodes().size)
-        assertEquals(1, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
+        assertEquals(2, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
         val signOut = signOutRow().fetchSemanticsNode().config
         assertEquals(Role.Button, signOut.getOrNull(SemanticsProperties.Role))
         assertEquals(listOf(string(R.string.settings_sign_out)), signOut.getOrNull(SemanticsProperties.Text)?.map { it.text })
@@ -187,7 +199,8 @@ class SettingsScreenTest {
     fun everyTextComesFromStringResources() {
         composeRule.openSettings()
 
-        val resources = R.string::class.java.fields.map { string(it.getInt(null)) }.toSet()
+        val resources = R.string::class.java.fields.map { string(it.getInt(null)) }.toSet() +
+            composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)
         val shown = composeRule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true)
             .fetchSemanticsNodes()
             .flatMap { node ->
@@ -196,6 +209,42 @@ class SettingsScreenTest {
             }
         assertTrue("no text found", shown.isNotEmpty())
         assertEquals("text that is not a string resource", emptyList<String>(), shown.filterNot { it in resources })
+    }
+
+    @Test
+    fun reminderSwitchAndHoursValidateAndApply() {
+        composeRule.openSettings()
+        val app = composeRule.activity.application as TokklApplication
+        try {
+            val toggle = composeRule.onNode(hasText(string(R.string.reminder_enabled)) and isToggleable())
+            toggle.performScrollTo().assertIsOn().performClick().assertIsOff()
+            assertFalse(app.reminderSettings.state.value.enabled)
+            val hours = composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)) and hasClickAction())
+            hours.performScrollTo().performClick()
+            val field = composeRule.onNode(hasSetTextAction())
+            for (invalid in listOf("", "0", "169", "1.5")) {
+                field.performTextReplacement(invalid)
+                composeRule.onNodeWithText(string(R.string.reminder_save)).assertIsNotEnabled()
+            }
+            field.performTextReplacement("168")
+            // Close the keyboard with Back, then use the dialog's visible Save button.
+            InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            composeRule.onNodeWithText(string(R.string.reminder_save)).performClick()
+            composeRule.onNodeWithText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 168, 168)).assertIsDisplayed()
+            assertEquals(ReminderPreferences(false, 168), app.reminderSettings.state.value)
+        } finally {
+            runBlocking { app.reminderSettings.change(ReminderPreferences()).join() }
+        }
+    }
+
+    @Test
+    fun tappingTheReminderOpensTimerFromSettings() {
+        composeRule.openSettings()
+        val original = composeRule.activity
+        val notification = ReminderNotifier(original).build(ReminderTimer(1, 1, 1))
+        notification.contentIntent.send()
+        composeRule.awaitTimerPage()
+        assertSame("the tap reuses the existing activity", original, composeRule.activity)
     }
 
     private fun mode(@StringRes label: Int): SemanticsNodeInteraction =

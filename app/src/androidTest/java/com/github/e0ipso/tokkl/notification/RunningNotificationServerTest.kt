@@ -155,7 +155,15 @@ class RunningNotificationServerTest {
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it == null } } }
         RunningNotifications.awaitGone("the notification after its Stop")
         assertEquals("the stop waits in the queue", 1, unsentCount())
-        val work = WorkManager.getInstance(context).getWorkInfosForUniqueWork(BackgroundSend.WORK_NAME).get().single()
+        // The cache and notification can update before onQueued's enqueue operation completes.
+        // Wait for the new send, rather than driving the previous start's cancelled work.
+        val work = runBlocking {
+            withTimeout(TIMEOUT_MS) {
+                WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(BackgroundSend.WORK_NAME)
+                    .first { infos -> infos.any { it.state == WorkInfo.State.ENQUEUED } }
+                    .single { it.state == WorkInfo.State.ENQUEUED }
+            }
+        }
 
         AirplaneMode.set(false, web)
         checkNotNull(WorkManagerTestInitHelper.getTestDriver(context)).setAllConstraintsMet(work.id)

@@ -152,6 +152,9 @@ class LargestFontScaleTest {
                 "light choice" to choice(R.string.settings_theme_light),
                 "dark choice" to choice(R.string.settings_theme_dark),
                 "wallpaper colours switch" to switch(R.string.settings_dynamic_colour),
+                "reminder heading" to composeRule.onNode(hasText(string(R.string.reminder_settings)) and isHeading()),
+                "reminder switch" to switch(R.string.reminder_enabled),
+                "reminder hours" to composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)) and hasClickAction()),
                 "Account heading" to composeRule.onNode(hasText(string(R.string.settings_account)) and isHeading()),
                 "Sign out row" to button(R.string.settings_sign_out),
                 "About heading" to composeRule.onNode(hasText(string(R.string.settings_about)) and isHeading()),
@@ -165,7 +168,25 @@ class LargestFontScaleTest {
                 inside(R.string.licences, hasClickAction()),
                 inside(R.string.settings_dynamic_colour, isToggleable()),
                 inside(R.string.settings_dynamic_colour_summary, isToggleable()),
+                inside(R.string.reminder_enabled, isToggleable()),
             ),
+        )
+    }
+
+    @Test
+    fun reminderDialogFitsAtLargestFont() {
+        composeRule.awaitText(string(R.string.settings))
+        composeRule.onNodeWithText(string(R.string.settings)).performClick()
+        composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)) and hasClickAction())
+            .performScrollTo().performClick()
+        assertDialogFits(
+            blocks = listOf(
+                "title" to composeRule.onNode(hasText(string(R.string.reminder_hours_label)) and isHeading()),
+                "hours field" to composeRule.onNode(hasSetTextAction()),
+                "cancel" to button(R.string.reminder_cancel),
+                "save" to button(R.string.reminder_save),
+            ),
+            texts = listOf("range" to composeRule.onNodeWithText(string(R.string.reminder_hours_range))),
         )
     }
 
