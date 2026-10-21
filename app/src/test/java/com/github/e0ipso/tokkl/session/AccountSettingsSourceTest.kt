@@ -415,7 +415,7 @@ class AccountSettingsSourceTest {
         const val MADRID_MONDAY = """{"id":7,"email":"ana@example.com","timezone":"Europe/Madrid","beginning_of_week":1}"""
         const val MADRID_MONDAY_IN_42 =
             """{"id":7,"email":"ana@example.com","timezone":"Europe/Madrid","beginning_of_week":1,"default_workspace_id":42}"""
-        val MADRID_MONDAY_SETTINGS = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val MADRID_MONDAY_SETTINGS = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, timeResolutionMinutes = null, userId = 7)
         const val IMPROVED = """{"duration_format":"improved"}"""
         const val CLASSIC = """{"duration_format":"classic"}"""
     }

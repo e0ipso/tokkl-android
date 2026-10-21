@@ -15,7 +15,8 @@ import androidx.room.TypeConverters
  * would lose the queued changes.
  *
  * Version 2 adds the queue: `pending_changes` and `entry_ids`. Version 3 adds
- * `pending_changes.maybeSent`, and version 4 `pending_changes.existingIds`.
+ * `pending_changes.maybeSent`, version 4 `pending_changes.existingIds`, and version 5
+ * `pending_changes.held` and `pending_changes.refusal`.
  */
 @Database(
     entities = [
@@ -28,9 +29,14 @@ import androidx.room.TypeConverters
         PendingChange::class,
         EntryIdMapping::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
+    ],
 )
 @TypeConverters(CacheConverters::class)
 abstract class CacheDatabase : RoomDatabase() {

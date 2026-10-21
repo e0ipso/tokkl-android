@@ -4,8 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
-import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.Dispatchers
 
 /**
@@ -16,12 +17,15 @@ import kotlinx.coroutines.Dispatchers
 class SignInViewModel(application: Application) : AndroidViewModel(application) {
 
     val model = SignInModel(
-        // Runs on the IO thread, since the stores touch the disk. The settings go first. If the
-        // session write then fails, the app stays signed out and the next sign-in replaces them.
+        // Runs on the IO thread, since the stores touch the disk.
         signIn = SignIn(
-            session = { server, token, settings ->
-                (application as TokklApplication).accountSettings.store(settings)
-                Session(application).save(server, token)
+            session = (application as TokklApplication)::storeSignIn,
+            // Recheck persisted identity on every submit, including a form restored after the
+            // process died. The in-memory form's reauthentication marker may have been lost.
+            signedInAccount = {
+                ServerConfigStore(application).load()?.let { server ->
+                    SignInAgain(server, AccountSettingsStore(application).load()?.userId)
+                }
             },
         ),
         trust = ServerTrustStore(application),

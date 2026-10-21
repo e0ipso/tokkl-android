@@ -48,6 +48,12 @@ enum class ChangeKind {
  *   [ChangeSender.LOOKUP_MARGIN] of its start when it was queued. None of them can be the entry a
  *   post of this create made, so the sender never takes one for it, as it would take the source
  *   of a duplicate, which has every field and time of the copy.
+ * @property held the server refused this change with a 400 or another 4xx that only the user can
+ *   settle (docs/PRD.md O6), so it waits in the "needs attention" list until the user sends it
+ *   again, edits the entry or discards it. Later changes to the same entry wait behind it, and the
+ *   rest of the queue goes on.
+ * @property refusal the server's reason for refusing a [held] change, such as "Time entries can
+ *   not be longer than 999 hours", or null when its answer gave none.
  */
 @Entity(tableName = "pending_changes", indices = [Index("entryId")])
 data class PendingChange(
@@ -65,6 +71,8 @@ data class PendingChange(
     val tagIds: List<Long>,
     @ColumnInfo(defaultValue = "0") val maybeSent: Boolean = false,
     @ColumnInfo(defaultValue = "[]") val existingIds: List<Long> = emptyList(),
+    @ColumnInfo(defaultValue = "0") val held: Boolean = false,
+    val refusal: String? = null,
 ) {
 
     /** The cache row this change leaves, or null for a delete. */

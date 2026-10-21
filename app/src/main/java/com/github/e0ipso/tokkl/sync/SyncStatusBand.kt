@@ -30,8 +30,9 @@ import java.time.Clock
  * alone, and the text wraps at any font scale.
  *
  * While the server has refused changes, [SyncStatus.needsAttention], a button opens the "needs
- * attention" list through [onOpenNeedsAttention], which TKA-0073 builds. The element lists no
- * change itself.
+ * attention" list through [onOpenNeedsAttention]. The element lists no change itself. While the
+ * server refuses the phone's API token, [SyncStatus.signInNeeded], it says so, and a button signs
+ * in again through [onSignInAgain] (docs/PRD.md O6).
  *
  * @param clock where today comes from, which decides whether the time needs its day.
  */
@@ -40,6 +41,7 @@ fun SyncStatusBand(
     status: SyncStatus,
     onOpenNeedsAttention: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    onSignInAgain: (() -> Unit)? = null,
     clock: Clock = Clock.systemUTC(),
 ) {
     val resources = LocalResources.current
@@ -74,6 +76,19 @@ fun SyncStatusBand(
                     }
                     lastAnsweredText(resources, lastAnsweredLabel(status.lastAnswered, status.settings, clock))?.let { text ->
                         Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            if (status.signInNeeded) {
+                Text(
+                    text = resources.getString(R.string.sync_sign_in_needed),
+                    style = bodyStyle,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(top = TokklTheme.spacing.space1),
+                )
+                if (onSignInAgain != null) {
+                    TextButton(onClick = onSignInAgain) {
+                        Text(resources.getString(R.string.sync_sign_in_again))
                     }
                 }
             }

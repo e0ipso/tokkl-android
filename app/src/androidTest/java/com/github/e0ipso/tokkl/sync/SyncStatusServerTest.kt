@@ -1,6 +1,9 @@
 package com.github.e0ipso.tokkl.sync
 
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -17,6 +20,13 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.cache.CacheDatabase
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import kotlinx.coroutines.Dispatchers
+import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.orFail
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonObject
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -102,6 +112,114 @@ class SyncStatusServerTest {
             val later = checkNotNull(app.lastAnswer.state.value)
             assertTrue("the send's answers moved the time on from $answered to $later", later.isAfter(answered))
         }
+    }
+
+    @Test
+    fun theNeedsAttentionLinkOpensTheReasonAndItsEditResendAndDiscardActions() {
+        ActivityScenario.launch(MainActivity::class.java).use {
+            composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
+            runBlocking { app.accountSettings.refresh().join() }
+            val start = Instant.now().minusSeconds(3600)
+            runBlocking {
+                app.changes.create(account.workspaceId, EntryFields(description = "Invalid draft"), start, start.plusSeconds(1000 * 3600))
+            }
+            val link = context.resources.getQuantityString(R.plurals.sync_needs_attention, 1, 1)
+            awaitText(link)
+            composeRule.onNode(hasText(link) and hasClickAction()).performClick()
+            val reason = context.getString(R.string.needs_attention_reason, "Time entries can not be longer than 999 hours")
+            awaitText(reason)
+            composeRule.onNode(hasText(context.getString(R.string.needs_attention_send_again)) and hasClickAction())
+                .performScrollTo().performClick()
+            composeRule.waitUntil("the same server refusal returns", NETWORK_TIMEOUT_MS) {
+                runBlocking { app.changes.heldCount.first() } == 1
+            }
+            composeRule.onNode(hasText(context.getString(R.string.needs_attention_edit)) and hasClickAction())
+                .performScrollTo().performClick()
+            composeRule.waitUntil("Edit entry opened the form", NETWORK_TIMEOUT_MS) {
+                shows(hasText(context.getString(R.string.entry_description)) and hasSetTextAction())
+            }
+            InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            awaitText(reason)
+            composeRule.onNode(hasText(context.getString(R.string.needs_attention_discard)) and hasClickAction())
+                .performScrollTo().performClick()
+            awaitText(context.getString(R.string.needs_attention_empty))
+            assertEquals(0, runBlocking { app.changes.unsentCount.first() })
+        }
+    }
+
+    @Test
+    fun aDeletedEntryShowsADiscardNoticeUntilItIsDismissed() {
+        val start = Instant.now().minusSeconds(3600)
+        val id = account.createEntry("Deleted on the web", start, start.plusSeconds(1800))
+        ActivityScenario.launch(MainActivity::class.java).use {
+            composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
+            runBlocking { app.accountSettings.refresh().join() }
+            account.deleteEntry(id)
+            assertTrue(runBlocking { app.changes.update(id, EntryFields(description = "Offline edit"), start, start.plusSeconds(1800)) })
+            awaitText(context.resources.getQuantityString(R.plurals.sync_discarded, 1, 1))
+            assertEquals(0, runBlocking { app.changes.unsentCount.first() })
+            composeRule.onNode(hasText(context.getString(R.string.sync_discarded_dismiss)) and hasClickAction()).performClick()
+            composeRule.waitUntil("the discard notice is dismissed", NETWORK_TIMEOUT_MS) { app.discarded.state.value == 0 }
+        }
+    }
+
+    @Test
+    fun openingTheAppWithAnExpiredTokenAndSavedChangesAsksForSignIn() {
+        runBlocking {
+            app.accountSettings.refresh().join()
+            app.sender.send().join()
+        }
+        val workspace = account.workspaceId
+        val start = Instant.now().minusSeconds(3600)
+        // This represents a queue written by a previous process: no in-memory sender event.
+        val database = CacheDatabase.open(context)
+        try {
+            val quietQueue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            runBlocking { quietQueue.create(workspace, EntryFields(description = "Saved before restart"), start, start.plusSeconds(1800)) }
+        } finally {
+            database.close()
+        }
+        direct.send("POST", direct.server.api("me", "reset_token"), JsonObject(emptyMap()), String.serializer())
+            .orFail("POST /me/reset_token")
+        assertEquals(1, runBlocking { app.changes.unsentCount.first() })
+        assertTrue(!app.sender.signInNeeded.value)
+        ActivityScenario.launch(MainActivity::class.java).use {
+            composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
+            awaitText(context.getString(R.string.sync_sign_in_needed))
+            assertEquals(1, runBlocking { app.changes.unsentCount.first() })
+            assertTrue(app.sender.signInNeeded.value)
+        }
+    }
+
+    @Test
+    fun aResetTokenPromptsForSignInAndTheNewTokenSendsTheWaitingChanges() {
+        ActivityScenario.launch(MainActivity::class.java).use {
+            composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
+            runBlocking { app.accountSettings.refresh().join() }
+            val workspace = account.workspaceId
+            val newToken = direct.send("POST", direct.server.api("me", "reset_token"), JsonObject(emptyMap()), String.serializer())
+                .orFail("POST /me/reset_token")
+            val start = Instant.now().minusSeconds(3600)
+            runBlocking { app.changes.create(workspace, EntryFields(description = "Waiting for sign-in"), start, start.plusSeconds(1800)) }
+            awaitText(context.getString(R.string.sync_sign_in_needed))
+            assertEquals(1, runBlocking { app.changes.unsentCount.first() })
+            composeRule.onNode(hasText(context.getString(R.string.sync_sign_in_again)) and hasClickAction()).performClick()
+            composeRule.waitUntil("the sign-in form opens", NETWORK_TIMEOUT_MS) {
+                shows(hasText(context.getString(R.string.sign_in_api_token)) and hasSetTextAction())
+            }
+            composeRule.onNode(hasText(context.getString(R.string.sign_in_api_token)) and hasSetTextAction())
+                .performScrollTo().performTextInput(newToken)
+            composeRule.onNode(hasText(context.getString(R.string.sign_in_submit)) and hasClickAction())
+                .performScrollTo().performClick()
+            composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
+            composeRule.waitUntil("sign-in resumed the queue", NETWORK_TIMEOUT_MS) { runBlocking { app.changes.unsentCount.first() } == 0 }
+            assertTrue(!app.sender.signInNeeded.value)
+            assertEquals(0, app.discarded.state.value)
+        }
+    }
+
+    private fun awaitText(text: String) {
+        composeRule.waitUntil("the screen shows $text", NETWORK_TIMEOUT_MS) { shows(hasText(text)) }
     }
 
     /** One node, as TalkBack reads it, that holds [count] and [answered], and the bar's unsent icon with them. */

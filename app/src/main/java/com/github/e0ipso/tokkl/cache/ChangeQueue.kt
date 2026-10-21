@@ -59,6 +59,12 @@ interface EntryChanges {
  * An entry created on the phone gets a negative local id. The calls take it, before and after the
  * server has answered the create with its own id.
  *
+ * A change the server refused waits for the user in the "needs attention" list ([held],
+ * docs/PRD.md O6), and later changes to its entry wait behind it. A change made to that entry
+ * meanwhile, such as the user's fix in the entry form, folds into the held change and lets it go
+ * out again: every change carries all of the entry's fields, so the newest one says everything the
+ * server needs. [sendAgain] lets a held change go out as it is, and [discard] drops it.
+ *
  * @param io where the database writes run.
  * @param stopSpan the span the server stores for a running entry from `start` stopped at `at`:
  *   with `oneStep` for a Stop, as Tokkl's stop endpoint does, and without it for a start that
@@ -77,8 +83,14 @@ class ChangeQueue(
 
     private val dao = database.changes()
 
-    /** How many changes the server has not received (docs/PRD.md O5). */
+    /** How many changes the server has not received (docs/PRD.md O5), held ones included. */
     val unsentCount: Flow<Int> = dao.count()
+
+    /** The changes the server refused, which wait for the user, oldest first (docs/PRD.md O6). */
+    val held: Flow<List<PendingChange>> = dao.held()
+
+    /** How many changes the server refused wait for the user. */
+    val heldCount: Flow<Int> = dao.heldCount()
 
     /**
      * Starts a timer in [workspaceId] with [fields], at the tap time. A cached running entry
@@ -163,8 +175,29 @@ class ChangeQueue(
         }
 
     /**
-     * Runs [change] in one transaction on [io], then asks for the queue to be sent. A call that
-     * queued nothing, such as a stop of an entry that does not run, leaves an empty queue alone.
+     * Lets the held change [sequence] go out again as it is, such as after the cause of its
+     * refusal was fixed on the server. Returns false when it is not held.
+     */
+    suspend fun sendAgain(sequence: Long): Boolean = queue { dao.release(sequence) > 0 }
+
+    /**
+     * Drops the held change [sequence] and the later changes to its entry that wait behind it,
+     * since each of them builds on it. An entry the phone created goes from the cache with them;
+     * any other keeps its row until the next refresh brings the server's. Returns false when the
+     * change is not held.
+     */
+    suspend fun discard(sequence: Long): Boolean =
+        queue {
+            val held = dao.change(sequence)?.takeIf { it.held } ?: return@queue false
+            dao.deleteFrom(held.entryId, held.sequence)
+            if (held.kind == ChangeKind.CREATE) dao.deleteEntry(held.entryId)
+            true
+        }
+
+    /**
+     * Runs [change] in one transaction on [io], then asks for the queue to be sent while it holds
+     * a change that can go out. A call that queued nothing, such as a stop of an entry that does
+     * not run, leaves an empty queue alone.
      */
     private suspend fun <T> queue(change: () -> T): T {
         val (result, holdsChanges) = withContext(io) {
@@ -194,6 +227,7 @@ class ChangeQueue(
      * local id here. Returns the entry's id.
      */
     private fun enqueue(kind: ChangeKind, entry: CachedTimeEntry, existingIds: List<Long> = emptyList()): Long {
+        dao.heldFor(entry.id)?.let { held -> return foldInto(held, kind, entry) }
         val change = PendingChange.of(kind, entry).copy(existingIds = existingIds)
         val sequence = dao.insert(change)
         val queued = if (kind == ChangeKind.CREATE) {
@@ -204,6 +238,35 @@ class ChangeQueue(
         val row = queued.cachedEntry()
         if (row == null) dao.deleteEntry(queued.entryId) else dao.upsertEntry(row)
         return queued.entryId
+    }
+
+    /**
+     * Folds a change of [kind] that leaves [entry] as given into [held], the refused change to the
+     * same entry, and lets it go out again. The changes queued behind [held] go, since this one
+     * carries every field after them. A held create stays a create, as the server has no entry
+     * yet, and a delete of it leaves nothing to send. Returns the entry's id.
+     */
+    private fun foldInto(held: PendingChange, kind: ChangeKind, entry: CachedTimeEntry): Long {
+        dao.deleteFrom(held.entryId, held.sequence + 1)
+        if (held.kind == ChangeKind.CREATE && kind == ChangeKind.DELETE) {
+            dao.delete(held.sequence)
+            dao.deleteEntry(held.entryId)
+            return held.entryId
+        }
+        // An edit can move a create to another day. Its lost-post lookup must also exclude
+        // the server entries already known around the new start.
+        val existingIds = if (held.kind == ChangeKind.CREATE) {
+            val margin = ChangeSender.LOOKUP_MARGIN
+            (held.existingIds + dao.serverEntryIds(entry.start.minus(margin), entry.start.plus(margin))).distinct()
+        } else {
+            held.existingIds
+        }
+        val folded = PendingChange.of(if (held.kind == ChangeKind.CREATE) ChangeKind.CREATE else kind, entry)
+            .copy(sequence = held.sequence, entryId = held.entryId, maybeSent = held.maybeSent, existingIds = existingIds)
+        dao.update(folded)
+        val row = folded.cachedEntry()
+        if (row == null) dao.deleteEntry(folded.entryId) else dao.upsertEntry(row)
+        return folded.entryId
     }
 
     private fun entry(id: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant?): CachedTimeEntry {

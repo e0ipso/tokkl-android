@@ -21,6 +21,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
@@ -34,11 +37,24 @@ import kotlinx.serialization.json.put
 import okhttp3.HttpUrl
 
 /**
- * Sends the queue to the configured server, oldest change first (docs/PRD.md O1). A failure stops
- * the drain and keeps the change queued, so the order holds and nothing is lost: no network, a
- * 5xx, a 429 and, until the queue learns what each means (TKA-0073), any other failure. After a
- * 429 the next try waits for `Retry-After`, or [DEFAULT_RETRY_AFTER] when the header is missing.
- * The wait is kept in memory, and the queue itself on disk.
+ * Sends the queue to the configured server, oldest change first (docs/PRD.md O1). A failure the
+ * phone can wait out stops the drain and keeps the change queued, so the order holds and nothing
+ * is lost: no network, a 5xx, a 408 or a 429. After a 429 the next try waits for `Retry-After`,
+ * or [DEFAULT_RETRY_AFTER] when the header is missing. The wait is kept in memory, and the queue
+ * itself on disk.
+ *
+ * Each other refusal has its own outcome (docs/PRD.md O6):
+ * - A 409 on a stop leaves the queue with no message, since the entry is stopped either way.
+ * - A 404 on an update or a stop, when the server no longer has the entry, takes every queued
+ *   change to it out of the queue and the entry out of the cache, and [onDiscarded] counts them
+ *   for the discard notice. A 404 on a delete that may already have reached the server counts
+ *   as sent. Any other 404, such as a create or
+ *   an update whose project the server no longer has, is held as a 400 is.
+ * - A 400, and any other 4xx, is held for the user with the server's message
+ *   ([ChangeStore.hold]). Later changes to the same entry wait behind it, and the rest of the
+ *   queue goes on.
+ * - A 403, or a 401, pauses the whole queue and discards nothing: [signInNeeded] turns true, and
+ *   no drain sends anything until [resume], which signing in again calls.
  *
  * A queued start is the exception to "the change that reaches the server last wins" (O3), because
  * Tokkl stops the running entry when a new one starts. Before posting it, the sender reads the
@@ -76,9 +92,11 @@ import okhttp3.HttpUrl
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
  * @param onSent runs on [io] once a drain has sent at least one change, so the app can refresh:
  *   after the drain's last pass, not after each change or pass. It runs after a restore too.
- * @param onEmptied runs on [io] once a drain that sent at least one change has left the queue
- *   empty, inside the drain's job and before [onSent], so the app can cancel a background retry
+ * @param onEmptied runs on [io] once a drain that sent at least one change has left nothing to
+ *   send, inside the drain's job and before [onSent], so the app can cancel a background retry
  *   that would find nothing to send.
+ * @param onDiscarded runs on [io] with how many changes a 404 took out of the queue because the
+ *   server no longer has their entry, so the app can say so.
  * @param serverStart where the server puts a start once the entry is stopped: Tokkl snaps it to
  *   the account's time resolution, and Toggl keeps it. Finds the entry a lost create made.
  * @param switchSpan the span the server stores for a running entry from `start` that a new timer
@@ -93,6 +111,7 @@ class ChangeSender(
     private val io: CoroutineContext,
     private val onSent: () -> Unit = {},
     private val onEmptied: () -> Unit = {},
+    private val onDiscarded: (Int) -> Unit = {},
     private val clock: Clock = Clock.systemUTC(),
     private val serverStart: (Instant) -> Instant = { it },
     private val switchSpan: (start: Instant, stop: Instant) -> SnappedSpan = ::SnappedSpan,
@@ -100,13 +119,19 @@ class ChangeSender(
 
     /** What one [drain] did. */
     sealed interface Outcome {
-        /** How many changes the drain sent. */
+        /**
+         * How many changes left the queue because the server answered them: it stored them, it
+         * had what a stop asked for already, or it no longer has their entry.
+         */
         val sent: Int
 
-        /** The queue is empty. */
+        /** Nothing is left to send: the queue is empty, or holds only changes that wait for the user. */
         data class Empty(override val sent: Int) : Outcome
 
-        /** The oldest change stays queued, because the server did not accept it. */
+        /**
+         * The oldest change stays queued, because the server did not accept it, or because the
+         * queue waits for the user to sign in again ([ApiError.AuthFailed]).
+         */
         data class Stopped(override val sent: Int, val error: ApiError) : Outcome
 
         /** A 429 asked the phone to wait until [until] before the next try. */
@@ -156,6 +181,20 @@ class ChangeSender(
     @Volatile
     private var lastOutcome: Outcome? = null
 
+    private val mutableSignInNeeded = MutableStateFlow(false)
+
+    /**
+     * True once the server refused the session's token for a queued change (docs/PRD.md O6). The
+     * queue then sends nothing and discards nothing until [resume].
+     */
+    val signInNeeded: StateFlow<Boolean> = mutableSignInNeeded.asStateFlow()
+
+    /** Lifts the pause after a refused token, once the user has signed in again, and drains the queue. */
+    fun resume(): Job {
+        mutableSignInNeeded.value = false
+        return send()
+    }
+
     /**
      * Drains the queue in the background. While a drain runs, another call returns that one, which
      * then drains once more, so a change queued meanwhile does not wait for the next event.
@@ -193,6 +232,7 @@ class ChangeSender(
         running?.join()
         retryAt = null
         lastOutcome = null
+        mutableSignInNeeded.value = false
     }
 
     private fun drainUntilQuiet() {
@@ -226,15 +266,17 @@ class ChangeSender(
     }
 
     /**
-     * Sends the queued changes in order until the queue is empty or one fails. Each sent change
-     * leaves the queue as [ChangeStore.sent] describes. Blocks on the network and the disk, so
-     * call it off the main thread, and from one thread at a time.
+     * Sends the queued changes in order until nothing is left to send or one fails in a way the
+     * phone can wait out. Each sent change leaves the queue as [ChangeStore.sent] describes, and
+     * each refused one as [ChangeSender] describes. Blocks on the network and the disk, so call
+     * it off the main thread, and from one thread at a time.
      */
     fun drain(): Outcome {
         var sent = 0
         // The change this drain already tried once more, by its queue sequence.
         var triedAgain: Long? = null
         while (true) {
+            if (mutableSignInNeeded.value) return Outcome.Stopped(sent, ApiError.AuthFailed)
             val wait = retryAt
             if (wait != null) {
                 if (clock.instant().isBefore(wait)) return Outcome.Waiting(sent, wait)
@@ -261,7 +303,31 @@ class ChangeSender(
                         triedAgain = queued.sequence
                         continue
                     }
-                    return Outcome.Stopped(sent, error)
+                    when (val refused = refusal(api, queued, error)) {
+                        is Refusal.Wait -> {
+                            val waiting = refused.error
+                            if (waiting is ApiError.RateLimited) {
+                                val until = clock.instant().plusSeconds(waiting.retryAfterSeconds ?: DEFAULT_RETRY_AFTER.seconds)
+                                retryAt = until
+                                return Outcome.Waiting(sent, until)
+                            }
+                            return Outcome.Stopped(sent, waiting)
+                        }
+                        Refusal.SignInAgain -> {
+                            mutableSignInNeeded.value = true
+                            return Outcome.Stopped(sent, ApiError.AuthFailed)
+                        }
+                        Refusal.AlreadyDone -> {
+                            store.sent(queued, queued.entryId, answer = null)
+                            sent++
+                        }
+                        Refusal.EntryGone -> {
+                            val discarded = store.discardEntry(queued)
+                            sent += discarded
+                            if (discarded > 0) onDiscarded(discarded)
+                        }
+                        is Refusal.Hold -> store.hold(queued, refused.reason)
+                    }
                 }
             }
         }
@@ -321,10 +387,11 @@ class ChangeSender(
 
     /**
      * Sends the queued delete [change], marked [PendingChange.maybeSent] first, or returns null
-     * when Undo took it back before then. On a first try, the mark clears when the failure shows
-     * that the server deleted nothing. Once a try may have reached the server, the mark stays
-     * whatever later tries get, so Undo goes through the server, and a 404 counts as sent: the
-     * server no longer has the entry, most likely because that earlier try deleted it.
+     * when Undo took it back before then. A 404 on a retry counts as sent: the server no longer has the
+     * entry, because an earlier try or another client deleted it, which is what the delete asked
+     * for (docs/PRD.md O6). On a first try, the mark clears when another failure shows that the
+     * server deleted nothing. Once a try may have reached the server, the mark stays whatever
+     * later tries get, so Undo goes through the server.
      */
     private fun delete(api: TogglApiClient, change: PendingChange): ApiResult<Sent>? =
         synchronized(deletes) {
@@ -333,15 +400,69 @@ class ChangeSender(
             when (val result = api.sendNoContent(request.method, request.url, request.body, resend = false)) {
                 is ApiResult.Success -> ApiResult.Success(Sent(change, change.entryId, entry = null))
                 is ApiResult.Failure -> when {
+                    (result.error as? ApiError.Http)?.status == NOT_FOUND && change.maybeSent -> ApiResult.Success(Sent(change, change.entryId, entry = null))
                     !change.maybeSent -> {
                         if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
                         result
                     }
-                    (result.error as? ApiError.Http)?.status == NOT_FOUND -> ApiResult.Success(Sent(change, change.entryId, entry = null))
                     else -> result
                 }
             }
         }
+
+    /**
+     * What the drain does with [change], which the server, or the way to it, refused with [error]
+     * (docs/PRD.md O6). A 404 on an update or a stop reads the entry, one GET, to tell an entry
+     * the server no longer has from a value it no longer has, such as a deleted project.
+     */
+    private fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError): Refusal {
+        if (error == ApiError.AuthFailed) return Refusal.SignInAgain
+        val refused = error as? ApiError.UnexpectedStatus ?: return Refusal.Wait(error)
+        val status = refused.status
+        return when {
+            status == UNAUTHORIZED -> Refusal.SignInAgain
+            status !in 400..499 || status == REQUEST_TIMEOUT -> Refusal.Wait(error)
+            status == CONFLICT && change.kind == ChangeKind.STOP -> Refusal.AlreadyDone
+            status == NOT_FOUND && change.kind != ChangeKind.CREATE -> when (val entry = entryOnServer(api, change.entryId)) {
+                is ApiResult.Success -> if (entry.value) Refusal.Hold(refused.message) else Refusal.EntryGone
+                is ApiResult.Failure -> if (entry.error == ApiError.AuthFailed || (entry.error as? ApiError.Http)?.status == UNAUTHORIZED) {
+                    Refusal.SignInAgain
+                } else {
+                    Refusal.Wait(entry.error)
+                }
+            }
+            else -> Refusal.Hold(refused.message)
+        }
+    }
+
+    /** Whether the server has the entry [id], preserving a failed lookup's retry or sign-in outcome. */
+    private fun entryOnServer(api: TogglApiClient, id: Long): ApiResult<Boolean> =
+        when (val result = api.get(api.server.api("me", "time_entries", id.toString()), JsonObject.serializer())) {
+            is ApiResult.Success -> ApiResult.Success(true)
+            is ApiResult.Failure -> when {
+                (result.error as? ApiError.Http)?.status == NOT_FOUND -> ApiResult.Success(false)
+                result.error is ApiError.InvalidResponse -> ApiResult.Success(true)
+                else -> result
+            }
+        }
+
+    /** What the drain does with a refused change. */
+    private sealed interface Refusal {
+        /** The failure may pass: stop the drain and keep the change. */
+        data class Wait(val error: ApiError) : Refusal
+
+        /** The server refused the token: pause the queue until the user signs in again. */
+        data object SignInAgain : Refusal
+
+        /** The server has what the change asked for already: it leaves the queue. */
+        data object AlreadyDone : Refusal
+
+        /** The server no longer has the entry: every change to it leaves the queue, counted. */
+        data object EntryGone : Refusal
+
+        /** Only the user can settle it: hold it with the server's [reason]. */
+        data class Hold(val reason: String?) : Refusal
+    }
 
     /**
      * Takes back the delete of the entry [entryId], the id the phone deleted it under. A delete
@@ -439,6 +560,15 @@ class ChangeSender(
 
         /** What Tokkl answers to a delete of an entry it does not have, or has in the trash. */
         private const val NOT_FOUND = 404
+
+        /** What a server may answer to a token it does not take, where Tokkl answers 403. */
+        private const val UNAUTHORIZED = 401
+
+        /** The server gave up waiting for the request, which a later try may get past. */
+        private const val REQUEST_TIMEOUT = 408
+
+        /** What a server answers to a stop of an entry stopped already, as Tokkl's stop endpoint does. */
+        private const val CONFLICT = 409
     }
 }
 

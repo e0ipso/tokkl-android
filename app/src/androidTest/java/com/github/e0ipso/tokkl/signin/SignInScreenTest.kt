@@ -97,7 +97,7 @@ class SignInScreenTest {
         assertEquals(TokklTestServer.url, ServerConfigStore(context).load())
         assertTrue("the token store holds the API token", ApiTokenStore(context).load() == TokklTestServer.apiToken)
         // The test account is in UTC (scripts/instrumented-tests.sh), with Tokkl's other defaults.
-        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = defaultWorkspace())
+        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = serverId("default_workspace_id"), userId = serverId("id"))
         assertEquals(settings, AccountSettingsStore(context).load())
         assertEquals(settings, (context.applicationContext as TokklApplication).accountSettings.state.value)
         assertStoredNowhere(TokklTestServer.apiToken, "the API token in plain text")
@@ -302,10 +302,10 @@ class SignInScreenTest {
     }
 
     /** The test account's default workspace, read straight from the server, past the app's guard. */
-    private fun defaultWorkspace(): Long {
+    private fun serverId(field: String): Long {
         val api = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
         return api.get(api.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
-            .getValue("default_workspace_id").jsonPrimitive.long
+            .getValue(field).jsonPrimitive.long
     }
 
     private fun exists(matcher: SemanticsMatcher): Boolean =

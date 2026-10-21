@@ -100,7 +100,7 @@ class SignInModelTest {
         assertEquals("/tokkl/api/v9/me", request.url.encodedPath)
         assertEquals(ApiCredentials.ApiToken(TOKEN).authorizationHeader, request.headers["Authorization"])
         assertEquals(listOf(ServerUrl.parse(baseUrl("/tokkl"))!! to TOKEN), saved)
-        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.SUNDAY, 15.0)), savedSettings)
+        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.SUNDAY, 15.0, userId = 7)), savedSettings)
         assertTrue(model.state.value.signedIn)
     }
 
@@ -144,7 +144,7 @@ class SignInModelTest {
 
         assertNull(model.state.value.failure)
         assertTrue(model.state.value.signedIn)
-        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null)), savedSettings)
+        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null, userId = 7)), savedSettings)
     }
 
     @Test
@@ -181,6 +181,62 @@ class SignInModelTest {
             ApiCredentials.EmailPassword("ana@example.com", " $PASSWORD ").authorizationHeader,
             server.takeRequest().headers["Authorization"],
         )
+    }
+
+    @Test
+    fun aFormOpenedBeforeSettingsLoadStillChecksThePersistedIdentity() {
+        val url = ServerUrl.parse(baseUrl("/"))!!
+        val signIn = SignIn(
+            session = { _, _, _ -> error("must not replace the existing account") },
+            signedInAccount = { SignInAgain(url, 7) },
+        )
+        server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
+        assertEquals(SignInResult.OtherAccount,
+            signIn.attempt(url, SignInCredentials.ApiToken(TOKEN), SignInAgain(url, null)))
+    }
+
+    @Test
+    fun aRestoredFormStillChecksThePersistedAccountBeforeStoringCredentials() {
+        val signIn = SignIn(
+            session = { _, _, _ -> error("must not replace the existing account") },
+            signedInAccount = { SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7) },
+        )
+        server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
+        assertEquals(SignInResult.OtherAccount,
+            signIn.attempt(ServerUrl.parse(baseUrl("/"))!!, SignInCredentials.ApiToken(TOKEN)))
+    }
+
+    @Test
+    fun signingInAgainRefusesAnotherServerWithoutSendingTheToken() {
+        model.signInAgain(SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7))
+        model.onServerUrlChange("https://other.example.com/")
+        model.onApiTokenChange(TOKEN)
+        model.submit()
+        assertEquals(SignInResult.OtherAccount, model.state.value.failure)
+        assertEquals(0, server.requestCount)
+        assertTrue(saved.isEmpty())
+    }
+
+    @Test
+    fun signingInAgainRefusesAnotherAccountAndKeepsTheExistingSession() {
+        model.signInAgain(SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7))
+        server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
+        model.onApiTokenChange(TOKEN)
+        model.submit()
+        assertEquals(SignInResult.OtherAccount, model.state.value.failure)
+        assertTrue(saved.isEmpty())
+        assertTrue(savedSettings.isEmpty())
+    }
+
+    @Test
+    fun signingInAgainAcceptsTheSameAccountWithItsNewToken() {
+        model.signInAgain(SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7))
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
+        model.onApiTokenChange(TOKEN)
+        model.submit()
+        assertTrue(model.state.value.signedIn)
+        assertEquals(TOKEN, saved.single().second)
+        assertEquals(7L, savedSettings.single().userId)
     }
 
     @Test

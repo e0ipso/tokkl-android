@@ -26,6 +26,8 @@ import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.NetworkWatch
+import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
@@ -102,6 +104,11 @@ class MainActivity : ComponentActivity() {
                         capabilities = (application as TokklApplication).capabilities.state,
                         favorites = timerViewModel.favorites,
                         syncStatus = (application as TokklApplication).syncStatus,
+                        needsAttention = (application as TokklApplication).needsAttention,
+                        settings = (application as TokklApplication).accountSettings.state,
+                        discardedChanges = (application as TokklApplication).discarded.state,
+                        onDismissDiscarded = (application as TokklApplication).discarded::dismiss,
+                        signedInAccount = ::signedInAccount,
                     )
                 }
             }
@@ -165,6 +172,12 @@ class MainActivity : ComponentActivity() {
         historyViewModel.model.reconnected()
         calendarViewModel.model.reconnected()
         reportsViewModel.model.reconnected()
+    }
+
+    /** The account signed in now, for signing in again after the server refused its token. Reads the disk. */
+    private fun signedInAccount(): SignInAgain? {
+        val app = application as TokklApplication
+        return ServerConfigStore(app).load()?.let { server -> SignInAgain(server, app.accountSettings.state.value?.userId) }
     }
 
     /** A sign-in loads the account settings and the cache, as coming to the foreground does. */

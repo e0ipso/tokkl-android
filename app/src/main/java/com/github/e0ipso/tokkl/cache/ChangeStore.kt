@@ -6,7 +6,11 @@ import java.time.Instant
 /** The queue as [ChangeSender] sees it: the next change, and the record of a sent one. */
 interface ChangeStore {
 
-    /** The oldest queued change, or null when the queue is empty. Blocks on disk I/O. */
+    /**
+     * The oldest queued change that can go out, or null when the queue holds none: changes the
+     * server refused, and later changes to their entries, wait for the user (docs/PRD.md O6).
+     * Blocks on disk I/O.
+     */
     fun first(): PendingChange?
 
     /**
@@ -40,6 +44,19 @@ interface ChangeStore {
 
     /** True when a create from the phone already maps to the server's entry [serverId]. Blocks on disk I/O. */
     fun isMapped(serverId: Long): Boolean
+
+    /**
+     * Holds [change], which the server refused, for the user with the server's [refusal], or null
+     * without one (docs/PRD.md O6). Later changes to its entry wait behind it. Blocks on disk I/O.
+     */
+    fun hold(change: PendingChange, refusal: String?)
+
+    /**
+     * Takes every queued change to the entry of [change] out of the queue, and the entry out of
+     * the cache, in one transaction, because the server no longer has the entry. Returns how
+     * many changes it took. Blocks on disk I/O.
+     */
+    fun discardEntry(change: PendingChange): Int
 
     /**
      * Takes back the delete of the entry [entryId], the id the phone deleted it under, in one
@@ -108,6 +125,14 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
     override fun maybeSent(change: PendingChange, maybeSent: Boolean): Boolean = dao.setMaybeSent(change.sequence, maybeSent) > 0
 
     override fun isMapped(serverId: Long): Boolean = dao.isMapped(serverId)
+
+    override fun hold(change: PendingChange, refusal: String?) = dao.hold(change.sequence, refusal)
+
+    override fun discardEntry(change: PendingChange): Int =
+        database.runInTransaction<Int> {
+            dao.deleteEntry(change.entryId)
+            dao.deleteFrom(change.entryId, sequence = Long.MIN_VALUE)
+        }
 
     override fun takeBackDelete(entryId: Long): TakenBack =
         database.runInTransaction<TakenBack> {

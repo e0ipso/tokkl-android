@@ -16,13 +16,42 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 abstract class ChangeDao {
 
-    /** How many changes the server has not received. */
+    /** How many changes the server has not received, held ones included. */
     @Query("SELECT COUNT(*) FROM pending_changes")
     abstract fun count(): Flow<Int>
 
-    /** The oldest change, which goes out next. */
-    @Query("SELECT * FROM pending_changes ORDER BY sequence LIMIT 1")
+    /**
+     * The oldest change that can go out, which goes out next: neither [PendingChange.held] nor to
+     * an entry whose earlier change is held, since those wait behind it (docs/PRD.md O6).
+     */
+    @Query("SELECT * FROM pending_changes WHERE entryId NOT IN (SELECT entryId FROM pending_changes WHERE held) ORDER BY sequence LIMIT 1")
     abstract fun first(): PendingChange?
+
+    /** How many changes the server refused wait for the user. */
+    @Query("SELECT COUNT(*) FROM pending_changes WHERE held")
+    abstract fun heldCount(): Flow<Int>
+
+    /** The changes the server refused that wait for the user, oldest first. */
+    @Query("SELECT * FROM pending_changes WHERE held ORDER BY sequence")
+    abstract fun held(): Flow<List<PendingChange>>
+
+    /** The held change to the entry [entryId], or null when it has none. */
+    @Query("SELECT * FROM pending_changes WHERE entryId = :entryId AND held ORDER BY sequence LIMIT 1")
+    abstract fun heldFor(entryId: Long): PendingChange?
+
+    @Query("SELECT * FROM pending_changes WHERE sequence = :sequence")
+    abstract fun change(sequence: Long): PendingChange?
+
+    @Query("UPDATE pending_changes SET held = 1, refusal = :refusal WHERE sequence = :sequence")
+    abstract fun hold(sequence: Long, refusal: String?)
+
+    /** Lets a held change go out again. Returns how many it let go: none when it is not held. */
+    @Query("UPDATE pending_changes SET held = 0, refusal = NULL WHERE sequence = :sequence AND held")
+    abstract fun release(sequence: Long): Int
+
+    /** Deletes the queued changes to the entry [entryId] from [sequence] on. Returns how many. */
+    @Query("DELETE FROM pending_changes WHERE entryId = :entryId AND sequence >= :sequence")
+    abstract fun deleteFrom(entryId: Long, sequence: Long): Int
 
     @Query("SELECT COUNT(*) FROM pending_changes WHERE entryId = :entryId")
     abstract fun countFor(entryId: Long): Int

@@ -58,6 +58,8 @@
     <string name="sign_in_error_no_api_token">The server didn\'t send an API token. Sign in with your API token instead.</string>
     <string name="sign_in_error_host_not_allowed">The server redirected to %1$s. The app talks only to the URL you entered, so it sent nothing there.</string>
     <string name="sign_in_error_storage">Couldn\'t store the API token on this phone. Try again.</string>
+    <!-- Signing in again after the server refused the token went to another server or account. -->
+    <string name="sign_in_error_other_account">Sign in again to the same account on the same server, so your unsent changes go where you made them. To use another account, sign out in Settings first.</string>
     <string name="sign_in_error_answer_not_stored">Couldn\'t save your answer on this phone, so the app sent nothing. Try again.</string>
 
     <string name="sign_in_warning_cancel">Cancel</string>

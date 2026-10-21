@@ -23,18 +23,21 @@ import kotlin.time.Duration.Companion.seconds
  * @property lastAnswered when the server last gave a 2xx answer, or null when it has not since
  *   sign-in.
  * @property needsAttention how many changes the server refused, which the "needs attention" list
- *   of TKA-0073 holds. The queue keeps none apart yet, so it is 0 until that list lands.
+ *   holds until the user sends them again or discards them (docs/PRD.md O6).
  * @property settings the account's settings, for the timezone and the clock format, or null
  *   before they load.
+ * @property signInNeeded the server refused the phone's API token, so the queue waits until the
+ *   user signs in again (docs/PRD.md O6).
  */
 data class SyncStatus(
     val unsent: Int,
     val lastAnswered: Instant?,
     val needsAttention: Int = 0,
     val settings: AccountSettings? = null,
+    val signInNeeded: Boolean = false,
 ) {
     /** Something waits to reach the server, so the status shows. */
-    val pending: Boolean get() = unsent > 0 || needsAttention > 0
+    val pending: Boolean get() = unsent > 0 || needsAttention > 0 || signInNeeded
 }
 
 /**
@@ -49,10 +52,11 @@ fun shownSyncStatus(
     lastAnswered: Flow<Instant?>,
     settings: Flow<AccountSettings?>,
     needsAttention: Flow<Int> = flowOf(0),
+    signInNeeded: Flow<Boolean> = flowOf(false),
     grace: Duration = SHOW_AFTER,
 ): Flow<SyncStatus?> {
-    val status = combine(unsent, lastAnswered, needsAttention, settings) { count, answered, attention, account ->
-        SyncStatus(count, answered, attention, account)
+    val status = combine(unsent, lastAnswered, needsAttention, settings, signInNeeded) { count, answered, attention, account, signIn ->
+        SyncStatus(count, answered, attention, account, signIn)
     }
     val waitedLongEnough = status
         .map { it.pending }

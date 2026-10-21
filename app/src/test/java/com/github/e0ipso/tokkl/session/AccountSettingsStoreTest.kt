@@ -65,6 +65,16 @@ class AccountSettingsStoreTest {
     }
 
     @Test
+    fun theAccountIdReadsBackAsSavedAndIsClearedWithTheAccount() {
+        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, null, userId = 7)
+        store.save(settings)
+        assertEquals(7L, store.load()!!.userId)
+        store.clear()
+        assertNull(store.load())
+        assertFalse(file.contains("user_id"))
+    }
+
+    @Test
     fun theClockFormatReadsBackAsSaved() {
         for (twelveHour in listOf(true, false)) {
             val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null, twelveHour = twelveHour)

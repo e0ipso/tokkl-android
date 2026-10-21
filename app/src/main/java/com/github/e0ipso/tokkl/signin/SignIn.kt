@@ -85,7 +85,20 @@ sealed interface SignInResult {
 
     /** The server accepted the credentials, but the phone could not store the token. */
     data object StorageFailed : SignInResult
+
+    /**
+     * Signing in again ([SignInAgain]) went to another server or account than the signed-in one,
+     * so nothing was stored. The changes queued for that account would go to the wrong one.
+     */
+    data object OtherAccount : SignInResult
 }
+
+/**
+ * The signed-in account, when the user signs in again because the server refused its API token
+ * (docs/PRD.md O6). The phone keeps that account's cache and queued changes, so only a sign-in to
+ * the same [server] and, when the phone knows it, the same [userId] may replace the token.
+ */
+data class SignInAgain(val server: ServerUrl, val userId: Long?)
 
 /**
  * Stores the configured server, its API token and the account settings once the server has
@@ -107,9 +120,16 @@ fun interface SessionWriter {
 class SignIn(
     private val session: SessionWriter,
     private val httpClient: OkHttpClient = SharedHttpClient.instance,
+    private val signedInAccount: () -> SignInAgain? = { null },
 ) {
 
-    fun attempt(server: ServerUrl, credentials: SignInCredentials): SignInResult {
+    /**
+     * With [again], a server other than the signed-in one gets no request, and an account other
+     * than the signed-in one is not stored: both end in [SignInResult.OtherAccount].
+     */
+    fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult {
+        val account = signedInAccount() ?: again
+        if (account != null && server != account.server) return SignInResult.OtherAccount
         val client = TogglApiClient(server, credentials.toApiCredentials(), httpClient)
         // Until the server is stored, the URL being tried is the configured server.
         val result = ConfiguredServer.signingIn(server) { client.get(server.api("me"), Me.serializer()) }
@@ -118,6 +138,7 @@ class SignIn(
             is ApiResult.Failure -> return result.error.toSignInResult()
         }
         val settings = me.accountSettings() ?: return SignInResult.NotTokkl
+        if (account?.userId != null && me.id != account.userId) return SignInResult.OtherAccount
         val token = when (credentials) {
             is SignInCredentials.ApiToken -> credentials.token
             is SignInCredentials.EmailPassword -> me.apiToken?.takeIf { it.isNotEmpty() } ?: return SignInResult.NoApiToken

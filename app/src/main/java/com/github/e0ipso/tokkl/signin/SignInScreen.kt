@@ -414,6 +414,7 @@ private fun failureMessage(failure: SignInResult, method: SignInMethod): String?
         is SignInResult.HostNotAllowed -> stringResource(R.string.sign_in_error_host_not_allowed, failure.origin)
         SignInResult.NoApiToken -> stringResource(R.string.sign_in_error_no_api_token)
         SignInResult.StorageFailed -> stringResource(R.string.sign_in_error_storage)
+        SignInResult.OtherAccount -> stringResource(R.string.sign_in_error_other_account)
         SignInResult.AnswerNotStored -> stringResource(R.string.sign_in_error_answer_not_stored)
         is SignInResult.CleartextNotConfirmed, is SignInResult.UntrustedCertificate, SignInResult.SignedIn -> null
     }

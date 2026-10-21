@@ -281,12 +281,113 @@ class ChangeSenderTest {
     }
 
     @Test
-    fun anyOtherFailureStopsTheDrainAndKeepsTheChange() {
+    fun a400HoldsTheChangeWithTheServersMessage() {
         store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
-        server.enqueue(MockResponse.Builder().code(400).build())
+        server.enqueue(MockResponse.Builder().code(400).body("\"Invalid project\"").build())
 
-        assertEquals(ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(400)), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 0), sender.drain())
         assertEquals(1, store.changes.size)
+        assertTrue(store.changes.single().held)
+        assertEquals("Invalid project", store.changes.single().refusal)
+    }
+
+    @Test
+    fun a409OnAStopLeavesTheQueueSilently() {
+        store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(60), description = "Stopped elsewhere")
+        server.enqueue(MockResponse.Builder().code(409).build())
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertTrue(store.changes.isEmpty())
+        assertTrue(store.answers.isEmpty())
+        assertFalse(sender.signInNeeded.value)
+    }
+
+    @Test
+    fun a404DiscardsEveryChangeToTheMissingEntryAndContinues() {
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Gone")
+        store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(90), description = "Gone")
+        store.queue(ChangeKind.UPDATE, 56, TAP, stop = TAP.plusSeconds(60), description = "Other")
+        var discarded = 0
+        sender = ChangeSender(store, { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) }, scope, Dispatchers.IO,
+            onDiscarded = { discarded += it })
+        server.enqueue(MockResponse.Builder().code(404).build())
+        server.enqueue(MockResponse.Builder().code(404).build())
+        server.enqueue(entry(56, "Other", stop = "2026-10-19T08:01:00Z"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 3), sender.drain())
+        assertEquals(2, discarded)
+        assertTrue(store.changes.isEmpty())
+        assertEquals(3, server.requestCount)
+    }
+
+    @Test
+    fun a404ForAValueDoesNotDiscardAnEntryTheServerStillHas() {
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Keep me")
+        server.enqueue(MockResponse.Builder().code(404).body("\"Project not found\"").build())
+        server.enqueue(entry(55, "Keep me", stop = "2026-10-19T08:01:00Z"))
+        assertEquals(ChangeSender.Outcome.Empty(0), sender.drain())
+        assertTrue(store.changes.single().held)
+        assertEquals("Project not found", store.changes.single().refusal)
+    }
+
+    @Test
+    fun a404LookupPreservesAnAuthenticationFailureOrARetryableFailure() {
+        for (status in listOf(503, 429, 403)) {
+            store.changes.clear()
+            store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Keep me")
+            server.enqueue(MockResponse.Builder().code(404).build())
+            server.enqueue(MockResponse.Builder().code(status).addHeader("Retry-After", "30").build())
+            val result = sender.drain()
+            when (status) {
+                503 -> assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.UnexpectedStatus(503)), result)
+                429 -> {
+                    assertEquals(ChangeSender.Outcome.Waiting(0, TAP.plusSeconds(30)), result)
+                    clock.now = TAP.plusSeconds(30)
+                }
+                403 -> {
+                    assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), result)
+                    assertTrue(sender.signInNeeded.value)
+                }
+            }
+            assertEquals(1, store.changes.size)
+            assertFalse(store.changes.single().held)
+        }
+    }
+
+    @Test
+    fun a400BlocksOnlyItsEntryAndAReleasedChangeCanGoAgain() {
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Bad")
+        store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(90), description = "Later")
+        store.queue(ChangeKind.UPDATE, 56, TAP, stop = TAP.plusSeconds(60), description = "Other")
+        server.enqueue(MockResponse.Builder().code(400).body("\"Bad value\"").build())
+        server.enqueue(entry(56, "Other", stop = "2026-10-19T08:01:00Z"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(listOf(55L, 55L), store.changes.map { it.entryId })
+        assertEquals("Bad value", store.changes.first().refusal)
+        assertEquals(2, server.requestCount)
+        store.changes.replaceAll { it.copy(held = false, refusal = null) }
+        server.enqueue(entry(55, "Fixed", stop = "2026-10-19T08:01:00Z"))
+        server.enqueue(entry(55, "Later", stop = "2026-10-19T08:01:30Z"))
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+    }
+
+    @Test
+    fun a403PausesAllRequestsUntilSignInResumesTheQueue() {
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "First")
+        store.queue(ChangeKind.UPDATE, 56, TAP, stop = TAP.plusSeconds(60), description = "Second")
+        server.enqueue(MockResponse.Builder().code(403).build())
+        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), sender.drain())
+        assertTrue(sender.signInNeeded.value)
+        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), sender.drain())
+        assertEquals(1, server.requestCount)
+        assertEquals(2, store.changes.size)
+
+        server.enqueue(entry(55, "First", stop = "2026-10-19T08:01:00Z"))
+        server.enqueue(entry(56, "Second", stop = "2026-10-19T08:01:00Z"))
+        runBlocking { sender.resume().join() }
+        assertFalse(sender.signInNeeded.value)
+        assertTrue(store.changes.isEmpty())
     }
 
     @Test
@@ -805,8 +906,10 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual")
         server.enqueue(MockResponse.Builder().code(400).build())
 
-        assertEquals(ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(400)), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 0), sender.drain())
         assertFalse(store.changes.single().maybeSent)
+        assertTrue(store.changes.single().held)
+        store.changes.replaceAll { it.copy(held = false, refusal = null) }
 
         server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:01:00+00:00"))
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
@@ -929,8 +1032,8 @@ class ChangeSenderTest {
     @Test
     fun aDeleteThatFailedWithoutReachingTheServerStaysUnmarkedSoUndoNeedsNoRequest() {
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
-        server.enqueue(MockResponse.Builder().code(404).build())
-        assertEquals(ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(404)), sender.drain())
+        server.enqueue(MockResponse.Builder().code(400).build())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 0), sender.drain())
         assertFalse("a 4xx deleted nothing", store.changes.single().maybeSent)
 
         assertEquals(ChangeSender.UndoOutcome.Cancelled, runBlocking { sender.undoDelete(55) })
@@ -1139,7 +1242,10 @@ class ChangeSenderTest {
         }
 
         override fun first(): PendingChange? {
-            val change = synchronized(this) { changes.firstOrNull() }
+            val change = synchronized(this) {
+                val heldEntries = changes.filter { it.held }.map { it.entryId }.toSet()
+                changes.firstOrNull { it.entryId !in heldEntries }
+            }
             if (change != null) afterFirst?.also { afterFirst = null }?.invoke(change)
             return change
         }
@@ -1180,6 +1286,18 @@ class ChangeSenderTest {
 
         @Synchronized
         override fun isMapped(serverId: Long): Boolean = mapped.any { it.second == serverId }
+
+        @Synchronized
+        override fun hold(change: PendingChange, refusal: String?) {
+            changes.replaceAll { if (it.sequence == change.sequence) it.copy(held = true, refusal = refusal) else it }
+        }
+
+        @Synchronized
+        override fun discardEntry(change: PendingChange): Int {
+            val count = changes.count { it.entryId == change.entryId }
+            changes.removeAll { it.entryId == change.entryId }
+            return count
+        }
 
         /** Takes a delete back as [RoomChangeStore] does, and keeps the entry it puts back for the test. */
         @Synchronized

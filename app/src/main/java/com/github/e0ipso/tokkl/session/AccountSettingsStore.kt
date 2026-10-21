@@ -29,7 +29,9 @@ class AccountSettingsStore(context: Context) {
         val twelveHour = preferences.getBoolean(KEY_TWELVE_HOUR, false)
         // Settings stored before the app read the grouping preference have none, which means grouped.
         val collapseSimilar = preferences.getBoolean(KEY_COLLAPSE_SIMILAR, true)
-        return AccountSettings(timeZone, beginningOfWeek, timeResolution, durationFormat, defaultWorkspaceId, twelveHour, collapseSimilar)
+        // Settings stored before the app kept the account's id have none until the next refresh.
+        val userId = KEY_USER_ID.takeIf(preferences::contains)?.let { preferences.getLong(it, 0) }
+        return AccountSettings(timeZone, beginningOfWeek, timeResolution, durationFormat, defaultWorkspaceId, twelveHour, collapseSimilar, userId)
     }
 
     /** Replaces the stored settings in one write. */
@@ -50,6 +52,8 @@ class AccountSettingsStore(context: Context) {
             if (defaultWorkspaceId == null) remove(KEY_DEFAULT_WORKSPACE_ID) else putLong(KEY_DEFAULT_WORKSPACE_ID, defaultWorkspaceId)
             putBoolean(KEY_TWELVE_HOUR, settings.twelveHour)
             putBoolean(KEY_COLLAPSE_SIMILAR, settings.collapseSimilar)
+            val userId = settings.userId
+            if (userId == null) remove(KEY_USER_ID) else putLong(KEY_USER_ID, userId)
         }
     }
 
@@ -71,5 +75,6 @@ class AccountSettingsStore(context: Context) {
         private const val KEY_DEFAULT_WORKSPACE_ID = "default_workspace_id"
         private const val KEY_TWELVE_HOUR = "twelve_hour"
         private const val KEY_COLLAPSE_SIMILAR = "collapse_similar"
+        private const val KEY_USER_ID = "user_id"
     }
 }

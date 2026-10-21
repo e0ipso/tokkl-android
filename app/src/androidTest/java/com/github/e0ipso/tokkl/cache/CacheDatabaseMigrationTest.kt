@@ -123,6 +123,41 @@ class CacheDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun version4MigratesAndHeldChangesSurviveAReopen() {
+        context.deleteDatabase(FILE)
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+            VERSION_3.forEach(db::execSQL)
+            db.execSQL("ALTER TABLE pending_changes ADD COLUMN existingIds TEXT NOT NULL DEFAULT '[]'")
+            db.execSQL(
+                "INSERT INTO pending_changes VALUES " +
+                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Draft', ${START.toEpochMilli()}, NULL, 0, '[]', '[]', 0, '[]')",
+            )
+            db.version = 4
+        }
+        val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            val store = RoomChangeStore(database)
+            val draft = checkNotNull(store.first())
+            assertEquals(false, draft.held)
+            assertEquals(null, draft.refusal)
+            store.hold(draft, "Server validation failed")
+        } finally {
+            database.close()
+        }
+        val reopened = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            val held = runBlocking { reopened.changes().held().first() }.single()
+            assertEquals("Server validation failed", held.refusal)
+            assertEquals(null, RoomChangeStore(reopened).first())
+            assertEquals(1, reopened.changes().release(held.sequence))
+            assertEquals("Draft", RoomChangeStore(reopened).first()!!.description)
+        } finally {
+            reopened.close()
+            assertTrue(context.deleteDatabase(FILE))
+        }
+    }
+
     private companion object {
         const val FILE = "cache-migration-test.db"
         val START: Instant = Instant.parse("2026-10-19T08:00:00Z")

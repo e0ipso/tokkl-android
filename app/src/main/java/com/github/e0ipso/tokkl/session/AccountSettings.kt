@@ -46,6 +46,9 @@ import kotlinx.serialization.json.doubleOrNull
  * @property collapseSimilar the preferences' `collapseTimeEntries`: the history groups similar
  *   entries of a day, as the web app's timer list does. True until a refresh reads the
  *   preferences, and when they leave it out, as in the web app.
+ * @property userId the account's `id` from `/me`, so signing in again after a refused token
+ *   (docs/PRD.md O6) can tell the same account from another one. Null until a `/me` sends it, so
+ *   settings that an older app version stored have none until the next refresh.
  */
 data class AccountSettings(
     val timeZone: String,
@@ -55,6 +58,7 @@ data class AccountSettings(
     val defaultWorkspaceId: Long? = null,
     val twelveHour: Boolean = false,
     val collapseSimilar: Boolean = true,
+    val userId: Long? = null,
 ) {
 
     /**
@@ -117,7 +121,7 @@ class Me(
     /** The account settings, or null when `beginning_of_week` is not a day from 0 to 6. */
     fun accountSettings(): AccountSettings? =
         dayOfWeek(beginningOfWeek)?.let {
-            AccountSettings(timezone, it, timeResolutionMinutes, defaultWorkspaceId = defaultWorkspaceId)
+            AccountSettings(timezone, it, timeResolutionMinutes, defaultWorkspaceId = defaultWorkspaceId, userId = id)
         }
 
     override fun toString(): String = "Me(id=$id)"

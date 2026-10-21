@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -58,12 +59,17 @@ import com.github.e0ipso.tokkl.projects.ProjectsModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reports.ReportsModel
 import com.github.e0ipso.tokkl.reports.ReportsScreen
+import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.SettingsScreen
 import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
+import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
+import com.github.e0ipso.tokkl.sync.DiscardNotice
+import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
+import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.sync.SyncStatusBand
 import com.github.e0ipso.tokkl.tags.TagsModel
@@ -87,10 +93,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model holds. */
-enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, SETTINGS, LICENCES, ENTRY }
+/**
+ * The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model
+ * holds. NEEDS_ATTENTION lists the changes the server refused.
+ */
+enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, SETTINGS, LICENCES, ENTRY, NEEDS_ATTENTION }
 
 /**
  * The app's navigation host: a back stack of [Destination]s that survives configuration changes
@@ -113,7 +123,11 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
  * prompts. Above the bottom bar, or at the bottom beside the rail, it shows [syncStatus] while
- * changes wait to reach the server.
+ * changes wait to reach the server (docs/PRD.md O5, O6). Its button opens the [needsAttention]
+ * list above the page, and after a refused token its other button opens sign-in above the page,
+ * filled in for [signedInAccount], so the user signs in again to the same account. At the bottom
+ * of a signed-in screen, a notice says how many changes [discardedChanges] counts, until
+ * [onDismissDiscarded].
  */
 @Composable
 fun TokklNavHost(
@@ -137,8 +151,14 @@ fun TokklNavHost(
     capabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
     favorites: FavoritesModel? = null,
     syncStatus: Flow<SyncStatus?> = flowOf(null),
+    needsAttention: NeedsAttentionModel? = null,
+    settings: StateFlow<AccountSettings?> = MutableStateFlow(null),
+    discardedChanges: StateFlow<Int> = MutableStateFlow(0),
+    onDismissDiscarded: () -> Unit = {},
+    signedInAccount: () -> SignInAgain? = { null },
 ) {
     val appContext = LocalContext.current.applicationContext
+    val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
     // A signed-in page restored from saved state can outlive its session: a sign-out that finished
@@ -190,12 +210,22 @@ fun TokklNavHost(
         entryOpenings++
         if (backStack.lastOrNull() != Destination.ENTRY) backStack.add(Destination.ENTRY)
     }
+    val discarded by discardedChanges.collectAsState()
     SignedInFrame(
         current = backStack.currentPage(),
         onOpen = backStack::open,
         timerRunning = running,
         hidden = if (offersTrash) emptySet() else setOf(TopLevelPage.TRASH),
         syncStatus = status,
+        onOpenNeedsAttention = needsAttention?.let { { if (backStack.lastOrNull() != Destination.NEEDS_ATTENTION) backStack.add(Destination.NEEDS_ATTENTION) } },
+        onSignInAgain = {
+            scope.launch {
+                // Reads the stored server, off the main thread.
+                val account = withContext(Dispatchers.IO) { signedInAccount() } ?: return@launch
+                signInModel.signInAgain(account)
+                backStack.add(Destination.SIGN_IN)
+            }
+        },
         width = width,
     ) {
         SignedInPanes(
@@ -228,6 +258,8 @@ fun TokklNavHost(
                 },
                 onOpenEntry = openEntry,
                 favorites = favorites,
+                needsAttention = needsAttention,
+                settings = settings,
             ) {
                 TimerBar(timer, cache, favorites = favorites, onAddEntry = {
                     entryForm.new()
@@ -235,6 +267,7 @@ fun TokklNavHost(
                 })
             }
         }
+        if (discarded > 0) DiscardNotice(discarded, onDismiss = onDismissDiscarded, modifier = Modifier.align(Alignment.BottomCenter))
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -297,8 +330,8 @@ internal fun SignedInPanes(
  * compact window, beside the navigation rail on wider ones. The bar or the rail marks [current]
  * and opens pages with [onOpen], leaves out the pages in [hidden], and puts a dot on Timer while
  * [timerRunning]. Right above the bar, or at the bottom of the screen beside the rail, shows
- * [syncStatus] when it is not null, and its "needs attention" button calls
- * [onOpenNeedsAttention]. The bar's height, status and system navigation bar included, is padding
+ * [syncStatus] when it is not null, its "needs attention" button calls [onOpenNeedsAttention]
+ * and its sign-in button [onSignInAgain]. The bar's height, status and system navigation bar included, is padding
  * the screens consume, so their own navigation bar padding adds nothing above the bar. Beside the
  * rail, which keeps clear of the system bars at its side, the screens consume that side's insets.
  */
@@ -310,6 +343,7 @@ internal fun SignedInFrame(
     hidden: Set<TopLevelPage> = emptySet(),
     syncStatus: SyncStatus? = null,
     onOpenNeedsAttention: (() -> Unit)? = null,
+    onSignInAgain: (() -> Unit)? = null,
     syncStatusClock: Clock = Clock.systemUTC(),
     width: WindowWidth = windowWidth(),
     content: @Composable BoxScope.() -> Unit,
@@ -325,7 +359,7 @@ internal fun SignedInFrame(
                 .then(if (rail) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start)) else Modifier),
             bottomBar = {
                 Column {
-                    if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, clock = syncStatusClock)
+                    if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, onSignInAgain = onSignInAgain, clock = syncStatusClock)
                     if (!rail) {
                         AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden)
                     } else if (syncStatus != null) {
@@ -373,6 +407,8 @@ private fun Screen(
     onContinue: (Long) -> Unit,
     onOpenEntry: () -> Unit,
     favorites: FavoritesModel?,
+    needsAttention: NeedsAttentionModel?,
+    settings: StateFlow<AccountSettings?>,
     timer: @Composable () -> Unit,
 ) {
     when (destination) {
@@ -427,6 +463,17 @@ private fun Screen(
                 entryForm.close()
             },
         )
+        Destination.NEEDS_ATTENTION -> if (needsAttention != null) {
+            NeedsAttentionScreen(
+                model = needsAttention,
+                settings = settings,
+                onEdit = { entryId ->
+                    entryForm.edit(entryId, older = null)
+                    onOpenEntry()
+                },
+                onBack = { backStack.removeAt(backStack.lastIndex) },
+            )
+        }
     }
 }
 

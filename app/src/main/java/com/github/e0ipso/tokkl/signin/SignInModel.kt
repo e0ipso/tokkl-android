@@ -26,7 +26,9 @@ enum class InputError { SERVER_URL, API_TOKEN, EMAIL, EMAIL_COLON, PASSWORD }
  * saved instance state, and `toString` leaves them out.
  *
  * [retryAt] is the [SignInModel] clock time at which a 429 from the server in
- * [serverUrl] stops blocking sign-in, or null when nothing blocks it.
+ * [serverUrl] stops blocking sign-in, or null when nothing blocks it. [again] is the signed-in
+ * account while the user signs in again after the server refused its token, and null for a
+ * first sign-in.
  */
 data class SignInState(
     val serverUrl: String = "",
@@ -39,10 +41,11 @@ data class SignInState(
     val failure: SignInResult? = null,
     val retryAt: Long? = null,
     val signedIn: Boolean = false,
+    val again: SignInAgain? = null,
 ) {
     override fun toString(): String =
         "SignInState(serverUrl=$serverUrl, method=$method, inputErrors=$inputErrors, submitting=$submitting, " +
-            "failure=$failure, retryAt=$retryAt, signedIn=$signedIn)"
+            "failure=$failure, retryAt=$retryAt, signedIn=$signedIn, again=$again)"
 }
 
 /**
@@ -137,7 +140,7 @@ class SignInModel(
                 return@launch
             }
             if (stored != null) forget(server.origin)
-            val result = withContext(io) { signIn.attempt(server, credentials) }
+            val result = withContext(io) { signIn.attempt(server, credentials, current.again) }
             val retryAt = when (result) {
                 is SignInResult.RateLimited ->
                     (clock() + (result.retryAfterSeconds ?: DEFAULT_RETRY_AFTER_SECONDS) * MILLIS_PER_SECOND)
@@ -202,6 +205,16 @@ class SignInModel(
 
     private fun SignInResult?.isPrompt(): Boolean =
         this is SignInResult.CleartextNotConfirmed || this is SignInResult.UntrustedCertificate
+
+    /**
+     * Starts the form over to sign in again to [account], which the server stopped accepting
+     * (docs/PRD.md O6), with its server filled in. A sign-in to another server or account fails
+     * with [SignInResult.OtherAccount].
+     */
+    fun signInAgain(account: SignInAgain) {
+        val url = account.server.toString()
+        mutableState.value = SignInState(serverUrl = url, again = account, retryAt = deadlineFor(url))
+    }
 
     /** Clears the form after the app has moved on from a successful sign-in. */
     fun reset() {

@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl
 import android.app.Application
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
+import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.BackgroundSend
@@ -16,6 +17,7 @@ import com.github.e0ipso.tokkl.notification.RunningNotificationStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.notification.runningNotificationContent
+import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
@@ -27,14 +29,19 @@ import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
+import com.github.e0ipso.tokkl.sync.DiscardedChanges
+import com.github.e0ipso.tokkl.sync.DiscardedChangesStore
 import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.sync.LastAnswerStore
+import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.sync.shownSyncStatus
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import java.io.IOException
+import java.security.GeneralSecurityException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -87,10 +94,21 @@ class TokklApplication : Application() {
     /**
      * Refreshes the account, and with it the running entry and the cache, each time the app comes
      * to the foreground and each time the network comes back while it is there. MainActivity
-     * reports its starts, stops and network changes. Nothing refreshes on a timer.
+     * reports its starts, stops and network changes. It also tries queued changes independently
+     * of the refresh, so an expired token still asks for sign-in when `/me` fails on opening the
+     * app with a saved queue. Nothing refreshes on a timer.
      */
     val foregroundRefresh: ForegroundRefresh by lazy {
-        ForegroundRefresh(refresh = { accountSettings.refresh() }, refreshOnReconnect = { accountSettings.refreshOnReconnect() })
+        ForegroundRefresh(
+            refresh = {
+                sender.send()
+                accountSettings.refresh()
+            },
+            refreshOnReconnect = {
+                sender.send()
+                accountSettings.refreshOnReconnect()
+            },
+        )
     }
 
     /** What the server offers. Loaded on first use from a file of four flags. */
@@ -144,6 +162,7 @@ class TokklApplication : Application() {
      * Sends the queued changes in order. Once it has sent some, the account refreshes with a read
      * that starts after the send, so a refresh that read the server before it cannot put the
      * cache back. A drain that empties the queue cancels the background send's waiting retry.
+     * Changes it discards because the server no longer has their entries count in [discarded].
      */
     val sender: ChangeSender by lazy {
         val store = RoomChangeStore(cacheDatabase)
@@ -155,6 +174,7 @@ class TokklApplication : Application() {
             onSent = { accountSettings.refreshAfterChange() },
             // A queue the disk cannot read counts as holding a change, so the work stays.
             onEmptied = { BackgroundSend.cancelWaiting(this) { runCatching { store.first() == null }.getOrDefault(false) } },
+            onDiscarded = { count -> discarded.add(count) },
             serverStart = { start -> accountSettings.state.value?.time()?.snapUnsent(start, start)?.start ?: start },
             switchSpan = { start, stop -> accountSettings.state.value?.time()?.snapStop(start, stop, oneStep = false) ?: SnappedSpan(start, stop) },
         )
@@ -171,12 +191,55 @@ class TokklApplication : Application() {
     }
 
     /**
-     * The status element above the bottom bar: the queue's unsent count and the server's last
-     * answer, once changes have waited long enough to show.
+     * How many queued changes the [sender] discarded because the server no longer had their
+     * entries, for the notice that says so (docs/PRD.md O6). Loaded on the first discard or the
+     * first frame of a signed-in screen, from a file of one value.
+     */
+    val discarded: DiscardedChanges by lazy {
+        val store = DiscardedChangesStore(this)
+        DiscardedChanges(initial = store.load(), save = store::save)
+    }
+
+    /**
+     * The "needs attention" list of the changes the server refused (docs/PRD.md O6). Discarding
+     * one refreshes the account, so the cache takes the server's entry back.
+     */
+    val needsAttention: NeedsAttentionModel by lazy {
+        NeedsAttentionModel(
+            held = changes.held,
+            release = changes::sendAgain,
+            drop = changes::discard,
+            afterDiscard = { accountSettings.refresh() },
+            scope = MainScope(),
+        )
+    }
+
+    /**
+     * The status element above the bottom bar: the queue's unsent count, the changes that need
+     * attention, a refused token and the server's last answer, once changes have waited long
+     * enough to show.
      */
     val syncStatus: StateFlow<SyncStatus?> by lazy {
-        shownSyncStatus(changes.unsentCount, lastAnswer.state, accountSettings.state)
-            .stateIn(MainScope(), SharingStarted.WhileSubscribed(STATUS_STOP_TIMEOUT_MS), null)
+        shownSyncStatus(
+            changes.unsentCount,
+            lastAnswer.state,
+            accountSettings.state,
+            needsAttention = changes.heldCount,
+            signInNeeded = sender.signInNeeded,
+        ).stateIn(MainScope(), SharingStarted.WhileSubscribed(STATUS_STOP_TIMEOUT_MS), null)
+    }
+
+    /**
+     * Stores what a sign-in got from the server: the account settings first, then the server and
+     * its token. If the session write fails, the app stays signed out and the next sign-in replaces
+     * the settings. A sign-in again after a refused token then lifts the queue's pause, and the
+     * changes that waited go out (docs/PRD.md O6). Blocks on disk I/O.
+     */
+    @Throws(GeneralSecurityException::class, IOException::class)
+    fun storeSignIn(server: ServerUrl, token: String, settings: AccountSettings) {
+        accountSettings.store(settings)
+        Session(this).save(server, token)
+        if (sender.signInNeeded.value) sender.resume()
     }
 
     /**
@@ -219,7 +282,8 @@ class TokklApplication : Application() {
      * so the app sends nothing new. Then it cancels the queue's background work and every call in
      * flight, waits for the refresh and the queue's drain to end, and clears the cache with the
      * queue, the running timer's notification, the account settings, the capabilities, the Timer
-     * page's view, the trust decisions and the time the server last answered. MainActivity then drops its view models, and with them
+     * page's view, the trust decisions, the time the server last answered and the count of
+     * discarded changes. MainActivity then drops its view models, and with them
      * the history's older days and what every other screen loaded. The theme and the sign-in
      * cooldowns stay: they belong to the phone and to a server, not to the account.
      */
@@ -245,6 +309,10 @@ class TokklApplication : Application() {
                 { ServerTrustStore(this).clear() },
                 { sessionTrust.forget() },
                 { lastAnswer.forget() },
+                {
+                    discarded.dismiss()
+                    DiscardedChangesStore(this).clear()
+                },
             ),
             io = Dispatchers.IO,
         )

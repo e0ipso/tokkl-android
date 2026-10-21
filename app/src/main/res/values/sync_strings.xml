@@ -17,4 +17,32 @@
         <item quantity="one">%d change needs attention</item>
         <item quantity="other">%d changes need attention</item>
     </plurals>
+    <!-- The server refused the phone's API token, so the queue waits and nothing is discarded. -->
+    <string name="sync_sign_in_needed">The server didn\'t accept this phone\'s API token, so these changes wait. Sign in again to send them.</string>
+    <string name="sync_sign_in_again">Sign in again</string>
+    <!-- The notice after the queue dropped changes to entries the server no longer has. -->
+    <plurals name="sync_discarded">
+        <item quantity="one">%d change discarded: the entry was deleted elsewhere</item>
+        <item quantity="other">%d changes discarded: their entries were deleted elsewhere</item>
+    </plurals>
+    <string name="sync_discarded_dismiss">OK</string>
+
+    <!-- The "needs attention" list: changes the server refused, which wait for the user. -->
+    <string name="needs_attention">Needs attention</string>
+    <string name="needs_attention_intro">The server refused these changes. Fix the entry and save it to send it again, or discard the change. Later changes to the same entry wait until then.</string>
+    <string name="needs_attention_empty">Nothing needs attention.</string>
+    <string name="needs_attention_kind_create">New entry</string>
+    <string name="needs_attention_kind_update">Edit</string>
+    <string name="needs_attention_kind_stop">Stop</string>
+    <string name="needs_attention_kind_delete">Delete</string>
+    <string name="needs_attention_no_description">(no description)</string>
+    <!-- A refused change's entry, on its day: Mon, 13 Oct 2026, 14:00 to 15:30 -->
+    <string name="needs_attention_span">%1$s, %2$s to %3$s</string>
+    <!-- A refused change that leaves its entry running: Mon, 13 Oct 2026, from 14:00 -->
+    <string name="needs_attention_running">%1$s, from %2$s</string>
+    <string name="needs_attention_reason">The server said: %1$s</string>
+    <string name="needs_attention_no_reason">The server gave no reason.</string>
+    <string name="needs_attention_edit">Edit entry</string>
+    <string name="needs_attention_send_again">Send again</string>
+    <string name="needs_attention_discard">Discard</string>
 </resources>

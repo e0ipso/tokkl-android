@@ -54,15 +54,15 @@ class AccountSettingsServerTest {
         runBlocking { source.refresh().join() }
 
         // Tokkl's instance time resolution is 5 minutes unless an admin changes it.
-        val expected = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = defaultWorkspace())
+        val expected = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = serverId("default_workspace_id"), userId = serverId("id"))
         assertEquals(expected, source.state.value)
         assertEquals("the stored settings", expected, AccountSettingsStore(context).load())
         assertEquals(ZoneId.of("America/Sao_Paulo"), expected.time()?.zone)
     }
 
-    private fun defaultWorkspace(): Long =
+    private fun serverId(field: String): Long =
         client.get(client.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
-            .getValue("default_workspace_id").jsonPrimitive.long
+            .getValue(field).jsonPrimitive.long
 
     private fun putMe(timezone: String, beginningOfWeek: Int) {
         val body = buildJsonObject {
