@@ -80,7 +80,7 @@ mkdir -p "$second_home/wrapper"
 ln -s "$gradle_home/wrapper/dists" "$second_home/wrapper/dists"
 second=(GRADLE_USER_HOME="$second_home" GRADLE_RO_DEP_CACHE="$gradle_home/caches")
 if command -v taskset >/dev/null && [ "$(nproc)" -gt 2 ]; then
-    second+=(taskset -c 0,1)
+    second+=(taskset -c "0,1")
 fi
 build "$work_dir/second-build/tokkl-android" "$work_dir/b.apk" "${second[@]}"
 
