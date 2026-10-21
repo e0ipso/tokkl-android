@@ -7,8 +7,12 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
+import android.os.Build
+import android.os.Bundle
+import androidx.compose.ui.graphics.toArgb
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
 
 /**
  * Posts and removes the running timer's notification (docs/PRD.md N1). It is ongoing and shows
@@ -38,13 +42,16 @@ class RunningNotifier(context: Context) {
         NotificationChannel(CHANNEL_ID, context.getString(R.string.notification_channel_running), NotificationManager.IMPORTANCE_LOW)
             .apply { description = context.getString(R.string.notification_channel_running_description) }
 
-    private fun build(content: RunningNotificationContent): Notification {
+    internal fun build(
+        content: RunningNotificationContent,
+        requestPromotion: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && manager.canPostPromotedNotifications(),
+    ): Notification {
         val stop = Notification.Action.Builder(
             Icon.createWithResource(context, R.drawable.ic_stop),
             context.getString(R.string.notification_stop),
             stopIntent(content.entryId),
         ).build()
-        return Notification.Builder(context, CHANNEL_ID)
+        val builder = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_nav_timer)
             .setContentTitle(content.description.ifBlank { context.getString(R.string.notification_no_description) })
             .setContentText(projectText(content))
@@ -56,7 +63,14 @@ class RunningNotifier(context: Context) {
             .setCategory(Notification.CATEGORY_STOPWATCH)
             .setContentIntent(openApp())
             .addAction(stop)
-            .build()
+        // Standard style, ongoing, a title and a non-minimal channel meet the promotion rules.
+        // Keep the same notification when the user or the device declines promotion.
+        // https://developer.android.com/develop/ui/views/notifications/live-update
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && requestPromotion) {
+            builder.addExtras(Bundle().apply { putBoolean(REQUEST_PROMOTED_ONGOING, true) })
+                .setColor(TokklLightExtraColors.primaryFill.toArgb())
+        }
+        return builder.build()
     }
 
     private fun projectText(content: RunningNotificationContent): String? {
@@ -84,5 +98,9 @@ class RunningNotifier(context: Context) {
         const val NOTIFICATION_ID = 1
 
         const val CHANNEL_ID = "running_timer"
+
+        // Notification.EXTRA_REQUEST_PROMOTED_ONGOING's documented key. The native setter was
+        // added in 36.1; the extra also safely requests it on Android 16.0 and falls back there.
+        internal const val REQUEST_PROMOTED_ONGOING = "android.requestPromotedOngoing"
     }
 }

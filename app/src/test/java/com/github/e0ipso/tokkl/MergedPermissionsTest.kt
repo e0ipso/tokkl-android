@@ -26,6 +26,7 @@ class MergedPermissionsTest {
                 "android.permission.ACCESS_NETWORK_STATE",
                 "android.permission.INTERNET",
                 "android.permission.POST_NOTIFICATIONS",
+                "android.permission.POST_PROMOTED_NOTIFICATIONS",
                 "android.permission.RECEIVE_BOOT_COMPLETED",
                 "android.permission.WAKE_LOCK",
             ),

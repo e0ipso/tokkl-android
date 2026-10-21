@@ -30,6 +30,8 @@
         the user allows it; asking is TKA-0058's.
     -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 16 Live Updates (N2). This permission needs no runtime request. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 
     <!--
         No Android backup or device transfer (docs/PRD.md S8): Keystore keys
