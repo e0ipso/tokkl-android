@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -114,10 +115,13 @@ class RunningTileServerTest {
     @Test
     fun aTapContinuesTheLastEntryWithTheNetworkDown() {
         AirplaneMode.set(true, web)
-        val earlier = runBlocking { app.changes.start(workspace, EntryFields(description = "Earlier entry")) }
-        runBlocking { app.changes.stop(earlier) }
-        val last = runBlocking { app.changes.start(workspace, EntryFields(description = "Continued from the tile", projectId = project, tags = listOf("tile"))) }
-        runBlocking { app.changes.stop(last) }
+        // Equal starts must prefer the newest local queue ID, through the tile's real tap too.
+        val start = Instant.parse("2026-10-19T08:00:00Z")
+        val stop = start.plusSeconds(3600)
+        runBlocking { app.changes.create(workspace, EntryFields(description = "Earlier entry"), start, stop) }
+        val last = runBlocking {
+            app.changes.create(workspace, EntryFields(description = "Continued from the tile", projectId = project, tags = listOf("tile")), start, stop)
+        }
         QuickSettingsTile.expand()
         QuickSettingsTile.awaitText("no timer runs", context.getString(R.string.tile_continue))
         QuickSettingsTile.awaitText("the entry a tap continues", "Continued from the tile")
@@ -191,6 +195,8 @@ class RunningTileServerTest {
 
     @Test
     fun runningAndNotDifferInLabelAndIconNotOnlyInColour() {
+        // Keep this local fixture's ID stable while checking the label/icon rendering.
+        AirplaneMode.set(true, web)
         val entry = runBlocking {
             val id = app.changes.start(workspace, EntryFields(description = "Looked at"))
             app.cache.running.first()!!.entry.also { assertEquals(id, it.id) }

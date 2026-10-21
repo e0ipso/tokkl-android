@@ -151,6 +151,22 @@ scripts/instrumented-tests.sh \
   -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest
 ```
 
+The native Android 13+ notification permission probes need a permission reset before their
+instrumentation process starts. Run each method separately on an emulator the script boots:
+
+```sh
+TOKKL_TEST_AVD=tokkl-api36 TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 scripts/instrumented-tests.sh \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.notification.NativeNotificationPermissionTest#allowingTheNativeDialogPostsTheAlreadyRunningTimer
+TOKKL_TEST_AVD=tokkl-api36 TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 scripts/instrumented-tests.sh \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.notification.NativeNotificationPermissionTest#denyingTheNativeDialogKeepsTheTimerAndOpensItsSettings
+```
+
+This opt-in fixture installs the debug app, revokes `POST_NOTIFICATIONS` and clears its
+user decision flags before starting the selected test. It refuses attached devices and
+requires API 33 or later. Its additional test source directory is compiled only for this
+fixture; ordinary unfiltered suites retain the permission and process-restart setup they use.
+The probes use the real system dialog and check the timer before answering it.
+
 Use `class=<class>#<method>` for one test, a comma-separated `class=` list for
 several classes or methods, or `package=<package>` for a package and its
 subpackages. A comma-separated `package=` list selects all those packages.

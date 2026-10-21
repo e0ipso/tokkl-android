@@ -13,7 +13,7 @@ const prefix = 'com.github.e0ipso.tokkl';
 // Run the complete entry point. Any dependency invocation fails harmlessly,
 // including `id`, which is the first command used to name the slot files.
 // No Gradle, adb, emulator, Docker or real runtime directory can be reached.
-function refusesBeforeStartup(args, message) {
+function refusesBeforeStartup(args, message, environment = {}) {
   const root = mkdtempSync(join(tmpdir(), 'tokkl-filter-preflight-'));
   try {
     const bin = join(root, 'bin');
@@ -35,6 +35,8 @@ function refusesBeforeStartup(args, message) {
         TOKKL_TEST_SLOTS: '2',
         TOKKL_TEST_BOOT_MEMORY_MB: '9000',
         TOKKL_TEST_THROWAWAY_EMULATOR: '',
+        TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '0',
+        ...environment,
       },
     });
     assert.ifError(result.error);
@@ -85,4 +87,16 @@ for (const selector of ['class', 'package']) {
 
 test('still refuses other comma-separated runner arguments', () => {
   refusesBeforeStartup([runnerArg('annotation', 'example.First,example.Second')], /holds a comma/);
+});
+
+for (const args of [[], [runnerArg('package', `${prefix}.notification`)], [runnerArg('class', `${prefix}.notification.NativeNotificationPermissionTest`)]]) {
+  test(`fresh notification permission refuses a non-isolated selection: ${JSON.stringify(args)}`, () => {
+    refusesBeforeStartup(args, /requires exactly one NativeNotificationPermissionTest method/, {
+      TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '1',
+    });
+  });
+}
+
+test('fresh notification permission refuses an invalid switch before startup', () => {
+  refusesBeforeStartup([], /must be 0 or 1/, { TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '2' });
 });

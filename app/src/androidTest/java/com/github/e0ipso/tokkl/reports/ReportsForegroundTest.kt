@@ -10,6 +10,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
+import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
@@ -109,10 +110,10 @@ class ReportsForegroundTest {
         assertTrue("the seeded time shows: $report", report.totals.seconds > 0)
         assertTrue("the total $total shows", hasNode(total))
 
-        val activity = sendToBackground()
+        val activity = BackgroundTrip.leave()
         DeviceShell.run("cmd connectivity airplane-mode enable")
         awaitServer(answers = false)
-        bringBack(activity)
+        BackgroundTrip.comeBack(activity)
 
         val offline = runCatching {
             compose.waitUntil("the offline message shows", LOAD_TIMEOUT_MS) { hasNode(string(R.string.reports_offline_title)) }
@@ -135,7 +136,7 @@ class ReportsForegroundTest {
         val first = awaitLoaded(model, after = null)
         assertEquals("opening asks once", 1, relay.count)
 
-        bringBack(sendToBackground())
+        BackgroundTrip.comeBack(BackgroundTrip.leave())
         val second = awaitLoaded(model, after = first)
         assertEquals("the same range again", first.selection, second.selection)
         Thread.sleep(SETTLE_MS)
@@ -180,22 +181,6 @@ class ReportsForegroundTest {
         return state as ReportsState.Loaded
     }
 
-    /** Presses the home key and waits until the activity has stopped. Returns that activity. */
-    private fun sendToBackground(): MainActivity {
-        val activity = resumedActivity()!!
-        DeviceShell.run("input keyevent KEYCODE_HOME")
-        awaitCondition("the app is in the background") { activity.takeIf { inStage(it, Stage.STOPPED) } }
-        return activity
-    }
-
-    /** Brings [activity]'s task to the front as it was, and checks that the same activity came back. */
-    private fun bringBack(activity: MainActivity) {
-        val component = "${context.packageName}/${MainActivity::class.java.name}"
-        DeviceShell.run("am start -W -n $component -f $NEW_TASK_REORDER_TO_FRONT")
-        val back = awaitCondition("the app is in the foreground") { resumedActivity() }
-        assertSame("the same activity came back, not a new one", activity, back)
-    }
-
     private fun modelOf(activity: MainActivity): ReportsModel {
         var model: ReportsModel? = null
         instrumentation.runOnMainSync { model = ViewModelProvider(activity)[ReportsViewModel::class.java].model }
@@ -208,12 +193,6 @@ class ReportsForegroundTest {
             resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
-    }
-
-    private fun inStage(activity: MainActivity, stage: Stage): Boolean {
-        var found = false
-        instrumentation.runOnMainSync { found = activity in ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(stage) }
-        return found
     }
 
     private fun hasNode(text: String): Boolean = compose.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().isNotEmpty()
@@ -266,8 +245,6 @@ class ReportsForegroundTest {
         /** Long enough for a request the app would send at once to reach the relay. */
         const val SETTLE_MS = 2_000L
 
-        /** FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_REORDER_TO_FRONT: the existing task and activity, as they were. */
-        const val NEW_TASK_REORDER_TO_FRONT = "0x10020000"
 
         /** The request line of a report search, `POST .../search/time_entries`. No other request holds it. */
         const val SEARCH = "/search/time_entries HTTP/1.1"

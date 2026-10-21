@@ -151,6 +151,12 @@ android {
         compose = true
     }
 
+    // These probes need the script to revoke permission before instrumentation starts. Revoking
+    // it inside a test kills that test's process; ordinary suites keep their restart fixtures.
+    if (providers.gradleProperty("tokklFreshNotificationPermission").orNull == "true") {
+        sourceSets.getByName("androidTest").kotlin.srcDir("src/notificationPermissionTest/java")
+    }
+
     testOptions {
         // Puts the merged manifest's path on the unit test classpath, in
         // com/android/tools/test_config.properties, for BackupRulesTest.

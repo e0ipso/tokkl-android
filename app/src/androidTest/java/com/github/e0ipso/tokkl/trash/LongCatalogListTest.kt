@@ -50,8 +50,9 @@ class LongCatalogListTest {
     @Test
     fun oneThousandTrashEntries() = withAccount { account ->
         val start = Instant.parse("2026-10-19T08:00:00Z")
+        // Use a span the pinned server's five-minute resolution can retain.
         repeat(1000) { index ->
-            account.createEntry("Measured trash $index", start, start.plusSeconds(60)).also(account::deleteEntry)
+            account.createEntry("Measured trash $index", start, start.plusSeconds(300)).also(account::deleteEntry)
         }
         val entries = TrashServer(account.client).list().orFail("list measurement trash")
         assertEquals(1000, entries.size)

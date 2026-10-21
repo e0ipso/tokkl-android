@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl
 
+import android.content.Intent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
@@ -24,8 +25,14 @@ object BackgroundTrip {
 
     /** Brings [activity]'s task to the front as it was, and checks that the same activity came back. */
     fun comeBack(activity: MainActivity) {
-        val component = "${instrumentation.targetContext.packageName}/${MainActivity::class.java.name}"
-        DeviceShell.run("am start -W -n $component -f $NEW_TASK_REORDER_TO_FRONT")
+        // ActivityScenario matches lifecycle events against the original launch intent. Keep
+        // its action and categories too, or it ignores RESUMED and close() fails during teardown.
+        // Replace launch-only flags such as CLEAR_TASK so this returns the existing activity.
+        val intent = Intent(activity.intent).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        // UiAutomation passes arguments directly; the URI already escapes its own values.
+        val uri = intent.toUri(Intent.URI_INTENT_SCHEME)
+        val result = DeviceShell.run("am start -W $uri")
+        check(!result.contains("Error:")) { "bringing the app back failed: $result" }
         val back = await("the app is in the foreground") { resumedActivity() }
         assertSame("the same activity came back, not a new one", activity, back)
     }
@@ -53,8 +60,6 @@ object BackgroundTrip {
         }
     }
 
-    /** FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_REORDER_TO_FRONT, so the stopped activity returns. */
-    private const val NEW_TASK_REORDER_TO_FRONT = "0x10020000"
     private const val TIMEOUT_NANOS = 30_000_000_000L
     private const val POLL_MS = 50L
 }

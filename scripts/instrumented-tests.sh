@@ -246,6 +246,22 @@ if [ "${#test_filter[@]}" -gt 0 ]; then
         esac
     done
 fi
+# A native permission probe runs alone, with permission reset before its test process starts.
+# Keep this validation before device allocation, like the selector checks above.
+fresh_notification_permission=${TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION:-0}
+case $fresh_notification_permission in
+    0) ;;
+    1)
+        if [ "$#" -ne 1 ] || { [ "$1" != "-P$RUNNER_ARGS.class=com.github.e0ipso.tokkl.notification.NativeNotificationPermissionTest#allowingTheNativeDialogPostsTheAlreadyRunningTimer" ] &&
+            [ "$1" != "-P$RUNNER_ARGS.class=com.github.e0ipso.tokkl.notification.NativeNotificationPermissionTest#denyingTheNativeDialogKeepsTheTimerAndOpensItsSettings" ]; }; then
+            echo "$0: a fresh notification permission requires exactly one NativeNotificationPermissionTest method, selected with class=, before startup." >&2
+            exit 2
+        fi
+        gradle_args+=("-PtokklFreshNotificationPermission=true")
+        ;;
+    *) echo "$0: TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION must be 0 or 1." >&2; exit 2 ;;
+esac
+
 for tool in docker adb curl jq openssl flock; do
     command -v "$tool" >/dev/null || { echo "$0: $tool is not on PATH" >&2; exit 1; }
 done
@@ -1158,4 +1174,15 @@ else
     echo "This script did not boot the test devices and TOKKL_TEST_THROWAWAY_EMULATOR is not 1, so it installs no user CA and leaves out the tests marked @UserCaInstalled"
 fi
 push_to_devices
+if [ "$fresh_notification_permission" = 1 ]; then
+    # Never alter permissions on an attached device, even one vouched for as throwaway.
+    if [ -z "$emulator_serial" ] || [ "$(adb -s "$emulator_serial" shell getprop ro.build.version.sdk | tr -d '\r')" -lt 33 ]; then
+        echo "$0: a fresh notification permission requires an API 33+ emulator booted by this script." >&2
+        exit 2
+    fi
+    ./gradlew --no-daemon installDebug -PtokklFreshNotificationPermission=true
+    adb -s "$emulator_serial" shell pm revoke com.github.e0ipso.tokkl android.permission.POST_NOTIFICATIONS
+    adb -s "$emulator_serial" shell pm clear-permission-flags com.github.e0ipso.tokkl android.permission.POST_NOTIFICATIONS user-set user-fixed
+    echo "Reset notification permission before instrumentation on $emulator_serial"
+fi
 run_tests

@@ -90,12 +90,30 @@ class RunningCheckServerTest {
     fun startingATimerSchedulesOneCheckAndStoppingItCancelsIt() {
         assertEquals("no check before a timer starts", emptyList<WorkInfo>(), checkWork())
 
-        runBlocking { app.changes.start(workspace, EntryFields(description = "First")) }
+        val first = runBlocking { app.changes.start(workspace, EntryFields(description = "First")) }
+        runBlocking {
+            app.changes.update(
+                first,
+                EntryFields(description = "First"),
+                Instant.now().minus(4, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS),
+                stop = null,
+            )
+        }
         val check = awaitCheck("the start schedules a check") { it.state == WorkInfo.State.ENQUEUED }
         assertEquals("the work waits for a network", NetworkType.CONNECTED, check.constraints.requiredNetworkType)
         assertEquals("every 15 minutes", RunningCheck.INTERVAL.toMillis(), check.periodicityInfo?.repeatIntervalMillis)
 
         val second = runBlocking { app.changes.start(workspace, EntryFields(description = "Second")) }
+        // Both timers need a normal, on-grid duration: replacing the first also queues a Stop.
+        // This checks scheduling and cancellation, not short-Stop parity (TKA-0259).
+        runBlocking {
+            app.changes.update(
+                second,
+                EntryFields(description = "Second"),
+                Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS),
+                stop = null,
+            )
+        }
         runBlocking { app.sender.sendAndWait() }
         assertEquals("a second timer keeps the one check", listOf(check.id), checkWork().map { it.id })
         assertEquals(WorkInfo.State.ENQUEUED, checkWork().single().state)

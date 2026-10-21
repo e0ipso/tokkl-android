@@ -435,6 +435,7 @@ class LargestFontScaleTest {
         assertCertificatePromptFits(R.string.sign_in_certificate_title, R.string.sign_in_certificate_body)
     }
 
+    @SignedOut
     @RefusedSession(Refusal.UNCONFIRMED_HTTP)
     @Test
     fun httpWarningOverTheHomeScreenFits() {
@@ -444,6 +445,7 @@ class LargestFontScaleTest {
         assertHttpWarningFits()
     }
 
+    @SignedOut
     @RefusedSession(Refusal.UNCONFIRMED_HTTP)
     @Test
     fun noticeAfterCancellingTheHttpWarningFits() {
@@ -456,6 +458,7 @@ class LargestFontScaleTest {
         assertNoticeFits(R.string.trust_refused_http)
     }
 
+    @SignedOut
     @RefusedSession(Refusal.CHANGED_CERTIFICATE)
     @Test
     fun certificatePromptOverTheHomeScreenFits() {
@@ -465,6 +468,7 @@ class LargestFontScaleTest {
         assertCertificatePromptFits(R.string.sign_in_certificate_changed_title, R.string.sign_in_certificate_changed_body)
     }
 
+    @SignedOut
     @RefusedSession(Refusal.CHANGED_CERTIFICATE)
     @Test
     fun noticeAfterCancellingTheCertificatePromptFits() {
@@ -892,7 +896,10 @@ private enum class Refusal {
     CHANGED_CERTIFICATE,
 }
 
-/** Stores the session of a test marked [RefusedSession]. Order it after [SessionRule] and before the activity starts. */
+/**
+ * Stores a refused session after [SessionRule]. Pair [RefusedSession] with [SignedOut] so the
+ * outer rule never briefly confirms the server and lets an earlier refresh populate its cache.
+ */
 private class RefusedSessionRule : TestRule {
 
     override fun apply(base: Statement, description: Description): Statement =

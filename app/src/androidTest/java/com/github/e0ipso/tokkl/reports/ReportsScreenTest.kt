@@ -372,8 +372,10 @@ class ReportsScreenTest {
                 buildJsonObject { put("name", "Consulting"); put("color", "#c7af14"); put("billable", true); put("rate", 100); put("currency", "USD") },
             )
             val internal = project(buildJsonObject { put("name", "Internal"); put("color", "#990099") })
-            entry(day(0).atTime(9, 0), 1000, website, billable = true)
-            entry(day(1).atTime(14, 0), 3700, consulting, billable = true)
+            // Keep stored spans on Tokkl's five-minute grid. Report rounding then still raises
+            // 20 to 30 minutes and 65 to 75, independently of the latest write-time snapping.
+            entry(day(0).atTime(9, 0), 1200, website, billable = true)
+            entry(day(1).atTime(14, 0), 3900, consulting, billable = true)
             entry(today.atTime(0, 10), 600, null, billable = false)
             entry(if (day(2) == today) today.atTime(0, 30) else day(2).atTime(23, 50), 1200, internal, billable = false)
             entry(weekStart.minusDays(1).atTime(12, 0), 3600, website, billable = true)
