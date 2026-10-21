@@ -151,6 +151,18 @@ scripts/instrumented-tests.sh \
   -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest
 ```
 
+Use `class=<class>#<method>` for one test, a comma-separated `class=` list for
+several classes or methods, or `package=<package>` for a package and its
+subpackages. A comma-separated `package=` list selects all those packages.
+The script converts either kind of list to the runner's `testFile`, avoiding
+AGP's comma splitting. It refuses a caller-supplied `testFile` beside a list.
+
+Use either `class=` or `package=` per run. Combining them, even as single
+values, fails before tool checks or device allocation: AndroidJUnitRunner
+discovers package tests only when no explicit classes are present, including
+in a filter file. To cover packages plus extra classes, run them separately
+or put every concrete class in one `class=` list.
+
 Run the suite on `tokkl-api31` with:
 
 ```sh

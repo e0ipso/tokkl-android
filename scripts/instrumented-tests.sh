@@ -140,6 +140,13 @@
 # each test device, one entry per line, and passes the runner its path as
 # testFile instead. It refuses a comma in any other runner argument, and a
 # testFile argument of your own beside a list.
+#
+# Use either class= or package= in a run, never both, including single values.
+# AndroidJUnitRunner 1.7.0 discovers tests in packages only when no explicit
+# classes are given. Mixing them in testFile also runs just the named classes.
+# The script rejects this combination before checking tools or taking a slot.
+# To cover packages and extra classes, use separate runs or name every concrete
+# class in one class= list.
 
 set -euo pipefail
 
@@ -199,16 +206,18 @@ if ! [[ $BOOT_MEMORY_MB =~ ^[0-9]+$ ]]; then
     exit 2
 fi
 
-for tool in docker adb curl jq openssl flock; do
-    command -v "$tool" >/dev/null || { echo "$0: $tool is not on PATH" >&2; exit 1; }
-done
-
 # The arguments for Gradle, and the entries of a class= or package= list,
 # which go to the runner in a file (see the header). Checked before the run
 # waits for its turn or boots anything.
 gradle_args=()
 test_filter=()
+class_requested=''
+package_requested=''
 for arg in "$@"; do
+    case $arg in
+        "-P$RUNNER_ARGS.class="*) class_requested=1 ;;
+        "-P$RUNNER_ARGS.package="*) package_requested=1 ;;
+    esac
     case $arg in
         "-P$RUNNER_ARGS.class="*,* | "-P$RUNNER_ARGS.package="*,*)
             IFS=, read -ra entries <<<"${arg#*=}"
@@ -223,6 +232,10 @@ for arg in "$@"; do
         *) gradle_args+=("$arg") ;;
     esac
 done
+if [ -n "$class_requested" ] && [ -n "$package_requested" ]; then
+    echo "$0: cannot combine class= and package= filters. AndroidJUnitRunner can omit package tests when explicit classes are given, also in testFile. Use separate runs or list every concrete class in class=. No test device has been allocated." >&2
+    exit 2
+fi
 if [ "${#test_filter[@]}" -gt 0 ]; then
     for arg in "${gradle_args[@]}"; do
         case $arg in
@@ -233,6 +246,9 @@ if [ "${#test_filter[@]}" -gt 0 ]; then
         esac
     done
 fi
+for tool in docker adb curl jq openssl flock; do
+    command -v "$tool" >/dev/null || { echo "$0: $tool is not on PATH" >&2; exit 1; }
+done
 # The lock files (see the header). A run holds a slot from here until it exits,
 # after its cleanup. Its slot file names the run, and the emulator it boots, so
 # a waiting run can say who holds the slots and no run tests on another one's
