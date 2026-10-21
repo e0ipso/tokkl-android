@@ -3,6 +3,9 @@ package com.github.e0ipso.tokkl.tags
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -112,61 +115,71 @@ internal fun TagsContent(
     LaunchedEffect(state.done) {
         if (state.done is CatalogChange.Created) newName = ""
     }
+    val rows = state.data?.tags?.map { TagRow(it, fromServer = true) }
+        ?: cachedTags.map { TagRow(Tag(it.id, it.workspaceId, it.name), fromServer = false) }
+    val hasNotices = serverNeeded || state.loadProblem != null ||
+        (state.loading && state.data == null) || (state.changeProblem != null && state.overlay == null)
     CatalogPage(
         title = stringResource(R.string.nav_tags),
         done = state.done?.let { changeText(it) },
         onDoneShown = actions.onDoneShown,
         modifier = modifier,
-    ) {
-        NewTagField(
-            name = newName,
-            nameMissing = nameMissing,
-            enabled = canChange,
-            onNameChange = {
-                newName = it.take(NAME_MAX)
-                nameMissing = false
-            },
-            onAdd = {
-                if (newName.isBlank()) nameMissing = true else actions.onCreate(newName)
-            },
-        )
-        Column(
-            modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),
-            verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
-        ) {
-            CatalogNotices(
-                serverNeeded = serverNeeded,
-                neededTitle = stringResource(R.string.tags_server_needed_title),
-                neededMessage = stringResource(R.string.tags_server_needed_message),
-                loadProblem = state.loadProblem,
-                loading = state.loading && state.data == null,
-                loadingText = stringResource(R.string.tags_loading),
-                changeProblem = state.changeProblem.takeIf { state.overlay == null },
-                onRetry = actions.onRetry,
-            )
-            val rows = state.data?.tags?.map { TagRow(it, fromServer = true) }
-                ?: cachedTags.map { TagRow(Tag(it.id, it.workspaceId, it.name), fromServer = false) }
+        lazyContent = {
+            item(key = "new-tag") {
+                NewTagField(
+                    name = newName,
+                    nameMissing = nameMissing,
+                    enabled = canChange,
+                    onNameChange = {
+                        newName = it.take(NAME_MAX)
+                        nameMissing = false
+                    },
+                    onAdd = {
+                        if (newName.isBlank()) nameMissing = true else actions.onCreate(newName)
+                    },
+                )
+            }
+            item(key = "notices") {
+                Column(Modifier.padding(top = TokklTheme.spacing.betweenGroups)) {
+                    CatalogNotices(
+                        serverNeeded = serverNeeded,
+                        neededTitle = stringResource(R.string.tags_server_needed_title),
+                        neededMessage = stringResource(R.string.tags_server_needed_message),
+                        loadProblem = state.loadProblem,
+                        loading = state.loading && state.data == null,
+                        loadingText = stringResource(R.string.tags_loading),
+                        changeProblem = state.changeProblem.takeIf { state.overlay == null },
+                        onRetry = actions.onRetry,
+                    )
+                    if (hasNotices && (state.data != null || rows.isNotEmpty())) Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+                }
+            }
             if (state.data != null && rows.isEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                    Text(stringResource(R.string.tags_empty_title), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.tags_empty_message), style = MaterialTheme.typography.bodyLarge)
+                item(key = "empty") {
+                    Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+                        Text(stringResource(R.string.tags_empty_title), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.tags_empty_message), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+            itemsIndexed(rows, key = { _, row -> row.tag.id }) { index, row ->
+                Column {
+                    if (index > 0) HorizontalDivider()
+                    TagListRow(row, canChange, actions)
                 }
             }
             if (rows.isNotEmpty()) {
-                Column {
-                    rows.forEachIndexed { index, row ->
-                        if (index > 0) HorizontalDivider()
-                        TagListRow(row, canChange, actions)
-                    }
+                item(key = "rename-hint") {
+                    Text(
+                        text = stringResource(R.string.tags_rename_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),
+                    )
                 }
-                Text(
-                    text = stringResource(R.string.tags_rename_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
-        }
-    }
+        },
+    )
     when (val overlay = state.overlay) {
         is TagsOverlay.Rename -> RenameDialog(
             tag = overlay.tag,

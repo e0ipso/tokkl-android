@@ -2,6 +2,9 @@ package com.github.e0ipso.tokkl.trash
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -93,62 +96,74 @@ internal fun TrashContent(
     val canChange = state.canChange && !offline
     // Entries show only once loaded: the phone keeps no copy of the trash.
     val entries = state.entries.takeUnless { serverNeeded }
+    val time = remember(settings) { settings?.time() }
+    val hasNotices = serverNeeded || state.loadProblem != null ||
+        (state.loading && state.entries == null) || (state.changeProblem != null && !state.confirmingEmpty)
     CatalogPage(
         title = stringResource(R.string.nav_trash),
         done = state.done?.let { changeText(it) },
         onDoneShown = actions.onDoneShown,
         modifier = modifier,
-    ) {
-        Text(
-            text = stringResource(R.string.trash_intro),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        TokklGhostButton(
-            onClick = actions.onAskToEmpty,
-            enabled = canChange && !entries.isNullOrEmpty(),
-            modifier = Modifier.padding(top = TokklTheme.spacing.inGroup),
-        ) {
-            Text(stringResource(R.string.trash_empty_trash))
-        }
-        Column(
-            modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),
-            verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
-        ) {
-            CatalogNotices(
-                serverNeeded = serverNeeded,
-                neededTitle = stringResource(R.string.trash_server_needed_title),
-                neededMessage = stringResource(R.string.trash_server_needed_message),
-                loadProblem = state.loadProblem,
-                loading = state.loading && state.entries == null,
-                loadingText = stringResource(R.string.trash_loading),
-                changeProblem = state.changeProblem.takeIf { !state.confirmingEmpty },
-                onRetry = actions.onRetry,
-            )
+        lazyContent = {
+            item(key = "intro") {
+                Column {
+                    Text(
+                        text = stringResource(R.string.trash_intro),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TokklGhostButton(
+                        onClick = actions.onAskToEmpty,
+                        enabled = canChange && !entries.isNullOrEmpty(),
+                        modifier = Modifier.padding(top = TokklTheme.spacing.inGroup),
+                    ) {
+                        Text(stringResource(R.string.trash_empty_trash))
+                    }
+                }
+            }
+            item(key = "notices") {
+                Column(Modifier.padding(top = TokklTheme.spacing.betweenGroups)) {
+                    CatalogNotices(
+                        serverNeeded = serverNeeded,
+                        neededTitle = stringResource(R.string.trash_server_needed_title),
+                        neededMessage = stringResource(R.string.trash_server_needed_message),
+                        loadProblem = state.loadProblem,
+                        loading = state.loading && state.entries == null,
+                        loadingText = stringResource(R.string.trash_loading),
+                        changeProblem = state.changeProblem.takeIf { !state.confirmingEmpty },
+                        onRetry = actions.onRetry,
+                    )
+                    if (hasNotices && entries != null) Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+                }
+            }
             if (entries != null && entries.isEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                    Text(stringResource(R.string.trash_empty_title), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.trash_empty_message), style = MaterialTheme.typography.bodyLarge)
+                item(key = "empty") {
+                    Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+                        Text(stringResource(R.string.trash_empty_title), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.trash_empty_message), style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
             }
             if (!entries.isNullOrEmpty()) {
-                val time = remember(settings) { settings?.time() }
-                Column {
-                    entries.forEachIndexed { index, entry ->
+                itemsIndexed(entries, key = { _, entry -> entry.id }) { index, entry ->
+                    Column {
                         if (index > 0) HorizontalDivider()
                         TrashRow(entry, time, settings?.durationFormat ?: DurationFormat.IMPROVED, settings?.twelveHour == true, canChange, actions)
                     }
                 }
                 if (entries.size >= TrashServer.LIST_LIMIT) {
-                    Text(
-                        text = stringResource(R.string.trash_limit),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    item(key = "limit") {
+                        Text(
+                            text = stringResource(R.string.trash_limit),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),
+                        )
+                    }
                 }
             }
-        }
-    }
+        },
+    )
     if (state.confirmingEmpty) {
         val count = state.entries?.size ?: 0
         ConfirmDialog(

@@ -3,6 +3,10 @@ package com.github.e0ipso.tokkl.catalog
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,7 +68,8 @@ fun CatalogPageEffects(model: CatalogPageModel, offline: Boolean) {
  * The frame of a page that manages projects, clients or tags: the top bar with [title], and the
  * back button when [onBack] is given, as for a form; under it one scrolling column in the
  * screen's margins that makes room for the keyboard; and a snackbar that says [done], the text of
- * the change the server last accepted, then calls [onDoneShown].
+ * the change the server last accepted, then calls [onDoneShown]. [lazyContent] replaces the
+ * scrolling column for pages with long lists, keeping the same frame and screen margins.
  */
 @Composable
 fun CatalogPage(
@@ -73,7 +78,8 @@ fun CatalogPage(
     onDoneShown: () -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit,
+    lazyContent: (LazyListScope.() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -90,20 +96,32 @@ fun CatalogPage(
         contentWindowInsets = ScrollingScreenInsets,
         snackbarHost = { SnackbarHost(snackbar) },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                // The keyboard covers the bottom bar, whose height the frame has consumed, so this
-                // adds the rest of the keyboard's height while a field has focus.
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .navigationBarsPadding()
-                .screenContent()
-                .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
-            content = content,
-        )
+        val body = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .consumeWindowInsets(innerPadding)
+            // The keyboard covers the bottom bar, whose height the frame has consumed, so this
+            // adds the rest of the keyboard's height while a field has focus.
+            .imePadding()
+        if (lazyContent != null) {
+            LazyColumn(
+                modifier = body.screenContent(),
+                contentPadding = PaddingValues(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
+                content = {
+                    lazyContent()
+                    item(key = "catalog-navigation-inset") { Spacer(Modifier.navigationBarsPadding()) }
+                },
+            )
+        } else {
+            Column(
+                modifier = body
+                    .verticalScroll(rememberScrollState())
+                    .navigationBarsPadding()
+                    .screenContent()
+                    .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
+                content = content,
+            )
+        }
     }
 }
 
