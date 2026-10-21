@@ -25,23 +25,8 @@ sealed interface RunningTileContent {
 fun runningTileContent(running: CachedTimeEntry?, entries: List<CachedTimeEntry>): RunningTileContent =
     when {
         running != null -> RunningTileContent.Running(running)
-        else -> lastStopped(entries.sortedWith(newestCreatedFirst))?.let { RunningTileContent.Continue(it) } ?: RunningTileContent.Nothing
+        else -> lastStopped(entries)?.let { RunningTileContent.Continue(it) } ?: RunningTileContent.Nothing
     }
-
-/**
- * Start times can tie after the account snaps stopped entries to minutes. Give lastStopped a
- * newest-first list for those ties, as on the web: larger server IDs are newer, but local IDs
- * are negative queue sequences, so a smaller local ID is newer. A local create is newer than
- * the server rows already cached when it was queued.
- */
-private val newestCreatedFirst = Comparator<CachedTimeEntry> { a, b ->
-    when {
-        a.id < 0 && b.id < 0 -> a.id.compareTo(b.id)
-        a.id < 0 -> -1
-        b.id < 0 -> 1
-        else -> b.id.compareTo(a.id)
-    }
-}
 
 /**
  * A tap on the tile while it shows [shown]. It acts on what the tile shows, not on what the cache

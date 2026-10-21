@@ -36,6 +36,69 @@ class ContinueEntryTest {
         assertEquals(emptyList<String>(), calls)
     }
 
+    @Test
+    fun tiedLocalStartsPreferTheNewestQueuedCreateInEitherOrder() {
+        val older = entry(-2, "2026-10-19T11:00:00Z")
+        val newer = entry(-4, "2026-10-19T11:00:00Z")
+
+        assertEquals(newer, lastStopped(listOf(older, newer)))
+        assertEquals(newer, lastStopped(listOf(newer, older)))
+    }
+
+    @Test
+    fun tiedLocalAndServerStartsPreferTheNewestQueuedCreateInEveryOrder() {
+        val entries = listOf(entry(42, "2026-10-19T11:00:00Z"), entry(-2, "2026-10-19T11:00:00Z"), entry(-4, "2026-10-19T11:00:00Z"))
+
+        for (order in permutations(entries)) {
+            assertEquals("input IDs: ${order.map { it.id }}", entries.last(), lastStopped(order))
+        }
+    }
+
+    @Test
+    fun tiedServerStartsPreferTheLargerIdInEitherOrder() {
+        val older = entry(41, "2026-10-19T11:00:00Z")
+        val newer = entry(42, "2026-10-19T11:00:00Z")
+
+        assertEquals(newer, lastStopped(listOf(older, newer)))
+        assertEquals(newer, lastStopped(listOf(newer, older)))
+    }
+
+    @Test
+    fun aLaterStartWinsOverCreationIdsAndRunningEntriesAreExcluded() {
+        val later = entry(1, "2026-10-19T11:01:00Z")
+        val entries = listOf(entry(-4, "2026-10-19T11:00:00Z"), entry(42, "2026-10-19T11:00:00Z"), later, running(-6))
+
+        for (order in permutations(entries)) {
+            assertEquals(later, lastStopped(order))
+        }
+    }
+
+    @Test
+    fun continueLastCopiesEveryFieldOfTheNewestTiedLocalEntry() {
+        val server = entry(42, "2026-10-19T11:00:00Z")
+        val older = server.copy(id = -2, description = "Older local entry")
+        val newer = server.copy(
+            id = -4,
+            workspaceId = 50,
+            description = "Newest local entry",
+            projectId = 100,
+            taskId = 200,
+            tags = listOf("one", "two"),
+            billable = true,
+        )
+
+        for (order in permutations(listOf(server, older, newer))) {
+            calls.clear()
+            assertEquals(LOCAL_ID, runBlocking { RecordingChanges().continueLast(order) })
+            assertEquals(listOf("start 50 ${newer.fieldsOf()}"), calls)
+        }
+    }
+
+    private fun <T> permutations(items: List<T>): List<List<T>> =
+        if (items.isEmpty()) listOf(emptyList()) else items.indices.flatMap { index ->
+            permutations(items.filterIndexed { i, _ -> i != index }).map { listOf(items[index]) + it }
+        }
+
     private fun CachedTimeEntry.fieldsOf() = EntryFields(description, projectId, taskId, tags, billable)
 
     private fun entry(id: Long, start: String) = CachedTimeEntry(

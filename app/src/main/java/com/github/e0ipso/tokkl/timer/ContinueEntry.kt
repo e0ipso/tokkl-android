@@ -10,10 +10,19 @@ import com.github.e0ipso.tokkl.entry.fields
 
 /**
  * The entry that continue-last continues: the stopped entry that started last, as the web app's
- * "c" shortcut takes the first stopped one of its newest-first list. Null when none is stopped.
+ * "c" shortcut takes the first stopped one of its newest-first list. Tied starts prefer local
+ * creates over server entries, then the newest create: smaller negative queue IDs or larger
+ * server IDs. Null when none is stopped.
  */
 fun lastStopped(entries: List<CachedTimeEntry>): CachedTimeEntry? =
-    entries.filter { it.stop != null }.maxByOrNull { it.start }
+    entries.filter { it.stop != null }.maxWithOrNull(stoppedEntryOrder)
+
+private val stoppedEntryOrder = compareBy<CachedTimeEntry> { it.start }
+    .thenBy { it.id < 0 }
+    .thenComparator { a, b ->
+        // Local IDs are negative queue sequences, so smaller means newer.
+        if (a.id < 0) b.id.compareTo(a.id) else a.id.compareTo(b.id)
+    }
 
 /**
  * Starts a timer with [source]'s description, project, task, tags and billable, in [source]'s

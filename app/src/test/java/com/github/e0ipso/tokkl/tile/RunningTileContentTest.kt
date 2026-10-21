@@ -37,11 +37,22 @@ class RunningTileContentTest {
     fun tiedSnappedStartsContinueTheNewestLocalEntryBeforeServerEntries() {
         val server = stopped(42, "2026-10-19T11:00:00Z")
         val earlier = server.copy(id = -2, description = "Earlier local entry")
-        val last = server.copy(id = -4, description = "Last local entry")
+        val last = server.copy(
+            id = -4,
+            workspaceId = 50,
+            description = "Last local entry",
+            projectId = 100,
+            taskId = 200,
+            tags = listOf("one", "two"),
+            billable = false,
+        )
         // Room's id DESC puts server entries and older negative local IDs first.
         val content = runningTileContent(null, listOf(server, earlier, last))
 
         assertEquals(RunningTileContent.Continue(last), content)
+        assertEquals(content, runningTileContent(null, listOf(last, earlier, server)))
+        runBlocking { RecordingChanges().tapTile(content) }
+        assertEquals(listOf("start 50 ${EntryFields(last.description, last.projectId, last.taskId, last.tags, last.billable)}"), calls)
     }
 
     @Test
