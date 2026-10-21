@@ -14,6 +14,8 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ApiError
 import java.time.Duration
 import java.util.concurrent.ExecutionException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Sends the queue in the background once the phone has a network, also with the app closed
@@ -26,6 +28,8 @@ object BackgroundSend {
 
     /** The unique work's name. One work by this name waits or runs at a time. */
     const val WORK_NAME = "send-queue"
+
+    internal val runs = BackgroundSendRuns()
 
     /**
      * The wait before the first retry after a transient failure. Each later retry waits twice as
@@ -53,20 +57,17 @@ object BackgroundSend {
      * [queueEmpty] turns false after the cancel, a change came meanwhile and the work is
      * scheduled again. Blocks on WorkManager and [queueEmpty], so call it off the main thread.
      *
-     * A worker that starts between the check and the cancel ends as cancelled. Its drain runs on
-     * the app's scope and goes on, and the check after the cancel keeps a queued change covered.
+     * Worker registration and the cancel share a lock. Even when the state read becomes stale,
+     * a worker that joined stays, and a worker cancelled before registration sends nothing.
      */
     fun cancelWaiting(context: Context, queueEmpty: () -> Boolean) {
         val workManager = WorkManager.getInstance(context)
-        try {
-            val waiting = workManager.getWorkInfosForUniqueWork(WORK_NAME).get().any { it.state == WorkInfo.State.ENQUEUED }
-            if (!waiting) return
-            workManager.cancelUniqueWork(WORK_NAME).result.get()
-        } catch (e: ExecutionException) {
-            // WorkManager could not read or write its database. The work may still wait, and at
-            // worst wakes the phone once; or the cancel went through, which the check below covers.
-        }
-        if (!queueEmpty()) schedule(context)
+        runs.cancelWaiting(
+            waiting = { workManager.getWorkInfosForUniqueWork(WORK_NAME).get().any { it.state == WorkInfo.State.ENQUEUED } },
+            cancel = { workManager.cancelUniqueWork(WORK_NAME).result.get() },
+            queueEmpty = queueEmpty,
+            schedule = { schedule(context) },
+        )
     }
 
     /**
@@ -85,12 +86,27 @@ object BackgroundSend {
  */
 class BackgroundSendWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): Result {
-        val sender = (applicationContext as TokklApplication).sender
-        return when (sender.sendAndWait().afterBackgroundSend()) {
-            AfterBackgroundSend.DONE -> Result.success()
-            AfterBackgroundSend.RETRY -> Result.retry()
-            AfterBackgroundSend.GIVE_UP -> Result.failure()
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        val workManager = WorkManager.getInstance(applicationContext)
+        val joined = try {
+            BackgroundSend.runs.join(id) {
+                // Cancellation may be recorded before WorkManager delivers stop to this worker.
+                // Read its committed state under the same lock as cancelWaiting's cancellation.
+                !isStopped && workManager.getWorkInfoById(id).get()?.state == WorkInfo.State.RUNNING
+            }
+        } catch (e: ExecutionException) {
+            return@withContext Result.retry()
+        }
+        if (!joined) return@withContext Result.success()
+        try {
+            val sender = (applicationContext as TokklApplication).sender
+            when (sender.sendAndWait().afterBackgroundSend()) {
+                AfterBackgroundSend.DONE -> Result.success()
+                AfterBackgroundSend.RETRY -> Result.retry()
+                AfterBackgroundSend.GIVE_UP -> Result.failure()
+            }
+        } finally {
+            BackgroundSend.runs.leave(id)
         }
     }
 }

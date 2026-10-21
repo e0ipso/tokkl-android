@@ -236,13 +236,46 @@ class BackgroundSendServerTest {
 
         driver.setAllConstraintsMet(work.id)
         awaitWork(work.id) { it.state == WorkInfo.State.RUNNING }
-        // The worker joins the drain as soon as it runs; the held answer keeps the drain open.
-        Thread.sleep(JOIN_MS)
+        awaitCondition("the worker registered with the drain") { BackgroundSend.runs.hasJoined(work.id) }
         relay.releaseAnswer()
 
         assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
         assertEquals(0, unsentCount())
         assertEquals("one run", 1, queueWork().single().runAttemptCount)
+    }
+
+    /** Forces ENQUEUED -> joined between the state read and the attempted cancellation. */
+    @Test
+    fun aWorkerJoiningAfterTheWaitingReadStillSucceeds() {
+        val relay = HangingRelay(TokklTestServer.url).also { this.relay = it }
+        signIn(relay.url, account.apiToken)
+        relay.holdAnswerTo(CREATE)
+        val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        val local = runBlocking { app.changes.create(workspace, EntryFields(description = "Joined after read"), stop.minusSeconds(600), stop) }
+        awaitCondition("the server stored the entry and its answer is held") { relay.holdsAnswer }
+        val work = queueWork().single()
+
+        // Use the same cancellation coordinator as cancelWaiting, with real WorkManager reads
+        // and writes. The waiting read deliberately hands back a stale ENQUEUED observation.
+        BackgroundSend.runs.cancelWaiting(
+            waiting = {
+                val waiting = queueWork().single().state == WorkInfo.State.ENQUEUED
+                assertTrue("the cancellation first observes waiting work", waiting)
+                driver.setAllConstraintsMet(work.id)
+                awaitWork(work.id) { it.state == WorkInfo.State.RUNNING }
+                awaitCondition("the worker joined before the cancel") { BackgroundSend.runs.hasJoined(work.id) }
+                waiting
+            },
+            cancel = { workManager.cancelUniqueWork(BackgroundSend.WORK_NAME).result.get() },
+            queueEmpty = { unsentCount() == 0 },
+            schedule = { BackgroundSend.schedule(context) },
+        )
+        relay.releaseAnswer()
+
+        assertEquals("the joined worker must succeed", WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
+        assertEquals("the joined drain sent the queue", 0, unsentCount())
+        assertEquals("one run", 1, queueWork().single().runAttemptCount)
+        assertEquals("Joined after read", serverEntry(serverId(local)).string("description"))
     }
 
     private fun awaitCondition(what: String, condition: () -> Boolean) {
@@ -281,9 +314,6 @@ class BackgroundSendServerTest {
 
     private companion object {
         val WORK_TIMEOUT: Duration = Duration.ofSeconds(60)
-
-        /** Long enough for a worker that has started to call the sender. */
-        const val JOIN_MS = 1_000L
 
         const val POLL_MS = 50L
 
