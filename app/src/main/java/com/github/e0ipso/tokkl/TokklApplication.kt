@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl
 
 import android.app.Application
+import androidx.glance.appwidget.updateAll
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
@@ -43,10 +44,17 @@ import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.widget.TokklWidget
+import com.github.e0ipso.tokkl.widget.WidgetState
+import com.github.e0ipso.tokkl.widget.WidgetStore
+import com.github.e0ipso.tokkl.widget.WidgetSync
+import com.github.e0ipso.tokkl.widget.widgetState
 import java.io.IOException
 import java.security.GeneralSecurityException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -285,6 +293,34 @@ class TokklApplication : Application() {
     }
 
     /**
+     * What the home screen widget shows (docs/PRD.md N3): the running entry and the favorites from
+     * the cache, the favorites capability and the account's default workspace, all from the phone.
+     * The first use loads the account settings and the capabilities from disk.
+     */
+    val widgetState: Flow<WidgetState> by lazy {
+        val catalog = combine(cache.projects, cache.tasks, ::Pair)
+        combine(accountSettings.state, capabilities.state, cache.running, cache.favorites, catalog) { settings, flags, running, favorites, (projects, tasks) ->
+            widgetState(settings?.defaultWorkspaceId, running?.entry, favorites, flags.favorites, projects, tasks)
+        }.distinctUntilChanged()
+    }
+
+    /**
+     * Updates the widget whenever what it shows changes, whichever surface changed it, from
+     * process start. It builds [widgetState] off the main thread.
+     */
+    val widgetSync: WidgetSync by lazy {
+        val store = WidgetStore(this)
+        WidgetSync(
+            state = { widgetState },
+            loadShown = store::load,
+            saveShown = store::save,
+            update = { TokklWidget().updateAll(this) },
+            scope = MainScope(),
+            io = Dispatchers.IO,
+        )
+    }
+
+    /**
      * The trust refusals of the signed-in session's requests, which every
      * [Session] reports and the navigation host prompts about. Accepting one
      * refreshes the account settings, the request that ran into it.
@@ -358,6 +394,7 @@ class TokklApplication : Application() {
         // Reads the cache off the main thread, and posts or removes nothing for the entry the
         // notification already followed, so opening the app never brings back a dismissed one.
         runningNotification.start()
+        widgetSync.start()
         // Check every 15 minutes while the cache holds a running entry.
         RunningCheck.follow(this, cache.running.map { it != null }, MainScope(), Dispatchers.IO)
     }

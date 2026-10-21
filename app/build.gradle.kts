@@ -178,6 +178,8 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
 
     // Declares the empty activity that createComposeRule() starts, in debug builds only.
     debugImplementation(libs.androidx.compose.ui.test.manifest)

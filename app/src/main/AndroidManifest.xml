@@ -89,6 +89,21 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+        <!--
+            The home screen widget (docs/PRD.md N3). Exported, since the launcher's widget service
+            sends it the widget's updates. Its taps go to Glance's receiver, which is not exported.
+        -->
+        <receiver
+            android:name=".widget.TokklWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tokkl_widget_info" />
+        </receiver>
     </application>
 
 </manifest>
