@@ -288,6 +288,7 @@ slot_fd=''
 run_testing=''
 work_dir=''
 container=''
+emulator_tmp=''
 
 random_hex() {
     od -An -N"$1" -tx1 /dev/urandom | tr -d ' \n'
@@ -349,8 +350,9 @@ take_slot() {
 # before it exists, so no other run takes it for a killed run's leftover.
 describe_run() {
     if [ $# -gt 0 ]; then run_testing=$1; fi
-    printf 'PID %s, started %s in %s%s%s%s\n' "$$" "$run_started" "$PWD" "${run_testing:+, $run_testing}" \
-        "${work_dir:+, work directory $work_dir}" "${container:+, server $container}" >"$(slot_file "$slot")"
+    printf 'PID %s, started %s in %s%s%s%s%s\n' "$$" "$run_started" "$PWD" "${run_testing:+, $run_testing}" \
+        "${work_dir:+, work directory $work_dir}" "${container:+, server $container}" \
+        "${emulator_tmp:+, temporary emulator data $emulator_tmp}" >"$(slot_file "$slot")"
 }
 
 # Takes the device lock shared ($1 is --shared) or alone, saying who holds it
@@ -463,7 +465,14 @@ remove_user_ca() {
 # Stops the emulator this script booted, if any, and its scope. Fails, after
 # saying why, when the emulator had already exited on its own.
 stop_emulator() {
-    local status=0
+    local status=0 stopped=1
+    # A signal can arrive between forking the launcher and recording $!.
+    # An inactive scope then does not prove that launch cannot still happen.
+    if [ -f "$work_dir/emulator-launching" ] && [ -z "$emulator_pid" ]; then
+        echo "$0: emulator launch ownership is incomplete; retaining $work_dir" >&2
+        stopped=0
+        status=1
+    fi
     if [ -n "$emulator_pid" ] && ! kill -0 "$emulator_pid" 2>/dev/null; then
         report_emulator_exit
         status=1
@@ -475,10 +484,45 @@ stop_emulator() {
     fi
     if [ -n "$emulator_unit" ]; then
         # Stops whatever is left in the scope. It is gone once qemu exits.
-        systemctl --user stop "$emulator_unit" >/dev/null 2>&1 || true
-        emulator_unit=''
+        if systemctl --user stop "$emulator_unit" >/dev/null 2>&1 || emulator_scope_stopped "$emulator_unit"; then
+            emulator_unit=''
+        else
+            echo "$0: could not confirm $emulator_unit stopped; retaining $work_dir" >&2
+            stopped=0
+            status=1
+        fi
+    fi
+    if [ "$stopped" -eq 1 ] && [ -d "$work_dir/emulator-tmp" ]; then
+        : >"$work_dir/emulator-stopped"
     fi
     return "$status"
+}
+
+# A collected scope reports inactive too. A failed query or any other state
+# cannot prove that qemu and its helpers released their files.
+emulator_scope_stopped() {
+    local state
+    state=$(systemctl --user show --property=ActiveState --value "$1" 2>/dev/null) && [ "$state" = inactive ]
+}
+
+# Only allocations named before launch belong to this run. A SIGKILL can
+# skip shutdown, so orphan recovery must prove the recorded scope stopped
+# before deleting its directory. Without a scope, retain an orphan rather
+# than guess whether its emulator is still alive from a reused PID.
+remove_run_directory() {
+    local dir=$1 unit pid
+    if [ -d "$dir/emulator-tmp" ] && [ ! -f "$dir/emulator-stopped" ]; then
+        unit=$(cat "$dir/emulator.scope" 2>/dev/null) || unit=''
+        pid=$(cat "$dir/emulator.pid" 2>/dev/null) || pid=''
+        # A reused PID only retains data unnecessarily; it never authorizes
+        # deletion. A live launcher can still be registering its scope.
+        if [ -f "$dir/emulator-launching" ] || ! [[ $pid =~ ^[1-9][0-9]*$ ]] || kill -0 "$pid" 2>/dev/null ||
+            ! [[ $unit =~ ^tokkl-emulator-[0-9]+-[0-9a-f]+\.scope$ ]] || ! emulator_scope_stopped "$unit"; then
+            echo "$0: retaining $dir; temporary emulator data may still be in use" >&2
+            return 1
+        fi
+    fi
+    rm -rf -- "$dir"
 }
 
 # ShellCheck 0.11 misses that the EXIT trap runs this.
@@ -502,7 +546,7 @@ cleanup() {
         adb kill-server >/dev/null 2>&1 || true
         rm -f "$adb_marker"
     fi
-    rm -rf "$work_dir"
+    if ! remove_run_directory "$work_dir" && [ "$status" -eq 0 ]; then status=1; fi
     exit "$status"
 }
 trap cleanup EXIT
@@ -590,7 +634,7 @@ boot_emulator() {
     if [ "$SLOTS" -gt 1 ]; then
         instance_args=(-read-only)
         mkdir -m 700 "$work_dir/runtime"
-        emulator_env=(env "XDG_RUNTIME_DIR=$work_dir/runtime")
+        emulator_env=("XDG_RUNTIME_DIR=$work_dir/runtime")
     fi
     if command -v systemd-run >/dev/null && systemctl --user show --property=Version >/dev/null 2>&1; then
         emulator_unit="tokkl-emulator-$port-$(random_hex 4).scope"
@@ -606,16 +650,26 @@ boot_emulator() {
     # references' use SwiftShader.
     level=$(avd_api_level)
     if [[ $level =~ ^[0-9]+$ ]] && [ "$level" -lt 36 ]; then gpu=swiftshader_indirect; fi
+    # System::getTempDir uses ANDROID_TMP on Linux, otherwise /tmp/android-$USER.
+    # Record ownership before launch, including if startup or a signal fails.
+    # Keep AVD images and other runs' temporary files outside this allocation.
+    emulator_tmp="$work_dir/emulator-tmp"
     # The slot file names the emulator before it starts, so another run never
     # takes it for an attached device.
     describe_run "testing on $emulator_serial${emulator_unit:+ in $emulator_unit}"
+    printf '%s\n' "$emulator_unit" >"$work_dir/emulator.scope"
+    mkdir -m 700 "$emulator_tmp"
+    emulator_env=(env "ANDROID_TMP=$emulator_tmp" "${emulator_env[@]}")
     echo "Booting $AVD as $emulator_serial${emulator_unit:+ in $emulator_unit} with the $gpu renderer${instance_args[*]:+, ${instance_args[*]}}"
     # The emulator raises any smaller -memory to 2560 MB for an API 34 or later
     # image.
+    : >"$work_dir/emulator-launching"
     "${launch[@]}" "${emulator_env[@]}" emulator -avd "$AVD" -port "$port" -memory 2560 -cores 4 -gpu "$gpu" \
         -no-window -no-audio -no-boot-anim -no-snapshot "${instance_args[@]}" -accel on \
         {slot_fd}>&- {device_fd}>&- {boot_fd}>&- >"$log" 2>&1 &
     emulator_pid=$!
+    printf '%s\n' "$emulator_pid" >"$work_dir/emulator.pid"
+    rm -f "$work_dir/emulator-launching"
     # Gradle tests on this emulator alone, never on another run's.
     export ANDROID_SERIAL="$emulator_serial"
     until [ "$(adb -s "$emulator_serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
@@ -788,7 +842,7 @@ remove_leftover_runs() {
             continue
         fi
         echo "Removing $dir, which no running test run uses"
-        rm -rf "$dir"
+        remove_run_directory "$dir" || true
     done <<<"$dirs"
 }
 
