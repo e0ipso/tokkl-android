@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
+import com.github.e0ipso.tokkl.ui.theme.TokklSpectrum
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
@@ -41,9 +42,10 @@ private val TopBarBorder: Dp = 1.dp
 /**
  * The bar at the top of every signed-in page: the page's [title] in the page-title role, which
  * TalkBack reads as a heading, on surface, [TopBarHeight] tall or taller at large font scales.
- * Along its bottom runs a strip of the texture glow, drawn as a gradient under the controls and
- * never behind them, then a 1dp border. A page opened from another, such as Licences, a form or
- * the entry screen, passes [onBack] for the 48dp back button; the pages of the bottom bar have
+ * Along its bottom runs a strip in the wordmark's full gradient, [TokklSpectrum], under the
+ * controls and never behind them, then a 1dp border. The web app draws the same strip under its
+ * page titles and at the foot of its phone header (tokkl d012228). A page opened from another,
+ * such as Licences, a form or the entry screen, passes [onBack] for the 48dp back button; the pages of the bottom bar have
  * none. The title and the button sit in the screen's margins, as the content under them does.
  *
  * The bar never shows the wordmark, which appears only on sign-in and the launch splash. It looks
@@ -61,7 +63,6 @@ fun TokklTopBar(
     windowInsets: WindowInsets = ScrollingScreenInsets,
 ) {
     val surface = MaterialTheme.colorScheme.surface
-    val glow = TokklTheme.extraColors.textureGlow
     Column(
         modifier
             .fillMaxWidth()
@@ -89,12 +90,12 @@ fun TokklTopBar(
             }
             PageTitle(title, Modifier.weight(1f))
         }
-        // As the web app's phone header: the glow from the start edge, gone by 70% of the width.
+        // As the web app's phone header: the 4dp spectrum strip, left to right as `to right` in styles.css.
         Box(
             Modifier
                 .fillMaxWidth()
                 .height(TokklTheme.spacing.space1)
-                .background(Brush.horizontalGradient(0f to glow, GLOW_END to surface)),
+                .background(Brush.horizontalGradient(TokklSpectrum)),
         )
         HorizontalDivider(thickness = TopBarBorder, color = MaterialTheme.colorScheme.outline)
     }
@@ -130,6 +131,3 @@ private val BackButtonSize: Dp = 48.dp
 
 /** The room between the back button's edge and its 24dp icon. */
 private val BackIconInset: Dp = 12.dp
-
-/** Where the glow strip's gradient reaches the bar's surface, as a fraction of its width. */
-private const val GLOW_END = 0.7f

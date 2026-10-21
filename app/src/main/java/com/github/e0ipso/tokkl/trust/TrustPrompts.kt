@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.trust
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,15 +25,14 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
+import com.github.e0ipso.tokkl.ui.StickerCard
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
-import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 // The prompts about trusting a server, for sign-in and for any screen of a
@@ -64,15 +61,12 @@ fun TrustRefusedNotice(refusal: ApiError.TrustRefused, onReview: () -> Unit, mod
         is ApiError.CertificateHostMismatch -> stringResource(R.string.trust_refused_certificate_host, refusal.host)
     }
     val reviewable = refusal is ApiError.TrustQuestion
-    Surface(
+    StickerCard(
         modifier = modifier
             .navigationBarsPadding()
             .padding(TokklTheme.spacing.space4)
             .fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
-        border = BorderStroke(FrameWidth, MaterialTheme.colorScheme.outline),
-        shadowElevation = 6.dp,
     ) {
         Column(
             modifier = Modifier.padding(

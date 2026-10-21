@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.catalog
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,8 +20,8 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.ErrorBanner
+import com.github.e0ipso.tokkl.ui.StickerCard
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
-import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /** What [change] did, in the web app's words, such as "Created Website". */
@@ -56,12 +54,10 @@ fun problemText(problem: ServerProblem): String = when (problem) {
  */
 @Composable
 fun ServerNeededNotice(title: String, message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
+    StickerCard(
         modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        border = BorderStroke(FrameWidth, MaterialTheme.colorScheme.outline),
     ) {
         Row(
             modifier = Modifier.padding(TokklTheme.spacing.space4),

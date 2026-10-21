@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.signin
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,8 +58,8 @@ import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.PageTitle
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.Scene
+import com.github.e0ipso.tokkl.ui.StickerCard
 import com.github.e0ipso.tokkl.ui.TokklButton
-import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -222,12 +220,7 @@ private fun SignInForm(
  */
 @Composable
 private fun FormCard(content: @Composable ColumnScope.() -> Unit) {
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(FrameWidth, MaterialTheme.colorScheme.outline),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    StickerCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(TokklTheme.spacing.space4),
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),

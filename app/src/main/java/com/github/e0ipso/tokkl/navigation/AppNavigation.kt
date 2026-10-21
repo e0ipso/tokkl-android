@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.navigation
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,6 +45,9 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.ui.theme.FrameWidth
+import com.github.e0ipso.tokkl.ui.theme.SectionHue
+import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import com.github.e0ipso.tokkl.ui.theme.TokklNavigationBarDefaults
 import com.github.e0ipso.tokkl.ui.theme.TokklNavigationBarItem
 import com.github.e0ipso.tokkl.ui.theme.TokklNavigationRailItem
@@ -54,21 +58,23 @@ import kotlinx.coroutines.launch
 /**
  * The app's top-level pages, in the order of NAV in Tokkl's App.tsx (docs/PRD.md B1). As on the
  * web app on a phone, the pages [inMore] sit on the More sheet, not in the bottom bar. Admin stays
- * out, since the app has no admin features.
+ * out, since the app has no admin features. Each page has its section's [hue], as NAV in App.tsx
+ * gives each item a section since tokkl d012228; the pages on the More sheet take More's.
  */
 enum class TopLevelPage(
     val destination: Destination,
     @StringRes val label: Int,
     @DrawableRes val icon: Int,
+    val hue: SectionHue,
     val inMore: Boolean = false,
 ) {
-    TIMER(Destination.TIMER, R.string.nav_timer, R.drawable.ic_nav_timer),
-    REPORTS(Destination.REPORTS, R.string.reports, R.drawable.ic_nav_reports),
-    PROJECTS(Destination.PROJECTS, R.string.nav_projects, R.drawable.ic_nav_projects),
-    CLIENTS(Destination.CLIENTS, R.string.nav_clients, R.drawable.ic_nav_clients, inMore = true),
-    TAGS(Destination.TAGS, R.string.nav_tags, R.drawable.ic_nav_tags, inMore = true),
-    TRASH(Destination.TRASH, R.string.nav_trash, R.drawable.ic_nav_trash, inMore = true),
-    SETTINGS(Destination.SETTINGS, R.string.settings, R.drawable.ic_nav_settings),
+    TIMER(Destination.TIMER, R.string.nav_timer, R.drawable.ic_nav_timer, SectionHues.timer),
+    REPORTS(Destination.REPORTS, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports),
+    PROJECTS(Destination.PROJECTS, R.string.nav_projects, R.drawable.ic_nav_projects, SectionHues.projects),
+    CLIENTS(Destination.CLIENTS, R.string.nav_clients, R.drawable.ic_nav_clients, SectionHues.more, inMore = true),
+    TAGS(Destination.TAGS, R.string.nav_tags, R.drawable.ic_nav_tags, SectionHues.more, inMore = true),
+    TRASH(Destination.TRASH, R.string.nav_trash, R.drawable.ic_nav_trash, SectionHues.more, inMore = true),
+    SETTINGS(Destination.SETTINGS, R.string.settings, R.drawable.ic_nav_settings, SectionHues.settings),
     ;
 
     companion object {
@@ -106,6 +112,7 @@ fun AppNavigationBar(
                     onClick = { if (item.page == null) moreOpen = true else onOpen(item.page) },
                     icon = { ItemIcon(item, current, timerRunning) },
                     label = item.label,
+                    hue = item.hue,
                     barLabels = items.map { it.label },
                     modifier = Modifier.runningState(item, timerRunning),
                 )
@@ -147,6 +154,7 @@ fun AppNavigationRail(
                         onClick = { if (item.page == null) moreOpen = true else onOpen(item.page) },
                         icon = { ItemIcon(item, current, timerRunning) },
                         label = item.label,
+                        hue = item.hue,
                         railLabels = items.map { it.label },
                         modifier = Modifier.runningState(item, timerRunning),
                     )
@@ -160,6 +168,9 @@ fun AppNavigationRail(
 
 /** An item of the bar or the rail: a [page], or More when [page] is null. */
 private class NavigationItem(val page: TopLevelPage?, val label: String, @param:DrawableRes val icon: Int, val runningLabel: String) {
+    /** The hue of the item's indicator: its page's, or for More the hue of the pages on the sheet. */
+    val hue: SectionHue get() = page?.hue ?: SectionHues.more
+
     /** Whether the item marks [current]: its own page, or for More a page on the sheet. */
     fun selected(current: TopLevelPage): Boolean = if (page == null) current.inMore else page == current
 
@@ -184,16 +195,17 @@ private fun navigationItems(hidden: Set<TopLevelPage>): List<NavigationItem> {
 @Composable
 private fun ItemIcon(item: NavigationItem, current: TopLevelPage, timerRunning: Boolean) {
     val icon = @Composable { Icon(painterResource(item.icon), contentDescription = null) }
-    if (item.dot(timerRunning)) BadgedBox(badge = { RunningDot(item.selected(current)) }, content = { icon() }) else icon()
+    if (item.dot(timerRunning)) BadgedBox(badge = { RunningDot(item.selected(current), item.hue) }, content = { icon() }) else icon()
 }
 
 /**
- * The running dot, in the running colour, or in on-primary on the selected item's primary
- * indicator, where the running colour would not read, as `.nav-link.active .running-dot`.
+ * The running dot, in the running colour, or on the selected item's indicator in the colour of
+ * the icon on [hue], where the running colour would not read, as `.nav-link.active .running-dot`
+ * takes currentColor: the running pink is only 1.32:1 on the orange.
  */
 @Composable
-private fun RunningDot(selected: Boolean) {
-    Badge(containerColor = if (selected) MaterialTheme.colorScheme.onPrimary else TokklTheme.extraColors.running)
+private fun RunningDot(selected: Boolean, hue: SectionHue) {
+    Badge(containerColor = if (selected) hue.onFill else TokklTheme.extraColors.running)
 }
 
 /**
@@ -241,6 +253,7 @@ private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: 
             ) {
                 for (page in pages) {
                     val selected = page == current
+                    val shape = MaterialTheme.shapes.small
                     NavigationDrawerItem(
                         label = {
                             Text(
@@ -255,8 +268,10 @@ private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: 
                             onOpen(page)
                             hide()
                         },
-                        shape = MaterialTheme.shapes.small,
-                        colors = TokklNavigationBarDefaults.moreItemColors(),
+                        // The active item's outline, as the bar's indicator has one.
+                        modifier = if (selected) Modifier.border(FrameWidth, MaterialTheme.colorScheme.outline, shape) else Modifier,
+                        shape = shape,
+                        colors = TokklNavigationBarDefaults.moreItemColors(page.hue),
                     )
                 }
             }

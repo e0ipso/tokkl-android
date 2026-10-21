@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
 import android.content.res.Resources
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.ui.theme.FrameWidth
+import com.github.e0ipso.tokkl.ui.StickerCard
 import com.github.e0ipso.tokkl.ui.theme.TokklExtraColors
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.text.NumberFormat
@@ -57,15 +55,10 @@ internal fun SummaryContent(report: SummaryReport, settings: AccountSettings) {
     }
 }
 
-/** A card in Tokkl's frame: surface, the large corners and a 2dp outline. */
+/** A report's card, a [StickerCard] on surface. */
 @Composable
 internal fun ReportCard(content: @Composable ColumnScope.() -> Unit) {
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(FrameWidth, MaterialTheme.colorScheme.outline),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    StickerCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(TokklTheme.spacing.space4),
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),

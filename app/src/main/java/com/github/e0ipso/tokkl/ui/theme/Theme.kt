@@ -49,6 +49,12 @@ object TokklTheme {
         @ReadOnlyComposable
         get() = LocalTokklExtraColors.current
 
+    /** The hue of the section that shows, [LocalSectionHue]. */
+    val sectionHue: SectionHue
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalSectionHue.current
+
     /** Tokkl's spacing scale, rhythm, screen margin and content width. */
     val spacing: TokklSpacing get() = TokklSpacing
 

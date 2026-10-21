@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -88,6 +89,7 @@ import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import com.github.e0ipso.tokkl.trust.TrustPrompt
 import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
 import com.github.e0ipso.tokkl.ui.WindowWidth
+import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
 import com.github.e0ipso.tokkl.ui.windowWidth
 import java.time.Clock
 import kotlinx.coroutines.Dispatchers
@@ -387,13 +389,16 @@ internal fun SignedInFrame(
             },
             contentWindowInsets = WindowInsets(0),
         ) { innerPadding ->
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .consumeWindowInsets(innerPadding),
-                content = content,
-            )
+            // The page's stickers take the current tab's hue, LocalSectionHue.
+            CompositionLocalProvider(LocalSectionHue provides current.hue) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .consumeWindowInsets(innerPadding),
+                    content = content,
+                )
+            }
         }
     }
 }

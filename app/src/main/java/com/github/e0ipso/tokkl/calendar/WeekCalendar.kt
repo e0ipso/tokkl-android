@@ -115,6 +115,7 @@ import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.ScrollAwayColumn
 import com.github.e0ipso.tokkl.ui.UnsentIcon
+import com.github.e0ipso.tokkl.ui.daySticker
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SmallCorner
 import com.github.e0ipso.tokkl.ui.theme.SmallCornerShape
@@ -325,7 +326,9 @@ private fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant, 
 
 /**
  * A head for each of [days] above its column: its weekday, or Today in a filled badge, its date
- * and, once the week's entries are known, its total.
+ * and, once the week's entries are known, its total. Each head is a day sticker in the section's
+ * hue, as `.calendar-day-head` in styles.css since tokkl d012228. Their band is surface, not
+ * surface-2, as the web app's: in dark the violet is under 3:1 on surface-2.
  */
 @Composable
 private fun DayHeads(days: List<LocalDate>, today: LocalDate, state: CalendarState.Shown, now: Instant, gutter: Dp, editing: CalendarEditing?) {
@@ -335,7 +338,7 @@ private fun DayHeads(days: List<LocalDate>, today: LocalDate, state: CalendarSta
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(MaterialTheme.colorScheme.surface),
     ) {
         Spacer(Modifier.width(gutter))
         for (day in days) {
@@ -350,14 +353,16 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
     val resources = LocalResources.current
     val locale = LocalConfiguration.current.locales[0]
     val words = remember(resources) { DateWords(resources) }
-    val line = MaterialTheme.colorScheme.outlineVariant
+    val hue = TokklTheme.sectionHue
     val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(R.string.history_day, words.weekday(day), words.short(day))
     val spoken = totalSeconds?.let { stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it)) } ?: label
     val addAction = addEntryAction(day, editing)
     Column(
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1 / 2),
         modifier = modifier
-            .drawBehind { drawLine(line, Offset.Zero, Offset(0f, size.height), DividerDefaults.Thickness.toPx()) }
+            // The web app's 4px by 2px margin, inside the column's width, so heads and columns still line up.
+            .padding(horizontal = TokklTheme.spacing.space1 / 2, vertical = TokklTheme.spacing.space1)
+            .daySticker(hue, MaterialTheme.shapes.small, TokklTheme.extraColors.stickerOutline)
             .padding(horizontal = TokklTheme.spacing.space2, vertical = TokklTheme.spacing.space1)
             .clearAndSetSemantics {
                 heading()
@@ -367,26 +372,27 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
     ) {
         val headStyle = MaterialTheme.typography.labelMedium
         if (isToday) {
-            // A filled badge, so today is marked by its shape as well as its colour.
+            // An inverted badge, the hue on the hue's text colour, so today is marked by its shape
+            // as well as its colour on every hue.
             Text(
                 text = resources.getString(R.string.history_today).uppercase(locale),
                 style = headStyle,
-                color = TokklTheme.extraColors.onPrimaryFill,
+                color = hue.fill,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
-                    .background(TokklTheme.extraColors.primaryFill, PillShape)
+                    .background(hue.onFill, PillShape)
                     .padding(horizontal = TokklTheme.spacing.space1),
             )
         } else {
-            Text(words.weekday(day).uppercase(locale), style = headStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(words.weekday(day).uppercase(locale), style = headStyle, color = hue.onFill, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Text(words.short(day), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(words.short(day), style = MaterialTheme.typography.bodySmall, color = hue.onFill, maxLines = 1, overflow = TextOverflow.Ellipsis)
         if (totalSeconds != null) {
             Text(
                 text = settings.formatDuration(totalSeconds),
                 style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = hue.onFill,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

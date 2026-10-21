@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.ui.theme
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -11,10 +12,10 @@ import org.junit.Test
 class NavigationBarColoursTest {
 
     @Test
-    fun lightItemsFollowTheDecision() = assertDecision(TokklLightColorScheme)
+    fun lightItemsFollowTheDecision() = SectionHues.all.forEach { assertDecision(TokklLightColorScheme, it) }
 
     @Test
-    fun darkItemsFollowTheDecision() = assertDecision(TokklDarkColorScheme)
+    fun darkItemsFollowTheDecision() = SectionHues.all.forEach { assertDecision(TokklDarkColorScheme, it) }
 
     @Test
     fun onlyTheActiveLabelIsBold() {
@@ -22,11 +23,16 @@ class NavigationBarColoursTest {
         assertNull(navigationBarLabelWeight(selected = false))
     }
 
-    private fun assertDecision(s: ColorScheme) {
-        val item = navigationBarItemColors(s)
-        assertEquals(s.primary, item.selectedIndicatorColor)
-        assertEquals(s.onPrimary, item.selectedIconColor)
-        assertEquals(s.primary, item.selectedTextColor)
+    private fun assertDecision(s: ColorScheme, hue: SectionHue) {
+        val item = navigationBarItemColors(s, hue)
+        val indicator = navigationIndicator(s, hue)
+        // The indicator is the hue inside an outline in the border colour, in light and dark.
+        assertEquals(hue.fill, indicator.fill)
+        assertEquals(s.outline, indicator.outline)
+        // Tokkl draws the indicator itself, so Material 3's stays transparent.
+        assertEquals(Color.Transparent, item.selectedIndicatorColor)
+        assertEquals(hue.onFill, item.selectedIconColor)
+        assertEquals(s.onSurface, item.selectedTextColor)
         assertEquals(s.onSurfaceVariant, item.unselectedIconColor)
         assertEquals(s.onSurfaceVariant, item.unselectedTextColor)
         // Material 3's default indicator, which the colour scheme maps to --selected.

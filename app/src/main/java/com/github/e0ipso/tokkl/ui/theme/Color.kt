@@ -41,6 +41,7 @@ private class Tokens(
     val sceneSwell: Color,
     val sceneStripe: Color,
     val wordmarkHalo: Color,
+    val stickerOutline: Color,
     val chartBillable: Color,
     val chartOther: Color,
     val chartOtherWash: Color,
@@ -77,6 +78,7 @@ private val Light = Tokens(
     sceneSwell = Color(0xFFC2E8E3), // --scene-swell
     sceneStripe = Color(0xFFFDE6D4), // --scene-stripe
     wordmarkHalo = Color.Transparent, // --wordmark-halo, transparent: only dark mode draws the halo
+    stickerOutline = Color(0xFF08061F), // --sticker-outline
     chartBillable = Color(0xFF0086D1), // --chart-billable
     chartOther = Color(0xFFF05A00), // --chart-other
     chartOtherWash = Color(0xFFFBCEB3), // --chart-other-wash
@@ -113,6 +115,7 @@ private val Dark = Tokens(
     sceneSwell = Color(0xFF063A4B), // --scene-swell
     sceneStripe = Color(0xFF2B131B), // --scene-stripe
     wordmarkHalo = Color(0xFFB9B5D6), // --wordmark-halo
+    stickerOutline = Color.Transparent, // --sticker-outline, transparent: every hue reaches 3:1 on dark surface
     chartBillable = Color(0xFF00B9FA), // --chart-billable
     chartOther = Color(0xFFFF9500), // --chart-other
     chartOtherWash = Color(0xFF5B3920), // --chart-other-wash
@@ -122,8 +125,8 @@ private val Dark = Tokens(
 
 /**
  * The section hues of styles.css, the wordmark's and the same in light and dark, with the colour
- * of text and icons on each. TKA-0186 gives each top-level tab one of them; until then no screen
- * draws them, and ThemeContrastTest keeps their pairs checked.
+ * of text and icons on each. [SectionHues] gives each top-level tab one of them, as tokkl d012228
+ * (TT-0299) gives each section of the web app.
  */
 internal object TokklHues {
     val orange = Color(0xFFF05A00) // --hue-orange
@@ -138,6 +141,20 @@ internal object TokklHues {
     /** `--on-hue-violet`, white, on violet, where the ink is only 3.50:1. */
     val onHueViolet = Color(0xFFFFFFFF)
 }
+
+/**
+ * The stops of `--spectrum-strip`, the wordmark's full gradient from the start edge to the end,
+ * which the top bar draws as a strip along its bottom. The strip is decoration and needs no ratio.
+ */
+internal val TokklSpectrum: List<Color> = listOf(
+    Color(0xFFFFE900),
+    Color(0xFFFF9500),
+    Color(0xFFFF008C),
+    Color(0xFF00DFD5),
+    Color(0xFF00B9FA),
+    Color(0xFF8722FF),
+    Color(0xFFEB00D5),
+)
 
 /**
  * Maps the Material 3 roles onto the tokens of one scheme. A role with no token of its own takes
@@ -231,8 +248,10 @@ internal val TokklDarkColorScheme =
  * Tokkl colours with no Material 3 role. Screens show [running] and [billable] together with an
  * icon or a label, never as the only sign of the state.
  *
- * The texture and scene colours are the stops of gradients behind the top bar strip and the
- * sign-in scene. Draw them as gradients, never as images, and never behind an input or data.
+ * The scene colours are the stops of the gradients behind the sign-in scene. Draw them as
+ * gradients, never as images, and never behind an input or data. The texture colours mirror
+ * styles.css, where they draw the sidebar and settings card textures; the app draws none of them
+ * since the spectrum strip took the place of the top bar's glow strip.
  */
 @Immutable
 class TokklExtraColors(
@@ -252,11 +271,11 @@ class TokklExtraColors(
      * and under 3:1 on bg and surface-2.
      */
     val accentLime: Color,
-    /** `--texture-glow`, the sunset glow over surface behind the top bar strip. */
+    /** `--texture-glow`, the sunset glow over surface. */
     val textureGlow: Color,
-    /** `--texture-swell`, the striped swell's base over surface behind the top bar strip. */
+    /** `--texture-swell`, the striped swell's base over surface. */
     val textureSwell: Color,
-    /** `--texture-stripe`, the swell's stripes over surface behind the top bar strip. */
+    /** `--texture-stripe`, the swell's stripes over surface. */
     val textureStripe: Color,
     /** `--scene-glow`, the sunset glow over bg behind the sign-in scene and the splash. */
     val sceneGlow: Color,
@@ -266,6 +285,12 @@ class TokklExtraColors(
     val sceneStripe: Color,
     /** `--wordmark-halo`, the 1dp outline around the wordmark. Transparent in light. */
     val wordmarkHalo: Color,
+    /**
+     * `--sticker-outline`, the 2dp outline of a hue-filled day sticker: the ink in light, where
+     * sky and yellow do not reach 3:1 on surface by themselves, and transparent in dark, where
+     * every hue does.
+     */
+    val stickerOutline: Color,
     /** `--chart-billable`, a report chart's billable time, drawn solid. A mark only, never text. */
     val chartBillable: Color,
     /** `--chart-other`, the stripes of a report chart's non-billable time. A mark only, never text. */
@@ -297,6 +322,7 @@ internal val TokklLightExtraColors = TokklExtraColors(
     sceneSwell = Light.sceneSwell,
     sceneStripe = Light.sceneStripe,
     wordmarkHalo = Light.wordmarkHalo,
+    stickerOutline = Light.stickerOutline,
     chartBillable = Light.chartBillable,
     chartOther = Light.chartOther,
     chartOtherWash = Light.chartOtherWash,
@@ -317,6 +343,7 @@ internal val TokklDarkExtraColors = TokklExtraColors(
     sceneSwell = Dark.sceneSwell,
     sceneStripe = Dark.sceneStripe,
     wordmarkHalo = Dark.wordmarkHalo,
+    stickerOutline = Dark.stickerOutline,
     chartBillable = Dark.chartBillable,
     chartOther = Dark.chartOther,
     chartOtherWash = Dark.chartOtherWash,
@@ -341,6 +368,7 @@ internal fun TokklExtraColors.withPrimaryFill(fill: Color, onFill: Color) = Tokk
     sceneSwell = sceneSwell,
     sceneStripe = sceneStripe,
     wordmarkHalo = wordmarkHalo,
+    stickerOutline = stickerOutline,
     chartBillable = chartBillable,
     chartOther = chartOther,
     chartOtherWash = chartOtherWash,

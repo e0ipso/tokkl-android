@@ -37,6 +37,8 @@ import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
+import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.DayOfWeek
@@ -136,6 +138,32 @@ class DayCalendarTest {
         }
     }
 
+    @Test
+    fun lightWeekDayHeadsUseTheCurrentSectionHue() = assertDayStickers(dark = false)
+
+    @Test
+    fun darkWeekDayHeadsUseTheCurrentSectionHue() = assertDayStickers(dark = true)
+
+    private fun assertDayStickers(dark: Boolean) {
+        val shown = show(THURSDAY, dark = dark)
+        composeRule.runOnIdle { shown.window = TABLET }
+        val headings = listOf("Mon, 12 Oct", string(R.string.history_today), "Sun, 18 Oct")
+        for (hue in SectionHues.all) {
+            composeRule.runOnIdle { shown.hue = hue }
+            for (label in headings) {
+                val pixels = composeRule.onNode(isHeading() and hasContentDescription(label, substring = true))
+                    .captureToImage().toPixelMap()
+                var fillPixels = 0
+                for (x in 0 until pixels.width) {
+                    for (y in 0 until pixels.height) {
+                        if (close(pixels[x, y], hue.fill)) fillPixels++
+                    }
+                }
+                assertTrue("$label has a section-coloured sticker", fillPixels > pixels.width * pixels.height / 3)
+            }
+        }
+    }
+
     /** The chosen day sits in Tokkl's frame, which the other days lack, so colour is not its only sign. */
     @Test
     fun theChosenDayIsFramed() {
@@ -176,19 +204,21 @@ class DayCalendarTest {
     }
 
     /** The calendar from [start], in this phone's own window until the test gives it another. */
-    private fun show(start: LocalDate): Shown {
+    private fun show(start: LocalDate, dark: Boolean = false): Shown {
         val shown = Shown(start)
         composeRule.setContent {
-            TokklTheme(darkTheme = false) {
-                WindowOfSize(shown.window) {
-                    CalendarContent(
-                        state = state(shown.selected),
-                        now = NOON,
-                        onStep = { shown.selected = shown.selected.plusDays(it) },
-                        onSelect = { shown.selected = it },
-                        onToday = { shown.selected = THURSDAY },
-                        onRetry = {},
-                    )
+            TokklTheme(darkTheme = dark) {
+                CompositionLocalProvider(LocalSectionHue provides shown.hue) {
+                    WindowOfSize(shown.window) {
+                        CalendarContent(
+                            state = state(shown.selected),
+                            now = NOON,
+                            onStep = { shown.selected = shown.selected.plusDays(it) },
+                            onSelect = { shown.selected = it },
+                            onToday = { shown.selected = THURSDAY },
+                            onRetry = {},
+                        )
+                    }
                 }
             }
         }
@@ -236,6 +266,7 @@ class DayCalendarTest {
     private class Shown(start: LocalDate) {
         var selected: LocalDate by mutableStateOf(start)
         var window: DpSize? by mutableStateOf(null)
+        var hue by mutableStateOf(SectionHues.timer)
     }
 
     private companion object {

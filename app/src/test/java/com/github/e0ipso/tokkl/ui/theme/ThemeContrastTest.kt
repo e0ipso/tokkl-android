@@ -120,7 +120,7 @@ class ThemeContrastTest {
             Pair("onTertiaryFixed on tertiaryFixedDim", s.onTertiaryFixed, s.tertiaryFixedDim, Kind.TEXT),
             Pair("onTertiaryFixedVariant on tertiaryFixed", s.onTertiaryFixedVariant, s.tertiaryFixed, Kind.TEXT),
         )
-        return surfacePairs + surfaceOnlyMarks + fills + huePairs() + navigationBarPairs(s) + texturePairs(s, x) + sceneOverlapPairs(s, x) +
+        return surfacePairs + surfaceOnlyMarks + fills + huePairs() + stickerPairs(s, x) + navigationBarPairs(s) + texturePairs(s, x) + sceneOverlapPairs(s, x) +
             reportPairs(s, x)
     }
 
@@ -140,15 +140,44 @@ class ThemeContrastTest {
     }
 
     /**
-     * The colours Tokkl gives a bottom bar item: the icon sits on the primary indicator, and the
-     * label sits below it, on the bar, which is surfaceContainer.
+     * The pairs of the stickers on each section's hue (SectionHue.kt): a day sticker's text in the
+     * hue's text colour, today's inverted badge on the week calendar, the hue's text colour on the
+     * hue, and the sticker's edge against the surface it sits on. In light the sticker outline, the
+     * ink, draws that edge, since sky and yellow fall under 3:1 on surface; in dark there is no
+     * outline, so every hue must reach 3:1 on surface by itself.
+     */
+    private fun stickerPairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
+        val outlined = x.stickerOutline.alpha > 0f
+        return SECTION_HUES.flatMap { (name, hue) ->
+            listOfNotNull(
+                Pair("day sticker text on $name", hue.onFill, hue.fill, Kind.TEXT),
+                Pair("today badge, $name on its text colour", hue.fill, hue.onFill, Kind.TEXT),
+                Pair("$name sticker outline on surface", x.stickerOutline, s.surface, Kind.NON_TEXT).takeIf { outlined },
+                Pair("$name sticker outline on background", x.stickerOutline, s.background, Kind.NON_TEXT).takeIf { outlined },
+                Pair("$name sticker on surface", hue.fill, s.surface, Kind.NON_TEXT).takeUnless { outlined },
+            )
+        }
+    }
+
+    /**
+     * The colours Tokkl gives a bottom bar item, for the hue of every tab: the icon and, on Timer,
+     * the running dot sit on the hue's indicator, whose outline draws its edge on the bar, which is
+     * surfaceContainer, and the label sits below it, on the bar.
      */
     private fun navigationBarPairs(s: ColorScheme): List<Pair> {
-        val item = navigationBarItemColors(s)
         val bar = s.surfaceContainer
-        return listOf(
-            Pair("active nav icon on indicator", item.selectedIconColor, item.selectedIndicatorColor, Kind.NON_TEXT),
-            Pair("active nav label on bar", item.selectedTextColor, bar, Kind.TEXT),
+        val active = SECTION_HUES.flatMap { (name, hue) ->
+            val item = navigationBarItemColors(s, hue)
+            val indicator = navigationIndicator(s, hue)
+            listOf(
+                Pair("active nav icon on the $name indicator", item.selectedIconColor, indicator.fill, Kind.NON_TEXT),
+                Pair("running dot on the $name indicator", hue.onFill, indicator.fill, Kind.NON_TEXT),
+                Pair("$name indicator outline on bar", indicator.outline, bar, Kind.NON_TEXT),
+                Pair("active nav label on bar, $name", item.selectedTextColor, bar, Kind.TEXT),
+            )
+        }
+        val item = navigationBarItemColors(s, SectionHues.timer)
+        return active + listOf(
             Pair("inactive nav icon on bar", item.unselectedIconColor, bar, Kind.NON_TEXT),
             Pair("inactive nav label on bar", item.unselectedTextColor, bar, Kind.TEXT),
         )
@@ -280,5 +309,14 @@ class ThemeContrastTest {
     private companion object {
         /** The near-black navy outline of the wordmark artwork, which styles.css names; not a token. */
         val WORDMARK_OUTLINE = Color(0xFF000013)
+
+        /** Every section's hue, by the section's name. */
+        val SECTION_HUES = listOf(
+            "timer" to SectionHues.timer,
+            "reports" to SectionHues.reports,
+            "projects" to SectionHues.projects,
+            "settings" to SectionHues.settings,
+            "more" to SectionHues.more,
+        )
     }
 }

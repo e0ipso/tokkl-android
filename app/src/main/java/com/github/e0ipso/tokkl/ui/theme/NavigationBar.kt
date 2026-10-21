@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.ui.theme
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.modifiers.TextAutoSizeLayoutScope
@@ -18,6 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
@@ -26,7 +33,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** Material 3's alpha for a disabled item. */
@@ -34,18 +43,19 @@ private const val DisabledAlpha = 0.38f
 
 /**
  * Tokkl's colours for a bottom bar item, replacing Material 3's defaults. The active indicator is
- * a primary block behind the icon, with an on-primary icon. Material 3 draws the label below the
- * indicator on the bar, where on-primary text would be unreadable, so the active label takes
- * primary instead. Tokkl's web puts the label inside the block (`.nav-link.active` in
- * styles.css). Inactive icons and labels take on-surface-variant.
+ * a block in its page's [hue] behind the icon, with the icon in the hue's text colour, as
+ * `.nav-link.active` in styles.css since tokkl d012228. [navigationIndicator] draws that block,
+ * so Material 3's own indicator is transparent. Material 3 draws the label below the indicator on
+ * the bar, where Tokkl's web puts it inside the block, so the active label takes on-surface, the
+ * ink in light. Inactive icons and labels take on-surface-variant.
  *
  * The scheme's own roles stay as they are: Material 3 would have painted the indicator in
  * secondaryContainer, which Tokkl maps to --selected.
  */
-internal fun navigationBarItemColors(scheme: ColorScheme) = NavigationBarItemColors(
-    selectedIconColor = scheme.onPrimary,
-    selectedTextColor = scheme.primary,
-    selectedIndicatorColor = scheme.primary,
+internal fun navigationBarItemColors(scheme: ColorScheme, hue: SectionHue) = NavigationBarItemColors(
+    selectedIconColor = hue.onFill,
+    selectedTextColor = scheme.onSurface,
+    selectedIndicatorColor = Color.Transparent,
     unselectedIconColor = scheme.onSurfaceVariant,
     unselectedTextColor = scheme.onSurfaceVariant,
     disabledIconColor = scheme.onSurfaceVariant.copy(alpha = DisabledAlpha),
@@ -53,7 +63,7 @@ internal fun navigationBarItemColors(scheme: ColorScheme) = NavigationBarItemCol
 )
 
 /** The colours of [navigationBarItemColors] for a navigation rail item, whose label also sits below its indicator. */
-internal fun navigationRailItemColors(scheme: ColorScheme) = navigationBarItemColors(scheme).let { bar ->
+internal fun navigationRailItemColors(scheme: ColorScheme, hue: SectionHue) = navigationBarItemColors(scheme, hue).let { bar ->
     NavigationRailItemColors(
         selectedIconColor = bar.selectedIconColor,
         selectedTextColor = bar.selectedTextColor,
@@ -66,6 +76,17 @@ internal fun navigationRailItemColors(scheme: ColorScheme) = navigationBarItemCo
 }
 
 /**
+ * The active indicator of a bar or rail item: [fill], its page's hue, inside a [FrameWidth]
+ * [outline]. The outline is the border colour in light and dark, as the web's 2px inset outline on
+ * `.nav-link.active`: the ink in light, where sky and yellow are under 3:1 on surface, and
+ * `--border` in dark.
+ */
+internal class NavigationIndicator(val fill: Color, val outline: Color)
+
+/** The indicator of an item whose page has [hue]. */
+internal fun navigationIndicator(scheme: ColorScheme, hue: SectionHue) = NavigationIndicator(hue.fill, scheme.outline)
+
+/**
  * The weight of an item's label. The active one is bold, 700, so that the weight and the
  * indicator's shape mark it without colour. An inactive label keeps the weight it inherits.
  */
@@ -74,28 +95,29 @@ internal fun navigationBarLabelWeight(selected: Boolean): FontWeight? =
 
 /** What a screen needs to build a bar or rail item from [NavigationBarItem] or [NavigationRailItem] in Tokkl's colours. */
 object TokklNavigationBarDefaults {
-    /** The colours of [NavigationBarItem] in the current theme. */
+    /** The colours of [NavigationBarItem] for a page with [hue], in the current theme. */
     @Composable
     @ReadOnlyComposable
-    fun itemColors(): NavigationBarItemColors = navigationBarItemColors(MaterialTheme.colorScheme)
+    fun itemColors(hue: SectionHue): NavigationBarItemColors = navigationBarItemColors(MaterialTheme.colorScheme, hue)
 
-    /** The colours of [NavigationRailItem] in the current theme, the bar's colours. */
+    /** The colours of [NavigationRailItem] for a page with [hue], in the current theme, the bar's colours. */
     @Composable
     @ReadOnlyComposable
-    fun railItemColors(): NavigationRailItemColors = navigationRailItemColors(MaterialTheme.colorScheme)
+    fun railItemColors(hue: SectionHue): NavigationRailItemColors = navigationRailItemColors(MaterialTheme.colorScheme, hue)
 
     /**
      * The colours of an item on the More sheet, a [NavigationDrawerItem], as `.more-sheet .nav-link`
-     * in Tokkl's styles.css. The active item is a primary block with its icon and label inside in
-     * on-primary, as in the web app; the others take on-surface-variant on the sheet.
+     * in Tokkl's styles.css. The active item is a block in its page's [hue] with its icon and label
+     * inside in the hue's text colour, as in the web app, inside a [FrameWidth] outline in the border
+     * colour that the item draws itself; the others take on-surface-variant on the sheet.
      */
     @Composable
-    fun moreItemColors(): NavigationDrawerItemColors {
+    fun moreItemColors(hue: SectionHue): NavigationDrawerItemColors {
         val scheme = MaterialTheme.colorScheme
         return NavigationDrawerItemDefaults.colors(
-            selectedContainerColor = scheme.primary,
-            selectedIconColor = scheme.onPrimary,
-            selectedTextColor = scheme.onPrimary,
+            selectedContainerColor = hue.fill,
+            selectedIconColor = hue.onFill,
+            selectedTextColor = hue.onFill,
             unselectedIconColor = scheme.onSurfaceVariant,
             unselectedTextColor = scheme.onSurfaceVariant,
         )
@@ -117,6 +139,7 @@ fun RowScope.TokklNavigationBarItem(
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
     label: String,
+    hue: SectionHue,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     barLabels: List<String> = listOf(label),
@@ -124,12 +147,12 @@ fun RowScope.TokklNavigationBarItem(
     NavigationBarItem(
         selected = selected,
         onClick = onClick,
-        icon = icon,
+        icon = { IndicatedIcon(selected, hue, BarIndicatorSize, icon) },
         modifier = modifier,
         enabled = enabled,
         label = { ItemLabel(label, selected, barLabels) },
         alwaysShowLabel = true,
-        colors = TokklNavigationBarDefaults.itemColors(),
+        colors = TokklNavigationBarDefaults.itemColors(hue),
     )
 }
 
@@ -145,19 +168,54 @@ fun TokklNavigationRailItem(
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
     label: String,
+    hue: SectionHue,
     modifier: Modifier = Modifier,
     railLabels: List<String> = listOf(label),
 ) {
     NavigationRailItem(
         selected = selected,
         onClick = onClick,
-        icon = icon,
+        icon = { IndicatedIcon(selected, hue, RailIndicatorSize, icon) },
         modifier = modifier,
         label = { ItemLabel(label, selected, railLabels) },
         alwaysShowLabel = true,
-        colors = TokklNavigationBarDefaults.railItemColors(),
+        colors = TokklNavigationBarDefaults.railItemColors(hue),
     )
 }
+
+/**
+ * The [icon] of a bar or rail item, over its [NavigationIndicator] while [selected]: a pill of
+ * [indicatorSize], Material 3's indicator size, centred on the icon as Material 3 centres its
+ * own. It draws outside the icon's bounds, where Material 3 draws its indicator.
+ */
+@Composable
+private fun IndicatedIcon(selected: Boolean, hue: SectionHue, indicatorSize: DpSize, icon: @Composable () -> Unit) {
+    val indicator = navigationIndicator(MaterialTheme.colorScheme, hue)
+    Box(
+        Modifier.drawBehind {
+            if (!selected) return@drawBehind
+            val size = indicatorSize.toSize()
+            val stroke = FrameWidth.toPx()
+            val topLeft = Offset((this.size.width - size.width) / 2, (this.size.height - size.height) / 2)
+            drawRoundRect(indicator.fill, topLeft, size, CornerRadius(size.height / 2))
+            // Inset, as the web's inset box-shadow: the outline lies inside the fill's edge.
+            val inset = stroke / 2
+            drawRoundRect(
+                color = indicator.outline,
+                topLeft = topLeft + Offset(inset, inset),
+                size = Size(size.width - stroke, size.height - stroke),
+                cornerRadius = CornerRadius((size.height - stroke) / 2),
+                style = Stroke(stroke),
+            )
+        },
+    ) { icon() }
+}
+
+/** Material 3's active indicator on a bar item, NavigationBarTokens' 64 by 32dp. */
+private val BarIndicatorSize = DpSize(64.dp, 32.dp)
+
+/** Material 3's active indicator on a rail item, NavigationRailTokens' 56 by 32dp. */
+private val RailIndicatorSize = DpSize(56.dp, 32.dp)
 
 /**
  * The [label] of a bar or rail item, bold while [selected], on one line, at the size at which all

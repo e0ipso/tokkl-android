@@ -63,6 +63,7 @@ import com.github.e0ipso.tokkl.reports.projectMark
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.UnsentIcon
+import com.github.e0ipso.tokkl.ui.daySticker
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -220,24 +221,36 @@ private fun dayLabel(date: LocalDate, today: LocalDate, resources: Resources, wo
     )
 }
 
-/** The day and its total, one heading to TalkBack. */
+/**
+ * The day and its total, one heading to TalkBack, on a day sticker: a pill in the section's hue
+ * with the text in the hue's text colour, as `.day-header` in styles.css since tokkl d012228. The
+ * day stickers take the section's hue rather than one per day, as the web app's do.
+ */
 @Composable
 private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettings) {
     val locale = LocalConfiguration.current.locales[0]
     val spoken = stringResource(R.string.history_day_spoken, label, spokenDuration(LocalResources.current, totalSeconds))
+    val hue = TokklTheme.sectionHue
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = TokklTheme.spacing.betweenGroups, bottom = TokklTheme.spacing.inGroup)
+            .daySticker(hue, CircleShape, TokklTheme.extraColors.stickerOutline)
+            .padding(
+                start = TokklTheme.spacing.space3,
+                end = TokklTheme.spacing.space4,
+                top = TokklTheme.spacing.space2,
+                bottom = TokklTheme.spacing.space2,
+            )
             .semantics(mergeDescendants = true) {
                 heading()
                 contentDescription = spoken
             },
     ) {
-        Text(label.uppercase(locale), style = TokklTheme.dayHeaderTextStyle, modifier = Modifier.weight(1f))
+        Text(label.uppercase(locale), style = TokklTheme.dayHeaderTextStyle, color = hue.onFill, modifier = Modifier.weight(1f))
         Spacer(Modifier.width(TokklTheme.spacing.space3))
-        Text(settings.formatDuration(totalSeconds), style = TokklTheme.dayTotalTextStyle)
+        Text(settings.formatDuration(totalSeconds), style = TokklTheme.dayTotalTextStyle, color = hue.onFill)
     }
 }
 
