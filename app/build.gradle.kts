@@ -190,6 +190,8 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.runner)
+    // Exercises the actual launcher menu and shortcut tap.
+    androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.androidx.work.testing)
     androidTestUtil(libs.androidx.test.orchestrator)
 }

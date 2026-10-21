@@ -104,6 +104,14 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/tokkl_widget_info" />
         </receiver>
+        <!-- A launcher shortcut queues its favorite and shows a toast without opening an app screen. -->
+        <activity
+            android:name=".shortcuts.StartFavoriteActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Tokkl.Shortcut" />
     </application>
 
 </manifest>

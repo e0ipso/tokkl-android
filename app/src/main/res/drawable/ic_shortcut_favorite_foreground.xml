@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The foreground of ic_shortcut_favorite: ic_play's triangle, 2.5 times its size and centred in
+    the 108 dp adaptive icon layer, well inside the 66 dp safe zone.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="2.5"
+        android:scaleY="2.5"
+        android:translateX="20.25"
+        android:translateY="24">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M8 5v14l11-7z" />
+    </group>
+</vector>

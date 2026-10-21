@@ -219,7 +219,7 @@ The owner asked for a Pomodoro session on 2026-10-20 and made the decisions belo
 
 ## 6. Architecture
 
-Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2, the Kotlin ports in 6.1, the running timer's notification (N1) without its Live Update, the Glance home screen widget with its running clock and offline Start, Stop and favorites (N3), and the Quick Settings tile's cached state and offline Stop and Continue actions (N4). Not built: the tile's server refresh when the shade opens (N4), the running entry's check every 15 minutes in 6.3, and the Pomodoro session (section 5.12) with its settings (G3) and the new bar and More sheet (B1).
+Built: Kotlin with Jetpack Compose and Compose Material 3, Room for the cache and the queue, WorkManager for the background send, OkHttp and kotlinx.serialization with the pinning trust manager, the network security config in 6.2, the Kotlin ports in 6.1, the running timer's notification (N1) without its Live Update, the Glance home screen widget with its running clock and offline Start, Stop and favorites (N3), the favorites' dynamic launcher shortcuts with offline starts and a short confirmation (N6), and the Quick Settings tile's cached state and offline Stop and Continue actions (N4). Not built: the tile's server refresh when the shade opens (N4), the running entry's check every 15 minutes in 6.3, and the Pomodoro session (section 5.12) with its settings (G3) and the new bar and More sheet (B1).
 
 ### 6.1 Stack
 

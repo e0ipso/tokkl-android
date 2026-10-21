@@ -33,6 +33,10 @@ import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
+import com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutSync
+import com.github.e0ipso.tokkl.shortcuts.LauncherShortcuts
+import com.github.e0ipso.tokkl.shortcuts.favoriteNames
+import com.github.e0ipso.tokkl.shortcuts.favoriteShortcuts
 import com.github.e0ipso.tokkl.sync.DiscardedChanges
 import com.github.e0ipso.tokkl.sync.DiscardedChangesStore
 import com.github.e0ipso.tokkl.sync.LastAnswer
@@ -58,7 +62,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -321,6 +327,24 @@ class TokklApplication : Application() {
     }
 
     /**
+     * The favorites as launcher shortcuts (docs/PRD.md N6), which follow the cached favorites and
+     * the capabilities from process start. The capabilities load on the first collection, off the
+     * main thread.
+     */
+    val favoriteShortcuts: FavoriteShortcutSync by lazy {
+        val launcher = LauncherShortcuts(this)
+        FavoriteShortcutSync(
+            shortcuts = combine(flow { emitAll(capabilities.state) }, cache.favorites, cache.projects) { flags, favorites, projects ->
+                favoriteShortcuts(flags.favorites, favorites, projects, launcher.limit, favoriteNames(this))
+            },
+            published = launcher::published,
+            publish = launcher::publish,
+            scope = MainScope(),
+            io = Dispatchers.IO,
+        )
+    }
+
+    /**
      * The trust refusals of the signed-in session's requests, which every
      * [Session] reports and the navigation host prompts about. Accepting one
      * refreshes the account settings, the request that ran into it.
@@ -338,8 +362,8 @@ class TokklApplication : Application() {
      * Sign-out (docs/PRD.md S6). It forgets the server and the token with its Keystore key first,
      * so the app sends nothing new. Then it cancels the queue's background work and every call in
      * flight, waits for the refresh and the queue's drain to end, and clears the cache with the
-     * queue, the running timer's notification, the account settings, the capabilities, the Timer
-     * page's view, the Pomodoro defaults, the trust decisions, the last answer and the count of
+     * queue, the running timer's notification, the launcher shortcuts, the account settings,
+     * the capabilities, the Timer page's view, the Pomodoro defaults, the trust decisions, the last answer and the count of
      * discarded changes. MainActivity then drops its view models, and with them
      * the history's older days and what every other screen loaded. The theme and the sign-in
      * cooldowns stay: they belong to the phone and to a server, not to the account.
@@ -355,6 +379,7 @@ class TokklApplication : Application() {
                 { sender.stop() },
                 { cache.clear() },
                 { runningNotification.forget() },
+                { favoriteShortcuts.forget() },
                 { AccountSettingsStore(this).clear() },
                 {
                     capabilities.forget()
@@ -395,6 +420,7 @@ class TokklApplication : Application() {
         // notification already followed, so opening the app never brings back a dismissed one.
         runningNotification.start()
         widgetSync.start()
+        favoriteShortcuts.start()
         // Check every 15 minutes while the cache holds a running entry.
         RunningCheck.follow(this, cache.running.map { it != null }, MainScope(), Dispatchers.IO)
     }
