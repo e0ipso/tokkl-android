@@ -1,7 +1,10 @@
 package com.github.e0ipso.tokkl
 
+import android.Manifest
 import android.app.Application
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,6 +26,7 @@ import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
+import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.NetworkWatch
@@ -33,6 +37,7 @@ import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.trash.TrashViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -60,6 +65,9 @@ class MainActivity : ComponentActivity() {
         (application as TokklApplication).cache.running.map { it != null }.distinctUntilChanged()
     }
 
+    private val notificationPermission by lazy { NotificationPermissionAsk.forApp(this) }
+    private var notificationsAllowed = false
+
     /** The default network, watched while the activity is started. */
     private val network by lazy { NetworkWatch(this, ::networkChanged) }
 
@@ -69,6 +77,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         drawEdgeToEdge()
+        notificationsAllowed = allowsNotifications()
         val themeSettings = (application as TokklApplication).themeSettings
         // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
         val systemIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -109,6 +118,8 @@ class MainActivity : ComponentActivity() {
                         discardedChanges = (application as TokklApplication).discarded.state,
                         onDismissDiscarded = (application as TokklApplication).discarded::dismiss,
                         signedInAccount = ::signedInAccount,
+                        notificationPermission = notificationPermission,
+                        onNotificationsAllowed = ::notificationsGranted,
                     )
                 }
             }
@@ -147,6 +158,10 @@ class MainActivity : ComponentActivity() {
      */
     override fun onStart() {
         super.onStart()
+        // A grant in notification settings makes the already-running timer visible too.
+        val allowed = allowsNotifications()
+        if (allowed && !notificationsAllowed) notificationsGranted()
+        notificationsAllowed = allowed
         (application as TokklApplication).foregroundRefresh.started(online = network.start())
         calendarViewModel.model.cameToForeground()
     }
@@ -172,6 +187,17 @@ class MainActivity : ComponentActivity() {
         historyViewModel.model.reconnected()
         calendarViewModel.model.reconnected()
         reportsViewModel.model.reconnected()
+    }
+
+    private fun allowsNotifications(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+
+    private fun notificationsGranted() {
+        notificationsAllowed = true
+        lifecycleScope.launch(Dispatchers.IO) {
+            (application as TokklApplication).runningNotification.repost()
+        }
     }
 
     /** The account signed in now, for signing in again after the server refused its token. Reads the disk. */

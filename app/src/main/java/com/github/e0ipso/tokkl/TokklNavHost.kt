@@ -55,6 +55,8 @@ import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
 import com.github.e0ipso.tokkl.navigation.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.projects.ProjectsModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reports.ReportsModel
@@ -156,6 +158,8 @@ fun TokklNavHost(
     discardedChanges: StateFlow<Int> = MutableStateFlow(0),
     onDismissDiscarded: () -> Unit = {},
     signedInAccount: () -> SignInAgain? = { null },
+    notificationPermission: NotificationPermissionAsk? = null,
+    onNotificationsAllowed: () -> Unit = {},
 ) {
     val appContext = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
@@ -269,6 +273,14 @@ fun TokklNavHost(
         }
         if (discarded > 0) DiscardNotice(discarded, onDismiss = onDismissDiscarded, modifier = Modifier.align(Alignment.BottomCenter))
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
+        if (notificationPermission != null) {
+            NotificationPermissionPrompt(
+                timer.starts,
+                notificationPermission,
+                onAllowed = onNotificationsAllowed,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
     }
 }
 

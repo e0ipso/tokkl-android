@@ -17,10 +17,14 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -109,6 +113,15 @@ class TimerModel(
 
     private val local = MutableStateFlow(Local())
 
+    private val queuedStarts = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /**
+     * One item for each timer start made here, Start, Continue or a favorite, once the queue has
+     * it, for the notification permission's question (docs/PRD.md N5). The start never waits for
+     * a collector. The latest start waits for a screen collector after a configuration change.
+     */
+    val starts: SharedFlow<Unit> = queuedStarts.asSharedFlow()
+
     val state: StateFlow<TimerState> = combine(cached, catalog, accountSettings, local) { running, names, settings, taps ->
         timerState(running, settings?.defaultWorkspaceId, taps).labelled(names)
     }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), TimerState.Loading)
@@ -195,6 +208,7 @@ class TimerModel(
                 if (typed != null) changes.update(typed.entryId, typed.edit.fields, typed.edit.start, stop = null)
                 changes.start(workspaceId, starting.fields)
                 queued = true
+                queuedStarts.tryEmit(Unit)
                 settle { entry -> entry != null && !entry.start.isBefore(starting.at) }
             } finally {
                 local.update { taps ->

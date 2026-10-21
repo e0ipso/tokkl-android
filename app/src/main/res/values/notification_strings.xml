@@ -13,4 +13,8 @@
         says what TalkBack reads: a bare "Stop" among other notifications does not say what stops.
     -->
     <string name="notification_stop">Stop timer</string>
+    <!-- After the owner refuses the notification permission (docs/PRD.md N5): what is lost. -->
+    <string name="notification_permission_refused">Without notifications, the running timer will not show in the notification shade or as a Live Update.</string>
+    <!-- The message's action, which opens the app's notification settings. -->
+    <string name="notification_permission_settings">Settings</string>
 </resources>

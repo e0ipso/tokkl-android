@@ -42,6 +42,7 @@ class RunningNotificationSync(
 ) {
 
     private val lock = Mutex()
+    private var latest: RunningNotificationContent? = null
 
     /** Follows the running entry until the scope ends. Call once, at process start. */
     fun start(): Job = scope.launch(io) { follow() }
@@ -57,6 +58,7 @@ class RunningNotificationSync(
      */
     suspend fun apply(content: RunningNotificationContent?) {
         lock.withLock {
+            latest = content
             val stored = loadShown()
             val followed = stored?.let { it.copy(entryId = it.entryId?.let { id -> currentId(id) }) }
             when (val change = runningNotificationChange(followed, content)) {
@@ -68,9 +70,19 @@ class RunningNotificationSync(
         }
     }
 
+    /**
+     * A newly granted notification permission makes the current timer visible, even if its start
+     * was already followed while notifications were blocked. Ordinary foreground trips never call
+     * this, so a notification dismissed by the user stays dismissed.
+     */
+    suspend fun repost() {
+        lock.withLock { latest?.let(post) }
+    }
+
     /** Takes the notification away and forgets the entry it followed. Signing out calls this. */
     suspend fun forget() {
         lock.withLock {
+            latest = null
             remove()
             remember(null)
         }

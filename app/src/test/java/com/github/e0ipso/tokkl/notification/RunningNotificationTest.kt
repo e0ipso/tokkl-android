@@ -261,6 +261,34 @@ class RunningNotificationTest {
         assertEquals(listOf("post Notification -3", "post Notification -3"), fake.calls)
     }
 
+    @Test
+    fun grantingPermissionRepostsTheLatestEntryEvenIfItsStartWasAlreadyFollowed() {
+        val first = content()!!
+        val fake = FakeNotification(shown = first.followed())
+        val sync = fake.sync(flowOf())
+        runBlocking {
+            sync.apply(first)
+            assertEquals(emptyList<String>(), fake.calls)
+            sync.repost()
+            sync.apply(null)
+            sync.repost()
+        }
+        assertEquals(listOf("post Notification -3", "remove"), fake.calls)
+    }
+
+    @Test
+    fun aGrantAfterSignOutCannotRepostThePreviousAccountsEntry() {
+        val first = content()!!
+        val fake = FakeNotification(shown = first.followed())
+        val sync = fake.sync(flowOf())
+        runBlocking {
+            sync.apply(first)
+            sync.forget()
+            sync.repost()
+        }
+        assertEquals(listOf("remove"), fake.calls)
+    }
+
     private fun RunningNotificationContent.followed() = FollowedEntry(key, entryId)
 
     /** [serverIds] maps the local ids the server has answered to its own, as the queue's table does. */

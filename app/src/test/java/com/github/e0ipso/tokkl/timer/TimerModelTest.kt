@@ -20,6 +20,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -444,6 +445,76 @@ class TimerModelTest {
 
         val idle = awaitState("the idle timer shows again") { it is TimerState.Idle && it.fields.description.isNotEmpty() } as TimerState.Idle
         assertEquals(EntryFields(description = "A draft"), idle.fields)
+    }
+
+    /**
+     * Start, Continue and a favorite each announce their start once the queue has it, for the
+     * notification permission's question, and a start the queue refused announces nothing.
+     */
+    @Test
+    fun eachStartMadeHereIsAnnouncedAfterTheQueueHasIt() {
+        val announced = CopyOnWriteArrayList<Int>()
+        onMain {
+            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                model.starts.collect { announced += changes.calls.count { it.startsWith("start") } }
+            }
+        }
+        awaitIdle()
+
+        changes.gate = CompletableDeferred()
+        onMain { model.start() }
+        awaitState("the draft runs") { it is TimerState.Running }
+        Thread.sleep(SETTLE_PAUSE_MS)
+        assertEquals("nothing is announced while the queue writes the start", emptyList<Int>(), announced)
+        changes.gate.complete(Unit)
+        awaitAnnounced(announced, listOf(1))
+
+        tapUntilTaken { model.continueEntry(PAST) }
+        awaitAnnounced(announced, listOf(1, 2))
+
+        tapUntilTaken { model.startFrom(EntryFields(description = "Write the report")) }
+        awaitAnnounced(announced, listOf(1, 2, 3))
+
+        changes.failStart = true
+        tapUntilTaken { model.continueEntry(PAST) }
+        Thread.sleep(SETTLE_PAUSE_MS)
+        assertEquals("a refused start is not announced", listOf(1, 2, 3), announced)
+    }
+
+    @Test
+    fun aStartMadeElsewhereDoesNotAnnounceAnInAppStart() {
+        awaitIdle()
+        onMain { running.value = EntryWithSendState(PAST.copy(stop = null), unsent = false) }
+        awaitState("the external running entry") { it is TimerState.Running }
+        assertEquals(emptyList<Unit>(), model.starts.replayCache)
+    }
+
+    @Test
+    fun aStartWaitsForACollectorWithoutHoldingUpTheTimer() {
+        awaitIdle()
+        onMain { model.start() }
+        awaitState("the queued start") { it is TimerState.Running && it.entryId != null }
+        assertEquals(listOf(Unit), model.starts.replayCache)
+    }
+
+    private fun awaitAnnounced(announced: List<Int>, expected: List<Int>) {
+        val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
+        while (announced != expected) {
+            if (System.nanoTime() > deadline) throw AssertionError("announced $announced, not $expected, after ${changes.calls}")
+            Thread.sleep(POLL_MS)
+        }
+    }
+
+    /** Taps until the model takes the tap, which it ignores while the last start is pending. */
+    private fun tapUntilTaken(tap: () -> Unit) {
+        val before = changes.calls.size
+        val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
+        while (true) {
+            onMain(tap)
+            if (changes.calls.size > before) return
+            if (System.nanoTime() > deadline) throw AssertionError("the tap was never taken, after ${changes.calls}")
+            Thread.sleep(POLL_MS)
+        }
     }
 
     private fun awaitIdle(): TimerState.Idle = awaitState("the idle timer shows") { it is TimerState.Idle } as TimerState.Idle
