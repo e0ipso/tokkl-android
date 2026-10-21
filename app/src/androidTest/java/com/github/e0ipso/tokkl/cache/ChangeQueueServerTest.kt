@@ -137,7 +137,7 @@ class ChangeQueueServerTest {
         assertEquals("the start is on the grid", earliest.start, row.entry.start)
         assertTrue("the stop is on the grid point nearest the tap", row.entry.stop!! in earliest.stop..latest.stop)
         // The history shows an unsent entry's span as snapUnsent has it.
-        val shown = time().snapUnsent(row.entry.start, row.entry.stop)
+        val shown = time().snapUnsent(row.entry.start, row.entry.stop)!!
         assertEquals("the history shows the stop's span as it is", SnappedSpan(row.entry.start, row.entry.stop), shown)
 
         relay.release()
@@ -288,7 +288,7 @@ class ChangeQueueServerTest {
         assertTrue("the later timer still runs: $later", later["stop"] is JsonNull)
         assertEquals(laterStart, later.instant("start"))
         val phone = serverEntry(serverId(id))
-        assertEquals(time().snapUnsent(queued.start, queued.start).start, phone.instant("start"))
+        assertEquals(time().snapInstant(queued.start), phone.instant("start"))
         assertEquals(
             "the phone shows the server's running entry without waiting for a refresh",
             laptop,
@@ -301,7 +301,7 @@ class ChangeQueueServerTest {
         assertEquals("the phone's entry ends where the later timer's start snaps: $phone", laterStopped.instant("start"), phone.instant("stop"))
         assertNotEquals(
             "a span that rounded its duration up ends elsewhere, so this test tells the two apart",
-            time().snapUnsent(queued.start, laterStart).stop,
+            legacyRoundedStop(queued.start, laterStart),
             phone.instant("stop"),
         )
     }
@@ -322,7 +322,7 @@ class ChangeQueueServerTest {
         drainUntilEmpty()
 
         val stopped = serverEntry(earlier)
-        assertEquals(time().snapUnsent(start, start).start, stopped.instant("start"))
+        assertEquals(time().snapInstant(start), stopped.instant("start"))
         // Once the phone's timer stops, its start snaps to the grid point where the earlier one ends.
         val later = stopOnTheWeb(serverId(id))
         assertEquals("the two entries are back to back: $stopped, $later", later.instant("start"), stopped.instant("stop"))
@@ -344,8 +344,10 @@ class ChangeQueueServerTest {
         val before = Instant.now()
         assertTrue(runBlocking { app.changes.stop(onPhone) })
         val tapped = Instant.now()
-        // The web app starts a timer with the same start and stops it at once. Its start stops the
-        // phone's timer on the server, and the phone's stop, sent after, sets that entry's span.
+        // Stop the server copy before starting the comparison timer. Starting at the same
+        // instant as an existing timer now trashes the zero-length predecessor on Tokkl 1.7.0.
+        // Both comparisons here are long stops; exact short Stop remains TKA-0259/TKA-0261.
+        stopOnTheWeb(onPhone)
         val onWeb = startOnTheWeb("Stopped on the web", start)
         val stoppedOnWeb = stopOnTheWeb(onWeb)
         val after = Instant.now()
@@ -357,7 +359,7 @@ class ChangeQueueServerTest {
         // The two stops came a moment apart, by the phone's clock and the server's. Only when no
         // grid point's half step falls between them, with a margin for the clocks, do they share
         // their nearest grid point.
-        val nearest = { at: Instant -> time().snapUnsent(at, at).start }
+        val nearest = { at: Instant -> time().snapInstant(at) }
         val earliest = nearest(before.minus(CLOCK_MARGIN))
         val latest = nearest(after.plus(CLOCK_MARGIN))
         for (stopped in listOf(stoppedOnPhone, stoppedOnWeb)) {
@@ -408,7 +410,7 @@ class ChangeQueueServerTest {
         val earlier = serverEntry(laptop)
         assertEquals(
             "the server stopped the earlier timer at the queued start: $earlier",
-            time().snapUnsent(queued.start, queued.start).start,
+            time().snapInstant(queued.start),
             earlier.instant("stop"),
         )
         assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)
@@ -644,12 +646,12 @@ class ChangeQueueServerTest {
     /** One step of the account's grid: a second's span rounds up to it. */
     private fun step(): Duration {
         val at = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        val span = time().snapUnsent(at, at.plusSeconds(1))
+        val span = time().snapStop(at, at.plusSeconds(1), oneStep = true)
         return Duration.between(span.start, span.stop).also { check(it >= Duration.ofMinutes(1)) { "the account snaps to a grid: $it" } }
     }
 
     /** The grid point nearest [at], where Tokkl puts a start. */
-    private fun gridPoint(at: Instant): Instant = time().snapUnsent(at, at).start
+    private fun gridPoint(at: Instant): Instant = time().snapInstant(at)
 
     /**
      * A start about [ago] before now, a second after a half step, so its grid point is almost half
@@ -684,8 +686,15 @@ class ChangeQueueServerTest {
      */
     private fun assertRoundingUpEndsElsewhere(start: Instant, tapped: ClosedRange<Instant>, stop: Instant) {
         for (at in listOf(tapped.start, tapped.endInclusive)) {
-            assertNotEquals("a span rounded up to $at ends elsewhere, so this test tells the rules apart", time().snapUnsent(start, at).stop, stop)
+            assertNotEquals("the old duration-ceiling prediction ends elsewhere", legacyRoundedStop(start, at), stop)
         }
+    }
+
+    /** The old typed-span rule, retained only to prove these fixtures distinguish the rules. */
+    private fun legacyRoundedStop(start: Instant, stop: Instant): Instant {
+        val seconds = Duration.between(start.truncatedTo(ChronoUnit.SECONDS), stop.truncatedTo(ChronoUnit.SECONDS)).seconds
+        val stepSeconds = step().seconds
+        return gridPoint(start).plusSeconds(((seconds + stepSeconds - 1) / stepSeconds) * stepSeconds)
     }
 
     private fun editOnTheWeb(entry: Long, description: String, billable: Boolean) {

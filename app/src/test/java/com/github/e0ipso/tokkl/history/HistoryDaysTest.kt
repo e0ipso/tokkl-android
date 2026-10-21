@@ -63,7 +63,7 @@ class HistoryDaysTest {
     @Test
     fun anUnsentEntryShowsTheTimesTheServerWillStore() {
         val raw = entry(5, "2026-10-15T07:07:31.500Z", "2026-10-15T08:01:02.250Z")
-        val snapped = time(resolution = 15.0).snapUnsent(raw.start, raw.stop!!)
+        val snapped = time(resolution = 15.0).snapUnsent(raw.start, raw.stop!!)!!
 
         val shown = historyDays(listOf(unsent(raw)), emptyList(), emptyList(), emptyList(), time(resolution = 15.0))
             .single().entries.single()
@@ -125,6 +125,16 @@ class HistoryDaysTest {
         val older = days[1].entries.single()
         assertFalse("the cache holds it only until its next refresh", older.cached)
         assertTrue("and it still shows its change as not sent", older.unsent)
+    }
+
+    @Test
+    fun aRejectedPendingSpanStaysVisibleAtItsActualTimesForCorrection() {
+        val raw = entry(5, "2026-10-15T07:00:00Z", "2026-10-15T07:10:00Z")
+        val shown = historyDays(listOf(unsent(raw)), emptyList(), emptyList(), emptyList(), time(resolution = 60.0))
+            .single().entries.single()
+        assertEquals(raw.start, shown.start)
+        assertEquals(raw.stop, shown.stop)
+        assertTrue(shown.unsent)
     }
 
     private fun time(resolution: Double?) = AccountTime(MADRID, DayOfWeek.MONDAY, resolution, CLOCK)

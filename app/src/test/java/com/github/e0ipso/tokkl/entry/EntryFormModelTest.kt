@@ -230,8 +230,8 @@ class EntryFormModelTest {
         val form = openEntry()
 
         assertEquals("09:15", form.start)
-        assertEquals("10:15", form.end)
-        assertEquals("1:00:00", form.duration)
+        assertEquals("10:00", form.end)
+        assertEquals("0:45:00", form.duration)
     }
 
     @Test
@@ -475,6 +475,93 @@ class EntryFormModelTest {
 
         // 09:00 to 10:00 in Madrid's summer time.
         assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-09-02T07:00:00Z 2026-09-02T08:00:00Z"), changes.calls)
+    }
+
+    @Test
+    fun shortTypedCreatesAndTimeEditsNeverReachTheQueue() {
+        settings.value = SETTINGS.copy(timeResolutionMinutes = 60.0)
+        for (editing in listOf(false, true)) {
+            for (byDuration in listOf(false, true)) {
+                if (editing) openEntry() else openNew()
+                onMain {
+                    model.setStart("12:00")
+                    if (byDuration) {
+                        model.setDuration("10m")
+                        model.durationDone()
+                        model.durationDone() // Focus changes must not turn the prediction into input.
+                    } else {
+                        model.setEnd("12:10")
+                        model.timesDone()
+                    }
+                    model.save()
+                }
+                val field = if (byDuration) TimeField.DURATION else TimeField.END
+                awaitOpen("short span is marked") { it.mistakes == mapOf(field to TimeMistake.TOO_SHORT) }
+                assertEquals("nothing queued", emptyList<String>(), changes.calls)
+            }
+        }
+    }
+
+    @Test
+    fun coincidentSnappedEndpointsAreRejectedEvenAboveHalfAStep() {
+        settings.value = SETTINGS.copy(timeResolutionMinutes = 60.0)
+        openNew()
+        onMain {
+            model.setStart("12:31")
+            model.setEnd("13:29")
+            model.save()
+        }
+        awaitOpen("coincident endpoints are too short") { it.mistakes == mapOf(TimeField.END to TimeMistake.TOO_SHORT) }
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
+    @Test
+    fun unchangedTimesOfALegacyZeroEntryCanBeEditedButMovingThemIsRejected() {
+        settings.value = SETTINGS.copy(timeResolutionMinutes = 60.0)
+        val legacy = ENTRY.copy(stop = ENTRY.start)
+        entries.value = listOf(EntryWithSendState(legacy, unsent = false))
+        openEntry()
+        onMain { model.setDescription("Keep the legacy times") }
+        save()
+        assertEquals(listOf("update $ENTRY_ID ${ENTRY_FIELDS.copy(description = "Keep the legacy times")} ${legacy.start} ${legacy.stop}"), changes.calls)
+        changes.calls.clear()
+        openEntry()
+        onMain {
+            model.setDuration("10m")
+            model.save()
+        }
+        awaitOpen("changed times are checked") { it.mistakes == mapOf(TimeField.DURATION to TimeMistake.TOO_SHORT) }
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
+    @Test
+    fun durationPredictionRetainsTheTypedSpanAcrossFocusChangesAndFractionalDst() {
+        settings.value = SETTINGS.copy(timeZone = "Australia/Lord_Howe", timeResolutionMinutes = 60.0)
+        openNew()
+        onMain {
+            model.setDate(LocalDate.of(2026, 10, 4))
+            model.setStart("01:40") // 15:10Z, before the half-hour spring gap.
+            model.setDuration("1h") // 16:10Z; independently snapped duration is 90 minutes.
+            model.durationDone()
+            model.durationDone()
+        }
+        awaitOpen("the snapped duration shows") { it.duration == "1:30:00" && it.end == "03:10" }
+        save()
+        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-10-03T15:10:00Z 2026-10-03T16:10:00Z"), changes.calls)
+    }
+
+    @Test
+    fun togglWithoutResolutionStillAcceptsShortAndZeroTypedSpans() {
+        for (duration in listOf("0", "10s")) {
+            changes.calls.clear()
+            openNew()
+            onMain {
+                model.setStart("12")
+                model.setDuration(duration)
+            }
+            save()
+            assertEquals(1, changes.calls.size)
+        }
     }
 
     private fun openNew(): EntryFormState.Open {

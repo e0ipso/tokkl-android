@@ -150,9 +150,9 @@
 
 set -euo pipefail
 
-# Tokkl 1.5.0. To upgrade, take the index digest from
+# Tokkl 1.7.0. To upgrade, take the index digest from
 # `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>`.
-readonly IMAGE='ghcr.io/e0ipso/tokkl:1.5.0@sha256:773585e0457c88c90c2f26aa2b4f0313822d842192343b4e0d95110114b933bd'
+readonly IMAGE='ghcr.io/e0ipso/tokkl:1.7.0@sha256:d843b7a5a76646af2118e5ba37ea1ef3975a00360f9798286327226b5860ee3d'
 # HAProxy 3.2.26 on Alpine, the index digest from
 # `docker buildx imagetools inspect haproxy:3.2.26-alpine`.
 readonly PROXY_IMAGE='haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c67f33777c1b6a9dc0d4b28bcba7171460122'

@@ -298,6 +298,7 @@ private val TimeMistake.text: Int
         TimeMistake.DURATION -> R.string.entry_mistake_duration
         TimeMistake.END_BEFORE_START -> R.string.entry_mistake_end_before_start
         TimeMistake.TOO_LONG -> R.string.entry_mistake_too_long
+        TimeMistake.TOO_SHORT -> R.string.entry_mistake_too_short
     }
 
 /**

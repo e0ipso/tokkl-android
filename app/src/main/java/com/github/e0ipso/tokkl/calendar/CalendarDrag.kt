@@ -109,9 +109,8 @@ fun movedRange(start: Instant, stop: Instant, deltaMinutes: Int, day: LocalDate,
 
 /**
  * The stopped entry from [start] to [stop] after its end moves [deltaMinutes] clock minutes, at
- * least [step] minutes after the start. The server moves an off-grid start to the grid and rounds
- * the duration up from there, so the start goes to the grid too, which keeps the end where it was
- * dropped.
+ * least [step] minutes after the start. Both endpoints move independently to the grid. Snapping the start here keeps the
+ * minimum drag length relative to the same start the server stores.
  */
 fun endResizedRange(start: Instant, stop: Instant, deltaMinutes: Int, step: Int, time: AccountTime): TimeRange {
     val gridStart = snappedInstant(start, time)

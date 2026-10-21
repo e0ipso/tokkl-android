@@ -8,7 +8,7 @@ import java.time.temporal.ChronoUnit
 
 // resolveRange ports resolveRange in ../tokkl/packages/web/src/lib/entryTime.ts at tokkl commit
 // c8dd0fd9bf5f9f67ccbf59079dacbf43c94c480f, and snappedSeconds ports snappedSeconds in
-// ../tokkl/packages/web/src/lib/settings.ts at tokkl commit bafe8eb953c258804bb100850a5faa475823ce91.
+// ../tokkl/packages/web/src/lib/settings.ts at tokkl commit e3f15ff628d88a476b77e51ef77c9172903d6db4.
 
 /** A stopped entry's span. */
 data class TimeRange(val start: Instant, val stop: Instant)
@@ -37,12 +37,13 @@ fun resolveRange(
 
 /**
  * The seconds the server will store for a stopped entry from [start] to [stop]: both cut to whole
- * seconds, then snapped to the account's time resolution. Zero when the stop is not after the start.
+ * seconds, then snapped to the account's time resolution. Zero for a rejected short span or
+ * when the stop is not after the start. This is display only; saves validate the nullable span.
  */
 fun snappedSeconds(start: Instant, stop: Instant, time: AccountTime): Long {
     val from = start.truncatedTo(ChronoUnit.SECONDS)
     val to = stop.truncatedTo(ChronoUnit.SECONDS)
     if (!to.isAfter(from)) return 0
-    val span = time.snapUnsent(from, to)
+    val span = time.snapUnsent(from, to) ?: return 0
     return span.stop.epochSecond - span.start.epochSecond
 }

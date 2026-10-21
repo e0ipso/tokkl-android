@@ -50,13 +50,18 @@ class AccountTime(
      * The span the server will store for a stopped entry it has not received yet. This is
      * [snapUnsent][com.github.e0ipso.tokkl.time.snapUnsent] in the account's zone with the
      * account's time resolution. Without a resolution the span comes back unchanged. Never pass
-     * the running entry.
+     * the running entry. Null means the server would reject a typed span as too short.
      */
-    fun snapUnsent(start: Instant, stop: Instant): SnappedSpan =
+    fun snapUnsent(start: Instant, stop: Instant): SnappedSpan? =
         snapUnsent(start, stop, timeResolutionMinutes, zone)
 
+    /** A write's start snapped independently; no resolution keeps the instant unchanged. */
+    fun snapInstant(at: Instant): Instant =
+        if (timeResolutionMinutes == null || !isTimeResolution(timeResolutionMinutes)) at
+        else snapInstant(at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS), timeResolutionMinutes, zone)
+
     /**
-     * The span the server will store for the running entry from [start] that stops at [at]. This
+     * The existing Stop prediction, retained pending TKA-0259/TKA-0261, for the running entry from [start] that stops at [at]. This
      * is [snapStop][com.github.e0ipso.tokkl.time.snapStop] in the account's zone with the
      * account's time resolution: [oneStep] for a Stop, not for a new timer that stops the running
      * one. Without a resolution the entry stops at [at] as tapped.

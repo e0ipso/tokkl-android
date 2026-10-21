@@ -176,7 +176,7 @@ class TokklApplication : Application() {
             // A queue the disk cannot read counts as holding a change, so the work stays.
             onEmptied = { BackgroundSend.cancelWaiting(this) { runCatching { store.first() == null }.getOrDefault(false) } },
             onDiscarded = { count -> discarded.add(count) },
-            serverStart = { start -> accountSettings.state.value?.time()?.snapUnsent(start, start)?.start ?: start },
+            serverStart = { start -> accountSettings.state.value?.time()?.snapInstant(start) ?: start },
             switchSpan = { start, stop -> accountSettings.state.value?.time()?.snapStop(start, stop, oneStep = false) ?: SnappedSpan(start, stop) },
         )
     }

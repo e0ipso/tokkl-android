@@ -388,6 +388,26 @@ class CalendarModelTest {
         assertEquals(emptyList<String>(), changes.calls)
     }
 
+    @Test
+    fun aMovedLegacyShortEntryIsRejectedBeforeQueueing() {
+        val cached = entry(4, "2026-10-20T09:00:00Z", "2026-10-20T09:10:00Z")
+        val model = model(cached = listOf(cached), settings = DRAG_SETTINGS.copy(timeResolutionMinutes = 60.0))
+        val block = shown(model) { true }.entries.single()
+        model.move(block, OCTOBER_20, deltaMinutes = 60, dayMode = true)
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
+    @Test
+    fun aRejectedPendingSpanKeepsItsActualTimesAndUnsentState() {
+        val cached = entry(4, "2026-10-20T09:00:00Z", "2026-10-20T09:10:00Z")
+        val model = model(cached = listOf(cached), settings = DRAG_SETTINGS.copy(timeResolutionMinutes = 60.0),
+            cache = flowOf(listOf(EntryWithSendState(cached, unsent = true))))
+        val block = shown(model) { true }.entries.single()
+        assertEquals(cached.start to cached.stop, block.start to block.stop)
+        assertEquals(true, block.unsent)
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
     private fun model(
         cached: List<CachedTimeEntry>,
         settings: AccountSettings = SETTINGS,

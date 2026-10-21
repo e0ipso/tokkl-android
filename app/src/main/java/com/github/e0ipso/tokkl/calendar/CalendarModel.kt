@@ -308,6 +308,7 @@ class CalendarModel(
         val time = settings.time(clock) ?: return
         val workspaceId = settings.defaultWorkspaceId ?: return
         val range = createdRange(day, fromMinute, toMinute, dragStep(settings.dragResolution), time) ?: return
+        if (range.stop < range.start || time.snapUnsent(range.start, range.stop) == null) return
         scope.launch { onCreated(changes.create(workspaceId, EntryFields(), range.start, range.stop)) }
     }
 
@@ -336,6 +337,7 @@ class CalendarModel(
         val settings = accountSettings.value ?: return
         val time = settings.time(clock) ?: return
         val span = range(stop, time, dragStep(settings.dragResolution))
+        if (span.stop < span.start || time.snapUnsent(span.start, span.stop) == null) return
         scope.launch {
             val cached = entries.first().firstOrNull { it.entry.id == entry.id }?.entry
             when {
@@ -448,7 +450,7 @@ internal fun weekEntries(
 /** The entry with the times the server stores once it gets it: a stopped entry's span snapped. */
 private fun CachedTimeEntry.stored(time: AccountTime): CachedTimeEntry {
     val stop = stop?.takeIf { !it.isBefore(start) } ?: return this
-    val span = time.snapUnsent(start, stop)
+    val span = time.snapUnsent(start, stop) ?: return this
     return copy(start = span.start, stop = span.stop)
 }
 
@@ -459,6 +461,7 @@ private fun CachedTimeEntry.shown(
     tasks: Map<Long, CachedTask>,
 ): CalendarEntry {
     // The server keeps a running entry's start as sent, so only a stopped one is snapped.
+    // A rejected pending span keeps its actual times and unsent state for correction.
     val span = stop?.takeIf { unsent }?.let { time.snapUnsent(start, it) }
     val project = projectId?.let(projects::get)
     return CalendarEntry(

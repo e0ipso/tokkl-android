@@ -6,12 +6,11 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.time.zone.ZoneRules
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.floor
 
-// Port of isTimeResolution and snapSpan in ../tokkl/packages/common/snap.ts at tokkl commit
-// 51aed28fbc2769e4868f915230a558c2f2ce989e, with timeZoneOffsetMs from time.ts next to it.
-// SnapTest replays the cases from snap.test.ts.
+// Port of isTimeResolution, snapSpan and snapInstant in ../tokkl/packages/common/snap.ts at
+// tokkl commit e3f15ff628d88a476b77e51ef77c9172903d6db4 (Tokkl 1.6.1+, tested against 1.7.0).
+// SnapTest replays fixtures/snap.json and the snapInstant cases from snap.test.ts.
 //
 // As in JavaScript, the arithmetic runs on doubles that hold epoch milliseconds, and an instant
 // outside the range of a JavaScript Date behaves like an invalid Date.
@@ -39,39 +38,34 @@ fun isTimeResolution(minutes: Double): Boolean =
     minutes.isFinite() && floor(minutes) == minutes && minutes >= 1 && 60 % minutes == 0.0
 
 /**
- * Snaps the span from [start] to [stop] to a resolution of [minutes], which must divide 60.
+ * Independently snaps both ends to the account's wall-clock grid, taking the later point on a
+ * tie. Returns null below half a step or when the snapped endpoints coincide. Grid points use
+ * their own UTC offsets, including across fractional-hour DST changes.
  *
- * The duration rounds up to a multiple of the resolution: it never shrinks, it gains less than one
- * step, and a duration that is already a multiple stays as it is. The start moves to the nearest
- * point of the grid on the wall clock of [timeZone], rounding a tie up. Because the resolution
- * divides an hour, the grid falls on every whole hour, also in zones 30 or 45 minutes off UTC.
- * Near a DST change each grid point uses the offset in force at that point, so a change of half an
- * hour, as on Lord Howe Island, never leaves the start off the clock grid.
- * The stop is the snapped start plus the rounded duration, counted in elapsed time, so a span
- * across a DST change keeps its duration.
- *
- * [start] and [stop] are cut to whole milliseconds, the precision of a JavaScript Date. Where the
- * TypeScript throws a RangeError, this throws [IllegalArgumentException]: for a resolution that
- * does not divide 60, a stop before the start, an instant outside a JavaScript Date's range, and a
- * start within a step or two of either end of that range. Within hours of the range's end the
- * TypeScript can also return an invalid Date; an [Instant] has no such value, so this throws there
- * too.
+ * Inputs have JavaScript Date millisecond precision. Invalid resolutions, reversed spans and
+ * invalid Date values throw [IllegalArgumentException], corresponding to the upstream RangeError.
  */
-fun snapSpan(start: Instant, stop: Instant, minutes: Double, timeZone: ZoneId): SnappedSpan {
+fun snapSpan(start: Instant, stop: Instant, minutes: Double, timeZone: ZoneId): SnappedSpan? {
     require(isTimeResolution(minutes)) { "Invalid time resolution: $minutes" }
-    val startMs = jsTime(start)
-    val elapsed = jsTime(stop) - startMs
-    // Written like the TypeScript's !(elapsed >= 0), so NaN from an invalid Date fails it too.
+    val elapsed = jsTime(stop) - jsTime(start)
     require(elapsed >= 0) { "Stop must not be before start" }
-    val step = minutes * MINUTE_MS
-    val duration = ceil(elapsed / step) * step
-    val snappedStart = nearestGridPoint(startMs, step, timeZone.rules)
-    return SnappedSpan(jsDate(snappedStart), jsDate(snappedStart + duration))
+    if (elapsed * 2 < minutes * MINUTE_MS) return null
+    // Compare milliseconds before making Instants: an upstream invalid Date compares false.
+    val snappedStart = nearestGridPoint(jsTime(start), minutes * MINUTE_MS, timeZone.rules)
+    val snappedStop = nearestGridPoint(jsTime(stop), minutes * MINUTE_MS, timeZone.rules)
+    return if (snappedStop > snappedStart) SnappedSpan(jsDate(snappedStart), jsDate(snappedStop)) else null
+}
+
+/** The nearest wall-clock grid point to [at], taking the later point on a tie. */
+fun snapInstant(at: Instant, minutes: Double, timeZone: ZoneId): Instant {
+    require(isTimeResolution(minutes)) { "Invalid time resolution: $minutes" }
+    return jsDate(nearestGridPoint(jsTime(at), minutes * MINUTE_MS, timeZone.rules))
 }
 
 /**
  * The span the server will store for a stopped entry it has not received yet, so the phone can
- * show those times before sending it. Never pass the running entry: its clock is not snapped.
+ * show those times before sending it. Null means the typed span would be rejected as too short.
+ * Never pass the running entry: its clock is not snapped.
  *
  * A server without Tokkl's `time_resolution_minutes` in `GET /api/v9/me` does not snap, so with
  * [timeResolutionMinutes] null the span comes back unchanged (docs/PRD.md section 8.3). A value
@@ -84,7 +78,7 @@ fun snapUnsent(
     stop: Instant,
     timeResolutionMinutes: Double?,
     timeZone: ZoneId,
-): SnappedSpan {
+): SnappedSpan? {
     if (timeResolutionMinutes == null || !isTimeResolution(timeResolutionMinutes)) {
         return SnappedSpan(start, stop)
     }
@@ -109,8 +103,9 @@ fun snapUnsent(
  * the entry ends where the new timer's start snaps once that stops too, which can leave it with
  * no length. The stop never goes past 999 hours after the start.
  *
- * The result is on the grid and lasts a whole number of steps, so [snapSpan] leaves it as it is:
- * a PUT of it is stored as sent.
+ * This preserves the existing Android Stop contract pending TKA-0259/TKA-0261. It is not the
+ * latest server short-Stop/trash behavior. In particular a zero-length switch can be rejected.
+ * Typed entries use the nullable [snapUnsent] separately.
  */
 fun stopSpan(start: Instant, at: Instant, minutes: Double, timeZone: ZoneId, oneStep: Boolean): SnappedSpan {
     val snappedStart = startGridPoint(start, minutes, timeZone)
@@ -121,8 +116,8 @@ fun stopSpan(start: Instant, at: Instant, minutes: Double, timeZone: ZoneId, one
 }
 
 /**
- * The span the server will store for a running entry from [start] that the phone stops at [at],
- * so the phone can store and send the span on the grid (docs/PRD.md T3). This is [stopSpan] with
+ * The existing Android Stop prediction, retained pending TKA-0259/TKA-0261 (docs/PRD.md T3).
+ * This is [stopSpan] with
  * the account's [timeResolutionMinutes]. A server without Tokkl's `time_resolution_minutes`, or
  * with a value that is not a resolution, does not snap, so the span stops at [at] as tapped, or at
  * [start] when the tap came earlier.
@@ -146,7 +141,7 @@ fun snapStop(
  */
 private fun startGridPoint(at: Instant, minutes: Double, timeZone: ZoneId): Instant {
     val time = at.truncatedTo(ChronoUnit.SECONDS)
-    return snapSpan(time, time, minutes, timeZone).start
+    return snapInstant(time, minutes, timeZone)
 }
 
 /**

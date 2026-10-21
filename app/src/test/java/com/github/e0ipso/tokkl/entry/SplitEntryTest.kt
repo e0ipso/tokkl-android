@@ -10,7 +10,7 @@ import org.junit.Test
 /**
  * The split port. The snappedInstant and snappedSplit cases are those of
  * ../tokkl/packages/web/src/lib/settings.test.ts, and the overnight ones those of
- * ../tokkl/e2e/editor.spec.ts, at tokkl commit 0031de3.
+ * ../tokkl/e2e/editor.spec.ts, at tokkl commit e3f15ff628d88a476b77e51ef77c9172903d6db4.
  */
 class SplitEntryTest {
 
@@ -81,17 +81,19 @@ class SplitEntryTest {
     }
 
     @Test
-    fun snappedSplitRefusesASplitWhoseHalvesWouldOverlapAcrossAHalfHourClockChange() {
+    fun snappedSplitKeepsHalvesMeetingAcrossAHalfHourClockChange() {
         // Lord Howe springs forward from 02:00 (UTC+10:30) to 02:30 (UTC+11) at 15:30 UTC on 2026-10-03.
         // At a resolution of 60, 14:30 to 16:30 UTC is local 01:00 to 03:30, and local 03:00 (16:00 UTC)
-        // is the only grid point inside it. Saved on their own, the halves would be 14:30 to 16:30 and
-        // 16:00 to 17:00 UTC: a 30-minute overlap and three hours in total.
+        // is inside it. Endpoint snapping keeps both halves meeting there, with the stop at 17:00 UTC.
         val lordHowe = zone("Australia/Lord_Howe", 60.0)
         val start = at("2026-10-03T14:30:00Z")
         val stop = at("2026-10-03T16:30:00Z")
         val split = snappedInstant(at("2026-10-03T16:00:00Z"), lordHowe)
         assertEquals(at("2026-10-03T16:00:00.000Z"), split)
-        assertEquals(SplitProblem.CLOCK_CHANGE, snappedSplit(start, stop, split, lordHowe))
+        assertEquals(
+            listOf(listOf("2026-10-03T14:30:00Z", "2026-10-03T16:00:00Z"), listOf("2026-10-03T16:00:00Z", "2026-10-03T17:00:00Z")),
+            iso(snappedSplit(start, stop, split, lordHowe)),
+        )
         // At a resolution of 30, the half hour on either side of the change is a whole step, so it splits.
         assertEquals(
             listOf(

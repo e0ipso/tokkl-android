@@ -31,6 +31,10 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import kotlinx.serialization.json.Json
+import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -46,6 +50,13 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -84,6 +95,7 @@ class EntryFormServerTest {
     private val app get() = context.applicationContext as TokklApplication
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
+    private var originalResolution: Long? = null
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
@@ -108,6 +120,7 @@ class EntryFormServerTest {
     fun cleanUp() {
         try {
             AirplaneMode.off()
+            originalResolution?.let { setResolution(it) }
         } finally {
             try {
                 // TestAccounts talks to the server through the app's guard, which follows the session.
@@ -344,6 +357,138 @@ class EntryFormServerTest {
         assertEquals(at(today, 9, 15), instant(saved.string("stop")))
     }
 
+    /** Typed spans use the current server contract, independently of the blocked short Stop API. */
+    @Test
+    fun typedCreateAndEditPredictionsMatchLatestServerAcrossAccountZonesAndDst() {
+        setResolution(60)
+        val cases = listOf(
+            // Madrid: 80 minutes stores 60, not the old ceiling-rounded 120.
+            listOf("Europe/Madrid", "2026-10-14", "14:00", "15:20", "2026-10-14T12:00:00Z", "2026-10-14T13:00:00Z"),
+            listOf("Asia/Kathmandu", "2026-10-14", "10:05", "10:45", "2026-10-14T04:15:00Z", "2026-10-14T05:15:00Z"),
+            // Lord Howe's spring gap leaves a 90-minute span between adjacent hourly grid points.
+            listOf("Australia/Lord_Howe", "2026-10-04", "01:40", "03:10", "2026-10-03T14:30:00Z", "2026-10-03T16:00:00Z"),
+        )
+        for ((index, case) in cases.withIndex()) {
+            val changed = web.send("PUT", web.server.api("me"), buildJsonObject { put("timezone", case[0]) }, JsonObject.serializer()).orFail("set account zone")
+            runBlocking { app.accountSettings.refreshAfterChange().join() }
+            assertEquals("the refreshed account zone", changed.string("timezone"), app.accountSettings.state.value!!.timeZone)
+            val time = app.accountSettings.state.value!!.time()!!
+            val date = LocalDate.parse(case[1])
+            val raw = resolveRange(date, case[2], case[3], time, false, 0)!!
+            val expected = SnappedSpan(Instant.parse(case[4]), Instant.parse(case[5]))
+            assertEquals("local create prediction", expected, time.snapUnsent(raw.start, raw.stop))
+            val description = "Typed snap $index"
+            withModel { model ->
+                model.new(date)
+                model.state.first { it is EntryFormState.Open }
+                model.setDescription(description)
+                model.setStart(case[2])
+                model.setEnd(case[3])
+                model.timesDone()
+                model.save()
+                model.state.first { it == EntryFormState.Saved }
+            }
+            drainUntilEmpty()
+            val created = serverEntry(description, date)
+            assertEquals(expected.start, instant(created.string("start")))
+            assertEquals(expected.stop, instant(created.string("stop")))
+            val id = created.getValue("id").jsonPrimitive.long
+            withModel { model ->
+                model.edit(id, Json { ignoreUnknownKeys = true }.decodeFromJsonElement(ServerTimeEntry.serializer(), created).toCached())
+                model.state.first { it is EntryFormState.Open }
+                model.setDescription("$description edited")
+                model.setStart(case[2])
+                model.setDuration(Duration.between(raw.start, raw.stop).seconds.toString() + "s")
+                model.durationDone()
+                model.durationDone()
+                model.save()
+                model.state.first { it == EntryFormState.Saved }
+            }
+            drainUntilEmpty()
+            val edited = web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET edited span")
+            assertEquals("edit start", expected.start, instant(edited.string("start")))
+            assertEquals("edit stop", expected.stop, instant(edited.string("stop")))
+        }
+    }
+
+    @Test
+    fun shortTypedSpansShowValidationAndCreateNoPendingChange() {
+        setResolution(60)
+        createEntry("Short typed edit", at(day, 8, 0), at(day, 9, 0))
+        launch {
+            openEntry("Short typed edit")
+            replace(R.string.entry_end, "08:10")
+            composeRule.onNode(hasText(string(R.string.entry_save)) and hasClickAction()).performScrollTo().performClick()
+            awaitShows("the end explains the short span") {
+                composeRule.onNode(isField(R.string.entry_end) and hasText(string(R.string.entry_mistake_too_short)))
+            }
+            assertTrue(field(R.string.entry_end).isError())
+            assertEquals("no pending edit", 0, runBlocking { app.changes.unsentCount.first() })
+        }
+        withModel { model ->
+            model.new(day)
+            model.state.first { it is EntryFormState.Open }
+            model.setStart("12:00")
+            model.setDuration("10m")
+            model.durationDone()
+            model.save()
+            model.state.first { it is EntryFormState.Open && it.mistakes == mapOf(TimeField.DURATION to TimeMistake.TOO_SHORT) }
+        }
+        assertEquals("no pending create", 0, runBlocking { app.changes.unsentCount.first() })
+    }
+
+    @Test
+    fun aLegacyZeroLengthEntryKeepsItsTimesOnADescriptionEdit() {
+        setResolution(60)
+        // Latest Tokkl can restore a short timer from trash as a legacy zero-length entry.
+        // This disposable fixture uses the server's own clock, not Android's Stop implementation.
+        val running = web.send("POST", web.server.api("workspaces", workspace.toString(), "time_entries"), buildJsonObject {
+            put("workspace_id", workspace)
+            put("created_with", "typed snap fixture")
+            put("description", "Legacy zero")
+            put("start", Instant.now().toString())
+            put("duration", -1)
+        }, JsonObject.serializer()).orFail("create fixture timer")
+        val id = running.getValue("id").jsonPrimitive.long
+        web.send("PATCH", web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"), buildJsonObject {}, JsonObject.serializer()).orFail("stop fixture timer")
+        val legacy = web.send("POST", web.server.app("time_entries", id.toString(), "restore"), buildJsonObject {}, JsonObject.serializer()).orFail("restore legacy fixture")
+        assertEquals(legacy.string("start"), legacy.string("stop"))
+        runBlocking { app.accountSettings.refresh().join() }
+        withModel { model ->
+            model.edit(id)
+            model.state.first { it is EntryFormState.Open }
+            model.setDescription("Legacy zero renamed")
+            model.save()
+            model.state.first { it == EntryFormState.Saved }
+        }
+        drainUntilEmpty()
+        val saved = web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET legacy entry")
+        assertEquals("Legacy zero renamed", saved.string("description"))
+        assertEquals(legacy.string("start"), saved.string("start"))
+        assertEquals(legacy.string("stop"), saved.string("stop"))
+    }
+
+    private fun setResolution(minutes: Long) {
+        val admin = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+        val url = admin.server.app("admin", "settings")
+        if (originalResolution == null) originalResolution = admin.get(url, JsonObject.serializer()).orFail("GET settings").getValue("time_resolution_minutes").jsonPrimitive.long
+        admin.send("PUT", url, buildJsonObject { put("time_resolution_minutes", minutes) }, JsonObject.serializer()).orFail("set resolution")
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
+    }
+
+    /** The actual form and Room queue, with collection and handlers on the main dispatcher. */
+    private fun withModel(steps: suspend (EntryFormModel) -> Unit) = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        val model = EntryFormModel(app.cache.entries, app.cache.projects, app.cache.tasks, app.accountSettings.state, app.changes, scope)
+        val collector = scope.launch { model.state.collect {} }
+        try {
+            withTimeout(NETWORK_TIMEOUT.toMillis()) { withContext(Dispatchers.Main) { steps(model) } }
+        } finally {
+            collector.cancel()
+            scope.cancel()
+        }
+    }
+
     private fun launch(steps: () -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
@@ -444,10 +589,17 @@ class EntryFormServerTest {
         SemanticsProperties.Disabled !in fetchSemanticsNode().config
 
     /** The entry described as [description], as the server keeps it. */
-    private fun serverEntry(description: String): JsonObject =
-        web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
+    private fun serverEntry(description: String, date: LocalDate? = null): JsonObject {
+        val url = web.server.api("me", "time_entries").newBuilder().apply {
+            if (date != null) {
+                addQueryParameter("start_date", date.minusDays(2).toString() + "T00:00:00Z")
+                addQueryParameter("end_date", date.plusDays(2).toString() + "T00:00:00Z")
+            }
+        }.build()
+        return web.get(url, JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
             .map { it.jsonObject }
             .single { it.string("description") == description }
+    }
 
     private fun dateButton(): SemanticsNodeInteraction =
         composeRule.onNode(hasContentDescription(string(R.string.entry_date_spoken, ""), substring = true) and hasClickAction())

@@ -45,6 +45,10 @@ class ChangeQueueRestartTest {
         SessionRule.signOut()
         signIn(TokklTestServer.url, TokklTestServer.apiToken)
         val account = TestAccounts.create(timezone = "Europe/Madrid")
+        signIn(TokklTestServer.url, account.apiToken)
+        // A real sign-in caches the resolution before going offline. Without it a sub-second
+        // Stop is rejected by latest Tokkl, the separate TKA-0259 defect.
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
         val workspace = account.client.get(account.client.server.api("me"), JsonObject.serializer())
             .orFail("GET /api/v9/me").getValue("default_workspace_id").jsonPrimitive.long
         Properties().apply {
@@ -90,7 +94,7 @@ class ChangeQueueRestartTest {
             val sent = account.client.get(account.client.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer())
                 .orFail("GET the entry")
             assertEquals("Edited before the restart", sent.getValue("description").jsonPrimitive.content)
-            val snapped = app.accountSettings.state.value!!.time()!!.snapUnsent(row.entry.start, row.entry.stop!!)
+            val snapped = app.accountSettings.state.value!!.time()!!.snapUnsent(row.entry.start, row.entry.stop!!)!!
             // Tokkl writes an offset, +00:00, which Instant.parse refused on API 30.
             assertEquals(snapped.start, OffsetDateTime.parse(sent.getValue("start").jsonPrimitive.content).toInstant())
             assertEquals(snapped.stop, OffsetDateTime.parse(sent.getValue("stop").jsonPrimitive.content).toInstant())

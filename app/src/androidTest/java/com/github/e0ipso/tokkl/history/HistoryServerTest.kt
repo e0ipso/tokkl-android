@@ -217,7 +217,7 @@ class HistoryServerTest {
         val stop = start.plusMillis(3_125_250)
         val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Logged offline"), start, stop) }
         val settings = app.accountSettings.state.value!!
-        val snapped = settings.time()!!.snapUnsent(start, stop)
+        val snapped = settings.time()!!.snapUnsent(start, stop)!!
         val range = context.getString(R.string.history_time_range, settings.formatTime(snapped.start, zone), settings.formatTime(snapped.stop, zone))
         val unsent = string(R.string.history_unsent).uppercase(Locale.ROOT)
 

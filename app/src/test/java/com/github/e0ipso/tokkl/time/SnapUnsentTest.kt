@@ -36,11 +36,11 @@ class SnapUnsentTest {
 
     @Test
     fun `both ends are cut to whole seconds before snapping, as the server does`() {
-        // 60.5 seconds round up to two minutes, but the server keeps 60 of them, which is one.
-        val from = Instant.parse("2026-10-14T09:00:00Z")
-        val to = Instant.parse("2026-10-14T09:01:00.500Z")
-        assertEquals(Instant.parse("2026-10-14T09:02:00Z"), snapSpan(from, to, 1.0, madrid).stop)
-        assertEquals(SnappedSpan(from, Instant.parse("2026-10-14T09:01:00Z")), snapUnsent(from, to, 1.0, madrid))
+        // 29.2 elapsed seconds are too short; truncating each endpoint gives the 30-second tie.
+        val from = Instant.parse("2026-10-14T09:00:00.900Z")
+        val to = Instant.parse("2026-10-14T09:00:30.100Z")
+        assertEquals(null, snapSpan(from, to, 1.0, madrid))
+        assertEquals(SnappedSpan(Instant.parse("2026-10-14T09:00:00Z"), Instant.parse("2026-10-14T09:01:00Z")), snapUnsent(from, to, 1.0, madrid))
     }
 
     @Test

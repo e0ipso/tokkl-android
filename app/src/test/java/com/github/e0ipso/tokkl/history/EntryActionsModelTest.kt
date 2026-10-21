@@ -220,14 +220,14 @@ class EntryActionsModelTest {
 
         onMain { model.split(STOPPED.id) }
         val dialog = awaitSplit(model)
-        // At 15 minutes, 08:00:12 to 09:05:40 stores as 08:00 to 09:15.
-        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T09:15:00Z")), dialog.whole)
+        // At 15 minutes, 08:00:12 to 09:05:40 stores as 08:00 to 09:00, with each endpoint rounded independently.
+        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T09:00:00Z")), dialog.whole)
 
         // 10:30 in Madrid, CEST.
         onMain { model.setSplitText("10:30") }
         val halves = model.state.value.split?.halves ?: throw AssertionError("no preview for 10:30")
         assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T08:30:00Z")), halves.first)
-        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:30:00Z"), Instant.parse("2026-10-19T09:15:00Z")), halves.second)
+        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:30:00Z"), Instant.parse("2026-10-19T09:00:00Z")), halves.second)
 
         onMain { model.confirmSplit() }
 
@@ -237,7 +237,7 @@ class EntryActionsModelTest {
         assertEquals(
             "the second half first, with the source's workspace and fields, then the original ends at the split",
             listOf(
-                "create 10 $fields 2026-10-19T08:30:00Z 2026-10-19T09:15:00Z",
+                "create 10 $fields 2026-10-19T08:30:00Z 2026-10-19T09:00:00Z",
                 "update 70 $fields 2026-10-19T08:00:00Z 2026-10-19T08:30:00Z",
             ),
             calls,

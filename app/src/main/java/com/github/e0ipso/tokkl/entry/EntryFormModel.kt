@@ -47,6 +47,9 @@ enum class TimeMistake {
 
     /** The entry would be longer than the 999 hours Tokkl and Toggl store. */
     TOO_LONG,
+
+    /** The typed span is too short at the account's time resolution. */
+    TOO_SHORT,
 }
 
 /** What the entry form shows. */
@@ -171,23 +174,23 @@ class EntryFormModel(
 
     fun setEnd(text: String) = change { it.copy(end = text, mistakes = it.mistakes - TimeField.END) }
 
-    fun setDuration(text: String) = change { it.copy(duration = text, mistakes = it.mistakes - TimeField.DURATION) }
+    fun setDuration(text: String) = change { it.copy(duration = text, durationSeconds = null, mistakes = it.mistakes - TimeField.DURATION) }
 
     /** The start or the end lost focus: the duration follows them when both can be read and one changed. */
     fun timesDone() = changeWithTime { form, settings, time ->
         val range = resolveRange(form.date, form.start, form.end, time, settings.twelveHour, nowMinutes(time))
         if (range == null || !(form.startChanged() || form.endChanged())) return@changeWithTime form
         val text = formatDuration(snappedSeconds(range.start, range.stop, time))
-        form.copy(duration = text, syncedDuration = text)
+        form.copy(duration = text, syncedDuration = text, durationSeconds = null)
     }
 
     /** The duration lost focus: once it differs from what the form derived, the end follows it. */
     fun durationDone() = changeWithTime { form, settings, time ->
         if (!form.durationChanged()) return@changeWithTime form
-        val seconds = parseDuration(form.duration) ?: return@changeWithTime form
+        val seconds = form.durationSeconds ?: parseDuration(form.duration) ?: return@changeWithTime form
         val start = form.startInstant(settings, time) ?: return@changeWithTime form
         val stop = start.plusSecondsOrNull(seconds) ?: return@changeWithTime form
-        form.copy(end = settings.formatTime(stop, time.zone), duration = formatDuration(snappedSeconds(start, stop, time)))
+        form.copy(end = settings.formatTime(stop, time.zone), duration = formatDuration(snappedSeconds(start, stop, time)), durationSeconds = seconds)
     }
 
     /** Checks the times and queues the entry, or marks what keeps it from saving. */
@@ -265,7 +268,10 @@ class EntryFormModel(
     private fun editForm(cached: EntryWithSendState, settings: AccountSettings, time: AccountTime, onPhone: Boolean): Form? {
         val entry = cached.entry
         val stop = entry.stop ?: return null
-        val shown = if (cached.unsent && !stop.isBefore(entry.start)) time.snapUnsent(entry.start, stop) else SnappedSpan(entry.start, stop)
+        // Keep rejected/legacy entries editable at their actual times, still marked unsent by the
+        // history. A null prediction is never a replacement stored span.
+        val predicted = if (cached.unsent && !stop.isBefore(entry.start)) time.snapUnsent(entry.start, stop) else null
+        val shown = predicted ?: SnappedSpan(entry.start, stop)
         val date = time.local(shown.start).toLocalDate()
         val start = settings.formatTime(shown.start, time.zone)
         val end = settings.formatTime(shown.stop, time.zone)
@@ -285,18 +291,22 @@ class EntryFormModel(
         val start = form.startInstant(settings, time) ?: return Checked.Invalid(TimeField.START, unreadable)
         val durationChanged = form.durationChanged()
         val stop = when {
-            durationChanged -> parseDuration(form.duration)?.let { start.plusSecondsOrNull(it) }
+            durationChanged -> (form.durationSeconds ?: parseDuration(form.duration))?.let { start.plusSecondsOrNull(it) }
                 ?: return Checked.Invalid(TimeField.DURATION, TimeMistake.DURATION)
             form.target is Target.Edit && !form.endChanged() -> form.target.stop
             else -> resolveRange(form.date, form.start, form.end, time, settings.twelveHour, nowMinutes(time))?.stop
                 ?: return Checked.Invalid(TimeField.END, unreadable)
         }
         val spanField = if (durationChanged) TimeField.DURATION else TimeField.END
-        return when {
-            stop.epochSecond < start.epochSecond -> Checked.Invalid(spanField, TimeMistake.END_BEFORE_START)
-            snappedSeconds(start, stop, time) > MAX_ENTRY_SECONDS -> Checked.Invalid(spanField, TimeMistake.TOO_LONG)
-            else -> Checked.Valid(TimeRange(start, stop))
-        }
+        if (stop.epochSecond < start.epochSecond) return Checked.Invalid(spanField, TimeMistake.END_BEFORE_START)
+        val predicted = time.snapUnsent(start, stop)
+        // Tokkl permits an unchanged-time edit of a stored legacy short/zero-length entry.
+        val target = form.target as? Target.Edit
+        val unchanged = target != null && target.entryId > 0 && start == target.start && stop == target.stop
+        if (predicted == null && !unchanged) return Checked.Invalid(spanField, TimeMistake.TOO_SHORT)
+        val seconds = predicted?.let { it.stop.epochSecond - it.start.epochSecond } ?: (stop.epochSecond - start.epochSecond)
+        return if (seconds > MAX_ENTRY_SECONDS) Checked.Invalid(spanField, TimeMistake.TOO_LONG)
+        else Checked.Valid(TimeRange(start, stop))
     }
 
     /** The start [Form.start] means: the entry's own while the date and the start are as they opened. */
@@ -376,6 +386,8 @@ class EntryFormModel(
         val duration: String,
         /** The duration the form last derived from the start and the end. */
         val syncedDuration: String,
+        /** The typed elapsed duration, retained when the display shows its snapped prediction. */
+        val durationSeconds: Long? = null,
         val mistakes: Map<TimeField, TimeMistake> = emptyMap(),
         val saving: Boolean = false,
     ) {
@@ -383,7 +395,7 @@ class EntryFormModel(
 
         fun endChanged(): Boolean = target !is Target.Edit || date != target.date || end != target.endText
 
-        fun durationChanged(): Boolean = duration != syncedDuration
+        fun durationChanged(): Boolean = durationSeconds != null || duration != syncedDuration
     }
 
     private sealed interface Target {

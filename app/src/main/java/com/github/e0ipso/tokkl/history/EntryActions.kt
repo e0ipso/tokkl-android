@@ -182,7 +182,8 @@ class EntryActionsModel(
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
             val stop = source.stop?.takeIf { !it.isBefore(source.start) } ?: return@launch
             val time = accountSettings.value?.time(clock) ?: return@launch
-            mutableState.update { it.copy(split = SplitDialog(source, time.snapUnsent(source.start, stop), time.zone)) }
+            val span = time.snapUnsent(source.start, stop) ?: return@launch
+            mutableState.update { it.copy(split = SplitDialog(source, span, time.zone)) }
         }
     }
 

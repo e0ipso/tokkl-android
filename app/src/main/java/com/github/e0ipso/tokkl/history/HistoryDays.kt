@@ -107,6 +107,7 @@ private fun CachedTimeEntry.shown(
     tasks: Map<Long, CachedTask>,
 ): HistoryEntry? {
     val stop = stop ?: return null
+    // A rejected pending span keeps its actual times and unsent state for correction.
     val span = if (unsent) time.snapUnsent(start, stop) else null
     val project = projectId?.let(projects::get)
     return HistoryEntry(

@@ -109,7 +109,7 @@ The first release is feature complete: it ships every requirement below, so they
 |---|---|
 | T1 | Start and stop the timer, and edit the running entry: description, project, task, tags, billable. |
 | T2 | Continue a past entry. |
-| T3 | Show stopped entries as the server returns them, after it snaps them to `time_resolution_minutes`. Entries not yet sent are snapped on the phone with a port of `snapSpan` (`../tokkl/packages/common/snap.ts`) in the account timezone, so their times do not change when the server answers. A timer stopped on the phone goes on the grid as Tokkl 1.5.0 stops one (`stopEntryAt` in `../tokkl/packages/api/src/models/timeEntries.ts`): the start on the nearest grid point, and the stop on the grid point nearest the tap, at least one step after the start for a Stop, or where the new timer's start snaps when a new timer stopped it. The phone stores and sends that span, so the web app's Stop at the same moment stores the same one. The running clock is not snapped. |
+| T3 | Show stopped entries as the server returns them. For typed creates and time edits, predict Tokkl 1.6.1+ snapping in the account timezone: truncate both endpoints to whole seconds, then snap each independently to the nearest wall-clock grid point, taking the later point on a tie. Refuse a span shorter than half a step or with coincident snapped endpoints before queueing. Non-time edits of stored legacy zero-length entries remain possible. The running clock is not snapped. Android retains its existing Stop prediction and queued PUT behavior pending TKA-0259 and the captured-time Stop API in TKA-0261; exact short-Stop/trash/Undo parity is unresolved. |
 | T4 | Description autocomplete from recent entries. |
 | T5 | Favorites: start any of up to 9 pinned entries in one tap. They are the same favorites the web app shows, read from and written to `/me/preferences`. Pin what the timer shows, or a history entry from its menu. |
 
@@ -288,7 +288,7 @@ Releases are not set up. The decisions for them:
 
 - F-Droid only. No Play Store listing is planned. The signed APK on each GitHub release (section 8.2) serves anyone who sideloads.
 - The app has its own version, independent of Tokkl's, with its own `v*` tags and changelog, starting at 0.1.0. semantic-release does not support a first release below 1.0.0 ([FAQ](https://semantic-release.gitbook.io/semantic-release/support/faq)), so the first release is a hand-made `v0.1.0` tag and semantic-release counts on from it. A commit marked as a breaking change then moves the app to 1.0.0.
-- No minimum server version. The app checks what the server can do instead: a missing `time_resolution_minutes` in `GET /api/v9/me` means no snapping to show, and a 404 from a Tokkl-only endpoint such as `/api/app/trash` hides the features that use it. The same checks hide those features against Toggl later (risk 4).
+- Tokkl snapping follows the latest supported contract, the 1.6.1+ independent-endpoint rules, verified against Tokkl 1.7.0 pinned by digest in device tests. Older snapping contracts are unsupported; there is no server-version selector or compatibility probe. Missing `time_resolution_minutes`, as on Toggl Track, keeps the no-resolution behavior. Other capability checks still hide Tokkl-only features when their endpoints return 404. Short-Stop/trash/Undo parity remains blocked under TKA-0259/TKA-0261, separate from typed-entry support in T3.
 
 ## 9. Risks and open questions
 

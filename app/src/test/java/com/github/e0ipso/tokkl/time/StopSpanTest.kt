@@ -35,7 +35,7 @@ class StopSpanTest {
             val label = "R=$minutes switch at $switchAt"
             assertEquals(label, span("2026-10-14T09:00:00Z", "2026-10-14T${stop}Z"), old)
             // Where the second timer's start snaps once it stops.
-            assertEquals(label, snapSpan(at, at, minutes.toDouble(), utc).start, old.stop)
+            assertEquals(label, snapInstant(at, minutes.toDouble(), utc), old.stop)
         }
     }
 
@@ -92,7 +92,7 @@ class StopSpanTest {
     }
 
     @Test
-    fun `snapSpan, and so a PUT to Tokkl, leaves a stop span as it is`() {
+    fun `latest typed prediction keeps positive Stop spans but rejects legacy zero switches`() {
         val madrid = ZoneId.of("Europe/Madrid")
         // The night of 2026-10-25, when Madrid's clocks go back an hour, and a plain day.
         val starts = listOf("2026-10-25T00:31:07.250Z", "2026-10-14T09:02:03.456Z").map(Instant::parse)
@@ -101,7 +101,7 @@ class StopSpanTest {
                 for (offsetSeconds in listOf(0L, 45L, 150L, 899L, 3_725L, 7_201L)) {
                     for (oneStep in listOf(false, true)) {
                         val stopped = stopSpan(start, start.plusSeconds(offsetSeconds), minutes.toDouble(), madrid, oneStep)
-                        assertEquals("R=$minutes $start +${offsetSeconds}s oneStep=$oneStep", stopped, snapSpan(stopped.start, stopped.stop, minutes.toDouble(), madrid))
+                        assertEquals("R=$minutes $start +${offsetSeconds}s oneStep=$oneStep", stopped.takeIf { it.stop > it.start }, snapSpan(stopped.start, stopped.stop, minutes.toDouble(), madrid))
                     }
                 }
             }
@@ -149,10 +149,10 @@ class SnapStopTest {
     }
 
     @Test
-    fun `the stop goes to the grid point nearest the tap where snapUnsent rounds the duration up`() {
+    fun `a positive typed span and the existing Stop agree on the nearest endpoint`() {
         // 35 minutes and 7 seconds after the start, which snaps 2 minutes and 3 seconds back.
         val tap = Instant.parse("2026-10-14T09:37:10.789Z")
         assertEquals(Instant.parse("2026-10-14T09:35:00Z"), snapStop(start, tap, 5.0, madrid, oneStep = true).stop)
-        assertEquals(Instant.parse("2026-10-14T09:40:00Z"), snapUnsent(start, tap, 5.0, madrid).stop)
+        assertEquals(Instant.parse("2026-10-14T09:35:00Z"), snapUnsent(start, tap, 5.0, madrid)!!.stop)
     }
 }

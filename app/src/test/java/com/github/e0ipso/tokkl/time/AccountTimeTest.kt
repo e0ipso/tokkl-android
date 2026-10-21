@@ -62,9 +62,13 @@ class AccountTimeTest {
         val stop = Instant.parse("2026-10-18T10:50:00Z")
         val time = AccountSettings("Asia/Kolkata", DayOfWeek.MONDAY, timeResolutionMinutes = 60.0).time()!!
 
-        val snapped = time.snapUnsent(start, stop)
-
-        assertEquals(SnappedSpan(Instant.parse("2026-10-18T10:30:00Z"), Instant.parse("2026-10-18T11:30:00Z")), snapped)
+        // Both endpoints land at 10:30Z, so latest Tokkl rejects this typed span.
+        assertNull(time.snapUnsent(start, stop))
+        assertEquals(Instant.parse("2026-10-18T10:30:00Z"), time.snapInstant(start))
+        assertEquals(
+            SnappedSpan(Instant.parse("2026-10-18T10:30:00Z"), Instant.parse("2026-10-18T11:30:00Z")),
+            time.snapUnsent(start, Instant.parse("2026-10-18T11:20:00Z")),
+        )
     }
 
     @Test

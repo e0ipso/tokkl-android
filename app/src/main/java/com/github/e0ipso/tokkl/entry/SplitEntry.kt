@@ -8,7 +8,7 @@ import java.time.temporal.ChronoUnit
 
 // Split (docs/PRD.md H6): splitTimes ports splitHalves in
 // ../tokkl/packages/web/src/components/EntryEditor.tsx, and snappedSplit and snappedInstant port
-// those in ../tokkl/packages/web/src/lib/settings.ts, at tokkl commit 0031de3. SplitEntryTest
+// those in ../tokkl/packages/web/src/lib/settings.ts, at tokkl commit e3f15ff628d88a476b77e51ef77c9172903d6db4. SplitEntryTest
 // replays the cases from settings.test.ts and the overnight splits of e2e/editor.spec.ts.
 
 /** What a split time gives: the two halves, or why it cuts nowhere. */
@@ -49,27 +49,26 @@ fun splitTimes(text: String, start: Instant, stop: Instant, time: AccountTime, t
  * The grid point of the account's time resolution nearest [at], cut to whole seconds first: where
  * the server moves a start it saves. Without a resolution, [at] in whole seconds.
  */
-fun snappedInstant(at: Instant, time: AccountTime): Instant = snap(at, at, time).start
+fun snappedInstant(at: Instant, time: AccountTime): Instant = time.snapInstant(at.truncatedTo(ChronoUnit.SECONDS))
 
 /**
  * The two halves of the stopped entry from [start] to [stop] cut at [at], as the server will store
  * them. Both come from the snapped whole, so an entry saved under another resolution splits into
  * halves that add up to what it would store now. [SplitProblem.OUTSIDE] when [at] is not strictly
- * inside the snapped whole, and [SplitProblem.CLOCK_CHANGE] when the stored halves would not meet
- * at one instant and add up to the whole, as across Lord Howe Island's half-hour change at a
- * resolution of 60.
+ * inside the snapped whole or the whole or either half is too short. Independently snapped
+ * endpoints keep halves meeting even across fractional-hour DST changes.
  */
 fun snappedSplit(start: Instant, stop: Instant, at: Instant, time: AccountTime): SplitResult {
     if (stop.isBefore(start)) return SplitProblem.OUTSIDE
-    val whole = snap(start, stop, time)
-    val cut = at.truncatedTo(ChronoUnit.SECONDS)
+    val whole = snap(start, stop, time) ?: return SplitProblem.OUTSIDE
+    val cut = snappedInstant(at, time)
     if (!cut.isAfter(whole.start) || !cut.isBefore(whole.stop)) return SplitProblem.OUTSIDE
-    val first = snap(whole.start, cut, time)
-    val second = snap(cut, whole.stop, time)
+    val first = snap(whole.start, cut, time) ?: return SplitProblem.OUTSIDE
+    val second = snap(cut, whole.stop, time) ?: return SplitProblem.OUTSIDE
     val meets = first.start == whole.start && first.stop == second.start && second.stop == whole.stop
     return if (meets) SplitHalves(first, second) else SplitProblem.CLOCK_CHANGE
 }
 
 /** The span from [from] to [to], both cut to whole seconds, snapped as the server will store it. */
-private fun snap(from: Instant, to: Instant, time: AccountTime): SnappedSpan =
+private fun snap(from: Instant, to: Instant, time: AccountTime): SnappedSpan? =
     time.snapUnsent(from.truncatedTo(ChronoUnit.SECONDS), to.truncatedTo(ChronoUnit.SECONDS))

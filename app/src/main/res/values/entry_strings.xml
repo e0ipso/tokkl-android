@@ -49,4 +49,5 @@
     <string name="entry_form_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t read times.</string>
     <!-- What TalkBack says a tap on a history row or a calendar block does. -->
     <string name="entry_edit_action">Edit entry</string>
+    <string name="entry_mistake_too_short">This entry is too short for your time resolution. Choose a longer span.</string>
 </resources>
