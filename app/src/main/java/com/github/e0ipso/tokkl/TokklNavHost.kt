@@ -20,6 +20,10 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -39,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarModel
@@ -223,6 +228,18 @@ fun TokklNavHost(
         if (backStack.lastOrNull() != Destination.ENTRY) backStack.add(Destination.ENTRY)
     }
     val discarded by discardedChanges.collectAsState()
+    val changes = (appContext as TokklApplication).changes
+    val shortUndo by changes.shortStopUndo.collectAsState(initial = null)
+    val shortHost = remember { SnackbarHostState() }
+    val shortMessage = stringResource(R.string.timer_short_stop_trashed)
+    val undoLabel = stringResource(R.string.history_undo)
+    LaunchedEffect(destination, shortUndo?.entryId, shortUndo?.capturedAt) {
+        val pending = shortUndo ?: return@LaunchedEffect
+        if (destination != Destination.TIMER) return@LaunchedEffect
+        val result = shortHost.showSnackbar(shortMessage, undoLabel, withDismissAction = true, duration = SnackbarDuration.Long)
+        if (result == SnackbarResult.ActionPerformed) changes.undoShortStop(pending.entryId)
+        else changes.dismissShortStop(pending.entryId)
+    }
     SignedInFrame(
         current = backStack.currentPage(),
         onOpen = backStack::open,
@@ -281,6 +298,7 @@ fun TokklNavHost(
             }
         }
         if (discarded > 0) DiscardNotice(discarded, onDismiss = onDismissDiscarded, modifier = Modifier.align(Alignment.BottomCenter))
+        if (destination == Destination.TIMER) SnackbarHost(shortHost, Modifier.align(Alignment.BottomCenter))
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
         if (notificationPermission != null) {
             NotificationPermissionPrompt(

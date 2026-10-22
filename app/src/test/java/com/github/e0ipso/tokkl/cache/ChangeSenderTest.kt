@@ -134,7 +134,7 @@ class ChangeSenderTest {
     }
 
     @Test
-    fun aStopSendsEveryFieldWithTheTapTimeAndAMatchingDuration() {
+    fun aLegacyQueuedStopStillSendsEveryFieldAfterMigration() {
         store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(90).plusMillis(400), description = "Running")
         server.enqueue(entry(55, "Running", stop = "2026-10-19T08:01:30+00:00"))
 
@@ -149,6 +149,54 @@ class ChangeSenderTest {
             ),
             request.json(),
         )
+    }
+
+    @Test
+    fun aCapturedStopUsesTheFrozenTapInstantAfterTheClockMoves() {
+        val captured = TAP.plusSeconds(90).plusMillis(400)
+        store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(90), description = "Running", capturedStop = captured)
+        clock.now = TAP.plusSeconds(600)
+        server.enqueue(entry(55, "Running", stop = "2026-10-19T08:01:30+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
+
+        val request = server.takeRequest()
+        assertEquals("PATCH /api/v9/workspaces/7/time_entries/55/stop", "${request.method} ${request.url.encodedPath}")
+        assertEquals(Json.parseToJsonElement("""{"stop":"2026-10-19T08:01:30Z"}"""), request.json())
+    }
+
+    @Test
+    fun anUncertainCapturedStopReadsTheMatchingRowInsteadOfReplayingPatch() {
+        store.queue(ChangeKind.STOP, 55, TAP, TAP.plusSeconds(90), "Running", maybeSent = true, capturedStop = TAP.plusSeconds(90))
+        server.enqueue(entry(55, "Running", stop = "2026-10-19T08:01:30+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
+        val request = server.takeRequest()
+        assertEquals("GET /api/v9/me/time_entries/55", "${request.method} ${request.url.encodedPath}")
+        assertTrue(store.changes.isEmpty())
+    }
+
+    @Test
+    fun anUncertainShortStopRequiresTheExactTrashRow() {
+        store.queue(ChangeKind.STOP, 55, TAP, TAP, "Short", maybeSent = true, capturedStop = TAP.plusSeconds(2), shortStop = true)
+        server.enqueue(MockResponse.Builder().code(404).body("\"Not found\"").build())
+        server.enqueue(entries("""{"id":55,"start":"2026-10-19T08:00:00+00:00","stop":"2026-10-19T08:00:00+00:00","server_deleted_at":"2026-10-19T08:00:02Z"}"""))
+
+        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
+        assertEquals(listOf("GET /api/v9/me/time_entries/55", "GET /api/app/trash"),
+            List(2) { server.takeRequest() }.map { "${it.method} ${it.url.encodedPath}" })
+        assertTrue(store.changes.isEmpty())
+    }
+
+    @Test
+    fun anAlreadyStoppedConflictWithDifferentSpanIsHeld() {
+        store.queue(ChangeKind.STOP, 55, TAP, TAP.plusSeconds(90), "Running", capturedStop = TAP.plusSeconds(90))
+        server.enqueue(MockResponse.Builder().code(409).body("\"Time entry already stopped\"").build())
+        server.enqueue(entry(55, "Running", stop = "2026-10-19T08:05:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(0), sender.drain())
+        assertTrue(store.changes.single().held)
+        assertEquals(listOf("PATCH", "GET"), List(2) { server.takeRequest().method })
     }
 
     @Test
@@ -1222,6 +1270,8 @@ class ChangeSenderTest {
             tags: List<String> = emptyList(),
             maybeSent: Boolean = false,
             existingIds: List<Long> = emptyList(),
+            capturedStop: Instant? = null,
+            shortStop: Boolean = false,
         ) {
             changes += PendingChange(
                 sequence = ++sequence,
@@ -1238,6 +1288,8 @@ class ChangeSenderTest {
                 tagIds = emptyList(),
                 maybeSent = maybeSent,
                 existingIds = existingIds,
+                capturedStop = capturedStop,
+                shortStop = shortStop,
             )
         }
 

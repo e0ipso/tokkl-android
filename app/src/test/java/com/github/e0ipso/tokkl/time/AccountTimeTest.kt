@@ -73,8 +73,7 @@ class AccountTimeTest {
 
     @Test
     fun stopsOnTheAccountZonesGrid() {
-        // 10:10Z is 15:40 in Kolkata, so the start goes to 16:00 there, 10:30Z, and the stop at
-        // 10:50Z, 16:20 there, to 16:00 too. A Stop takes one step, and a new timer none.
+        // The old predictor remains for pre-migration queued Stops and switch reconciliation.
         val start = Instant.parse("2026-10-18T10:10:00Z")
         val at = Instant.parse("2026-10-18T10:50:00Z")
         val time = AccountSettings("Asia/Kolkata", DayOfWeek.MONDAY, timeResolutionMinutes = 60.0).time()!!
@@ -84,12 +83,25 @@ class AccountTimeTest {
     }
 
     @Test
+    fun capturedStopPredictsTheReleasedShortTrashAndLongSpan() {
+        val time = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0).time()!!
+        val start = Instant.parse("2026-10-14T09:00:30Z")
+        assertNull(time.snapCapturedStop(start, start.plusSeconds(60)))
+        assertNull(time.snapCapturedStop(start, start.minusSeconds(60)))
+        assertEquals(
+            SnappedSpan(Instant.parse("2026-10-14T09:00:00Z"), Instant.parse("2026-10-14T09:05:00Z")),
+            time.snapCapturedStop(start, Instant.parse("2026-10-14T09:03:00Z")),
+        )
+    }
+
+    @Test
     fun withoutATimeResolutionAStopKeepsTheTapTime() {
         val start = Instant.parse("2026-10-18T10:10:07.250Z")
         val at = Instant.parse("2026-10-18T10:52:41.900Z")
         val time = AccountSettings("Asia/Kolkata", DayOfWeek.MONDAY, timeResolutionMinutes = null).time()!!
 
         assertEquals(SnappedSpan(start, at), time.snapStop(start, at, oneStep = true))
+        assertEquals(SnappedSpan(start, at), time.snapCapturedStop(start, at))
     }
 
     @Test

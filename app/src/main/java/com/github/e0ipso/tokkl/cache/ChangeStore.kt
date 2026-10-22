@@ -36,7 +36,7 @@ interface ChangeStore {
     fun endBefore(start: PendingChange, later: CachedTimeEntry, onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange
 
     /**
-     * Records [PendingChange.maybeSent] for the queued create or delete [change]. Returns false
+     * Records [PendingChange.maybeSent] for the queued create, Stop or delete [change]. Returns false
      * when [change] has left the queue, as a delete does when Undo takes it back. Blocks on disk
      * I/O.
      */
@@ -100,11 +100,16 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
             if (change.kind == ChangeKind.CREATE) {
                 dao.insertMapping(EntryIdMapping(localId = change.entryId, serverId = serverId))
                 dao.remap(localId = change.entryId, serverId = serverId)
+                dao.shortStop(change.entryId)?.let { undo ->
+                    dao.deleteShortStop(change.entryId)
+                    dao.upsertShortStop(undo.copy(entryId = serverId, entry = undo.entry.copy(id = serverId)))
+                }
                 dao.entry(change.entryId)?.let { local ->
                     dao.deleteEntry(local.id)
                     dao.upsertEntry(local.copy(id = serverId))
                 }
             }
+            if (change.kind == ChangeKind.STOP && change.shortStop && dao.countFor(serverId) == 0) dao.deleteEntry(serverId)
             if (answer != null && dao.countFor(serverId) == 0) dao.upsertEntry(answer)
         }
     }

@@ -225,6 +225,10 @@ class TokklApplication : Application() {
             stopSpan = { start, at, oneStep ->
                 accountSettings.state.value?.time()?.snapStop(start, at, oneStep) ?: SnappedSpan(start, maxOf(at, start))
             },
+            capturedStopSpan = { start, at ->
+                val time = accountSettings.state.value?.time()
+                if (time == null) SnappedSpan(start, maxOf(at, start)) else time.snapCapturedStop(start, at)
+            },
         )
     }
 

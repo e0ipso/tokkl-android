@@ -88,6 +88,18 @@ abstract class ChangeDao {
     @Query("SELECT * FROM pending_changes WHERE entryId = :entryId AND kind = 'DELETE' ORDER BY sequence DESC LIMIT 1")
     abstract fun queuedDelete(entryId: Long): PendingChange?
 
+    @Query("SELECT * FROM short_stop_undo ORDER BY capturedAt DESC LIMIT 1")
+    abstract fun latestShortStop(): Flow<ShortStopUndo?>
+
+    @Query("SELECT * FROM short_stop_undo WHERE entryId = :entryId")
+    abstract fun shortStop(entryId: Long): ShortStopUndo?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract fun upsertShortStop(stop: ShortStopUndo)
+
+    @Query("DELETE FROM short_stop_undo WHERE entryId = :entryId")
+    abstract fun deleteShortStop(entryId: Long)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract fun insertMapping(mapping: EntryIdMapping)
 

@@ -16,7 +16,8 @@ import androidx.room.TypeConverters
  *
  * Version 2 adds the queue: `pending_changes` and `entry_ids`. Version 3 adds
  * `pending_changes.maybeSent`, version 4 `pending_changes.existingIds`, and version 5
- * `pending_changes.held` and `pending_changes.refusal`.
+ * `pending_changes.held` and `pending_changes.refusal`. Version 6 keeps the immutable captured
+ * Stop instant and short Stop Undo records without changing older queued requests.
  */
 @Database(
     entities = [
@@ -28,14 +29,16 @@ import androidx.room.TypeConverters
         CachedFavorite::class,
         PendingChange::class,
         EntryIdMapping::class,
+        ShortStopUndo::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6),
     ],
 )
 @TypeConverters(CacheConverters::class)

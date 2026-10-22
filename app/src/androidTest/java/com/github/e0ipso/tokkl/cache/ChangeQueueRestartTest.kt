@@ -11,7 +11,6 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.io.File
-import java.time.OffsetDateTime
 import java.util.Properties
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -46,8 +45,8 @@ class ChangeQueueRestartTest {
         signIn(TokklTestServer.url, TokklTestServer.apiToken)
         val account = TestAccounts.create(timezone = "Europe/Madrid")
         signIn(TokklTestServer.url, account.apiToken)
-        // A real sign-in caches the resolution before going offline. Without it a sub-second
-        // Stop is rejected by latest Tokkl, the separate TKA-0259 defect.
+        // A real sign-in caches the resolution before going offline, so a short Stop predicts
+        // the server's Trash outcome before this process exits.
         runBlocking { app.accountSettings.refreshAfterChange().join() }
         val workspace = account.client.get(account.client.server.api("me"), JsonObject.serializer())
             .orFail("GET /api/v9/me").getValue("default_workspace_id").jsonPrimitive.long
@@ -68,6 +67,8 @@ class ChangeQueueRestartTest {
         runBlocking { app.sender.send().join() }
 
         assertEquals("the drain failed and kept every change", 3, runBlocking { app.changes.unsentCount.first() })
+        assertTrue("the short timer is absent from offline history", runBlocking { app.cache.entries.first() }.isEmpty())
+        assertEquals(id, runBlocking { app.changes.shortStopUndo.first() }?.entryId)
     }
 
     @Test
@@ -78,9 +79,14 @@ class ChangeQueueRestartTest {
         try {
             assertNotEquals("step 1 ran in this same process", saved.getProperty("process"), currentProcess())
             assertEquals("the queue survived", 3, runBlocking { app.changes.unsentCount.first() })
+            assertTrue("Trash prediction survived", runBlocking { app.cache.entries.first() }.isEmpty())
+            val localId = checkNotNull(runBlocking { app.changes.shortStopUndo.first() }).entryId
+            assertTrue("Undo queues offline after process death", runBlocking { app.changes.undoShortStop(localId) })
             val row = runBlocking { app.cache.entries.first() }.single()
             assertTrue(row.unsent)
             assertEquals("Edited before the restart", row.entry.description)
+            assertEquals(row.entry.start, row.entry.stop)
+            assertEquals(4, runBlocking { app.changes.unsentCount.first() })
 
             signIn(TokklTestServer.url, account.apiToken)
             runBlocking { app.accountSettings.refresh().join() }
@@ -90,14 +96,11 @@ class ChangeQueueRestartTest {
                 assertTrue("the drain sent nothing", runBlocking { app.changes.unsentCount.first() } < before)
             }
 
-            val serverId = runBlocking { app.changes.currentId(row.entry.id) }
+            val serverId = runBlocking { app.changes.currentId(localId) }
             val sent = account.client.get(account.client.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer())
                 .orFail("GET the entry")
             assertEquals("Edited before the restart", sent.getValue("description").jsonPrimitive.content)
-            val snapped = app.accountSettings.state.value!!.time()!!.snapUnsent(row.entry.start, row.entry.stop!!)!!
-            // Tokkl writes an offset, +00:00, which Instant.parse refused on API 30.
-            assertEquals(snapped.start, OffsetDateTime.parse(sent.getValue("start").jsonPrimitive.content).toInstant())
-            assertEquals(snapped.stop, OffsetDateTime.parse(sent.getValue("stop").jsonPrimitive.content).toInstant())
+            assertEquals("the server restored a stopped zero-length entry", sent.getValue("start"), sent.getValue("stop"))
         } finally {
             try {
                 signIn(TokklTestServer.url, TokklTestServer.apiToken)

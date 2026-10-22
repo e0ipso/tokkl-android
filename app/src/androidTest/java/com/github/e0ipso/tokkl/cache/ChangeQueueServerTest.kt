@@ -125,26 +125,32 @@ class ChangeQueueServerTest {
         val stopTap = Instant.now().truncatedTo(ChronoUnit.MILLIS)
         val (stopped, stopTook) = timed { runBlocking { app.changes.stop(id) } }
         val afterStop = Instant.now()
-        val row = runBlocking { app.cache.entries.first() }.single { it.entry.id == serverId(id) }
-
         assertTrue("Stop took the entry's local id after the server mapped it", stopped)
         assertTrue("Stop returned without waiting for the network: $stopTook", stopTook < AT_ONCE)
         assertNull("nothing runs at once", runBlocking { app.cache.running.first() })
-        assertTrue("the stop is marked unsent", row.unsent)
-        // Tokkl stores a Stop on the grid point nearest the tap, so the phone puts it there at once.
-        val earliest = time().snapStop(running.entry.start, stopTap, oneStep = true)
-        val latest = time().snapStop(running.entry.start, afterStop, oneStep = true)
-        assertEquals("the start is on the grid", earliest.start, row.entry.start)
-        assertTrue("the stop is on the grid point nearest the tap", row.entry.stop!! in earliest.stop..latest.stop)
-        // The history shows an unsent entry's span as snapUnsent has it.
-        val shown = time().snapUnsent(row.entry.start, row.entry.stop)!!
-        assertEquals("the history shows the stop's span as it is", SnappedSpan(row.entry.start, row.entry.stop), shown)
+        assertNull("an immediate Stop predicts Trash", time().snapCapturedStop(running.entry.start, stopTap))
+        assertNull("the same prediction holds after the call", time().snapCapturedStop(running.entry.start, afterStop))
+        assertTrue("the short timer leaves history offline", runBlocking { app.cache.entries.first() }.none { it.entry.id == serverId(id) })
+        assertEquals("the captured Stop waits durably", 1, unsentCount())
+        assertEquals(serverId(id), runBlocking { app.changes.shortStopUndo.first() }?.entryId)
 
         relay.release()
         drainUntilEmpty()
-        val stoppedOnServer = serverEntry(serverId(id))
-        assertEquals(shown.start, stoppedOnServer.instant("start"))
-        assertEquals("the server stored the stop the history showed", shown.stop, stoppedOnServer.instant("stop"))
+        val trashed = web.get(web.server.app("trash"), ListSerializer(JsonObject.serializer())).orFail("GET /api/app/trash")
+            .single { it.getValue("id").jsonPrimitive.long == serverId(id) }
+        assertEquals("the server stores zero duration", 0L, trashed.getValue("duration").jsonPrimitive.long)
+        assertEquals(trashed.instant("start"), trashed.instant("stop"))
+        assertNull("the server no longer runs it", runningOnServer())
+
+        relay.hang()
+        assertTrue("Undo is queued offline", runBlocking { app.changes.undoShortStop(id) })
+        val restoredLocally = runBlocking { app.cache.entries.first() }.single { it.entry.id == serverId(id) }
+        assertEquals(restoredLocally.entry.start, restoredLocally.entry.stop)
+        assertTrue(restoredLocally.unsent)
+        relay.release()
+        drainUntilEmpty()
+        val restored = serverEntry(serverId(id))
+        assertEquals("Undo restores the stopped zero-length row", restored.instant("start"), restored.instant("stop"))
     }
 
     @Test
@@ -157,6 +163,7 @@ class ChangeQueueServerTest {
             },
         )
         assertTrue(runBlocking { app.changes.stop(timer) })
+        assertTrue("a short Stop can be undone before sending", runBlocking { app.changes.undoShortStop(timer) })
         val manualStart = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
         val manual = runBlocking {
             app.changes.create(
@@ -167,7 +174,7 @@ class ChangeQueueServerTest {
             )
         }
         assertTrue(runBlocking { app.changes.delete(timer) })
-        assertEquals(5, unsentCount())
+        assertEquals(6, unsentCount())
         assertEquals(
             "the deleted timer is gone from the phone and the manual entry shows, unsent",
             listOf(manual to true),
@@ -344,30 +351,17 @@ class ChangeQueueServerTest {
         val before = Instant.now()
         assertTrue(runBlocking { app.changes.stop(onPhone) })
         val tapped = Instant.now()
-        // Stop the server copy before starting the comparison timer. Starting at the same
-        // instant as an existing timer now trashes the zero-length predecessor on Tokkl 1.7.0.
-        // Both comparisons here are long stops; exact short Stop remains TKA-0259/TKA-0261.
-        stopOnTheWeb(onPhone)
-        val onWeb = startOnTheWeb("Stopped on the web", start)
-        val stoppedOnWeb = stopOnTheWeb(onWeb)
         val after = Instant.now()
         relay.release()
         drainUntilEmpty()
 
         val stoppedOnPhone = serverEntry(onPhone)
-        assertEquals("the same start: $stoppedOnPhone", stoppedOnWeb.instant("start"), stoppedOnPhone.instant("start"))
-        // The two stops came a moment apart, by the phone's clock and the server's. Only when no
-        // grid point's half step falls between them, with a margin for the clocks, do they share
-        // their nearest grid point.
+        // PATCH refuses an entry another client already stopped, so leave this entry running on
+        // the server until the queued captured Stop arrives and compare it to that tap window.
         val nearest = { at: Instant -> time().snapInstant(at) }
         val earliest = nearest(before.minus(CLOCK_MARGIN))
         val latest = nearest(after.plus(CLOCK_MARGIN))
-        for (stopped in listOf(stoppedOnPhone, stoppedOnWeb)) {
-            assertTrue("a stop on the grid point nearest the moment: $stopped", stopped.instant("stop") in earliest..latest)
-        }
-        if (earliest == latest) {
-            assertEquals("the same stop: $stoppedOnPhone", stoppedOnWeb.instant("stop"), stoppedOnPhone.instant("stop"))
-        }
+        assertTrue("a stop on the grid point nearest the tap: $stoppedOnPhone", stoppedOnPhone.instant("stop") in earliest..latest)
         assertRoundingUpEndsElsewhere(start, before..tapped, stoppedOnPhone.instant("stop"))
         assertEquals(
             "after the refresh that follows the drain, the phone shows the span the server stored",

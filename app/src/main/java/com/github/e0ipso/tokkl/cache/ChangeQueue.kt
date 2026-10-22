@@ -53,8 +53,9 @@ interface EntryChanges {
  *
  * Start and Stop use the tap time, which each call reads from [clock] before anything else, so
  * call them from the tap's handler. A timer started offline keeps that start on the server. A
- * stop puts the entry where [stopSpan] says the server stores a timer stopped at the tap, so the
- * phone shows that span at once and the server keeps it as sent.
+ * captured Stop predicts the span the server will store. A short Stop removes the entry from
+ * local history and keeps an Undo offer on disk. Undo queues a restore after the Stop and shows
+ * the server's zero-length stopped row at once, including offline.
  *
  * An entry created on the phone gets a negative local id. The calls take it, before and after the
  * server has answered the create with its own id.
@@ -66,10 +67,9 @@ interface EntryChanges {
  * server needs. [sendAgain] lets a held change go out as it is, and [discard] drops it.
  *
  * @param io where the database writes run.
- * @param stopSpan the span the server stores for a running entry from `start` stopped at `at`:
- *   with `oneStep` for a Stop, as Tokkl's stop endpoint does, and without it for a start that
- *   stops the running entry. Tokkl puts both ends on the grid of the account's time resolution
- *   (`AccountTime.snapStop`), and Toggl keeps the tap time.
+ * @param stopSpan the legacy predictor retained for older queued Stops and a short Stop's
+ *   snapped zero point.
+ * @param capturedStopSpan the latest server prediction; null means Trash.
  */
 class ChangeQueue(
     private val database: CacheDatabase,
@@ -77,6 +77,9 @@ class ChangeQueue(
     private val onQueued: () -> Unit,
     private val clock: Clock = Clock.systemUTC(),
     private val stopSpan: (start: Instant, at: Instant, oneStep: Boolean) -> SnappedSpan = { start, at, _ ->
+        SnappedSpan(start, maxOf(at, start))
+    },
+    private val capturedStopSpan: (start: Instant, at: Instant) -> SnappedSpan? = { start, at ->
         SnappedSpan(start, maxOf(at, start))
     },
 ) : EntryChanges {
@@ -92,6 +95,9 @@ class ChangeQueue(
     /** How many changes the server refused wait for the user. */
     val heldCount: Flow<Int> = dao.heldCount()
 
+    /** Latest short Stop, retained across process death until Undo or dismissal. */
+    val shortStopUndo: Flow<ShortStopUndo?> = dao.latestShortStop()
+
     /**
      * Starts a timer in [workspaceId] with [fields], at the tap time. A cached running entry
      * stops at that time first, as the server does when a timer starts, so the two are stored
@@ -101,14 +107,14 @@ class ChangeQueue(
     override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
         val at = clock.instant()
         return queue {
-            dao.runningEntries().forEach { running -> stopAt(running, at, oneStep = false) }
+            dao.runningEntries().forEach { running -> stopAt(running, at) }
             queueCreate(workspaceId, fields, at, stop = null)
         }
     }
 
     /**
      * Stops the running entry [entryId] at the tap time, or at its start if the tap came earlier,
-     * on the grid as the web app's Stop is stored: at least one step long on Tokkl.
+     * on the grid as Tokkl's captured Stop stores it. A short span enters the trash.
      * With [fields], the stop also sets them, in the same change, such as a description still
      * being typed when Stop was tapped. Returns false when the entry is not cached or not running.
      */
@@ -117,10 +123,25 @@ class ChangeQueue(
         return queue {
             val running = dao.entry(resolve(entryId))?.takeIf { it.stop == null } ?: return@queue false
             val stopped = if (fields == null) running else entry(running.id, running.workspaceId, fields, running.start, stop = null)
-            stopAt(stopped, at, oneStep = true)
+            if (stopped != running) enqueue(ChangeKind.UPDATE, stopped)
+            stopAt(stopped, at)
             true
         }
     }
+
+    /** Queues a restore behind the short Stop and shows its zero-length row immediately offline. */
+    suspend fun undoShortStop(entryId: Long): Boolean = queue {
+        val id = resolve(entryId)
+        val undo = dao.shortStop(id) ?: return@queue false
+        val change = PendingChange.of(ChangeKind.RESTORE, undo.entry)
+        dao.insert(change)
+        dao.upsertEntry(undo.entry)
+        dao.deleteShortStop(id)
+        true
+    }
+
+    /** Dismisses only the offer; the queued Stop and server trash remain intact. */
+    suspend fun dismissShortStop(entryId: Long) = withContext(io) { dao.deleteShortStop(resolve(entryId)) }
 
     /**
      * Creates a stopped entry in [workspaceId], as a manual entry does. Returns its local id. Pass
@@ -207,9 +228,16 @@ class ChangeQueue(
         return result
     }
 
-    private fun stopAt(running: CachedTimeEntry, at: Instant, oneStep: Boolean) {
-        val span = stopSpan(running.start, at, oneStep)
-        enqueue(ChangeKind.STOP, running.copy(start = span.start, stop = span.stop))
+    private fun stopAt(running: CachedTimeEntry, at: Instant) {
+        val span = capturedStopSpan(running.start, at)
+        val stopped = if (span == null) {
+            val point = stopSpan(running.start, running.start, false).start
+            running.copy(start = point, stop = point)
+        } else {
+            running.copy(start = span.start, stop = span.stop)
+        }
+        enqueue(ChangeKind.STOP, stopped, capturedAt = at, shortStop = span == null)
+        if (span == null) dao.upsertShortStop(ShortStopUndo(stopped.id, at, stopped))
     }
 
     /**
@@ -226,9 +254,17 @@ class ChangeQueue(
      * Queues a change that leaves [entry] as given and applies it to the cache. A create gets its
      * local id here. Returns the entry's id.
      */
-    private fun enqueue(kind: ChangeKind, entry: CachedTimeEntry, existingIds: List<Long> = emptyList()): Long {
-        dao.heldFor(entry.id)?.let { held -> return foldInto(held, kind, entry) }
-        val change = PendingChange.of(kind, entry).copy(existingIds = existingIds)
+    private fun enqueue(
+        kind: ChangeKind,
+        entry: CachedTimeEntry,
+        existingIds: List<Long> = emptyList(),
+        capturedAt: Instant? = null,
+        shortStop: Boolean = false,
+    ): Long {
+        if (kind != ChangeKind.STOP && kind != ChangeKind.RESTORE) {
+            dao.heldFor(entry.id)?.let { held -> return foldInto(held, kind, entry, capturedAt, shortStop) }
+        }
+        val change = PendingChange.of(kind, entry).copy(existingIds = existingIds, capturedStop = capturedAt, shortStop = shortStop)
         val sequence = dao.insert(change)
         val queued = if (kind == ChangeKind.CREATE) {
             change.copy(sequence = sequence, entryId = -sequence).also(dao::update)
@@ -246,8 +282,13 @@ class ChangeQueue(
      * carries every field after them. A held create stays a create, as the server has no entry
      * yet, and a delete of it leaves nothing to send. Returns the entry's id.
      */
-    private fun foldInto(held: PendingChange, kind: ChangeKind, entry: CachedTimeEntry): Long {
-        dao.deleteFrom(held.entryId, held.sequence + 1)
+    private fun foldInto(held: PendingChange, kind: ChangeKind, entry: CachedTimeEntry, capturedAt: Instant?, shortStop: Boolean): Long {
+        // A captured Stop is a separate PATCH and cannot be replaced by the full fields of an
+        // edit. Keep it and the later queue order if the user fixes an earlier held change.
+        val laterCapturedStop = dao.changesFor(held.entryId).any {
+            it.sequence > held.sequence && it.kind == ChangeKind.STOP && it.capturedStop != null
+        }
+        if (!laterCapturedStop) dao.deleteFrom(held.entryId, held.sequence + 1)
         if (held.kind == ChangeKind.CREATE && kind == ChangeKind.DELETE) {
             dao.delete(held.sequence)
             dao.deleteEntry(held.entryId)
@@ -262,9 +303,12 @@ class ChangeQueue(
             held.existingIds
         }
         val folded = PendingChange.of(if (held.kind == ChangeKind.CREATE) ChangeKind.CREATE else kind, entry)
-            .copy(sequence = held.sequence, entryId = held.entryId, maybeSent = held.maybeSent, existingIds = existingIds)
+            .copy(
+                sequence = held.sequence, entryId = held.entryId, maybeSent = held.maybeSent,
+                existingIds = existingIds, capturedStop = capturedAt, shortStop = shortStop,
+            )
         dao.update(folded)
-        val row = folded.cachedEntry()
+        val row = dao.changesFor(held.entryId).last().cachedEntry()
         if (row == null) dao.deleteEntry(folded.entryId) else dao.upsertEntry(row)
         return folded.entryId
     }

@@ -34,6 +34,8 @@
     <string name="needs_attention_kind_create">New entry</string>
     <string name="needs_attention_kind_update">Edit</string>
     <string name="needs_attention_kind_stop">Stop</string>
+    <string name="needs_attention_kind_restore">Restore</string>
+    <string name="timer_short_stop_trashed">Short timer moved to Trash</string>
     <string name="needs_attention_kind_delete">Delete</string>
     <string name="needs_attention_no_description">(no description)</string>
     <!-- A refused change's entry, on its day: Mon, 13 Oct 2026, 14:00 to 15:30 -->

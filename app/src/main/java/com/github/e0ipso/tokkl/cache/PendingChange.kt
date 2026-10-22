@@ -19,17 +19,19 @@ enum class ChangeKind {
     /** Sets every field of the entry. */
     UPDATE,
 
-    /** Sets every field of a running entry, its stop being the tap time. */
+    /** Stops a running entry at its captured tap time. */
     STOP,
+
+    /** Restores a short stop after its captured PATCH has reached the server. */
+    RESTORE,
 
     DELETE,
 }
 
 /**
  * One change to a time entry, waiting in the queue. The queue sends changes in [sequence] order.
- * Each one carries every field of the entry as the change left it, so the server gets full values
- * and the change that reaches it last wins (docs/PRD.md O3). A [ChangeKind.DELETE] carries the
- * fields the entry had.
+ * Each one carries the entry fields as the change left them. Creates and updates send full values;
+ * captured Stops send their immutable tap instant. A [ChangeKind.DELETE] carries the old fields.
  *
  * @property entryId the entry's server id, or a negative local id while the server has not
  *   answered the entry's [ChangeKind.CREATE]. A created entry's local id is minus its create's
@@ -38,7 +40,7 @@ enum class ChangeKind {
  * @property stop the stop the user gave or the tap time of Stop, or null while the entry runs.
  * @property tags tag names. The server creates any it does not know.
  * @property tagIds the cached ids of [tags], for the cache row only. The server gets the names.
- * @property maybeSent the sender sent this create or delete and the server may have stored it,
+ * @property maybeSent the sender sent this create, captured Stop or delete and the server may have stored it,
  *   because no answer came back that rules it out: the connection dropped, the read timed out, the
  *   app died mid-request, the server answered 5xx or the phone could not read its 2xx. Before
  *   posting a create again the sender looks for the entry that post made. Undo of a marked delete
@@ -73,10 +75,13 @@ data class PendingChange(
     @ColumnInfo(defaultValue = "[]") val existingIds: List<Long> = emptyList(),
     @ColumnInfo(defaultValue = "0") val held: Boolean = false,
     val refusal: String? = null,
+    /** The immutable tap instant for a captured PATCH Stop. Null on pre-migration queued stops. */
+    val capturedStop: Instant? = null,
+    @ColumnInfo(defaultValue = "0") val shortStop: Boolean = false,
 ) {
 
-    /** The cache row this change leaves, or null for a delete. */
-    fun cachedEntry(): CachedTimeEntry? = if (kind == ChangeKind.DELETE) null else entry()
+    /** The cache row this change leaves, or null for a delete or short Stop. */
+    fun cachedEntry(): CachedTimeEntry? = if (kind == ChangeKind.DELETE || (kind == ChangeKind.STOP && shortStop)) null else entry()
 
     /** The entry as this change has it: for a delete, as it was when the delete was queued. */
     fun entry(): CachedTimeEntry =
@@ -99,6 +104,14 @@ data class PendingChange(
         )
     }
 }
+
+/** A short Stop that can be undone after its queue item has been sent. */
+@Entity(tableName = "short_stop_undo")
+data class ShortStopUndo(
+    @PrimaryKey val entryId: Long,
+    val capturedAt: Instant,
+    @Embedded(prefix = "stopped_") val entry: CachedTimeEntry,
+)
 
 /** The server's id for an entry the phone created under [localId]. */
 @Entity(tableName = "entry_ids")

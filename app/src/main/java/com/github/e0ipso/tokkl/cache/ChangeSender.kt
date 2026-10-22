@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.jsTrim
+import com.github.e0ipso.tokkl.trash.TrashEntry
 import java.io.InterruptedIOException
 import java.net.ConnectException
 import java.net.NoRouteToHostException
@@ -44,8 +45,9 @@ import okhttp3.HttpUrl
  * itself on disk.
  *
  * Each other refusal has its own outcome (docs/PRD.md O6):
- * - A 409 on a stop leaves the queue with no message, since the entry is stopped either way.
- * - A 404 on an update or a stop, when the server no longer has the entry, takes every queued
+ * - A 409 on a captured Stop is reconciled against the exact server span or Trash row. A legacy
+ *   queued Stop without a captured instant retains its pre-migration handling.
+ * - A 404 on an update or a legacy stop, when the server no longer has the entry, takes every queued
  *   change to it out of the queue and the entry out of the cache, and [onDiscarded] counts them
  *   for the discard notice. A 404 on a delete that may already have reached the server counts
  *   as sent. Any other 404, such as a create or
@@ -348,10 +350,50 @@ class ChangeSender(
     private fun send(api: TogglApiClient, change: PendingChange): ApiResult<Sent>? {
         if (change.kind == ChangeKind.CREATE) return create(api, change)
         if (change.kind == ChangeKind.DELETE) return delete(api, change)
+        if (change.kind == ChangeKind.STOP && change.capturedStop != null) return capturedStop(api, change)
         val request = change.request(api.server)
         return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
             is ApiResult.Success -> ApiResult.Success(Sent(change, result.value.id, result.value.toCached()))
             is ApiResult.Failure -> result
+        }
+    }
+
+    /** A captured Stop may already have reached the server even when its reply was lost. */
+    private fun capturedStop(api: TogglApiClient, change: PendingChange): ApiResult<Sent> {
+        if (change.maybeSent) {
+            when (val found = stoppedOnServer(api, change)) {
+                is ApiResult.Success -> if (found.value) return ApiResult.Success(Sent(change, change.entryId, if (change.shortStop) null else change.entry()))
+                is ApiResult.Failure -> return found
+            }
+        }
+        store.maybeSent(change, true)
+        val request = change.request(api.server)
+        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
+            is ApiResult.Success -> if (result.value.matchesStop(change)) {
+                ApiResult.Success(Sent(change, result.value.id, if (change.shortStop) null else result.value.toCached()))
+            } else {
+                ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The server stored a different Stop outcome"))
+            }
+            is ApiResult.Failure -> result
+        }
+    }
+
+    /** True only after reading the exact stopped row, including a short row hidden in Trash. */
+    private fun stoppedOnServer(api: TogglApiClient, change: PendingChange): ApiResult<Boolean> {
+        val url = api.server.api("me", "time_entries", change.entryId.toString())
+        return when (val result = api.get(url, ServerTimeEntry.serializer())) {
+            is ApiResult.Success -> when {
+                result.value.stop == null -> ApiResult.Success(false)
+                result.value.matchesStop(change) -> ApiResult.Success(true)
+                else -> ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The server stopped this entry differently"))
+            }
+            is ApiResult.Failure -> if (change.shortStop && (result.error as? ApiError.Http)?.status == NOT_FOUND) {
+                when (val trash = api.get(api.server.app("trash"), ListSerializer(TrashEntry.serializer()))) {
+                    is ApiResult.Success -> if (trash.value.any { it.matchesStop(change) }) ApiResult.Success(true)
+                        else ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The short Stop is not in Trash"))
+                    is ApiResult.Failure -> trash
+                }
+            } else result
         }
     }
 
@@ -422,7 +464,14 @@ class ChangeSender(
         return when {
             status == UNAUTHORIZED -> Refusal.SignInAgain
             status !in 400..499 || status == REQUEST_TIMEOUT -> Refusal.Wait(error)
-            status == CONFLICT && change.kind == ChangeKind.STOP -> Refusal.AlreadyDone
+            status == CONFLICT && change.kind == ChangeKind.STOP && change.capturedStop == null -> Refusal.AlreadyDone
+            change.kind == ChangeKind.STOP && change.capturedStop != null && status in setOf(CONFLICT, NOT_FOUND) ->
+                when (val found = stoppedOnServer(api, change)) {
+                    is ApiResult.Success -> if (found.value) Refusal.AlreadyDone else Refusal.Hold(refused.message)
+                    is ApiResult.Failure -> if (found.error is ApiError.Http && found.error.status in 400..499) {
+                        Refusal.Hold(refused.message ?: "Captured Stop could not be verified")
+                    } else Refusal.Wait(found.error)
+                }
             status == NOT_FOUND && change.kind != ChangeKind.CREATE -> when (val entry = entryOnServer(api, change.entryId)) {
                 is ApiResult.Success -> if (entry.value) Refusal.Hold(refused.message) else Refusal.EntryGone
                 is ApiResult.Failure -> if (entry.error == ApiError.AuthFailed || (entry.error as? ApiError.Http)?.status == UNAUTHORIZED) {
@@ -631,9 +680,8 @@ internal const val CREATED_WITH = "Tokkl for Android"
 
 /**
  * The Toggl API v9 request for this change, under [server]. A create is a POST, an update and a
- * stop a PUT with every field, so the stop keeps the tap time where Tokkl's `PATCH .../stop`
- * would take the server's clock. [ChangeQueue] has put a stop's span on the grid as that endpoint
- * would, so Tokkl stores it as sent. A delete is a DELETE. Times go in whole seconds, the precision
+ * legacy stop a PUT with every field; a new Stop sends its frozen tap instant as PATCH. A delete is
+ * a DELETE and a short Stop's Undo is a POST restore. Times go in whole seconds, the precision
  * the server stores; a running entry sends `duration: -1`, and a stopped one the duration that
  * matches its start and stop. Tags go by name.
  */
@@ -642,10 +690,26 @@ internal fun PendingChange.request(server: ServerUrl): ChangeRequest {
     val url = if (kind == ChangeKind.CREATE) collection else collection.newBuilder().addPathSegment(entryId.toString()).build()
     return when (kind) {
         ChangeKind.CREATE -> ChangeRequest("POST", url, body())
-        ChangeKind.UPDATE, ChangeKind.STOP -> ChangeRequest("PUT", url, body())
+        ChangeKind.UPDATE -> ChangeRequest("PUT", url, body())
+        ChangeKind.STOP -> if (capturedStop == null) ChangeRequest("PUT", url, body()) else
+            ChangeRequest("PATCH", url.newBuilder().addPathSegment("stop").build(), buildJsonObject {
+                put("stop", capturedStop.truncatedTo(ChronoUnit.SECONDS).toString())
+            })
+        ChangeKind.RESTORE -> ChangeRequest("POST", server.app("time_entries", entryId.toString(), "restore"), JsonObject(emptyMap()))
         ChangeKind.DELETE -> ChangeRequest("DELETE", url, body = null)
     }
 }
+
+private fun ServerTimeEntry.matchesStop(change: PendingChange): Boolean =
+    id == change.entryId && workspaceId == change.workspaceId &&
+        runCatching { Instant.parse(start) }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
+        stop?.let { runCatching { Instant.parse(it) }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS) &&
+        (serverDeletedAt != null) == change.shortStop
+
+private fun TrashEntry.matchesStop(change: PendingChange): Boolean =
+    id == change.entryId && deletedAt != null &&
+        runCatching { Instant.parse(start) }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
+        stop?.let { runCatching { Instant.parse(it) }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS)
 
 private fun PendingChange.body(): JsonObject {
     val start = start.truncatedTo(ChronoUnit.SECONDS)

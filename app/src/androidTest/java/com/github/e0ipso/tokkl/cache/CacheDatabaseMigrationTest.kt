@@ -158,6 +158,40 @@ class CacheDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun version5KeepsAnAlreadyQueuedStopAndAddsUndoStorage() {
+        context.deleteDatabase(FILE)
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+            VERSION_3.forEach(db::execSQL)
+            db.execSQL("ALTER TABLE pending_changes ADD COLUMN existingIds TEXT NOT NULL DEFAULT '[]'")
+            db.execSQL("ALTER TABLE pending_changes ADD COLUMN held INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE pending_changes ADD COLUMN refusal TEXT")
+            db.execSQL(
+                "INSERT INTO pending_changes VALUES " +
+                    "(1, 'STOP', 42, 7, NULL, NULL, 'Earlier tap', ${START.toEpochMilli()}, " +
+                    "${START.plusSeconds(300).toEpochMilli()}, 0, '[]', '[]', 0, '[]', 0, NULL)",
+            )
+            db.execSQL("INSERT INTO time_entries VALUES (42, 7, NULL, NULL, 'Earlier tap', " +
+                "${START.toEpochMilli()}, ${START.plusSeconds(300).toEpochMilli()}, 0, '[]', '[]')")
+            db.execSQL("UPDATE room_master_table SET identity_hash = '7b9d9c485b587e3975dadd777dfeccae' WHERE id = 42")
+            db.version = 5
+        }
+
+        val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            val old = checkNotNull(RoomChangeStore(database).first())
+            assertEquals(ChangeKind.STOP, old.kind)
+            assertEquals(null, old.capturedStop)
+            assertEquals(false, old.shortStop)
+            assertEquals(START.plusSeconds(300), old.stop)
+            assertEquals(1, runBlocking { database.changes().count().first() })
+            assertEquals(null, runBlocking { database.changes().latestShortStop().first() })
+        } finally {
+            database.close()
+            assertTrue(context.deleteDatabase(FILE))
+        }
+    }
+
     private companion object {
         const val FILE = "cache-migration-test.db"
         val START: Instant = Instant.parse("2026-10-19T08:00:00Z")

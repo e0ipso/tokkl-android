@@ -132,6 +132,7 @@ private fun ChangeKind.label(): Int = when (this) {
     ChangeKind.CREATE -> R.string.needs_attention_kind_create
     ChangeKind.UPDATE -> R.string.needs_attention_kind_update
     ChangeKind.STOP -> R.string.needs_attention_kind_stop
+    ChangeKind.RESTORE -> R.string.needs_attention_kind_restore
     ChangeKind.DELETE -> R.string.needs_attention_kind_delete
 }
 

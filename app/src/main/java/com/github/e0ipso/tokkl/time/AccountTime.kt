@@ -61,11 +61,20 @@ class AccountTime(
         else snapInstant(at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS), timeResolutionMinutes, zone)
 
     /**
-     * The existing Stop prediction, retained pending TKA-0259/TKA-0261, for the running entry from [start] that stops at [at]. This
-     * is [snapStop][com.github.e0ipso.tokkl.time.snapStop] in the account's zone with the
-     * account's time resolution: [oneStep] for a Stop, not for a new timer that stops the running
-     * one. Without a resolution the entry stops at [at] as tapped.
+     * Legacy queued Stop and switch-span prediction. New captured Stops use [snapCapturedStop].
      */
     fun snapStop(start: Instant, at: Instant, oneStep: Boolean): SnappedSpan =
         snapStop(start, at, timeResolutionMinutes, zone, oneStep)
+
+    /** Tokkl's captured PATCH Stop prediction. Null means a zero-length row in the trash. */
+    fun snapCapturedStop(start: Instant, at: Instant): SnappedSpan? {
+        if (timeResolutionMinutes == null || !isTimeResolution(timeResolutionMinutes)) {
+            return SnappedSpan(start, maxOf(at, start))
+        }
+        val first = start.truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
+        val last = maxOf(at, start).truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
+        val snapped = snapSpan(first, last, timeResolutionMinutes, zone) ?: return null
+        val limit = snapped.start.plus(java.time.Duration.ofHours(999))
+        return snapped.copy(stop = minOf(snapped.stop, limit))
+    }
 }

@@ -62,6 +62,7 @@ class ServerTimeEntry(
     val billable: Boolean? = null,
     val tags: List<String>? = null,
     @SerialName("tag_ids") val tagIds: List<Long>? = null,
+    @SerialName("server_deleted_at") val serverDeletedAt: String? = null,
 )
 
 /** `GET /api/v9/me/preferences`. Tokkl leaves `favorites` out until the user saves one. */
