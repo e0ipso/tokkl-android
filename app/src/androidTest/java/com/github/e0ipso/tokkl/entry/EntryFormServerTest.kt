@@ -516,20 +516,28 @@ class EntryFormServerTest {
     @Test
     fun aLegacyZeroLengthEntryKeepsItsTimesOnADescriptionEdit() {
         setResolution(60)
-        // Latest Tokkl can restore a short timer from trash as a legacy zero-length entry.
-        // This disposable fixture uses the server's own clock, not Android's Stop implementation.
+        // Exercise a start that rounds across midnight, inside the cached history. Using
+        // now after 23:30 would round into tomorrow, outside today's exclusive cache end.
+        // The real server stops and restores a zero-length row at the explicit fixture time.
+        val fixtureStart = day.atTime(23, 31).atZone(MADRID).toInstant()
         val running = web.send("POST", web.server.api("workspaces", workspace.toString(), "time_entries"), buildJsonObject {
             put("workspace_id", workspace)
             put("created_with", "typed snap fixture")
             put("description", "Legacy zero")
-            put("start", Instant.now().toString())
+            put("start", fixtureStart.toString())
             put("duration", -1)
         }, JsonObject.serializer()).orFail("create fixture timer")
         val id = running.getValue("id").jsonPrimitive.long
-        web.send("PATCH", web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"), buildJsonObject {}, JsonObject.serializer()).orFail("stop fixture timer")
+        web.send("PATCH", web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"), buildJsonObject {
+            put("stop", fixtureStart.toString())
+        }, JsonObject.serializer()).orFail("stop fixture timer")
         val legacy = web.send("POST", web.server.app("time_entries", id.toString(), "restore"), buildJsonObject {}, JsonObject.serializer()).orFail("restore legacy fixture")
         assertEquals(legacy.string("start"), legacy.string("stop"))
-        runBlocking { app.accountSettings.refresh().join() }
+        assertEquals("the fixture snaps across midnight", day.plusDays(1).atStartOfDay(MADRID).toInstant(), java.time.OffsetDateTime.parse(legacy.string("start")).toInstant())
+        // A refresh already in flight may have read before the restore. Read after it so
+        // model.edit opens the restored entry rather than observing a missing cache row.
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        assertTrue("the restored fixture is in the cache", runBlocking { app.cache.entries.first() }.any { it.entry.id == id })
         withModel { model ->
             model.edit(id)
             model.state.first { it is EntryFormState.Open }
