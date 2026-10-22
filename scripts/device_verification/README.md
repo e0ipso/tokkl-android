@@ -103,7 +103,8 @@ Stage 3 readiness ended 55.046 seconds before preparation. Root must review
 timing after validation and use fresh admission without changing guard anchors,
 thresholds or baselines. A carried continuation must pin the actual previous
 ledger and its SHA, retain 2,189,529,088 spent bytes against 6,442,450,944 total,
-and allow three remaining preparations, not four new ones. Arithmetic remaining
+and allow three remaining preparations, not four new ones. These figures describe
+that historical TKA-0294 stage, not a new budget. Arithmetic remaining
 capacity is 4,252,921,856 bytes. Fresh configuration/runtime/adoption and an
 exclusive coordinator lease are required; this host proof grants none of them.
 
@@ -179,7 +180,10 @@ configuration. API31 compatibility remains a later dedicated cycle.
 
 `reclaim_budget_bytes` is at most 6 GiB and grants no renewed authorization.
 Default zero permits no reclaim. `preparation_policy.max_request_bytes` defaults
-to zero and is at most 4 GiB; `max_preparations` is at most four. Each distinct
+to zero. It may be set to the authorized cumulative budget, or an explicitly
+stricter caller bound; there is no independent 4 GiB ceiling. The controller and
+both helper entry points still require the whole request to fit the actual
+remaining cumulative budget. `max_preparations` is at most four. Each distinct
 planned job permits at most one full fresh deficit plus 128 MiB, covered entirely
 by inactive file cache. Both entry points require matching root adoption and
 bind the reservation to project, configuration, lease, state path and job index.
@@ -191,6 +195,16 @@ budget. Preserve previous finite budget records separately when the coordinator
 explicitly authorizes a new budget. Do not reset a failed attempt's reservation,
 reuse historical output directories, reclaim globally, or stop another workload.
 No change to host resource arrangements is proposed by this package.
+
+For the TKA-0295 continuation of the current TKA-0290 phase, root must pin the
+actual previous ledger and SHA, retain zero reserved bytes and the one consumed
+preparation, and configure only three remaining preparations. The existing
+cumulative budget is 6 GiB. Root must replace the obsolete 4 GiB caller bound in
+a fresh matching configuration/adoption, not edit an old snapshot or reset the
+budget. Host fixtures admit a computed 4,352,847,872-byte request through actual
+controller preparation, parent and writer validation, with resource operations
+modeled and the real durable write intent exercised only in owned disk scratch.
+They grant no resource permission or automatic continuation.
 
 ```sh
 python3 -B scripts/device_verification/preflight.py --config /disk/run-config.json

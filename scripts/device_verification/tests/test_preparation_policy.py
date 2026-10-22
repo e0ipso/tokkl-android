@@ -4,6 +4,8 @@ import ast
 import copy
 import json
 import os
+import builtins
+import runpy
 import subprocess
 import sys
 import tempfile
@@ -29,10 +31,11 @@ def root_config(directory):
 
 
 class ActualPreparationTests(unittest.TestCase):
-    def execute(self, directory, cap, *, reserved=0, inactive=8*GIB, repeat=False, count=0):
+    def execute(self, directory, cap, *, reserved=0, inactive=8*GIB, repeat=False, count=0,
+                request=REQUEST, max_preparations=4):
         node = next(n for n in ast.parse((PACKAGE/'runtime/controller.py').read_text()).body
                     if isinstance(n, ast.FunctionDef) and n.name == 'prepare')
-        before = {'limits': ORIGINAL, 'current': 6*GIB+REQUEST-134217728, 'host_available': 12*GIB,
+        before = {'limits': ORIGINAL, 'current': 6*GIB+request-134217728, 'host_available': 12*GIB,
                   'stat': {'inactive_file': inactive, 'shmem': 0}, 'events': dict.fromkeys(['high', 'max', 'oom', 'oom_kill'], 0), 'swap': 0}
         after = copy.deepcopy(before)
         after['current'] = 6*GIB
@@ -41,7 +44,7 @@ class ActualPreparationTests(unittest.TestCase):
         state = {'preparations': [{'label': 'full36' if repeat else 'earlier-'+str(i)} for i in range(count)],
                  'prepared_labels': [], 'reclaim_budget_bytes': 6*GIB, 'reclaim_reserved_bytes': reserved}
         ns = {'preparation_snapshot': lambda: next(frames), 'original': ORIGINAL, 'temporary': TEMPORARY,
-              'config': {'preparation_policy': {'max_request_bytes': cap, 'max_preparations': 4}},
+              'config': {'preparation_policy': {'max_request_bytes': cap, 'max_preparations': max_preparations}},
               'state': state, 'time': types.SimpleNamespace(time=lambda: 1), 'os': types.SimpleNamespace(environ={}),
               'save': lambda: None, 'base': directory, 'project': directory, 'tag': 'fixture',
               'state_path': directory/'window-state-fixture.json', 'json': json,
@@ -144,13 +147,128 @@ class HelperBindingTests(unittest.TestCase):
         self.assertFalse((self.run/'preparation-write-0.json').exists())
 
     def test_request_policy_rejects_invalid_caps_and_plan_counts(self):
-        for policy_value in [{'max_request_bytes': 4*GIB+1, 'max_preparations': 4},
+        for policy_value in [{'max_request_bytes': self.config['reclaim_budget_bytes']+1, 'max_preparations': 4},
                              {'max_request_bytes': True, 'max_preparations': 4},
                              {'max_request_bytes': 4*GIB, 'max_preparations': 5},
                              {'max_request_bytes': 0, 'max_preparations': 4}]:
             candidate = dict(self.config, preparation_policy=policy_value)
             with self.subTest(policy=policy_value), self.assertRaises(ValueError):
                 cfg.validate(candidate)
+
+
+class RemainingBudgetTests(unittest.TestCase):
+    REQUEST = 4352847872
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(dir=SCRATCH)
+        self.directory = Path(self.tmp.name)
+        self.config = root_config(self.directory)
+        # One previous preparation consumed, zero reserved bytes. Three slots
+        # remain. This is host evidence, never a production continuation grant.
+        prior = self.directory/'previous-host-ledger.json'
+        prior.write_text(json.dumps({'reclaim_reserved_bytes': 0, 'preparations': [{'label': 'consumed'}]}))
+        self.config.update(prior_window=str(prior), prior_window_sha256=cfg.sha(prior),
+            preparation_policy={'max_request_bytes': self.config['reclaim_budget_bytes'], 'max_preparations': 3})
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_original_validator_and_explicit_stricter_cap_refuse(self):
+        source = subprocess.check_output(['git', 'show',
+            '3749d40:scripts/device_verification/runtime/configuration.py'], cwd=PACKAGE, text=True)
+        ns = {'__name__': 'original_configuration_0294', '__package__': None}
+        exec(compile(source, '<original-0294-configuration>', 'exec'), ns)
+        with self.assertRaisesRegex(ValueError, 'at most 4 GiB'):
+            ns['validate'](self.config)
+        success, writes, state = ActualPreparationTests.execute(self, self.directory, 4*GIB, request=self.REQUEST)
+        self.assertFalse(success)
+        self.assertFalse(writes)
+        self.assertEqual(state['reclaim_reserved_bytes'], 0)
+        self.assertEqual(cfg.validate(self.config)['preparation_policy']['max_request_bytes'], 6*GIB)
+
+    def test_above_four_gib_actual_controller_parent_writer_and_durable_once(self):
+        checked = cfg.validate(self.config)
+        proof = snapshot(self.config)
+        run = Path(proof['run_dir'])
+        adoption = self.directory/'HOST-ONLY-adoption.json'
+        adoption.write_text(json.dumps(dict(configuration_sha256=proof['configuration_sha256'],
+            runtime_sha256=proof['runtime_sha256'], lease_id=self.config['lease_id'],
+            approved_by='HOST-MODEL-ONLY', cheap_live_controller_fixtures_verified=True)))
+        success, calls, state = ActualPreparationTests.execute(self, run,
+            checked['preparation_policy']['max_request_bytes'], request=self.REQUEST, max_preparations=3)
+        self.assertTrue(success)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(state['reclaim_reserved_bytes'], self.REQUEST)
+        self.assertEqual(state['preparations'][0]['requested'], state['preparations'][0]['deficit']+134217728)
+        state.update(phase='prepared', project=checked['project'], configuration_sha256=checked['_sha256'],
+                     run_id=checked['run_id'], lease_id=checked['lease_id'])
+        state_path = run/'window-state-fixture.json'
+        state_path.write_text(json.dumps(state))
+        argv = calls[0][2:]
+        self.assertEqual(argv, [str(self.REQUEST), '--state', str(state_path), '--preparation', '0'])
+        class Boundary(Exception): pass
+        original_open, original_os_open = builtins.open, os.open
+        reached = []
+        def stop_lock(path, *args, **kw):
+            if str(path) == '/run/user/1000/tokkl-android-mem-gate.lock':
+                reached.append('parent-before-lock');raise Boundary()
+            return original_open(path, *args, **kw)
+        def stop_reclaim(path, flags, *args, **kw):
+            if str(path).startswith('/sys/'):
+                self.assertTrue(str(path).endswith('/memory.reclaim'))
+                reached.append('writer-after-durable-intent');raise Boundary()
+            self.assertEqual(Path(path), run)  # Actual reserve_write directory fsync.
+            return original_os_open(path, flags, *args, **kw)
+        helper = run/'local-reclaim-finite.py'
+        with patch.dict(os.environ, TOKKL_VERIFICATION_ADOPTION=str(adoption)):
+            for write in [False, True]:
+                request = policy.helper_request(run, (['--write'] if write else [])+argv)
+                self.assertEqual(request['amount'], self.REQUEST)
+                self.assertEqual(request['write'], write)
+                with patch.object(sys, 'argv', [str(helper)]+(['--write'] if write else [])+argv), \
+                     patch('builtins.open', stop_lock), patch('os.open', stop_reclaim), self.assertRaises(Boundary):
+                    runpy.run_path(str(helper), run_name='__main__')
+            intent = run/'preparation-write-0.json'
+            self.assertEqual(json.loads(intent.read_text())['amount'], self.REQUEST)
+            with patch.object(sys, 'argv', [str(helper), '--write']+argv), \
+                 patch('os.open', stop_reclaim), self.assertRaises(FileExistsError):
+                runpy.run_path(str(helper), run_name='__main__')
+            original_state = copy.deepcopy(state)
+            for change in ['budget', 'inactive']:
+                state = copy.deepcopy(original_state)
+                if change == 'budget': state['reclaim_reserved_bytes'] = state['reclaim_budget_bytes']+1
+                if change == 'inactive': state['preparations'][0]['before']['stat']['inactive_file'] = self.REQUEST-1
+                state_path.write_text(json.dumps(state))
+                for prefix in [[], ['--write']]:
+                    with self.subTest(change=change, writer=bool(prefix)), self.assertRaises(ValueError):
+                        policy.helper_request(run, prefix+argv)
+            state = original_state;state_path.write_text(json.dumps(state))
+            bad = json.loads(adoption.read_text());bad['lease_id'] = 'tampered-lease'
+            adoption.write_text(json.dumps(bad))
+            for prefix in [[], ['--write']]:
+                with self.assertRaisesRegex(ValueError, 'coordinator adoption'):
+                    policy.helper_request(run, prefix+argv)
+        self.assertEqual(reached, ['parent-before-lock', 'writer-after-durable-intent'])
+        print('ABOVE_4G_HOST '+json.dumps(dict(request_bytes=self.REQUEST,
+            configuration_sha256=proof['configuration_sha256'], runtime_sha256=proof['runtime_sha256'],
+            controller_reserved_bytes=state['reclaim_reserved_bytes'], paths=reached,
+            actual_reclaim=False, max_preparations=checked['preparation_policy']['max_preparations'])), flush=True)
+
+    def test_remaining_budget_cache_slots_and_invalid_grants_still_refuse(self):
+        self.assertTrue(cfg.validate(self.config))
+        for change in [{'reserved': 2*GIB}, {'inactive': self.REQUEST-1}, {'cap': 0},
+                       {'count': 3}, {'count': 1, 'repeat': True}]:
+            args = dict(cap=6*GIB, request=self.REQUEST, max_preparations=3);args.update(change)
+            success, calls, state = ActualPreparationTests.execute(self, self.directory, **args)
+            self.assertFalse(success)
+            self.assertFalse(calls)
+        for amount in [-1, True, 6*GIB+1]:
+            bad = copy.deepcopy(self.config);bad['preparation_policy']['max_request_bytes'] = amount
+            with self.subTest(amount=amount), self.assertRaises(ValueError): cfg.validate(bad)
+        bad = dict(self.config, reclaim_budget_bytes=-1)
+        with self.assertRaises(ValueError): cfg.validate(bad)
+        bad = dict(self.config, reclaim_budget_bytes=0)
+        with self.assertRaises(ValueError): cfg.validate(bad)
 
 
 if __name__ == '__main__':

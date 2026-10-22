@@ -15,7 +15,6 @@ else:
     from scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
 
 MAX_BUDGET = 6 * 1024**3
-MAX_REQUEST = 4 * 1024**3
 CANONICAL_GATE = '/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh'
 
 
@@ -73,8 +72,9 @@ def validate(config, *, fresh=True):
     policy = config.get('preparation_policy', {'max_request_bytes': 0, 'max_preparations': 4})
     require(isinstance(policy, dict) and set(policy) == {'max_request_bytes', 'max_preparations'},
             'explicit bounded preparation policy required')
-    require(type(policy['max_request_bytes']) is int and 0 <= policy['max_request_bytes'] <= MAX_REQUEST,
-            'per-preparation request must be at most 4 GiB; zero disables writes')
+    require(type(policy['max_request_bytes']) is int
+            and 0 <= policy['max_request_bytes'] <= config['reclaim_budget_bytes'],
+            'request bound must fit the authorized cumulative budget; zero disables writes')
     require(type(policy['max_preparations']) is int and 1 <= policy['max_preparations'] <= 4,
             'one to four distinct preparations required')
     require(config['reclaim_budget_bytes'] == 0 or policy['max_request_bytes'] > 0,
