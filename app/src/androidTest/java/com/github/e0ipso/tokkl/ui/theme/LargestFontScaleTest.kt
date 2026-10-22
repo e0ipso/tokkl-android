@@ -41,17 +41,20 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
+import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.signin.assertFieldErrorsLeaveTheFormInPlace
 import com.github.e0ipso.tokkl.signin.assertServerUrlErrorFitsTheHint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -706,6 +709,9 @@ class LargestFontScaleTest {
      */
     private fun assertNoticeFits(@StringRes message: Int) {
         composeRule.onNode(hasText(string(R.string.favorites_title)) and isHeading()).assertDoesNotExist()
+        val app = composeRule.activity.application as TokklApplication
+        assertEquals("refused session has no loaded capabilities", Capabilities.NONE, app.capabilities.state.value)
+        assertNull("refused session has no loaded account settings", app.accountSettings.state.value)
         assertFitWithoutOverlap(
             *timerPageParts().toTypedArray(),
             text(message),

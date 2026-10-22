@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.sync.LastAnswerStore
 import com.github.e0ipso.tokkl.timer.TimerViewStore
+import kotlinx.coroutines.runBlocking
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -57,6 +58,7 @@ class SessionRule : TestRule {
          * Deletes the stored server, the token, its Keystore key, the account settings, the
          * server's capabilities, the offline cache, the Timer view, the Pomodoro defaults, trust and
          * the sign-in cooldowns and the time the server last answered.
+         * Also forgets account settings and capabilities already loaded by process-start observers.
          * A cooldown is kept by server origin, and every test signs in to the same few, so one
          * left by a test that ended early would block sign-in in every later test of the run.
          *
@@ -69,9 +71,14 @@ class SessionRule : TestRule {
             WorkManagerTestInitHelper.initializeTestWorkManager(context)
             ServerConfigStore(context).clear()
             ApiTokenStore(context).clear()
+            val app = context.applicationContext as TokklApplication
+            // Process-start widget and shortcut observers can load these before this rule.
+            // Forget the loaded account too, waiting out a refresh before clearing its stores.
+            runBlocking { app.accountSettings.forget() }
             AccountSettingsStore(context).clear()
+            app.capabilities.forget()
             CapabilitiesStore(context).clear()
-            (context.applicationContext as TokklApplication).cache.clear()
+            app.cache.clear()
             TimerViewStore(context).clear()
             PomodoroDefaultsStore(context).clear()
             ServerTrustStore(context).clear()
