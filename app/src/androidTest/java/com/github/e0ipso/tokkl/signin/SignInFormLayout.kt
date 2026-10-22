@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.signin
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -82,10 +81,16 @@ private fun ComposeTestRule.lineCount(@StringRes id: Int): Int {
 private class FieldLayout(val height: Dp, val top: Dp)
 
 private fun ComposeTestRule.layoutOf(fields: List<Pair<Int, String>>): List<FieldLayout> {
-    val serverTop = field(R.string.sign_in_server_url).getUnclippedBoundsInRoot().top
-    return fields.map { (label, _) ->
-        val bounds = field(label).getUnclippedBoundsInRoot()
-        FieldLayout(height = bounds.bottom - bounds.top, top = bounds.top - serverTop)
+    val nodes = fields.map { (label, _) -> field(label).fetchSemanticsNode() }
+    return runOnIdle {
+        // The keyboard can scroll the form between semantics queries. Read every
+        // unclipped position in one main-thread task, using the same frame's origin.
+        val serverTop = nodes.first().positionInRoot.y
+        nodes.map { node ->
+            with(node.layoutInfo.density) {
+                FieldLayout(height = node.size.height.toDp(), top = (node.positionInRoot.y - serverTop).toDp())
+            }
+        }
     }
 }
 

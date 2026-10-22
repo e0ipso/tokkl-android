@@ -21,6 +21,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -81,6 +82,11 @@ class ReminderServerTest {
         withTimeout(60_000) { work.getWorkInfoByIdFlow(id).first { it?.state?.isFinished == true } }
     }
     private fun notification() = manager.activeNotifications.firstOrNull { it.id == ReminderNotifier.ID }?.notification
+    private fun awaitNotificationGone() = runBlocking {
+        withTimeout(10_000) {
+            while (notification() != null) delay(25)
+        }
+    }
     private fun fire(): Notification {
         val pending = awaitWork { !it.state.isFinished }
         assertNull("the reminder waits", notification())
@@ -108,6 +114,8 @@ class ReminderServerTest {
         assertEquals(ReminderNotifier.CHANNEL, first.channelId)
         assertEquals(context.getString(R.string.reminder_keep_running), first.actions[0].title.toString())
         send(first.actions[0].actionIntent)
+        // NotificationManager processes cancellation asynchronously after the action.
+        awaitNotificationGone()
         assertNull(notification())
         assertEquals(id, runBlocking { app.cache.running.first() }!!.entry.id)
         runBlocking { app.reminder.reconcile() }

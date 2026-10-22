@@ -95,8 +95,12 @@ class NativeWidget : AutoCloseable {
     }
 
     /** Text must fit vertically even when Android enlarges the font. Ellipsis may shorten names. */
-    fun assertTextFitsVertically() = onMain {
-        descendants().filterIsInstance<TextView>().filter { it.text.isNotEmpty() }.forEach { text ->
+    fun assertTextFitsVertically() = await("the widget text is laid out") {
+        val texts = descendants().filterIsInstance<TextView>().filter { it.text.isNotEmpty() }
+        // RemoteViews can install text before Android's next measure/layout pass. Check
+        // readiness and geometry in the same main-thread task so no update can replace it.
+        if (texts.isEmpty() || texts.any { !it.isLaidOut || it.isLayoutRequested || it.layout == null }) return@await false
+        texts.forEach { text ->
             val visible = android.graphics.Rect()
             assertTrue("${text.text} is visible", text.getGlobalVisibleRect(visible))
             assertTrue("${text.text} is not clipped by its row: ${visible.height()} / ${text.height}", visible.height() >= text.height - 1)
@@ -107,6 +111,7 @@ class NativeWidget : AutoCloseable {
                 assertTrue("the elapsed clock fits horizontally", text.layout.getLineWidth(0) <= text.width - text.compoundPaddingLeft - text.compoundPaddingRight)
             }
         }
+        true
     }
 
     /** Observe native Chronometer ticks, with no widget updates in between. */
