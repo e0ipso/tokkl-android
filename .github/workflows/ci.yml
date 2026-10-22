@@ -72,7 +72,10 @@ jobs:
   # screenshot tests do not run there, since their references come from API 36.
   instrumented-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The orchestrated suite now discovers over 550 cases. On GitHub's
+    # emulator it reached only about 314 in 45 minutes, still making progress.
+    # Allow the full suite to finish; benchmark regression limits are separate.
+    timeout-minutes: 90
     permissions:
       contents: read
     strategy:
