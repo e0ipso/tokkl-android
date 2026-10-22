@@ -10,7 +10,8 @@ tags:
   - emulator
 kk_schema_version: 3
 kk_id: practice-instrumented-tests-on-every-api-level
-kk_derived_from: []
+kk_derived_from:
+  - '9c8de91d-411b-498c-b4ed-241fabaa877e:practice:3'
 kk_relates_to:
   - practice-run-instrumented-tests-only-through-the-script
   - practice-emulator-plain-aosp-image-headless
@@ -35,7 +36,7 @@ Reuse the helpers in `app/src/androidTest/java/com/github/e0ipso/tokkl/`:
 - `LoopbackRelay` is the only relay. It owns the loop that relays the phone's 127.0.0.1 to a test server, with TLS passed through untouched. `watchConnections` gives each connection a `ConnectionWatcher` that sees every chunk sent and can hold back the server's answer. `holdNewConnections` accepts new connections and answers nothing, `dropHeld` and `cutRelayed` close held and relayed connections, and `relayTo` sends new connections to another server at the same local port.
 - `HangingRelay` and `RequestCounter` build on it. `HangingRelay` can hang like a network that went quiet, cutting the connections it relayed, or hold back one answer with `holdAnswerTo` until `releaseAnswer`. `RequestCounter` counts the requests whose request line ends in a given path.
 - `openBarPage(label)` in `ComposeWaits.kt` waits for a bottom bar item and taps it. `bottomBarItem` finds the item by its text and `Role.Tab`, because text and a click action alone also match a cached history row with that description.
-- `SessionRule` sets the stored session before the activity starts, signed in to the test server or signed out for a test marked `@SignedOut`. It first clears every store and puts an empty in-memory test WorkManager in place, so the queue's background work runs only when a test's `TestDriver` says the network is there, and work one test scheduled never sends another test's queue. This applies to every test, so a change to it needs the full suite.
+- `SessionRule` sets the stored session before the activity starts, signed in to the test server or signed out for a test marked `@SignedOut`. It first clears every store and puts an empty in-memory test WorkManager in place, so the queue's background work runs only when a test's `TestDriver` says the network is there, and work one test scheduled never sends another test's queue. Process-start widget and shortcut observers may already have loaded the account before the rule runs. `signOut()` waits for `app.accountSettings.forget()` to finish an in-flight refresh, clears its stored settings, forgets loaded capabilities and clears their store, then clears the cache and the Pomodoro defaults store. This handoff prevents stale account data from surviving into the next test. Order the rule before the Compose rule. This applies to every test, so a change to it needs the full suite.
 - `AirplaneMode` switches airplane mode through the shell user and waits until the client's requests fail, or get through again.
 - `BackgroundTrip` sends `MainActivity` to the background with the home key and brings the same activity back.
 - `TestAccounts` invites throwaway accounts on the test server for tests that fill an account with data, and creates, reads and deletes their entries. The account the script creates stays empty.
@@ -54,3 +55,9 @@ To catch clipped text in a Compose test, check `TextLayoutResult.didOverflowHeig
 - Related: [practice-emulator-plain-aosp-image-headless](practice-emulator-plain-aosp-image-headless.md)
 - Related: [practice-screenshot-references-on-tokkl-api36](practice-screenshot-references-on-tokkl-api36.md)
 <!-- kk:related:end -->
+
+<!-- kk:citations:start -->
+# Citations
+
+[1] 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:3
+<!-- kk:citations:end -->

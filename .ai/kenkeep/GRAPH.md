@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:1d184c8e22cf70e00d6e79678423aa748078d4dde94ad699b965a8a807da3897'
-node_count: 45
+nodes_hash: 'sha256:78bb58966b5d298ea0d4ef0350977c56c45932111ec73db8808fb0784bf39431'
+node_count: 51
 ---
 # kenkeep Graph
 
-Total nodes: 45
+Total nodes: 51
 
 ## map-account-cache-and-capabilities
 
@@ -63,6 +63,7 @@ Total nodes: 45
 - **path:** data-and-offline/map-change-queue-sends-entry-changes-in-order.md
 - **tags:** offline, cache, room, api, queue
 - **relates_to:** practice-never-wait-for-server-on-start-stop, map-account-cache-and-capabilities, map-tokkl-toggl-api, practice-refresh-on-events-no-polling, map-timer-entry-form-and-entry-menu, map-api-client-shared-okhttp-serverurl-and-errors, practice-test-real-tokkl-server-speed-regressions
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:1
 
 ## map-connection-trust-store-pinning-and-prompts
 
@@ -80,6 +81,24 @@ Total nodes: 45
 - **tags:** ui, theme, accessibility, android
 - **relates_to:** map-tokkl-colour-tokens-and-font, practice-tokkl-palette-wcag-english-strings
 
+## map-device-verification-runtime-maintained-code-and-explicit-adoption
+
+- **kind:** map
+- **title:** Device verification runtime: maintained code and explicit adoption
+- **path:** testing/map-device-verification-runtime-maintained-code-and-explicit-adoption.md
+- **tags:** testing, agents, tooling
+- **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-reuse-drain-checks-by-content-and-test-configuration, practice-drain-sittings-gate-on-memory-not-a-sitting-cap
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:7
+
+## map-favorite-launcher-shortcuts-cache-publication-and-tap-handling
+
+- **kind:** map
+- **title:** Favorite launcher shortcuts: cache publication and tap handling
+- **path:** screens/map-favorite-launcher-shortcuts-cache-publication-and-tap-handling.md
+- **tags:** android, shortcuts, offline
+- **relates_to:** map-change-queue-sends-entry-changes-in-order, practice-never-wait-for-server-on-start-stop
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:4
+
 ## map-fdroid-metadata-release-artifacts
 
 - **kind:** map
@@ -95,6 +114,15 @@ Total nodes: 45
 - **path:** build-and-tooling/map-gradle-build-sdk-levels-kotlin-and-memory.md
 - **tags:** android, build, gradle
 - **relates_to:** map-planned-android-stack, practice-emulator-plain-aosp-image-headless, map-jdk-android-sdk-and-agent-shells
+
+## map-home-screen-widget-cache-state-and-a-native-ticking-clock
+
+- **kind:** map
+- **title:** Home screen widget: cache state and a native ticking clock
+- **path:** screens/map-home-screen-widget-cache-state-and-a-native-ticking-clock.md
+- **tags:** android, widget, offline, battery
+- **relates_to:** practice-never-wait-for-server-on-start-stop, map-change-queue-sends-entry-changes-in-order, practice-refresh-on-events-no-polling
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:2
 
 ## map-jdk-android-sdk-and-agent-shells
 
@@ -114,10 +142,28 @@ Total nodes: 45
 ## map-planned-android-stack
 
 - **kind:** map
-- **title:** Android stack: Compose, Room, WorkManager and OkHttp built; Glance and tile next
+- **title:** Android stack: shipped UI, cache and native timer surfaces
 - **path:** build-and-tooling/map-planned-android-stack.md
 - **tags:** architecture, android, offline
-- **derived_from:** docs/PRD.md
+- **derived_from:** docs/PRD.md, 9c8de91d-411b-498c-b4ed-241fabaa877e:map:0
+
+## map-pomodoro-defaults-four-preferences-with-offline-persistence
+
+- **kind:** map
+- **title:** Pomodoro defaults: four preferences with offline persistence
+- **path:** data-and-offline/map-pomodoro-defaults-four-preferences-with-offline-persistence.md
+- **tags:** settings, offline, api, pomodoro
+- **relates_to:** map-account-settings-source-and-account-time, practice-check-capabilities-not-server-version
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:6
+
+## map-quick-settings-tile-default-listening-and-cached-actions
+
+- **kind:** map
+- **title:** Quick Settings tile: default listening and cached actions
+- **path:** screens/map-quick-settings-tile-default-listening-and-cached-actions.md
+- **tags:** android, tile, offline
+- **relates_to:** map-change-queue-sends-entry-changes-in-order, practice-never-wait-for-server-on-start-stop
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:3
 
 ## map-reports-summary-from-detailed-search
 
@@ -134,6 +180,15 @@ Total nodes: 45
 - **path:** data-and-offline/map-running-timer-notification-follows-the-cache.md
 - **tags:** notification, offline, android
 - **relates_to:** practice-never-wait-for-server-on-start-stop, map-change-queue-sends-entry-changes-in-order, practice-talk-only-to-configured-server
+
+## map-runningcheck-guarded-background-current-entry-refresh
+
+- **kind:** map
+- **title:** RunningCheck: guarded background current-entry refresh
+- **path:** data-and-offline/map-runningcheck-guarded-background-current-entry-refresh.md
+- **tags:** offline, cache, android, battery
+- **relates_to:** practice-refresh-on-events-no-polling, map-account-cache-and-capabilities, map-running-timer-notification-follows-the-cache
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:5
 
 ## map-signin-session-settings-and-navigation-host
 
@@ -199,7 +254,7 @@ Total nodes: 45
 - **path:** api-and-security/practice-check-capabilities-not-server-version.md
 - **tags:** api, toggl, compatibility
 - **relates_to:** map-account-cache-and-capabilities
-- **derived_from:** docs/PRD.md
+- **derived_from:** docs/PRD.md, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:2
 
 ## practice-drain-sittings-gate-on-memory-not-a-sitting-cap
 
@@ -233,6 +288,7 @@ Total nodes: 45
 - **path:** testing/practice-instrumented-tests-on-every-api-level.md
 - **tags:** testing, android, emulator
 - **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-emulator-plain-aosp-image-headless, practice-screenshot-references-on-tokkl-api36
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:3
 
 ## practice-isolate-all-known-failing-tests-before-full-suite-validation
 
@@ -249,7 +305,7 @@ Total nodes: 45
 - **path:** data-and-offline/practice-match-web-app-behavior-account-timezone.md
 - **tags:** api, ui, time
 - **relates_to:** practice-port-tokkl-typescript-with-javascript-semantics, map-account-settings-source-and-account-time
-- **derived_from:** docs/PRD.md
+- **derived_from:** docs/PRD.md, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:1
 
 ## practice-never-wait-for-server-on-start-stop
 
@@ -293,6 +349,7 @@ Total nodes: 45
 - **path:** data-and-offline/practice-port-tokkl-typescript-with-javascript-semantics.md
 - **tags:** time, parsing, testing, tokkl
 - **relates_to:** practice-match-web-app-behavior-account-timezone
+- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:0
 
 ## practice-refresh-on-events-no-polling
 
@@ -300,7 +357,7 @@ Total nodes: 45
 - **title:** Refresh on events, never on a short polling timer
 - **path:** api-and-security/practice-refresh-on-events-no-polling.md
 - **tags:** network, toggl, battery
-- **derived_from:** docs/PRD.md
+- **derived_from:** docs/PRD.md, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:5
 
 ## practice-reproducible-builds-project-key
 
@@ -326,7 +383,7 @@ Total nodes: 45
 - **path:** testing/practice-run-instrumented-tests-only-through-the-script.md
 - **tags:** testing, android, emulator, docker
 - **relates_to:** practice-test-real-tokkl-server-speed-regressions, practice-emulator-plain-aosp-image-headless, practice-gradle-no-daemon-in-parallel-worktrees, practice-screenshot-references-on-tokkl-api36
-- **derived_from:** scripts/instrumented-tests.sh
+- **derived_from:** scripts/instrumented-tests.sh, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:4
 
 ## practice-run-npm-install-in-every-clone-and-worktree
 

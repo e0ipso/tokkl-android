@@ -25,8 +25,8 @@ _None yet._
 ## By topic
 
 ### #agents
+- Open [**Device verification runtime: maintained code and explicit adoption**](testing/map-device-verification-runtime-maintained-code-and-explicit-adoption.md) — scripts/device_verification maintains the controller; execution requires a frozen matching configuration, adoption and lease.
 - Open [**Reuse drain checks by content and test configuration**](testing/practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
-- Open [**Gate drain sittings on free memory, not on a sitting count**](build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
 - Open [**T3 restarts daily and ends running agent sessions**](build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
 ### #ci
 - Open [**Test against a real Tokkl server and catch speed regressions in CI**](testing/practice-test-real-tokkl-server-speed-regressions.md) — Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. Macrobenchmark fails a build slower than the previous one.
@@ -34,5 +34,5 @@ _None yet._
 - Open [**Keep release builds reproducible and signed with the project key**](release/practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
 ### #testing
 - Open [**Write instrumented tests that hold on API 31 and 36, with the shared helpers**](testing/practice-instrumented-tests-on-every-api-level.md) — Skip with @SdkSuppress, never an assumption. Rules set device state. Reuse LoopbackRelay, openBarPage, SessionRule, TestAccounts.
-- Open [**Run instrumented tests only through scripts/instrumented-tests.sh**](testing/practice-run-instrumented-tests-only-through-the-script.md) — It starts a pinned Tokkl container behind a TLS proxy, seeds an account, passes test filters as a file and fails a run Gradle passed without tests.
+- Open [**Run instrumented tests only through scripts/instrumented-tests.sh**](testing/practice-run-instrumented-tests-only-through-the-script.md) — The script pins Tokkl 1.8.1, seeds accounts, configures TLS and test filters, and rejects empty device runs.
 - Open [**Record screenshot references on tokkl-api36, in the commit that changes the look**](testing/practice-screenshot-references-on-tokkl-api36.md) — Four classes compare every screen with PNGs in androidTest/assets/screenshots. Only tokkl-api36 renders them, and captures carry no ripple.

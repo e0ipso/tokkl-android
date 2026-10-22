@@ -2,8 +2,8 @@
 type: practice
 title: Run instrumented tests only through scripts/instrumented-tests.sh
 description: >-
-  It starts a pinned Tokkl container behind a TLS proxy, seeds an account,
-  passes test filters as a file and fails a run Gradle passed without tests.
+  The script pins Tokkl 1.8.1, seeds accounts, configures TLS and test filters,
+  and rejects empty device runs.
 tags:
   - testing
   - android
@@ -13,6 +13,7 @@ kk_schema_version: 3
 kk_id: practice-run-instrumented-tests-only-through-the-script
 kk_derived_from:
   - scripts/instrumented-tests.sh
+  - '9c8de91d-411b-498c-b4ed-241fabaa877e:practice:4'
 kk_relates_to:
   - practice-test-real-tokkl-server-speed-regressions
   - practice-emulator-plain-aosp-image-headless
@@ -23,7 +24,7 @@ kk_confidence: high
 ---
 Run the instrumented tests with `scripts/instrumented-tests.sh`. A plain `./gradlew connectedDebugAndroidTest` fails every test that reads `TokklTestServer`, on purpose: the server URLs and the account come from instrumentation arguments, and only the script passes them.
 
-The script starts `ghcr.io/e0ipso/tokkl` pinned by digest, Tokkl 1.5.0 today, and publishes it on a free port of 127.0.0.1, which the emulator reaches as `10.0.2.2`. The database sits on `--tmpfs /data:mode=1777`, because the image runs as an unprivileged user that cannot write to a default tmpfs. The script creates the account through `POST /api/app/setup` with a random `TOKKL_SETUP_CODE` and password, reads the API token from `GET /api/v9/me`, and passes `tokklBaseUrl`, `tokklEmail` and `tokklCredentialsFile` to Gradle as `-Pandroid.testInstrumentationRunnerArguments.*`. It removes the containers on exit, also on failure. README "Build and test" says how to move either image to a newer version.
+The script starts `ghcr.io/e0ipso/tokkl` pinned by digest, Tokkl 1.8.1, and publishes it on a free port of 127.0.0.1, which the emulator reaches as `10.0.2.2`. The database sits on `--tmpfs /data:mode=1777`, because the image runs as an unprivileged user that cannot write to a default tmpfs. The script creates the account through `POST /api/app/setup` with a random `TOKKL_SETUP_CODE` and password, reads the API token from `GET /api/v9/me`, and passes `tokklBaseUrl`, `tokklEmail` and `tokklCredentialsFile` to Gradle as `-Pandroid.testInstrumentationRunnerArguments.*`. It removes the containers on exit, also on failure. README "Build and test" says how to move either image to a newer version.
 
 In front of the same server the script runs haproxy, pinned by digest in `PROXY_IMAGE`, in the Tokkl container's network namespace. As a TLS proxy it serves a self-signed certificate that `openssl` makes for each run, with IP SANs for `10.0.2.2` and `127.0.0.1`, so host name checks pass. Its key stays in the script's temporary directory, and cleanup deletes it. The tests get `tokklTlsBaseUrl` and the certificate's `tokklTlsFingerprint`, never the key, through `TokklTestServer.tlsUrl` and `tlsFingerprint`. On another port the proxy serves Tokkl over http under the path prefix `/tokkl` and answers 404 to every other path there, so a client that drops the prefix fails. Tests reach it as `tokklPrefixedBaseUrl`, through `TokklTestServer.prefixedUrl`.
 
@@ -52,4 +53,5 @@ Every run goes in one piece. A Gradle pass does not prove the tests ran. With th
 # Citations
 
 [1] [scripts/instrumented-tests.sh](../../../../scripts/instrumented-tests.sh)
+[2] 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:4
 <!-- kk:citations:end -->
