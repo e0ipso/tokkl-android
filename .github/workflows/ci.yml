@@ -125,6 +125,15 @@ jobs:
             adb shell settings put secure show_ime_with_hard_keyboard 1
             adb shell setprop debug.hwui.renderer skiavk
             TOKKL_TEST_THROWAWAY_EMULATOR=1 scripts/instrumented-tests.sh
+      - name: Preserve device test reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: instrumented-reports-api-${{ matrix.api-level }}
+          path: |
+            app/build/outputs/androidTest-results/connected/
+            app/build/reports/androidTests/connected/
+          if-no-files-found: ignore
 
   # Macrobenchmark (macrobenchmark/) on an API 36 emulator set up as above:
   # cold start, and the time from a Start or Stop tap on the Timer page until
@@ -179,6 +188,17 @@ jobs:
             adb shell settings put secure show_ime_with_hard_keyboard 1
             adb shell setprop debug.hwui.renderer skiavk
             TOKKL_TEST_THROWAWAY_EMULATOR=1 scripts/instrumented-tests.sh :macrobenchmark:connectedBenchmarkAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.benchmark,com.github.e0ipso.tokkl.api
+      - name: Preserve benchmark test reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: benchmark-reports
+          path: |
+            app/build/outputs/androidTest-results/connected/
+            app/build/reports/androidTests/connected/
+            macrobenchmark/build/outputs/androidTest-results/connected/
+            macrobenchmark/build/reports/androidTests/connected/
+          if-no-files-found: ignore
       - name: Collect the results
         run: |
           mkdir benchmark-results
