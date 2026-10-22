@@ -83,5 +83,25 @@
     "before": " if standalone:stable=not stop_reason",
     "after": " if standalone:\n  stable=not stop_reason\n  if config.get('plan_recipe')=='compile-then-scoped-app-v1' and label==config['plan'][0]['label']:\n   stable=stable and exit_code==0\n   if not stable:rec['prerequisite_failed']=True;state['not_run_labels']=[config['plan'][1]['label']];save()",
     "occurrences": 1
+  },
+  {
+    "before": "from pathlib import Path\n",
+    "after": "from pathlib import Path\nfrom capture_evidence import CaptureEvidence\n",
+    "occurrences": 1
+  },
+  {
+    "before": "def prepare(label,required_mb,opening=False):",
+    "after": "capture=CaptureEvidence(capture,base/'failure-evidence')\ndef prepare(label,required_mb,opening=False):",
+    "occurrences": 1
+  },
+  {
+    "before": "   if limits()!=temporary:why='window limit interference'",
+    "after": "   if limits()!=temporary:why='window limit interference'\n   if why:sample['failure_evidence']=capture.persist(why,{'event_baseline':event_baseline,'event_tree':tree,'event_assessment':assessment})",
+    "occurrences": 1
+  },
+  {
+    "before": " text=log.read_text(errors='replace');result_root=project/'app/build/outputs/androidTest-results/connected/debug'",
+    "after": " if stop_reason:state['failure_evidence']=capture.persist(stop_reason,{'scope_completion_directory':str(completion.path),'stop_reason':stop_reason})\n text=log.read_text(errors='replace');result_root=project/'app/build/outputs/androidTest-results/connected/debug'",
+    "occurrences": 1
   }
 ]

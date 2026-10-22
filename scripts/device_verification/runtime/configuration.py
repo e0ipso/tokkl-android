@@ -29,7 +29,14 @@ def canonical(value):
 
 
 def sha(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    """Hash every byte with one 64 KiB buffer, including large tool/image pins."""
+    digest = hashlib.sha256()
+    buffer = bytearray(64 * 1024)
+    view = memoryview(buffer)
+    with Path(path).open('rb', buffering=0) as stream:
+        while count := stream.readinto(buffer):
+            digest.update(view[:count])
+    return digest.hexdigest()
 
 
 def load(path):

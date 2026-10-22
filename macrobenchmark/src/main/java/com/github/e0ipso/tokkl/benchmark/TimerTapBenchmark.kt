@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.benchmark
 
 import android.Manifest
 import android.os.Build
+import android.util.Log
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
 import androidx.benchmark.macro.MacrobenchmarkScope
@@ -10,6 +11,8 @@ import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
+import androidx.test.uiautomator.waitForStable
+import java.io.File
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -51,7 +54,8 @@ class TimerTapBenchmark {
             if (!device.hasObject(By.pkg(TARGET_PACKAGE).depth(0))) startActivityAndWait()
             device.awaitTimerPage()
             if (device.hasObject(stopButton())) stopTimer()
-            checkNotNull(device.wait(Until.findObject(startButton().enabled(true)), UI_TIMEOUT_MS)) { "Start never became enabled" }
+            val start = checkNotNull(device.wait(Until.findObject(startButton().enabled(true)), UI_TIMEOUT_MS)) { "Start never became enabled" }
+            check(!start.waitForStable(requireStableScreenshot = false).isTimeout) { "Start button never settled" }
         },
     ) {
         device.findObject(startButton()).click()
@@ -65,11 +69,30 @@ class TimerTapBenchmark {
      * tap opens no trace section.
      */
     private fun MacrobenchmarkScope.stopTimer() {
-        repeat(STOP_TAPS) {
-            device.findObject(stopButton())?.click()
-            if (device.wait(Until.hasObject(startButton()), STOP_WAIT_MS)) return
+        try {
+            repeat(STOP_TAPS) {
+                device.findObject(stopButton())?.let { stop ->
+                    // Queuing/sending Start changes the Unsent label and can wrap this row.
+                    // UiAutomator injects a coordinate tap, so the node must stop moving first.
+                    // This precedes the tap and its TimerStop trace, leaving that metric intact.
+                    check(!stop.waitForStable(requireStableScreenshot = false).isTimeout) { "Stop button never settled" }
+                    stop.click()
+                }
+                if (device.wait(Until.hasObject(startButton()), STOP_WAIT_MS)) return
+            }
+            error("$STOP_TAPS Stop taps did not show the idle timer")
+        } catch (failure: Throwable) {
+            // Capture before Macrobenchmark tears down the target app. A JUnit watcher would
+            // otherwise capture the launcher instead of the screen that lost the controls.
+            runCatching {
+                val directory = InstrumentationRegistry.getArguments().getString("additionalTestOutputDir")?.let(::File)
+                    ?: InstrumentationRegistry.getInstrumentation().targetContext.cacheDir
+                directory.mkdirs()
+                device.dumpWindowHierarchy(File(directory, "timer-stop-failure.xml"))
+                device.takeScreenshot(File(directory, "timer-stop-failure.png"))
+            }.onFailure { Log.w("TimerTapBenchmark", "Could not capture the failed timer screen", it) }
+            throw failure
         }
-        error("$STOP_TAPS Stop taps did not show the idle timer")
     }
 
     private companion object {

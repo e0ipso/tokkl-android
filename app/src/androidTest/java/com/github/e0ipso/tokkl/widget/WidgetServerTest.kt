@@ -114,7 +114,16 @@ class WidgetServerTest {
         runBlocking { withTimeout(1_000) { app.cache.running.first { it == null } } }
         native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
         assertEquals(queued + 2, unsentCount())
-        assertNotNull("the local entry was stopped", runBlocking { app.cache.timeEntries.first() }.single { it.id == entry.id }.stop)
+        val kept = runBlocking { app.cache.timeEntries.first() }.singleOrNull { it.id == entry.id }
+        val undo = runBlocking { app.changes.shortStopUndo.first() }
+        if (undo == null) {
+            assertNotNull("a full-span Stop keeps the local entry", kept)
+            assertNotNull("the local entry was stopped", kept!!.stop)
+        } else {
+            assertEquals("the native Stop targets this entry's Undo", entry.id, undo.entryId)
+            assertEquals("a short Stop saves a zero span", undo.entry.start, undo.entry.stop)
+            assertTrue("the short Stop removes the entry from history", kept == null)
+        }
     }
 
     @Test
@@ -186,7 +195,17 @@ class WidgetServerTest {
             compose.onNodeWithContentDescription(context.getString(R.string.timer_stop_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
         }
-        runBlocking { app.changes.start(workspace, EntryFields("Tile to widget")) }
+        val fields = EntryFields("Tile to widget")
+        val tileEntry = runBlocking { app.changes.start(workspace, fields) }
+        // Continue needs a retained stopped row. The prior immediate Stops exercise Trash above.
+        runBlocking {
+            val running = checkNotNull(app.cache.running.first()).entry
+            assertEquals(tileEntry, running.id)
+            // Two hours spans even the server's coarsest allowed 60-minute grid.
+            val agedStart = running.start.minusSeconds(7_200)
+            assertTrue(app.changes.update(tileEntry, fields, agedStart, null))
+            withTimeout(1_000) { app.cache.running.first { it?.entry?.start == agedStart } }
+        }
         native.awaitText("Tile to widget")
         QuickSettingsTile.add()
         QuickSettingsTile.expand()

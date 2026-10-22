@@ -82,12 +82,15 @@ class NativeWidget : AutoCloseable {
     fun hasText(text: String): Boolean = onMain { descendants().any { it is TextView && it.text.toString() == text } }
 
     fun click(label: String) {
-        awaitDescription(label)
-        onMain {
-            val target = descendants().first { it.contentDescription?.toString() == label }
+        // RemoteViews may replace the control between two main-thread tasks. Find and click it
+        // in the same task, waiting through an update without ever tapping a stale view.
+        await("widget control $label") {
+            val target = descendants().firstOrNull { it.contentDescription?.toString() == label }
+                ?: return@await false
             val button = generateSequence(target) { it.parent as? View }.first { it.isClickable }
             assertTrue("the native widget control is enabled", button.isEnabled)
             assertTrue("the native widget control handles the tap", button.performClick())
+            true
         }
     }
 

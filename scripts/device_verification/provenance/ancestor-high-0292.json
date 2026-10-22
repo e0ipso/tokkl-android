@@ -1,0 +1,8 @@
+{
+  "fixture": "tests/fixtures/ancestor-high-0292.json",
+  "fixture_sha256": "c854b9669afbeb3fc7115c8c1d9ab83b77ce087e03cb0f269aa031be6d07c37c",
+  "source": "/home/e0ipso/.cache/sift-w10/short-stop-fixtures-0289/root-freeze-20261022T145003Z/snapshot/affected36-api36-20261022145404-memory.jsonl",
+  "source_sha256": "bab197f61dc4cd561f370a9c48531623eea04e9d50f6a98106b86a970b00e554",
+  "extraction": "exact retained prior accepted frame plus all4abort reads/protected scope strings/hostavailable/assessments, no invented settled reads or historical microtiming",
+  "original_89_frame_replay": "owned TKA-0292 evidence, all63compile+26device monitoring frames/decisions matched through maintainedSession/Monitor; byte hashes retained there"
+}

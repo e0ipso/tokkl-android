@@ -72,6 +72,41 @@ reclassified as a pass.
 
 ## Cheap checks
 
+Input fingerprint validation uses one reusable 64 KiB byte buffer and unbuffered
+binary reads in `runtime/configuration.py`. Each digest still covers every byte.
+There is no hash cache, pin omission or change to adoption/ledger checks. This
+same function checks inputs, the previous ledger and frozen runtime at controller
+startup and in both reclaim parent and writer before write intent. `preflight`
+and `prepare` also reach this validator. Streaming bounds hash-buffer memory; it
+does not bound total interpreter RSS, metadata size, filesystem cache or I/O time.
+
+The host regression uses a 100,663,313-byte sparse file with a 64 MiB child
+address-space cap and an independent `sha256sum` reference. It runs the actual
+hash, adoption, controller bootstrap and both helper entry points. Controller
+execution stops immediately after validated configuration; the parent stops
+before its lock and the writer before intent. All resource operations remain
+unexecuted. Exact original validator bytes must fail with `MemoryError` under
+the same cap. Receipts include this exec's Linux `VmHWM` and `getrusage` max RSS
+separately, since the latter can retain a pre-exec parent high-water mark.
+
+Other whole-file hash consumers remain confined to package sources/manifests,
+selected Kotlin sources, parser/JUnit outputs, benchmark source and tiny version
+metadata. They are not the arbitrary large tool/image input-pin path. Source and
+JUnit parsing still materialize their inputs, as before; this correction makes
+no general claim about their memory use. The original admission's aggregate
+anonymous growth does not identify which process allocated it. TKA-0294 proves
+the old allocation risk and bounds this hash function, not sole historical cause.
+
+Streaming still reads all pins each time. Quiet readiness observed before
+validation cannot establish continuous quiet through preparation; the retained
+Stage 3 readiness ended 55.046 seconds before preparation. Root must review
+timing after validation and use fresh admission without changing guard anchors,
+thresholds or baselines. A carried continuation must pin the actual previous
+ledger and its SHA, retain 2,189,529,088 spent bytes against 6,442,450,944 total,
+and allow three remaining preparations, not four new ones. Arithmetic remaining
+capacity is 4,252,921,856 bytes. Fresh configuration/runtime/adoption and an
+exclusive coordinator lease are required; this host proof grants none of them.
+
 Run from the checked worktree:
 
 ```sh
@@ -321,6 +356,41 @@ validation, maintained `run_workload`, Session/final-counter protocol and real X
 parsing, with launch/cgroup membership/counters modeled on disk. It does not rerun
 the 0284 live fixtures or reclassify the earlier UNKNOWN global event. Nine
 protected modules and preparation/reclaim logic remain unchanged by this extension.
+
+## Failed capture diagnostics
+
+TKA-0292 replayed all 89 retained monitoring frames from the compile/scoped stage
+through the actual Session and monitor. All original decisions match. The four
+abort reads contain real unrelated `t3.service` local high deltas 12/13/13/14,
+against user.slice hierarchical deltas 11/12/13/13. Its cgroup identity is stable.
+Only one intermediate read accounts exactly; the next changes again. The existing
+three resamples therefore correctly fail closed. Exact per-file read/event/kernel
+propagation timing is UNKNOWN. This is no finding about the earlier 0284 origin.
+
+`CaptureEvidence` adds diagnostics only. It calls the unchanged reader, returns
+the same tree and rethrows the same reader exception. Five immutable serialized
+copies retain the most recent raw capture attempts. They hold no raw-tree
+references. Each is capped at 262144 bytes, for at most 1310720 retained payload
+bytes, plus the deque/bytes object overhead reported by `memory()`. This is a
+buffer bound, not a process RSS limit. Serialization has transient encoder and
+bounded output buffers. An oversized or unencodable frame becomes an explicit
+diagnostic-gap record; it never changes the tree given to the monitor.
+
+Only failures write files. Raw reader exceptions and existing controller abort
+boundaries persist available frames, Session-view/assessment context or the exact
+exception. Context is capped at 524288 bytes. Each file is at most 1839104 bytes;
+at most four files are attempted per controller, including failed writes, with no
+refund. File, directory and parent directory are fsynced. Diagnostic write errors
+are returned as diagnostic errors and never clear or replace the original abort.
+The monitor, Session, resource guards, retry limits/anchor and cleanup are unchanged.
+
+These are available-frame diagnostics, not new per-file kernel timing. They do
+not recover unretained history, justify a retry, activate a resource window or
+declare global cleanliness. A root-approved fresh snapshot/adoption is required
+to use them. The failed stage's 3564269568 reserved bytes and two preparations
+remain consumed. Any continuation must preserve that ledger and its two remaining
+slots. Successful compile receipts remain retained observations; missing historical
+tool/classpath/artifact fingerprints cannot be filled by hashing current files.
 
 The dedicated final-tree API31 compatibility cycle still includes TKA-0271,
 TKA-0281 and all deferred coverage. After shared-code compatibility fixes, rerun

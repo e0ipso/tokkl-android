@@ -25,6 +25,6 @@ with tempfile.TemporaryDirectory(dir=cache) as scratch:
     import test_consistent_events
     test_consistent_events.BASE = base/'tests/fixtures'
     suite = unittest.defaultTestLoader.loadTestsFromNames([
-        'test_scope_completion', 'test_event_monitor', 'test_consistent_events', 'test_candidate', 'test_preparation_policy', 'test_scoped_results'])
+        'test_scope_completion', 'test_event_monitor', 'test_consistent_events', 'test_candidate', 'test_preparation_policy', 'test_scoped_results', 'test_capture_evidence', 'test_stream_fingerprints'])
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(not result.wasSuccessful())

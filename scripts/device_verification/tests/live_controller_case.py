@@ -9,6 +9,7 @@ import ast,copy,json,os,re,shutil,signal,subprocess,sys,time,uuid,xml.etree.Elem
 from unittest.mock import patch
 PACKAGE=Path(__file__).resolve().parent.parent;B=Path(__file__).resolve().parent;sys.path.insert(0,str(PACKAGE/'runtime'))
 import scope_completion as sc
+from capture_evidence import CaptureEvidence
 import event_monitor_0274 as em
 from controller_cleanup import install_controller,CleanupContext
 from watchdog_lifetime import service_command
@@ -90,7 +91,7 @@ def captured(*args,**kwargs):
   if case=='sampler':
    injected=True;tree['rows'][str(app)]['stable']=False
  return tree
-ns['capture']=captured
+ns['capture']=CaptureEvidence(captured,run/'failure-evidence')
 class FixtureMonitor(em.Monitor):
  def inspect(self,*args,**kwargs):
   global injected
