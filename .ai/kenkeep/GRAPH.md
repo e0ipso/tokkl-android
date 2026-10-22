@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:e55386b402b4441fda6c89e425e33a135a51215a333b63993667f8b01b9482b5'
-node_count: 44
+nodes_hash: 'sha256:1d184c8e22cf70e00d6e79678423aa748078d4dde94ad699b965a8a807da3897'
+node_count: 45
 ---
 # kenkeep Graph
 
-Total nodes: 44
+Total nodes: 45
 
 ## map-account-cache-and-capabilities
 
@@ -233,6 +233,14 @@ Total nodes: 44
 - **path:** testing/practice-instrumented-tests-on-every-api-level.md
 - **tags:** testing, android, emulator
 - **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-emulator-plain-aosp-image-headless, practice-screenshot-references-on-tokkl-api36
+
+## practice-isolate-all-known-failing-tests-before-full-suite-validation
+
+- **kind:** practice
+- **title:** Isolate all known failing tests before full-suite validation
+- **path:** practice-isolate-all-known-failing-tests-before-full-suite-validation.md
+- **tags:** testing, ci, agents
+- **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-reuse-drain-checks-by-content-and-test-configuration
 
 ## practice-match-web-app-behavior-account-timezone
 

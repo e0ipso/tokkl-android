@@ -153,6 +153,25 @@ scripts/instrumented-tests.sh \
   -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest
 ```
 
+For test repairs, collect every failed or errored case from the available report,
+then iterate on an exact test selection before running the full suite. Keep the
+minimal fixture prerequisites. This applies to host and JVM tests too.
+
+`test/filters/api31-stop-and-widget.txt` selects the 17 failures from CI run
+39818788596, plus the setup step required by the restart test. Run that selection
+on Android 12 with:
+
+```sh
+TOKKL_TEST_AVD=tokkl-api31 systemd-run --user --scope --quiet -p OOMPolicy=continue -- choom -n 1000 -- \
+  scripts/instrumented-tests.sh \
+  "-Pandroid.testInstrumentationRunnerArguments.class=$(paste -sd, test/filters/api31-stop-and-widget.txt)"
+```
+
+The script transfers the selection to the runner as a file. Check that the report
+contains all 18 cases with no failures or skips. Once the focused run passes, run
+the surrounding tests and required full-suite checks. Add newly discovered
+failures to the focused selection rather than repeating a full run per fix.
+
 The native Android 13+ notification permission probes need a permission reset before their
 instrumentation process starts. Run each method separately on an emulator the script boots:
 
