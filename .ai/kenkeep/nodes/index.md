@@ -17,26 +17,11 @@ okf_version: '0.1'
 - Load [`testing/`](testing/index.md) for more information on instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator.
 
 ## Conventions (how we build)
-- Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents
-- Open [**Gate drain sittings on free memory, not on a sitting count**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) to learn about: Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes. #sift #agents #memory
+_None yet._
 
 ## Components (what exists)
 _None yet._
 
 ## By topic
 
-### #agents
-- Open [**Gate drain sittings on free memory, not on a sitting count**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
-- Open [**T3 restarts daily and ends running agent sessions**](build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
-- Open [**An OOM kill inside an agent session's scope ends the whole session**](build-and-tooling/map-oom-kill-ends-agent-session.md) — Agent sessions run in t3code-claude-*.scope with OOMPolicy=stop. Run Gradle and the test script in a scope of their own with choom 1000.
-### #sift
-- Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
-- Open [**Gate drain sittings on free memory, not on a sitting count**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
-### #memory
-- Open [**An OOM kill inside an agent session's scope ends the whole session**](build-and-tooling/map-oom-kill-ends-agent-session.md) — Agent sessions run in t3code-claude-*.scope with OOMPolicy=stop. Run Gradle and the test script in a scope of their own with choom 1000.
-- Open [**Gate drain sittings on free memory, not on a sitting count**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
-- Open [**Test on plain AOSP emulators, headless, and stop them afterwards**](testing/practice-emulator-plain-aosp-image-headless.md) — tokkl-api36 and tokkl-api31 use plain AOSP images, since ATD drops SystemUI. Only the script boots them, headless and capped.
-### #testing
-- Open [**Write instrumented tests that hold on API 31 and 36, with the shared helpers**](testing/practice-instrumented-tests-on-every-api-level.md) — Skip with @SdkSuppress, never an assumption. Rules set device state. Reuse LoopbackRelay, openBarPage, SessionRule, TestAccounts.
-- Open [**Run instrumented tests only through scripts/instrumented-tests.sh**](testing/practice-run-instrumented-tests-only-through-the-script.md) — It starts a pinned Tokkl container behind a TLS proxy, seeds an account, passes test filters as a file and fails a run Gradle passed without tests.
-- Open [**Record screenshot references on tokkl-api36, in the commit that changes the look**](testing/practice-screenshot-references-on-tokkl-api36.md) — Four classes compare every screen with PNGs in androidTest/assets/screenshots. Only tokkl-api36 renders them, and captures carry no ripple.
+_No tags yet._

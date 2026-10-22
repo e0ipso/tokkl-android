@@ -1,6 +1,6 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:586ce891e0b8a28a6625f8eff95be2a5205d242f5a651818e4e1f2c2df024d8b'
+nodes_hash: 'sha256:e55386b402b4441fda6c89e425e33a135a51215a333b63993667f8b01b9482b5'
 node_count: 44
 ---
 # kenkeep
@@ -15,7 +15,3 @@ node_count: 44
 - Load [`release/`](nodes/release/index.md) for more information on the app ID, versioning, reproducible signed builds, CI jobs and F-Droid metadata; read before touching versions, signing, CI or store text.
 - Load [`screens/`](nodes/screens/index.md) for more information on sign-in and sign-out, the navigation host with its bar, rail and window sizes, the Timer page, the timer and entry form, Reports, Trash and the catalog pages; read before changing a screen, its model or navigation.
 - Load [`testing/`](nodes/testing/index.md) for more information on instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator.
-
-## Conventions (how we build)
-- Open [**Reuse drain checks by content and test configuration**](nodes/practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents
-- Open [**Gate drain sittings on free memory, not on a sitting count**](nodes/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) to learn about: Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes. #sift #agents #memory

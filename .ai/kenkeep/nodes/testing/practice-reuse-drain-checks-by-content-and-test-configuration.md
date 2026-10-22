@@ -23,5 +23,5 @@ Reuse passing evidence after a cherry-pick or documentation-only commit only whe
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-run-instrumented-tests-only-through-the-script](testing/practice-run-instrumented-tests-only-through-the-script.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script](practice-run-instrumented-tests-only-through-the-script.md)
 <!-- kk:related:end -->

@@ -32,7 +32,7 @@ T3 writes checkpoint refs under `refs/t3/orchestration-v2/checkpoints/` in the m
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-reuse-drain-checks-by-content-and-test-configuration](practice-reuse-drain-checks-by-content-and-test-configuration.md)
-- Related: [map-oom-kill-ends-agent-session](build-and-tooling/map-oom-kill-ends-agent-session.md)
-- Related: [practice-emulator-plain-aosp-image-headless](testing/practice-emulator-plain-aosp-image-headless.md)
+- Related: [practice-reuse-drain-checks-by-content-and-test-configuration](../testing/practice-reuse-drain-checks-by-content-and-test-configuration.md)
+- Related: [map-oom-kill-ends-agent-session](map-oom-kill-ends-agent-session.md)
+- Related: [practice-emulator-plain-aosp-image-headless](../testing/practice-emulator-plain-aosp-image-headless.md)
 <!-- kk:related:end -->

@@ -1,6 +1,6 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:586ce891e0b8a28a6625f8eff95be2a5205d242f5a651818e4e1f2c2df024d8b'
+nodes_hash: 'sha256:e55386b402b4441fda6c89e425e33a135a51215a333b63993667f8b01b9482b5'
 node_count: 44
 ---
 # kenkeep Graph
@@ -205,7 +205,7 @@ Total nodes: 44
 
 - **kind:** practice
 - **title:** Gate drain sittings on free memory, not on a sitting count
-- **path:** practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md
+- **path:** build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md
 - **tags:** sift, agents, memory
 - **relates_to:** practice-reuse-drain-checks-by-content-and-test-configuration, map-oom-kill-ends-agent-session, practice-emulator-plain-aosp-image-headless
 
@@ -307,7 +307,7 @@ Total nodes: 44
 
 - **kind:** practice
 - **title:** Reuse drain checks by content and test configuration
-- **path:** practice-reuse-drain-checks-by-content-and-test-configuration.md
+- **path:** testing/practice-reuse-drain-checks-by-content-and-test-configuration.md
 - **tags:** sift, testing, agents
 - **relates_to:** practice-run-instrumented-tests-only-through-the-script
 
