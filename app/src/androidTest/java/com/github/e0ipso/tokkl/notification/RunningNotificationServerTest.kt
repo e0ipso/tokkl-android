@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.trash.TrashServer
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -155,6 +156,9 @@ class RunningNotificationServerTest {
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it == null } } }
         RunningNotifications.awaitGone("the notification after its Stop")
         assertEquals("the stop waits in the queue", 1, unsentCount())
+        val shortStop = runBlocking { app.changes.shortStopUndo.first() }?.also {
+            assertEquals("the notification's Undo targets its entry", serverId, it.entryId)
+        } != null
         // The cache and notification can update before onQueued's enqueue operation completes.
         // Wait for the new send, rather than driving the previous start's cancelled work.
         val work = runBlocking {
@@ -173,8 +177,16 @@ class RunningNotificationServerTest {
 
         assertEquals(WorkInfo.State.SUCCEEDED, done.state)
         assertEquals(0, unsentCount())
-        val sent = web.get(web.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer()).orFail("GET the entry")
-        assertTrue("the stop reached the server", sent["stop"] !is JsonNull)
+        if (shortStop) {
+            val trashed = TrashServer(web).list().orFail("GET /api/app/trash").single { it.id == serverId }
+            assertEquals("Stopped from the notification", trashed.description)
+            assertEquals("the notification's short Stop reached Trash", trashed.start, trashed.stop)
+            assertEquals(0L, trashed.duration)
+            assertNotNull("the server deleted the short entry", trashed.deletedAt)
+        } else {
+            val sent = web.get(web.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer()).orFail("GET the entry")
+            assertTrue("the stop reached the server", sent["stop"] !is JsonNull)
+        }
     }
 
     @Test
@@ -202,7 +214,7 @@ class RunningNotificationServerTest {
         val fields = EntryFields(description = "Started twice", projectId = project)
         // Just as a second begins, so both starts fall in it.
         Thread.sleep(1_000 - System.currentTimeMillis() % 1_000)
-        runBlocking { app.changes.start(workspace, fields) }
+        val first = runBlocking { app.changes.start(workspace, fields) }
         val firstShown = RunningNotifications.awaitShown("the first start")
         // Read before the second start stops the first entry and puts its start on the grid.
         val firstStart = runBlocking { app.cache.running.first() }!!.entry.start
@@ -214,9 +226,43 @@ class RunningNotificationServerTest {
         shown.notification.actions.single().actionIntent.send()
 
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it == null } } }
-        val stopped = runBlocking { app.cache.timeEntries.first() }.associateBy { it.id }
-        assertNotNull("the Stop stopped the second entry", stopped.getValue(second).stop)
+        val undo = runBlocking { app.changes.shortStopUndo.first() }
+        assertNotNull("the newer entry has a short Stop Undo", undo)
+        val shortStop = checkNotNull(undo)
+        assertEquals("Undo targets the newer start, not the first", second, shortStop.entryId)
+        assertEquals("the newer entry stopped at zero duration", shortStop.entry.start, shortStop.entry.stop)
+        assertTrue("the short Stop removed the newer entry from history", runBlocking { app.cache.timeEntries.first() }.none { it.id == second })
+        assertTrue("the older entry is not running", runBlocking { app.cache.timeEntries.first() }.none { it.id == first && it.stop == null })
         RunningNotifications.awaitGone("the notification after its Stop")
+
+        AirplaneMode.set(false, web)
+        runBlocking { app.sender.sendAndWait() }
+        assertEquals("both starts and Stops reached the server", 0, unsentCount())
+        val firstServerId = runBlocking { app.changes.currentId(first) }
+        val secondServerId = runBlocking { app.changes.currentId(second) }
+        assertTrue("the starts have distinct server ids", firstServerId > 0 && secondServerId > 0 && firstServerId != secondServerId)
+        val trashed = TrashServer(web).list().orFail("GET /api/app/trash")
+        assertTrue("the first start was also short", trashed.any { it.id == firstServerId })
+        val secondTrash = trashed.single { it.id == secondServerId }
+        assertEquals("the notification stopped the newer entry", shortStop.entry.start.epochSecond, java.time.Instant.parse(secondTrash.start).epochSecond)
+        assertEquals(secondTrash.start, secondTrash.stop)
+        assertEquals(0L, secondTrash.duration)
+
+        AirplaneMode.set(true, web)
+        assertTrue("Undo restores the newer stopped entry offline", runBlocking { app.changes.undoShortStop(second) })
+        val restored = runBlocking { app.cache.timeEntries.first() }.single { it.id == secondServerId }
+        assertEquals(shortStop.entry.start, restored.start)
+        assertEquals(shortStop.entry.stop, restored.stop)
+        assertNull("Undo must not restart the notification", runBlocking { app.cache.running.first() })
+        AirplaneMode.set(false, web)
+        runBlocking { app.sender.sendAndWait() }
+        assertEquals("Undo reached the server", 0, unsentCount())
+        val remainingTrash = TrashServer(web).list().orFail("GET /api/app/trash")
+        assertTrue("Undo left the older entry in Trash", remainingTrash.any { it.id == firstServerId })
+        assertTrue("Undo restored only the newer entry", remainingTrash.none { it.id == secondServerId })
+        val restoredOnServer = web.get(web.server.api("me", "time_entries", secondServerId.toString()), JsonObject.serializer())
+            .orFail("GET the restored newer entry")
+        assertEquals(restoredOnServer.getValue("start"), restoredOnServer.getValue("stop"))
     }
 
     @Test

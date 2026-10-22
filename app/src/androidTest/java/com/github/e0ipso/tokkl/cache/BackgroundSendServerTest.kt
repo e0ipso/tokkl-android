@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.reminder.ReminderWork
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.trash.TrashServer
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -102,6 +103,9 @@ class BackgroundSendServerTest {
         AirplaneMode.set(true, web)
         val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Queued offline")) }
         assertTrue(runBlocking { app.changes.stop(id) })
+        val shortStop = runBlocking { app.changes.shortStopUndo.first() }?.also {
+            assertEquals("the offline Undo targets this entry", id, it.entryId)
+        } != null
         // The app's own send of both changes, which fails for want of a network.
         runBlocking { app.sender.send().join() }
         assertEquals(2, unsentCount())
@@ -122,9 +126,18 @@ class BackgroundSendServerTest {
 
         assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
         assertEquals(0, unsentCount())
-        val sent = serverEntry(serverId(id))
-        assertEquals("Queued offline", sent.string("description"))
-        assertTrue("the stop reached the server", sent["stop"] !is JsonNull)
+        val sentId = serverId(id)
+        if (shortStop) {
+            val trashed = TrashServer(web).list().orFail("GET /api/app/trash").single { it.id == sentId }
+            assertEquals("Queued offline", trashed.description)
+            assertEquals("the short Stop reached Trash", trashed.start, trashed.stop)
+            assertEquals("the short Stop has zero duration", 0L, trashed.duration)
+            assertNotNull("the server deleted the short entry", trashed.deletedAt)
+        } else {
+            val sent = serverEntry(sentId)
+            assertEquals("Queued offline", sent.string("description"))
+            assertTrue("the stop reached the server", sent["stop"] !is JsonNull)
+        }
         assertTrue("no work waits or runs once the queue is empty", allWork().all { it.state.isFinished })
     }
 

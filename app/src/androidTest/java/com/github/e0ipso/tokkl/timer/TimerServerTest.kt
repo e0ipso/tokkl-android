@@ -114,6 +114,7 @@ class TimerServerTest {
     @Test
     fun startEditsAndStopShowAtOnceWhileTheNetworkHangsAndReachTheServer() {
         val project = createProject("Timer project")
+        var shortStop = false
         launch {
             relay.hang()
             description().performTextInput("Write the timer")
@@ -138,13 +139,15 @@ class TimerServerTest {
             description().performImeAction()
             stop().performClick()
             awaitAtOnce("Start shows") { shows(startButton()) }
+            awaitAtOnce("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
+            shortStop = localShortStop()
 
             assertTrue("the app tried to send while the network hung", relay.hungConnections > 0)
             relay.release()
             drainUntilEmpty()
         }
 
-        val entry = serverEntries().single()
+        val entry = stoppedEntry(shortStop)
         assertEquals("Write the timer screen", entry.string("description"))
         assertEquals(project, entry.getValue("project_id").jsonPrimitive.long)
         assertEquals(listOf("call"), entry.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
@@ -154,6 +157,7 @@ class TimerServerTest {
 
     @Test
     fun startEditsAndStopWorkInAirplaneModeAndReachTheServerAfterwards() {
+        var shortStop = false
         launch {
             AirplaneMode.set(true, web)
             description().performTextInput("Offline timer")
@@ -169,13 +173,15 @@ class TimerServerTest {
             description().performTextInput("Offline timer, edited")
             stop().performClick()
             awaitAtOnce("Start shows") { shows(startButton()) }
+            awaitAtOnce("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
+            shortStop = localShortStop()
             assertEquals("the idle timer starts empty", "", descriptionText())
 
             AirplaneMode.set(false, web)
             drainUntilEmpty()
         }
 
-        val entry = serverEntries().single()
+        val entry = stoppedEntry(shortStop)
         assertEquals("Offline timer, edited", entry.string("description"))
         assertTrue("billable", entry.getValue("billable").jsonPrimitive.boolean)
         assertTrue("stopped", entry["stop"] !is JsonNull)
@@ -330,6 +336,36 @@ class TimerServerTest {
     private fun serverEntries(): List<JsonObject> =
         web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
             .map { it.jsonObject }
+
+    private fun localShortStop(): Boolean {
+        val undo = runBlocking { app.changes.shortStopUndo.first() }
+        val entries = runBlocking { app.cache.timeEntries.first() }
+        if (undo == null) {
+            assertTrue("a kept Stop remains in history", entries.any { it.stop != null })
+        } else {
+            assertEquals("the short Stop holds a zero span for Undo", undo.entry.start, undo.entry.stop)
+            assertTrue("the short Stop leaves history", entries.none { it.id == undo.entryId })
+        }
+        return undo != null
+    }
+
+    private fun stoppedEntry(shortStop: Boolean): JsonObject {
+        val kept = serverEntries()
+        val trashed = web.get(web.server.app("trash"), JsonArray.serializer()).orFail("GET /api/app/trash")
+            .map { it.jsonObject }
+        assertEquals("the server has exactly one stopped entry", 1, kept.size + trashed.size)
+        assertEquals("the server follows the offline short Stop prediction", shortStop, trashed.isNotEmpty())
+        val entry = (kept + trashed).single()
+        assertTrue("the Stop reached the server", entry.getValue("stop") !is JsonNull)
+        if (shortStop) {
+            assertEquals("Trash holds the zero span", entry.string("start"), entry.string("stop"))
+            assertEquals(0L, entry.getValue("duration").jsonPrimitive.long)
+            assertTrue("Trash records deletion", entry.getValue("server_deleted_at") !is JsonNull)
+        } else {
+            assertTrue("a kept entry is outside Trash", entry.getValue("server_deleted_at") is JsonNull)
+        }
+        return entry
+    }
 
     private fun serverEntry(id: Long): JsonObject =
         web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET a time entry")

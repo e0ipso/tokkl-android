@@ -96,7 +96,9 @@ class RunningTileServerTest {
     @Test
     fun aTapStopsTheRunningTimerWithTheNetworkDown() {
         AirplaneMode.set(true, web)
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Stopped from the tile", projectId = project)) }
+        val fields = EntryFields(description = "Stopped from the tile", projectId = project)
+        val id = runBlocking { app.changes.start(workspace, fields) }
+        ageRunning(id, fields)
         QuickSettingsTile.expand()
         QuickSettingsTile.awaitText("the running entry", "Stopped from the tile")
         QuickSettingsTile.awaitText("the running entry", context.getString(R.string.tile_running_subtitle))
@@ -143,7 +145,9 @@ class RunningTileServerTest {
         HangingRelay(TokklTestServer.url).use { relay ->
             signIn(relay.url, account.apiToken)
             relay.hang()
-            val original = runBlocking { app.changes.start(workspace, EntryFields(description = "The network never answers")) }
+            val fields = EntryFields(description = "The network never answers")
+            val original = runBlocking { app.changes.start(workspace, fields) }
+            ageRunning(original, fields)
             QuickSettingsTile.expand()
             QuickSettingsTile.awaitText("the running entry", "The network never answers")
             runBlocking {
@@ -173,7 +177,9 @@ class RunningTileServerTest {
         QuickSettingsTile.expand()
         QuickSettingsTile.awaitText("an account with no entries", context.getString(R.string.tile_nothing_subtitle))
 
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Started in the app")) }
+        val firstFields = EntryFields(description = "Started in the app")
+        val id = runBlocking { app.changes.start(workspace, firstFields) }
+        ageRunning(id, firstFields)
         QuickSettingsTile.awaitText("a start while the panel shows", "Started in the app")
         QuickSettingsTile.awaitText("a start while the panel shows", context.getString(R.string.tile_running_subtitle))
 
@@ -181,7 +187,9 @@ class RunningTileServerTest {
         QuickSettingsTile.awaitText("a stop while the panel shows", context.getString(R.string.tile_continue))
 
         QuickSettingsTile.collapse()
-        val next = runBlocking { app.changes.start(workspace, EntryFields(description = "Started with the panel closed")) }
+        val nextFields = EntryFields(description = "Started with the panel closed")
+        val next = runBlocking { app.changes.start(workspace, nextFields) }
+        ageRunning(next, nextFields)
         QuickSettingsTile.expand()
         QuickSettingsTile.awaitText("a start while the panel was closed", "Started with the panel closed")
         QuickSettingsTile.awaitText("a start while the panel was closed", context.getString(R.string.tile_running_subtitle))
@@ -223,6 +231,18 @@ class RunningTileServerTest {
     }
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
+
+    /** A stopped row is required for Continue; a fresh Start can instead enter short Stop Trash. */
+    private fun ageRunning(id: Long, fields: EntryFields) {
+        runBlocking {
+            val running = checkNotNull(app.cache.running.first()).entry
+            assertEquals("the fixture still targets the running entry", id, running.id)
+            // Two hours spans even the server's coarsest allowed 60-minute grid.
+            val agedStart = running.start.minusSeconds(7_200)
+            assertTrue("the Continue fixture has a full span", app.changes.update(id, fields, agedStart, null))
+            withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.start == agedStart } }
+        }
+    }
 
     private fun signIn(server: ServerUrl, token: String) {
         ServerTrustStore(context).confirmCleartext(server)
