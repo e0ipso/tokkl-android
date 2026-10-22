@@ -256,6 +256,8 @@ Before the first automatic release:
 
 Node 24.15 or later runs the release tooling. `npm run release -- --dry-run` previews the next release without changing files, creating commits or publishing; it still needs authenticated push access. `npm test` exercises release rules and performs a complete release against a disposable local Git remote, without publishing to GitHub.
 
+The Conventional Commits preset v10 uses render functions and needs `conventional-changelog-writer` v9. `package.json` overrides the writer used by `@semantic-release/release-notes-generator` 14, which still requests v8. Remove the override once the generator depends on v9 or later. The release tests check note rendering and the complete local release with this combination.
+
 ### Check that the release build is reproducible
 
 ```sh
