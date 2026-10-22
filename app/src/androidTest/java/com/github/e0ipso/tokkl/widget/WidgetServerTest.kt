@@ -233,7 +233,8 @@ class WidgetServerTest {
             put("description", "Long entry stopped by widget")
             put("start", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS).toString()); put("duration", -1)
         }, JsonObject.serializer()).orFail("seed long entry")
-        runBlocking { app.accountSettings.refresh().join() }
+        // The sender's refresh may have read the earlier timer before this server write.
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
         val id = runBlocking { app.cache.running.filterNotNull().first().entry.id }
         native.awaitText("Long entry stopped by widget")
         native.click(context.getString(R.string.widget_stop_description))

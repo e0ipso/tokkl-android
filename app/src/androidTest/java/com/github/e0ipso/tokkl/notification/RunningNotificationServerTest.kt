@@ -244,7 +244,7 @@ class RunningNotificationServerTest {
         val trashed = TrashServer(web).list().orFail("GET /api/app/trash")
         assertTrue("the first start was also short", trashed.any { it.id == firstServerId })
         val secondTrash = trashed.single { it.id == secondServerId }
-        assertEquals("the notification stopped the newer entry", shortStop.entry.start.epochSecond, java.time.Instant.parse(secondTrash.start).epochSecond)
+        assertEquals("the notification stopped the newer entry", shortStop.entry.start.epochSecond, java.time.OffsetDateTime.parse(secondTrash.start).toEpochSecond())
         assertEquals(secondTrash.start, secondTrash.stop)
         assertEquals(0L, secondTrash.duration)
 
