@@ -72,6 +72,41 @@ reclassified as a pass.
 
 ## Cheap checks
 
+Input fingerprint validation uses one reusable 64 KiB byte buffer and unbuffered
+binary reads in `runtime/configuration.py`. Each digest still covers every byte.
+There is no hash cache, pin omission or change to adoption/ledger checks. This
+same function checks inputs, the previous ledger and frozen runtime at controller
+startup and in both reclaim parent and writer before write intent. `preflight`
+and `prepare` also reach this validator. Streaming bounds hash-buffer memory; it
+does not bound total interpreter RSS, metadata size, filesystem cache or I/O time.
+
+The host regression uses a 100,663,313-byte sparse file with a 64 MiB child
+address-space cap and an independent `sha256sum` reference. It runs the actual
+hash, adoption, controller bootstrap and both helper entry points. Controller
+execution stops immediately after validated configuration; the parent stops
+before its lock and the writer before intent. All resource operations remain
+unexecuted. Exact original validator bytes must fail with `MemoryError` under
+the same cap. Receipts include this exec's Linux `VmHWM` and `getrusage` max RSS
+separately, since the latter can retain a pre-exec parent high-water mark.
+
+Other whole-file hash consumers remain confined to package sources/manifests,
+selected Kotlin sources, parser/JUnit outputs, benchmark source and tiny version
+metadata. They are not the arbitrary large tool/image input-pin path. Source and
+JUnit parsing still materialize their inputs, as before; this correction makes
+no general claim about their memory use. The original admission's aggregate
+anonymous growth does not identify which process allocated it. TKA-0294 proves
+the old allocation risk and bounds this hash function, not sole historical cause.
+
+Streaming still reads all pins each time. Quiet readiness observed before
+validation cannot establish continuous quiet through preparation; the retained
+Stage 3 readiness ended 55.046 seconds before preparation. Root must review
+timing after validation and use fresh admission without changing guard anchors,
+thresholds or baselines. A carried continuation must pin the actual previous
+ledger and its SHA, retain 2,189,529,088 spent bytes against 6,442,450,944 total,
+and allow three remaining preparations, not four new ones. Arithmetic remaining
+capacity is 4,252,921,856 bytes. Fresh configuration/runtime/adoption and an
+exclusive coordinator lease are required; this host proof grants none of them.
+
 Run from the checked worktree:
 
 ```sh
