@@ -232,6 +232,30 @@ The results land as `*-benchmarkData.json` under `macrobenchmark/build/outputs/c
 
 F-Droid builds the app from source and compares its unsigned APK with the signed APK on the GitHub release. It publishes the APK signed with the project's key only when the two match apart from the signature ([reproducible builds](https://f-droid.org/docs/Reproducible_Builds/)). People who sideload install the same APK from the GitHub release.
 
+### Automatic releases
+
+On pushes to `main`, `.github/workflows/ci.yml` runs semantic-release after every build, test, benchmark and commitlint job passes. It uses the same release rules as Tokkl:
+
+| Commit | Release |
+| --- | --- |
+| `feat` | Minor |
+| `fix`, `perf`, `refactor`, `revert` | Patch |
+| Breaking change, using `!` or a `BREAKING CHANGE:` footer | Major |
+| `docs`, `style`, `test`, `build`, `ci`, `chore` | None |
+| Scope `no-release` | None, unless it is a breaking change |
+
+The release commits `CHANGELOG.md` and both values in `gradle/version.properties`, with `chore(release): VERSION [skip ci]`, then creates a `vVERSION` tag and a GitHub release. The npm manifest describes development tooling and has no app version; nothing is published to npm. `versionCode` is `major * 1_000_000 + minor * 1_000 + patch`, with minor and patch below 1000 and the result within a positive Android integer.
+
+The `android-release` job checks out the new tag and builds the APK from that clean commit. The `android-publish` job attaches `tokkl-android-VERSION.apk` to the release. For F-Droid, the download URL is `https://github.com/e0ipso/tokkl-android/releases/download/v%v/tokkl-android-%v.apk`. Building and publishing run in this workflow because a tag pushed with `GITHUB_TOKEN` does not start another workflow. If the APK build or upload fails, re-run the failed jobs on the original run. The release exists before the APK is attached, as with Tokkl's desktop packages.
+
+Before the first automatic release:
+
+1. Set the four signing secrets described under "Sign the release APK". The release job checks they exist before publishing. Its `GITHUB_TOKEN` needs permission to push release commits and tags to `main`, including through any branch rules.
+2. Create the initial `v0.1.0` tag on the commit chosen as the starting version, whose `gradle/version.properties` must still contain `versionName=0.1.0` and `versionCode=1000`, then push that tag. For example, with that commit checked out, run `git tag v0.1.0` and `git push origin v0.1.0`. semantic-release otherwise starts at 1.0.0, so the Android plugin refuses a release without a previous version tag. Tagging alone does not create a GitHub release or build an APK.
+3. Push the next releasable Conventional Commit to `main`. Only changes after the starting tag count toward the next version.
+
+Node 24.15 or later runs the release tooling. `npm run release -- --dry-run` previews the next release without changing files, creating commits or publishing; it still needs authenticated push access. `npm test` exercises release rules and performs a complete release against a disposable local Git remote, without publishing to GitHub.
+
 ### Check that the release build is reproducible
 
 ```sh
@@ -281,20 +305,7 @@ gh secret set TOKKL_RELEASE_KEY_ALIAS --body tokkl
 gh secret set TOKKL_RELEASE_KEY_PASSWORD
 ```
 
-The release job writes the keystore to the runner's temporary directory and points `TOKKL_RELEASE_KEYSTORE` at it. No workflow has this step yet; the release workflow adds it once the repo is on GitHub:
-
-```yaml
-- name: Build the signed release APK
-  env:
-    TOKKL_RELEASE_KEYSTORE_BASE64: ${{ secrets.TOKKL_RELEASE_KEYSTORE_BASE64 }}
-    TOKKL_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.TOKKL_RELEASE_KEYSTORE_PASSWORD }}
-    TOKKL_RELEASE_KEY_ALIAS: ${{ secrets.TOKKL_RELEASE_KEY_ALIAS }}
-    TOKKL_RELEASE_KEY_PASSWORD: ${{ secrets.TOKKL_RELEASE_KEY_PASSWORD }}
-  run: |
-    export TOKKL_RELEASE_KEYSTORE="$RUNNER_TEMP/release.p12"
-    printf '%s' "$TOKKL_RELEASE_KEYSTORE_BASE64" | base64 -d >"$TOKKL_RELEASE_KEYSTORE"
-    ./gradlew assembleRelease
-```
+The `android-release` job writes the keystore to the runner's temporary directory with private file permissions and removes it when the build step ends. It requires all four secrets, builds with `./gradlew --no-daemon --no-build-cache assembleRelease`, checks the APK signature with `apksigner verify`, and uploads only the signed APK. The signing job has read access to repository contents; the separate publishing job holds the write token.
 
 The Android Gradle Plugin signs the APK itself. Don't sign it again with `apksigner` from Build-Tools 35 or later: F-Droid's docs say its signature copy check fails on APKs signed that way.
 
@@ -320,7 +331,7 @@ apksigcopier compare --unsigned app-release.apk app-release-unsigned.apk
 
 ## Commit messages
 
-Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/). `npm install` sets up a commit-msg hook that runs commitlint, which needs Node 22.12 or later. The hook lives in `.husky/_`, which git ignores, so run `npm install` once in every new clone or git worktree. Until you do, commits there skip the check. The hook rejects a ticket ID such as `TKA-0001` in the subject; put it in a `Refs: TKA-0001` trailer instead. It also rejects commits that credit an AI tool or a co-author (`Co-authored-by:`, "Generated with Claude Code" and the like). `npm test` checks these rules, and runs the hook against real commits and merges in a throwaway repository. The local hook never sees a commit made with `git revert` or `--no-verify`, so the commitlint job in `.github/workflows/ci.yml` also lints the commits of every pull request and push to `main`, and runs `npm test`.
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/). With Node 24.15 or later, `npm install` sets up a commit-msg hook that runs commitlint. The hook lives in `.husky/_`, which git ignores, so run `npm install` once in every new clone or git worktree. Until you do, commits there skip the check. The hook rejects a ticket ID such as `TKA-0001` in the subject; put it in a `Refs: TKA-0001` trailer instead. It also rejects commits that credit an AI tool or a co-author (`Co-authored-by:`, "Generated with Claude Code" and the like). `npm test` checks these rules, and runs the hook against real commits and merges in a throwaway repository. The local hook never sees a commit made with `git revert` or `--no-verify`, so the commitlint job in `.github/workflows/ci.yml` also lints the commits of every pull request and push to `main`, and runs `npm test`.
 
 ## License
 

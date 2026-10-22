@@ -283,10 +283,10 @@ The repo is public at `github.com/e0ipso/tokkl-android` and copies Tokkl's setup
 - commitlint with Tokkl's rules: Conventional Commits, no AI or co-author trailers, no ticket IDs in the subject. A husky hook runs it locally, and a CI job lints the commits of each pull request and push.
 - CI jobs for the Gradle build with lint and the unit tests (`assembleDebug check`), for a release build made twice from clean and compared byte for byte (`scripts/reproducible-release.sh`), for the instrumented tests on emulators at API 36 and 31, and for the macrobenchmarks on an API 36 emulator, which fails a median more than 10% slower than the last green run on `main`. GitHub's Ubuntu runners need a udev rule before the emulator can use KVM ([android-emulator-runner](https://github.com/ReactiveCircus/android-emulator-runner)).
 
-Releases are not set up. The decisions for them:
+Releases run in the same workflow after every CI check passes:
 
 - semantic-release on pushes to `main` with Tokkl's release rules and `v${version}` tags. It writes `CHANGELOG.md` and the version into the Gradle build, derives `versionCode` from the version, and attaches the signed release APK to the GitHub release, where F-Droid's `Binaries` can find it.
-- The signing key lives in GitHub Actions secrets, never in the repo.
+- The signing key lives in GitHub Actions secrets, never in the repo. After the release commit and tag exist, `android-release` builds and verifies the signed APK from a clean checkout of that tag, and `android-publish` attaches it to the release. README "Automatic releases" describes the one-time starting tag and signing secrets.
 
 ### 8.3 Versions and stores
 

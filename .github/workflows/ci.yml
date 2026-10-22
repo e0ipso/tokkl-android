@@ -236,3 +236,117 @@ jobs:
           fi
 
       - run: npm test
+
+  # Release only after every check passed, using Tokkl's release rules. This
+  # commits the changelog and Gradle version and creates the v* tag. The APK
+  # must be built from that commit, because AGP embeds its hash in the APK.
+  release:
+    needs: [gradle, reproducible-release, instrumented-tests, benchmarks, commitlint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: release
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Check signing secrets before creating a release
+        env:
+          TOKKL_RELEASE_KEYSTORE_BASE64: ${{ secrets.TOKKL_RELEASE_KEYSTORE_BASE64 }}
+          TOKKL_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.TOKKL_RELEASE_KEYSTORE_PASSWORD }}
+          TOKKL_RELEASE_KEY_ALIAS: ${{ secrets.TOKKL_RELEASE_KEY_ALIAS }}
+          TOKKL_RELEASE_KEY_PASSWORD: ${{ secrets.TOKKL_RELEASE_KEY_PASSWORD }}
+        run: |
+          for name in TOKKL_RELEASE_KEYSTORE_BASE64 TOKKL_RELEASE_KEYSTORE_PASSWORD TOKKL_RELEASE_KEY_ALIAS TOKKL_RELEASE_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing Actions secret $name. See README.md, Sign the release APK."
+              exit 1
+            fi
+          done
+      - name: Release
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release
+
+  # A clean checkout of the new tag gives F-Droid the same source revision.
+  # This job can read the signing key, but cannot write repository contents.
+  android-release:
+    needs: release
+    if: needs.release.outputs.tag != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ needs.release.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools platforms;android-37.0 build-tools;36.0.0
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Build the signed release APK
+        env:
+          TOKKL_RELEASE_KEYSTORE_BASE64: ${{ secrets.TOKKL_RELEASE_KEYSTORE_BASE64 }}
+          TOKKL_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.TOKKL_RELEASE_KEYSTORE_PASSWORD }}
+          TOKKL_RELEASE_KEY_ALIAS: ${{ secrets.TOKKL_RELEASE_KEY_ALIAS }}
+          TOKKL_RELEASE_KEY_PASSWORD: ${{ secrets.TOKKL_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in TOKKL_RELEASE_KEYSTORE_BASE64 TOKKL_RELEASE_KEYSTORE_PASSWORD TOKKL_RELEASE_KEY_ALIAS TOKKL_RELEASE_KEY_PASSWORD; do
+            test -n "${!name}" || { echo "::error::Missing Actions secret $name"; exit 1; }
+          done
+          test "$TAG" = "v$(sed -n 's/^versionName=//p' gradle/version.properties)"
+          git diff --exit-code HEAD
+          export TOKKL_RELEASE_KEYSTORE="$RUNNER_TEMP/release.p12"
+          trap 'rm -f "$TOKKL_RELEASE_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$TOKKL_RELEASE_KEYSTORE_BASE64" | base64 -d >"$TOKKL_RELEASE_KEYSTORE"
+          ./gradlew --no-daemon --no-build-cache assembleRelease
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify app/build/outputs/apk/release/app-release.apk
+          mkdir release-apk
+          cp app/build/outputs/apk/release/app-release.apk "release-apk/tokkl-android-${TAG#v}.apk"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-release-${{ needs.release.outputs.tag }}
+          path: release-apk/*.apk
+          if-no-files-found: error
+          overwrite: true
+
+  # As in Tokkl's desktop jobs, publishing holds the write token and consumes
+  # the build artifact. Re-running this job replaces the same release asset.
+  android-publish:
+    needs: [release, android-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.release.outputs.tag }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: android-release-${{ needs.release.outputs.tag }}
+          path: release-apk
+      - name: Attach the APK to the release
+        run: |
+          gh release upload "$TAG" \
+            "release-apk/tokkl-android-${TAG#v}.apk#Tokkl for Android 12 or later" --clobber
