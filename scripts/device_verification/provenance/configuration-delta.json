@@ -1,0 +1,57 @@
+[
+  {
+    "before": "base=Path('/home/e0ipso/.cache/sift-w10/final-matrix/post279-remaining-20261022T063232Z');project=Path('/home/e0ipso/workspace/apps/tokkl-android--w10-final-matrix');app=Path('/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice');runtime=Path(os.environ.get('XDG_RUNTIME_DIR','/run/user/1000'));gate='/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh';original={'memory.high':'10737418240','memory.max':'12884901888','memory.swap.max':'2147483648'};temporary={'memory.high':'15032385536','memory.max':'16106127360','memory.swap.max':'2147483648'};tag=datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S');state_path=base/('window-state-'+tag+'.json');unit='tokkl-w10-post279-tail-fallback-'+tag;state={'final_matrix_plan_budget_bytes':6442450944,'project':str(project),'controller_pid':os.getpid(),'phase':'prepared','timer_unit':unit,'records':[],'tests':[]};armed=False;owned_scope=None",
+    "after": "base=Path(__file__).resolve().parent;project=Path(config['project']);app=Path('/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice');runtime=Path(os.environ.get('XDG_RUNTIME_DIR','/run/user/1000'));gate=config['gate'];original={'memory.high':'10737418240','memory.max':'12884901888','memory.swap.max':'2147483648'};temporary={'memory.high':'15032385536','memory.max':'16106127360','memory.swap.max':'2147483648'};tag=datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S');state_path=base/('window-state-'+tag+'.json');unit='tokkl-verification-'+config['run_id']+'-'+tag;state={'final_matrix_plan_budget_bytes':config['reclaim_budget_bytes'],'project':str(project),'controller_pid':os.getpid(),'phase':'prepared','timer_unit':unit,'records':[],'tests':[]};armed=False;owned_scope=None",
+    "occurrences": 1
+  },
+  {
+    "before": "os.environ.update(PATH='/home/e0ipso/.local/bin:/home/e0ipso/.local/share/jdk/21/bin:/home/e0ipso/Android/Sdk/platform-tools:/home/e0ipso/Android/Sdk/emulator:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',JAVA_HOME='/home/e0ipso/.local/share/jdk/21',ANDROID_HOME='/home/e0ipso/Android/Sdk')",
+    "after": "os.environ.update(config['environment'])",
+    "occurrences": 1
+  },
+  {
+    "before": "state['reclaim_budget_bytes']=6442450944",
+    "after": "state['configuration_sha256']=config['_sha256'];state['run_id']=config['run_id'];state['lease_id']=config['lease_id'];state['server_image']=config['server_image'];state['proxy_image']=config['proxy_image'];state['reclaim_budget_bytes']=config['reclaim_budget_bytes']",
+    "occurrences": 1
+  },
+  {
+    "before": "int(os.environ.get('CARRIED_RECLAIM','0'))",
+    "after": "config['carried_reclaim_bytes']",
+    "occurrences": 2
+  },
+  {
+    "before": "os.environ.get('PRIOR_WINDOW')",
+    "after": "config['prior_window']",
+    "occurrences": 1
+  },
+  {
+    "before": "os.environ['FIX_RUN']",
+    "after": "config['plan'][0]['label']",
+    "occurrences": 2
+  },
+  {
+    "before": "'PATH=/home/e0ipso/.local/bin:/home/e0ipso/.local/share/jdk/21/bin:/home/e0ipso/Android/Sdk/platform-tools:/home/e0ipso/Android/Sdk/emulator:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'",
+    "after": "'PATH='+config['environment']['PATH']",
+    "occurrences": 1
+  },
+  {
+    "before": "'JAVA_HOME=/home/e0ipso/.local/share/jdk/21'",
+    "after": "'JAVA_HOME='+config['environment']['JAVA_HOME']",
+    "occurrences": 1
+  },
+  {
+    "before": "'ANDROID_HOME=/home/e0ipso/Android/Sdk'",
+    "after": "'ANDROID_HOME='+config['environment']['ANDROID_HOME']",
+    "occurrences": 1
+  },
+  {
+    "before": "plan=[(36, 'full36', ['scripts/instrumented-tests.sh', ':macrobenchmark:connectedBenchmarkAndroidTest', '--continue'], 5400, False), (0, 'reproducible-release', ['env', 'GRADLE_OPTS=-Dorg.gradle.workers.max=1', 'scripts/reproducible-release.sh'], 1800, True)]",
+    "after": "plan=[(job['api'],job['label'],job['args'],job['seconds'],job['standalone']) for job in config['plan']]",
+    "occurrences": 1
+  },
+  {
+    "before": "state['checked_base']='7707c24e52792a989d7f36a86d2ac00488155b77'",
+    "after": "state['checked_base']=config['checked_head']",
+    "occurrences": 1
+  }
+]

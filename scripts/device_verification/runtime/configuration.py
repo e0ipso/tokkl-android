@@ -1,0 +1,140 @@
+"""Read-only validation for the single frozen per-run JSON configuration.
+
+Policy limits are deliberately not configuration knobs. Loading this module does
+not execute a controller, start a scope, or write a cgroup or configuration file.
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+
+MAX_BUDGET = 6 * 1024**3
+CANONICAL_GATE = '/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh'
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load(path):
+    return json.loads(Path(path).read_text())
+
+
+def validate(config, *, fresh=True):
+    require(config.get('schema_version') == 1, 'unsupported configuration schema')
+    require(config.get('stage') == 'development', 'this candidate supports API36 development only; API31 stays deferred')
+    for key in ['run_id', 'lease_id', 'budget_authorization']:
+        require(isinstance(config.get(key), str) and config[key].strip(), 'missing '+key)
+    require(re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', config['run_id']), 'unsafe run identity')
+    for key in ['project', 'run_dir', 'gate']:
+        require(isinstance(config.get(key), str) and Path(config[key]).is_absolute()
+                and Path(config[key]).resolve() == Path(config[key]), 'absolute canonical '+key+' required')
+    base, project = Path(config['run_dir']), Path(config['project'])
+    require(config['gate'] == CANONICAL_GATE, 'shared admission gate must remain unchanged')
+    require(project.is_dir(), 'checked project missing')
+    require(not base.is_relative_to(Path('/tmp')) and not project.is_relative_to(base), 'unsafe output location')
+    require(not base.is_relative_to(project), 'run evidence must be outside checked project')
+    if fresh:
+        require(not base.exists(), 'fresh unused run directory required; never overwrite a historical ledger')
+    require(re.fullmatch(r'[0-9a-f]{40}', config.get('checked_head', '')), 'full checked commit required')
+    environment = config.get('environment')
+    require(isinstance(environment, dict) and set(environment) == {'PATH', 'JAVA_HOME', 'ANDROID_HOME'},
+            'explicit PATH/JAVA_HOME/ANDROID_HOME only')
+    require(all(isinstance(v, str) and v and '\n' not in v for v in environment.values()), 'invalid environment')
+    require(all(Path(p).is_absolute() for p in environment['PATH'].split(':')), 'PATH must contain absolute directories only')
+    for key in ['JAVA_HOME', 'ANDROID_HOME']:
+        require(Path(environment[key]).is_absolute(), 'absolute tool path required')
+    for key in ['reclaim_budget_bytes', 'carried_reclaim_bytes']:
+        require(type(config.get(key)) is int and 0 <= config[key] <= MAX_BUDGET, 'invalid finite '+key)
+    require(config['carried_reclaim_bytes'] <= config['reclaim_budget_bytes'], 'carried reservation exceeds authorized budget')
+    require('prior_window' in config, 'explicit prior_window required; null only for a newly authorized budget')
+    if config['prior_window'] is not None:
+        prior = Path(config['prior_window'])
+        require(prior.is_absolute() and prior.is_file(), 'prior reservation ledger missing')
+        require(sha(prior) == config.get('prior_window_sha256'), 'prior ledger changed')
+        require(config['carried_reclaim_bytes'] == load(prior)['reclaim_reserved_bytes'],
+                'carried reservation must match prior ledger, never reset on retry')
+    else:
+        require(config['carried_reclaim_bytes'] == 0, 'nonzero carry requires prior ledger')
+    jobs = config.get('plan')
+    require(isinstance(jobs, list) and 0 < len(jobs) <= 4, 'one to four finite sequential jobs required')
+    labels = set()
+    for job in jobs:
+        require(re.fullmatch('[a-z][a-z0-9-]{0,47}', job.get('label', '')), 'unsafe job label')
+        require(job['label'] not in labels, 'duplicate job labels/preparations prohibited')
+        labels.add(job['label'])
+        require(type(job.get('seconds')) is int and 0 < job['seconds'] <= 7200, 'finite job timeout required')
+        require(type(job.get('standalone')) is bool, 'explicit standalone boolean required')
+        args = job.get('args')
+        require(isinstance(args, list) and args and all(isinstance(x, str) and x and '\n' not in x for x in args), 'argv list required')
+        require('--stop' not in args, 'stopping another Gradle daemon is prohibited')
+        if not job['standalone']:
+            require(job['api'] == 36 and args[0] == 'scripts/instrumented-tests.sh', 'device jobs must use authorized script on API36')
+            require(args == ['scripts/instrumented-tests.sh', ':macrobenchmark:connectedBenchmarkAndroidTest', '--continue']
+                    and not job['label'].startswith('tap-scoped'),
+                    'this candidate accepts the frozen unfiltered integrated device command only')
+            require(job['seconds'] >= 5400, 'retain the observed full-suite 90-minute deadline minimum')
+        else:
+            require(job['api'] == 0, 'host jobs must use api zero')
+            require((args == ['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']
+                     and job['label'] == 'assemble-check')
+                    or (args == ['env', 'GRADLE_OPTS=-Dorg.gradle.workers.max=1', 'scripts/reproducible-release.sh']
+                        and job['label'] == 'reproducible-release'),
+                    'only guarded Gradle or the established reproducibility command is accepted')
+    require(not jobs[0]['standalone'], 'first opening preparation preserves the device budget')
+    pins = config.get('input_pins')
+    require(isinstance(pins, dict) and pins, 'explicit checked input pins required')
+    required = {str(project/'scripts/instrumented-tests.sh'), config['gate'],
+                '/home/e0ipso/workspace/apps/tokkl-android/scripts/mem-gate.sh',
+                '/home/e0ipso/workspace/apps/tokkl-android/scripts/memory-capacity.py'}
+    require(required <= pins.keys(), 'launcher/shared admission inputs must be pinned')
+    for path, expected in pins.items():
+        require(Path(path).is_absolute() and re.fullmatch('[0-9a-f]{64}', expected), 'invalid input pin')
+        require(sha(path) == expected, 'checked input changed: '+path)
+    launcher = (project/'scripts/instrumented-tests.sh').read_text()
+    for key, variable in [('server_image', 'IMAGE'), ('proxy_image', 'PROXY_IMAGE')]:
+        match = re.search(r"^readonly "+variable+r"='([^']+)'$", launcher, re.M)
+        require(match and re.fullmatch(r'[^\s]+@sha256:[0-9a-f]{64}', match[1]), 'actual launcher image digest missing')
+        require(config.get(key) == match[1], 'configured '+key+' differs from the actual launcher')
+    require(config.get('slots') == 1, 'one sequential emulator path only')
+    return dict(config, _sha256=hashlib.sha256(canonical(config)).hexdigest())
+
+
+def execution_configuration(controller):
+    """Execution is a separate coordinator adoption, never a preflight effect."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--execute', action='store_true', required=True)
+    parser.add_argument('--adoption', type=Path, required=True)
+    args = parser.parse_args()
+    directory = Path(controller).resolve().parent
+    config = validate(load(directory/'run-config.json'), fresh=False)
+    require(Path(config['run_dir']) == directory, 'controller must run only from its frozen run snapshot')
+    manifest = load(directory/'runtime-manifest.json')
+    for name, expected in manifest.items():
+        require(sha(directory/name) == expected, 'frozen runtime changed: '+name)
+    adoption = load(args.adoption)
+    require(adoption.get('configuration_sha256') == config['_sha256']
+            and adoption.get('runtime_sha256') == hashlib.sha256(canonical(manifest)).hexdigest()
+            and adoption.get('lease_id') == config['lease_id'] and adoption.get('approved_by'),
+            'explicit coordinator adoption must match configuration, runtime and lease')
+    require(adoption.get('cheap_live_controller_fixtures_verified') is True,
+            'coordinator must first verify the configured controller with cheap owned live fixtures')
+    # Per-run environment has one source. Existing floors, ramp and wait remain
+    # enforced by the unchanged gate and controller, never lowered here.
+    for name in ['FIX_RUN', 'CARRIED_RECLAIM', 'PRIOR_WINDOW', 'NO_RECLAIM',
+                 'MEM_GATE_MIN_MB', 'MEM_GATE_CGROUP_MB', 'MEM_GATE_WAIT_S',
+                 'MEM_GATE_SETTLE_S', 'TOKKL_TEST_SLOTS', 'TOKKL_TEST_AVD', 'ANDROID_SERIAL']:
+        os.environ.pop(name, None)
+    os.environ['TOKKL_TEST_SLOTS'] = str(config['slots'])
+    return config

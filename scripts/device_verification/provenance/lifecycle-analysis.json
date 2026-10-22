@@ -1,0 +1,49 @@
+{
+  "historical_abort_time": "2026-10-22T06:35:53.203985+00:00",
+  "historical_abort": "inaccessible or disappearing cgroup evidence",
+  "evidence_errors": [
+    {
+      "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tokkl-w10-post279-tail-fallback-20261022063251-watch.service",
+      "error": "FileNotFoundError: [Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tokkl-w10-post279-tail-fallback-20261022063251-watch.service'"
+    }
+  ],
+  "journal_lifecycle": [
+    {
+      "kind": "Starting",
+      "utc": "2026-10-22T06:33:51.158100+00:00",
+      "delta_from_abort_seconds": -122.04588508605957
+    },
+    {
+      "kind": "Finished",
+      "utc": "2026-10-22T06:33:51.191847+00:00",
+      "delta_from_abort_seconds": -122.01213788986206
+    },
+    {
+      "kind": "Starting",
+      "utc": "2026-10-22T06:34:52.159374+00:00",
+      "delta_from_abort_seconds": -61.04461097717285
+    },
+    {
+      "kind": "Finished",
+      "utc": "2026-10-22T06:34:52.217316+00:00",
+      "delta_from_abort_seconds": -60.986669063568115
+    },
+    {
+      "kind": "Starting",
+      "utc": "2026-10-22T06:35:53.163366+00:00",
+      "delta_from_abort_seconds": -0.040618896484375
+    },
+    {
+      "kind": "Finished",
+      "utc": "2026-10-22T06:35:53.222005+00:00",
+      "delta_from_abort_seconds": 0.018019914627075195
+    }
+  ],
+  "known": "The configured recurring Type=oneshot watchdog exits normally on a fresh heartbeat. Journal shows normal completions; actual cgroup read reported ENOENT for that exact watchdog service. Controlled real-service reproduction forces that normal completion between enumeration and stat.",
+  "limits": "Historical final watchdog resource counters were not captured, and exact kernel removal time is unavailable. No inference about unrelated resource pressure is made. Historical API36 remains unfinalized.",
+  "correction": "Retain one finite service cgroup with a sleeping parent; execute unchanged watchdog check every60s inside it; cancel only at existing post-cleanup/post-rollback boundary. Independent forced fallback unchanged.",
+  "authoritative_sources": [
+    "https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html",
+    "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html"
+  ]
+}

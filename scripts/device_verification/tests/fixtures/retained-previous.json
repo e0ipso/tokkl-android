@@ -1,0 +1,1585 @@
+{
+  "time": "2026-10-22T00:56:37.115313+00:00",
+  "host_available": "MemAvailable:    9664432 kB",
+  "parent": {
+    "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice",
+    "memory.current": "10454421504",
+    "memory.peak": "14449516544",
+    "memory.high": "15032385536",
+    "memory.max": "16106127360",
+    "memory.events": "low 0\nhigh 286772096\nmax 13014\noom 5\noom_kill 13\noom_group_kill 0\nsock_throttled 54160",
+    "memory.events.local": "low 0\nhigh 286737931\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+    "memory.pressure": "some avg10=1.23 avg60=0.33 avg300=0.07 total=22145004698\nfull avg10=1.23 avg60=0.33 avg300=0.07 total=19243078632",
+    "memory.swap.current": "1401360384",
+    "memory.swap.max": "2147483648"
+  },
+  "workload": {
+    "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tokkl-0270-red31-20261022005609.scope",
+    "memory.current": "25206784",
+    "memory.peak": "25767936",
+    "memory.high": "max",
+    "memory.max": "max",
+    "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+    "memory.events.local": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+    "memory.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+    "memory.swap.current": "0",
+    "memory.swap.max": "max"
+  },
+  "ancestors": [
+    {
+      "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service",
+      "memory.current": "11636527104",
+      "memory.peak": "14990589952",
+      "memory.high": "max",
+      "memory.max": "max",
+      "memory.events": "low 0\nhigh 286772096\nmax 13014\noom 5\noom_kill 13\noom_group_kill 0\nsock_throttled 59285",
+      "memory.events.local": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+      "memory.pressure": "some avg10=1.26 avg60=0.35 avg300=0.08 total=22175351739\nfull avg10=0.93 avg60=0.29 avg300=0.06 total=19264338380",
+      "memory.swap.current": "2459521024",
+      "memory.swap.max": "max"
+    },
+    {
+      "path": "/sys/fs/cgroup/user.slice/user-1000.slice",
+      "memory.current": "11991556096",
+      "memory.peak": "15438766080",
+      "memory.high": "max",
+      "memory.max": "max",
+      "memory.events": "low 0\nhigh 286772096\nmax 13014\noom 5\noom_kill 13\noom_group_kill 0\nsock_throttled 59285",
+      "memory.events.local": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+      "memory.pressure": "some avg10=1.24 avg60=0.33 avg300=0.07 total=22179947324\nfull avg10=1.06 avg60=0.29 avg300=0.06 total=19268519569",
+      "memory.swap.current": "2541232128",
+      "memory.swap.max": "max"
+    },
+    {
+      "path": "/sys/fs/cgroup/user.slice",
+      "memory.current": "11991564288",
+      "memory.peak": "15438790656",
+      "memory.high": "max",
+      "memory.max": "max",
+      "memory.events": "low 0\nhigh 286772096\nmax 13014\noom 5\noom_kill 13\noom_group_kill 0\nsock_throttled 59285",
+      "memory.events.local": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+      "memory.pressure": "some avg10=1.19 avg60=0.32 avg300=0.07 total=22180222736\nfull avg10=1.19 avg60=0.32 avg300=0.07 total=19268775758",
+      "memory.swap.current": "2541232128",
+      "memory.swap.max": "max"
+    }
+  ],
+  "emulators": [
+    {
+      "path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tokkl-emulator-5554-d83659d8.scope",
+      "memory.current": "4124401664",
+      "memory.peak": "4137091072",
+      "memory.high": "max",
+      "memory.max": "6442450944",
+      "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+      "memory.events.local": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0",
+      "memory.pressure": "some avg10=1.20 avg60=0.32 avg300=0.07 total=271226\nfull avg10=1.02 avg60=0.29 avg300=0.06 total=262614",
+      "memory.swap.current": "0",
+      "memory.swap.max": "0",
+      "unit": "tokkl-emulator-5554-d83659d8.scope"
+    }
+  ],
+  "private_allocations": [
+    {
+      "path": "/run/user/1000/tokkl-instrumented-tests-1000-runs/0d492102/emulator-tmp",
+      "files": [
+        {
+          "name": "emulator-9TecNc.qcow2",
+          "size": 589824,
+          "allocated": 405504
+        },
+        {
+          "name": "emulator-MkiUby.qcow2",
+          "size": 20905984,
+          "allocated": 20721664
+        },
+        {
+          "name": "emulator-5VGxVR.qcow2",
+          "size": 196616,
+          "allocated": 200704
+        },
+        {
+          "name": "emulator-nBRkmb",
+          "size": 4187,
+          "allocated": 8192
+        },
+        {
+          "name": "emu-crash-37.2.12.db/settings.dat",
+          "size": 40,
+          "allocated": 4096
+        },
+        {
+          "name": "android-e0ipso/netsimd/netsim_session_stats.json",
+          "size": 3174,
+          "allocated": 4096
+        },
+        {
+          "name": "android-e0ipso/netsimd/netsim_stderr.log",
+          "size": 4469,
+          "allocated": 8192
+        },
+        {
+          "name": "android-e0ipso/netsimd/netsim_stdout.log",
+          "size": 25652,
+          "allocated": 28672
+        }
+      ],
+      "allocated": 21381120
+    }
+  ],
+  "event_tree": {
+    "time": "2026-10-22T00:56:37.118148+00:00",
+    "monotonic": 1799472.415384252,
+    "duration": 0.0190171308349818,
+    "root": "/sys/fs/cgroup/user.slice",
+    "root_counters": "/sys/fs/cgroup root counters not exposed by cgroup v2; unrelated system.slice excluded",
+    "rows": {
+      "/sys/fs/cgroup/user.slice": {
+        "inode": 251,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 286772096,
+          "max": 13014,
+          "oom": 5,
+          "oom_kill": 13,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 11992465408,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=1.19 avg60=0.32 avg300=0.07 total=22180222736\nfull avg10=1.19 avg60=0.32 avg300=0.07 total=19268775758"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice": {
+        "inode": 3860,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 286772096,
+          "max": 13014,
+          "oom": 5,
+          "oom_kill": 13,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 11992436736,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=1.24 avg60=0.33 avg300=0.07 total=22179947324\nfull avg10=1.06 avg60=0.29 avg300=0.06 total=19268519569"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service": {
+        "inode": 4666,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 286772096,
+          "max": 13014,
+          "oom": 5,
+          "oom_kill": 13,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 11637407744,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=1.26 avg60=0.35 avg300=0.08 total=22175351739\nfull avg10=0.93 avg60=0.29 avg300=0.06 total=19264338380"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice": {
+        "inode": 4995,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 28717056,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=75098\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=74290"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/xdg-permission-store.service": {
+        "inode": 482482,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 344064,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/filter-chain.service": {
+        "inode": 5405,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 315392,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/xdg-document-portal.service": {
+        "inode": 482526,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1449984,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=15776\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=15699"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/xdg-desktop-portal.service": {
+        "inode": 483230,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 3350528,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=16064\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=16064"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/pipewire-pulse.service": {
+        "inode": 5449,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 8273920,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=1122\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=1122"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/wireplumber.service": {
+        "inode": 5317,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 5586944,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=876\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=876"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/at-spi-dbus-bus.service": {
+        "inode": 482614,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 983040,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=2\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=2"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/pipewire.service": {
+        "inode": 5229,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 4501504,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=1217\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=1217"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/dbus.service": {
+        "inode": 5134,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 3555328,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=12805\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=12805"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/background.slice": {
+        "inode": 5581,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1474560,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=13646\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=13620"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/background.slice/plasma-kactivitymanagerd.service": {
+        "inode": 1025754,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 921600,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=14\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=14"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/background.slice/plasma-kglobalaccel5.service": {
+        "inode": 1025867,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 495616,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice": {
+        "inode": 547776,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1142976512,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=75393516\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=68821268"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/docker-7a34a722fdd68aaec20841b2db20c39d999bb029a982740cbeeafadc984c19e8.scope": {
+        "inode": 1716364,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 4911104,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/docker-34def4e12f0c782687c13654592d2bbfeb10b7c5e6383059bcb328872747a299.scope": {
+        "inode": 550844,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 210513920,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=48400685\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=44945146"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/docker-08878b09f724d87b20e2485f5ed0466adcdeefc77dde5e1526c514b2290b0971.scope": {
+        "inode": 550895,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 22085632,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=4463458\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=4433397"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/docker-b58cc3595632f719a6548f46e7e9c194b4083724c6f7c178d328ded79a26c851.scope": {
+        "inode": 550742,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 8294400,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=1012814\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=1011977"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/user.slice/docker-a0821d68a74115d675284877b04b42f0a9492917b00a063af17f226adc768234.scope": {
+        "inode": 551150,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 130535424,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=15942389\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=15584065"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice": {
+        "inode": 4944,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 286737931,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 286772096,
+          "max": 13014,
+          "oom": 5,
+          "oom_kill": 13,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 10456342528,
+        "high": "15032385536",
+        "max": "16106127360",
+        "pressure": "some avg10=1.23 avg60=0.33 avg300=0.07 total=22145004698\nfull avg10=1.23 avg60=0.33 avg300=0.07 total=19243078632"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@8-1619243-0.service": {
+        "inode": 1493464,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 552960,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@5-1517401-0.service": {
+        "inode": 1485062,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 565248,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/docker.service": {
+        "inode": 550538,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 276779008,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=8667907197\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=5882073798"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/sway-headless.service": {
+        "inode": 480854,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 4395008,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=306248\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=306245"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/wayvnc-headless.service": {
+        "inode": 483406,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1175552,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=1335\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=1335"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@3-1509014-0.service": {
+        "inode": 1484346,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 548864,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dconf.service": {
+        "inode": 6591,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 221184,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/gnome-keyring-daemon.service": {
+        "inode": 1421456,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1277952,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=833939\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=817075"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/gcr-ssh-agent.service": {
+        "inode": 5632,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 217088,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dbus.socket": {
+        "inode": 5046,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 4096,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@16-2043312-0.service": {
+        "inode": 1528210,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 569344,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/t3.service": {
+        "inode": 434980,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 3664,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 1,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 3664,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 1,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 4210372608,
+        "high": "4294967296",
+        "max": "5368709120",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=1894378467\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=1769410941"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@10-1633752-0.service": {
+        "inode": 1495193,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 573440,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/gpg-agent-ssh.socket": {
+        "inode": 5090,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 4096,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@9-1633014-0.service": {
+        "inode": 1494908,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 536576,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@11-1708556-0.service": {
+        "inode": 1503534,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 557056,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@4-1516827-0.service": {
+        "inode": 1484704,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 569344,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@0-764893-0.service": {
+        "inode": 1427866,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 647168,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tokkl-emulator-5554-d83659d8.scope": {
+        "inode": 1716313,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 4124401664,
+        "high": "max",
+        "max": "6442450944",
+        "pressure": "some avg10=1.20 avg60=0.32 avg300=0.07 total=271226\nfull avg10=1.02 avg60=0.29 avg300=0.06 total=262614"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@7-1532696-0.service": {
+        "inode": 1485920,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 544768,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=225\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=225"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@6-1532389-0.service": {
+        "inode": 1485737,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 548864,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/gpg-agent.service": {
+        "inode": 189768,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 315392,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=9486681\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=9486681"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/run-u320001.scope": {
+        "inode": 1433469,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 7446528,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=382286653\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=382034402"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/app-t3code.slice": {
+        "inode": 1035206,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 23803,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 30501,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 7,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1548017664,
+        "high": "5368709120",
+        "max": "7516192768",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=9545061516\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=6016273220"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/app-t3code.slice/app-t3code-agents.slice": {
+        "inode": 1035257,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 6698,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 6698,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 7,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1547993088,
+        "high": "10048937984",
+        "max": "12368539648",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=9545005420\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=6016193297"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/app-t3code.slice/app-t3code-agents.slice/app-t3code-agents-aa7cca437ee8.slice": {
+        "inode": 1654655,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1385947136,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=3458115891\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=2334736561"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/app-t3code.slice/app-t3code-agents.slice/app-t3code-agents-aa7cca437ee8.slice/t3code-codex-5c3a191e.scope": {
+        "inode": 1706484,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1015070720,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=2506\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=2506"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@15-2024034-0.service": {
+        "inode": 1527232,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 548864,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@1-1251419-0.service": {
+        "inode": 1464063,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 610304,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@2-1508970-0.service": {
+        "inode": 1484251,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 577536,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@13-1935260-0.service": {
+        "inode": 1518641,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 552960,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/xdg-desktop-portal-gtk.service": {
+        "inode": 483274,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 1294336,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=27990665\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=27990665"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tmux-spawn-6009df84-24ac-40e7-8db8-1d98003336a5.scope": {
+        "inode": 853357,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 225280,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/obex.service": {
+        "inode": 7770,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 204800,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tokkl-0270-red31-20261022005609.scope": {
+        "inode": 1716262,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 25206784,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@14-1935617-0.service": {
+        "inode": 1518824,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 573440,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/drkonqi-coredump-launcher@12-1730287-0.service": {
+        "inode": 1505863,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 565248,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/init.scope": {
+        "inode": 4717,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 8339456,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=182185\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=182185"
+      },
+      "/sys/fs/cgroup/user.slice/user-1000.slice/session-3.scope": {
+        "inode": 16086,
+        "time": "2026-10-22T00:56:37.118148+00:00",
+        "local": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "events": {
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "stable": true,
+        "current": 337309696,
+        "high": "max",
+        "max": "max",
+        "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=8366991\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=8232928"
+      }
+    },
+    "errors": []
+  },
+  "event_assessment": {
+    "time": "2026-10-22T00:56:37.118148+00:00",
+    "origins": [],
+    "abort": null,
+    "evidence_errors": [],
+    "protected": [
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tokkl-0270-red31-20261022005609.scope",
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/tokkl-emulator-5554-d83659d8.scope"
+    ],
+    "ancestors": [
+      "/sys/fs/cgroup/user.slice",
+      "/sys/fs/cgroup/user.slice/user-1000.slice",
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service",
+      "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice"
+    ],
+    "full_stall_fraction": 0.019772462527555927,
+    "host_available": 9896378368,
+    "harmful_pressure_since": null
+  },
+  "event_baseline": null
+}
