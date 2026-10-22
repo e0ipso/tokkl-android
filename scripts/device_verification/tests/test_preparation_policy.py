@@ -217,6 +217,11 @@ class RemainingBudgetTests(unittest.TestCase):
             if str(path).startswith('/sys/'):
                 self.assertTrue(str(path).endswith('/memory.reclaim'))
                 reached.append('writer-after-durable-intent');raise Boundary()
+            if flags & os.O_DIRECT:
+                # The shared validator now opens every pin for read-only DIO.
+                self.assertEqual(flags & os.O_ACCMODE, os.O_RDONLY)
+                self.assertFalse(flags & (os.O_CREAT | os.O_TRUNC))
+                return original_os_open(path, flags, *args, **kw)
             self.assertEqual(Path(path), run)  # Actual reserve_write directory fsync.
             return original_os_open(path, flags, *args, **kw)
         helper = run/'local-reclaim-finite.py'

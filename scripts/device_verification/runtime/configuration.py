@@ -4,11 +4,16 @@ Policy limits are deliberately not configuration knobs. Loading this module does
 not execute a controller, start a scope, or write a cgroup or configuration file.
 """
 import argparse
+import ctypes
+import errno
 import hashlib
 import json
+import mmap
 import os
 from pathlib import Path
 import re
+import stat
+import struct
 if __package__:
     from .scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
 else:
@@ -27,15 +32,73 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
 
 
+def _direct_alignment(fd):
+    """Linux statx DIOALIGN, queried on the opened file, never guessed."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    statx = getattr(libc, 'statx', None)
+    if statx is None:
+        raise OSError(errno.ENOTSUP, 'statx DIOALIGN is required for input hashing')
+    result = ctypes.create_string_buffer(256)
+    # struct statx is a fixed 256-byte Linux ABI. DIOALIGN fields are u32 at
+    # offsets 152/156; AT_EMPTY_PATH binds the query to this descriptor.
+    if statx(fd, b'', 0x1000, 0x2000, result):
+        error = ctypes.get_errno()
+        raise OSError(error, 'statx DIOALIGN failed')
+    mask = struct.unpack_from('=I', result, 0)[0]
+    memory, offset = struct.unpack_from('=II', result, 152)
+    if not mask & 0x2000 or any(x <= 0 or x > 65536 or x & (x-1) for x in (memory, offset)):
+        raise OSError(errno.ENOTSUP, 'supported bounded direct I/O alignment required')
+    # Scope the guarantee to the ext4 host path tested here. Other filesystems
+    # can advertise DIO alignment yet fall back to buffered I/O for some extents.
+    filesystem = ctypes.create_string_buffer(256)
+    if libc.fstatfs(fd, filesystem):
+        error = ctypes.get_errno()
+        raise OSError(error, 'input hashing fstatfs failed')
+    if ctypes.c_long.from_buffer(filesystem).value != 0xEF53:
+        raise OSError(errno.ENOTSUP, 'cache-neutral hashing requires ext4 with DIOALIGN')
+    return memory, offset
+
+
+def _identity(info):
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+
+
 def sha(path):
-    """Hash every byte with one 64 KiB buffer, including large tool/image pins."""
-    digest = hashlib.sha256()
-    buffer = bytearray(64 * 1024)
-    view = memoryview(buffer)
-    with Path(path).open('rb', buffering=0) as stream:
-        while count := stream.readinto(buffer):
-            digest.update(view[:count])
-    return digest.hexdigest()
+    """Hash every byte using read-only direct I/O, without filling file cache.
+
+    Unsupported files/alignment fail closed. A 64 KiB transfer plus at most
+    64 KiB alignment padding bounds allocation. Existing cached pages remain.
+    """
+    if not hasattr(os, 'O_DIRECT') or not hasattr(os, 'preadv'):
+        raise OSError(errno.ENOTSUP, 'direct I/O is required for input hashing')
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECT | os.O_NONBLOCK | os.O_CLOEXEC)
+    try:
+        before = os.fstat(fd)
+        require(stat.S_ISREG(before.st_mode), 'input hash requires a regular file')
+        memory, alignment = _direct_alignment(fd)
+        digest = hashlib.sha256()
+        with mmap.mmap(-1, 65536 + memory) as buffer:
+            address = ctypes.addressof(ctypes.c_char.from_buffer(buffer))
+            start = (-address) % memory
+            view = memoryview(buffer)[start:start+65536]
+            try:
+                position = 0
+                while position < before.st_size:
+                    count = os.preadv(fd, [view], position)
+                    remaining = before.st_size - position
+                    if count <= 0 or count > min(65536, remaining):
+                        raise OSError(errno.EIO, 'input hash truncated or grew during direct read')
+                    digest.update(view[:count])
+                    position += count
+                    if position < before.st_size and count % alignment:
+                        raise OSError(errno.EIO, 'unaligned short direct read before EOF')
+            finally:
+                view.release()
+        require(_identity(before) == _identity(os.fstat(fd)) == _identity(os.stat(path)),
+                'input changed during hashing: '+str(path))
+        return digest.hexdigest()
+    finally:
+        os.close(fd)
 
 
 def load(path):

@@ -1,10 +1,13 @@
 """Actual bounded fingerprint/adoption paths. Disk fixtures and host children only."""
 import copy
+import ctypes
+import errno
 import hashlib
-import io
 import json
+import mmap
 import os
 from pathlib import Path
+import resource
 import subprocess
 import sys
 import tempfile
@@ -37,27 +40,128 @@ class StreamingFingerprintTests(unittest.TestCase):
 
     def test_single_fixed_buffer_and_read_failures_propagate(self):
         reads = []
-        class Reader(io.BytesIO):
-            def read(self, *args):
-                raise AssertionError('whole-file/allocating read is forbidden')
-            def readinto(self, buffer):
-                reads.append((id(buffer), len(buffer)))
-                return super().readinto(buffer)
+        path = self.root/'input'
         data = b'abc' * BUFFER
-        with patch.object(Path, 'open', return_value=Reader(data)):
-            self.assertEqual(cfg.sha(self.root/'modeled-read'), hashlib.sha256(data).hexdigest())
+        path.write_bytes(data)
+        original = os.preadv
+        def read(fd, buffers, offset):
+            reads.append((id(buffers[0]), len(buffers[0])))
+            return original(fd, buffers, offset)
+        with patch.object(os, 'preadv', side_effect=read):
+            self.assertEqual(cfg.sha(path), hashlib.sha256(data).hexdigest())
         self.assertEqual(len(set(reads)), 1)
         self.assertEqual(reads[0][1], BUFFER)
         self.assertGreater(len(reads), 2)
-        class Broken(Reader):
-            def readinto(self, buffer):
-                raise OSError('fixture read failure')
-        with patch.object(Path, 'open', return_value=Broken(data)), self.assertRaisesRegex(OSError, 'fixture read failure'):
-            cfg.sha(self.root/'modeled-error')
+        with patch.object(os, 'preadv', side_effect=OSError('fixture read failure')), self.assertRaisesRegex(OSError, 'fixture read failure'):
+            cfg.sha(path)
         with self.assertRaises(FileNotFoundError):
             cfg.sha(self.root/'missing')
-        with self.assertRaises(IsADirectoryError):
+        with self.assertRaises((OSError, ValueError)):
             cfg.sha(self.root)
+
+    def test_aligned_short_reads_continue_and_invalid_short_reads_refuse(self):
+        path = self.root/'short'
+        data = bytes(range(256)) * 513 + b'tail'
+        path.write_bytes(data)
+        original = os.preadv
+        def short(fd, buffers, offset):
+            return original(fd, [buffers[0][:512]], offset)
+        with patch.object(os, 'preadv', side_effect=short):
+            self.assertEqual(cfg.sha(path), hashlib.sha256(data).hexdigest())
+        for count in [0, 1, BUFFER+1]:
+            with self.subTest(count=count), patch.object(os, 'preadv', return_value=count), self.assertRaises(OSError):
+                cfg.sha(path)
+
+    def test_unsupported_direct_io_never_falls_back(self):
+        path = self.root/'unsupported'
+        path.write_bytes(b'bytes')
+        for target, error in [('os.open', OSError(errno.EOPNOTSUPP, 'unsupported open')),
+                              ('runtime.configuration._direct_alignment', OSError(errno.ENOTSUP, 'unsupported alignment')),
+                              ('os.preadv', OSError(errno.EINVAL, 'unsupported read'))]:
+            with self.subTest(target=target), patch(target, side_effect=error), patch.object(Path, 'open', side_effect=AssertionError('buffered fallback')), self.assertRaises(OSError):
+                cfg.sha(path)
+        with patch.object(cfg.ctypes, 'CDLL', return_value=object()), self.assertRaisesRegex(OSError, 'DIOALIGN'):
+            cfg.sha(path)
+        for mask, memory, offset in [(0, 512, 512), (0x2000, 0, 0), (0x2000, 3, 512), (0x2000, 131072, 512)]:
+            def statx(fd, name, flags, request, result):
+                cfg.struct.pack_into('=I', result, 0, mask)
+                cfg.struct.pack_into('=II', result, 152, memory, offset)
+                return 0
+            with self.subTest(alignment=(mask, memory, offset)), patch.object(cfg.ctypes, 'CDLL') as lib:
+                lib.return_value.statx.side_effect = statx
+                with self.assertRaisesRegex(OSError, 'alignment'):
+                    cfg.sha(path)
+        with patch.object(cfg.ctypes, 'CDLL') as lib:
+            lib.return_value.statx.return_value = -1
+            with self.assertRaisesRegex(OSError, 'statx DIOALIGN failed'):
+                cfg.sha(path)
+
+    def test_unproved_filesystem_and_statfs_error_refuse(self):
+        path = self.root/'filesystem'
+        path.write_bytes(b'bytes')
+        def statx(fd, name, flags, request, result):
+            cfg.struct.pack_into('=I', result, 0, 0x2000)
+            cfg.struct.pack_into('=II', result, 152, 512, 512)
+            return 0
+        for result in [0, -1]:
+            with self.subTest(fstatfs=result), patch.object(cfg.ctypes, 'CDLL') as lib:
+                lib.return_value.statx.side_effect = statx
+                lib.return_value.fstatfs.return_value = result
+                with self.assertRaisesRegex(OSError, 'ext4|fstatfs failed'):
+                    cfg.sha(path)
+
+    def test_mutation_truncation_growth_and_path_replacement_refuse(self):
+        path = self.root/'changing'
+        original = os.preadv
+        for action in ['mutate', 'truncate', 'grow', 'replace']:
+            path.write_bytes(b'a'*(2*BUFFER+17))
+            def changed(fd, buffers, offset):
+                count = original(fd, buffers, offset)
+                if offset == 0:
+                    if action == 'replace':
+                        replacement = self.root/'replacement'
+                        replacement.write_bytes(b'a'*(2*BUFFER+17))
+                        replacement.replace(path)
+                    else:
+                        with path.open('r+b', buffering=0) as out:
+                            if action == 'mutate': out.write(b'b')
+                            elif action == 'truncate': out.truncate(1)
+                            else: out.truncate(3*BUFFER)
+                return count
+            with self.subTest(action=action), patch.object(os, 'preadv', side_effect=changed), self.assertRaises((ValueError, OSError)):
+                cfg.sha(path)
+
+    def test_owned_cold_sparse_and_regular_residency_stays_zero(self):
+        libc = ctypes.CDLL(None, use_errno=True)
+        def resident(path):
+            size = path.stat().st_size
+            with path.open('r+b', buffering=0) as stream, mmap.mmap(stream.fileno(), size, access=mmap.ACCESS_COPY) as mapped:
+                vector = (ctypes.c_ubyte * ((size+mmap.PAGESIZE-1)//mmap.PAGESIZE))()
+                address = ctypes.addressof(ctypes.c_char.from_buffer(mapped))
+                self.assertEqual(libc.mincore(ctypes.c_void_p(address), ctypes.c_size_t(size), vector), 0)
+                return sum(value & 1 for value in vector)*mmap.PAGESIZE
+        size = 8*1024**2+17
+        for kind in ['sparse', 'regular']:
+            path = self.root/kind
+            expected = hashlib.sha256()
+            with mmap.mmap(-1, BUFFER) as block:
+                block[:] = bytes(range(256))*256 if kind == 'regular' else bytes(BUFFER)
+                fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_DIRECT, 0o600)
+                try:
+                    if kind == 'regular':
+                        for offset in range(0, size, BUFFER): self.assertEqual(os.write(fd, block), BUFFER)
+                    os.ftruncate(fd, size)
+                finally: os.close(fd)
+                for offset in range(0, size, BUFFER): expected.update(block[:min(BUFFER, size-offset)])
+            before = resident(path)
+            digest = cfg.sha(path)
+            after = resident(path)
+            print('CACHE_PROBE '+json.dumps(dict(kind=kind, size=size, before=before, after=after,
+                peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024)), flush=True)
+            self.assertEqual(digest, expected.hexdigest())
+            self.assertEqual((before, after), (0, 0))
+            path.unlink()
+            self.assertFalse(path.exists())
 
     def frozen(self):
         fixture = self.root/'large-sparse-input'
