@@ -198,6 +198,8 @@ jobs:
             app/build/reports/androidTests/connected/
             macrobenchmark/build/outputs/androidTest-results/connected/
             macrobenchmark/build/reports/androidTests/connected/
+            macrobenchmark/build/outputs/connected_android_test_additional_output/**/*.xml
+            macrobenchmark/build/outputs/connected_android_test_additional_output/**/*.png
           if-no-files-found: ignore
       - name: Collect the results
         run: |
