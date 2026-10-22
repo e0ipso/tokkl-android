@@ -203,6 +203,7 @@ jobs:
             macrobenchmark/build/reports/androidTests/connected/
             macrobenchmark/build/outputs/connected_android_test_additional_output/**/*.xml
             macrobenchmark/build/outputs/connected_android_test_additional_output/**/*.png
+            macrobenchmark/build/outputs/connected_android_test_additional_output/**/*.perfetto-trace
           if-no-files-found: ignore
       - name: Collect the results
         run: |
