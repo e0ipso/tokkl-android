@@ -322,6 +322,41 @@ parsing, with launch/cgroup membership/counters modeled on disk. It does not rer
 the 0284 live fixtures or reclassify the earlier UNKNOWN global event. Nine
 protected modules and preparation/reclaim logic remain unchanged by this extension.
 
+## Failed capture diagnostics
+
+TKA-0292 replayed all 89 retained monitoring frames from the compile/scoped stage
+through the actual Session and monitor. All original decisions match. The four
+abort reads contain real unrelated `t3.service` local high deltas 12/13/13/14,
+against user.slice hierarchical deltas 11/12/13/13. Its cgroup identity is stable.
+Only one intermediate read accounts exactly; the next changes again. The existing
+three resamples therefore correctly fail closed. Exact per-file read/event/kernel
+propagation timing is UNKNOWN. This is no finding about the earlier 0284 origin.
+
+`CaptureEvidence` adds diagnostics only. It calls the unchanged reader, returns
+the same tree and rethrows the same reader exception. Five immutable serialized
+copies retain the most recent raw capture attempts. They hold no raw-tree
+references. Each is capped at 262144 bytes, for at most 1310720 retained payload
+bytes, plus the deque/bytes object overhead reported by `memory()`. This is a
+buffer bound, not a process RSS limit. Serialization has transient encoder and
+bounded output buffers. An oversized or unencodable frame becomes an explicit
+diagnostic-gap record; it never changes the tree given to the monitor.
+
+Only failures write files. Raw reader exceptions and existing controller abort
+boundaries persist available frames, Session-view/assessment context or the exact
+exception. Context is capped at 524288 bytes. Each file is at most 1839104 bytes;
+at most four files are attempted per controller, including failed writes, with no
+refund. File, directory and parent directory are fsynced. Diagnostic write errors
+are returned as diagnostic errors and never clear or replace the original abort.
+The monitor, Session, resource guards, retry limits/anchor and cleanup are unchanged.
+
+These are available-frame diagnostics, not new per-file kernel timing. They do
+not recover unretained history, justify a retry, activate a resource window or
+declare global cleanliness. A root-approved fresh snapshot/adoption is required
+to use them. The failed stage's 3564269568 reserved bytes and two preparations
+remain consumed. Any continuation must preserve that ledger and its two remaining
+slots. Successful compile receipts remain retained observations; missing historical
+tool/classpath/artifact fingerprints cannot be filled by hashing current files.
+
 The dedicated final-tree API31 compatibility cycle still includes TKA-0271,
 TKA-0281 and all deferred coverage. After shared-code compatibility fixes, rerun
 affected API36 checks and complete release verification. Development and

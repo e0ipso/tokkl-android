@@ -5,6 +5,7 @@ if __name__ != '__main__' or '--execute' not in sys.argv:
 from configuration import execution_configuration
 config = execution_configuration(__file__)
 from pathlib import Path
+from capture_evidence import CaptureEvidence
 from scoped_results import assess_scoped
 from scope_completion import Session, EvidenceError
 from event_monitor_0274 import capture,Monitor
@@ -39,6 +40,7 @@ def preparation_snapshot():
 state['configuration_sha256']=config['_sha256'];state['run_id']=config['run_id'];state['lease_id']=config['lease_id'];state['server_image']=config['server_image'];state['proxy_image']=config['proxy_image'];state['reclaim_budget_bytes']=config['reclaim_budget_bytes'];state['reclaim_reserved_bytes']=config['carried_reclaim_bytes'];state['preparations']=[];state['prepared_labels']=[]
 once=base/(config['plan'][0]['label']+'-plan-once.json')
 with once.open('x') as f:f.write(json.dumps({'controller_pid':os.getpid(),'state':str(state_path),'started':now()})+'\n')
+capture=CaptureEvidence(capture,base/'failure-evidence')
 def prepare(label,required_mb,opening=False):
  if len(state['preparations'])>=config['preparation_policy']['max_preparations'] or any(r['label']==label for r in state['preparations']):
   state['blocked']='preparation count or repeated job refused';save();return False
@@ -128,6 +130,7 @@ def run_workload(api, label, args, seconds, standalone=False):
     why='scope completion evidence: '+repr(error);assessment={'abort':why,'evidence_errors':[repr(error)]}
    sample['event_tree']=tree;sample['event_assessment']=assessment;sample['event_baseline']=event_baseline if time.monotonic()-start<10 else None;sample['scope_completion_directory']=str(completion.path)
    if limits()!=temporary:why='window limit interference'
+   if why:sample['failure_evidence']=capture.persist(why,{'event_baseline':event_baseline,'event_tree':tree,'event_assessment':assessment})
    samples.write(json.dumps(sample)+'\n');samples.flush(); state['heartbeat']=time.time(); save()
    if why or time.monotonic()-start>seconds+360:
     stop_reason=why or 'owned workload deadline';completion.abort(stop_reason);subprocess.run(['systemctl','--user','kill','--kill-whom=all','--signal=TERM',owned_scope],stdout=out,stderr=subprocess.STDOUT);break
@@ -143,6 +146,7 @@ def run_workload(api, label, args, seconds, standalone=False):
    subprocess.run(['systemctl','--user','kill','--kill-whom=all','--signal=TERM',owned_scope],stdout=out,stderr=subprocess.STDOUT)
   try:completion.await_cleanup(deadline=cleanup_deadline)
   except (EvidenceError,OSError,ValueError,KeyError,TypeError) as error:stop_reason=stop_reason or 'scope cleanup evidence: '+repr(error)
+ if stop_reason:state['failure_evidence']=capture.persist(stop_reason,{'scope_completion_directory':str(completion.path),'stop_reason':stop_reason})
  text=log.read_text(errors='replace');result_root=project/'app/build/outputs/androidTest-results/connected/debug';copied=base/(name+'-'+tag+'-results');counts={'tests':0,'failures':0,'errors':0,'skipped':0};failures=[]
  if not standalone and result_root.exists():
   shutil.copytree(result_root,copied)

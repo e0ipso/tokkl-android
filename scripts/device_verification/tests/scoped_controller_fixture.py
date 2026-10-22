@@ -7,6 +7,7 @@ from contextlib import ExitStack
 from unittest.mock import patch
 import ast,copy,json,os,re,shutil,subprocess,sys,time,types,xml.etree.ElementTree as ET
 import scope_completion as sc
+from capture_evidence import CaptureEvidence
 from event_monitor_0274 import Monitor,KEYS
 from scoped_results import assess_scoped,declare,COMPILE_FIRST,COMPILE_ARGS
 from runtime.configuration import validate,adopted_configuration,CANONICAL_GATE,sha
@@ -74,7 +75,7 @@ class WorkloadFixture:
         if scenario=='wrong-api':self.job[0]=31
         if scenario=='wrong-seconds':self.job[3]+=1
         if scenario=='wrong-label':self.job[1]='other-job'
-        self.ns={'Path':self.controller_path,'base':self.base,'project':self.project,'app':self.app,'runtime':self.runtime,'gate':CANONICAL_GATE,'tag':'fixture','state':{'tests':[]},'save':self.save,'limits':lambda:dict(self.temporary),'temporary':self.temporary,'owned_scope':None,'now':lambda:'fixture','time':time,'json':json,'os':os,'re':re,'shutil':shutil,'ET':ET,'Monitor':Monitor,'capture':self.capture,'EvidenceError':sc.EvidenceError,'assess_scoped':assess_scoped,'config':self.checked}
+        self.ns={'Path':self.controller_path,'base':self.base,'project':self.project,'app':self.app,'runtime':self.runtime,'gate':CANONICAL_GATE,'tag':'fixture','state':{'tests':[]},'save':self.save,'limits':lambda:dict(self.temporary),'temporary':self.temporary,'owned_scope':None,'now':lambda:'fixture','time':time,'json':json,'os':os,'re':re,'shutil':shutil,'ET':ET,'Monitor':Monitor,'capture':CaptureEvidence(self.capture,self.base/'failure-evidence'),'EvidenceError':sc.EvidenceError,'assess_scoped':assess_scoped,'config':self.checked}
         self.ns['Session']=self.make_session
         self.ns['subprocess']=types.SimpleNamespace(Popen=self.launch,run=self.control,STDOUT=-2,TimeoutExpired=TimeoutError)
         source=subprocess.check_output(['git','show','ec509ff:scripts/device_verification/runtime/controller.py'],cwd=PACKAGE.parent.parent,text=True) if legacy else (PACKAGE/'runtime/controller.py').read_text()
