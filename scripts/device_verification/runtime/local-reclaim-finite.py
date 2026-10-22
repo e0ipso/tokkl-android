@@ -1,12 +1,15 @@
 from pathlib import Path
 import datetime,fcntl,json,os,subprocess,sys,time
 base=Path(__file__).resolve().parent; app=Path('/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice')
-if len(sys.argv)==3 and sys.argv[1]=='--write':
+from preparation_policy import helper_request,reserve_write
+request=helper_request(base,sys.argv[1:])
+if request['write']:
+ reserve_write(request)
  fd=os.open(app/'memory.reclaim',os.O_WRONLY)
  try:os.write(fd,(sys.argv[2]+' swappiness=0').encode())
  finally:os.close(fd)
  sys.exit(0)
-amount=int(sys.argv[1]);assert 0<amount<=2147483648
+amount=request['amount']
 stamp=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'); dest=base/('local-reclaim-'+stamp+'.json');raw=dest.with_suffix('.log')
 def snap():
  stat={k:int(v) for k,v in (x.split() for x in (app/'memory.stat').read_text().splitlines())}
@@ -21,7 +24,7 @@ lock=open('/run/user/1000/tokkl-android-mem-gate.lock','a');fcntl.flock(lock,fcn
 s=(app/'memory.reclaim').stat();assert s.st_uid==1000 and s.st_gid==1001 and (s.st_mode&0o777)==0o200 and os.access(app/'memory.reclaim',os.W_OK)
 before=snap();assert before['limits'] in [{'memory.high':'10737418240','memory.max':'12884901888','memory.swap.max':'2147483648'},{'memory.high':'15032385536','memory.max':'16106127360','memory.swap.max':'2147483648'}]
 assert before['stat']['inactive_file']>=amount,'inactive file cache does not cover requested write'
-cmd=['/usr/bin/python3',str(Path(__file__).resolve()),'--write',str(amount)];record={'command':cmd,'target':str(app/'memory.reclaim'),'payload':str(amount)+' swappiness=0','requested':amount,'before':before,'samples':[]};start=time.monotonic();reason=[]
+cmd=['/usr/bin/python3',str(Path(__file__).resolve()),'--write',str(amount),'--state',str(request['state_path']),'--preparation',str(request['preparation'])];record={'command':cmd,'target':str(app/'memory.reclaim'),'payload':str(amount)+' swappiness=0','requested':amount,'before':before,'samples':[]};start=time.monotonic();reason=[]
 with raw.open('w') as out:
  p=subprocess.Popen(cmd,stdout=out,stderr=subprocess.STDOUT)
  while p.poll() is None:

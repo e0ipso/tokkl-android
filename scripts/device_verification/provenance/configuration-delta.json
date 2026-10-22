@@ -53,5 +53,20 @@
     "before": "state['checked_base']='7707c24e52792a989d7f36a86d2ac00488155b77'",
     "after": "state['checked_base']=config['checked_head']",
     "occurrences": 1
+  },
+  {
+    "before": " before=preparation_snapshot();expected=original if opening else temporary",
+    "after": " if len(state['preparations'])>=config['preparation_policy']['max_preparations'] or any(r['label']==label for r in state['preparations']):\n  state['blocked']='preparation count or repeated job refused';save();return False\n before=preparation_snapshot();expected=original if opening else temporary",
+    "occurrences": 1
+  },
+  {
+    "before": "  cap=2147483648",
+    "after": "  cap=config['preparation_policy']['max_request_bytes']",
+    "occurrences": 1
+  },
+  {
+    "before": "cmd=['/usr/bin/python3',str(base/'local-reclaim-finite.py'),str(amount)]",
+    "after": "cmd=['/usr/bin/python3',str(base/'local-reclaim-finite.py'),str(amount),'--state',str(state_path),'--preparation',str(len(state['preparations'])-1)]",
+    "occurrences": 1
   }
 ]

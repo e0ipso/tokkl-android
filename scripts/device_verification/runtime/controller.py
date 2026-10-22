@@ -39,6 +39,8 @@ state['configuration_sha256']=config['_sha256'];state['run_id']=config['run_id']
 once=base/(config['plan'][0]['label']+'-plan-once.json')
 with once.open('x') as f:f.write(json.dumps({'controller_pid':os.getpid(),'state':str(state_path),'started':now()})+'\n')
 def prepare(label,required_mb,opening=False):
+ if len(state['preparations'])>=config['preparation_policy']['max_preparations'] or any(r['label']==label for r in state['preparations']):
+  state['blocked']='preparation count or repeated job refused';save();return False
  before=preparation_snapshot();expected=original if opening else temporary
  rec={'label':label,'opening':opening,'before':before,'required_mb':required_mb,'write_count':0};state['preparations'].append(rec);state['heartbeat']=time.time();save()
  if before['limits']!=expected:rec['blocked']='limits differ from expected; no overwrite';save();return False
@@ -48,12 +50,12 @@ def prepare(label,required_mb,opening=False):
  if deficit and os.environ.get('NO_RECLAIM')=='1':
   rec['blocked']='repeated workload cache admission prohibited';save();return False
  if deficit:
-  cap=2147483648
+  cap=config['preparation_policy']['max_request_bytes']
   amount=deficit+134217728
   if amount>cap or amount>before['stat']['inactive_file'] or state['reclaim_reserved_bytes']+amount>state['reclaim_budget_bytes']:
    rec['blocked']='single-write size, inactive file coverage or finite 6GiB budget unavailable';save();return False
   state['reclaim_reserved_bytes']+=amount;rec.update(requested=amount,write_count=1)
-  cmd=['/usr/bin/python3',str(base/'local-reclaim-finite.py'),str(amount)];log=base/(label+'-admission-'+tag+'.log');rec.update(command=cmd,log=str(log));save()
+  cmd=['/usr/bin/python3',str(base/'local-reclaim-finite.py'),str(amount),'--state',str(state_path),'--preparation',str(len(state['preparations'])-1)];log=base/(label+'-admission-'+tag+'.log');rec.update(command=cmd,log=str(log));save()
   with log.open('w') as out:r=subprocess.run(cmd,stdout=out,stderr=subprocess.STDOUT,cwd=project)
   rec['exit']=r.returncode
   try:rec['helper_result']=json.loads(log.read_text().splitlines()[-1])

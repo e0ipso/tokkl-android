@@ -1,16 +1,17 @@
 # Maintained device verification candidate
 
 This package promotes the released TKA-0280 operational candidate into reviewable
-repository code. It is a **candidate**, with host-only verification. It has not
-run the SDK, Gradle, an emulator, a live systemd scope, a limit window or reclaim.
+repository code. It remains an inactive candidate. Bounded owned live fixtures
+exercise its controller, Session, cgroups and watchdog service with harmless
+payloads. They never run the SDK, Gradle, an emulator, a limit window or reclaim.
 Do not replace an active lease's frozen cache helpers with these files.
 
 The coordinator controls landing, adoption and the next integrated gate freeze.
-The TKA-0259 captured-Stop lease uses its own immutable cache runtime. This
-package can be considered only after that lease releases. No ready gate needs
-to wait for it. Before a first expensive run, the coordinator must validate the
-configured maintained controller with cheap owned live fixtures under a separate
-authorization. Source conformance does not establish live integration.
+The TKA-0259 captured-Stop lease used its own immutable cache runtime and has
+released. Root separately authorized the fixtures described below. Their evidence
+does not activate this package. The coordinator must accept the complete positive
+and failed observations, then freeze matching inputs, runtime, configuration and
+an exclusive lease before an expensive run.
 
 ## Source and configuration
 
@@ -31,11 +32,13 @@ analysis and adaptation guide are retained with their original uncertainty.
 Unchanged implementation includes the event monitor, duration policy,
 Session/holder protocol and Path(root) normalization, identity-aware cleanup,
 both private shims, finite watchdog service, original planned-watchdog body and
-conditional rollback body. Only reclaim's evidence directory changes to its
-immutable snapshot directory. All control functions, outer exception/finally
-ordering, preparation limits, fallback command and controller guard semantics
-remain checked against the released source. Configuration supplies the project,
-gate path, run identity, environment, finite plan and explicitly carried budget.
+conditional rollback body. Reclaim's evidence directory uses its immutable snapshot directory. The explicit
+root-authorized preparation policy replaces the legacy 2 GiB request ceiling in
+both controller and helper, with zero as the default. `preparation-delta.json`
+records the reviewed helper changes. All remaining control functions, outer
+exception/finally ordering, fallback command and guard semantics remain checked
+against the released source. Configuration supplies the project, gate path, run
+identity, environment, finite plan and explicitly carried budget.
 
 The guards retained include:
 
@@ -93,6 +96,24 @@ preflight and fixtures. Verify it before adoption. Future maintained edits need
 an intentional manifest update, renewed host checks and review of changed safety
 logic; never refresh hashes to suppress a conformance failure.
 
+The separately authorized live runner is `test_live.py`. Its four controller
+cases cover success, payload nonzero exit, capture-exception cleanup and loss of
+required scope evidence. Actual controller functions and its outer try/finally
+run with real Session, holder processes and cgroups. Admission, preparation,
+shared-window callbacks and destructive rollback remain modeled. A separate
+persistent watchdog service runs the unchanged body in inactive `prepared`
+phase across two real 60-second intervals. An independent real timer invokes a
+harmless marker instead of the destructive fallback body. Every unit is uniquely
+owned, capped at 128 MiB with swap disabled and choom 1000. The runner records
+PID start identities, final counters and exact-unit cleanup.
+
+Its default watchdog sampling scope is global. Root may separately authorize
+`--cases --watchdog-scope owned` to prove only the service lifetime with actual
+Session sampling its own service cgroup. That option refuses controller cases.
+It establishes neither global resource cleanliness nor gate success. Future
+monitor samples and assessments are persisted before an abort. Missing historical
+failed samples remain missing. Do not rerun live fixtures without authorization.
+
 ## Coordinator preparation and activation
 
 Copy `example.config.json` outside the repository and fill every placeholder.
@@ -117,8 +138,15 @@ already frozen authorized path; adding new plan shapes requires explicit review
 of their expected finalized counts. API31 execution is refused by this development
 configuration. API31 compatibility remains a later dedicated cycle.
 
-`reclaim_budget_bytes` is at most the previously authorized 6 GiB, not a renewed
-authorization. Default zero permits no reclaim. `carried_reclaim_bytes` must
+`reclaim_budget_bytes` is at most 6 GiB and grants no renewed authorization.
+Default zero permits no reclaim. `preparation_policy.max_request_bytes` defaults
+to zero and is at most 4 GiB; `max_preparations` is at most four. Each distinct
+planned job permits at most one full fresh deficit plus 128 MiB, covered entirely
+by inactive file cache. Both entry points require matching root adoption and
+bind the reservation to project, configuration, lease, state path and job index.
+The helper persists an exclusive write intent before opening `memory.reclaim`.
+Failed writes consume their reservation and cannot be replayed or refunded.
+`carried_reclaim_bytes` must
 exactly match the pinned `prior_window` reservation ledger when continuing a
 budget. Preserve previous finite budget records separately when the coordinator
 explicitly authorizes a new budget. Do not reset a failed attempt's reservation,
@@ -138,7 +166,9 @@ python3 -B scripts/device_verification/prepare.py --config /disk/run-config.json
 
 Preparation copies the one maintained implementation, never rewrites it. Each
 snapshot receives `run-config.json`, `runtime-manifest.json` and a conformance
-receipt. It refuses an existing output directory and never launches a workload.
+receipt, plus an owned mode-0700 disk `scratch` directory. Execution refuses
+missing, symlinked or unsafe scratch directories. Preparation refuses an
+existing output directory and never launches a workload.
 An interrupted partial preparation remains on disk for inspection; use a fresh
 directory rather than merging files into it.
 
@@ -164,13 +194,27 @@ before constructing a new plan and keep every required integrated obligation.
 
 ## Verification limits
 
-This delivery demonstrates source conformance, configuration rejection behavior,
-the actual launcher argument contract, final-evidence protocol and modeled outer
-cleanup ordering on the host. The new configured maintained controller still
-needs cheap owned live cgroup/controller fixtures. The actual SDK/API36 app and
-benchmark matrix, all 68 screenshot references, JVM/lint/static/assemble checks
-and reproducibility remain coordinator lease obligations. No current full-device
-runtime or throughput improvement is measured here.
+Host checks demonstrate source conformance, configuration rejection behavior,
+launcher arguments, final-evidence protocol, preparation binding and modeled
+cleanup ordering. See the handoff receipt for unique live case counts, failed
+fixture attempts, the failed global-resource observation and the separately
+bounded service-lifetime proof. A component proof cannot clear a global abort.
+The new runner persists future failed monitor samples without reconstructing
+missing historical evidence or assigning an unproven event origin.
+
+`audit_plan.py --config /disk/run-config.json` reads the actual controller's
+opening snapshot functions, checks the whole configured preparation request,
+resolves configured tools and records SDK/JDK metadata, screenshot-reference
+count and benchmark source fingerprints. This never admits or launches work.
+Snapshots expire; root must reread conditions under the eventual exclusive lease.
+
+The SDK/API36 full app and benchmark matrix, all 68 screenshot references,
+authoritative assemble/check and reproducibility remain coordinator obligations.
+The approved full plan uses a 90-minute API36 payload floor, one slot, followed
+by authoritative assemble/check and reproducibility. Its separate finite budget
+requires root adoption. Historical scoped usage remains immutable provenance.
+The missing authoritative 10 percent benchmark baseline remains an owner
+TKA-0228 limitation. No production throughput reduction is measured here.
 
 The dedicated final-tree API31 compatibility cycle still includes TKA-0271,
 TKA-0281 and all deferred coverage. After shared-code compatibility fixes, rerun

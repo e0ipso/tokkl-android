@@ -53,9 +53,12 @@ def verify(base=BASE):
     original = reference.read_text()
     old = next(line.split(';')[0] for line in original.splitlines() if line.startswith('base=Path('))
     configured = (base/'runtime/local-reclaim-finite.py').read_text()
+    for delta in reversed(json.loads((base/'provenance/preparation-delta.json').read_text())):
+        require(configured.count(delta['after']) == delta['occurrences'], 'preparation/helper delta differs')
+        configured = configured.replace(delta['after'], delta['before'])
     new = 'base=Path(__file__).resolve().parent'
     require(configured.count(new) == 1 and configured.replace(new, old, 1) == original,
-            'reclaim differs beyond its evidence directory')
+            'reclaim differs beyond its reviewed request binding and evidence directory')
     return {'conformant': True, 'unchanged_modules': [n for n, v in sources.items() if v.get('policy') == 'byte-identical'],
             'controller': sha(base/'runtime/controller.py'),
             'historical_watchdog_sha256': sources['watchdog_lifetime.py']['sha256'],

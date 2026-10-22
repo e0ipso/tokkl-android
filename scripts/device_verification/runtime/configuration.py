@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 
 MAX_BUDGET = 6 * 1024**3
+MAX_REQUEST = 4 * 1024**3
 CANONICAL_GATE = '/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh'
 
 
@@ -58,6 +59,15 @@ def validate(config, *, fresh=True):
     for key in ['reclaim_budget_bytes', 'carried_reclaim_bytes']:
         require(type(config.get(key)) is int and 0 <= config[key] <= MAX_BUDGET, 'invalid finite '+key)
     require(config['carried_reclaim_bytes'] <= config['reclaim_budget_bytes'], 'carried reservation exceeds authorized budget')
+    policy = config.get('preparation_policy', {'max_request_bytes': 0, 'max_preparations': 4})
+    require(isinstance(policy, dict) and set(policy) == {'max_request_bytes', 'max_preparations'},
+            'explicit bounded preparation policy required')
+    require(type(policy['max_request_bytes']) is int and 0 <= policy['max_request_bytes'] <= MAX_REQUEST,
+            'per-preparation request must be at most 4 GiB; zero disables writes')
+    require(type(policy['max_preparations']) is int and 1 <= policy['max_preparations'] <= 4,
+            'one to four distinct preparations required')
+    require(config['reclaim_budget_bytes'] == 0 or policy['max_request_bytes'] > 0,
+            'nonzero budget requires an explicit preparation request cap')
     require('prior_window' in config, 'explicit prior_window required; null only for a newly authorized budget')
     if config['prior_window'] is not None:
         prior = Path(config['prior_window'])
@@ -69,6 +79,7 @@ def validate(config, *, fresh=True):
         require(config['carried_reclaim_bytes'] == 0, 'nonzero carry requires prior ledger')
     jobs = config.get('plan')
     require(isinstance(jobs, list) and 0 < len(jobs) <= 4, 'one to four finite sequential jobs required')
+    require(len(jobs) <= policy['max_preparations'], 'plan exceeds preparation count allowance')
     labels = set()
     for job in jobs:
         require(re.fullmatch('[a-z][a-z0-9-]{0,47}', job.get('label', '')), 'unsafe job label')
@@ -108,7 +119,29 @@ def validate(config, *, fresh=True):
         require(match and re.fullmatch(r'[^\s]+@sha256:[0-9a-f]{64}', match[1]), 'actual launcher image digest missing')
         require(config.get(key) == match[1], 'configured '+key+' differs from the actual launcher')
     require(config.get('slots') == 1, 'one sequential emulator path only')
-    return dict(config, _sha256=hashlib.sha256(canonical(config)).hexdigest())
+    return dict(config, preparation_policy=policy, _sha256=hashlib.sha256(canonical(config)).hexdigest())
+
+
+def adopted_configuration(directory, adoption_path):
+    """Bind both controller and helper entry points to the same root adoption."""
+    directory = Path(directory).resolve()
+    config = validate(load(directory/'run-config.json'), fresh=False)
+    require(Path(config['run_dir']) == directory, 'controller/helper must use its frozen run snapshot')
+    scratch = directory/'scratch'
+    require(scratch.is_dir() and not scratch.is_symlink() and scratch.stat().st_uid == os.getuid()
+            and scratch.stat().st_mode & 0o777 == 0o700, 'private disk scratch directory missing or unsafe')
+    manifest = load(directory/'runtime-manifest.json')
+    for name, expected in manifest.items():
+        require(not Path(name).is_absolute() and '..' not in Path(name).parts, 'unsafe runtime manifest path')
+        require(sha(directory/name) == expected, 'frozen runtime changed: '+name)
+    adoption = load(adoption_path)
+    require(adoption.get('configuration_sha256') == config['_sha256']
+            and adoption.get('runtime_sha256') == hashlib.sha256(canonical(manifest)).hexdigest()
+            and adoption.get('lease_id') == config['lease_id'] and adoption.get('approved_by'),
+            'explicit coordinator adoption must match configuration, runtime and lease')
+    require(adoption.get('cheap_live_controller_fixtures_verified') is True,
+            'coordinator must first verify the configured controller with cheap owned live fixtures')
+    return config
 
 
 def execution_configuration(controller):
@@ -118,18 +151,7 @@ def execution_configuration(controller):
     parser.add_argument('--adoption', type=Path, required=True)
     args = parser.parse_args()
     directory = Path(controller).resolve().parent
-    config = validate(load(directory/'run-config.json'), fresh=False)
-    require(Path(config['run_dir']) == directory, 'controller must run only from its frozen run snapshot')
-    manifest = load(directory/'runtime-manifest.json')
-    for name, expected in manifest.items():
-        require(sha(directory/name) == expected, 'frozen runtime changed: '+name)
-    adoption = load(args.adoption)
-    require(adoption.get('configuration_sha256') == config['_sha256']
-            and adoption.get('runtime_sha256') == hashlib.sha256(canonical(manifest)).hexdigest()
-            and adoption.get('lease_id') == config['lease_id'] and adoption.get('approved_by'),
-            'explicit coordinator adoption must match configuration, runtime and lease')
-    require(adoption.get('cheap_live_controller_fixtures_verified') is True,
-            'coordinator must first verify the configured controller with cheap owned live fixtures')
+    config = adopted_configuration(directory, args.adoption)
     # Per-run environment has one source. Existing floors, ramp and wait remain
     # enforced by the unchanged gate and controller, never lowered here.
     for name in ['FIX_RUN', 'CARRIED_RECLAIM', 'PRIOR_WINDOW', 'NO_RECLAIM',
@@ -137,4 +159,5 @@ def execution_configuration(controller):
                  'MEM_GATE_SETTLE_S', 'TOKKL_TEST_SLOTS', 'TOKKL_TEST_AVD', 'ANDROID_SERIAL']:
         os.environ.pop(name, None)
     os.environ['TOKKL_TEST_SLOTS'] = str(config['slots'])
+    os.environ['TOKKL_VERIFICATION_ADOPTION'] = str(args.adoption.resolve())
     return config

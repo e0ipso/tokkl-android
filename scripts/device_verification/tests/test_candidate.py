@@ -28,6 +28,7 @@ import watchdog_lifetime as watchdog
 from duration_policy import window_bounds, full_suite_seconds
 from controller_cleanup import install_controller
 from test_event_monitor import snapshot, APP, OWN
+from test_live import monitored_sample
 from event_monitor_0274 import Monitor
 import event_monitor_0274 as events
 
@@ -48,6 +49,7 @@ def config(directory):
             'project': str(PROJECT), 'run_dir': str(directory/'frozen'), 'gate': cfg.CANONICAL_GATE,
             'checked_head': '0'*40, 'environment': {'PATH': '/usr/bin:/bin', 'JAVA_HOME': '/jdk', 'ANDROID_HOME': '/sdk'},
             'reclaim_budget_bytes': 0, 'carried_reclaim_bytes': 0, 'prior_window': None,
+            'preparation_policy': {'max_request_bytes': 0, 'max_preparations': 4},
             'slots': 1, 'plan': [{'api': 36, 'label': 'full36', 'standalone': False, 'seconds': 5400,
                                  'args': ['scripts/instrumented-tests.sh', ':macrobenchmark:connectedBenchmarkAndroidTest', '--continue']}],
             'server_image': re.search(r"^readonly IMAGE='([^']+)'$", source, re.M)[1],
@@ -71,10 +73,36 @@ class ConfigurationTests(unittest.TestCase):
         result = prepare(self.config)
         self.assertEqual(result['configuration_sha256'], checked['_sha256'])
         self.assertFalse(result['device_or_window_permission'])
+        self.assertTrue((Path(result['run_dir'])/'scratch').is_dir())
+        self.assertEqual((Path(result['run_dir'])/'scratch').stat().st_mode & 0o777, 0o700)
         self.assertEqual((Path(result['run_dir'])/'scope_completion.py').read_bytes(),
                          (PACKAGE/'runtime/scope_completion.py').read_bytes())
         with self.assertRaisesRegex(ValueError, 'fresh unused'):
             prepare(self.config)
+
+    def test_failed_live_samples_are_persisted_without_invented_evidence(self):
+        path = self.directory/'samples.jsonl'
+        tree = {'rows': {}, 'errors': ['required scope vanished']}
+        assessment = {'abort': 'unknown evidence'}
+        self.assertEqual(monitored_sample(path, lambda: tree, lambda value: assessment), (tree, assessment))
+        self.assertEqual(json.loads(path.read_text())['assessment'], assessment)
+        def fail():
+            raise OSError('capture failed before returning a sample')
+        with self.assertRaises(OSError):
+            monitored_sample(path, fail, lambda value: self.fail('no sample to inspect'))
+        rows = [json.loads(line) for line in path.read_text().splitlines()]
+        self.assertIsNone(rows[-1]['tree'])
+        self.assertIn('capture failed', rows[-1]['error'])
+
+    def test_snapshot_scratch_must_exist_and_remain_private(self):
+        result = prepare(self.config)
+        scratch = Path(result['run_dir'])/'scratch'
+        scratch.chmod(0o755)
+        with self.assertRaisesRegex(ValueError, 'scratch directory'):
+            cfg.adopted_configuration(Path(result['run_dir']), self.directory/'absent-adoption.json')
+        scratch.rmdir()
+        with self.assertRaisesRegex(ValueError, 'scratch directory'):
+            cfg.adopted_configuration(Path(result['run_dir']), self.directory/'absent-adoption.json')
 
     def test_default_and_missing_adoption_refuse_before_any_host_work(self):
         result = subprocess.run([sys.executable, '-B', str(PACKAGE/'runtime/controller.py')], capture_output=True, text=True)
@@ -131,6 +159,7 @@ class ConfigurationTests(unittest.TestCase):
         ledger = self.directory/'prior.json'
         ledger.write_text(json.dumps({'reclaim_reserved_bytes': 123}))
         candidate = dict(self.config, reclaim_budget_bytes=1000, carried_reclaim_bytes=123,
+                         preparation_policy={'max_request_bytes': 1000, 'max_preparations': 4},
                          prior_window=str(ledger), prior_window_sha256=cfg.sha(ledger))
         self.assertTrue(cfg.validate(candidate))
         candidate['carried_reclaim_bytes'] = 0
@@ -159,6 +188,31 @@ class ConfigurationTests(unittest.TestCase):
 
 
 class ActualLauncherTests(unittest.TestCase):
+    def test_live_fixture_case_selection_and_real_capture_race_are_host_checked(self):
+        source = (PACKAGE/'tests/live_controller_case.py').read_text()
+        tree = ast.parse(source)
+        supported = ast.literal_eval(next(n.value for n in tree.body if isinstance(n, ast.Assign)
+                                         and any(isinstance(t, ast.Name) and t.id == 'allowed' for t in n.targets)))
+        self.assertEqual(set(supported), {'success', 'nonzero', 'capture', 'unknown-disappearance'})
+        # A normal unrelated sibling closing before a read is not the historical
+        # missing-evidence race. Force actual disappearance after enumeration.
+        with tempfile.TemporaryDirectory(dir=SCRATCH) as tmp:
+            root = Path(tmp)/'tree'
+            root.mkdir()
+            zero = ''.join(k+' 0\n' for k in events.KEYS)
+            for name, value in {'memory.events': zero, 'memory.events.local': zero, 'memory.current': '0',
+                                'memory.high': 'max', 'memory.max': 'max', 'memory.pressure': 'full avg10=0'}.items():
+                (root/name).write_text(value)
+            actual = Path.stat
+            def gone(path, *args, **kwargs):
+                if path == root:
+                    raise FileNotFoundError('actual cgroup read fixture')
+                return actual(path, *args, **kwargs)
+            with patch.object(Path, 'stat', gone):
+                result = events.capture(root)
+            self.assertTrue(result['errors'])
+            self.assertIn('FileNotFoundError', json.dumps(result['errors']))
+
     def test_actual_boot_function_argv_and_holder_placement(self):
         source = (PROJECT/'scripts/instrumented-tests.sh').read_text()
         start = source.index('boot_emulator() {\n')

@@ -21,6 +21,7 @@ def prepare(config):
     destination = Path(config['run_dir'])
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.mkdir(mode=0o700)  # No merge/overwrite of historical directories.
+    (destination/'scratch').mkdir(mode=0o700)
     source = BASE/'runtime'
     manifest = {}
     for path in sorted(source.rglob('*')):

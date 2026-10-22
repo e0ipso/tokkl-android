@@ -14,6 +14,7 @@
     "ANDROID_HOME": "/home/e0ipso/Android/Sdk"
   },
   "reclaim_budget_bytes": 0,
+  "preparation_policy": {"max_request_bytes": 0, "max_preparations": 4},
   "carried_reclaim_bytes": 0,
   "prior_window": null,
   "slots": 1,

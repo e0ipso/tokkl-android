@@ -1,0 +1,17 @@
+[
+  {
+    "before": "if len(sys.argv)==3 and sys.argv[1]=='--write':",
+    "after": "from preparation_policy import helper_request,reserve_write\nrequest=helper_request(base,sys.argv[1:])\nif request['write']:\n reserve_write(request)",
+    "occurrences": 1
+  },
+  {
+    "before": "amount=int(sys.argv[1]);assert 0<amount<=2147483648",
+    "after": "amount=request['amount']",
+    "occurrences": 1
+  },
+  {
+    "before": "cmd=['/usr/bin/python3',str(Path(__file__).resolve()),'--write',str(amount)]",
+    "after": "cmd=['/usr/bin/python3',str(Path(__file__).resolve()),'--write',str(amount),'--state',str(request['state_path']),'--preparation',str(request['preparation'])]",
+    "occurrences": 1
+  }
+]
