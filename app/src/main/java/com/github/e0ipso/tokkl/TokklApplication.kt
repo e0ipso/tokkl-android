@@ -219,8 +219,9 @@ class TokklApplication : Application() {
             cacheDatabase,
             Dispatchers.IO,
             onQueued = {
-                sender.send()
+                // Register the fallback before a fast drain can finish and cancel it.
                 BackgroundSend.schedule(this)
+                sender.send()
             },
             stopSpan = { start, at, oneStep ->
                 accountSettings.state.value?.time()?.snapStop(start, at, oneStep) ?: SnappedSpan(start, maxOf(at, start))

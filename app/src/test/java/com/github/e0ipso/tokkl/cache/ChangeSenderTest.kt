@@ -14,6 +14,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -620,6 +621,39 @@ class ChangeSenderTest {
 
         runBlocking { withOnEmptied.send().join() }
         assertEquals("a drain of an empty queue sends nothing", 3, synchronized(calls) { calls.size })
+    }
+
+    @Test
+    fun aSendDuringQueueCleanupJoinsTheDrainUntilCancellationFinishes() {
+        val cleaning = CountDownLatch(1)
+        val finishCleanup = CountDownLatch(1)
+        val withCleanup = ChangeSender(
+            store,
+            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            scope = scope,
+            io = Dispatchers.IO,
+            onEmptied = {
+                cleaning.countDown()
+                assertTrue("cleanup was released", finishCleanup.await(10, TimeUnit.SECONDS))
+            },
+            clock = clock,
+        )
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "First")
+        server.enqueue(entry(101, "First", stop = "2026-10-19T08:01:00+00:00"))
+
+        val draining = withCleanup.send()
+        try {
+            assertTrue("the queue emptied and cleanup started", cleaning.await(10, TimeUnit.SECONDS))
+            store.queue(ChangeKind.UPDATE, 101, TAP, stop = TAP.plusSeconds(60), description = "Edited during cleanup")
+            server.enqueue(entry(101, "Edited during cleanup", stop = "2026-10-19T08:01:00+00:00"))
+            assertSame("a send must join the pending background-work cancellation", draining, withCleanup.send())
+            assertFalse("the drain includes its cleanup", draining.isCompleted)
+        } finally {
+            finishCleanup.countDown()
+            runBlocking { draining.join() }
+        }
+        assertTrue("the joined drain also sends changes queued during cleanup", store.changes.isEmpty())
+        assertEquals("the create and the later edit each reach the server", 2, server.requestCount)
     }
 
     /**

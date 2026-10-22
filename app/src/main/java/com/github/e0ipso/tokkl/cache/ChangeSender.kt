@@ -94,10 +94,11 @@ import okhttp3.HttpUrl
  * @param client the signed-in account's client, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
  * @param onSent runs on [io] once a drain has sent at least one change, so the app can refresh:
- *   after the drain's last pass, not after each change or pass. It runs after a restore too.
- * @param onEmptied runs on [io] once a drain that sent at least one change has left nothing to
- *   send, inside the drain's job and before [onSent], so the app can cancel a background retry
- *   that would find nothing to send.
+ *   after a quiet drain, not after each change or pass. A change queued during this callback
+ *   drains before the job ends. It runs after a restore too.
+ * @param onEmptied runs on [io] after a quiet drain that sent at least one change has left
+ *   nothing to send, inside the drain's job and before [onSent], so the app can cancel a
+ *   background retry that would find nothing to send.
  * @param onDiscarded runs on [io] with how many changes a 404 took out of the queue because the
  *   server no longer has their entry, so the app can say so.
  * @param serverStart where the server puts a start once the entry is stopped: Tokkl snaps it to
@@ -252,6 +253,13 @@ class ChangeSender(
                 lastOutcome = outcome
                 sent += outcome?.sent ?: 0
                 if (outcome is Outcome.Waiting) retryAfterWait(outcome.until)
+                if (!synchronized(lock) { again }) {
+                    // Keep this job published while cancelling background work and refreshing.
+                    // A caller during cleanup must join it, and any new change gets another pass.
+                    if (sent > 0 && lastOutcome is Outcome.Empty) onEmptied()
+                    if (sent > 0) onSent()
+                    sent = 0
+                }
                 drainAgain = synchronized(lock) {
                     again.also {
                         again = false
@@ -263,9 +271,6 @@ class ChangeSender(
             // A cancelled or failed drain lets the next call start another.
             if (drainAgain) synchronized(lock) { sending = null }
         }
-        if (sent > 0 && lastOutcome is Outcome.Empty) onEmptied()
-        // One refresh for the whole drain, however many changes and passes it took.
-        if (sent > 0) onSent()
     }
 
     /**
