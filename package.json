@@ -13,7 +13,7 @@
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@commitlint/is-ignored": "^21.2.3",
-    "@commitlint/lint": "^21.2.3",
+    "@commitlint/lint": "^21.2.4",
     "@commitlint/load": "^21.2.3",
     "@semantic-release/changelog": "^7.0.0",
     "@semantic-release/commit-analyzer": "^13.0.1",
