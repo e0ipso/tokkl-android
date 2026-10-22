@@ -1,0 +1,4 @@
+com.github.e0ipso.tokkl.entry.EntryFormServerTest#aLegacyZeroLengthEntryKeepsItsTimesOnADescriptionEdit
+com.github.e0ipso.tokkl.signin.SignInScreenTest#fieldErrorsLeaveTheFormInPlace
+com.github.e0ipso.tokkl.widget.WidgetLargeTextTest#theRunningClockControlsAndFavoriteTextFitAtTheLargestFont
+com.github.e0ipso.tokkl.widget.WidgetServerTest#nativeClockTicksWithoutWidgetUpdatesAndProviderHasNoPeriod

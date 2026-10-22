@@ -172,6 +172,14 @@ contains all 18 cases with no failures or skips. Once the focused run passes, ru
 the surrounding tests and required full-suite checks. Add newly discovered
 failures to the focused selection rather than repeating a full run per fix.
 
+`test/filters/api31-suggestions-and-clock.txt` selects both failures from the
+complete API 31 report in run 39851423063. Use it with the same command above
+and check for exactly two passing cases. To exercise their timing repeatedly,
+select `com.github.e0ipso.tokkl.timer.DescriptionSuggestionsRepeatTest` and
+`com.github.e0ipso.tokkl.widget.WidgetClockRepeatTest` as a comma-separated
+`class=` list. All 20 independent cases must pass; a failed case is never retried
+or discarded.
+
 The native Android 13+ notification permission probes need a permission reset before their
 instrumentation process starts. Run each method separately on an emulator the script boots:
 

@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.timer
 
+import android.os.SystemClock
 import androidx.annotation.StringRes
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -8,6 +10,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
@@ -19,10 +22,13 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -101,7 +107,9 @@ class DescriptionSuggestionsServerTest {
     @After
     fun cleanUp() {
         try {
-            AirplaneMode.off()
+            // A failed offline assertion also reaches here. Wait for connectivity before
+            // deleting the account rather than racing the airplane-mode transition.
+            AirplaneMode.set(false, web)
         } finally {
             try {
                 signIn(TokklTestServer.url)
@@ -121,9 +129,10 @@ class DescriptionSuggestionsServerTest {
         entry("Write the report", project, listOf("call"), billable = true, start = now.minus(5, ChronoUnit.HOURS))
         entry("Review the report", projectId = null, tags = emptyList(), billable = false, start = now.minus(7, ChronoUnit.HOURS))
         entry("Lunch", projectId = null, tags = emptyList(), billable = false, start = now.minus(9, ChronoUnit.HOURS))
-        launch {
+        launch { activity ->
             AirplaneMode.set(true, web)
             description().performTextInput("REPORT")
+            awaitKeyboard(activity)
             awaitShown("the count of suggestions") { composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 2))) }
             val count = composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 2))).fetchSemanticsNode()
             assertEquals("TalkBack announces the count", LiveRegionMode.Polite, count.config.getOrNull(SemanticsProperties.LiveRegion))
@@ -139,7 +148,7 @@ class DescriptionSuggestionsServerTest {
             description().performTextInput("acme")
             awaitShown("the suggestion that matches the client") { composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 1))) }
 
-            suggestion("Write the report").performClick()
+            tapSuggestion("Write the report")
             try {
                 awaitShown("the picked description") { composeRule.onNode(hasSetTextAction() and hasText("Write the report")) }
             } catch (e: Throwable) {
@@ -167,8 +176,8 @@ class DescriptionSuggestionsServerTest {
         assertTrue("billable", started.getValue("billable").jsonPrimitive.boolean)
     }
 
-    private fun launch(steps: () -> Unit) {
-        ActivityScenario.launch(MainActivity::class.java).use {
+    private fun launch(steps: (MainActivity) -> Unit) {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
             runBlocking { app.accountSettings.refresh().join() }
@@ -178,8 +187,38 @@ class DescriptionSuggestionsServerTest {
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT.toMillis()) {
                 shows(composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction() and enabled()))
             }
-            steps()
+            lateinit var activity: MainActivity
+            scenario.onActivity { activity = it }
+            steps(activity)
         }
+    }
+
+    /** The real keyboard must take up room before checking and tapping the suggestion list. */
+    private fun awaitKeyboard(activity: MainActivity) {
+        composeRule.waitUntil("the keyboard takes up room", NETWORK_TIMEOUT.toMillis()) {
+            var height = 0
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                height = ViewCompat.getRootWindowInsets(activity.window.decorView)
+                    ?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+            }
+            height > 0
+        }
+    }
+
+    /** Keep the real touch, but aim only after scrolling and keyboard/layout motion settle. */
+    private fun tapSuggestion(description: String) {
+        val node = suggestion(description).performScrollTo()
+        var bounds: Rect? = null
+        var since = SystemClock.uptimeMillis()
+        composeRule.waitUntil("the suggestion keeps still", NETWORK_TIMEOUT.toMillis()) {
+            val now = node.fetchSemanticsNode().boundsInRoot
+            if (now != bounds) {
+                bounds = now
+                since = SystemClock.uptimeMillis()
+            }
+            SystemClock.uptimeMillis() - since >= STILL_MS
+        }
+        node.assertIsDisplayed().performClick()
     }
 
     /** A suggestion in the list, by its description. */
@@ -280,6 +319,7 @@ class DescriptionSuggestionsServerTest {
 
     private companion object {
         const val ENTRIES = 4
+        const val STILL_MS = 500L
         val NETWORK_TIMEOUT: Duration = Duration.ofSeconds(60)
     }
 }

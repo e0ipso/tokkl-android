@@ -111,21 +111,49 @@ class NativeWidget : AutoCloseable {
 
     /** Observe native Chronometer ticks, with no widget updates in between. */
     fun assertClockTicksWithoutUpdates() {
-        val ticks = CountDownLatch(2)
+        val ticks = CountDownLatch(1)
+        var remaining = 2
         var first: String? = null
-        val count = updates.get()
-        onMain {
-            val clock = descendants().filterIsInstance<Chronometer>().single()
-            first = clock.text.toString()
-            clock.setOnChronometerTickListener { ticks.countDown() }
+        var last: String? = null
+        var before = -1
+        var after = -1
+        val clock = onMain {
+            val observed = descendants().filterIsInstance<Chronometer>().single()
+            // Counter reads and ticks share the main thread. An update before the listener
+            // is installed, or after its last tick, is outside the interval under test.
+            before = updates.get()
+            first = observed.text.toString()
+            observed.setOnChronometerTickListener { ticking ->
+                if (--remaining == 0) {
+                    last = ticking.text.toString()
+                    after = updates.get()
+                    ticking.onChronometerTickListener = null
+                    ticks.countDown()
+                }
+            }
+            observed
         }
-        assertTrue("the launcher ticks the clock", ticks.await(4, TimeUnit.SECONDS))
-        onMain {
-            val clock = descendants().filterIsInstance<Chronometer>().single()
-            assertTrue("elapsed time changed", first != clock.text.toString())
-            clock.onChronometerTickListener = null
+        try {
+            assertTrue("the launcher ticks the clock", ticks.await(4, TimeUnit.SECONDS))
+            assertTrue("elapsed time changed", first != last)
+            org.junit.Assert.assertEquals("no RemoteViews update was needed to tick", before, after)
+        } finally {
+            onMain { clock.onChronometerTickListener = null }
         }
-        org.junit.Assert.assertEquals("no RemoteViews update was needed to tick", count, updates.get())
+    }
+
+    /** Binding, resizing and a cache change can each queue a one-off Glance redraw. */
+    fun awaitUpdatesSettled() {
+        var count = updates.get()
+        var since = System.nanoTime()
+        await("the fixture's widget updates settle") {
+            val now = updates.get()
+            if (now != count) {
+                count = now
+                since = System.nanoTime()
+            }
+            System.nanoTime() - since >= TimeUnit.SECONDS.toNanos(1)
+        }
     }
 
     fun await(what: String, timeout: Long = 15_000, condition: () -> Boolean) {

@@ -1,0 +1,2 @@
+com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest#suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField
+com.github.e0ipso.tokkl.widget.WidgetServerTest#nativeClockTicksWithoutWidgetUpdatesAndProviderHasNoPeriod

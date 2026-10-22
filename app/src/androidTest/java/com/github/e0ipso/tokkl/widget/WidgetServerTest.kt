@@ -176,6 +176,12 @@ class WidgetServerTest {
         runBlocking { app.changes.start(workspace, EntryFields("A ticking widget")) }
         native.awaitText("A ticking widget")
         native.awaitDescription(context.getString(R.string.widget_stop_description))
+        // The active Glance composition can show Start's state before WidgetSync has
+        // queued its own redraw. Finish those one-off setup updates before measuring ticks.
+        val expected = runBlocking { app.widgetState.first() }.key()
+        val store = WidgetStore(context)
+        native.await("WidgetSync has queued the running state") { store.load() == expected }
+        native.awaitUpdatesSettled()
         native.assertClockTicksWithoutUpdates()
     }
 
