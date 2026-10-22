@@ -1,12 +1,16 @@
 package com.github.e0ipso.tokkl.benchmark
 
+import android.Manifest
+import android.os.Build
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
 import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -21,6 +25,16 @@ class TimerTapBenchmark {
 
     @get:Rule
     val rule = MacrobenchmarkRule()
+
+    @Before
+    fun allowTimerNotifications() {
+        // The first Start requests notification permission on API 33+. Its system dialog
+        // covers the timer controls, so grant it before measuring Start and Stop.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            InstrumentationRegistry.getInstrumentation().uiAutomation
+                .grantRuntimePermission(TARGET_PACKAGE, Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     @Test
     fun startAndStop() = rule.measureRepeated(
