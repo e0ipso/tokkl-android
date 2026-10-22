@@ -16,6 +16,7 @@ import java.net.UnknownHostException
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -700,16 +701,17 @@ internal fun PendingChange.request(server: ServerUrl): ChangeRequest {
     }
 }
 
+// Android 12's Instant.parse rejects Tokkl's +00:00 timestamps; OffsetDateTime accepts them.
 private fun ServerTimeEntry.matchesStop(change: PendingChange): Boolean =
     id == change.entryId && workspaceId == change.workspaceId &&
-        runCatching { Instant.parse(start) }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
-        stop?.let { runCatching { Instant.parse(it) }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS) &&
+        runCatching { OffsetDateTime.parse(start).toInstant() }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
+        stop?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS) &&
         (serverDeletedAt != null) == change.shortStop
 
 private fun TrashEntry.matchesStop(change: PendingChange): Boolean =
     id == change.entryId && deletedAt != null &&
-        runCatching { Instant.parse(start) }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
-        stop?.let { runCatching { Instant.parse(it) }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS)
+        runCatching { OffsetDateTime.parse(start).toInstant() }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
+        stop?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS)
 
 private fun PendingChange.body(): JsonObject {
     val start = start.truncatedTo(ChronoUnit.SECONDS)
