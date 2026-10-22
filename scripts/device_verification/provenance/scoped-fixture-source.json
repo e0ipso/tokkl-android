@@ -1,0 +1,5 @@
+{
+  "source": "/home/e0ipso/.cache/sift-w10/scoped-results-0286/controller_fixture.py",
+  "sha256": "4d02c57808dd702418c4744150dc67245ae185abe2c0b2467d34efbf1b244238",
+  "adaptation": "disk fixture only; actual maintained run_workload/Session with modeled launch/counters, new source-derived baseline classes and validated prepared config; no cache runtime/grant used"
+}

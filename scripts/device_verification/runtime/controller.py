@@ -5,6 +5,7 @@ if __name__ != '__main__' or '--execute' not in sys.argv:
 from configuration import execution_configuration
 config = execution_configuration(__file__)
 from pathlib import Path
+from scoped_results import assess_scoped
 from scope_completion import Session, EvidenceError
 from event_monitor_0274 import capture,Monitor
 from duration_policy import window_bounds
@@ -189,8 +190,16 @@ def run_workload(api, label, args, seconds, standalone=False):
      if case.findall(kind):benchmark_counts[{'failure':'failures','error':'errors','skipped':'skipped'}[kind]]+=1
   rec['benchmark_counts']=benchmark_counts;rec['benchmark_cases']=benchmark_cases;save()
  stable=not stop_reason and counts['tests']>0 and bool(rec['device_lines']) and bool(tmp_paths) and bool(observed_env) and all(v['ANDROID_TMP'] in tmp_paths for v in observed_env.values()) and cleanup['work_directories_removed'] and cleanup['private_android_tmp_removed'] and cleanup['emulator_scopes_absent'] and not cleanup['new_shared_android_files']
- if not standalone:stable=stable and benchmark_counts['tests']==(1 if label.startswith('tap-scoped') else 2) and not any(benchmark_counts[k] for k in ['failures','errors','skipped'])
- if standalone:stable=not stop_reason
+ if not standalone and any(job['label']==label and 'result_recipe' in job for job in config['plan']):
+  rec['result_contract']=assess_scoped(config,api,label,args,seconds,rec,start_wall,exit_code,stop_reason);save()
+  stable=stable and rec['result_contract']['passed']
+ else:
+  if not standalone:stable=stable and benchmark_counts['tests']==(1 if label.startswith('tap-scoped') else 2) and not any(benchmark_counts[k] for k in ['failures','errors','skipped'])
+ if standalone:
+  stable=not stop_reason
+  if config.get('plan_recipe')=='compile-then-scoped-app-v1' and label==config['plan'][0]['label']:
+   stable=stable and exit_code==0
+   if not stable:rec['prerequisite_failed']=True;state['not_run_labels']=[config['plan'][1]['label']];save()
  return stable and exit_code==0 and counts['failures']==0 and counts['errors']==0,stable
 plan=[(job['api'],job['label'],job['args'],job['seconds'],job['standalone']) for job in config['plan']]
 bounds=window_bounds(plan);state['duration_bounds']=bounds;save()

@@ -9,6 +9,10 @@ import json
 import os
 from pathlib import Path
 import re
+if __package__:
+    from .scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
+else:
+    from scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
 
 MAX_BUDGET = 6 * 1024**3
 MAX_REQUEST = 4 * 1024**3
@@ -80,6 +84,7 @@ def validate(config, *, fresh=True):
     jobs = config.get('plan')
     require(isinstance(jobs, list) and 0 < len(jobs) <= 4, 'one to four finite sequential jobs required')
     require(len(jobs) <= policy['max_preparations'], 'plan exceeds preparation count allowance')
+    validate_plan(config)
     labels = set()
     for job in jobs:
         require(re.fullmatch('[a-z][a-z0-9-]{0,47}', job.get('label', '')), 'unsafe job label')
@@ -92,18 +97,22 @@ def validate(config, *, fresh=True):
         require('--stop' not in args, 'stopping another Gradle daemon is prohibited')
         if not job['standalone']:
             require(job['api'] == 36 and args[0] == 'scripts/instrumented-tests.sh', 'device jobs must use authorized script on API36')
-            require(args == ['scripts/instrumented-tests.sh', ':macrobenchmark:connectedBenchmarkAndroidTest', '--continue']
-                    and not job['label'].startswith('tap-scoped'),
-                    'this candidate accepts the frozen unfiltered integrated device command only')
-            require(job['seconds'] >= 5400, 'retain the observed full-suite 90-minute deadline minimum')
+            if 'result_recipe' in job:
+                require(isinstance(job['result_recipe'], dict), 'explicit scoped recipe required')
+            else:
+                require(args == ['scripts/instrumented-tests.sh', ':macrobenchmark:connectedBenchmarkAndroidTest', '--continue']
+                        and not job['label'].startswith('tap-scoped'),
+                        'undeclared scoped command; use the explicit source-verified recipe')
+                require(job['seconds'] >= 5400, 'retain the observed full-suite 90-minute deadline minimum')
         else:
+            require('result_recipe' not in job, 'standalone host job cannot use device result recipe')
             require(job['api'] == 0, 'host jobs must use api zero')
             require((args == ['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']
                      and job['label'] == 'assemble-check')
                     or (args == ['env', 'GRADLE_OPTS=-Dorg.gradle.workers.max=1', 'scripts/reproducible-release.sh']
-                        and job['label'] == 'reproducible-release'),
+                        and job['label'] == 'reproducible-release')
+                    or (args == COMPILE_ARGS and config.get('plan_recipe') == COMPILE_FIRST and job is jobs[0]),
                     'only guarded Gradle or the established reproducibility command is accepted')
-    require(not jobs[0]['standalone'], 'first opening preparation preserves the device budget')
     pins = config.get('input_pins')
     require(isinstance(pins, dict) and pins, 'explicit checked input pins required')
     required = {str(project/'scripts/instrumented-tests.sh'), config['gate'],
@@ -113,6 +122,9 @@ def validate(config, *, fresh=True):
     for path, expected in pins.items():
         require(Path(path).is_absolute() and re.fullmatch('[0-9a-f]{64}', expected), 'invalid input pin')
         require(sha(path) == expected, 'checked input changed: '+path)
+    for job in jobs:
+        if 'result_recipe' in job:
+            validate_recipe(project, job, pins)
     launcher = (project/'scripts/instrumented-tests.sh').read_text()
     for key, variable in [('server_image', 'IMAGE'), ('proxy_image', 'PROXY_IMAGE')]:
         match = re.search(r"^readonly "+variable+r"='([^']+)'$", launcher, re.M)

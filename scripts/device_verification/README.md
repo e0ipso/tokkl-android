@@ -1,7 +1,11 @@
 # Maintained device verification candidate
 
 This package promotes the released TKA-0280 operational candidate into reviewable
-repository code. It remains an inactive candidate. Bounded owned live fixtures
+repository code. Root adopted the TKA-0284 runtime on integrated `d7740f0`.
+That full production stage closed with 540 app passes, 11 app failures and two
+benchmark passes, without an operational abort. It does not establish a passing
+product gate. The later scoped-result extension needs a fresh matching adoption.
+Bounded owned live fixtures
 exercise its controller, Session, cgroups and watchdog service with harmless
 payloads. They never run the SDK, Gradle, an emulator, a limit window or reclaim.
 Do not replace an active lease's frozen cache helpers with these files.
@@ -208,13 +212,115 @@ resolves configured tools and records SDK/JDK metadata, screenshot-reference
 count and benchmark source fingerprints. This never admits or launches work.
 Snapshots expire; root must reread conditions under the eventual exclusive lease.
 
-The SDK/API36 full app and benchmark matrix, all 68 screenshot references,
-authoritative assemble/check and reproducibility remain coordinator obligations.
+After scoped repairs, the final SDK/API36 full app and benchmark matrix, all 68
+screenshot references, authoritative assemble/check and reproducibility remain
+coordinator obligations. Prior full-stage receipts retain their own input pins
+and outcomes; source changes do not inherit a full-gate pass.
 The approved full plan uses a 90-minute API36 payload floor, one slot, followed
 by authoritative assemble/check and reproducibility. Its separate finite budget
 requires root adoption. Historical scoped usage remains immutable provenance.
 The missing authoritative 10 percent benchmark baseline remains an owner
 TKA-0228 limitation. No production throughput reduction is measured here.
+
+## Declared scoped app recipes
+
+TKA-0291 adds one result profile, `scoped-app-classes-v1`. It supports one to five
+whole app classes on API36, selected with exactly one class-list argument. It
+accepts no method/package mixture, benchmark task or arbitrary Gradle arguments.
+The existing unfiltered full plan keeps its 90-minute floor, two-benchmark
+predicate and outcome checks. Benchmark source assertions, 30 TimerTap and 15
+startup iterations, five Stop attempts and the 10 percent comparison remain
+unchanged. A scoped result is never a full-gate result.
+
+After source workers submit their candidate and root freezes its exact bytes,
+generate the declaration without starting a workload:
+
+```sh
+python3 -B scripts/device_verification/declare_recipe.py \
+  --project /disk/checked-project \
+  --classes com.github.e0ipso.tokkl.widget.WidgetServerTest
+```
+
+Put the emitted object in the device job's `result_recipe`. Its `classes` list
+determines the exact ordered argv, for example:
+
+```json
+{
+  "api": 36,
+  "label": "widget-app",
+  "seconds": 1800,
+  "standalone": false,
+  "args": [
+    "scripts/instrumented-tests.sh",
+    "-Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.widget.WidgetServerTest"
+  ],
+  "result_recipe": {"profile": "scoped-app-classes-v1", "classes": ["..."], "inventory": ["..."]}
+}
+```
+
+The abbreviated declaration above deliberately fails validation. Use the complete
+generated inventory. Each entry records class name, relative source path, SHA256,
+supported class shape and every direct `@Test` method. Validation derives it again
+from the pinned file and rejects a subset or edited inventory. This narrow Kotlin
+reader masks comments and literals. It supports concrete direct JUnit4 classes
+with ordinary zero-argument block methods. Inheritance, parameterization, custom
+runners, aliases and conditional test annotations require another reviewed
+profile; they cannot silently omit cases. The required baseline five classes
+contain 30 cases and WidgetServerTest seven. Candidate edits may change those
+inventories, so generate them again only after root freezes the submitted source.
+
+Include each selected source and the actual `scripts/sift_telemetry.py` parser in
+`input_pins`, along with every other source/build/tool/configuration input root
+requires. The existing content-pin policy permits explicitly reviewed WIP with a
+recorded base `checked_head`; it does not require changing commit identity to
+pretend WIP is committed. A head alone never identifies WIP bytes. Preparation,
+execution adoption and result validation must bind the same content configuration.
+After a source or recipe change, root must issue a newly reviewed configuration
+and matching adoption rather than refresh pins inside an active run.
+
+Scoped result validation rereads the frozen JSON and input hashes, matches the
+actual job/argv/API/deadline and requires exactly one recorded tokkl-api36 device.
+It uses the input-pinned telemetry JUnit parser to reject stale, empty, partial,
+duplicate, failed or skipped results. Actual class/method identities must equal
+the complete source inventory. Fresh unrequested benchmark execution refuses the
+app-only exception; old unrequested benchmark files are not requested evidence.
+The original resource stability, private TMP, exit and final-certificate gates
+still apply before success. Result receipts retain recipe/configuration hashes,
+exact cases, finalized counts and JUnit content hashes.
+
+For compile-first scoped verification, declare top-level
+`"plan_recipe": "compile-then-scoped-app-v1"`. This permits exactly two jobs.
+The first must be standalone API0, label `assemble-check`, with this exact argv:
+
+```sh
+./gradlew --no-daemon assembleDebug assembleDebugAndroidTest check --stacktrace
+```
+
+The second must be the declared API36 scoped app job. Root selected 1800-second
+payload deadlines for both current jobs. A nonzero compile records its actual
+exit and fails the prerequisite. The existing outer sequence then stops before
+the second preparation or device job. `not_run_labels` identifies that job as
+NOT RUN. Cleanup and rollback still occur. Outside this exact declared profile,
+the first job must remain a device job, the additional APK build task is refused,
+and the full plan keeps its original ordinary assertion-failure continuation.
+
+Every one of the scoped cases must pass. An unchanged failing widget clock makes
+the whole 30-case job fail; the coordinator may separately analyze the other 29
+outcomes, but this contract supplies no waiver or partial job pass. One 30-case
+invocation already includes all seven widget cases and can supply the first
+widget diagnostic observation without a duplicate device run.
+
+Choose finite scoped deadlines from observed runtime and progress; these values
+are not an automatic renewal. Follow the same read-only preflight, preparation
+and explicit root adoption procedure. Adoption's configuration digest includes
+the entire plan recipe, selected source inventory and argv. No new resource
+budget, lease or adoption is granted by declaring recipes or preparing disk files.
+
+The result extension has host coverage using actual configuration/adoption
+validation, maintained `run_workload`, Session/final-counter protocol and real XML
+parsing, with launch/cgroup membership/counters modeled on disk. It does not rerun
+the 0284 live fixtures or reclassify the earlier UNKNOWN global event. Nine
+protected modules and preparation/reclaim logic remain unchanged by this extension.
 
 The dedicated final-tree API31 compatibility cycle still includes TKA-0271,
 TKA-0281 and all deferred coverage. After shared-code compatibility fixes, rerun

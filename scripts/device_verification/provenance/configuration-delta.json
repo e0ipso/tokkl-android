@@ -68,5 +68,20 @@
     "before": "cmd=['/usr/bin/python3',str(base/'local-reclaim-finite.py'),str(amount)]",
     "after": "cmd=['/usr/bin/python3',str(base/'local-reclaim-finite.py'),str(amount),'--state',str(state_path),'--preparation',str(len(state['preparations'])-1)]",
     "occurrences": 1
+  },
+  {
+    "before": "from pathlib import Path\n",
+    "after": "from pathlib import Path\nfrom scoped_results import assess_scoped\n",
+    "occurrences": 1
+  },
+  {
+    "before": " if not standalone:stable=stable and benchmark_counts['tests']==(1 if label.startswith('tap-scoped') else 2) and not any(benchmark_counts[k] for k in ['failures','errors','skipped'])",
+    "after": " if not standalone and any(job['label']==label and 'result_recipe' in job for job in config['plan']):\n  rec['result_contract']=assess_scoped(config,api,label,args,seconds,rec,start_wall,exit_code,stop_reason);save()\n  stable=stable and rec['result_contract']['passed']\n else:\n  if not standalone:stable=stable and benchmark_counts['tests']==(1 if label.startswith('tap-scoped') else 2) and not any(benchmark_counts[k] for k in ['failures','errors','skipped'])",
+    "occurrences": 1
+  },
+  {
+    "before": " if standalone:stable=not stop_reason",
+    "after": " if standalone:\n  stable=not stop_reason\n  if config.get('plan_recipe')=='compile-then-scoped-app-v1' and label==config['plan'][0]['label']:\n   stable=stable and exit_code==0\n   if not stable:rec['prerequisite_failed']=True;state['not_run_labels']=[config['plan'][1]['label']];save()",
+    "occurrences": 1
   }
 ]
