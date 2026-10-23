@@ -579,6 +579,49 @@ fresh separate matching configuration/adoption. Do not defer benchmark inventory
 validation, replace an active lease, infer a benchmark pass from packaging or
 reuse historical applicability as proof for changed runtime bytes.
 
+## Exact standalone assemble and check
+
+`standalone-assemble-check-v1` is a separate compile-only plan recipe with
+exactly one job. It admits the host check after device configurations have
+closed, so this job may be first. The job is API 0, label `assemble-check`,
+standalone, 1800 seconds, and this argv only:
+
+```json
+["./gradlew", "--no-daemon", "assembleDebug", "check", "--stacktrace"]
+```
+
+`compile_only.py` recognizes it through the same one-job hook as the packaging
+bootstrap, and that hook still requires the Gradle wrapper in `input_pins`.
+No result recipe, host recipe, post-input policy, extra job field or second
+job is accepted. Alternate labels, API, mode, deadline, wrappers, task order,
+flags and tasks are refused. Without this recipe, a standalone first job is
+still refused. The packaging bootstrap, compile-first plan, grouped
+check-and-repro sequence, scoped-app jobs and benchmark profiles keep their
+own rules, including a later ordinary `assemble-check` job that is not first.
+
+Every other common field, launcher pin and image digest remains required.
+The landed post-input policy stays limited to one scoped-app API36 job with
+no plan recipe. Declaring it here is refused. Adoption must still name exactly
+that frozen policy, or none.
+
+This recipe validates shape only. It grants no workload, resource, count,
+budget, dependency acquisition, lease, adoption or device run. Preparation and
+adoption stay separate coordinator acts. The unchanged controller supplies
+scope, choom, the admission gate, TERM/KILL timeout, Session, monitoring and
+cleanup. A standalone completion still requires exit zero and no stop reason
+under the existing operational guards. The unchanged duration policy gives a
+2235-second job envelope and a 2520-second fallback.
+
+The unchanged controller may copy
+`app/build/test-results/testDebugUnitTest` and
+`app/build/reports/lint-results-debug.xml` when those files exist, because the
+label is `assemble-check`. A completion record is not a JVM or lint count.
+An all-zero `jvm_counts` object with no copied report is not a JVM result, and
+a missing lint file is not a lint result. Root retains the actual report files
+separately. Gate refusal, timeout, nonzero exit and missing final evidence fail
+normally. A completed Session certifies final scope captures, releases, closure
+and post-closure guards, not unit tests, lint or a device run.
+
 ## Exact benchmark/API diagnostic recipe
 
 TKA-0307 adds `benchmark-api-v1` within the existing result-recipe hooks. Its

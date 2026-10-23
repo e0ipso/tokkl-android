@@ -487,6 +487,154 @@ class ConfigurationTests(unittest.TestCase):
         Path(candidate['run_dir']).mkdir()
         with self.assertRaisesRegex(ValueError, 'fresh unused run directory'):cfg.validate(candidate)
 
+    def host_check_candidate(self):
+        candidate = copy.deepcopy(self.config)
+        candidate['plan_recipe'] = 'standalone-assemble-check-v1'
+        candidate['plan'] = [dict(api=0, label='assemble-check', standalone=True, seconds=1800,
+            args=['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace'])]
+        wrapper = PROJECT/'gradlew';candidate['input_pins'][str(wrapper)] = cfg.sha(wrapper)
+        return candidate
+
+    def test_exact_standalone_assemble_check_validates_adopts_and_keeps_old_profiles(self):
+        candidate = self.host_check_candidate();checked = cfg.validate(candidate)
+        self.assertEqual(checked['plan_recipe'], 'standalone-assemble-check-v1')
+        self.assertEqual(checked['plan'], candidate['plan'])
+        job = checked['plan'][0]
+        self.assertEqual(set(job), {'api', 'label', 'standalone', 'seconds', 'args'})
+        self.assertEqual(job['args'], ['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace'])
+        self.assertNotIn('post_input_policy', checked)
+        self.assertNotIn('jvm_counts', checked)
+        self.assertNotIn('lint', checked)
+        self.assertFalse(Path(checked['run_dir']).exists())
+        self.assertEqual(checked['reclaim_budget_bytes'], 0)
+        bounds = window_bounds([(job['api'], job['label'], job['args'], job['seconds'], job['standalone'])])
+        self.assertEqual(bounds['job_bounds_seconds'], [2235])
+        self.assertEqual(bounds['fallback_seconds'], 2520)
+        # The same argv remains a later host job without this recipe or a wrapper pin.
+        ordinary = copy.deepcopy(self.config)
+        ordinary['plan'].append(dict(api=0, label='assemble-check', standalone=True, seconds=1800,
+            args=['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']))
+        self.assertNotIn(str(PROJECT/'gradlew'), ordinary['input_pins'])
+        self.assertEqual([item['label'] for item in cfg.validate(ordinary)['plan']], ['full36', 'assemble-check'])
+        self.assertEqual(cfg.validate(self.bootstrap_candidate())['plan_recipe'], 'benchmark-apk-bootstrap-v1')
+        self.assertFalse(cfg.validate(self.config)['plan'][0]['standalone'])
+        proof = prepare(candidate)  # Owned disk snapshot only, not a Gradle or device run.
+        self.assertTrue(proof['adoption_required'])
+        self.assertFalse(proof['device_or_window_permission'])
+        self.assertFalse(proof['live_maintained_controller_verified'])
+        adoption = self.directory/'HOST-ONLY-assemble-check-adoption.json'
+        adoption.write_text(json.dumps(dict(configuration_sha256=proof['configuration_sha256'],
+            runtime_sha256=proof['runtime_sha256'], lease_id=candidate['lease_id'],
+            approved_by='HOST-MODEL-ONLY', cheap_live_controller_fixtures_verified=True)))
+        self.assertEqual(cfg.adopted_configuration(Path(proof['run_dir']), adoption), checked)
+        self.assertFalse(list(Path(proof['run_dir']).glob('window-state-*')))
+        with self.assertRaises((ValueError, FileNotFoundError)):
+            cfg.adopted_configuration(Path(checked['run_dir']), self.directory/'not-approved.json')
+
+    def test_assemble_check_wrong_label_api_mode_deadline_and_recipe_fields_refuse(self):
+        candidate = self.host_check_candidate()
+        variants = [('label','benchmark-apk-bootstrap'), ('label','full36'), ('api',36), ('api',31),
+                    ('api',False), ('standalone',False), ('standalone',1), ('seconds',1799),
+                    ('seconds',1801), ('seconds',5400), ('seconds',1800.0), ('result_recipe',{}),
+                    ('host_recipe','assemble-check-then-repro-v1'), ('extra','ignored')]
+        for field, value in variants:
+            bad = copy.deepcopy(candidate);bad['plan'][0][field] = value
+            with self.subTest(field=field,value=value), self.assertRaises(ValueError):cfg.validate(bad)
+        for field in ['label','api','standalone','seconds','args']:
+            bad = copy.deepcopy(candidate);del bad['plan'][0][field]
+            with self.subTest(missing=field), self.assertRaises(ValueError):cfg.validate(bad)
+
+    def test_assemble_check_argv_wrapper_and_task_variations_refuse(self):
+        candidate = self.host_check_candidate();args = candidate['plan'][0]['args']
+        packaging = ['./gradlew', '--no-daemon', ':app:assembleDebug', ':app:assembleDebugAndroidTest',
+                     ':app:assembleBenchmark', ':macrobenchmark:assembleBenchmark', '--stacktrace']
+        compile_first = ['./gradlew', '--no-daemon', 'assembleDebug', 'assembleDebugAndroidTest', 'check', '--stacktrace']
+        alternatives = [args[:-1], args+['--continue'], args+['--stop'], args+['assembleDebugAndroidTest'],
+                        ['env']+args, ['bash','-c',' '.join(args)], ['gradle']+args[1:],
+                        args[:2]+['check','assembleDebug', '--stacktrace'], args[:2]+args[3:],
+                        ['./gradlew', 'assembleDebug', '--no-daemon', 'check', '--stacktrace'],
+                        args[:2]+[':app:assembleDebug', 'check', '--stacktrace'], packaging, compile_first,
+                        ['/usr/bin/python3', '-B', 'check_and_repro.py', '--execute']]
+        for argv in alternatives:
+            bad = copy.deepcopy(candidate);bad['plan'][0]['args'] = argv
+            with self.subTest(argv=argv), self.assertRaises(ValueError):cfg.validate(bad)
+
+    def test_assemble_check_job_count_mixed_profiles_and_first_standalone_refusal(self):
+        candidate = self.host_check_candidate()
+        for mode in ['empty','second-job','device-first','missing-profile','unknown','near-miss',
+                     'compile-first','grouped-profile','bootstrap-profile','benchmark-result-profile',
+                     'top-host-recipe','top-result-recipe','packaging-job']:
+            bad = copy.deepcopy(candidate)
+            if mode=='empty':bad['plan'] = []
+            if mode=='second-job':bad['plan'].append(dict(api=0,label='reproducible-release',standalone=True,seconds=1800,
+                args=['env','GRADLE_OPTS=-Dorg.gradle.workers.max=1','scripts/reproducible-release.sh']))
+            if mode=='device-first':bad['plan'].insert(0,copy.deepcopy(self.config['plan'][0]))
+            if mode=='missing-profile':del bad['plan_recipe']
+            if mode=='unknown':bad['plan_recipe'] = 'arbitrary-host-check-v1'
+            if mode=='near-miss':bad['plan_recipe'] = 'standalone-assemble-check-v2'
+            if mode=='compile-first':bad['plan_recipe'] = 'compile-then-scoped-app-v1'
+            if mode=='grouped-profile':bad['plan_recipe'] = 'assemble-check-then-repro-v1'
+            if mode=='bootstrap-profile':bad['plan_recipe'] = 'benchmark-apk-bootstrap-v1'
+            if mode=='benchmark-result-profile':bad['plan_recipe'] = 'benchmark-api-v1'
+            if mode=='top-host-recipe':bad['host_recipe'] = 'assemble-check-then-repro-v1'
+            if mode=='top-result-recipe':bad['result_recipe'] = {'profile':'benchmark-api-v1'}
+            if mode=='packaging-job':bad['plan'] = [copy.deepcopy(self.bootstrap_candidate()['plan'][0])]
+            with self.subTest(mode=mode), self.assertRaises(ValueError):cfg.validate(bad)
+        alone = copy.deepcopy(self.config)
+        alone['plan'] = [dict(api=0, label='assemble-check', standalone=True, seconds=1800,
+            args=['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace'])]
+        alone['input_pins'][str(PROJECT/'gradlew')] = cfg.sha(PROJECT/'gradlew')
+        with self.assertRaisesRegex(ValueError, 'first opening preparation'):cfg.validate(alone)
+
+    def test_assemble_check_pins_carry_adoption_and_post_input_policy_refuse(self):
+        candidate = self.host_check_candidate()
+        for change in [{'gate':'/other/gate'}, {'carried_reclaim_bytes':1}, {'reclaim_budget_bytes':cfg.MAX_BUDGET+1},
+                       {'slots':2}, {'checked_head':'not-a-head'}]:
+            with self.subTest(change=change), self.assertRaises(ValueError):cfg.validate(dict(candidate,**change))
+        wrapper = str(PROJECT/'gradlew')
+        for mode in ['missing-wrapper','changed-wrapper','changed-source','wrong-image']:
+            bad = copy.deepcopy(candidate)
+            if mode=='missing-wrapper':del bad['input_pins'][wrapper]
+            if mode=='changed-wrapper':bad['input_pins'][wrapper] = '0'*64
+            if mode=='changed-source':bad['input_pins'][str(PROJECT/'scripts/instrumented-tests.sh')] = '0'*64
+            if mode=='wrong-image':bad['server_image'] = 'unreviewed:tag'
+            with self.subTest(mode=mode), self.assertRaises(ValueError):cfg.validate(bad)
+        with self.assertRaisesRegex(ValueError, 'Gradle wrapper must be input-pinned'):
+            missing = copy.deepcopy(candidate);del missing['input_pins'][wrapper];cfg.validate(missing)
+        ledger = self.directory/'assemble-check-prior.json'
+        ledger.write_text(json.dumps({'reclaim_reserved_bytes': 10}))
+        carried = self.host_check_candidate()
+        carried.update(reclaim_budget_bytes=1000, carried_reclaim_bytes=10,
+                       preparation_policy={'max_request_bytes': 1000, 'max_preparations': 1},
+                       prior_window=str(ledger), prior_window_sha256=cfg.sha(ledger))
+        self.assertEqual(cfg.validate(carried)['carried_reclaim_bytes'], 10)
+        stale_carry = copy.deepcopy(carried);stale_carry['prior_window_sha256'] = '0'*64
+        with self.assertRaisesRegex(ValueError, 'prior ledger changed'):cfg.validate(stale_carry)
+        policy = copy.deepcopy(candidate)
+        policy['post_input_policy'] = {'profile': 'gradle-global-index-observation-v1'}
+        with self.assertRaisesRegex(ValueError, 'post-input policy'):cfg.validate(policy)
+        # The packaging profile still reaches the landed policy checker.
+        bootstrap = self.bootstrap_candidate()
+        bootstrap['post_input_policy'] = {'profile': 'gradle-global-index-observation-v1'}
+        with self.assertRaisesRegex(ValueError, 'post-input policy'):cfg.validate(bootstrap)
+        proof = prepare(candidate)
+        adoption = self.directory/'HOST-ONLY-stale-assemble-check-adoption.json'
+        body = dict(configuration_sha256='0'*64, runtime_sha256=proof['runtime_sha256'],
+                    lease_id=candidate['lease_id'], approved_by='HOST-MODEL-ONLY',
+                    cheap_live_controller_fixtures_verified=True)
+        adoption.write_text(json.dumps(body))
+        with self.assertRaises(ValueError):cfg.adopted_configuration(Path(proof['run_dir']), adoption)
+        body['configuration_sha256'] = proof['configuration_sha256']
+        body['runtime_sha256'] = '0'*64
+        adoption.write_text(json.dumps(body))
+        with self.assertRaises(ValueError):cfg.adopted_configuration(Path(proof['run_dir']), adoption)
+        body['runtime_sha256'] = proof['runtime_sha256']
+        body['post_input_policy_sha256'] = '0'*64
+        adoption.write_text(json.dumps(body))
+        with self.assertRaisesRegex(ValueError, 'post-input policy'):
+            cfg.adopted_configuration(Path(proof['run_dir']), adoption)
+        with self.assertRaisesRegex(ValueError, 'fresh unused run directory'):cfg.validate(candidate)
+
     def test_conformance_rejects_guard_cleanup_sampler_and_reclaim_changes(self):
         other = self.directory/'package'
         shutil.copytree(PACKAGE, other, ignore=shutil.ignore_patterns('__pycache__'))
