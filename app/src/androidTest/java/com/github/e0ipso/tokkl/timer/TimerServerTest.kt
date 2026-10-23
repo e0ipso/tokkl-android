@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasAnyDescendant
@@ -19,6 +20,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -37,6 +39,13 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.cache.CacheDatabase
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.ChangeKind
+import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.cache.ShortStopUndo
+import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Duration
@@ -52,6 +61,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -130,8 +141,13 @@ class TimerServerTest {
         launch(diagnose = true) {
             relay.hang()
             description().performTextInput("Write the timer")
-            val started = TapToVisibleDeadline("app Start")
-            start().performClick()
+            lateinit var started: TapToVisibleDeadline
+            // Same touch as performClick, after node preparation. System.nanoTime starts before
+            // click queues input; queue/dispatch/UI/cache time is included, receipt stays UNKNOWN.
+            start().performTouchInput {
+                started = TapToVisibleDeadline("app Start")
+                click()
+            }
             started.await("Stop shows") { stopButton().isDisplayed() }
             started.await("the running state shows in words") {
                 composeRule.onNode(hasText(string(R.string.timer_running))).isDisplayed()
@@ -140,30 +156,57 @@ class TimerServerTest {
             assertTrue("the clock starts at zero: ${clockText()}", clockText().startsWith("0:00:0"))
             composeRule.waitUntil("Start reaches the hanging connection", NETWORK_TIMEOUT.toMillis()) { relay.hungConnections > 0 }
 
-            billable().performClick()
-            awaitAtOnce("billable is on") { billableState() == ToggleableState.On }
+            val database = CacheDatabase.open(context)
+            try {
+                val running = queueRead { database.changes().runningEntries().single() }
+                var fields = EntryFields(description = "Write the timer")
+                billable().performClick()
+                awaitAtOnce("billable is on") { billableState() == ToggleableState.On }
+                fields = fields.copy(billable = true)
+                awaitPersistedFields(database, running, fields, "billable")
 
-            projectButton(null).performClick()
-            option("Timer project").performClick()
-            composeRule.onNode(hasSetTextAction() and hasText(string(R.string.picker_search))).performTextInput("call")
-            option(string(R.string.picker_add_tag, "call")).performClick()
-            composeRule.onNode(hasText(string(R.string.entry_picker_done)) and hasClickAction()).performClick()
-            awaitAtOnce("the project shows") { shows(projectButton("Timer project")) }
-            awaitAtOnce("the tag shows") { shows(composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call")))) }
+                projectButton(null).performClick()
+                option("Timer project").performClick()
+                composeRule.onNode(hasSetTextAction() and hasText(string(R.string.picker_search))).performTextInput("call")
+                option(string(R.string.picker_add_tag, "call")).performClick()
+                composeRule.onNode(hasText(string(R.string.entry_picker_done)) and hasClickAction()).performClick()
+                awaitAtOnce("the project shows") { shows(projectButton("Timer project")) }
+                awaitAtOnce("the tag shows") { shows(composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call")))) }
+                fields = fields.copy(projectId = project, tags = listOf("call"))
+                awaitPersistedFields(database, running, fields, "picker")
 
-            description().performTextClearance()
-            description().performTextInput("Write the timer screen")
-            description().performImeAction()
-            val queued = runBlocking { app.changes.unsentCount.first() }
-            assertTrue("a connection still hangs before Stop", relay.hungConnections > 0)
-            val stopped = TapToVisibleDeadline("app Stop")
-            BlackholeDiagnostics.record("click.enter action=Stop dispatch=UNKNOWN")
-            stop().performClick()
-            BlackholeDiagnostics.record("click.return action=Stop actual_touch_receipt=UNKNOWN")
-            stopped.await("Start shows") { startButton().isDisplayed() }
-            stopped.await("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
-            assertEquals("Stop stays queued unsent", queued + 1, runBlocking { app.changes.unsentCount.first() })
-            shortStop = localShortStop()
+                description().performTextClearance()
+                description().performTextInput("Write the timer screen")
+                description().performImeAction()
+                // IME return and UI overlays do not prove that the preceding edit committed.
+                fields = fields.copy(description = "Write the timer screen")
+                val baseline = awaitPersistedFields(database, running, fields, "description")
+                val queued = baseline.total
+                assertTrue("a connection still hangs before Stop", relay.hungConnections > 0)
+                lateinit var stopped: TapToVisibleDeadline
+                BlackholeDiagnostics.record("click.enter action=Stop dispatch=UNKNOWN")
+                stop().performTouchInput {
+                    stopped = TapToVisibleDeadline("app Stop")
+                    click()
+                }
+                BlackholeDiagnostics.record("click.return action=Stop actual_touch_receipt=UNKNOWN")
+                stopped.await("Start shows") { startButton().isDisplayed() }
+                stopped.await("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
+                lateinit var stoppedQueue: TimerQueueSnapshot
+                stopped.await("Stop has its own captured queued operation") {
+                    stoppedQueue = queueRead { timerQueueSnapshot(database, running.id) }
+                    val previous = baseline.changes.map { it.sequence }.toSet()
+                    stoppedQueue.changes.filter { it.sequence !in previous }.singleOrNull()?.let {
+                        it.kind == ChangeKind.STOP && it.entryId == running.id &&
+                            it.capturedStop != null && it.cachedEntry() == stoppedQueue.entry
+                    } == true
+                }
+                assertEquals("Stop stays queued unsent", queued + 1, runBlocking { app.changes.unsentCount.first() })
+                assertQueuedStop(baseline, stoppedQueue, running, fields)
+                shortStop = localShortStop()
+            } finally {
+                database.close()
+            }
 
             assertTrue("the app tried to send while the network hung", relay.hungConnections > 0)
             relay.release()
@@ -377,6 +420,88 @@ class TimerServerTest {
 
     private fun awaitAtOnce(what: String, condition: () -> Boolean) {
         composeRule.waitUntil("$what within $AT_ONCE", AT_ONCE.toMillis(), condition)
+    }
+
+    private data class TimerQueueSnapshot(
+        val entry: CachedTimeEntry?,
+        val changes: List<PendingChange>,
+        val total: Int,
+        val undo: ShortStopUndo?,
+    )
+
+    /** All values come from one real database transaction, never separately delivered flows. */
+    private fun timerQueueSnapshot(database: CacheDatabase, entryId: Long): TimerQueueSnapshot =
+        database.runInTransaction<TimerQueueSnapshot> {
+            val dao = database.changes()
+            val total = database.openHelper.readableDatabase.query("SELECT COUNT(*) FROM pending_changes").use {
+                check(it.moveToFirst())
+                it.getInt(0)
+            }
+            TimerQueueSnapshot(dao.entry(entryId), dao.changesFor(entryId), total, dao.shortStop(entryId))
+        }
+
+    private fun <T> queueRead(read: () -> T): T = runBlocking {
+        withTimeout(AT_ONCE.toMillis()) { withContext(Dispatchers.IO) { read() } }
+    }
+
+    /** Observe the app connection's invalidations; a separate Room instance has no shared tracker. */
+    private fun awaitPersistedFields(
+        database: CacheDatabase,
+        running: CachedTimeEntry,
+        fields: EntryFields,
+        stage: String,
+    ): TimerQueueSnapshot {
+        val began = System.nanoTime()
+        BlackholeDiagnostics.record("queue.persist.enter stage=$stage")
+        val snapshot = runBlocking {
+            withTimeout(AT_ONCE.toMillis()) {
+                app.changes.unsentCount.map {
+                    withContext(Dispatchers.IO) { timerQueueSnapshot(database, running.id) }
+                }.first { snapshot ->
+                    val entry = snapshot.entry
+                    val update = snapshot.changes.lastOrNull()
+                    entry != null && entry.id == running.id && entry.workspaceId == running.workspaceId &&
+                        entry.start == running.start && entry.stop == null && entry.fields() == fields &&
+                        update != null && update.kind == ChangeKind.UPDATE && update.entryId == running.id &&
+                        update.start == running.start && update.stop == null && update.entry().fields() == fields
+                }
+            }
+        }
+        // A blocked SQLite read cannot turn a late successful observation into readiness.
+        if (System.nanoTime() - began >= AT_ONCE.toNanos()) {
+            throw AssertionError("$stage did not persist within $AT_ONCE")
+        }
+        BlackholeDiagnostics.record(
+            "queue.persist.ready stage=$stage total=${snapshot.total} target_rows=${snapshot.changes.size}",
+        )
+        return snapshot
+    }
+
+    private fun assertQueuedStop(
+        before: TimerQueueSnapshot,
+        after: TimerQueueSnapshot,
+        running: CachedTimeEntry,
+        fields: EntryFields,
+    ) {
+        val previous = before.changes.map { it.sequence }.toSet()
+        assertEquals("prior target operations remain queued unsent", previous, after.changes.filter { it.sequence in previous }.map { it.sequence }.toSet())
+        val added = after.changes.filter { it.sequence !in previous }
+        assertEquals("one new target operation is queued", 1, added.size)
+        val stop = added.single()
+        assertTrue("Stop has a new queue sequence", stop.sequence > previous.max())
+        assertEquals("the target operation is Stop", ChangeKind.STOP, stop.kind)
+        assertEquals("Stop belongs to the running entry", running.id, stop.entryId)
+        assertEquals("Stop keeps the workspace", running.workspaceId, stop.workspaceId)
+        assertEquals("Stop keeps all persisted edited fields", fields, stop.entry().fields())
+        assertTrue("Stop retains its captured tap instant", stop.capturedStop != null)
+        assertEquals("Stop and cache committed together", stop.cachedEntry(), after.entry)
+        if (stop.shortStop) {
+            val undo = requireNotNull(after.undo) { "the short Stop has its Undo row" }
+            assertEquals("Undo belongs to the target Stop", stop.entryId, undo.entryId)
+            assertEquals("Undo retains the same captured tap", stop.capturedStop, undo.capturedAt)
+            assertEquals("Undo holds the stopped target entry", stop.entry(), undo.entry)
+        }
+        BlackholeDiagnostics.record("queue.stop.proof new_sequence=true target_entry=true captured_stop=true")
     }
 
     /** Sends the queue until it is empty, as each change and refresh would, then refreshes. */
