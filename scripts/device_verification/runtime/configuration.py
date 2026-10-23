@@ -18,10 +18,12 @@ if __package__:
     from .scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
     from .check_and_repro import validate_grouped_job
     from .compile_only import validate_bootstrap_plan
+    from . import post_input_policy
 else:
     from scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
     from check_and_repro import validate_grouped_job
     from compile_only import validate_bootstrap_plan
+    import post_input_policy
 
 MAX_BUDGET = 32 * 1024**3
 CANONICAL_GATE = '/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh'
@@ -110,6 +112,11 @@ def load(path):
 
 
 def validate(config, *, fresh=True):
+    return _validated(config, fresh, post=False)
+
+
+def _validated(config, fresh, *, post):
+    """Only post_input_configuration passes post=True, under a declared policy."""
     require(config.get('schema_version') == 1, 'unsupported configuration schema')
     require(config.get('stage') == 'development', 'this candidate supports API36 development only; API31 stays deferred')
     for key in ['run_id', 'lease_id', 'budget_authorization']:
@@ -201,9 +208,13 @@ def validate(config, *, fresh=True):
     if any('host_recipe' in job for job in jobs):
         required.update({str(project/'gradlew'), str(project/'scripts/reproducible-release.sh')})
         require(required <= pins.keys(), 'grouped host command sources must be pinned')
+    observed = post_input_policy.declared(config)
     for path, expected in pins.items():
         require(Path(path).is_absolute() and re.fullmatch('[0-9a-f]{64}', expected), 'invalid input pin')
-        require(sha(path) == expected, 'checked input changed: '+path)
+        if not (post and path in observed):
+            require(sha(path) == expected, 'checked input changed: '+path)
+    if observed and not post:
+        post_input_policy.before(config)
     for job in jobs:
         if 'result_recipe' in job:
             validate_recipe(project, job, pins)
@@ -220,6 +231,10 @@ def adopted_configuration(directory, adoption_path):
     """Bind both controller and helper entry points to the same root adoption."""
     directory = Path(directory).resolve()
     config = validate(load(directory/'run-config.json'), fresh=False)
+    return _adopted(directory, config, adoption_path)
+
+
+def _adopted(directory, config, adoption_path):
     require(Path(config['run_dir']) == directory, 'controller/helper must use its frozen run snapshot')
     scratch = directory/'scratch'
     require(scratch.is_dir() and not scratch.is_symlink() and scratch.stat().st_uid == os.getuid()
@@ -235,7 +250,27 @@ def adopted_configuration(directory, adoption_path):
             'explicit coordinator adoption must match configuration, runtime and lease')
     require(adoption.get('cheap_live_controller_fixtures_verified') is True,
             'coordinator must first verify the configured controller with cheap owned live fixtures')
+    require(adoption.get('post_input_policy_sha256') == post_input_policy.policy_sha256(config),
+            'adoption must name exactly the frozen post-input policy, or none')
     return config
+
+
+def post_input_configuration(config, evidence):
+    """Scoped-app post assessment under its frozen declared post-input policy.
+
+    Startup and every helper keep validate() and adopted_configuration(). Only
+    the two declared indexes become observations here. Every other pin, the
+    dependency membership, carry and adoption stay strict; nothing is rewritten.
+    """
+    directory = Path(config['run_dir'])
+    observed = post_input_policy.observe(config, evidence)
+    current = _validated(load(directory/'run-config.json'), False, post=True)
+    require(current == config, 'frozen configuration identity changed during execution')
+    adoption = os.environ.get('TOKKL_VERIFICATION_ADOPTION')
+    require(adoption and Path(adoption).is_absolute(), 'post-input policy requires the matching root adoption')
+    _adopted(directory, current, adoption)
+    post_input_policy.confirm(current, observed, evidence)
+    return current
 
 
 def execution_configuration(controller):

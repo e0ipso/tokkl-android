@@ -420,13 +420,44 @@ and matching adoption rather than refresh pins inside an active run.
 
 Scoped result validation rereads the frozen JSON and input hashes, matches the
 actual job/argv/API/deadline and requires exactly one recorded tokkl-api36 device.
-It uses the input-pinned telemetry JUnit parser to reject stale, empty, partial,
+Startup, helpers and every result profile other than the post-input policy below
+keep that hash check for every pin, including the two Gradle indexes.
+Validation uses the input-pinned telemetry JUnit parser to reject stale, empty, partial,
 duplicate, failed or skipped results. Actual class/method identities must equal
 the complete source inventory. Fresh unrequested benchmark execution refuses the
 app-only exception; old unrequested benchmark files are not requested evidence.
 The original resource stability, private TMP, exit and final-certificate gates
 still apply before success. Result receipts retain recipe/configuration hashes,
 exact cases, finalized counts and JUnit content hashes.
+
+## Declared post-build Gradle index observations
+
+TKA-0324 freezes one optional policy, `gradle-global-index-observation-v1`, into
+the original configuration and its adoption. It is available only to a single
+scoped-app API36 job. Benchmark/API, Catalog, grouped host jobs, compile-first
+plans and every legacy configuration stay on the strict full-pin check.
+
+The policy names exactly these two files, in this order:
+
+`/home/e0ipso/.gradle/caches/modules-2/metadata-2.107/module-artifact.bin`
+`/home/e0ipso/.gradle/caches/modules-2/metadata-2.107/module-metadata.bin`
+
+`validate()`, `adopted_configuration()`, controller startup and every helper
+still compare both indexes with the other pins. Drift there refuses the run.
+Only the scoped-app post assessor may call `post_input_configuration()`. A
+change to those two files is an observation. The original `input_pins` map and
+the configuration hash are not rewritten, and a later run binds the new hashes
+in a new configuration rather than editing the frozen one.
+
+Every other source, tool, coordinate and artifact pin stays strict. Membership
+of `modules-2/files-2.1` and `modules-2/metadata-2.107` is checked on its own,
+because a pin map does not show a file that was added. Extra paths, wildcards,
+aliases, symlinks, and missing, unstable or oversized indexes are refused, as
+are a stale policy, adoption or carry and incomplete observation evidence.
+Compilation failure, empty or incomplete JUnit, and existing scoped-result
+failures stay unsuccessful. An accepted observation does not claim an unchanged
+dependency graph, no network use, a cause for the index change, or that nothing
+was added and then removed during the run.
 
 For compile-first scoped verification, declare top-level
 `"plan_recipe": "compile-then-scoped-app-v1"`. This permits exactly two jobs.

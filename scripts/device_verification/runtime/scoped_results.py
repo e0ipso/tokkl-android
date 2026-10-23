@@ -191,10 +191,13 @@ def assess_scoped(config, api, label, args, seconds, record, started, exit_code,
     result = {'passed': False, 'profile': PROFILE, 'reason': None}
     try:
         if __package__:
-            from .configuration import validate
+            from .configuration import validate, post_input_configuration
         else:
-            from configuration import validate
-        current = validate(json.loads((Path(config['run_dir'])/'run-config.json').read_text()), fresh=False)
+            from configuration import validate, post_input_configuration
+        if 'post_input_policy' in config:
+            current = post_input_configuration(config, result.setdefault('input_policy', {}))
+        else:
+            current = validate(json.loads((Path(config['run_dir'])/'run-config.json').read_text()), fresh=False)
         require(current == config, 'frozen configuration identity changed during execution')
         jobs = [job for job in config['plan'] if job['label'] == label]
         require(len(jobs) == 1, 'check identity missing/duplicated in configuration')

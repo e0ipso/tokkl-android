@@ -37,7 +37,7 @@ def baseline(project):
 
 
 class WorkloadFixture:
-    def __init__(self,root,scenario='valid',legacy=False,full=False,widget=False,compile_first=False,benchmark_api=False):
+    def __init__(self,root,scenario='valid',legacy=False,full=False,widget=False,compile_first=False,benchmark_api=False,post_input=False):
         self.root=Path(root);self.root.mkdir();self.base=self.root/'evidence'
         self.project=self.root/'project';self.project.mkdir();baseline(self.project)
         self.runtime=self.root/'runtime';self.runtime.mkdir();self.cg=self.root/'cgroups';self.app=self.cg/'app';self.app.mkdir(parents=True)
@@ -80,9 +80,16 @@ class WorkloadFixture:
         if compile_first:
             self.configuration['plan_recipe']=COMPILE_FIRST
             self.configuration['plan']=[{'api':0,'label':'assemble-check','args':COMPILE_ARGS,'seconds':1800,'standalone':True},job]
+        if post_input:
+            self._declare_post_input_policy()
         proof=prepare(self.configuration)
         adoption=self.root/'HOST-MODELED-adoption.json'
-        adoption.write_text(json.dumps(dict(configuration_sha256=proof['configuration_sha256'],runtime_sha256=proof['runtime_sha256'],lease_id=self.configuration['lease_id'],approved_by='HOST-MODEL-ONLY',cheap_live_controller_fixtures_verified=True)))
+        body=dict(configuration_sha256=proof['configuration_sha256'],runtime_sha256=proof['runtime_sha256'],lease_id=self.configuration['lease_id'],approved_by='HOST-MODEL-ONLY',cheap_live_controller_fixtures_verified=True)
+        if post_input:
+            from runtime.post_input_policy import policy_sha256
+            body['post_input_policy_sha256']=policy_sha256(self.configuration)
+        adoption.write_text(json.dumps(body))
+        self.adoption=adoption
         self.checked=adopted_configuration(self.base,adoption)
         if compile_first:job=self.configuration['plan'][0]
         self.job=[job['api'],job['label'],copy.deepcopy(job['args']),job['seconds'],job['standalone']]
@@ -100,6 +107,39 @@ class WorkloadFixture:
         for name in ['snapshot','run_workload']:
             node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name==name)
             exec(compile(ast.Module(body=[node],type_ignores=[]),'<actual-maintained-'+name+'>','exec'),self.ns)
+    def _declare_post_input_policy(self):
+        from runtime import post_input_policy as pip
+        roots, paths = pip.reviewed()
+        for root in roots:
+            Path(root).mkdir(parents=True, exist_ok=True)
+        members = []
+        for path in paths:
+            Path(path).write_bytes(b'frozen-gradle-index\n'+path.encode())
+            members.append(path)
+        extra = Path(roots[0])/'com.example'/'lib'/'1.0'/'lib-1.0.jar'
+        extra.parent.mkdir(parents=True, exist_ok=True)
+        extra.write_bytes(b'frozen-member')
+        side = Path(roots[1])/'descriptor.bin'
+        side.write_bytes(b'frozen-descriptor')
+        members.extend([str(extra), str(side)])
+        pins = self.configuration['input_pins']
+        for path in members:
+            pins[path] = sha(path)
+        rows = []
+        for path in paths:
+            info = os.lstat(path)
+            rows.append({'path': path, 'sha256': pins[path], 'bytes': info.st_size,
+                         'device': info.st_dev, 'inode': info.st_ino})
+        label = next(job['label'] for job in self.configuration['plan']
+                     if job.get('result_recipe', {}).get('profile') == 'scoped-app-classes-v1')
+        self.index_paths = tuple(paths)
+        self.member_paths = tuple(sorted(members))
+        self.descriptor_path = str(side)
+        self.index_bytes = {path: Path(path).read_bytes() for path in paths}
+        self.configuration['post_input_policy'] = {
+            'profile': pip.PROFILE, 'job': label, 'indexes': rows,
+            'dependency_membership': {'roots': roots, 'members': len(members),
+                                      'sha256': pip.digest(sorted(members))}}
     def controller_path(self,*args):
         if args and str(args[0])=='/sys/fs/cgroup':return self.cg.joinpath(*args[1:])
         if args and str(args[0])=='/proc' and len(args)>2 and args[2]=='environ':return self.root/'fixture-environ'
