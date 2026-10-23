@@ -30,6 +30,16 @@ fun runningTileLook(content: RunningTileContent, context: Context): RunningTileL
                 contentDescription = context.getString(R.string.tile_running_description, description),
             )
         }
+        is RunningTileContent.Paused -> {
+            val description = content.description.ifBlank { context.getString(R.string.tile_no_description) }
+            RunningTileLook(
+                state = Tile.STATE_INACTIVE,
+                label = description,
+                subtitle = context.getString(R.string.tile_paused_subtitle),
+                icon = R.drawable.ic_play,
+                contentDescription = context.getString(R.string.tile_paused_description, description),
+            )
+        }
         is RunningTileContent.Continue -> {
             val description = content.last.description.ifBlank { context.getString(R.string.tile_no_description) }
             RunningTileLook(

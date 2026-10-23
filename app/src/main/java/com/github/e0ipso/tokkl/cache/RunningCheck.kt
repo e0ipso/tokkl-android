@@ -97,7 +97,7 @@ class RunningCheckWorker(context: Context, params: WorkerParameters) : Coroutine
             val generation = RunningCheck.results.generation()
             val cache = (applicationContext as TokklApplication).cache
             val api = Session(applicationContext).client() ?: return@withContext Result.success()
-            val before = cache.runningEntries()
+            val before = cache.runningCheckStart()
             RunningCheck.currentRequestDiagnostic?.invoke(
                 "producer=RunningCheckWorker current.enter host=${api.server.api("me").host} port=${api.server.api("me").port} generation=$generation",
             )

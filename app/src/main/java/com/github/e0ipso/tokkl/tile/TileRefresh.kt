@@ -39,7 +39,7 @@ internal object TileRefresh {
             var succeeded = false
             try {
                 val cache = application.cache
-                val before = cache.runningEntries()
+                val before = cache.runningCheckStart()
                 RunningCheck.currentRequestDiagnostic?.invoke(
                     "producer=TileRefresh current.enter host=${api.server.api("me").host} port=${api.server.api("me").port} generation=$generation online=$online",
                 )

@@ -17,7 +17,9 @@ import androidx.room.TypeConverters
  * Version 2 adds the queue: `pending_changes` and `entry_ids`. Version 3 adds
  * `pending_changes.maybeSent`, version 4 `pending_changes.existingIds`, and version 5
  * `pending_changes.held` and `pending_changes.refusal`. Version 6 keeps the immutable captured
- * Stop instant and short Stop Undo records without changing older queued requests.
+ * Stop instant and short Stop Undo records without changing older queued requests. Version 7
+ * adds `pause_chain` and `timer_session` for Pause and Resume and leaves every earlier row as it
+ * is.
  */
 @Database(
     entities = [
@@ -30,8 +32,10 @@ import androidx.room.TypeConverters
         PendingChange::class,
         EntryIdMapping::class,
         ShortStopUndo::class,
+        PauseChain::class,
+        TimerSession::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -39,6 +43,7 @@ import androidx.room.TypeConverters
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
+        AutoMigration(from = 6, to = 7),
     ],
 )
 @TypeConverters(CacheConverters::class)

@@ -97,9 +97,11 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
     override fun sent(change: PendingChange, serverId: Long, answer: CachedTimeEntry?) {
         database.runInTransaction {
             dao.delete(change.sequence)
+            dao.touchPauseChain()
             if (change.kind == ChangeKind.CREATE) {
                 dao.insertMapping(EntryIdMapping(localId = change.entryId, serverId = serverId))
                 dao.remap(localId = change.entryId, serverId = serverId)
+                dao.remapPauseChain(localId = change.entryId, serverId = serverId)
                 dao.shortStop(change.entryId)?.let { undo ->
                     dao.deleteShortStop(change.entryId)
                     dao.upsertShortStop(undo.copy(entryId = serverId, entry = undo.entry.copy(id = serverId)))
@@ -124,6 +126,7 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
             }
             dao.changesFor(start.entryId).last().cachedEntry()?.let(dao::upsertEntry)
             if (dao.countFor(later.id) == 0) dao.upsertEntry(later)
+            endChainOf(start.entryId)
             ended
         }
 
@@ -136,6 +139,7 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
     override fun discardEntry(change: PendingChange): Int =
         database.runInTransaction<Int> {
             dao.deleteEntry(change.entryId)
+            endChainOf(change.entryId)
             dao.deleteFrom(change.entryId, sequence = Long.MIN_VALUE)
         }
 
@@ -159,8 +163,17 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
     override fun restored(serverId: Long, answer: CachedTimeEntry?) {
         database.runInTransaction {
             dao.queuedDelete(serverId)?.let { dao.delete(it.sequence) }
+            dao.touchPauseChain()
             if (answer != null && dao.countFor(serverId) == 0) dao.upsertEntry(answer)
         }
+    }
+
+    /**
+     * Ends the pause chain when the server ended its running clone [entryId] elsewhere, or no
+     * longer has it. Any other answer only marks the chain (docs/PRD.md T1).
+     */
+    private fun endChainOf(entryId: Long) {
+        if (dao.pauseChain()?.runningId == entryId) dao.deletePauseChain() else dao.touchPauseChain()
     }
 }
 

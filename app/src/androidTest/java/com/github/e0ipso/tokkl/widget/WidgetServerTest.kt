@@ -24,7 +24,9 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheck
+import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.notification.RunningNotifications
+import com.github.e0ipso.tokkl.notification.stopAction
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -47,7 +49,9 @@ import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -128,6 +132,24 @@ class WidgetServerTest {
     }
 
     @Test
+    fun pauseAndResumeWorkOfflineThroughTheNativeControls() {
+        signIn(NO_ROUTE, account.apiToken)
+        val first = runBlocking { app.changes.start(workspace, EntryFields("Paused on the widget")) }
+        native.awaitDescription(context.getString(R.string.widget_pause_description))
+
+        native.click(context.getString(R.string.widget_pause_description))
+        runBlocking { withTimeout(1_000) { app.changes.timerControls.first { it is TimerControls.Paused } } }
+        native.awaitDescription(context.getString(R.string.widget_resume_description), 1_000)
+        assertNull("nothing runs while paused", runBlocking { app.cache.running.first() })
+
+        native.click(context.getString(R.string.widget_resume_description))
+        val resumed = runBlocking { withTimeout(1_000) { app.changes.timerControls.first { it is TimerControls.Running } } } as TimerControls.Running
+        native.awaitDescription(context.getString(R.string.widget_pause_description), 1_000)
+        assertNotEquals("Resume starts a new entry", first, resumed.entry.id)
+        assertEquals("Paused on the widget", resumed.entry.description)
+    }
+
+    @Test
     fun favoritesResizeAndEachNativeTapQueuesAllItsFieldsOffline() {
         val project = web.send("POST", web.server.api("workspaces", "$workspace", "projects"),
             buildJsonObject { put("name", "Widget project"); put("billable", true) }, JsonObject.serializer()).orFail("create project")["id"]!!.jsonPrimitive.long
@@ -194,7 +216,7 @@ class WidgetServerTest {
             compose.onNodeWithContentDescription(context.getString(R.string.timer_start_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)
             RunningNotifications.awaitShown("the app start")
-            RunningNotifications.shown()!!.notification.actions.single().actionIntent.send()
+            RunningNotifications.shown()!!.notification.stopAction().actionIntent.send()
             native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
 
             compose.onNodeWithContentDescription(context.getString(R.string.timer_start_spoken)).performClick()

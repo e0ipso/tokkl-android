@@ -10,6 +10,7 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.TimerTarget
 
 /**
  * The widget's Start and its favorites (docs/PRD.md N3). It starts a timer on the phone and queues
@@ -34,19 +35,52 @@ class StartTimerAction : ActionCallback {
 }
 
 /**
- * The widget's Stop. It stops the entry the widget showed on the phone and queues the change, as
- * the notification's Stop does, so it works offline.
+ * The widget's Stop. It stops what the widget showed on the phone, the running entry or the paused
+ * timer, as the notification's Stop does, so it works offline.
  */
 class StopTimerAction : ActionCallback {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val entryId = parameters[ENTRY_ID] ?: return
         val app = context.applicationContext as TokklApplication
         try {
-            // Not running any more, or not cached since a sign-out: nothing to stop.
-            app.changes.stop(entryId)
+            // Not running or paused any more, or shown before a sign-out: nothing to stop. A
+            // widget drawn before Pause existed carries the entry alone.
+            val target = parameters.target()
+            if (target.session == 0L) parameters[ENTRY_ID]?.let { app.changes.stop(it) } else app.changes.stop(target)
         } catch (e: SQLiteException) {
             // The disk refused the change. The timer keeps running, and the widget shows it.
+        }
+    }
+}
+
+/**
+ * The widget's Pause (docs/PRD.md T1): it pauses the entry the widget showed on the phone and
+ * queues the change, so it works offline.
+ */
+class PauseTimerAction : ActionCallback {
+
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val app = context.applicationContext as TokklApplication
+        try {
+            app.changes.pause(parameters.target())
+        } catch (e: SQLiteException) {
+            // The disk refused the change. The timer keeps running, and the widget shows it.
+        }
+    }
+}
+
+/**
+ * The widget's Resume (docs/PRD.md T1): it starts a new entry with the paused timer's fields on
+ * the phone and queues it, so it works offline.
+ */
+class ResumeTimerAction : ActionCallback {
+
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val app = context.applicationContext as TokklApplication
+        try {
+            app.changes.resume(parameters.target())
+        } catch (e: SQLiteException) {
+            // The disk refused the change. The timer stays paused, and the widget shows it.
         }
     }
 }
@@ -54,8 +88,28 @@ class StopTimerAction : ActionCallback {
 /** Starts a timer with [fields], the empty ones for Start and a favorite's for that favorite. */
 fun startTimer(fields: EntryFields = EntryFields()): Action = actionRunCallback<StartTimerAction>(fields.toParameters())
 
-/** Stops the running entry [entryId]. */
-fun stopTimer(entryId: Long): Action = actionRunCallback<StopTimerAction>(actionParametersOf(ENTRY_ID to entryId))
+/** Stops what [target] shows: the running entry or the paused timer. */
+fun stopTimer(target: TimerTarget): Action = actionRunCallback<StopTimerAction>(target.toParameters())
+
+/** Pauses the running entry [target] shows. */
+fun pauseTimer(target: TimerTarget): Action = actionRunCallback<PauseTimerAction>(target.toParameters())
+
+/** Resumes the paused timer [target] shows. */
+fun resumeTimer(target: TimerTarget): Action = actionRunCallback<ResumeTimerAction>(target.toParameters())
+
+private fun TimerTarget.toParameters(): ActionParameters = actionParametersOf(
+    SESSION to session,
+    CHAIN to chainId,
+    REVISION to revision,
+    ENTRY_ID to entryId,
+)
+
+private fun ActionParameters.target(): TimerTarget = TimerTarget(
+    session = this[SESSION] ?: 0,
+    chainId = this[CHAIN] ?: 0,
+    revision = this[REVISION] ?: 0,
+    entryId = this[ENTRY_ID] ?: 0,
+)
 
 /**
  * The fields as the PendingIntent carries them. Glance puts each parameter in the intent's
@@ -81,6 +135,9 @@ private fun ActionParameters.fields(): EntryFields = EntryFields(
 )
 
 private val ENTRY_ID = ActionParameters.Key<Long>("entryId")
+private val SESSION = ActionParameters.Key<Long>("timerSession")
+private val CHAIN = ActionParameters.Key<Long>("pauseChain")
+private val REVISION = ActionParameters.Key<Long>("pauseRevision")
 private val DESCRIPTION = ActionParameters.Key<String>("description")
 private val PROJECT_ID = ActionParameters.Key<Long>("projectId")
 private val TASK_ID = ActionParameters.Key<Long>("taskId")

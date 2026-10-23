@@ -5,6 +5,10 @@ import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.cache.timerControls
 import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.favorites.fields
@@ -24,8 +28,9 @@ sealed interface WidgetState {
     /**
      * @param running the running entry, null when no timer runs.
      * @param favorites in the user's order, empty when the server keeps no favorites.
+     * @param paused the paused timer (docs/PRD.md T1), null unless a pause chain is paused.
      */
-    data class Ready(val running: WidgetRunning?, val favorites: List<WidgetFavorite>) : WidgetState
+    data class Ready(val running: WidgetRunning?, val favorites: List<WidgetFavorite>, val paused: WidgetPaused? = null) : WidgetState
 }
 
 /**
@@ -34,6 +39,9 @@ sealed interface WidgetState {
  * @param entryId the id the cache holds the entry under, which Stop stops.
  * @param description as typed; blank when the entry has none.
  * @param project null when the entry has no project or the cache does not know it.
+ * @param accumulatedSeconds what a pause chain stored before this entry, which the elapsed time
+ *   adds to the time since [start].
+ * @param target what Pause and Stop act on.
  */
 data class WidgetRunning(
     val entryId: Long,
@@ -41,6 +49,17 @@ data class WidgetRunning(
     val project: String?,
     val task: String?,
     val start: Instant,
+    val accumulatedSeconds: Long = 0,
+    val target: TimerTarget = TimerTarget(session = 0, entryId = entryId),
+)
+
+/** The paused timer: what Resume starts, the paused total [seconds], and what Resume and Stop act on. */
+data class WidgetPaused(
+    val description: String,
+    val project: String?,
+    val task: String?,
+    val seconds: Long,
+    val target: TimerTarget,
 )
 
 /** One favorite: what a tap starts, and the names of its project and task. */
@@ -59,10 +78,28 @@ fun widgetState(
     projects: List<CachedProject>,
     tasks: List<CachedTask>,
 ): WidgetState {
+    val controls = running?.takeIf { it.stop == null }?.let { timerControls(EntryWithSendState(it, unsent = false), chain = null, session = 0) }
+    return widgetState(workspaceId, controls ?: TimerControls.Idle, favorites, favoritesAvailable, projects, tasks)
+}
+
+/** The widget as [widgetState] above, for what the timer [controls] show, a paused timer too. */
+fun widgetState(
+    workspaceId: Long?,
+    controls: TimerControls,
+    favorites: List<CachedFavorite>,
+    favoritesAvailable: Boolean,
+    projects: List<CachedProject>,
+    tasks: List<CachedTask>,
+): WidgetState {
     if (workspaceId == null) return WidgetState.NoAccount
-    val shown = running?.takeIf { it.stop == null }?.let { entry ->
+    val shown = (controls as? TimerControls.Running)?.let { running ->
+        val entry = running.entry
         val labels = entryLabels(entry.fields(), projects, tasks)
-        WidgetRunning(entry.id, entry.description, labels.project, labels.task, entry.start)
+        WidgetRunning(entry.id, entry.description, labels.project, labels.task, entry.start, running.accumulatedSeconds, running.target)
+    }
+    val paused = (controls as? TimerControls.Paused)?.let { chain ->
+        val labels = entryLabels(chain.fields, projects, tasks)
+        WidgetPaused(chain.fields.description, labels.project, labels.task, chain.seconds, chain.target)
     }
     val starts = if (!favoritesAvailable) {
         emptyList()
@@ -73,7 +110,7 @@ fun widgetState(
             WidgetFavorite(fields, labels.project, labels.task)
         }
     }
-    return WidgetState.Ready(shown, starts)
+    return WidgetState.Ready(shown, starts, paused)
 }
 
 /**
@@ -87,12 +124,13 @@ fun favoritesThatFit(heightDp: Float, count: Int, fontScale: Float = 1f): Int {
 }
 
 /**
- * The base of a Chronometer that counts from [start]: the `SystemClock.elapsedRealtime()` at which
- * it read zero, given that [now] on the wall clock is [elapsedRealtime] on that clock. A start
- * after [now], from a clock that runs late, counts from zero.
+ * The base of a Chronometer that counts from [start], after [accumulatedSeconds] a pause chain
+ * stored before it: the `SystemClock.elapsedRealtime()` at which it read zero, given that [now]
+ * on the wall clock is [elapsedRealtime] on that clock. A start after [now], from a clock that
+ * runs late, counts from the accumulated time.
  */
-fun chronometerBase(start: Instant, now: Instant, elapsedRealtime: Long): Long =
-    elapsedRealtime - Duration.between(start, now).toMillis().coerceAtLeast(0)
+fun chronometerBase(start: Instant, now: Instant, elapsedRealtime: Long, accumulatedSeconds: Long = 0): Long =
+    elapsedRealtime - Duration.between(start, now).toMillis().coerceAtLeast(0) - Duration.ofSeconds(accumulatedSeconds).toMillis()
 
 /**
  * Changes with everything the widget shows, so the widget updates only when it would look

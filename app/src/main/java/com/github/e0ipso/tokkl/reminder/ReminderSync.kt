@@ -18,6 +18,8 @@ data class ReminderInput(val running: CachedTimeEntry?, val preferences: Reminde
  * Follows the shared running state. One delayed request, no periodic work and no network constraint.
  * Re-reads the cache inside the lock: queued flow emissions and old workers cannot revive an old timer.
  * The persisted handled flag survives process death, disable/enable and edits other than the start.
+ * Pause (docs/PRD.md T1) stops the entry, which cancels its reminder, and Resume's new entry gets
+ * one from its own start.
  */
 class ReminderSync(
     private val latest: suspend () -> ReminderInput,
@@ -29,6 +31,7 @@ class ReminderSync(
     private val post: (ReminderTimer) -> Unit,
     private val remove: () -> Unit,
     private val stop: suspend (Long) -> Boolean,
+    private val pause: suspend (Long) -> Boolean = { false },
 ) {
     private val lock = Mutex()
 
@@ -72,14 +75,15 @@ class ReminderSync(
         post(timer)
     }
 
-    /** Both actions act on exactly the timer shown, resolving an offline start's server id. */
-    suspend fun act(id: Long, start: Long, stopTimer: Boolean): Unit = lock.withLock {
+    /** Every action acts on exactly the timer shown, resolving an offline start's server id. */
+    suspend fun act(id: Long, start: Long, stopTimer: Boolean, pauseTimer: Boolean = false): Unit = lock.withLock {
         val input = latest()
         val entry = input.running ?: return@withLock
         if (entry.stop != null || entry.start.epochSecond != start || currentId(id) != entry.id) return@withLock
         val timer = load() ?: return@withLock
         if (timer.start != start || currentId(timer.id) != entry.id) return@withLock
         if (stopTimer && !stop(entry.id)) return@withLock
+        if (pauseTimer && !pause(entry.id)) return@withLock
         save(timer.copy(handled = true))
         cancel(); remove()
     }

@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -321,6 +322,7 @@ class RunningTileServerTest {
         val running = runningTileLook(RunningTileContent.Running(entry), context)
         val stopped = runningTileLook(RunningTileContent.Continue(entry.copy(stop = entry.start.plusSeconds(60))), context)
         val nothing = runningTileLook(RunningTileContent.Nothing, context)
+        val paused = runningTileLook(RunningTileContent.Paused("Looked at", TimerTarget(session = 1, chainId = 2, revision = 3)), context)
 
         assertEquals(Tile.STATE_ACTIVE, running.state)
         assertEquals("Looked at", running.label)
@@ -333,6 +335,11 @@ class RunningTileServerTest {
         assertEquals("No timer running. Tap to continue Looked at.", stopped.contentDescription)
         assertEquals(Tile.STATE_UNAVAILABLE, nothing.state)
         assertEquals("No entry to continue", nothing.subtitle)
+        assertEquals(Tile.STATE_INACTIVE, paused.state)
+        assertEquals("Looked at", paused.label)
+        assertEquals("Paused · tap to resume", paused.subtitle)
+        assertEquals(R.drawable.ic_play, paused.icon)
+        assertEquals("Timer paused: Looked at. Tap to resume.", paused.contentDescription)
         assertEquals(
             "No description",
             runningTileLook(RunningTileContent.Running(entry.copy(description = "")), context).label,

@@ -18,7 +18,7 @@ class TimerViewModel(application: Application) : AndroidViewModel(application) {
 
     val model = (application as TokklApplication).let { app ->
         TimerModel(
-            running = app.cache.running,
+            controls = app.changes.timerControls,
             projects = app.cache.projects,
             tasks = app.cache.tasks,
             accountSettings = app.accountSettings.state,

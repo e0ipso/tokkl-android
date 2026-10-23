@@ -39,14 +39,16 @@ class ReminderNotifier(private val context: Context) {
                 .addCategory(Intent.CATEGORY_LAUNCHER).putExtra(OPEN_TIMER, true)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
-        .addAction(Notification.Action.Builder(null, context.getString(R.string.reminder_keep_running), action(timer, false)).build())
-        .addAction(Notification.Action.Builder(null, context.getString(R.string.notification_stop), action(timer, true)).build())
+        .addAction(Notification.Action.Builder(null, context.getString(R.string.reminder_keep_running), action(timer, "keep")).build())
+        .addAction(Notification.Action.Builder(null, context.getString(R.string.notification_pause), action(timer, PAUSE)).build())
+        .addAction(Notification.Action.Builder(null, context.getString(R.string.notification_stop), action(timer, STOP)).build())
         .build()
 
-    private fun action(timer: ReminderTimer, stop: Boolean): PendingIntent = PendingIntent.getBroadcast(context, 0,
+    private fun action(timer: ReminderTimer, kind: String): PendingIntent = PendingIntent.getBroadcast(context, 0,
         Intent(context, ReminderActionReceiver::class.java)
-            .setData("tokkl-reminder://${timer.id}/${timer.start}/${if (stop) "stop" else "keep"}".toUri())
-            .putExtra(ReminderWork.ID, timer.id).putExtra(ReminderWork.START, timer.start).putExtra("stop", stop),
+            .setData("tokkl-reminder://${timer.id}/${timer.start}/$kind".toUri())
+            .putExtra(ReminderWork.ID, timer.id).putExtra(ReminderWork.START, timer.start)
+            .putExtra(STOP, kind == STOP).putExtra(PAUSE, kind == PAUSE),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
     fun remove() = manager.cancel(ID)
@@ -56,6 +58,10 @@ class ReminderNotifier(private val context: Context) {
         const val CHANNEL = "long_timer_reminder"
         /** A consumed boolean extra on the normal launcher intent. */
         const val OPEN_TIMER = "com.github.e0ipso.tokkl.OPEN_TIMER_REMINDER"
+
+        /** The actions' boolean extras, and the last part of their data URI. */
+        internal const val STOP = "stop"
+        internal const val PAUSE = "pause"
     }
 }
 
@@ -66,10 +72,13 @@ class ReminderActionReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 (context.applicationContext as TokklApplication).reminder.act(
-                    intent.getLongExtra(ReminderWork.ID, 0), intent.getLongExtra(ReminderWork.START, 0), intent.getBooleanExtra("stop", false),
+                    intent.getLongExtra(ReminderWork.ID, 0),
+                    intent.getLongExtra(ReminderWork.START, 0),
+                    stopTimer = intent.getBooleanExtra(ReminderNotifier.STOP, false),
+                    pauseTimer = intent.getBooleanExtra(ReminderNotifier.PAUSE, false),
                 )
             } catch (e: SQLiteException) {
-                // The disk refused Stop. Keep the notification so the user can try again.
+                // The disk refused Stop or Pause. Keep the notification so the user can try again.
             } catch (e: IOException) {
                 // Keep the notification if confirmation could not be stored.
             } finally {

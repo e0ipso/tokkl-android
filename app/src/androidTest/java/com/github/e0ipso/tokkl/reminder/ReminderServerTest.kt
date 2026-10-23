@@ -14,6 +14,7 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.notification.RunningNotifications
+import com.github.e0ipso.tokkl.notification.stopAction
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Instant
@@ -125,7 +126,7 @@ class ReminderServerTest {
         runBlocking { app.changes.update(id, com.github.e0ipso.tokkl.cache.EntryFields(description = "Corrected"), old.start.minusSeconds(3600), null) }
         val corrected = fire()
         assertNotNull(corrected)
-        send(first.actions[1].actionIntent)
+        send(first.stopAction().actionIntent)
         assertNotNull("old start's Stop is inert", runBlocking { app.cache.running.first() })
     }
 
@@ -150,7 +151,7 @@ class ReminderServerTest {
         val id = seed()
         val notification = fire()
         signIn(NO_ROUTE)
-        send(notification.actions[1].actionIntent)
+        send(notification.stopAction().actionIntent)
         runBlocking { withTimeout(60_000) { app.cache.running.first { it == null } } }
         assertEquals(1, runBlocking { app.changes.unsentCount.first() })
         assertNull(this.notification())

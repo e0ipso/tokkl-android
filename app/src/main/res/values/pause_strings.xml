@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pause and Resume on every timer surface (docs/PRD.md T1), worded as the web app's timer. -->
+<resources>
+    <!-- The timer's buttons, and what TalkBack reads for them. -->
+    <string name="timer_pause">Pause</string>
+    <string name="timer_pause_spoken">Pause timer</string>
+    <string name="timer_resume">Resume</string>
+    <string name="timer_resume_spoken">Resume timer</string>
+    <!-- The state while paused, said in words beside the frozen clock. -->
+    <string name="timer_paused">Paused</string>
+    <!-- What TalkBack reads for the frozen clock: 1 hour, 5 minutes elapsed, paused -->
+    <string name="timer_paused_elapsed_spoken">%1$s elapsed, paused</string>
+    <!--
+        The notification's actions. As for Stop, the button says what TalkBack reads, so it says
+        what pauses or resumes.
+    -->
+    <string name="notification_pause">Pause timer</string>
+    <string name="notification_resume">Resume timer</string>
+    <!-- The paused notification's text: Paused · 1:05:00 -->
+    <string name="notification_paused">Paused · %1$s</string>
+    <!-- The same with the project, or the project and task: Paused · 1:05:00 · Tokkl for Android -->
+    <string name="notification_paused_project">Paused · %1$s · %2$s</string>
+    <!-- What TalkBack reads for the widget's buttons. -->
+    <string name="widget_pause_description">Pause the timer</string>
+    <string name="widget_resume_description">Resume the timer</string>
+    <!-- The widget's state while paused, with the frozen time: Paused · 1:05:00 -->
+    <string name="widget_paused">Paused · %1$s</string>
+    <!-- The tile's second line while paused. -->
+    <string name="tile_paused_subtitle">Paused · tap to resume</string>
+    <!-- What TalkBack reads while paused: Timer paused: Design review. Tap to resume. -->
+    <string name="tile_paused_description">Timer paused: %1$s. Tap to resume.</string>
+</resources>

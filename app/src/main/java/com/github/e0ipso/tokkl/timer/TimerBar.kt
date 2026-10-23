@@ -90,7 +90,8 @@ fun TimerBar(
         withFrameNanos {}
         model.shown(state)
     }
-    val elapsed = rememberElapsedSeconds((state as? TimerState.Running)?.start, clock)
+    val running = state as? TimerState.Running
+    val elapsed = (running?.accumulatedSeconds ?: 0) + rememberElapsedSeconds(running?.start, clock)
     val focusManager = LocalFocusManager.current
     Column(modifier) {
         TimerBarCore(model, cache, state, elapsed, onAddEntry)
@@ -140,18 +141,22 @@ private fun TimerBarCore(model: TimerModel, cache: AccountCache, state: TimerSta
         picker = { workspaceId, original, picked, onPickedChange, pickerModifier ->
             EntityPicker(cache, workspaceId, original, picked, onPickedChange, pickerModifier)
         },
+        onPause = model::pause,
+        onResume = model::resume,
     )
 }
 
 /**
  * The timer as the web app's TimerBar.tsx draws it, for [state]: the entry's fields, then the
- * clock and Start, or while an entry runs, the "Running" label, the clock at [elapsedSeconds] and
- * Stop. The frame takes the running colour while an entry runs, and the label and the Stop
- * button's square say so too, so colour is never the only sign. Until the phone knows the
- * account's workspace, which the first account settings bring, the fields and Start are disabled.
- * After Start or Stop comes the button that adds a past entry by hand, as the web app's bar holds
- * its manual mode (M1), whether an entry runs or not. With [suggestions], the description field
- * suggests recent entries as it is typed in (T4), and a pick goes to [onSuggestion].
+ * clock and Start, or while an entry runs, the "Running" label, the clock at [elapsedSeconds],
+ * Pause and Stop. While paused (docs/PRD.md T1) come the "Paused" label, the paused total, which
+ * stands still, Resume and Stop. The frame takes the running colour while an entry runs, and the
+ * label and the Stop button's square say so too, so colour is never the only sign. Until the
+ * phone knows the account's workspace, which the first account settings bring, the fields and
+ * Start are disabled. After the timer's buttons comes the one that adds a past entry by hand, as
+ * the web app's bar holds its manual mode (M1), whatever the timer does. With [suggestions], the
+ * description field suggests recent entries as it is typed in (T4), and a pick goes to
+ * [onSuggestion].
  */
 @Composable
 fun TimerBarContent(
@@ -168,10 +173,13 @@ fun TimerBarContent(
     modifier: Modifier = Modifier,
     suggestions: ((String) -> List<DescriptionSuggestion>)? = null,
     onSuggestion: (DescriptionSuggestion) -> Unit = {},
+    onPause: () -> Unit = {},
+    onResume: () -> Unit = {},
 ) {
     val running = state as? TimerState.Running
+    val paused = state as? TimerState.Paused
     val idle = state as? TimerState.Idle
-    val workspaceId = running?.workspaceId ?: idle?.workspaceId
+    val workspaceId = running?.workspaceId ?: paused?.workspaceId ?: idle?.workspaceId
     val spacing = TokklTheme.spacing
     val focusManager = LocalFocusManager.current
     Surface(
@@ -181,10 +189,10 @@ fun TimerBarContent(
         modifier = modifier.fillMaxWidth(),
     ) {
         EntryFieldsEditor(
-            fields = running?.fields ?: idle?.fields ?: EntryFields(),
-            labels = running?.labels ?: idle?.labels ?: EntryLabels(),
-            original = running?.original ?: Picked(),
-            descriptionHint = stringResource(if (running != null) R.string.timer_description_running else R.string.timer_description_idle),
+            fields = running?.fields ?: paused?.fields ?: idle?.fields ?: EntryFields(),
+            labels = running?.labels ?: paused?.labels ?: idle?.labels ?: EntryLabels(),
+            original = running?.original ?: paused?.original ?: Picked(),
+            descriptionHint = stringResource(if (running != null || paused != null) R.string.timer_description_running else R.string.timer_description_idle),
             onDescriptionChange = onDescriptionChange,
             onDescriptionDone = onDescriptionDone,
             onPick = onPick,
@@ -197,19 +205,36 @@ fun TimerBarContent(
             onSuggestion = onSuggestion,
             modifier = Modifier.padding(spacing.space3),
         ) {
-            if (running != null) {
-                RunningLabel(unsent = running.unsent)
-                RunningClock(elapsedSeconds)
-                TimerButton(R.drawable.ic_stop, R.string.timer_stop, R.string.timer_stop_spoken, danger = true, enabled = true) {
-                    TapTrace.diagnostic?.invoke("timer.stop.handler.enter actual_touch_receipt=UNKNOWN")
-                    onStop()
-                    focusManager.clearFocus()
+            val stop = {
+                TapTrace.diagnostic?.invoke("timer.stop.handler.enter actual_touch_receipt=UNKNOWN")
+                onStop()
+                focusManager.clearFocus()
+            }
+            when {
+                running != null -> {
+                    RunningLabel(unsent = running.unsent)
+                    RunningClock(elapsedSeconds)
+                    TimerButton(R.drawable.ic_pause, R.string.timer_pause, R.string.timer_pause_spoken, TimerButtonLook.Neutral, enabled = true) {
+                        onPause()
+                        focusManager.clearFocus()
+                    }
+                    TimerButton(R.drawable.ic_stop, R.string.timer_stop, R.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
                 }
-            } else {
-                IdleClock()
-                TimerButton(R.drawable.ic_play, R.string.timer_start, R.string.timer_start_spoken, danger = false, enabled = workspaceId != null) {
-                    onStart()
-                    focusManager.clearFocus()
+                paused != null -> {
+                    PausedLabel()
+                    PausedClock(paused.seconds)
+                    TimerButton(R.drawable.ic_play, R.string.timer_resume, R.string.timer_resume_spoken, TimerButtonLook.Primary, enabled = true) {
+                        onResume()
+                        focusManager.clearFocus()
+                    }
+                    TimerButton(R.drawable.ic_stop, R.string.timer_stop, R.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
+                }
+                else -> {
+                    IdleClock()
+                    TimerButton(R.drawable.ic_play, R.string.timer_start, R.string.timer_start_spoken, TimerButtonLook.Primary, enabled = workspaceId != null) {
+                        onStart()
+                        focusManager.clearFocus()
+                    }
                 }
             }
             TokklGhostButton(onClick = onAddEntry) { Text(stringResource(R.string.timer_add_entry)) }
@@ -263,13 +288,33 @@ private fun IdleClock() {
     )
 }
 
-/** Start, on primary, or Stop, on danger: an icon and a word, and the whole action to TalkBack. */
+/** "Paused" in the muted colour, as the web app says it beside the frozen clock. */
+@Composable
+private fun PausedLabel() {
+    Text(stringResource(R.string.timer_paused), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** The paused total, which stands still, and which TalkBack reads as "1 hour elapsed, paused". */
+@Composable
+private fun PausedClock(seconds: Long) {
+    val spoken = stringResource(R.string.timer_paused_elapsed_spoken, spokenDuration(LocalResources.current, seconds))
+    Text(
+        text = formatDuration(seconds),
+        style = TokklTheme.clockTextStyle,
+        modifier = Modifier.semantics { contentDescription = spoken },
+    )
+}
+
+/** How a [TimerButton] looks: Start and Resume on primary, Pause outlined, Stop on danger. */
+private enum class TimerButtonLook { Primary, Neutral, Danger }
+
+/** A timer button in its [look]: an icon and a word, and the whole action to TalkBack. */
 @Composable
 private fun TimerButton(
     @DrawableRes icon: Int,
     @StringRes label: Int,
     @StringRes spoken: Int,
-    danger: Boolean,
+    look: TimerButtonLook,
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
@@ -279,10 +324,10 @@ private fun TimerButton(
         Text(stringResource(label), modifier = Modifier.padding(start = TokklTheme.spacing.space2))
     }
     val semantics = Modifier.semantics { contentDescription = description }
-    if (danger) {
-        TokklDangerButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
-    } else {
-        TokklButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
+    when (look) {
+        TimerButtonLook.Primary -> TokklButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
+        TimerButtonLook.Neutral -> TokklGhostButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
+        TimerButtonLook.Danger -> TokklDangerButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
     }
 }
 

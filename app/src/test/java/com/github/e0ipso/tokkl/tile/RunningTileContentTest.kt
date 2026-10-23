@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.tile
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.cache.TimerTarget
 import java.time.Instant
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -86,6 +88,28 @@ class RunningTileContentTest {
         assertEquals(listOf("start 10 ${EntryFields(last.description, last.projectId, last.taskId, last.tags, last.billable)}"), calls)
     }
 
+    @Test
+    fun aPausedTimerMakesTheTileResumeTheChainItShowed() {
+        val target = TimerTarget(session = 11, chainId = 22, revision = 3)
+        val paused = TimerControls.Paused(seconds = 600, workspaceId = 10, fields = EntryFields("Paused work"), target = target)
+        val content = runningTileContent(paused, listOf(stopped(1, "2026-10-19T08:00:00Z")))
+
+        assertEquals(RunningTileContent.Paused("Paused work", target), content)
+        runBlocking { RecordingChanges().tapTile(content) }
+        assertEquals(listOf("resume $target"), calls)
+    }
+
+    @Test
+    fun theControlsShowTheRunningEntryOrWhatToContinue() {
+        val running = running(4)
+        val last = stopped(1, "2026-10-19T08:00:00Z")
+        val controls = TimerControls.Running(running, unsent = false, accumulatedSeconds = 600, target = TimerTarget(session = 11, entryId = 4))
+
+        assertEquals(RunningTileContent.Running(running), runningTileContent(controls, listOf(last, running)))
+        assertEquals(RunningTileContent.Continue(last), runningTileContent(TimerControls.Idle, listOf(last)))
+        assertEquals(RunningTileContent.Nothing, runningTileContent(TimerControls.Idle, emptyList()))
+    }
+
     private fun stopped(id: Long, start: String) = CachedTimeEntry(
         id = id,
         workspaceId = id * 10,
@@ -110,6 +134,11 @@ class RunningTileContentTest {
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
             calls += "stop $entryId"
             return true
+        }
+
+        override suspend fun resume(target: TimerTarget, fields: EntryFields?): Long? {
+            calls += "resume $target"
+            return -9L
         }
 
         override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =

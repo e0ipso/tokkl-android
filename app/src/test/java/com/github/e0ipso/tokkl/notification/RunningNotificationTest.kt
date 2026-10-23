@@ -3,6 +3,9 @@ package com.github.e0ipso.tokkl.notification
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.cache.TimerTarget
 import java.io.IOException
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -12,8 +15,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RunningNotificationTest {
@@ -289,6 +294,65 @@ class RunningNotificationTest {
         assertEquals(listOf("remove"), fake.calls)
     }
 
+    @Test
+    fun aPausedChainShowsItsFrozenTotalAndWhatResumeStarts() {
+        val shown = paused()!!
+
+        assertTrue(shown.paused)
+        assertEquals("no entry runs", 0L, shown.entryId)
+        assertEquals("Notification", shown.description)
+        assertEquals("Tokkl for Android", shown.project)
+        assertEquals("Design", shown.task)
+        assertEquals(600L, shown.accumulatedSeconds)
+        assertEquals(PAUSED_TARGET, shown.target)
+    }
+
+    @Test
+    fun aResumedEntryCountsFromItsOwnStartAfterTheChainsStoredTime() {
+        val target = TimerTarget(session = 11, chainId = 22, revision = 4, entryId = -3)
+        val resumed = runningNotificationContent(TimerControls.Running(running, unsent = true, accumulatedSeconds = 600, target = target), listOf(project), listOf(task))!!
+
+        assertFalse(resumed.paused)
+        assertEquals("the segment's real start", start, resumed.start)
+        assertEquals(600L, resumed.accumulatedSeconds)
+        assertEquals(target, resumed.target)
+        assertNotEquals("the chain's total changes what it shows", content()!!.key, resumed.key)
+    }
+
+    @Test
+    fun idleControlsShowNothing() {
+        assertNull(runningNotificationContent(TimerControls.Idle, listOf(project), listOf(task)))
+    }
+
+    @Test
+    fun eachPauseAndResumePostsTheNotificationAgain() {
+        val fake = FakeNotification()
+        val resumed = runningNotificationContent(
+            TimerControls.Running(running.copy(id = -5, start = start.plusSeconds(900)), unsent = true, accumulatedSeconds = 600, target = TimerTarget(11, 22, 4, -5)),
+            listOf(project),
+            listOf(task),
+        )
+
+        runBlocking { fake.sync(flowOf(content(), paused(), resumed)).follow() }
+
+        assertEquals(listOf("post Notification -3", "post Notification 0", "post Notification -5"), fake.calls)
+    }
+
+    @Test
+    fun aPausedNotificationSwipedAwayStaysAwayInANewProcessUntilThePausedTimerChanges() {
+        val shown = paused()!!
+        val edited = paused(EntryFields("Edited while paused", projectId = 7, taskId = 9))!!
+        val fake = FakeNotification(shown = shown.followed())
+
+        runBlocking { fake.sync(flowOf(shown, edited)).follow() }
+
+        assertEquals(listOf("post Edited while paused 0"), fake.calls)
+        assertNotEquals("a later revision is another notification", shown.key, paused(target = PAUSED_TARGET.copy(revision = 5))!!.key)
+    }
+
+    private fun paused(fields: EntryFields = EntryFields("Notification", projectId = 7, taskId = 9, tags = listOf("android")), target: TimerTarget = PAUSED_TARGET) =
+        runningNotificationContent(TimerControls.Paused(seconds = 600, workspaceId = 1, fields = fields, target = target), listOf(project), listOf(task))
+
     private fun RunningNotificationContent.followed() = FollowedEntry(key, entryId)
 
     /** [serverIds] maps the local ids the server has answered to its own, as the queue's table does. */
@@ -310,5 +374,9 @@ class RunningNotificationTest {
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 io = Dispatchers.Unconfined,
             )
+    }
+
+    private companion object {
+        val PAUSED_TARGET = TimerTarget(session = 11, chainId = 22, revision = 3)
     }
 }

@@ -12,6 +12,6 @@
     <string name="reminder_cancel">Cancel</string>
     <string name="reminder_channel">Long-running timer reminders</string>
     <string name="reminder_question">Is your timer still running on purpose?</string>
-    <string name="reminder_summary">Keep it running or stop it now.</string>
+    <string name="reminder_summary">Keep it running, pause it or stop it now.</string>
     <string name="reminder_keep_running">Keep running</string>
 </resources>

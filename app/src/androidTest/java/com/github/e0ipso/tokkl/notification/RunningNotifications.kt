@@ -2,10 +2,13 @@ package com.github.e0ipso.tokkl.notification
 
 import android.Manifest
 import android.app.ActivityManager
+import android.app.Notification
 import android.app.NotificationManager
 import android.os.Build
 import android.service.notification.StatusBarNotification
+import androidx.annotation.StringRes
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.R
 import org.junit.Assert.assertNull
 
 /** Reads the running timer's notification as the system holds it, for the tests. */
@@ -82,3 +85,12 @@ object RunningNotifications {
     /** Longer than the app takes to post after a change, which is a few database reads. */
     const val STAYS_GONE_MS = 3_000L
 }
+
+/** The notification's action titled [title]: Pause or Resume, and Stop. */
+fun Notification.action(@StringRes title: Int): Notification.Action {
+    val label = InstrumentationRegistry.getInstrumentation().targetContext.getString(title)
+    return actions.single { it.title.toString() == label }
+}
+
+/** The notification's Stop action, which sits beside Pause or Resume. */
+fun Notification.stopAction(): Notification.Action = action(R.string.notification_stop)

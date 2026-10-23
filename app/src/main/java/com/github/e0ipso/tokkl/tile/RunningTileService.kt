@@ -16,9 +16,10 @@ import kotlinx.coroutines.launch
 
 /**
  * The Quick Settings tile (docs/PRD.md N4). While a timer runs it is active, with the entry's
- * description and a stop icon, and a tap stops the timer. Otherwise it is inactive, says it
- * continues the last entry, with a play icon, and a tap continues that entry. The label and the
- * icon carry the state, never the colour alone.
+ * description and a stop icon, and a tap stops the timer. While the timer is paused (T1) it is
+ * inactive, says so under the description, with a play icon, and a tap resumes it. Otherwise it
+ * is inactive, says it continues the last entry, with a play icon, and a tap continues that
+ * entry. The label and the icon carry the state, never the colour alone.
  *
  * It reads the running entry from the phone's cache and taps go through the change queue, so it
  * reacts at once, also offline. The tile is in the default, non-active mode: the system binds it
@@ -78,7 +79,7 @@ class RunningTileService : TileService() {
     }
 
     private fun content(): Flow<RunningTileContent> =
-        combine(app.cache.running, app.cache.entries) { running, entries -> runningTileContent(running?.entry, entries.map { it.entry }) }
+        combine(app.changes.timerControls, app.cache.entries) { controls, entries -> runningTileContent(controls, entries.map { it.entry }) }
 
     private fun show(content: RunningTileContent) {
         val tile = qsTile ?: return

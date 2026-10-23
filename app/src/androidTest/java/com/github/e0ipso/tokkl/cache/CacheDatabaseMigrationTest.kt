@@ -192,6 +192,36 @@ class CacheDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun version6KeepsARunningTimerAndItsQueueAndPausesItAfterTheUpdate() {
+        context.deleteDatabase(FILE)
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+            VERSION_6.forEach(db::execSQL)
+            db.execSQL(
+                "INSERT INTO pending_changes VALUES " +
+                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Running before the update', ${START.toEpochMilli()}, NULL, 0, " +
+                    "'[]', '[]', 0, '[]', 0, NULL, NULL, 0)",
+            )
+            db.execSQL("INSERT INTO time_entries VALUES (-1, 7, NULL, NULL, 'Running before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]')")
+            db.version = 6
+        }
+
+        val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            assertEquals("Running before the update", RoomChangeStore(database).first()!!.description)
+            assertEquals(null, database.changes().pauseChain())
+            val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            val running = runBlocking { queue.timerControls.first() } as TimerControls.Running
+            assertEquals(-1L, running.entry.id)
+            assertTrue(running.target.session != 0L)
+            assertTrue(runBlocking { queue.pause(running.target) })
+            assertEquals("Running before the update", database.changes().pauseChain()!!.fields.description)
+        } finally {
+            database.close()
+            assertTrue(context.deleteDatabase(FILE))
+        }
+    }
+
     private companion object {
         const val FILE = "cache-migration-test.db"
         val START: Instant = Instant.parse("2026-10-19T08:00:00Z")
@@ -244,6 +274,27 @@ class CacheDatabaseMigrationTest {
             "CREATE INDEX IF NOT EXISTS `index_pending_changes_entryId` ON `pending_changes` (`entryId`)",
             "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
             "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3c6b11c6c52fc8eca243b7d3d98dae21')",
+        )
+
+        /**
+         * The tables of version 6, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/6.json:
+         * those of version 3, with the queue's later columns and the short Stop's Undo.
+         */
+        val VERSION_6 = VERSION_1.dropLast(1) + listOf(
+            "CREATE TABLE IF NOT EXISTS `pending_changes` (`sequence` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` INTEGER, " +
+                "`taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, `stop` INTEGER, " +
+                "`billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, `maybeSent` INTEGER NOT NULL DEFAULT 0, " +
+                "`existingIds` TEXT NOT NULL DEFAULT '[]', `held` INTEGER NOT NULL DEFAULT 0, `refusal` TEXT, " +
+                "`capturedStop` INTEGER, `shortStop` INTEGER NOT NULL DEFAULT 0)",
+            "CREATE INDEX IF NOT EXISTS `index_pending_changes_entryId` ON `pending_changes` (`entryId`)",
+            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
+            "CREATE TABLE IF NOT EXISTS `short_stop_undo` (`entryId` INTEGER NOT NULL, `capturedAt` INTEGER NOT NULL, " +
+                "`stopped_id` INTEGER NOT NULL, `stopped_workspaceId` INTEGER NOT NULL, `stopped_projectId` INTEGER, " +
+                "`stopped_taskId` INTEGER, `stopped_description` TEXT NOT NULL, `stopped_start` INTEGER NOT NULL, " +
+                "`stopped_stop` INTEGER, `stopped_billable` INTEGER NOT NULL, `stopped_tags` TEXT NOT NULL, " +
+                "`stopped_tagIds` TEXT NOT NULL, PRIMARY KEY(`entryId`))",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '056926b082c8c580bac4595b21f4295a')",
         )
     }
 }

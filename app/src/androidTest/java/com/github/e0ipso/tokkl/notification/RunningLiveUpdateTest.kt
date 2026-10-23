@@ -9,6 +9,7 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
 import java.time.Instant
 import org.junit.After
@@ -111,6 +112,36 @@ class RunningLiveUpdateTest {
         assertRegularContent(notification)
     }
 
+    @Test
+    fun aPausedTimerIsQuietDismissibleAndAsksForNoPromotion() {
+        val paused = content.copy(entryId = 0, accumulatedSeconds = 3_900, paused = true, key = "paused-test")
+        val notification = notifier.build(paused, requestPromotion = true)
+
+        assertFalse("it can be swiped away", notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
+        assertFalse(notification.extras.containsKey(RunningNotifier.REQUEST_PROMOTED_ONGOING))
+        assertFalse("no clock ticks", notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertFalse(notification.extras.getBoolean(Notification.EXTRA_SHOW_WHEN))
+        assertEquals(
+            context.getString(R.string.notification_paused_project, formatDuration(3_900), context.getString(R.string.notification_project_task, "Tokkl", "Notifications")),
+            notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+        )
+        assertEquals(
+            listOf(context.getString(R.string.notification_resume), context.getString(R.string.notification_stop)),
+            notification.actions.map { it.title.toString() },
+        )
+        assertTrue(notification.actions.all { it.actionIntent.isBroadcast })
+    }
+
+    @Test
+    fun aResumedTimersClockCountsOnFromTheChainsStoredTime() {
+        val resumed = content.copy(accumulatedSeconds = 600, key = "resumed-test")
+        val notification = notifier.build(resumed, requestPromotion = false)
+
+        assertEquals(resumed.start.toEpochMilli() - 600_000, notification.`when`)
+        assertTrue(notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertTrue(notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
+    }
+
     private fun assertRegularContent(notification: Notification) {
         assertEquals(content.description, notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
         assertEquals(context.getString(R.string.notification_project_task, "Tokkl", "Notifications"), notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
@@ -119,7 +150,10 @@ class RunningLiveUpdateTest {
         assertTrue(notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
         assertTrue(notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(notification.contentIntent.isActivity)
-        assertEquals(context.getString(R.string.notification_stop), notification.actions.single().title.toString())
-        assertTrue(notification.actions.single().actionIntent.isBroadcast)
+        assertEquals(
+            listOf(context.getString(R.string.notification_pause), context.getString(R.string.notification_stop)),
+            notification.actions.map { it.title.toString() },
+        )
+        assertTrue(notification.actions.all { it.actionIntent.isBroadcast })
     }
 }

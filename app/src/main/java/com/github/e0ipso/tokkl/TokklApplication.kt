@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.cache.RunningCheck
+import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationStore
@@ -200,6 +201,10 @@ class TokklApplication : Application() {
             post = notifier::post,
             remove = notifier::remove,
             stop = { changes.stop(it) },
+            pause = { entryId ->
+                val running = changes.timerControls.first() as? TimerControls.Running
+                running != null && running.entry.id == entryId && changes.pause(running.target)
+            },
         )
     }
 
@@ -319,14 +324,15 @@ class TokklApplication : Application() {
 
     /**
      * The running timer's notification (docs/PRD.md N1), which follows the cache's running entry
-     * from process start, so every start, stop and edit from any surface reaches it.
+     * and the pause chain (T1) from process start, so every start, pause, resume, stop and edit
+     * from any surface reaches it.
      */
     val runningNotification: RunningNotificationSync by lazy {
         val store = RunningNotificationStore(this)
         val notifier = RunningNotifier(this)
         RunningNotificationSync(
-            running = combine(cache.running, cache.projects, cache.tasks) { running, projects, tasks ->
-                runningNotificationContent(running?.entry, projects, tasks)
+            running = combine(changes.timerControls, cache.projects, cache.tasks) { controls, projects, tasks ->
+                runningNotificationContent(controls, projects, tasks)
             },
             loadShown = store::load,
             saveShown = store::save,
@@ -339,14 +345,15 @@ class TokklApplication : Application() {
     }
 
     /**
-     * What the home screen widget shows (docs/PRD.md N3): the running entry and the favorites from
-     * the cache, the favorites capability and the account's default workspace, all from the phone.
-     * The first use loads the account settings and the capabilities from disk.
+     * What the home screen widget shows (docs/PRD.md N3): the running entry or paused timer (T1)
+     * and the favorites from the cache, the favorites capability and the account's default
+     * workspace, all from the phone. The first use loads the account settings and the
+     * capabilities from disk.
      */
     val widgetState: Flow<WidgetState> by lazy {
         val catalog = combine(cache.projects, cache.tasks, ::Pair)
-        combine(accountSettings.state, capabilities.state, cache.running, cache.favorites, catalog) { settings, flags, running, favorites, (projects, tasks) ->
-            widgetState(settings?.defaultWorkspaceId, running?.entry, favorites, flags.favorites, projects, tasks)
+        combine(accountSettings.state, capabilities.state, changes.timerControls, cache.favorites, catalog) { settings, flags, controls, favorites, (projects, tasks) ->
+            widgetState(settings?.defaultWorkspaceId, controls, favorites, flags.favorites, projects, tasks)
         }.distinctUntilChanged()
     }
 

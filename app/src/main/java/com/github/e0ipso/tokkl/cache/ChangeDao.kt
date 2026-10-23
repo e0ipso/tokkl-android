@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -113,6 +114,10 @@ abstract class ChangeDao {
     @Query("SELECT * FROM time_entries WHERE stop IS NULL")
     abstract fun runningEntries(): List<CachedTimeEntry>
 
+    /** The running entry that started last, as [CacheDao.runningEntry] shows it. */
+    @Query("SELECT time_entries.*, ${CacheDao.UNSENT} FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC LIMIT 1")
+    abstract fun latestRunning(): EntryWithSendState?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract fun upsertEntry(entry: CachedTimeEntry)
 
@@ -121,4 +126,47 @@ abstract class ChangeDao {
 
     @Query("SELECT * FROM tags WHERE workspaceId = :workspaceId")
     abstract fun tags(workspaceId: Long): List<CachedTag>
+
+    @Query("SELECT * FROM pause_chain WHERE slot = 0")
+    abstract fun pauseChain(): PauseChain?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract fun upsertPauseChain(chain: PauseChain)
+
+    /** Ends the pause chain. Returns how many it ended: none when there was none. */
+    @Query("DELETE FROM pause_chain")
+    abstract fun deletePauseChain(): Int
+
+    /** Marks a queue answer, so a refresh whose server read began earlier leaves the chain alone. */
+    @Query("UPDATE pause_chain SET epoch = epoch + 1")
+    abstract fun touchPauseChain()
+
+    /** Gives the chain's running clone [localId] the server's id. */
+    @Query("UPDATE pause_chain SET runningId = :serverId WHERE runningId = :localId")
+    abstract fun remapPauseChain(localId: Long, serverId: Long)
+
+    @Query("SELECT id FROM timer_session WHERE slot = 0")
+    abstract fun timerSession(): Long?
+
+    /** Keeps the current session, or starts [session] when there is none. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract fun ensureTimerSession(session: TimerSession)
+
+    /**
+     * Ends the pause chain when a server read that began at [mark] shows that its timer changed
+     * elsewhere: something runs while it is paused, or another entry than its clone runs, or
+     * nothing does. A chain that changed since [mark], or began after it, is newer than the read
+     * and stays. Call it in the transaction that writes the read's rows.
+     */
+    @Transaction
+    open fun reconcilePauseChain(mark: ChainMark?) {
+        val chain = pauseChain() ?: return
+        if (mark != ChainMark(chain.chainId, chain.epoch)) return
+        val running = latestRunning()?.entry
+        val keeps = if (chain.runningId == null) running == null else running?.id == chain.runningId
+        if (!keeps) deletePauseChain()
+    }
 }
+
+/** Where a server read begins for the pause chain, as [ChangeDao.reconcilePauseChain] takes it. */
+fun ChangeDao.chainMark(): ChainMark? = pauseChain()?.let { ChainMark(it.chainId, it.epoch) }

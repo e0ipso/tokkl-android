@@ -136,7 +136,7 @@ abstract class CacheDao {
     @Insert
     protected abstract fun insertFavorites(rows: List<CachedFavorite>)
 
-    private companion object {
+    internal companion object {
         /** The `unsent` column of [EntryWithSendState]. */
         const val UNSENT = "EXISTS (SELECT 1 FROM pending_changes WHERE pending_changes.entryId = time_entries.id) AS unsent"
     }

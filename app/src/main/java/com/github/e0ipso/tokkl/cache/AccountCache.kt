@@ -45,12 +45,23 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
      * [me] is the refresh's `GET /api/v9/me` with related data, [preferences] its
      * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
      * A server without favorites gets none cached. A failed request keeps its rows, and a failed
-     * write keeps the whole cache as it was. Blocks, so call it off the main thread.
+     * write keeps the whole cache as it was. Read history ends a pause chain whose timer changed
+     * elsewhere, as [ChangeDao.reconcilePauseChain] describes. Blocks, so call it off the main
+     * thread.
      */
     fun refresh(api: TogglApiClient, me: Me, preferences: MePreferences?, capabilities: Capabilities) {
+        val changes = database.changes()
+        val mark = try {
+            changes.chainMark()
+        } catch (e: SQLiteException) {
+            null
+        }
         val snapshot = readServerSnapshot(api, me, preferences, clock, favorites = capabilities.favorites)
         try {
-            dao.refresh { current, pending -> current.refreshedWith(snapshot, pending) }
+            database.runInTransaction {
+                dao.refresh { current, pending -> current.refreshedWith(snapshot, pending) }
+                if (snapshot.timeEntries != null) changes.reconcilePauseChain(mark)
+            }
         } catch (e: SQLiteException) {
             // Keeps the cache until the next refresh.
         }
@@ -64,22 +75,29 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
         dao.replaceFavorites(favorites.mapIndexed { position, favorite -> favorite.copy(position = position) })
     }
 
-    /** The cached running entries, as a running entry check reads them before its request. Blocks on disk I/O. */
-    fun runningEntries(): List<CachedTimeEntry> = database.changes().runningEntries()
+    /**
+     * The cached running entries and the pause chain, as a running entry check reads them before
+     * its request. Blocks on disk I/O.
+     */
+    fun runningCheckStart(): RunningCheckStart {
+        val changes = database.changes()
+        return database.runInTransaction<RunningCheckStart> { RunningCheckStart(changes.runningEntries(), changes.chainMark()) }
+    }
 
     /**
      * Writes a running entry check's answer, [server], the entry the server runs or null when none
-     * runs, read after the cache held the running entries [before], in one transaction, as
+     * runs, read after the cache held what [before] holds, in one transaction, as
      * [runningCheckWrites] describes: entries with unsent changes, and rows written since
-     * [before], stay as they are. A failed write keeps the cache for the next check. Blocks on
-     * disk I/O.
+     * [before], stay as they are. A pause chain whose timer changed elsewhere ends, as
+     * [ChangeDao.reconcilePauseChain] describes. A failed write keeps the cache for the next
+     * check. Blocks on disk I/O.
      */
-    fun checkedRunning(before: List<CachedTimeEntry>, server: CachedTimeEntry?) {
+    fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?) {
         val changes = database.changes()
         try {
             database.runInTransaction {
                 val writes = runningCheckWrites(
-                    before = before,
+                    before = before.running,
                     now = changes.runningEntries(),
                     server = server,
                     unsent = { changes.countFor(it) > 0 },
@@ -87,6 +105,7 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
                 )
                 writes.delete.forEach(changes::deleteEntry)
                 writes.upsert?.let(changes::upsertEntry)
+                changes.reconcilePauseChain(before.chain)
             }
         } catch (e: SQLiteException) {
             // Keeps the cache until the next check.
@@ -94,10 +113,15 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     }
 
     /**
-     * Deletes every cached row and the queue of unsent changes. Signing out calls this, together
-     * with clearing the stored session and settings. Blocks, so call it off the main thread.
+     * Deletes every cached row, the queue of unsent changes and the pause chain. Signing out calls
+     * this, together with clearing the stored session and settings. A new timer session starts,
+     * so a timer action shown before cannot act after it. Blocks, so call it off the main thread.
      */
     fun clear() {
         database.clearAllTables()
+        database.changes().ensureTimerSession(TimerSession(id = newTimerId()))
     }
 }
+
+/** What a running entry check read before its request: the [running] entries and the [chain]. */
+class RunningCheckStart(val running: List<CachedTimeEntry>, val chain: ChainMark?)

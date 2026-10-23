@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.cache.timerControls
 import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -27,6 +28,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -69,7 +71,7 @@ class TimerModelTest {
     @Before
     fun showTheTimer() {
         model = TimerModel(
-            running = running,
+            controls = running.map { timerControls(it, chain = null, session = 0) },
             projects = MutableStateFlow(listOf(APP, CLIENT_WORK)),
             tasks = MutableStateFlow(listOf(DESIGN)),
             accountSettings = settings,

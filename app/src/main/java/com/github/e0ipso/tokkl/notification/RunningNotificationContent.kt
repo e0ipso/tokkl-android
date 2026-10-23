@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.notification
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.fields
 import java.security.MessageDigest
@@ -10,9 +12,11 @@ import java.time.Instant
 
 /**
  * What the running timer's notification shows (docs/PRD.md N1): the entry's description, its
- * project and task, and the start the system chronometer counts from.
+ * project and task, and the start the system chronometer counts from. While a pause chain is
+ * paused (T1), what Resume starts and the paused total.
  *
- * @param entryId the id the cache held the entry under, which the Stop action stops.
+ * @param entryId the id the cache held the entry under, which the Stop action stops, or 0 while
+ *   [paused].
  * @param description as typed; blank when the entry has none.
  * @param project null when the entry has no project or the cache does not know it.
  * @param key changes with every edit of the running entry, with its start to the second, and with
@@ -21,6 +25,9 @@ import java.time.Instant
  *   of the account's tags. So two starts with the same fields within one second give the same
  *   key, and [entryId] tells them apart (see [runningNotificationChange]). It is a SHA-256 hash,
  *   so the store that keeps it holds no description or name.
+ * @param accumulatedSeconds what the chain's stopped segments store, which the chronometer adds
+ *   to the time since [start], or the paused total while [paused].
+ * @param target what the actions act on.
  */
 data class RunningNotificationContent(
     val entryId: Long,
@@ -29,7 +36,55 @@ data class RunningNotificationContent(
     val task: String?,
     val start: Instant,
     val key: String,
+    val accumulatedSeconds: Long = 0,
+    val paused: Boolean = false,
+    val target: TimerTarget = TimerTarget(session = 0, entryId = entryId),
 )
+
+/** The notification for what the timer [controls] show, or null when no timer runs or is paused. */
+fun runningNotificationContent(
+    controls: TimerControls,
+    projects: List<CachedProject>,
+    tasks: List<CachedTask>,
+): RunningNotificationContent? = when (controls) {
+    TimerControls.Idle -> null
+    is TimerControls.Running -> runningNotificationContent(controls.entry, projects, tasks)?.let { content ->
+        val chained = controls.target.chainId != 0L
+        content.copy(
+            // A resumed entry shows the chain's total, so its key says so too.
+            key = if (chained) hash(content.key, controls.target.chainId.toString(), controls.accumulatedSeconds.toString()) else content.key,
+            accumulatedSeconds = controls.accumulatedSeconds,
+            target = controls.target,
+        )
+    }
+    is TimerControls.Paused -> {
+        val fields = controls.fields
+        val labels = entryLabels(fields, projects, tasks)
+        RunningNotificationContent(
+            entryId = 0,
+            description = fields.description,
+            project = labels.project,
+            task = labels.task,
+            start = Instant.EPOCH,
+            key = hash(
+                "paused",
+                controls.target.chainId.toString(),
+                controls.target.revision.toString(),
+                controls.seconds.toString(),
+                fields.description.trim(),
+                fields.projectId?.toString().orEmpty(),
+                fields.taskId?.toString().orEmpty(),
+                fields.billable.toString(),
+                fields.tags.map(::tagKey).distinct().sorted().joinToString("") { field(it) },
+                labels.project.orEmpty(),
+                labels.task.orEmpty(),
+            ),
+            accumulatedSeconds = controls.seconds,
+            paused = true,
+            target = controls.target,
+        )
+    }
+}
 
 /** The notification for the [running] entry, or null when none runs. */
 fun runningNotificationContent(

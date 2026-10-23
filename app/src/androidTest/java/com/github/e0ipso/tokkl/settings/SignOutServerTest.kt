@@ -137,6 +137,7 @@ class SignOutServerTest {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         composeRule.openBarPage(R.string.settings)
         val before = viewModels()
+        val session = checkNotNull(timerSession()) { "no timer session" }
         composeRule.onNode(signOutRow()).performScrollTo().performClick()
 
         composeRule.awaitText(string(R.string.settings_sign_out_title))
@@ -159,6 +160,9 @@ class SignOutServerTest {
         composeRule.awaitText(string(R.string.sign_in_title), TIMEOUT_MS)
         assertFalse("the bottom bar went with the session", exists(hasText(string(R.string.nav_timer))))
         assertNothingOfTheAccountStays()
+        val next = timerSession()
+        assertNotNull("a new timer session", next)
+        assertNotEquals("timer actions shown before sign-out cannot act", session, next)
         val after = viewModels()
         for ((kind, old) in before) assertNotSame("$kind is a new view model", old, after.getValue(kind))
 
@@ -226,9 +230,17 @@ class SignOutServerTest {
                 buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
             }
             assertTrue("the database has its tables: $tables", "time_entries" in tables && "pending_changes" in tables)
-            tables.filterNot { it in BOOKKEEPING_TABLES }.associateWith { table ->
+            tables.filterNot { it in BOOKKEEPING_TABLES || it == TIMER_SESSION_TABLE }.associateWith { table ->
                 db.rawQuery("SELECT COUNT(*) FROM \"$table\"", null).use { it.moveToFirst(); it.getLong(0) }
             }
+        }
+    }
+
+    /** The timer session's id, read on a connection of its own, or null when there is none. */
+    private fun timerSession(): Long? {
+        val path = context.getDatabasePath(CacheDatabase.FILE_NAME).path
+        return SQLiteDatabase.openDatabase(path, null, SQLiteDatabase.OPEN_READONLY).use { db ->
+            db.rawQuery("SELECT id FROM \"$TIMER_SESSION_TABLE\"", null).use { if (it.moveToFirst()) it.getLong(0) else null }
         }
     }
 
@@ -278,6 +290,9 @@ class SignOutServerTest {
 
         /** SQLite's and Room's own tables, which hold no account data. */
         val BOOKKEEPING_TABLES = setOf("android_metadata", "room_master_table", "sqlite_sequence")
+
+        /** A random id and no account data, which sign-out replaces, as the test checks. */
+        const val TIMER_SESSION_TABLE = "timer_session"
 
         val VIEW_MODELS = listOf(
             SignInViewModel::class.java,

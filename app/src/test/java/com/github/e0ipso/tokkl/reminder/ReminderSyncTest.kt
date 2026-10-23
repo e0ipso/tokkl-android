@@ -15,6 +15,7 @@ class ReminderSyncTest {
     private val posted = mutableListOf<ReminderTimer>()
     private val stopped = mutableListOf<Long>()
     private val mappings = mutableMapOf<Long, Long>()
+    private var removals = 0
     private fun sync() = ReminderSync(
         latest = { input }, currentId = { mappings[it] ?: it }, load = { stored }, save = { stored = it },
         schedule = { if (waiting.none { old -> old.id == it.id && old.start == it.start && old.due == it.due }) waiting += it },
@@ -99,6 +100,42 @@ class ReminderSyncTest {
         assertTrue(posted.isEmpty())
         assertEquals(entry.start.plusSeconds(12 * 3600).toEpochMilli(), waiting.single().due)
     }
+
+    @Test fun pauseActsOnTheShownTimerAndResumeRemindsFromTheNewSegmentsStart() = runBlocking {
+        val paused = mutableListOf<Long>()
+        val sync = pausing { paused += it; true }
+        sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
+        sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true)
+        assertEquals(listOf(1L), paused)
+        assertTrue(stopped.isEmpty())
+        input = input.copy(running = null)
+        sync.reconcile()
+        assertTrue("a paused timer has no reminder", waiting.isEmpty())
+        input = input.copy(running = entry.copy(id = 2, start = now))
+        sync.reconcile()
+        assertEquals(2L, waiting.single().id)
+        assertEquals(now.plusSeconds(8 * 3600).toEpochMilli(), waiting.single().due)
+    }
+
+    @Test fun aRefusedPauseKeepsTheReminderAndAStalePausePausesNothing() = runBlocking {
+        val paused = mutableListOf<Long>()
+        var refuse = true
+        val sync = pausing { if (refuse) false else { paused += it; true } }
+        sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
+        val removed = removals
+        sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true)
+        assertEquals("the reminder stays for another try", removed, removals)
+        refuse = false
+        input = input.copy(running = entry.copy(id = 2))
+        sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true)
+        assertTrue("another timer runs now", paused.isEmpty())
+    }
+
+    private fun pausing(pause: suspend (Long) -> Boolean) = ReminderSync(
+        latest = { input }, currentId = { mappings[it] ?: it }, load = { stored }, save = { stored = it },
+        schedule = { waiting += it }, cancel = { waiting.clear() }, post = { posted += it }, remove = { removals++ },
+        stop = { stopped += it; true }, pause = pause,
+    )
 
     @Test fun futureTimerWaitsAndChangingHoursReplacesTheDelay() = runBlocking {
         input = input.copy(running = entry.copy(start = now))

@@ -5,6 +5,8 @@ import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.cache.TimerTarget
 import java.io.IOException
 import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
@@ -118,6 +120,49 @@ class WidgetStateTest {
         assertEquals(1_000_000L - 90_000, chronometerBase(start, now, elapsedRealtime = 1_000_000))
         assertEquals("a start after now counts from zero", 1_000_000L, chronometerBase(now, start, elapsedRealtime = 1_000_000))
     }
+
+    @Test
+    fun theChronometerAddsWhatThePauseChainStored() {
+        val now = start.plusSeconds(90)
+
+        assertEquals(1_000_000L - 90_000 - 600_000, chronometerBase(start, now, elapsedRealtime = 1_000_000, accumulatedSeconds = 600))
+        assertEquals("a start after now counts from the stored time", 1_000_000L - 600_000, chronometerBase(now, start, elapsedRealtime = 1_000_000, accumulatedSeconds = 600))
+    }
+
+    @Test
+    fun aPausedTimerShowsItsFrozenTotalAndWhatResumeStarts() {
+        val target = TimerTarget(session = 11, chainId = 22, revision = 3)
+        val paused = TimerControls.Paused(seconds = 600, workspaceId = 1, fields = EntryFields("Widget", projectId = 7, taskId = 9), target = target)
+
+        val shown = controlsState(paused) as WidgetState.Ready
+
+        assertEquals(null, shown.running)
+        assertEquals(WidgetPaused(description = "Widget", project = "Tokkl for Android", task = "Design", seconds = 600, target = target), shown.paused)
+        assertEquals("favorites stay", 2, shown.favorites.size)
+    }
+
+    @Test
+    fun aResumedEntryShowsTheChainsTimeAndActsOnTheChain() {
+        val target = TimerTarget(session = 11, chainId = 22, revision = 4, entryId = -3)
+        val resumed = TimerControls.Running(running, unsent = true, accumulatedSeconds = 600, target = target)
+
+        val shown = controlsState(resumed) as WidgetState.Ready
+
+        assertEquals(WidgetRunning(-3, "Widget", "Tokkl for Android", "Design", start, accumulatedSeconds = 600, target = target), shown.running)
+        assertEquals(null, shown.paused)
+    }
+
+    @Test
+    fun theKeyChangesWithEachPauseAndResume() {
+        val target = TimerTarget(session = 11, chainId = 22, revision = 3)
+        val paused = controlsState(TimerControls.Paused(seconds = 600, workspaceId = 1, fields = EntryFields("Widget"), target = target))
+
+        assertNotEquals(state().key(), paused.key())
+        assertNotEquals("a later revision", paused.key(), controlsState(TimerControls.Paused(600, 1, EntryFields("Widget"), target.copy(revision = 5))).key())
+        assertNotEquals("a paused edit", paused.key(), controlsState(TimerControls.Paused(600, 1, EntryFields("Edited"), target)).key())
+    }
+
+    private fun controlsState(controls: TimerControls) = widgetState(1, controls, favorites, favoritesAvailable = true, projects = listOf(project), tasks = listOf(task))
 
     @Test
     fun theKeyChangesWithWhatTheWidgetShows() {
