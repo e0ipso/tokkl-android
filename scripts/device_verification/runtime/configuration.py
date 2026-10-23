@@ -17,9 +17,11 @@ import struct
 if __package__:
     from .scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
     from .check_and_repro import validate_grouped_job
+    from .compile_only import validate_bootstrap_plan
 else:
     from scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
     from check_and_repro import validate_grouped_job
+    from compile_only import validate_bootstrap_plan
 
 MAX_BUDGET = 9 * 1024**3
 CANONICAL_GATE = '/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh'
@@ -156,7 +158,9 @@ def validate(config, *, fresh=True):
     jobs = config.get('plan')
     require(isinstance(jobs, list) and 0 < len(jobs) <= 4, 'one to four finite sequential jobs required')
     require(len(jobs) <= policy['max_preparations'], 'plan exceeds preparation count allowance')
-    validate_plan(config)
+    bootstrap = validate_bootstrap_plan(config)
+    if not bootstrap:
+        validate_plan(config)
     labels = set()
     for job in jobs:
         require(re.fullmatch('[a-z][a-z0-9-]{0,47}', job.get('label', '')), 'unsafe job label')
@@ -180,7 +184,7 @@ def validate(config, *, fresh=True):
         else:
             require('result_recipe' not in job, 'standalone host job cannot use device result recipe')
             require(job['api'] == 0, 'host jobs must use api zero')
-            require(grouped or (args == ['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']
+            require(bootstrap or grouped or (args == ['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']
                      and job['label'] == 'assemble-check')
                     or (args == ['env', 'GRADLE_OPTS=-Dorg.gradle.workers.max=1', 'scripts/reproducible-release.sh']
                         and job['label'] == 'reproducible-release')
@@ -192,6 +196,8 @@ def validate(config, *, fresh=True):
                 '/home/e0ipso/workspace/apps/tokkl-android/scripts/mem-gate.sh',
                 '/home/e0ipso/workspace/apps/tokkl-android/scripts/memory-capacity.py'}
     require(required <= pins.keys(), 'launcher/shared admission inputs must be pinned')
+    if bootstrap:
+        require(str(project/'gradlew') in pins, 'bootstrap Gradle wrapper must be input-pinned')
     if any('host_recipe' in job for job in jobs):
         required.update({str(project/'gradlew'), str(project/'scripts/reproducible-release.sh')})
         require(required <= pins.keys(), 'grouped host command sources must be pinned')

@@ -239,6 +239,87 @@ class ConfigurationTests(unittest.TestCase):
                 self.assertEqual(result['host_pass'], host_kib >= 9*1024**2)
                 self.assertEqual(result['limits'], original)
 
+    def bootstrap_candidate(self):
+        candidate = copy.deepcopy(self.config)
+        candidate['plan_recipe'] = 'benchmark-apk-bootstrap-v1'
+        candidate['plan'] = [dict(api=0, label='benchmark-apk-bootstrap', standalone=True, seconds=1800,
+            args=['./gradlew', '--no-daemon', ':app:assembleDebug', ':app:assembleDebugAndroidTest',
+                  ':app:assembleBenchmark', ':macrobenchmark:assembleBenchmark', '--stacktrace'])]
+        wrapper = PROJECT/'gradlew';candidate['input_pins'][str(wrapper)] = cfg.sha(wrapper)
+        return candidate
+
+    def test_exact_one_job_bootstrap_validates_without_executing_or_claiming_artifacts(self):
+        candidate = self.bootstrap_candidate();checked = cfg.validate(candidate)
+        self.assertEqual(checked['plan'], candidate['plan'])
+        job = checked['plan'][0]
+        self.assertEqual(set(job), {'api', 'label', 'standalone', 'seconds', 'args'})
+        self.assertFalse(Path(checked['run_dir']).exists())
+        self.assertEqual(checked['reclaim_budget_bytes'], 0)
+        bounds = window_bounds([(job['api'], job['label'], job['args'], job['seconds'], job['standalone'])])
+        self.assertEqual(bounds['job_bounds_seconds'], [2235])
+        self.assertEqual(bounds['fallback_seconds'], 2520)
+        # Approval and artifact identity remain separate from this read-only check.
+        with self.assertRaises((ValueError, FileNotFoundError)):
+            cfg.adopted_configuration(Path(checked['run_dir']), self.directory/'not-approved.json')
+        self.assertFalse(Path(checked['run_dir']).exists())
+
+    def test_bootstrap_wrong_label_api_mode_duration_and_added_recipe_fields_refuse(self):
+        candidate = self.bootstrap_candidate()
+        variants = [('label','assemble-check'), ('label','other-job'), ('api',36), ('api',31), ('api',False),
+                    ('standalone',False), ('standalone',1), ('seconds',1799), ('seconds',1801), ('seconds',5400),
+                    ('seconds',1800.0), ('result_recipe',{}), ('host_recipe','assemble-check-then-repro-v1'),
+                    ('extra','ignored')]
+        for field, value in variants:
+            bad = copy.deepcopy(candidate);bad['plan'][0][field] = value
+            with self.subTest(field=field,value=value), self.assertRaises(ValueError):cfg.validate(bad)
+        for field in ['label','api','standalone','seconds','args']:
+            bad = copy.deepcopy(candidate);del bad['plan'][0][field]
+            with self.subTest(missing=field), self.assertRaises(ValueError):cfg.validate(bad)
+
+    def test_bootstrap_exact_task_order_and_wrapper_flag_refusals(self):
+        candidate = self.bootstrap_candidate();args = candidate['plan'][0]['args']
+        alternatives = [args[:-1], args+['--continue'], args+['check'], args+['--stop'],
+                        ['env']+args, ['bash','-c',' '.join(args)], args+[':app:assembleDebug'],
+                        args[:2]+list(reversed(args[2:6]))+args[6:], args[:2]+args[3:],
+                        args[:2]+['assembleDebug']+args[3:], ['./gradlew', ':app:assembleDebug', '--no-daemon']+args[3:]]
+        for argv in alternatives:
+            bad = copy.deepcopy(candidate);bad['plan'][0]['args'] = argv
+            with self.subTest(argv=argv), self.assertRaises(ValueError):cfg.validate(bad)
+
+    def test_bootstrap_job_count_missing_unknown_and_mixed_plan_profiles_refuse(self):
+        candidate = self.bootstrap_candidate()
+        for mode in ['empty','second-job','device-first','missing-profile','unknown','compile-first',
+                     'grouped-profile','benchmark-result-profile','top-host-recipe','top-result-recipe']:
+            bad = copy.deepcopy(candidate)
+            if mode=='empty':bad['plan'] = []
+            if mode=='second-job':bad['plan'].append(dict(api=0,label='reproducible-release',standalone=True,seconds=1800,
+                args=['env','GRADLE_OPTS=-Dorg.gradle.workers.max=1','scripts/reproducible-release.sh']))
+            if mode=='device-first':bad['plan'].insert(0,copy.deepcopy(self.config['plan'][0]))
+            if mode=='missing-profile':del bad['plan_recipe']
+            if mode=='unknown':bad['plan_recipe'] = 'arbitrary-bootstrap-v1'
+            if mode=='compile-first':bad['plan_recipe'] = 'compile-then-scoped-app-v1'
+            if mode=='grouped-profile':bad['plan_recipe'] = 'assemble-check-then-repro-v1'
+            if mode=='benchmark-result-profile':bad['plan_recipe'] = 'benchmark-api-v1'
+            if mode=='top-host-recipe':bad['host_recipe'] = 'assemble-check-then-repro-v1'
+            if mode=='top-result-recipe':bad['result_recipe'] = {'profile':'benchmark-api-v1'}
+            with self.subTest(mode=mode), self.assertRaises(ValueError):cfg.validate(bad)
+
+    def test_bootstrap_preserves_pin_gate_carry_and_fresh_directory_guards(self):
+        candidate = self.bootstrap_candidate()
+        for change in [{'gate':'/other/gate'}, {'carried_reclaim_bytes':1}, {'reclaim_budget_bytes':cfg.MAX_BUDGET+1},
+                       {'slots':2}, {'checked_head':'not-a-head'}]:
+            with self.subTest(change=change), self.assertRaises(ValueError):cfg.validate(dict(candidate,**change))
+        wrapper = str(PROJECT/'gradlew')
+        for mode in ['missing-wrapper','changed-wrapper','changed-source','wrong-image']:
+            bad = copy.deepcopy(candidate)
+            if mode=='missing-wrapper':del bad['input_pins'][wrapper]
+            if mode=='changed-wrapper':bad['input_pins'][wrapper] = '0'*64
+            if mode=='changed-source':bad['input_pins'][str(PROJECT/'scripts/instrumented-tests.sh')] = '0'*64
+            if mode=='wrong-image':bad['server_image'] = 'unreviewed:tag'
+            with self.subTest(mode=mode), self.assertRaises(ValueError):cfg.validate(bad)
+        Path(candidate['run_dir']).mkdir()
+        with self.assertRaisesRegex(ValueError, 'fresh unused run directory'):cfg.validate(candidate)
+
     def test_conformance_rejects_guard_cleanup_sampler_and_reclaim_changes(self):
         other = self.directory/'package'
         shutil.copytree(PACKAGE, other, ignore=shutil.ignore_patterns('__pycache__'))

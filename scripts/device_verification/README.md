@@ -416,6 +416,92 @@ parsing, with launch/cgroup membership/counters modeled on disk. It does not rer
 the 0284 live fixtures or reclassify the earlier UNKNOWN global event. Nine
 protected modules and preparation/reclaim logic remain unchanged by this extension.
 
+## Guarded four-APK bootstrap
+
+`benchmark-apk-bootstrap-v1` is a separate packaging-only plan recipe with
+exactly one job, no result or host recipe and no additional job fields:
+
+```json
+{
+  "plan_recipe": "benchmark-apk-bootstrap-v1",
+  "plan": [{
+    "api": 0, "label": "benchmark-apk-bootstrap",
+    "standalone": true, "seconds": 1800,
+    "args": [
+      "./gradlew", "--no-daemon",
+      ":app:assembleDebug", ":app:assembleDebugAndroidTest",
+      ":app:assembleBenchmark", ":macrobenchmark:assembleBenchmark",
+      "--stacktrace"
+    ]
+  }]
+}
+```
+
+Every common configuration field and pin is still required. The Gradle wrapper
+must be input-pinned; root must also pin all consumed source/build/dependency/tool
+inputs. Alternate labels, API/mode/deadline, wrappers, task order, extra flags/tasks,
+additional jobs and mixed profiles refuse. Old profile restrictions stay intact.
+
+`compile_only.py` validates plan shape only. The unchanged controller supplies
+scope, choom, admission gate, TERM/KILL timeout, Session, monitoring and cleanup.
+Its standalone result requires exit zero, no stop reason and the existing
+operational guards. The unchanged duration policy gives a 2235-second job envelope
+and 2520-second fallback. Gate refusal, timeout, nonzero exit and missing final
+evidence fail normally. A completed Session certifies final scope captures,
+releases, closure and post-closure guards, not APK files, tests or benchmarks.
+No artifact collector is added to the controller.
+
+Before execution, root still needs fresh applicability, a reviewed finite config
+and matching adoption. The 6191243264 carried bytes and five used preparations
+cannot reset or be refunded. Root must allocate only remaining allowances in its
+exact reviewed configuration. This profile grants no bytes, preparations, lease,
+opening headroom or resource-policy change.
+
+After a separately authorized bootstrap completes, root must perform independent
+artifact verification and retain a bounded identity receipt. This procedure is
+a separate review obligation, not an implemented artifact assessor:
+
+1. Bind frozen config/runtime hashes, lease, checked head and full input pins to
+   the sole exact job. Retain actual argv, start/end times, outer/payload exits,
+   telemetry and hashes. Require zero exits, no stop reason, successful owned
+   cleanup, rollback and original-limit readback. Check matching Session request,
+   nonce, registered PID/start/cgroup identities, ready/final-capture/ack/released/
+   closed chain and completed receipt with both successful post-closure checks.
+   Missing, replayed, mutated or foreign evidence and resource/cleanup failures
+   refuse. A completion file alone is insufficient.
+2. Use exactly the four relative `APK_PATHS` below. Each must be a unique,
+   nonempty regular canonical file inside the project, without symlink ancestors
+   or inode aliases. Require the corresponding `output-metadata.json` beside each
+   APK. Bound each APK to 256 MiB, metadata JSON to 1 MiB and ZIP directories to
+   65536 unique safe members. Reject encryption, traversal, duplicate names,
+   missing or empty `AndroidManifest.xml` or `classes.dex`, and bad CRCs. Stream
+   bounded chunks with at most 256 MiB per member and 1 GiB unpacked across all
+   four APKs; refuse excess before allocating it. A filename/signature is not proof.
+3. Require one unfiltered metadata APK element, exact expected output filename,
+   debug/debugAndroidTest/benchmark variant and application/version identities
+   matching frozen build inputs. Immediately record each path/variant/member-set/
+   SHA/bytes tuple at successful completion. Metadata versions remain metadata-
+   reported, not binary-manifest, certificate or installed-byte attestation.
+   Freeze this mapping so later path/variant/file/copy swaps and hash mismatches
+   refuse.
+4. Require APKs and metadata fresh within that exact prelaunch-to-completion
+   interval. Verify unchanged stat identity, size, mtime/ctime and SHA before and
+   after inspection/copy, plus unchanged full source/build/tool pins and reviewed
+   config/runtime identity. Stale UP-TO-DATE output fails; never touch/retimestamp
+   it. Missing, escaped, stale, swapped or changing artifacts/metadata refuse.
+5. Retain copies and all four metadata files in a new exclusive owned evidence
+   directory. Rehash each copy against its original tuple and bind those hashes
+   to command/Session/cleanup evidence. Confirm exact owned process/scope/temp
+   allocation cleanup while retaining evidence. Record checks, failures and
+   bounds. Synthetic fixtures prove no real APK, installed identity,
+   reproducibility, test, metric, trace or stability result.
+
+Only a complete independent receipt and root review permit freezing four APK
+hashes into the unchanged benchmark declaration. A subsequent trial needs a
+fresh separate matching configuration/adoption. Do not defer benchmark inventory
+validation, replace an active lease, infer a benchmark pass from packaging or
+reuse historical applicability as proof for changed runtime bytes.
+
 ## Exact benchmark/API diagnostic recipe
 
 TKA-0307 adds `benchmark-api-v1` within the existing result-recipe hooks. Its
@@ -594,7 +680,8 @@ with the runtime; adoption binds the complete configuration and runtime manifest
 Execution revalidates adoption, command-source pins, frozen helper bytes, original
 job environment/cwd and registered Session cgroup. Missing bindings refuse before
 children start. Alternate wrappers, commands, profiles, positions, deadlines and
-first-host plans remain unsupported. Three jobs with two allowances still refuse.
+first-host plans under this grouped profile remain unsupported. Three jobs with
+two allowances still refuse.
 
 This recipe grants no preparation, budget, reset, refund, lease or activation.
 The original current phase remains 6 GiB, four lifetime preparations, zero bytes
