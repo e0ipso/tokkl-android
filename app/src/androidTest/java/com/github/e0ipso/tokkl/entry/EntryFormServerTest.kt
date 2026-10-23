@@ -147,16 +147,19 @@ class EntryFormServerTest {
     @After
     fun cleanUp() {
         try {
-            AirplaneMode.off()
-            originalResolution?.let { setResolution(it) }
-        } finally {
+            // off() returns before connectivity recovers. Probe as the administrator even if
+            // setup failed before creating this test's account.
+            val admin = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+            AirplaneMode.set(false, admin)
             try {
+                originalResolution?.let { setResolution(it) }
+            } finally {
                 // TestAccounts talks to the server through the app's guard, which follows the session.
                 signIn(TokklTestServer.url, TokklTestServer.apiToken)
                 if (::account.isInitialized) TestAccounts.delete(account)
-            } finally {
-                SessionRule.signOut()
             }
+        } finally {
+            SessionRule.signOut()
         }
     }
 
