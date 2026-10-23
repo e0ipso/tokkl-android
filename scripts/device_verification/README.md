@@ -206,7 +206,7 @@ already frozen authorized path; adding new plan shapes requires explicit review
 of their expected finalized counts. API31 execution is refused by this development
 configuration. API31 compatibility remains a later dedicated cycle.
 
-`reclaim_budget_bytes` is at most 12 GiB and grants no renewed authorization.
+`reclaim_budget_bytes` is at most 16 GiB and grants no renewed authorization.
 Default zero permits no reclaim. `preparation_policy.max_request_bytes` defaults
 to zero. It may be set to the authorized cumulative budget, or an explicitly
 stricter caller bound; there is no independent 4 GiB ceiling. The controller and
@@ -241,7 +241,7 @@ history. This ceiling change grants no new resource authority. Reservation
 identity, fresh whole deficit plus 128 MiB, whole inactive coverage, durable
 write intent, no reset/refund/replay and all existing safety guards still apply.
 
-TKA-0312 raises only the explicit ceiling to 12884901888 bytes (12 GiB).
+TKA-0312 raised only the explicit ceiling to 12884901888 bytes (12 GiB).
 Existing budgets, including 9 GiB, and zero defaults remain unchanged. This
 finite amendment carries all 9289646080 actual reserved bytes, leaving
 3595255808 bytes; the recorded fresh whole need is 981966848 bytes. Eight actual
@@ -253,6 +253,25 @@ Opening 6/9 GiB, temporary 14G/15G/2G, rollback 10G/12G/2G, whole inactive-file
 coverage, identity and all failure/cleanup guards remain unchanged. Changed
 validator bytes require fresh actual applicability and matching root adoption
 separately; host checks establish no workload or device result.
+
+TKA-0314 raises only the explicit finite ceiling to 17179869184 bytes
+(16 GiB). Existing budgets, including 12 GiB, and zero defaults stay unchanged.
+The recorded amendment carries all 11858051072 reserved bytes, including the
+failed pre-write attempt, leaving 5321818112 bytes. The observed fresh whole
+need is 1340342272 bytes with 4556406784 bytes of inactive-file coverage; every
+future request still needs fresh calculation and full coverage. Eleven actual
+preparations are consumed; root binds three remaining allowances under its
+finite lifetime cap of fourteen. The generic validator enforces local plan
+allowances only. Carry the actual closed prior state unchanged, with its pinned
+hash, even when its phase remains `prepared`; closure review is separate.
+
+This cumulative amendment does not fix the anonymous-memory guard or authorize
+activation. The 64 MiB guard, owner opening 6/9 GiB, temporary 14G/15G/2G,
+rollback 10G/12G/2G, bounded hashing and all identity/failure/cleanup guards stay
+unchanged. There is no reset, refund or automatic replacement run. The sole
+corrected attempt and any later completed-run repetitions require separate root
+review under the recorded finite amendment; another failure stops the series.
+Fresh actual applicability and matching root adoption remain separate.
 
 For the TKA-0295 continuation of the current TKA-0290 phase, root must pin the
 actual previous ledger and SHA, retain zero reserved bytes and the one consumed
