@@ -21,7 +21,7 @@ else:
     from scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
     from check_and_repro import validate_grouped_job
 
-MAX_BUDGET = 6 * 1024**3
+MAX_BUDGET = 9 * 1024**3
 CANONICAL_GATE = '/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh'
 
 

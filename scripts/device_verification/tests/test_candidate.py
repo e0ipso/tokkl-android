@@ -170,6 +170,75 @@ class ConfigurationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'ledger changed'):
             cfg.validate(candidate)
 
+    def nine_gib_candidate(self):
+        ledger = self.directory/'nine-gib-prior.json'
+        ledger.write_text(json.dumps({'reclaim_reserved_bytes': 6191243264,
+                                     'preparations': [{'label': 'historical-'+str(i)} for i in range(5)]}))
+        candidate = copy.deepcopy(self.config)
+        candidate.update(reclaim_budget_bytes=9*1024**3, carried_reclaim_bytes=6191243264,
+                         prior_window=str(ledger), prior_window_sha256=cfg.sha(ledger),
+                         preparation_policy={'max_request_bytes': 9*1024**3, 'max_preparations': 2})
+        candidate['plan'].append(dict(api=0, label='assemble-check', standalone=True, seconds=1800,
+            args=['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']))
+        return candidate
+
+    def test_nine_gib_accepts_actual_carry_and_two_reviewed_local_allowances(self):
+        candidate = self.nine_gib_candidate()
+        checked = cfg.validate(candidate)
+        self.assertEqual(checked['reclaim_budget_bytes']-checked['carried_reclaim_bytes'], 3472433152)
+        self.assertEqual(checked['preparation_policy']['max_preparations'], 2)
+        history = json.loads(Path(candidate['prior_window']).read_text())
+        self.assertEqual(len(history['preparations']), 5)
+        self.assertEqual(len(history['preparations'])+checked['preparation_policy']['max_preparations'], 7)
+        self.assertEqual(cfg.validate(self.config)['reclaim_budget_bytes'], 0)
+        legacy = copy.deepcopy(self.config)
+        legacy.update(reclaim_budget_bytes=6*1024**3,
+                      preparation_policy={'max_request_bytes': 6*1024**3, 'max_preparations': 4})
+        self.assertEqual(cfg.validate(legacy)['reclaim_budget_bytes'], 6*1024**3)
+        proof = prepare(candidate)  # Owned disk model only, not execution adoption.
+        adoption = self.directory/'HOST-ONLY-nine-gib-adoption.json'
+        adoption.write_text(json.dumps(dict(configuration_sha256=proof['configuration_sha256'],
+            runtime_sha256=proof['runtime_sha256'], lease_id=candidate['lease_id'],
+            approved_by='HOST-MODEL-ONLY', cheap_live_controller_fixtures_verified=True)))
+        self.assertEqual(cfg.adopted_configuration(Path(proof['run_dir']), adoption), checked)
+        self.assertFalse(list(Path(proof['run_dir']).glob('window-state-*')))
+
+    def test_nine_gib_budget_carry_hash_and_allowance_refusals(self):
+        candidate = self.nine_gib_candidate()
+        for key in ['reclaim_budget_bytes', 'carried_reclaim_bytes']:
+            for value in [9*1024**3+1, -1, True, 1.5, '9663676416', None]:
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    cfg.validate(dict(candidate, **{key: value}))
+        for change in [{'reclaim_budget_bytes': 6191243263}, {'carried_reclaim_bytes': 0},
+                       {'prior_window': None}, {'prior_window_sha256': '0'*64}]:
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                cfg.validate(dict(candidate, **change))
+        for value in [0, 1, 5, -1, True, 1.5]:
+            bad = copy.deepcopy(candidate);bad['preparation_policy']['max_preparations'] = value
+            with self.subTest(allowance=value), self.assertRaises(ValueError):cfg.validate(bad)
+        bad = copy.deepcopy(candidate);del bad['prior_window_sha256']
+        with self.assertRaisesRegex(ValueError, 'prior ledger changed'):cfg.validate(bad)
+        Path(candidate['prior_window']).write_text('{"reclaim_reserved_bytes":0}')
+        with self.assertRaisesRegex(ValueError, 'prior ledger changed'):cfg.validate(candidate)
+
+    def test_nine_gib_ceiling_preserves_actual_opening_six_nine_boundaries(self):
+        node = next(n for n in ast.parse((PACKAGE/'runtime/controller.py').read_text()).body
+                    if isinstance(n, ast.FunctionDef) and n.name == 'conditions')
+        meminfo = self.directory/'meminfo'
+        original = {'memory.high': str(10*1024**3), 'memory.max': str(12*1024**3),
+                    'memory.swap.max': str(2*1024**3)}
+        ns = {'app': self.directory, 'Path': lambda _: meminfo, 'now': lambda: 'host-fixture',
+              'limits': lambda: dict(original)}
+        exec(compile(ast.Module(body=[node], type_ignores=[]), '<actual-opening-conditions>', 'exec'), ns)
+        for current in [6*1024**3, 6*1024**3+1]:
+            for host_kib in [9*1024**2, 9*1024**2-1]:
+                (self.directory/'memory.current').write_text(str(current))
+                meminfo.write_text('MemAvailable: '+str(host_kib)+' kB\n')
+                result = ns['conditions']()
+                self.assertEqual(result['baseline_pass'], current <= 6*1024**3)
+                self.assertEqual(result['host_pass'], host_kib >= 9*1024**2)
+                self.assertEqual(result['limits'], original)
+
     def test_conformance_rejects_guard_cleanup_sampler_and_reclaim_changes(self):
         other = self.directory/'package'
         shutil.copytree(PACKAGE, other, ignore=shutil.ignore_patterns('__pycache__'))

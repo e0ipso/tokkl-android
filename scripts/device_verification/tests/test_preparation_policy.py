@@ -32,7 +32,7 @@ def root_config(directory):
 
 class ActualPreparationTests(unittest.TestCase):
     def execute(self, directory, cap, *, reserved=0, inactive=8*GIB, repeat=False, count=0,
-                request=REQUEST, max_preparations=4):
+                request=REQUEST, max_preparations=4, budget=6*GIB):
         node = next(n for n in ast.parse((PACKAGE/'runtime/controller.py').read_text()).body
                     if isinstance(n, ast.FunctionDef) and n.name == 'prepare')
         before = {'limits': ORIGINAL, 'current': 6*GIB+request-134217728, 'host_available': 12*GIB,
@@ -42,7 +42,7 @@ class ActualPreparationTests(unittest.TestCase):
         frames = iter([before, after])
         writes = []
         state = {'preparations': [{'label': 'full36' if repeat else 'earlier-'+str(i)} for i in range(count)],
-                 'prepared_labels': [], 'reclaim_budget_bytes': 6*GIB, 'reclaim_reserved_bytes': reserved}
+                 'prepared_labels': [], 'reclaim_budget_bytes': budget, 'reclaim_reserved_bytes': reserved}
         ns = {'preparation_snapshot': lambda: next(frames), 'original': ORIGINAL, 'temporary': TEMPORARY,
               'config': {'preparation_policy': {'max_request_bytes': cap, 'max_preparations': max_preparations}},
               'state': state, 'time': types.SimpleNamespace(time=lambda: 1), 'os': types.SimpleNamespace(environ={}),
@@ -258,6 +258,84 @@ class RemainingBudgetTests(unittest.TestCase):
             configuration_sha256=proof['configuration_sha256'], runtime_sha256=proof['runtime_sha256'],
             controller_reserved_bytes=state['reclaim_reserved_bytes'], paths=reached,
             actual_reclaim=False, max_preparations=checked['preparation_policy']['max_preparations'])), flush=True)
+
+    def test_nine_gib_remaining_controller_budget_cache_and_local_slots(self):
+        carry = 6191243264; remaining = 9*GIB-carry
+        args = dict(cap=9*GIB, request=remaining, reserved=carry, budget=9*GIB, max_preparations=2)
+        success, calls, state = ActualPreparationTests.execute(self, self.directory, **args)
+        self.assertTrue(success);self.assertEqual(len(calls), 1)
+        self.assertEqual(state['reclaim_reserved_bytes'], 9*GIB)
+        self.assertEqual(state['preparations'][0]['requested'], remaining)
+        self.assertEqual(state['preparations'][0]['target_current'], 6*GIB)
+        self.assertEqual(state['preparations'][0]['host_floor'], 9*GIB)
+        for change in [{'request': remaining+1}, {'inactive': remaining-1}, {'cap': remaining-1},
+                       {'count': 2}, {'count': 1, 'repeat': True}]:
+            bad = dict(args, **change)
+            with self.subTest(change=change):
+                success, calls, state = ActualPreparationTests.execute(self, self.directory, **bad)
+                self.assertFalse(success);self.assertFalse(calls)
+                self.assertEqual(state['reclaim_reserved_bytes'], carry)
+
+    def test_nine_gib_actual_parent_writer_binding_and_replay_refusals(self):
+        carry = 6191243264; amount = 9*GIB-carry
+        prior = Path(self.config['prior_window'])
+        prior.write_text(json.dumps({'reclaim_reserved_bytes': carry,
+                                    'preparations': [{'label': 'historical-'+str(i)} for i in range(5)]}))
+        self.config.update(reclaim_budget_bytes=9*GIB, carried_reclaim_bytes=carry,
+            prior_window_sha256=cfg.sha(prior), preparation_policy={'max_request_bytes': 9*GIB, 'max_preparations': 2})
+        self.config['plan'].append(dict(api=0, label='assemble-check', standalone=True, seconds=1800,
+            args=['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']))
+        proof = snapshot(self.config);run = Path(proof['run_dir'])
+        adoption = self.directory/'HOST-ONLY-nine-gib-adoption.json'
+        adoption.write_text(json.dumps(dict(configuration_sha256=proof['configuration_sha256'],
+            runtime_sha256=proof['runtime_sha256'], lease_id=self.config['lease_id'],
+            approved_by='HOST-MODEL-ONLY', cheap_live_controller_fixtures_verified=True)))
+        success, calls, state = ActualPreparationTests.execute(self, run, 9*GIB, reserved=carry,
+            request=amount, budget=9*GIB, max_preparations=2)
+        self.assertTrue(success)
+        state.update(phase='prepared', project=self.config['project'],
+                     configuration_sha256=proof['configuration_sha256'], run_id=self.config['run_id'], lease_id=self.config['lease_id'])
+        state_path = run/'window-state-fixture.json';state_path.write_text(json.dumps(state));argv = calls[0][2:]
+        class Boundary(Exception): pass
+        original_open, original_os_open = builtins.open, os.open
+        reached = []
+        def stop_lock(path, *args, **kw):
+            if str(path) == '/run/user/1000/tokkl-android-mem-gate.lock':
+                reached.append('parent-before-lock');raise Boundary()
+            return original_open(path, *args, **kw)
+        def stop_reclaim(path, flags, *args, **kw):
+            if str(path).startswith('/sys/'):
+                self.assertTrue(str(path).endswith('/memory.reclaim'))
+                reached.append('writer-after-durable-intent');raise Boundary()
+            if flags & os.O_DIRECT:
+                self.assertEqual(flags & os.O_ACCMODE, os.O_RDONLY)
+                self.assertFalse(flags & (os.O_CREAT | os.O_TRUNC))
+            else:self.assertEqual(Path(path), run)
+            return original_os_open(path, flags, *args, **kw)
+        helper = run/'local-reclaim-finite.py'
+        with patch.dict(os.environ, TOKKL_VERIFICATION_ADOPTION=str(adoption)):
+            for prefix in [[], ['--write']]:
+                self.assertEqual(policy.helper_request(run, prefix+argv)['amount'], amount)
+                with patch.object(sys, 'argv', [str(helper)]+prefix+argv), patch('builtins.open', stop_lock), \
+                     patch('os.open', stop_reclaim), self.assertRaises(Boundary):
+                    runpy.run_path(str(helper), run_name='__main__')
+            intent = run/'preparation-write-0.json';self.assertEqual(json.loads(intent.read_text())['amount'], amount)
+            with self.assertRaises(FileExistsError):policy.reserve_write(policy.helper_request(run, ['--write']+argv))
+            for mode in ['overbudget', 'refund', 'reset', 'inactive', 'deficit', 'label', 'command', 'replay']:
+                bad = copy.deepcopy(state);row = bad['preparations'][0]
+                if mode=='overbudget':bad['reclaim_reserved_bytes'] = 9*GIB+1
+                if mode=='refund':bad['reclaim_reserved_bytes'] -= 1
+                if mode=='reset':bad['reclaim_reserved_bytes'] = amount
+                if mode=='inactive':row['before']['stat']['inactive_file'] = amount-1
+                if mode=='deficit':row['deficit'] -= 1
+                if mode=='label':row['label'] = 'other'
+                if mode=='command':row['command'][1] = '/other/helper.py'
+                if mode=='replay':bad['preparations'].append(copy.deepcopy(row))
+                state_path.write_text(json.dumps(bad))
+                for prefix in [[], ['--write']]:
+                    with self.subTest(mode=mode, writer=bool(prefix)), self.assertRaises(ValueError):
+                        policy.helper_request(run, prefix+argv)
+        self.assertEqual(reached, ['parent-before-lock', 'writer-after-durable-intent'])
 
     def test_remaining_budget_cache_slots_and_invalid_grants_still_refuse(self):
         self.assertTrue(cfg.validate(self.config))
