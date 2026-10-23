@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The tile's long press opens over the Quick Settings shade. A translucent window, with
+        the shade dimmed and no launch splash from Theme.Tokkl, lets Compose draw the compact
+        dialog on top of it. The dialog theme's own window does not wrap Compose content.
+    -->
+    <style name="Theme.Tokkl.TileControls" parent="android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+</resources>

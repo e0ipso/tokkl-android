@@ -110,6 +110,23 @@
             </intent-filter>
         </service>
         <!--
+            A long press on the tile. SystemUI, another app, sends QS_TILE_PREFERENCES, so the
+            activity is exported. It reads the queue and ignores the intent's extras. The
+            translucent theme lets it draw a dialog over the shade and leave no recents entry.
+        -->
+        <activity
+            android:name=".tile.TileControlsActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Tokkl.TileControls">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!--
             The home screen widget (docs/PRD.md N3). Exported, since the launcher's widget service
             sends it the widget's updates. Its taps go to Glance's receiver, which is not exported.
         -->

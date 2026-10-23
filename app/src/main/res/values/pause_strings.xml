@@ -25,8 +25,11 @@
     <string name="widget_resume_description">Resume the timer</string>
     <!-- The widget's state while paused, with the frozen time: Paused · 1:05:00 -->
     <string name="widget_paused">Paused · %1$s</string>
-    <!-- The tile's second line while paused. -->
-    <string name="tile_paused_subtitle">Paused · tap to resume</string>
-    <!-- What TalkBack reads while paused: Timer paused: Design review. Tap to resume. -->
-    <string name="tile_paused_description">Timer paused: %1$s. Tap to resume.</string>
+    <!--
+        The tile's second line while paused. It keeps the state and says to hold, which opens
+        Resume and Stop. The tap still resumes, and TalkBack says the state, the tap and the hint.
+    -->
+    <string name="tile_paused_subtitle">Paused · Hold for controls</string>
+    <!-- What TalkBack reads while paused: Timer paused: Design review. Tap to resume. Hold for controls. -->
+    <string name="tile_paused_description">Timer paused: %1$s. Tap to resume. Hold for controls.</string>
 </resources>

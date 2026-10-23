@@ -326,8 +326,9 @@ class RunningTileServerTest {
 
         assertEquals(Tile.STATE_ACTIVE, running.state)
         assertEquals("Looked at", running.label)
+        assertEquals("Running · Hold for controls", running.subtitle)
         assertEquals(R.drawable.ic_stop, running.icon)
-        assertEquals("Timer running: Looked at. Tap to stop.", running.contentDescription)
+        assertEquals("Timer running: Looked at. Tap to stop. Hold for controls.", running.contentDescription)
         assertEquals(Tile.STATE_INACTIVE, stopped.state)
         assertEquals("Continue last entry", stopped.label)
         assertEquals("Looked at", stopped.subtitle)
@@ -337,9 +338,9 @@ class RunningTileServerTest {
         assertEquals("No entry to continue", nothing.subtitle)
         assertEquals(Tile.STATE_INACTIVE, paused.state)
         assertEquals("Looked at", paused.label)
-        assertEquals("Paused · tap to resume", paused.subtitle)
+        assertEquals("Paused · Hold for controls", paused.subtitle)
         assertEquals(R.drawable.ic_play, paused.icon)
-        assertEquals("Timer paused: Looked at. Tap to resume.", paused.contentDescription)
+        assertEquals("Timer paused: Looked at. Tap to resume. Hold for controls.", paused.contentDescription)
         assertEquals(
             "No description",
             runningTileLook(RunningTileContent.Running(entry.copy(description = "")), context).label,

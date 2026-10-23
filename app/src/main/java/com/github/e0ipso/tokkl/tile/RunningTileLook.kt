@@ -8,7 +8,9 @@ import com.github.e0ipso.tokkl.R
 /**
  * How the Quick Settings tile draws [RunningTileContent]: its [state] (a `Tile.STATE_*`), the
  * [label] and [subtitle] it shows, its [icon] and what TalkBack reads. The label and the icon
- * differ between running and not, so the state never rests on the colour alone.
+ * differ between running and not, so the state never rests on the colour alone. While a timer
+ * runs or is paused, the subtitle keeps that state and says to hold for both controls, and
+ * TalkBack reads the state, the tap and the hold hint.
  */
 data class RunningTileLook(
     val state: Int,
