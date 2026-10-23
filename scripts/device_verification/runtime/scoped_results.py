@@ -59,7 +59,14 @@ def require(condition, message):
 
 
 def sha(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    """Reuse cache-neutral bounded hashing after configuration imports settle."""
+    # configuration imports this module for recipe validation. Resolve the
+    # primitive only on a hash call, in either package or frozen-script mode.
+    if __package__:
+        from .configuration import sha as bounded_sha
+    else:
+        from configuration import sha as bounded_sha
+    return bounded_sha(path)
 
 
 def masked_kotlin(text):

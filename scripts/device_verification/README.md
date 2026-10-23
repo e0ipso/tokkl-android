@@ -550,6 +550,20 @@ The four required APK paths under the checked project are:
 - `app/build/outputs/apk/benchmark/app-benchmark.apk`
 - `macrobenchmark/build/outputs/apk/benchmark/macrobenchmark-benchmark.apk`
 
+Benchmark recipe hashing reuses the same bounded direct-I/O primitive as
+configuration input hashing, including every-byte digests, file identity checks
+and refusal on unsupported I/O. A lazy import in `scoped_results.sha()` resolves
+the existing configuration/recipe dependency in both package and frozen-script
+imports; no shared module or duplicate reader is needed. This removes whole-APK
+Python byte buffers during mandatory writer revalidation without skipping any
+source/APK inventory or identity check. The 64 MiB aggregate anonymous-change
+guard, resource limits and finite accounting remain unchanged.
+
+TKA-0313 host allocation and capped-memory checks establish bounded hashing,
+not attribution of Trial1's aggregate growth or resolution of benchmark noise.
+Retain that failed attempt, its complete charge and certified closure. Fresh
+actual applicability and matching root adoption remain separate requirements.
+
 Declaration and validation read existing files only. They enumerate the complete
 API package and its direct JUnit4 methods: three PinnedCertificateTest cases and
 seven ServerSmokeTest cases. They require the reviewed benchmark/helper source

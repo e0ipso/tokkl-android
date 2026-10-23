@@ -11,15 +11,97 @@ import tempfile
 import io
 import zipfile
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 from test_candidate import PACKAGE,SCRATCH
 from scoped_controller_fixture import WorkloadFixture,CLASSES
+import scoped_results as scoped
+import configuration as hash_config
 from scoped_results import declare,inventory,assess_scoped,PREFIX,COMPILE_ARGS,COMPILE_FIRST
 from watchdog_lifetime import service_command
 from runtime.configuration import validate,adopted_configuration
 from scoped_results import BENCHMARK_API,BENCHMARK_ARGS,BENCHMARK_LABEL,APK_PATHS,declare_benchmark_api
 from scoped_controller_fixture import DEVICE_BUILD
+
+
+class ScopedHashTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(dir=SCRATCH)
+        self.root = Path(self.temp.name)
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def test_empty_alignment_boundaries_and_changed_bytes_match_every_byte(self):
+        path = self.root/'input'
+        for size in [0, 1, 65535, 65536, 65537, 3*65536+17]:
+            data = (bytes(range(256))*((size+255)//256))[:size]
+            path.write_bytes(data)
+            with self.subTest(size=size), patch.object(Path, 'read_bytes', side_effect=AssertionError('whole-file fallback')):
+                self.assertEqual(scoped.sha(path), hashlib.sha256(data).hexdigest())
+        previous = scoped.sha(path)
+        with path.open('r+b') as out:
+            out.seek(65537);out.write(b'changed')
+        self.assertNotEqual(scoped.sha(path), previous)
+
+    def test_missing_short_unsupported_and_observed_identity_mutation_refuse(self):
+        path = self.root/'input';path.write_bytes(b'a'*(2*65536+17))
+        with self.assertRaises(FileNotFoundError):scoped.sha(self.root/'missing')
+        for count in [0, 1, 65537]:
+            with self.subTest(short_read=count), patch.object(os, 'preadv', return_value=count), self.assertRaises(OSError):
+                scoped.sha(path)
+        with patch.object(hash_config, '_direct_alignment', side_effect=OSError('unsupported direct I/O')),              patch.object(Path, 'open', side_effect=AssertionError('buffered fallback')),              self.assertRaisesRegex(OSError, 'unsupported direct I/O'):
+            scoped.sha(path)
+        original = os.preadv
+        def mutate(fd, buffers, offset):
+            count = original(fd, buffers, offset)
+            if offset == 0:
+                with path.open('r+b', buffering=0) as out:out.write(b'b')
+            return count
+        with patch.object(os, 'preadv', side_effect=mutate), self.assertRaisesRegex(ValueError, 'input changed during hashing'):
+            scoped.sha(path)
+
+    def test_package_and_standalone_import_orders_use_the_same_bounded_primitive(self):
+        path = self.root/'input';path.write_bytes(b'checked source bytes')
+        expected = hashlib.sha256(b'checked source bytes').hexdigest()
+        code = """
+import importlib,json,sys
+from pathlib import Path
+from unittest.mock import patch
+sys.path[:0]=[sys.argv[1],str(Path(sys.argv[1])/'runtime')]
+recipe_name,config_name,first,path,expected=sys.argv[2:]
+for name in ([recipe_name,config_name] if first=='recipe' else [config_name,recipe_name]):
+    importlib.import_module(name)
+recipe=importlib.import_module(recipe_name);config=importlib.import_module(config_name)
+with patch.object(config,'sha',wraps=config.sha) as bounded, patch.object(Path,'read_bytes',side_effect=AssertionError('whole-file fallback')):
+    assert recipe.sha(path)==expected
+    bounded.assert_called_once_with(path)
+print(json.dumps(dict(recipe=recipe_name,first=first,digest=expected,bounded_primitive=True)))
+"""
+        for prefix in ['', 'runtime.']:
+            for first in ['recipe', 'configuration']:
+                result = subprocess.run([sys.executable, '-B', '-c', code, str(PACKAGE), prefix+'scoped_results',
+                    prefix+'configuration', first, str(path), expected], capture_output=True, text=True, timeout=5)
+                with self.subTest(prefix=prefix, first=first):
+                    self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+                    self.assertTrue(json.loads(result.stdout)['bounded_primitive'])
+
+    def test_large_scoped_hash_matches_digest_under_existing_host_memory_cap(self):
+        path = self.root/'large-sparse-input'
+        with path.open('wb') as out:out.truncate(96*1024**2+17)
+        reference = subprocess.check_output(['sha256sum', str(path)], text=True).split()[0]
+        result = subprocess.run([sys.executable, '-B', str(PACKAGE/'tests/hash_memory_probe.py'),
+            str(PACKAGE/'runtime'), str(self.root/'unused-adoption'), str(path), 'scoped-sha'],
+            capture_output=True, text=True, timeout=15)
+        print('SCOPED_HASH_PROBE '+result.stdout.strip(), flush=True)
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        receipt = json.loads(result.stdout)
+        self.assertEqual(receipt['status'], 'validated')
+        self.assertEqual(receipt['digest'], reference)
+        self.assertFalse(receipt['resource_actions'])
+        self.assertGreater(receipt['fixture_bytes'], receipt['address_space_limit_bytes'])
+        self.assertLess(receipt['peak_rss_bytes'], receipt['address_space_limit_bytes'])
 
 
 class ScopedIntegrationTests(unittest.TestCase):

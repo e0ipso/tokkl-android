@@ -48,6 +48,9 @@ def main():
     try:
         if operation == 'sha':
             result['digest'] = configuration.sha(fixture)
+        elif operation == 'scoped-sha':
+            import scoped_results
+            result['digest'] = scoped_results.sha(fixture)
         elif operation == 'adopted':
             result['configuration_sha256'] = configuration.adopted_configuration(directory, adoption)['_sha256']
         elif operation == 'controller':
