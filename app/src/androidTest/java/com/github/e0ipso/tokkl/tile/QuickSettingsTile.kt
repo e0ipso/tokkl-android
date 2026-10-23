@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.DeviceShell
 
 /**
@@ -27,14 +28,19 @@ object QuickSettingsTile {
 
     /** Opens the full Quick Settings panel, where the system binds the tile and it listens. */
     fun expand() {
+        BlackholeDiagnostics.mark("tile.expand.enter")
         DeviceShell.run("cmd statusbar expand-settings")
+        BlackholeDiagnostics.mark("tile.expand.shell.return")
     }
 
     fun collapse() {
+        BlackholeDiagnostics.mark("tile.collapse.enter")
         DeviceShell.run("cmd statusbar collapse")
+        BlackholeDiagnostics.mark("tile.collapse.shell.return")
         // The command returns before SystemUI's animation ends. An expansion sent during that
         // animation can be lost, so wait for accessibility events to settle before reopening.
         instrumentation.uiAutomation.waitForIdle(500, 5_000)
+        BlackholeDiagnostics.mark("tile.collapse.idle.return")
     }
 
     /** Taps the tile, as SystemUI does for a touch. */

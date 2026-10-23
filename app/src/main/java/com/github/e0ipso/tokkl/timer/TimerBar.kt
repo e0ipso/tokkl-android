@@ -201,6 +201,7 @@ fun TimerBarContent(
                 RunningLabel(unsent = running.unsent)
                 RunningClock(elapsedSeconds)
                 TimerButton(R.drawable.ic_stop, R.string.timer_stop, R.string.timer_stop_spoken, danger = true, enabled = true) {
+                    TapTrace.diagnostic?.invoke("timer.stop.handler.enter actual_touch_receipt=UNKNOWN")
                     onStop()
                     focusManager.clearFocus()
                 }

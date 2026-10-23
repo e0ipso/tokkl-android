@@ -37,6 +37,10 @@ object RunningCheck {
 
     internal val results = RunningCheckResults()
 
+    /** Nonsecret diagnostic labels only; observers must not throw or change request decisions. */
+    @Volatile
+    internal var currentRequestDiagnostic: ((String) -> Unit)? = null
+
     /**
      * How often the check runs: the shortest period WorkManager allows. The first check waits one
      * period too, since the start that schedules it has just reached the cache.
@@ -94,7 +98,11 @@ class RunningCheckWorker(context: Context, params: WorkerParameters) : Coroutine
             val cache = (applicationContext as TokklApplication).cache
             val api = Session(applicationContext).client() ?: return@withContext Result.success()
             val before = cache.runningEntries()
+            RunningCheck.currentRequestDiagnostic?.invoke(
+                "producer=RunningCheckWorker current.enter host=${api.server.api("me").host} port=${api.server.api("me").port} generation=$generation",
+            )
             val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
+            RunningCheck.currentRequestDiagnostic?.invoke("producer=RunningCheckWorker current.return success=${current is ApiResult.Success}")
             if (current is ApiResult.Success) {
                 RunningCheck.results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
             }

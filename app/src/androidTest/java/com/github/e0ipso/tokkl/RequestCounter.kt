@@ -15,6 +15,7 @@ class RequestCounter(server: ServerUrl, request: String) : Closeable {
 
     private val needle = request.toByteArray(Charsets.US_ASCII)
     private val total = AtomicInteger()
+    private val connections = AtomicInteger()
     private val relay = server.toString().toHttpUrl().let { LoopbackRelay(it.host, it.port) { OnOneConnection() } }
 
     /** Connections the relay could not pass on, which would make [count] wrong. */
@@ -29,11 +30,22 @@ class RequestCounter(server: ServerUrl, request: String) : Closeable {
 
     /** Counts [request] in one connection's requests, once even when it is split across two chunks. */
     private inner class OnOneConnection : LoopbackRelay.ConnectionWatcher {
+        private val connection = connections.incrementAndGet()
         private var tail = ByteArray(0)
+
+        init {
+            BlackholeDiagnostics.record("counter.connection listen_port=${url.toString().toHttpUrl().port} connection=$connection")
+        }
 
         override fun sent(bytes: ByteArray, count: Int) {
             val seen = tail + bytes.copyOf(count)
-            total.addAndGet(occurrences(seen))
+            val matches = occurrences(seen)
+            val cumulative = total.addAndGet(matches)
+            if (matches > 0) {
+                BlackholeDiagnostics.record(
+                    "counter.match listen_port=${url.toString().toHttpUrl().port} connection=$connection matches=$matches cumulative=$cumulative",
+                )
+            }
             tail = seen.copyOfRange(maxOf(0, seen.size - needle.size + 1), seen.size)
         }
 

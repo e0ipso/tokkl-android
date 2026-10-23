@@ -19,9 +19,11 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
@@ -40,6 +42,14 @@ import com.github.e0ipso.tokkl.session.Session
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -117,7 +127,7 @@ class TimerServerTest {
     fun startEditsAndStopShowAtOnceWhileTheNetworkHangsAndReachTheServer() {
         val project = createProject("Timer project")
         var shortStop = false
-        launch {
+        launch(diagnose = true) {
             relay.hang()
             description().performTextInput("Write the timer")
             val started = TapToVisibleDeadline("app Start")
@@ -147,7 +157,9 @@ class TimerServerTest {
             val queued = runBlocking { app.changes.unsentCount.first() }
             assertTrue("a connection still hangs before Stop", relay.hungConnections > 0)
             val stopped = TapToVisibleDeadline("app Stop")
+            BlackholeDiagnostics.record("click.enter action=Stop dispatch=UNKNOWN")
             stop().performClick()
+            BlackholeDiagnostics.record("click.return action=Stop actual_touch_receipt=UNKNOWN")
             stopped.await("Start shows") { startButton().isDisplayed() }
             stopped.await("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
             assertEquals("Stop stays queued unsent", queued + 1, runBlocking { app.changes.unsentCount.first() })
@@ -258,13 +270,46 @@ class TimerServerTest {
         }
     }
 
-    private fun launch(steps: () -> Unit) {
-        ActivityScenario.launch(MainActivity::class.java).use {
+    private fun launch(diagnose: Boolean = false, steps: () -> Unit) {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
             runBlocking { app.accountSettings.refresh().join() }
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT.toMillis()) { shows(startButton()) }
+            if (diagnose) diagnoseTimer(scenario, steps) else steps()
+        }
+    }
+
+    private fun diagnoseTimer(scenario: ActivityScenario<MainActivity>, steps: () -> Unit) {
+        val observations = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        BlackholeDiagnostics.begin("timer-hang")
+        try {
+            scenario.onActivity { activity ->
+                val model = ViewModelProvider(activity)[TimerViewModel::class.java].model
+                observations.launch {
+                    model.state.map { it.javaClass.simpleName }.distinctUntilChanged().collect {
+                        BlackholeDiagnostics.record("model.state kind=$it drawn=UNKNOWN")
+                    }
+                }
+                observations.launch {
+                    app.cache.running.map { it != null }.distinctUntilChanged().collect {
+                        BlackholeDiagnostics.record("cache.running present=$it")
+                    }
+                }
+                observations.launch {
+                    app.changes.unsentCount.distinctUntilChanged().collect {
+                        BlackholeDiagnostics.record("queue.unsent count=$it")
+                    }
+                }
+            }
             steps()
+        } finally {
+            try {
+                InstrumentationRegistry.getInstrumentation().runOnMainSync { observations.cancel() }
+            } finally {
+                observations.cancel()
+                BlackholeDiagnostics.finish()
+            }
         }
     }
 

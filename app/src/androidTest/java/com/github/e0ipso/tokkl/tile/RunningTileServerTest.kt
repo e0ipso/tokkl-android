@@ -1,8 +1,10 @@
 package com.github.e0ipso.tokkl.tile
 
+import android.net.ConnectivityManager
 import android.service.quicksettings.Tile
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
@@ -18,6 +20,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.reachesInternet
 import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -154,23 +157,39 @@ class RunningTileServerTest {
 
     @Test
     fun openingTheShadeOfflineAttemptsNoRequest() {
-        HangingRelay(TokklTestServer.url).use { relay ->
-            // Both relay hops use loopback, so an attempted request is observable even offline.
-            RequestCounter(relay.url, CURRENT_REQUEST).use { requests ->
-                signIn(requests.url, account.apiToken)
-                relay.hang()
-                AirplaneMode.set(true, web)
-                QuickSettingsTile.expand()
-                QuickSettingsTile.awaitText("the offline cache", context.getString(R.string.tile_nothing_subtitle))
-                QuickSettingsTile.collapse()
-                QuickSettingsTile.expand()
-                QuickSettingsTile.awaitText("the offline cache on reopening", context.getString(R.string.tile_nothing_subtitle))
-                QuickSettingsTile.collapse()
+        BlackholeDiagnostics.begin("tile-offline")
+        try {
+            HangingRelay(TokklTestServer.url).use { relay ->
+                // Both relay hops use loopback, so an attempted request is observable even offline.
+                RequestCounter(relay.url, CURRENT_REQUEST).use { requests ->
+                    BlackholeDiagnostics.mark("tile.session.save.enter")
+                    signIn(requests.url, account.apiToken)
+                    BlackholeDiagnostics.mark("tile.session.save.return")
+                    BlackholeDiagnostics.mark("tile.hang.enter")
+                    relay.hang()
+                    BlackholeDiagnostics.mark("tile.hang.return")
+                    BlackholeDiagnostics.mark("tile.airplane.enter")
+                    tileNetworkSnapshot()
+                    AirplaneMode.set(true, web)
+                    BlackholeDiagnostics.mark("tile.airplane.return.web_network_failure")
+                    tileNetworkSnapshot()
+                    QuickSettingsTile.expand()
+                    QuickSettingsTile.awaitText("the offline cache", context.getString(R.string.tile_nothing_subtitle))
+                    QuickSettingsTile.collapse()
+                    QuickSettingsTile.expand()
+                    QuickSettingsTile.awaitText("the offline cache on reopening", context.getString(R.string.tile_nothing_subtitle))
+                    QuickSettingsTile.collapse()
 
-                assertEquals("offline openings send no current-entry request", 0, requests.count)
-                assertEquals("offline openings attempt no loopback connection", 0, relay.hungConnections)
-                assertEquals(emptyList<String>(), requests.failures)
+                    BlackholeDiagnostics.record("tile.pre_assert count=${requests.count} hung=${relay.hungConnections} relay_failures=${requests.failures.size}")
+                    BlackholeDiagnostics.mark("tile.assertions")
+                    tileNetworkSnapshot()
+                    assertEquals("offline openings send no current-entry request", 0, requests.count)
+                    assertEquals("offline openings attempt no loopback connection", 0, relay.hungConnections)
+                    assertEquals(emptyList<String>(), requests.failures)
+                }
             }
+        } finally {
+            BlackholeDiagnostics.finish()
         }
     }
 
@@ -332,6 +351,11 @@ class RunningTileServerTest {
             assertTrue("the Continue fixture has a full span", app.changes.update(id, fields, agedStart, null))
             withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.start == agedStart } }
         }
+    }
+
+    private fun tileNetworkSnapshot() {
+        val connectivity = context.getSystemService(ConnectivityManager::class.java)
+        BlackholeDiagnostics.record("connectivity.snapshot internet=${connectivity.reachesInternet()}")
     }
 
     private fun signIn(server: ServerUrl, token: String) {
