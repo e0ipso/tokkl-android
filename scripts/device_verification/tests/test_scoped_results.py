@@ -8,6 +8,8 @@ import os
 import subprocess
 import sys
 import tempfile
+import io
+import zipfile
 import unittest
 import xml.etree.ElementTree as ET
 
@@ -16,6 +18,8 @@ from scoped_controller_fixture import WorkloadFixture,CLASSES
 from scoped_results import declare,inventory,assess_scoped,PREFIX,COMPILE_ARGS,COMPILE_FIRST
 from watchdog_lifetime import service_command
 from runtime.configuration import validate,adopted_configuration
+from scoped_results import BENCHMARK_API,BENCHMARK_ARGS,BENCHMARK_LABEL,APK_PATHS,declare_benchmark_api
+from scoped_controller_fixture import DEVICE_BUILD
 
 
 class ScopedIntegrationTests(unittest.TestCase):
@@ -322,6 +326,283 @@ class ScopedIntegrationTests(unittest.TestCase):
             (current/'fixture-benchmarkData.json').write_text(json.dumps(data(value,missing)))
             result=subprocess.run(['bash',str(PACKAGE.parent/'compare-benchmarks.sh'),str(baseline),str(current)],capture_output=True,text=True,timeout=5)
             self.assertEqual(result.returncode,code,result.stderr)
+
+
+class BenchmarkApiTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory(dir=SCRATCH)
+        self.root=Path(self.temp.name);self.number=0
+
+    def tearDown(self):
+        self.temp.cleanup()
+        self.assertFalse(self.root.exists())
+
+    def fixture(self,scenario='valid',mutate=None):
+        self.number+=1
+        f=WorkloadFixture(self.root/str(self.number),scenario,benchmark_api=True)
+        if mutate:
+            original=f.results
+            def results():
+                original();mutate(f)
+            f.results=results
+        return f
+
+    def data_path(self,f):
+        return f.project/'macrobenchmark/build/outputs/connected_android_test_additional_output/benchmark/fixture-benchmarkData.json'
+
+    def change_data(self,f,fn):
+        path=self.data_path(f);data=json.loads(path.read_text());fn(data);path.write_text(json.dumps(data))
+
+    def run_validated_plan(self,f):
+        # Exercise the actual outer plan-to-call path as well as its real
+        # run_workload/Session/assessor. Only external operations are modeled.
+        namespace=f.ns;actual=namespace['run_workload'];calls=[]
+        original={'memory.high':'10737418240','memory.max':'12884901888','memory.swap.max':'2147483648'}
+        shared=dict(original)
+        expected=[(j['api'],j['label'],j['args'],j['seconds'],j['standalone']) for j in f.checked['plan']]
+        self.assertEqual(validate(f.configuration,fresh=False),f.checked)
+        self.assertEqual(expected,[tuple(f.job)])
+        def command(args,label,refresh=False):
+            if label=='apply-window':shared.update(f.temporary)
+            if label=='immediate-rollback':shared.update(original)
+            return 0
+        def run_workload(*job):
+            self.assertIn(job,expected);calls.append(job)
+            return actual(*job)
+        namespace.update(run_workload=run_workload,
+            state_path=f.base/'controller-state.json',unit='host-modeled-benchmark-timer',
+            bounds={'fallback_seconds':3000},armed=False,watchdog_armed=False,_controller_error=None,result=1,
+            original=original,limits=lambda:dict(shared),
+            conditions=lambda:{'limits':dict(shared),'baseline_pass':True,'host_pass':True},
+            command=command,service_command=service_command,sys=sys,
+            cleanup_active_workload=lambda *args:{'success':True},settle_active_workload=lambda *args:True)
+        namespace['state']['prepared_labels']=[BENCHMARK_LABEL]
+        tree=ast.parse((PACKAGE/'runtime/controller.py').read_text())
+        plan_assignment=next(n for n in tree.body if isinstance(n,ast.Assign)
+                             and any(isinstance(t,ast.Name) and t.id=='plan' for t in n.targets))
+        outer=next(n for n in tree.body if isinstance(n,ast.Try) and n.finalbody)
+        with f.context():
+            exec(compile(ast.Module(body=[plan_assignment,outer],type_ignores=[]),'<actual-validated-benchmark-plan>','exec'),namespace)
+        self.assertEqual(calls,expected)
+        self.assertEqual(shared,original)
+        return namespace['result']
+
+    def test_exact_profile_passes_actual_collector_and_retains_75_values_45_traces(self):
+        f=self.fixture();self.assertEqual(self.run_validated_plan(f),0)
+        rec=f.ns['state']['tests'][0];r=rec['result_contract']
+        self.assertEqual(r['profile'],BENCHMARK_API)
+        self.assertEqual(r['app_counts'],dict(tests=10,failures=0,errors=0,skipped=0))
+        self.assertEqual(r['benchmark_counts'],dict(tests=2,failures=0,errors=0,skipped=0))
+        self.assertEqual(r['metric_values'],75)
+        self.assertEqual(len(r['traces']),45)
+        self.assertEqual(len({t['sha256'] for t in r['traces']}),45)
+        self.assertEqual(r['apks'],f.configuration['plan'][0]['result_recipe']['apks'])
+        self.assertEqual(r['comparison'],'not performed');self.assertFalse(r['full_app_gate'])
+        self.assertEqual(f.identity_rows,{})
+        self.assertTrue((f.session.path/'completed.json').is_file())
+
+    def test_current_command_filter_overrides_and_job_identities_refuse(self):
+        f=self.fixture()
+        variants=[BENCHMARK_ARGS[:-1],BENCHMARK_ARGS+['--continue'],
+                  BENCHMARK_ARGS+['-Pandroid.testInstrumentationRunnerArguments.class=other.Test'],
+                  BENCHMARK_ARGS+['-Pandroid.testInstrumentationRunnerArguments.notClass=other.Test'],
+                  BENCHMARK_ARGS+['-Pandroid.testInstrumentationRunnerArguments.testFile=/owned/file'],
+                  BENCHMARK_ARGS+[':app:check'],
+                  BENCHMARK_ARGS[:-1]+[BENCHMARK_ARGS[-1].replace('benchmark,com.github.e0ipso.tokkl.api','api,com.github.e0ipso.tokkl.benchmark')],
+                  BENCHMARK_ARGS[:-1]+[BENCHMARK_ARGS[-1]+',com.github.e0ipso.tokkl.api']]
+        for i,args in enumerate(variants):
+            with self.subTest(args=args):
+                c=copy.deepcopy(f.configuration);c['run_dir']=str(self.root/f'bad-args-{i}');c['plan'][0]['args']=args
+                with self.assertRaises(ValueError):validate(c)
+        for key,value in [('label','other-job'),('label','tap-scoped-api'),('api',31),('standalone',True),('seconds',1799),('seconds',1801),('seconds',5400)]:
+            with self.subTest(key=key,value=value):
+                c=copy.deepcopy(f.configuration);c['run_dir']=str(self.root/f'bad-{key}-{value}');c['plan'][0][key]=value
+                with self.assertRaises(ValueError):validate(c)
+
+    def test_undeclared_label_and_wrong_mode_configs_refuse_before_preparation_or_runtime(self):
+        # Preserve the first attempt's failed assertion/log verbatim outside the
+        # checkout. Here the negative modifies CONFIG before its actual validator,
+        # rather than an unreachable separate internal-call tuple after adoption.
+        for mode in ['wrong-label','wrong-mode']:
+            with self.subTest(mode=mode):
+                with self.assertRaises(ValueError):self.fixture(mode)
+                self.assertFalse((self.root/str(self.number)/'evidence').exists())
+        f=self.fixture();p=f.base/'run-config.json';c=json.loads(p.read_text())
+        c['plan'][0]['label']='other-job';p.write_text(json.dumps(c))
+        with self.assertRaises(ValueError):adopted_configuration(f.base,f.root/'HOST-MODELED-adoption.json')
+        self.assertEqual(f.ns['state']['tests'],[])
+        self.assertFalse(list(f.base.glob('completion-*')))
+
+    def test_source_complete_recipe_pins_and_apk_identity_cannot_be_truncated(self):
+        f=self.fixture()
+        for mode in ['subset','benchmark-method','source','device','extra','missing-pin','missing-apk-pin']:
+            with self.subTest(mode=mode):
+                c=copy.deepcopy(f.configuration);c['run_dir']=str(self.root/('bad-'+mode));r=c['plan'][0]['result_recipe']
+                if mode=='subset':r['inventory'][0]['methods'].pop()
+                if mode=='benchmark-method':r['inventory'][2]['methods']=['invented']
+                if mode=='source':r['sources'][0]['sha256']='0'*64
+                if mode=='device':r['device_build']['version']['sdk']=31
+                if mode=='extra':r['unchecked']='override'
+                if mode=='missing-pin':del c['input_pins'][str(f.project/r['inventory'][0]['source'])]
+                if mode=='missing-apk-pin':del c['input_pins'][str(f.project/APK_PATHS[0])]
+                with self.assertRaises(ValueError):validate(c)
+
+    def test_added_api_source_method_unsupported_shape_and_changed_benchmark_refuse(self):
+        for mode in ['new-file','new-method','inheritance','parameterized','benchmark']:
+            with self.subTest(mode=mode):
+                f=self.fixture();r=f.configuration['plan'][0]['result_recipe'];p=f.project/r['inventory'][0]['source']
+                if mode=='new-file':p.with_name('Extra.kt').write_text('package com.github.e0ipso.tokkl.api\nclass Extra { @Test fun extra() {} }')
+                if mode=='new-method':p.write_text(p.read_text().replace('class PinnedCertificateTest {','class PinnedCertificateTest {\n@Test fun added() {}'))
+                if mode=='inheritance':p.write_text(p.read_text().replace('class PinnedCertificateTest {','class PinnedCertificateTest : Parent() {'))
+                if mode=='parameterized':p.write_text(p.read_text().replace('class PinnedCertificateTest {','@RunWith(Parameterized::class)\nclass PinnedCertificateTest {'))
+                if mode=='benchmark':
+                    p=f.project/r['inventory'][2]['source'];p.write_text(p.read_text()+'\n// changed benchmark bytes\n')
+                with self.assertRaises(ValueError):declare_benchmark_api(f.project,DEVICE_BUILD)
+
+    def test_api_missing_duplicate_skipped_failed_and_actual_job_changes_refuse(self):
+        for mode in ['missing','empty','partial','stale','failure','error','skipped','duplicate','missing-class','missing-case',
+                     'wrong-class','wrong-case','wrongfilter','wrongpackage','undeclared-macro','wrong-api','wrong-sdk-log','stale-log','exit7','wrong-seconds']:
+            with self.subTest(mode=mode):self.assertFalse(self.fixture(mode).run()[0])
+
+    def test_benchmark_junit_complete_membership_outcomes_aggregates_and_freshness(self):
+        for mode in ['missing','duplicate','skipped','failure','error','stale','foreign','aggregate','partial']:
+            with self.subTest(mode=mode):
+                def mutate(f):
+                    path=f.project/'macrobenchmark/build/outputs/androidTest-results/connected/benchmark/TEST-bench.xml'
+                    root=ET.parse(path).getroot()
+                    if mode=='missing':root.remove(root[-1]);root.set('tests','1')
+                    if mode=='duplicate':root.append(copy.deepcopy(root[0]));root.set('tests','3')
+                    if mode in ['skipped','failure','error']:ET.SubElement(root[0],mode);root.set({'failure':'failures','error':'errors','skipped':'skipped'}[mode],'1')
+                    if mode=='foreign':root[0].set('classname','foreign.Benchmark')
+                    if mode=='partial':root.set('tests','9')
+                    if mode=='aggregate':
+                        aggregate=ET.Element('testsuites',tests='99');aggregate.append(root);root=aggregate
+                    ET.ElementTree(root).write(path)
+                    if mode=='stale':os.utime(path,(1,1))
+                self.assertFalse(self.fixture(mutate=mutate).run()[0])
+
+    def test_metric_corpus_case_device_iteration_and_every_sample_are_mandatory(self):
+        for mode in ['missing','extra-corpus','stale','truncated','duplicate-key','duplicate-case','foreign-case','wrong-device',
+                     'iteration','missing-metric','extra-metric','short-runs','null','nan','infinite','zero','negative','bool',
+                     'median','minimum','maximum','params','sampled']:
+            with self.subTest(mode=mode):
+                def mutate(f):
+                    path=self.data_path(f)
+                    if mode=='missing':path.unlink();return
+                    if mode=='extra-corpus':path.with_name('extra-benchmarkData.json').write_bytes(path.read_bytes());return
+                    if mode=='stale':os.utime(path,(1,1));return
+                    if mode=='truncated':path.write_text('{');return
+                    if mode=='duplicate-key':path.write_text(path.read_text().replace('"context":', '"context":{},"context":',1));return
+                    def change(d):
+                        b=d['benchmarks'][0];m=b['metrics']['timeToInitialDisplayMs']
+                        if mode=='duplicate-case':d['benchmarks'][1]=copy.deepcopy(b)
+                        if mode=='foreign-case':b['name']='other'
+                        if mode=='wrong-device':d['context']['build']['fingerprint']='foreign'
+                        if mode=='iteration':b['repeatIterations']=14
+                        if mode=='missing-metric':b['metrics']={}
+                        if mode=='extra-metric':b['metrics']['other']=copy.deepcopy(m)
+                        if mode=='short-runs':m['runs'].pop()
+                        if mode in ['null','nan','infinite','zero','negative','bool']:m['runs'][0]={'null':None,'nan':float('nan'),'infinite':float('inf'),'zero':0,'negative':-1,'bool':True}[mode]
+                        if mode in ['median','minimum','maximum']:m[mode]=101.
+                        if mode=='params':b['params']={'partial':'yes'}
+                        if mode=='sampled':b['sampledMetrics']={'other':{}}
+                    self.change_data(f,change)
+                self.assertFalse(self.fixture(mutate=mutate).run()[0])
+
+    def test_trace_reference_indices_paths_and_complete_actual_artifacts(self):
+        for mode in ['missing-ref','duplicate-ref','wrong-index','foreign','unsafe','missing','extra','duplicate-bytes','empty','stale','truncated','malformed']:
+            with self.subTest(mode=mode):
+                def mutate(f):
+                    path=self.data_path(f);d=json.loads(path.read_text());refs=d['benchmarks'][0]['profilerOutputs'];trace=path.parent/refs[0]['filename']
+                    if mode=='missing-ref':refs.pop()
+                    if mode=='duplicate-ref':refs[-1]=copy.deepcopy(refs[0])
+                    if mode=='wrong-index':refs[0]['label']='Trace Iteration 99'
+                    if mode=='foreign':refs[0]['filename']='Other_'+refs[0]['filename']
+                    if mode=='unsafe':refs[0]['filename']='../'+refs[0]['filename']
+                    if mode=='missing':trace.unlink()
+                    if mode=='extra':trace.with_name('extra.perfetto-trace').write_bytes(trace.read_bytes())
+                    if mode=='duplicate-bytes':(path.parent/refs[1]['filename']).write_bytes(trace.read_bytes())
+                    if mode=='empty':trace.write_bytes(b'')
+                    if mode=='stale':os.utime(trace,(1,1))
+                    if mode=='truncated':trace.write_bytes(b'\x0a\x08\x40\x01')
+                    if mode=='malformed':trace.write_bytes(b'not a trace')
+                    path.write_text(json.dumps(d))
+                self.assertFalse(self.fixture(mutate=mutate).run()[0])
+
+    def test_last_stop_sample_and_last_trace_cannot_be_omitted(self):
+        for mode in ['last-sample','last-trace']:
+            with self.subTest(mode=mode):
+                def mutate(f):
+                    path=self.data_path(f);d=json.loads(path.read_text());b=d['benchmarks'][-1]
+                    if mode=='last-sample':b['metrics']['TimerStopFirstMs']['runs'][-1]=None
+                    if mode=='last-trace':(path.parent/b['profilerOutputs'][-1]['filename']).unlink()
+                    path.write_text(json.dumps(d))
+                self.assertFalse(self.fixture(mutate=mutate).run()[0])
+
+    def test_zip_trace_container_positive_and_integrity_refusals(self):
+        for mode in ['valid','crc','multiple','unsafe','bad-protobuf','late-bad-field','oversized']:
+            with self.subTest(mode=mode):
+                def mutate(f):
+                    path=self.data_path(f);d=json.loads(path.read_text());trace=path.parent/d['benchmarks'][0]['profilerOutputs'][0]['filename']
+                    raw=trace.read_bytes();buf=io.BytesIO()
+                    if mode=='bad-protobuf':raw=b'\x0a\x08\x40\x01'
+                    if mode=='late-bad-field':raw=b'\x0a\x03\x40\x01\x80'
+                    with zipfile.ZipFile(buf,'w',zipfile.ZIP_DEFLATED) as archive:
+                        archive.writestr('../Trace_output.pb' if mode=='unsafe' else 'Trace_output.pb',raw)
+                        if mode=='multiple':archive.writestr('extra.pb',raw)
+                    value=bytearray(buf.getvalue())
+                    if mode=='crc':value[14:18]=b'\x01\x02\x03\x04';where=value.index(b'PK\x01\x02');value[where+16:where+20]=b'\x01\x02\x03\x04'
+                    if mode=='oversized':where=value.index(b'PK\x01\x02');value[where+24:where+28]=(64*1024*1024+1).to_bytes(4,'little')
+                    trace.write_bytes(value)
+                self.assertEqual(self.fixture(mutate=mutate).run()[0],mode=='valid')
+
+    def test_missing_finalization_and_harmful_resource_evidence_remain_controller_failures(self):
+        for mode in ['missing-final','owned-high','owned-oom']:
+            with self.subTest(mode=mode):
+                f=self.fixture(mode);self.assertFalse(f.run()[0]);self.assertTrue(f.ns['state']['tests'][0]['stop_reason'])
+
+    def test_cleanup_and_record_forgery_cannot_produce_profile_pass(self):
+        f=self.fixture();self.assertEqual(f.run(),(True,True));rec=f.ns['state']['tests'][0]
+        for key,value in [('work_directories_removed',False),('private_android_tmp_removed',False),('emulator_scopes_absent',False),
+                          ('new_shared_android_files',['foreign']),('observed_android_tmp_env',{}),('private_android_tmp',[])]:
+            with self.subTest(cleanup=key):
+                changed=copy.deepcopy(rec);changed['cleanup'][key]=value
+                self.assertFalse(assess_scoped(f.checked,*f.job[:4],changed,0,0,None)['passed'])
+        for key,value in [('exit',7),('stop_reason','resource failure'),('counts',dict(rec['counts'],tests=9)),
+                          ('benchmark_counts',dict(rec['benchmark_counts'],tests=1)),('benchmark_cases',[]),
+                          ('api_requested',31),('label','other-job'),('standalone',True),
+                          ('device_lines',[]),('command',rec['command'][:-1]+['override'])]:
+            with self.subTest(field=key):
+                self.assertFalse(assess_scoped(f.checked,*f.job[:4],dict(rec,**{key:value}),0,0,None)['passed'])
+        args=list(f.job[:4]);args[1]='other-job'
+        self.assertFalse(assess_scoped(f.checked,*args,rec,0,0,None)['passed'])
+
+    def test_foreign_result_directory_and_symlink_trace_refuse_assessor(self):
+        f=self.fixture();self.assertEqual(f.run(),(True,True));rec=f.ns['state']['tests'][0]
+        changed=copy.deepcopy(rec);changed['results']=str(f.project/'app/build/outputs/androidTest-results/connected/debug')
+        self.assertFalse(assess_scoped(f.checked,*f.job[:4],changed,0,0,None)['passed'])
+        folder=Path(rec['benchmark-data']);trace=next(folder.glob('*.perfetto-trace'))
+        retained=self.root/'foreign-trace';retained.write_bytes(trace.read_bytes());trace.unlink();trace.symlink_to(retained)
+        self.assertFalse(assess_scoped(f.checked,*f.job[:4],rec,0,0,None)['passed'])
+
+    def test_source_parser_apk_runtime_and_config_mutations_during_execution_refuse(self):
+        for mode in ['source','parser','apk','runtime','config']:
+            with self.subTest(mode=mode):
+                def mutate(f):
+                    if mode=='source':path=f.project/f.configuration['plan'][0]['result_recipe']['inventory'][0]['source']
+                    if mode=='parser':path=f.project/'scripts/sift_telemetry.py'
+                    if mode=='apk':path=f.project/APK_PATHS[0]
+                    if mode=='runtime':path=f.base/'scope_completion.py'
+                    if mode=='config':path=f.base/'run-config.json'
+                    path.write_bytes(path.read_bytes()+b'\nchanged')
+                self.assertFalse(self.fixture(mutate=mutate).run()[0])
+
+    def test_existing_full_fallback_still_requires_unfiltered_5400_seconds(self):
+        f=self.fixture()
+        for args,seconds in [(BENCHMARK_ARGS,5400),(['scripts/instrumented-tests.sh',':macrobenchmark:connectedBenchmarkAndroidTest','--continue'],1800)]:
+            c=copy.deepcopy(f.configuration);c['run_dir']=str(self.root/'unscoped');job=c['plan'][0]
+            del job['result_recipe'];job.update(args=args,seconds=seconds)
+            with self.assertRaises(ValueError):validate(c)
 
 
 if __name__=='__main__':unittest.main(verbosity=2)

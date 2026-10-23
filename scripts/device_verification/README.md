@@ -399,6 +399,92 @@ parsing, with launch/cgroup membership/counters modeled on disk. It does not rer
 the 0284 live fixtures or reclassify the earlier UNKNOWN global event. Nine
 protected modules and preparation/reclaim logic remain unchanged by this extension.
 
+## Exact benchmark/API diagnostic recipe
+
+TKA-0307 adds `benchmark-api-v1` within the existing result-recipe hooks. Its
+canonical job label is `benchmark-api`, API is 36, `standalone` is false and
+`seconds` is exactly 1800. Its entire argv, in this order, is:
+
+```json
+[
+  "scripts/instrumented-tests.sh",
+  ":macrobenchmark:connectedBenchmarkAndroidTest",
+  "-Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.benchmark,com.github.e0ipso.tokkl.api"
+]
+```
+
+The launcher already converts this package pair to its runner testFile. No extra
+task, class/method filter, exclusion, package reordering or testFile override is
+accepted. The existing app-only and compile-first profiles retain their original
+restrictions, including refusal of fresh unrequested benchmarks. Undeclared
+device jobs still require the original unfiltered full argv and 5400-second floor.
+
+After the coordinator freezes the source, four compiled APKs and actual API36
+device build identity, generate the complete declaration by importing
+`declare_benchmark_api(project, device_build)` from `runtime/scoped_results.py`.
+Here `device_build` is the complete reviewed `context.build` object from the
+benchmark output, including its fingerprint and integer `version.sdk` of 36.
+This is a Python declaration function, not a new execution command. Put its
+returned object in the job's `result_recipe`. Include every returned inventory,
+source and APK row in `input_pins`, plus all other coordinator-required inputs.
+The four required APK paths under the checked project are:
+
+- `app/build/outputs/apk/debug/app-debug.apk`
+- `app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`
+- `app/build/outputs/apk/benchmark/app-benchmark.apk`
+- `macrobenchmark/build/outputs/apk/benchmark/macrobenchmark-benchmark.apk`
+
+Declaration and validation read existing files only. They enumerate the complete
+API package and its direct JUnit4 methods: three PinnedCertificateTest cases and
+seven ServerSmokeTest cases. They require the reviewed benchmark/helper source
+bytes, including StartupBenchmark.coldStart and TimerTapBenchmark.startAndStop,
+15/30 iterations, Full compilation, five Stop attempts and the original
+assertions. Added package sources, unsupported test shapes, changed benchmark
+bytes, truncated inventories and missing pins require a newly reviewed profile.
+
+Configuration validation rejects an alternate label or wrong mode before
+preparation. Adoption binds that validated configuration and runtime hashes. The
+unchanged controller derives each call from that plan and dispatches declared
+result recipes to the assessor. A separate fixture tuple changed after adoption
+and passed directly to the internal workload function is not that entry path.
+The first attempt's failed direct-call assertion and logs remain historical
+evidence; retry canaries test configuration rejection, the actual outer plan
+loop and assessor identity failures instead of treating that injection as a
+supported controller entry point.
+
+A passing receipt requires both complete finalized JUnit inventories, with zero
+missing, extra, duplicate, failed, errored or skipped cases. The pinned telemetry
+parser checks each module separately, including aggregate counts and freshness.
+Exactly one fresh benchmark JSON corpus must match the reviewed device build and
+both benchmark identities. All 75 finite positive samples are required: 15 cold
+start, 30 TimerStartFirstMs and 30 TimerStopFirstMs. Minimum, maximum and median
+must agree with those samples. Iteration counts and metric membership are exact;
+duplicate JSON keys, foreign cases and partial samples refuse.
+
+Each of 45 indexed Perfetto references must resolve to its corresponding fresh,
+nonempty, unique-content trace artifact. Extra, missing, duplicate, stale,
+truncated or unsafe references/artifacts refuse. JSON/JUnit reads are bounded to
+2 MiB each; each trace is bounded to 16 MiB stored and 64 MiB unpacked. Supported
+containers are raw Perfetto protobuf or a ZIP with exactly one `Trace_output.pb`
+member. ZIP CRC and complete outer packet/packet-field wire framing are checked.
+This is container integrity validation, not trace-event or timing analysis.
+
+The assessor rechecks frozen config, source/APK pins, runtime manifest, actual
+command/API/device and cleanup evidence. The original controller's resource,
+deadline, finalization and cleanup predicates remain required. Receipts retain
+configuration/recipe/runtime hashes, APK hashes, JUnit identities, samples and
+per-trace size/hash evidence. They explicitly report `full_app_gate: false` and
+`comparison: "not performed"`. The unchanged 10 percent comparator must be run
+separately against complete comparable results. A missing baseline or incomplete
+evidence never establishes stability.
+
+Host fixtures model external operations and use synthetic APK/trace bytes. They
+grant no device or resource permission and do not prove installed APK identity.
+The coordinator still owns fresh actual applicability, installed byte identity,
+matching root adoption and separate allowance authorization. The closed phase
+remains four preparations used, zero left, 3716812800 bytes reserved and
+2725638144 remaining. This profile grants no reset, refund or additional run.
+
 ## Failed capture diagnostics
 
 TKA-0292 replayed all 89 retained monitoring frames from the compile/scoped stage

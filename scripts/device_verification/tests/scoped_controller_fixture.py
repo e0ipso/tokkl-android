@@ -10,6 +10,7 @@ import scope_completion as sc
 from capture_evidence import CaptureEvidence
 from event_monitor_0274 import Monitor,KEYS
 from scoped_results import assess_scoped,declare,COMPILE_FIRST,COMPILE_ARGS
+from scoped_results import declare_benchmark_api,BENCHMARK_ARGS,BENCHMARK_LABEL,API_CLASSES,BENCHMARK_SOURCE,BENCHMARK_SOURCES,APK_PATHS
 from runtime.configuration import validate,adopted_configuration,CANONICAL_GATE,sha
 from prepare import prepare
 from test_candidate import config,PACKAGE
@@ -21,6 +22,8 @@ CLASSES = ['com.github.e0ipso.tokkl.cache.BackgroundSendServerTest',
            'com.github.e0ipso.tokkl.widget.WidgetServerTest']
 BENCHMARK_CASES = [['com.github.e0ipso.tokkl.benchmark.StartupBenchmark','coldStart'],
                    ['com.github.e0ipso.tokkl.benchmark.TimerTapBenchmark','startAndStop']]
+DEVICE_BUILD = {'brand':'Android','device':'emu64x','fingerprint':'HOST-MODEL-ONLY/API36',
+                'id':'host-fixture','model':'host-fixture','type':'userdebug','version':{'sdk':36,'codename':'REL'}}
 
 
 def baseline(project):
@@ -34,7 +37,7 @@ def baseline(project):
 
 
 class WorkloadFixture:
-    def __init__(self,root,scenario='valid',legacy=False,full=False,widget=False,compile_first=False):
+    def __init__(self,root,scenario='valid',legacy=False,full=False,widget=False,compile_first=False,benchmark_api=False):
         self.root=Path(root);self.root.mkdir();self.base=self.root/'evidence'
         self.project=self.root/'project';self.project.mkdir();baseline(self.project)
         self.runtime=self.root/'runtime';self.runtime.mkdir();self.cg=self.root/'cgroups';self.app=self.cg/'app';self.app.mkdir(parents=True)
@@ -43,23 +46,37 @@ class WorkloadFixture:
         self.work=self.root/'work';self.tmp=self.root/'emulator-tmp';self.work.mkdir();self.tmp.mkdir();(self.tmp/'private-image').write_text('fixture')
         self.emunit='tokkl-emulator-5554-aabbccdd.scope';self.emscope=self.app/self.emunit;self.real_path=Path
         declaration=declare(self.project,CLASSES[-1:] if widget else CLASSES)
-        cases=[[row['class'],method] for row in declaration['inventory'] for method in row['methods']]
-        self.info={'expected_app_cases':cases,'classes':declaration['classes'],'benchmark_cases':BENCHMARK_CASES,'iterations':{'START_ITERATIONS':15,'TAP_ITERATIONS':30}}
+        self.benchmark_api=benchmark_api
+        if benchmark_api:
+            for relative in ['app/src/androidTest/java/'+c.replace('.','/')+'.kt' for c in API_CLASSES]+[BENCHMARK_SOURCE+n for n in BENCHMARK_SOURCES]:
+                path=self.project/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes((PACKAGE.parent.parent/relative).read_bytes())
+            for relative in APK_PATHS:
+                path=self.project/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'HOST-MODEL-ONLY APK '+relative.encode())
+            declaration=declare_benchmark_api(self.project,DEVICE_BUILD)
+        app_inventory=declaration['inventory'][:2] if benchmark_api else declaration['inventory']
+        cases=[[row['class'],method] for row in app_inventory for method in row['methods']]
+        self.info={'expected_app_cases':cases,'classes':API_CLASSES if benchmark_api else declaration['classes'],'benchmark_cases':BENCHMARK_CASES,'iterations':{'START_ITERATIONS':15,'TAP_ITERATIONS':30}}
         self.configuration=config(self.root)
         self.configuration.update(project=str(self.project),run_dir=str(self.base),checked_head='d7740f0ba984f6626907700cc0d7b651f14e4285')
         pins=[Path(CANONICAL_GATE),Path('/home/e0ipso/workspace/apps/tokkl-android/scripts/mem-gate.sh'),Path('/home/e0ipso/workspace/apps/tokkl-android/scripts/memory-capacity.py')]
         pins += [self.project/'scripts/instrumented-tests.sh',self.project/'scripts/sift_telemetry.py']
         pins += [self.project/row['source'] for row in declaration['inventory']]
+        if benchmark_api:pins += [self.project/row['source'] for row in declaration['sources']+declaration['apks']]
         self.configuration['input_pins']={str(path):sha(path) for path in pins}
         text=(self.project/'scripts/instrumented-tests.sh').read_text()
         for key,var in [('server_image','IMAGE'),('proxy_image','PROXY_IMAGE')]:self.configuration[key]=re.search(r"^readonly "+var+r"='([^']+)'$",text,re.M)[1]
         if full:
             job=self.configuration['plan'][0]
         else:
-            job={'api':36,'label':'scoped-app','standalone':False,'seconds':1800,
-                 'args':['scripts/instrumented-tests.sh','-Pandroid.testInstrumentationRunnerArguments.class='+','.join(declaration['classes'])],
+            job={'api':36,'label':BENCHMARK_LABEL if benchmark_api else 'scoped-app','standalone':False,'seconds':1800,
+                 'args':list(BENCHMARK_ARGS) if benchmark_api else ['scripts/instrumented-tests.sh','-Pandroid.testInstrumentationRunnerArguments.class='+','.join(declaration['classes'])],
                  'result_recipe':declaration}
             self.configuration['plan']=[job]
+        # Benchmark-profile label/mode refusals belong at configuration validation,
+        # before preparation/adoption. Historical direct-call injection is retained
+        # in the first-attempt evidence; it is not the controller's entry path.
+        if benchmark_api and scenario=='wrong-label':job['label']='other-job'
+        if benchmark_api and scenario=='wrong-mode':job['standalone']=True
         if compile_first:
             self.configuration['plan_recipe']=COMPILE_FIRST
             self.configuration['plan']=[{'api':0,'label':'assemble-check','args':COMPILE_ARGS,'seconds':1800,'standalone':True},job]
@@ -140,6 +157,8 @@ class WorkloadFixture:
         if mode=='wrong-class':cases[-1][0]='other.Test'
         if mode=='duplicate':cases.append(cases[0])
         xml=self.project/'app/build/outputs/androidTest-results/connected/debug/TEST-app.xml';self.xml(xml,cases,mode)
+        if self.benchmark_api:
+            self.benchmark_results();return
         if self.full:
             bench=copy.deepcopy(info['benchmark_cases'])
             if mode=='missing-one-benchmark':bench=bench[:1]
@@ -155,6 +174,24 @@ class WorkloadFixture:
                 data.append(item)
             path=self.project/'macrobenchmark/build/outputs/connected_android_test_additional_output/benchmark/fixture-benchmarkData.json';path.parent.mkdir(parents=True);path.write_text(json.dumps({'benchmarks':data}))
             if mode=='stale-metrics':os.utime(path,(1,1))
+    def benchmark_results(self):
+        """Synthetic disk evidence only, read by the actual maintained collector."""
+        self.xml(self.project/'macrobenchmark/build/outputs/androidTest-results/connected/benchmark/TEST-bench.xml',BENCHMARK_CASES)
+        folder=self.project/'macrobenchmark/build/outputs/connected_android_test_additional_output/benchmark'
+        folder.mkdir(parents=True,exist_ok=True)
+        data=[]
+        for case,(cls,name) in enumerate(BENCHMARK_CASES):
+            n=15 if case==0 else 30;outputs=[]
+            for i in range(n):
+                filename=f'{cls.rsplit(".",1)[1]}_{name}_iter{i:03d}_2026-10-23-00-00-00.perfetto-trace'
+                # Trace.packet { timestamp: unique value }. Wire framing fixture,
+                # deliberately no claim of real device/trace-processor evidence.
+                (folder/filename).write_bytes(bytes([10,2,64,case*30+i+1]))
+                outputs.append({'type':'PerfettoTrace','label':f'Trace Iteration {i}','filename':filename})
+            keys=['timeToInitialDisplayMs'] if case==0 else ['TimerStartFirstMs','TimerStopFirstMs']
+            data.append({'className':cls,'name':name,'params':{},'sampledMetrics':{},'warmupIterations':0,
+                         'repeatIterations':n,'metrics':{key:{'runs':[100.]*n,'minimum':100.,'maximum':100.,'median':100.} for key in keys},'profilerOutputs':outputs})
+        (folder/'fixture-benchmarkData.json').write_text(json.dumps({'context':{'build':DEVICE_BUILD},'benchmarks':data}))
     def launch(self,cmd,stdout,stderr,cwd,env):
         # This is the only Popen implementation visible to the actual controller.
         # Record argv, never execute it. Session.wrap_command is real and checked.
