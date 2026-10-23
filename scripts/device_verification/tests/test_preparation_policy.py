@@ -328,6 +328,29 @@ class RemainingBudgetTests(unittest.TestCase):
     def test_sixteen_gib_parent_writer_binding_and_replay_refusals(self):
         self.assert_carried_parent_writer_binding_and_replay_refusals(16*GIB, 11858051072, 11, allowances=3)
 
+    def test_thirty_two_gib_remaining_whole_request_cache_and_local_slots(self):
+        carry = 16990552064; remaining = 32*GIB-carry
+        self.assertEqual(remaining, 17369186304)
+        # Hypothetical local allowances only; root assigns any real continuation.
+        args = dict(cap=32*GIB, request=remaining, inactive=remaining, reserved=carry,
+                    budget=32*GIB, max_preparations=2)
+        success, calls, state = ActualPreparationTests.execute(self, self.directory, **args)
+        self.assertTrue(success);self.assertEqual(len(calls), 1)
+        self.assertEqual(state['reclaim_reserved_bytes'], 34359738368)
+        self.assertEqual(state['preparations'][0]['requested'], remaining)
+        self.assertEqual(state['preparations'][0]['target_current'], 6*GIB)
+        self.assertEqual(state['preparations'][0]['host_floor'], 9*GIB)
+        for change in [{'request': remaining+1, 'inactive': remaining+1}, {'inactive': remaining-1},
+                       {'cap': remaining-1}, {'cap': 0}, {'count': 2}, {'count': 1, 'repeat': True}]:
+            with self.subTest(change=change):
+                success, calls, state = ActualPreparationTests.execute(self, self.directory, **dict(args, **change))
+                self.assertFalse(success);self.assertFalse(calls)
+                self.assertEqual(state['reclaim_reserved_bytes'], carry)
+
+    def test_thirty_two_gib_parent_writer_binding_and_replay_refusals(self):
+        # Two modeled slots exercise existing predicates, not a lifetime renewal.
+        self.assert_carried_parent_writer_binding_and_replay_refusals(32*GIB, 16990552064, 17)
+
     def assert_carried_parent_writer_binding_and_replay_refusals(self, budget, carry, history, allowances=2):
         amount = budget-carry
         prior = Path(self.config['prior_window'])
@@ -346,7 +369,7 @@ class RemainingBudgetTests(unittest.TestCase):
             runtime_sha256=proof['runtime_sha256'], lease_id=self.config['lease_id'],
             approved_by='HOST-MODEL-ONLY', cheap_live_controller_fixtures_verified=True)))
         success, calls, state = ActualPreparationTests.execute(self, run, budget, reserved=carry,
-            request=amount, budget=budget, max_preparations=allowances)
+            request=amount, inactive=max(8*GIB, amount), budget=budget, max_preparations=allowances)
         self.assertTrue(success)
         state.update(phase='prepared', project=self.config['project'],
                      configuration_sha256=proof['configuration_sha256'], run_id=self.config['run_id'], lease_id=self.config['lease_id'])

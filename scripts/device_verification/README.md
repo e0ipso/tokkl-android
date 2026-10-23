@@ -206,7 +206,7 @@ already frozen authorized path; adding new plan shapes requires explicit review
 of their expected finalized counts. API31 execution is refused by this development
 configuration. API31 compatibility remains a later dedicated cycle.
 
-`reclaim_budget_bytes` is at most 16 GiB and grants no renewed authorization.
+`reclaim_budget_bytes` is at most 32 GiB and grants no renewed authorization.
 Default zero permits no reclaim. `preparation_policy.max_request_bytes` defaults
 to zero. It may be set to the authorized cumulative budget, or an explicitly
 stricter caller bound; there is no independent 4 GiB ceiling. The controller and
@@ -272,6 +272,20 @@ unchanged. There is no reset, refund or automatic replacement run. The sole
 corrected attempt and any later completed-run repetitions require separate root
 review under the recorded finite amendment; another failure stops the series.
 Fresh actual applicability and matching root adoption remain separate.
+
+TKA-0322 raises only the explicit finite configuration ceiling to 34359738368
+bytes (32 GiB). The 16 GiB and smaller budgets and zero defaults remain valid.
+The closed corrected ledger retains all 16990552064 reserved bytes, leaving
+17369186304 bytes under an explicit 32 GiB configuration. Its actual 17 consumed
+preparations exhaust cap17 with zero allowances. That ledger and its hash remain
+immutable. Root must separately review a finite remaining plan and assign its
+preparation counts, fresh actual applicability, matching configuration and
+adoption. The generic validator enforces one to four local plan allowances;
+it does not enforce a lifetime counter or grant new slots from this ceiling.
+Every stage still requires a fresh whole request and full inactive-file coverage.
+Bounded hashing, owner opening predicates, resource limits and all reservation,
+identity, failure and cleanup guards remain unchanged. This change grants no
+execution, activation, reset, refund, replay or replacement run.
 
 For the TKA-0295 continuation of the current TKA-0290 phase, root must pin the
 actual previous ledger and SHA, retain zero reserved bytes and the one consumed

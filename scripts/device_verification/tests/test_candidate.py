@@ -235,7 +235,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_twelve_gib_budget_actual_carry_and_unchanged_defaults(self):
         candidate = self.twelve_gib_candidate();checked = cfg.validate(candidate)
-        self.assertEqual(cfg.MAX_BUDGET, 17179869184)
+        self.assertEqual(checked['reclaim_budget_bytes'], 12884901888)
         self.assertEqual(checked['carried_reclaim_bytes'], 9289646080)
         self.assertEqual(checked['reclaim_budget_bytes']-checked['carried_reclaim_bytes'], 3595255808)
         self.assertEqual(checked['preparation_policy']['max_preparations'], 2)
@@ -292,7 +292,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_sixteen_gib_exact_boundary_actual_carry_and_old_budgets(self):
         candidate = self.sixteen_gib_candidate();checked = cfg.validate(candidate)
-        self.assertEqual(cfg.MAX_BUDGET, 17179869184)
+        self.assertEqual(checked['reclaim_budget_bytes'], 17179869184)
         self.assertEqual(checked['carried_reclaim_bytes'], 11858051072)
         self.assertEqual(checked['reclaim_budget_bytes']-checked['carried_reclaim_bytes'], 5321818112)
         self.assertEqual(checked['preparation_policy']['max_preparations'], 3)
@@ -312,10 +312,10 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(cfg.validate(candidate)['carried_reclaim_bytes'], 17179869184)
         self.assertFalse(Path(candidate['run_dir']).exists())
 
-    def test_sixteen_gib_above_boundary_malformed_reset_hash_and_local_allowance_refusals(self):
+    def test_sixteen_gib_malformed_reset_hash_and_local_allowance_refusals(self):
         candidate = self.sixteen_gib_candidate()
         for key in ['reclaim_budget_bytes', 'carried_reclaim_bytes']:
-            for value in [16*1024**3+1, -1, True, 17179869184.0, '17179869184', None]:
+            for value in [cfg.MAX_BUDGET+1, -1, True, 17179869184.0, '17179869184', None]:
                 with self.subTest(key=key, value=value), self.assertRaises(ValueError):
                     cfg.validate(dict(candidate, **{key: value}))
         for change in [{'reclaim_budget_bytes': 11858051071}, {'carried_reclaim_bytes': 0},
@@ -331,6 +331,61 @@ class ConfigurationTests(unittest.TestCase):
         bad = copy.deepcopy(candidate);del bad['prior_window_sha256']
         with self.assertRaisesRegex(ValueError, 'prior ledger changed'):cfg.validate(bad)
         Path(candidate['prior_window']).write_text('{"phase":"prepared","reclaim_reserved_bytes":0}')
+        with self.assertRaisesRegex(ValueError, 'prior ledger changed'):cfg.validate(candidate)
+
+    def thirty_two_gib_candidate(self):
+        ledger = self.directory/'thirty-two-gib-prior.json'
+        ledger.write_text(json.dumps({'phase': 'prepared', 'reclaim_reserved_bytes': 16990552064,
+                                     'preparations': [{'label': 'historical-'+str(i)} for i in range(17)]}))
+        candidate = copy.deepcopy(self.config)
+        # One synthetic local slot tests validation, never renews the closed cap17.
+        candidate.update(reclaim_budget_bytes=32*1024**3, carried_reclaim_bytes=16990552064,
+                         prior_window=str(ledger), prior_window_sha256=cfg.sha(ledger),
+                         preparation_policy={'max_request_bytes': 32*1024**3, 'max_preparations': 1})
+        return candidate
+
+    def test_thirty_two_gib_exact_ceiling_actual_carry_and_no_activation(self):
+        candidate = self.thirty_two_gib_candidate();checked = cfg.validate(candidate)
+        self.assertEqual(cfg.MAX_BUDGET, 34359738368)
+        self.assertEqual(checked['reclaim_budget_bytes'], 34359738368)
+        self.assertEqual(checked['carried_reclaim_bytes'], 16990552064)
+        self.assertEqual(checked['reclaim_budget_bytes']-checked['carried_reclaim_bytes'], 17369186304)
+        self.assertEqual(len(json.loads(Path(candidate['prior_window']).read_text())['preparations']), 17)
+        self.assertEqual(checked['preparation_policy']['max_preparations'], 1)
+        self.assertEqual(cfg.validate(self.sixteen_gib_candidate())['reclaim_budget_bytes'], 17179869184)
+        self.assertEqual(cfg.validate(self.config)['preparation_policy'],
+                         {'max_request_bytes': 0, 'max_preparations': 4})
+        Path(candidate['prior_window']).write_text(json.dumps({'reclaim_reserved_bytes': 32*1024**3}))
+        candidate.update(carried_reclaim_bytes=32*1024**3, prior_window_sha256=cfg.sha(candidate['prior_window']))
+        self.assertEqual(cfg.validate(candidate)['carried_reclaim_bytes'], 34359738368)
+        self.assertFalse(Path(candidate['run_dir']).exists())
+        with self.assertRaises(FileNotFoundError):
+            cfg.adopted_configuration(Path(candidate['run_dir']), self.directory/'absent-adoption.json')
+        self.assertFalse(Path(candidate['run_dir']).exists())
+
+    def test_thirty_two_gib_above_ceiling_carry_hash_reset_and_allowance_refusals(self):
+        candidate = self.thirty_two_gib_candidate()
+        for key in ['reclaim_budget_bytes', 'carried_reclaim_bytes']:
+            for value in [32*1024**3+1, -1, True, 34359738368.0, '34359738368', None]:
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    cfg.validate(dict(candidate, **{key: value}))
+        for change in [{'reclaim_budget_bytes': 16990552063}, {'carried_reclaim_bytes': 0},
+                       {'carried_reclaim_bytes': 16990552063}, {'prior_window': None},
+                       {'prior_window_sha256': '0'*64}]:
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                cfg.validate(dict(candidate, **change))
+        for field, values in [('max_preparations', [0, 5, -1, True, 1.0]),
+                              ('max_request_bytes', [0, 32*1024**3+1, -1, True, 34359738368.0])]:
+            for value in values:
+                bad = copy.deepcopy(candidate);bad['preparation_policy'][field] = value
+                with self.subTest(field=field, value=value), self.assertRaises(ValueError):cfg.validate(bad)
+        bad = copy.deepcopy(candidate)
+        bad['plan'].append(dict(api=0, label='assemble-check', standalone=True, seconds=1800,
+            args=['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']))
+        with self.assertRaisesRegex(ValueError, 'plan exceeds preparation count'):cfg.validate(bad)
+        bad = copy.deepcopy(candidate);del bad['prior_window_sha256']
+        with self.assertRaisesRegex(ValueError, 'prior ledger changed'):cfg.validate(bad)
+        Path(candidate['prior_window']).write_text('{"reclaim_reserved_bytes":0}')
         with self.assertRaisesRegex(ValueError, 'prior ledger changed'):cfg.validate(candidate)
 
     def test_nine_gib_ceiling_preserves_actual_opening_six_nine_boundaries(self):
