@@ -277,21 +277,49 @@ class RemainingBudgetTests(unittest.TestCase):
                 self.assertEqual(state['reclaim_reserved_bytes'], carry)
 
     def test_nine_gib_actual_parent_writer_binding_and_replay_refusals(self):
-        carry = 6191243264; amount = 9*GIB-carry
+        self.assert_carried_parent_writer_binding_and_replay_refusals(9*GIB, 6191243264, 5)
+
+    def test_twelve_gib_remaining_controller_whole_request_cache_and_slots(self):
+        carry = 9289646080; remaining = 12*GIB-carry
+        self.assertEqual(remaining, 3595255808)
+        args = dict(cap=12*GIB, request=remaining, reserved=carry, budget=12*GIB, max_preparations=2)
+        success, calls, state = ActualPreparationTests.execute(self, self.directory, **args)
+        self.assertTrue(success);self.assertEqual(len(calls), 1)
+        self.assertEqual(state['reclaim_reserved_bytes'], 12884901888)
+        self.assertEqual(state['preparations'][0]['requested'], remaining)
+        self.assertEqual(state['preparations'][0]['target_current'], 6*GIB)
+        self.assertEqual(state['preparations'][0]['host_floor'], 9*GIB)
+        # The recorded fresh need fits without splitting or discarding carry.
+        success, calls, state = ActualPreparationTests.execute(self, self.directory,
+            **dict(args, request=981966848, inactive=981966848, count=1))
+        self.assertTrue(success);self.assertEqual(len(calls), 1)
+        self.assertEqual(state['reclaim_reserved_bytes'], 10271612928)
+        for change in [{'request': remaining+1}, {'inactive': remaining-1}, {'cap': remaining-1},
+                       {'cap': 0}, {'count': 2}, {'count': 1, 'repeat': True}]:
+            with self.subTest(change=change):
+                success, calls, state = ActualPreparationTests.execute(self, self.directory, **dict(args, **change))
+                self.assertFalse(success);self.assertFalse(calls)
+                self.assertEqual(state['reclaim_reserved_bytes'], carry)
+
+    def test_twelve_gib_actual_parent_writer_binding_and_replay_refusals(self):
+        self.assert_carried_parent_writer_binding_and_replay_refusals(12*GIB, 9289646080, 8)
+
+    def assert_carried_parent_writer_binding_and_replay_refusals(self, budget, carry, history):
+        amount = budget-carry
         prior = Path(self.config['prior_window'])
         prior.write_text(json.dumps({'reclaim_reserved_bytes': carry,
-                                    'preparations': [{'label': 'historical-'+str(i)} for i in range(5)]}))
-        self.config.update(reclaim_budget_bytes=9*GIB, carried_reclaim_bytes=carry,
-            prior_window_sha256=cfg.sha(prior), preparation_policy={'max_request_bytes': 9*GIB, 'max_preparations': 2})
+                                    'preparations': [{'label': 'historical-'+str(i)} for i in range(history)]}))
+        self.config.update(reclaim_budget_bytes=budget, carried_reclaim_bytes=carry,
+            prior_window_sha256=cfg.sha(prior), preparation_policy={'max_request_bytes': budget, 'max_preparations': 2})
         self.config['plan'].append(dict(api=0, label='assemble-check', standalone=True, seconds=1800,
             args=['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']))
         proof = snapshot(self.config);run = Path(proof['run_dir'])
-        adoption = self.directory/'HOST-ONLY-nine-gib-adoption.json'
+        adoption = self.directory/'HOST-ONLY-carried-budget-adoption.json'
         adoption.write_text(json.dumps(dict(configuration_sha256=proof['configuration_sha256'],
             runtime_sha256=proof['runtime_sha256'], lease_id=self.config['lease_id'],
             approved_by='HOST-MODEL-ONLY', cheap_live_controller_fixtures_verified=True)))
-        success, calls, state = ActualPreparationTests.execute(self, run, 9*GIB, reserved=carry,
-            request=amount, budget=9*GIB, max_preparations=2)
+        success, calls, state = ActualPreparationTests.execute(self, run, budget, reserved=carry,
+            request=amount, budget=budget, max_preparations=2)
         self.assertTrue(success)
         state.update(phase='prepared', project=self.config['project'],
                      configuration_sha256=proof['configuration_sha256'], run_id=self.config['run_id'], lease_id=self.config['lease_id'])
@@ -323,7 +351,7 @@ class RemainingBudgetTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):policy.reserve_write(policy.helper_request(run, ['--write']+argv))
             for mode in ['overbudget', 'refund', 'reset', 'inactive', 'deficit', 'label', 'command', 'replay']:
                 bad = copy.deepcopy(state);row = bad['preparations'][0]
-                if mode=='overbudget':bad['reclaim_reserved_bytes'] = 9*GIB+1
+                if mode=='overbudget':bad['reclaim_reserved_bytes'] = budget+1
                 if mode=='refund':bad['reclaim_reserved_bytes'] -= 1
                 if mode=='reset':bad['reclaim_reserved_bytes'] = amount
                 if mode=='inactive':row['before']['stat']['inactive_file'] = amount-1

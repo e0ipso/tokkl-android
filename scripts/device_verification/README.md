@@ -206,7 +206,7 @@ already frozen authorized path; adding new plan shapes requires explicit review
 of their expected finalized counts. API31 execution is refused by this development
 configuration. API31 compatibility remains a later dedicated cycle.
 
-`reclaim_budget_bytes` is at most 9 GiB and grants no renewed authorization.
+`reclaim_budget_bytes` is at most 12 GiB and grants no renewed authorization.
 Default zero permits no reclaim. `preparation_policy.max_request_bytes` defaults
 to zero. It may be set to the authorized cumulative budget, or an explicitly
 stricter caller bound; there is no independent 4 GiB ceiling. The controller and
@@ -224,15 +224,15 @@ explicitly authorizes a new budget. Do not reset a failed attempt's reservation,
 reuse historical output directories, reclaim globally, or stop another workload.
 No change to host resource arrangements is proposed by this package.
 
-TKA-0309 raises only this finite cumulative ceiling. Existing explicit amounts
-and the zero default remain unchanged. Cumulative accounting is separate from
+TKA-0309 raised this finite cumulative ceiling to 9 GiB. Existing explicit
+amounts and the zero default remain unchanged. Cumulative accounting is separate from
 the owner opening predicates: app current at most 6 GiB and host available at
 least 9 GiB. Temporary limits remain 14G/15G/2G and rollback 10G/12G/2G.
 The protected controller's refusal text still mentions a "finite 6GiB budget";
 its actual predicate compares against the configured budget, not that stale text.
 
-The recorded amendment carries 6191243264 actual reserved bytes and five actual
-preparations. A reviewed 9663676416-byte budget leaves 3472433152 bytes. Root
+The historical TKA-0309 amendment carries 6191243264 actual reserved bytes and
+five actual preparations. A reviewed 9663676416-byte budget leaves 3472433152 bytes. Root
 must pin the actual prior ledger/hash and bind exactly two remaining allowances
 in the new configuration/adoption, for seven lifetime preparations in that
 amendment. The generic validator enforces one to four local plan allowances;
@@ -240,6 +240,19 @@ it does not enforce a lifetime counter or infer the two remaining slots from
 history. This ceiling change grants no new resource authority. Reservation
 identity, fresh whole deficit plus 128 MiB, whole inactive coverage, durable
 write intent, no reset/refund/replay and all existing safety guards still apply.
+
+TKA-0312 raises only the explicit ceiling to 12884901888 bytes (12 GiB).
+Existing budgets, including 9 GiB, and zero defaults remain unchanged. This
+finite amendment carries all 9289646080 actual reserved bytes, leaving
+3595255808 bytes; the recorded fresh whole need is 981966848 bytes. Eight actual
+preparations have been consumed. Root must pin the actual prior ledger/hash and
+bind the two remaining local allowances, for a lifetime cap of ten. The generic
+validator still enforces only one to four local allowances, not a lifetime cap.
+No reset, refund, resource grant or activation follows from the ceiling change.
+Opening 6/9 GiB, temporary 14G/15G/2G, rollback 10G/12G/2G, whole inactive-file
+coverage, identity and all failure/cleanup guards remain unchanged. Changed
+validator bytes require fresh actual applicability and matching root adoption
+separately; host checks establish no workload or device result.
 
 For the TKA-0295 continuation of the current TKA-0290 phase, root must pin the
 actual previous ledger and SHA, retain zero reserved bytes and the one consumed

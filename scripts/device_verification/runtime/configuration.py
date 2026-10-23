@@ -23,7 +23,7 @@ else:
     from check_and_repro import validate_grouped_job
     from compile_only import validate_bootstrap_plan
 
-MAX_BUDGET = 9 * 1024**3
+MAX_BUDGET = 12 * 1024**3
 CANONICAL_GATE = '/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh'
 
 
