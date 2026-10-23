@@ -438,3 +438,67 @@ The dedicated final-tree API31 compatibility cycle still includes TKA-0271,
 TKA-0281 and all deferred coverage. After shared-code compatibility fixes, rerun
 affected API36 checks and complete release verification. Development and
 compatibility completion must be reported separately.
+
+
+## Finite assemble/check and reproducibility recipe
+
+The private `assemble-check-then-repro-v1` host recipe preserves a two-job plan:
+one existing API36 device job, then one standalone API0 job labeled
+`assemble-check`. It requires exactly 1800 seconds for the entire host sequence,
+with no `plan_recipe` override. The host job is declared as follows, replacing
+only `/disk/NEW_RUN` with the frozen `run_dir`:
+
+```json
+{
+  "api": 0,
+  "label": "assemble-check",
+  "standalone": true,
+  "seconds": 1800,
+  "host_recipe": "assemble-check-then-repro-v1",
+  "args": ["/usr/bin/python3", "-B", "/disk/NEW_RUN/check_and_repro.py", "--execute"]
+}
+```
+
+The frozen runner executes exactly these children in order:
+
+```sh
+./gradlew --no-daemon assembleDebug check --stacktrace
+env GRADLE_OPTS=-Dorg.gradle.workers.max=1 scripts/reproducible-release.sh
+```
+
+The children inherit the original job's cwd, environment, output and process
+group. The runner adds no per-child timeout, gate, scope or resource operation.
+The existing shared gate, owned scope, Session holder, continuous capture and
+descendant event monitoring surround the whole sequence. One existing `timeout`
+sets 1800 seconds for both children together, including runner startup and pin
+validation. Original cleanup/final certification, controller deadline, fallback
+and watchdog policy remain unchanged. A nonzero first exit stops the sequence
+before reproducibility. A nonzero second exit fails the job. Signal exits retain
+the raw negative child returncode and propagate the usual 128-plus-signal status.
+
+The Session directory's `check-and-repro.json` receipt records each exact argv,
+start/end monotonic times, actual returncode and status. `not_run`, `running`
+and `launch_failed` never mean passed; an interrupted receipt can have no final
+exit. Each update is also flushed to the job log. The controller independently
+records the outer job exit, including timeout 124, plus its original monitoring,
+JVM/lint collection and cleanup evidence. Both child exits must be zero before
+the runner returns zero; resource/certification failures still fail the job.
+An exclusive initial receipt rejects replay in the same Session.
+
+Both `gradlew` and `scripts/reproducible-release.sh` must be input-pinned, as must
+all other required build/tool inputs. Preparation copies and hashes the runner
+with the runtime; adoption binds the complete configuration and runtime manifest.
+Execution revalidates adoption, command-source pins, frozen helper bytes, original
+job environment/cwd and registered Session cgroup. Missing bindings refuse before
+children start. Alternate wrappers, commands, profiles, positions, deadlines and
+first-host plans remain unsupported. Three jobs with two allowances still refuse.
+
+This recipe grants no preparation, budget, reset, refund, lease or activation.
+The original current phase remains 6 GiB, four lifetime preparations, zero bytes
+reserved/reclaimed and two preparations consumed, leaving two. Old snapshots and
+ledgers remain immutable. New host canaries use owned tiny executables and modeled
+resources only. The candidate stays private/inactive until the coordinator obtains
+fresh actual cheap-fixture applicability and matching root adoption; no SDK,
+Gradle, device, reproducibility workload or shared-resource operation is authorized
+by these host checks. Final integrated checks and API31 compatibility remain the
+coordinator's separate obligations.

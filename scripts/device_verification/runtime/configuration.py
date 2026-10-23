@@ -16,8 +16,10 @@ import stat
 import struct
 if __package__:
     from .scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
+    from .check_and_repro import validate_grouped_job
 else:
     from scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
+    from check_and_repro import validate_grouped_job
 
 MAX_BUDGET = 6 * 1024**3
 CANONICAL_GATE = '/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh'
@@ -165,6 +167,7 @@ def validate(config, *, fresh=True):
         args = job.get('args')
         require(isinstance(args, list) and args and all(isinstance(x, str) and x and '\n' not in x for x in args), 'argv list required')
         require('--stop' not in args, 'stopping another Gradle daemon is prohibited')
+        grouped = validate_grouped_job(config, job)
         if not job['standalone']:
             require(job['api'] == 36 and args[0] == 'scripts/instrumented-tests.sh', 'device jobs must use authorized script on API36')
             if 'result_recipe' in job:
@@ -177,7 +180,7 @@ def validate(config, *, fresh=True):
         else:
             require('result_recipe' not in job, 'standalone host job cannot use device result recipe')
             require(job['api'] == 0, 'host jobs must use api zero')
-            require((args == ['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']
+            require(grouped or (args == ['./gradlew', '--no-daemon', 'assembleDebug', 'check', '--stacktrace']
                      and job['label'] == 'assemble-check')
                     or (args == ['env', 'GRADLE_OPTS=-Dorg.gradle.workers.max=1', 'scripts/reproducible-release.sh']
                         and job['label'] == 'reproducible-release')
@@ -189,6 +192,9 @@ def validate(config, *, fresh=True):
                 '/home/e0ipso/workspace/apps/tokkl-android/scripts/mem-gate.sh',
                 '/home/e0ipso/workspace/apps/tokkl-android/scripts/memory-capacity.py'}
     require(required <= pins.keys(), 'launcher/shared admission inputs must be pinned')
+    if any('host_recipe' in job for job in jobs):
+        required.update({str(project/'gradlew'), str(project/'scripts/reproducible-release.sh')})
+        require(required <= pins.keys(), 'grouped host command sources must be pinned')
     for path, expected in pins.items():
         require(Path(path).is_absolute() and re.fullmatch('[0-9a-f]{64}', expected), 'invalid input pin')
         require(sha(path) == expected, 'checked input changed: '+path)
