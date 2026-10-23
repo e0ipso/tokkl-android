@@ -25,7 +25,8 @@ import kotlinx.coroutines.launch
  * each time the Quick Settings panel shows it and calls [onStartListening], where it reads the
  * cache, and while it listens it follows the cache, so a start or stop from any surface shows.
  * `requestListeningState` does nothing for a tile in this mode, and an active tile would not hear
- * of the panel opening, which TKA-0075 refreshes on.
+ * of the panel opening. [TileRefresh] reads the current entry on opening, at most once a minute,
+ * while the cache continues to drive the display and taps without waiting for that read.
  * See https://developer.android.com/develop/ui/views/quicksettings-tiles#select-a-listening-mode
  * and [requestListeningState]'s active-mode-only API contract. No application observer is needed:
  * each listening interval starts a fresh cache collection, cancelled in [onStopListening].
@@ -44,6 +45,7 @@ class RunningTileService : TileService() {
         super.onStartListening()
         listening?.cancel()
         listening = scope.launch { content().distinctUntilChanged().collect(::show) }
+        TileRefresh.onStartListening(this)
     }
 
     override fun onStopListening() {

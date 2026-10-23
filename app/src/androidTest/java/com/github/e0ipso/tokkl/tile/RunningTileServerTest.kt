@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -89,6 +90,85 @@ class RunningTileServerTest {
                 if (::account.isInitialized) TestAccounts.delete(account)
             } finally {
                 SessionRule.signOut()
+            }
+        }
+    }
+
+    @Test
+    fun openingTheShadeFindsATimerStartedOnTheServer() {
+        val remote = account.createEntry("Started on the laptop", Instant.now().minusSeconds(7_200))
+        assertEquals("the app has not fetched the remote start", null, runBlocking { app.cache.running.first() })
+
+        QuickSettingsTile.expand()
+
+        QuickSettingsTile.awaitText("the remote timer without opening the app", "Started on the laptop")
+        QuickSettingsTile.awaitText("the remote timer", context.getString(R.string.tile_running_subtitle))
+        assertEquals(remote, runBlocking { app.cache.running.first() }!!.entry.id)
+    }
+
+    @Test
+    fun openingTheShadeTwiceWithinAMinuteFetchesOnlyOnce() {
+        account.createEntry("One shade refresh", Instant.now().minusSeconds(7_200))
+        RequestCounter(TokklTestServer.url, CURRENT_REQUEST).use { requests ->
+            signIn(requests.url, account.apiToken)
+            QuickSettingsTile.expand()
+            QuickSettingsTile.awaitText("the first refresh completed", "One shade refresh")
+            QuickSettingsTile.collapse()
+            QuickSettingsTile.expand()
+            QuickSettingsTile.awaitText("the cached timer on reopening", "One shade refresh")
+            QuickSettingsTile.collapse()
+
+            assertEquals("two openings within a minute", 1, requests.count)
+            assertEquals("all counted connections reached the real server", emptyList<String>(), requests.failures)
+        }
+    }
+
+    @Test
+    fun aTapDuringAHeldRefreshContinuesTheDisplayedEntryAtOnce() {
+        account.createEntry("Continue while refresh hangs", Instant.now().minusSeconds(7_200), Instant.now().minusSeconds(3_600))
+        runBlocking { app.accountSettings.refresh().join() }
+        account.createEntry("Laptop timer hidden by the held reply", Instant.now().minusSeconds(1_800))
+        HangingRelay(TokklTestServer.url).use { relay ->
+            RequestCounter(relay.url, CURRENT_REQUEST).use { requests ->
+                signIn(requests.url, account.apiToken)
+                relay.holdAnswerTo("GET /api/v9/me/time_entries/current ")
+                QuickSettingsTile.expand()
+                QuickSettingsTile.awaitText("the cached entry before the refresh answers", "Continue while refresh hangs")
+                runBlocking { withTimeout(TIMEOUT_MS) { while (!relay.holdsAnswer) delay(20) } }
+                QuickSettingsTile.collapse()
+                QuickSettingsTile.expand()
+                QuickSettingsTile.awaitText("the cached entry during the same refresh", "Continue while refresh hangs")
+                assertEquals("reopening joins the in-flight fetch", 1, requests.count)
+
+                QuickSettingsTile.click()
+
+                val continued = runBlocking { withTimeout(AT_ONCE_MS) { app.cache.running.first { it != null } } }!!.entry
+                assertEquals("the tap uses the displayed entry", "Continue while refresh hangs", continued.description)
+                assertTrue("the tap did not wait for the current-entry reply", relay.holdsAnswer)
+                QuickSettingsTile.awaitText("the immediate cached start", context.getString(R.string.tile_running_subtitle))
+                relay.releaseAnswer()
+            }
+        }
+    }
+
+    @Test
+    fun openingTheShadeOfflineAttemptsNoRequest() {
+        HangingRelay(TokklTestServer.url).use { relay ->
+            // Both relay hops use loopback, so an attempted request is observable even offline.
+            RequestCounter(relay.url, CURRENT_REQUEST).use { requests ->
+                signIn(requests.url, account.apiToken)
+                relay.hang()
+                AirplaneMode.set(true, web)
+                QuickSettingsTile.expand()
+                QuickSettingsTile.awaitText("the offline cache", context.getString(R.string.tile_nothing_subtitle))
+                QuickSettingsTile.collapse()
+                QuickSettingsTile.expand()
+                QuickSettingsTile.awaitText("the offline cache on reopening", context.getString(R.string.tile_nothing_subtitle))
+                QuickSettingsTile.collapse()
+
+                assertEquals("offline openings send no current-entry request", 0, requests.count)
+                assertEquals("offline openings attempt no loopback connection", 0, relay.hungConnections)
+                assertEquals(emptyList<String>(), requests.failures)
             }
         }
     }
@@ -253,6 +333,7 @@ class RunningTileServerTest {
     private class Created(val id: Long)
 
     private companion object {
+        const val CURRENT_REQUEST = "/api/v9/me/time_entries/current HTTP/1.1"
         const val AT_ONCE_MS = 2_000L
         const val TIMEOUT_MS = 60_000L
     }
