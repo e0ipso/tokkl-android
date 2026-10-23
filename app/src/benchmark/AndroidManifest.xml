@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Exists only in the profileable benchmark variant. No launcher or application override. -->
+    <application>
+        <activity
+            android:name=".CatalogProfileActivity"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
+        <receiver
+            android:name=".CatalogProfileActivity$Control"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
+    </application>
+</manifest>
