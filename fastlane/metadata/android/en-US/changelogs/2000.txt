@@ -1,0 +1,2 @@
+- Keep syncing time-entry changes made while an earlier sync is finishing.
+- Fix reading Stop timestamps on Android 12.

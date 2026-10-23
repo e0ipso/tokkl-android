@@ -1,0 +1,5 @@
+First version for Android 12 and later.
+
+Connect to a Tokkl server to track time, edit entries and browse your history. View summary, detailed and weekly reports. Manage projects, clients, tasks and tags, and restore entries from Trash.
+
+Track time offline with cached data and queued changes. Stop the running timer from its notification.

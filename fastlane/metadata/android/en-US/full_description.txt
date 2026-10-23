@@ -1,0 +1,9 @@
+Tokkl is a native Android client for your Tokkl time-tracking server. Connect to your server and sign in with an API token or your email and password. Requires Android 12 or later and a Tokkl account.
+
+Start and stop a timer, edit a running entry, or add time by hand. Browse past entries grouped by day or on a week calendar. Duplicate an entry to track similar work again, and undo an accidental deletion.
+
+Review your time in summary, detailed and weekly reports. Filter reports by project, client, tag and other entry fields. Manage projects, clients, tasks and tags, and restore deleted entries from Trash.
+
+Keep tracking when your connection drops. Tokkl caches your account data and queues time entry changes to send when the network returns. An ongoing notification shows the running timer and lets you stop it offline.
+
+Choose a light or dark theme, or follow your system setting. Signing out clears the account's data from the phone.
