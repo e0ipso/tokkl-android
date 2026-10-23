@@ -73,6 +73,7 @@ fun TimerScreen(
     listContent: @Composable () -> Unit,
     calendarContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    feedback: @Composable () -> Unit = {},
 ) {
     val title = stringResource(R.string.nav_timer)
     val scrollAway = view == TimerView.CALENDAR || compactHeightWindow()
@@ -83,6 +84,7 @@ fun TimerScreen(
     }
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { feedback() },
         topBar = { if (scrollAway) TopBarStatusBand() else TokklTopBar(title) },
         contentWindowInsets = ScrollingScreenInsets,
     ) { innerPadding ->

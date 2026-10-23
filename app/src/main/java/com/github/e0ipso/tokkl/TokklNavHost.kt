@@ -54,6 +54,7 @@ import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entry.EntryFormModel
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
 import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.history.EntryActionsHost
 import com.github.e0ipso.tokkl.history.EntryActionsModel
 import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryModel
@@ -171,6 +172,12 @@ fun TokklNavHost(
     reminderSettings: ReminderSetting? = null,
     openReminderTimer: Int = 0,
 ) {
+    LaunchedEffect(entryActions, calendar, history) {
+        entryActions.reconciliation.collect { overrides ->
+            calendar.reconcile(overrides)
+            history.reconcile(overrides)
+        }
+    }
     val appContext = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -471,6 +478,22 @@ private fun Screen(
                     },
                     onContinue = onContinue,
                     favorites = favorites,
+                    showActions = false,
+                )
+            },
+            feedback = {
+                val actionsState by entryActions.state.collectAsState()
+                val account by settings.collectAsState()
+                EntryActionsHost(
+                    state = actionsState,
+                    onUndo = entryActions::undo,
+                    onNoticeDone = entryActions::noticeDone,
+                    onConfirmDelete = entryActions::confirmDelete,
+                    onCancelDelete = entryActions::cancelDelete,
+                    settings = account,
+                    onSplitTextChange = entryActions::setSplitText,
+                    onConfirmSplit = entryActions::confirmSplit,
+                    onCancelSplit = entryActions::cancelSplit,
                 )
             },
             calendarContent = {
@@ -502,6 +525,8 @@ private fun Screen(
         Destination.ENTRY -> EntryFormScreen(
             model = entryForm,
             cache = cache,
+            canRestore = entryActions::canRestoreDelete,
+            onDeleted = entryActions::deleted,
             onClose = {
                 if (backStack.lastOrNull() == Destination.ENTRY) backStack.removeAt(backStack.lastIndex)
                 entryForm.close()

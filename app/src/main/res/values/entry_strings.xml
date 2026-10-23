@@ -50,4 +50,6 @@
     <!-- What TalkBack says a tap on a history row or a calendar block does. -->
     <string name="entry_edit_action">Edit entry</string>
     <string name="entry_mistake_too_short">This entry is too short for your time resolution. Choose a longer span.</string>
+    <!-- Shown when Delete could not be written to the phone. -->
+    <string name="entry_delete_failed">Couldn\'t queue the deletion. Try again.</string>
 </resources>

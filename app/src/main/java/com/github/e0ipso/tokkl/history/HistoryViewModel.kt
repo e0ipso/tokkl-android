@@ -22,6 +22,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
             client = Session(application)::client,
             scope = viewModelScope,
             io = Dispatchers.IO,
+            currentId = app.changes::currentId,
         )
     }
 

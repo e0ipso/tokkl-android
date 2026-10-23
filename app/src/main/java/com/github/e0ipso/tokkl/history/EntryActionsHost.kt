@@ -25,7 +25,8 @@ import com.github.e0ipso.tokkl.session.AccountSettings
  * needs the account's [settings].
  * The snackbar is a polite live region, as Material's SnackbarHost makes each one, so TalkBack
  * reads the message and its Undo button when it appears. A snackbar with Undo stays for
- * Material's long duration, which grows as Android's accessibility timeout asks.
+ * Material's long duration, which grows as Android's accessibility timeout asks. A restore
+ * waiting for the server stays available until retried or dismissed.
  */
 @Composable
 internal fun EntryActionsHost(
@@ -53,7 +54,11 @@ internal fun EntryActionsHost(
             message = message,
             actionLabel = undoLabel.takeIf { undoes != null },
             withDismissAction = true,
-            duration = if (undoes != null) SnackbarDuration.Long else SnackbarDuration.Short,
+            duration = when {
+                notice is EntryNotice.UndoNeedsServer -> SnackbarDuration.Indefinite
+                undoes != null -> SnackbarDuration.Long
+                else -> SnackbarDuration.Short
+            },
         )
         if (result == SnackbarResult.ActionPerformed && undoes != null) undo(undoes) else done(notice)
     }

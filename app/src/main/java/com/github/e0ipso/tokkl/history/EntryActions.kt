@@ -119,6 +119,21 @@ class EntryActionsModel(
 
     private val mutableState = MutableStateFlow(EntryActionsState())
 
+    private val mutableReconciliation = MutableStateFlow<Map<Long, CachedTimeEntry?>>(emptyMap())
+    val reconciliation: StateFlow<Map<Long, CachedTimeEntry?>> = mutableReconciliation.asStateFlow()
+    private val deletedEntries = mutableMapOf<Long, CachedTimeEntry>()
+    private val deleting = mutableSetOf<Long>()
+    private var undoing = false
+
+    fun canRestoreDelete(): Boolean = canRestore()
+
+    /** Called only after the editor's deletion transaction commits. Kept by HistoryViewModel. */
+    fun deleted(entry: CachedTimeEntry, undo: Boolean) {
+        deletedEntries[entry.id] = entry
+        mutableReconciliation.update { it + (entry.id to null) }
+        mutableState.update { it.copy(notice = EntryNotice.Deleted(++serial, entry.id, undo)) }
+    }
+
     private var serial = 0L
 
     val state: StateFlow<EntryActionsState> = mutableState.asStateFlow()
@@ -145,14 +160,26 @@ class EntryActionsModel(
 
     /** Takes back the delete of [entryId], which a [EntryNotice.Deleted] or [EntryNotice.UndoNeedsServer] offered. */
     fun undo(entryId: Long) {
-        mutableState.update { it.copy(notice = null) }
+        if (undoing) return
+        undoing = true
+        val offered = mutableState.value.notice
         scope.launch {
-            val notice = when (val outcome = undoDelete(entryId)) {
-                UndoOutcome.Cancelled, UndoOutcome.Restored -> null
-                UndoOutcome.NeedsServer -> EntryNotice.UndoNeedsServer(++serial, entryId)
-                is UndoOutcome.Failed -> EntryNotice.UndoFailed(++serial, outcome.status)
+            try {
+                val notice = when (val outcome = undoDelete(entryId)) {
+                    UndoOutcome.Cancelled, UndoOutcome.Restored -> {
+                        val id = changes.currentId(entryId)
+                        val restored = entries.first().firstOrNull { it.entry.id == id }?.entry
+                            ?: deletedEntries[entryId]?.copy(id = id)
+                        mutableReconciliation.update { it + (entryId to restored) }
+                        null
+                    }
+                    UndoOutcome.NeedsServer -> EntryNotice.UndoNeedsServer(++serial, entryId)
+                    is UndoOutcome.Failed -> EntryNotice.UndoFailed(++serial, outcome.status)
+                }
+                mutableState.update { if (it.notice == offered) it.copy(notice = notice) else it }
+            } finally {
+                undoing = false
             }
-            if (notice != null) mutableState.update { it.copy(notice = notice) }
         }
     }
 
@@ -274,9 +301,17 @@ class EntryActionsModel(
     }
 
     private fun queueDelete(entryId: Long, undo: Boolean) {
+        if (!deleting.add(entryId)) return
         scope.launch {
-            if (changes.delete(entryId)) {
-                mutableState.update { it.copy(notice = EntryNotice.Deleted(++serial, entryId, undo)) }
+            try {
+                val snapshot = entries.first().firstOrNull { it.entry.id == entryId }?.entry
+                if (snapshot != null) {
+                    changes.delete(snapshot)?.let { deleted(it, undo) }
+                } else if (changes.delete(entryId)) {
+                    mutableState.update { it.copy(notice = EntryNotice.Deleted(++serial, entryId, undo)) }
+                }
+            } finally {
+                deleting.remove(entryId)
             }
         }
     }

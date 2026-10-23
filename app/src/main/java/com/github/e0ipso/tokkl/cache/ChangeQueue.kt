@@ -41,6 +41,15 @@ interface EntryChanges {
     }
 
     suspend fun delete(entryId: Long): Boolean
+
+    /** The id the cache holds [entryId] under after a local create is answered, or [entryId]. */
+    suspend fun currentId(entryId: Long): Long = entryId
+
+    /**
+     * Deletes the current cached copy, or [entry] when the cache does not hold that server entry.
+     * Returns the exact deleted row, or null when nothing was queued.
+     */
+    suspend fun delete(entry: CachedTimeEntry): CachedTimeEntry? = if (delete(entry.id)) entry else null
 }
 
 /**
@@ -185,15 +194,30 @@ class ChangeQueue(
      * The id the cache holds the entry [entryId] under: the server's once the server has answered
      * the create of an entry made on the phone, or [entryId] as it is.
      */
-    suspend fun currentId(entryId: Long): Long = withContext(io) { resolve(entryId) }
+    override suspend fun currentId(entryId: Long): Long = withContext(io) { resolve(entryId) }
 
-    /** Deletes the cached entry [entryId]. Returns false when the entry is not cached. */
+    /** Deletes the cached entry [entryId]. Returns false when it is missing or a delete is already queued. */
     override suspend fun delete(entryId: Long): Boolean =
         queue {
-            val current = dao.entry(resolve(entryId)) ?: return@queue false
+            val id = resolve(entryId)
+            if (dao.queuedDelete(id) != null) return@queue false
+            val current = dao.entry(id) ?: return@queue false
             enqueue(ChangeKind.DELETE, current)
             true
         }
+
+    /**
+     * Resolves identity, prefers the current cache row and guards a duplicate in the same
+     * transaction as DELETE. A missing local create is never recreated from a stale snapshot.
+     * Returns the exact deleted fields and identity for reconciliation and Undo.
+     */
+    override suspend fun delete(entry: CachedTimeEntry): CachedTimeEntry? = queue {
+        val id = resolve(entry.id)
+        if (dao.queuedDelete(id) != null) return@queue null
+        val current = dao.entry(id) ?: entry.copy(id = id).takeIf { id > 0 } ?: return@queue null
+        enqueue(ChangeKind.DELETE, current)
+        current
+    }
 
     /**
      * Lets the held change [sequence] go out again as it is, such as after the cause of its

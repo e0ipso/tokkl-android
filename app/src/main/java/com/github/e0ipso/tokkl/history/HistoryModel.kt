@@ -117,9 +117,17 @@ class HistoryModel(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),
+    private val currentId: suspend (Long) -> Long = { it },
 ) {
 
     private val older = MutableStateFlow(Older())
+    private val reconciliation = MutableStateFlow<Map<Long, CachedTimeEntry?>>(emptyMap())
+
+    fun reconcile(overrides: Map<Long, CachedTimeEntry?>) {
+        reconciliation.value = overrides
+    }
+
+    private val pages = combine(older, reconciliation) { loaded, overrides -> loaded to overrides }
 
     /** Where the account's history starts, once the server has said or shown that it cannot. */
     private var bounds: Bounds? = null
@@ -143,7 +151,7 @@ class HistoryModel(
     @Volatile
     private var shownEntries: Map<Long, CachedTimeEntry> = emptyMap()
 
-    val state: StateFlow<HistoryState> = combine(entries, projects, tasks, accountSettings, older) { cached, projectRows, taskRows, settings, loaded ->
+    val state: StateFlow<HistoryState> = combine(entries, projects, tasks, accountSettings, pages) { cached, projectRows, taskRows, settings, (loaded, overrides) ->
         val time = settings?.time(clock)
         when {
             settings == null -> HistoryState.Loading
@@ -151,11 +159,16 @@ class HistoryModel(
             else -> {
                 val firstCached = firstCachedDay(time)
                 val olderEntries = daysTheCacheDropped(cached, loaded.until, time) + withEdits(cached, loaded.entries, firstCached, time)
-                shownEntries = olderEntries.associateBy { it.id } + cached.associate { it.entry.id to it.entry }
+                val resolved = resolveEntryOverrides(overrides, currentId)
+                val restoredIds = resolved.values.filterNotNull().mapTo(HashSet()) { it.id }
+                edited = edited + cached.filter { it.entry.id in restoredIds }.associate { it.entry.id to it.entry }
+                val restored = resolved.mapValues { (id, entry) -> entry?.let { edited[id] ?: it } }
+                val (current, reconciled) = reconcileEntryRows(cached, olderEntries, restored)
+                shownEntries = reconciled.associateBy { it.id } + current.associate { it.entry.id to it.entry }
                 HistoryState.Shown(
                     days = historyDays(
-                        cached,
-                        olderEntries,
+                        current,
+                        reconciled,
                         projectRows,
                         taskRows,
                         time,

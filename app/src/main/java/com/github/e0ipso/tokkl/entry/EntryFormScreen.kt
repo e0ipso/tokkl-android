@@ -57,6 +57,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.reports.DateWords
@@ -84,10 +86,18 @@ typealias EntryFormPicker =
  * process was restarted.
  */
 @Composable
-fun EntryFormScreen(model: EntryFormModel, cache: AccountCache, onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun EntryFormScreen(
+    model: EntryFormModel,
+    cache: AccountCache,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+    canRestore: () -> Boolean = { false },
+    onDeleted: (CachedTimeEntry, Boolean) -> Unit = { _, _ -> },
+) {
     LaunchedEffect(model) { if (!model.isOpen) onClose() }
-    BackHandler(onBack = onClose)
     val state by model.state.collectAsState()
+    val close = { if ((state as? EntryFormState.Open)?.saving != true) onClose() }
+    BackHandler(onBack = close)
     LaunchedEffect(state) { if (state == EntryFormState.Saved) onClose() }
     EntryFormContent(
         state = state,
@@ -102,7 +112,10 @@ fun EntryFormScreen(model: EntryFormModel, cache: AccountCache, onClose: () -> U
             onTimesDone = model::timesDone,
             onDurationDone = model::durationDone,
             onSave = model::save,
-            onClose = onClose,
+            onDelete = { model.delete(canRestore(), onDeleted) },
+            onConfirmDelete = { model.confirmDelete(onDeleted) },
+            onCancelDelete = model::cancelDelete,
+            onClose = close,
         ),
         picker = { workspaceId, original, picked, onPickedChange, pickerModifier ->
             EntityPicker(cache, workspaceId, original, picked, onPickedChange, pickerModifier)
@@ -123,6 +136,9 @@ internal class EntryFormActions(
     val onTimesDone: () -> Unit = {},
     val onDurationDone: () -> Unit = {},
     val onSave: () -> Unit = {},
+    val onDelete: () -> Unit = {},
+    val onConfirmDelete: () -> Unit = {},
+    val onCancelDelete: () -> Unit = {},
     val onClose: () -> Unit = {},
 )
 
@@ -134,6 +150,19 @@ internal class EntryFormActions(
 @Composable
 internal fun EntryFormContent(state: EntryFormState, actions: EntryFormActions, picker: EntryFormPicker, modifier: Modifier = Modifier) {
     val editing = (state as? EntryFormState.Open)?.editing ?: true
+    val openState = state as? EntryFormState.Open
+    if (openState?.confirmDelete == true) {
+        ConfirmDialog(
+            title = stringResource(R.string.history_delete_confirm_title),
+            paragraphs = listOf(stringResource(R.string.history_delete_confirm_message)),
+            confirmLabel = stringResource(R.string.history_delete_confirm),
+            canConfirm = !openState.saving,
+            problem = null,
+            onConfirm = actions.onConfirmDelete,
+            onCancel = actions.onCancelDelete,
+            danger = true,
+        )
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -241,12 +270,24 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
+        if (state.deleteFailed) {
+            Text(
+                stringResource(R.string.entry_delete_failed),
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(spacing.space2, Alignment.End),
             verticalArrangement = Arrangement.spacedBy(spacing.space2),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            TokklGhostButton(onClick = actions.onClose) { Text(stringResource(R.string.entry_cancel)) }
+            if (state.editing) {
+                TokklGhostButton(onClick = actions.onDelete, enabled = !state.saving) {
+                    Text(stringResource(R.string.history_delete), color = MaterialTheme.colorScheme.error)
+                }
+            }
+            TokklGhostButton(onClick = actions.onClose, enabled = !state.saving) { Text(stringResource(R.string.entry_cancel)) }
             TokklButton(onClick = actions.onSave, enabled = canChange) { Text(stringResource(R.string.entry_save)) }
         }
     }

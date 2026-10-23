@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.time.parseTimeOfDay
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,6 +84,8 @@ sealed interface EntryFormState {
      * @property duration what the duration field holds, such as `1h 30m`, `90` or `1,5h`.
      * @property endsOn the day the entry ends on, when that is not [date], as far as the fields can be read.
      * @property saving the change is being written to the phone.
+     * @property confirmDelete Delete is waiting for a yes, on a server that cannot restore.
+     * @property deleteFailed the last Delete could not be queued.
      */
     data class Open(
         val editing: Boolean,
@@ -97,6 +100,8 @@ sealed interface EntryFormState {
         val mistakes: Map<TimeField, TimeMistake>,
         val endsOn: LocalDate?,
         val saving: Boolean,
+        val confirmDelete: Boolean = false,
+        val deleteFailed: Boolean = false,
     ) : EntryFormState
 }
 
@@ -123,7 +128,8 @@ sealed interface EntryFormState {
  * server wins (O3). Call everything on the main thread.
  *
  * Like ../tokkl/packages/web/src/components/EntryEditor.tsx, closing or replacing the editor
- * discards unsaved fields without asking or keeping a draft. Only Save queues a change.
+ * discards unsaved fields without asking or keeping a draft. Save queues the draft; Delete
+ * queues the current stored entry and ignores unsaved fields.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param clock where now comes from, which a start without AM or PM is guessed against.
@@ -237,6 +243,42 @@ class EntryFormModel(
         }
     }
 
+    /** Delete uses the entry as opened, never an unsaved field, and skips time validation. */
+    fun delete(canRestore: Boolean, onDeleted: (CachedTimeEntry, Boolean) -> Unit) {
+        val form = (phase.value as? Phase.Open)?.form?.takeIf { !it.saving } ?: return
+        if (form.target !is Target.Edit) return
+        if (canRestore) queueDelete(form, true, onDeleted)
+        else phase.value = Phase.Open(form.copy(confirmDelete = true, deleteFailed = false))
+    }
+
+    fun cancelDelete() = change { it.copy(confirmDelete = false) }
+
+    fun confirmDelete(onDeleted: (CachedTimeEntry, Boolean) -> Unit) {
+        val form = (phase.value as? Phase.Open)?.form?.takeIf { it.confirmDelete && !it.saving } ?: return
+        queueDelete(form, false, onDeleted)
+    }
+
+    private fun queueDelete(form: Form, undo: Boolean, onDeleted: (CachedTimeEntry, Boolean) -> Unit) {
+        val target = form.target as? Target.Edit ?: return
+        val deleting = form.copy(saving = true, confirmDelete = false, deleteFailed = false)
+        phase.value = Phase.Open(deleting)
+        scope.launch {
+            val deleted = try {
+                changes.delete(target.snapshot)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                null
+            }
+            if (deleted != null) onDeleted(deleted, undo)
+            phase.update { current ->
+                if (current != Phase.Open(deleting)) current
+                else if (deleted != null) Phase.Saved
+                else Phase.Open(form.copy(saving = false, confirmDelete = false, deleteFailed = true))
+            }
+        }
+    }
+
     private fun open(opening: Opening) {
         val waiting = Phase.Waiting(opening)
         phase.value = waiting
@@ -280,7 +322,7 @@ class EntryFormModel(
         val end = settings.formatTime(shown.stop, time.zone)
         val duration = formatDuration(snappedSeconds(shown.start, shown.stop, time))
         val fields = entry.fields()
-        val target = Target.Edit(entry.id, entry.workspaceId, entry.start, stop, date, start, end, fields.picked, onPhone)
+        val target = Target.Edit(entry.id, entry.workspaceId, entry.start, stop, date, start, end, fields.picked, onPhone, entry)
         return Form(target, fields, date, start, end, duration, syncedDuration = duration)
     }
 
@@ -362,6 +404,8 @@ class EntryFormModel(
             mistakes = mistakes,
             endsOn = endsOn,
             saving = saving,
+            confirmDelete = confirmDelete,
+            deleteFailed = deleteFailed,
         )
     }
 
@@ -393,6 +437,8 @@ class EntryFormModel(
         val durationSeconds: Long? = null,
         val mistakes: Map<TimeField, TimeMistake> = emptyMap(),
         val saving: Boolean = false,
+        val confirmDelete: Boolean = false,
+        val deleteFailed: Boolean = false,
     ) {
         fun startChanged(): Boolean = target !is Target.Edit || date != target.date || start != target.startText
 
@@ -408,7 +454,8 @@ class EntryFormModel(
         /**
          * The entry [entryId], which spans [start] to [stop] and opened on [date] with [startText]
          * and [endText]. [onPhone] when the cache held it, and false for an entry from the older
-         * days, which the queue edits with [EntryChanges.updateOlder].
+         * days, which the queue edits with [EntryChanges.updateOlder]. [snapshot] is that opened
+         * entry, which Delete uses when the cache no longer holds it.
          */
         data class Edit(
             val entryId: Long,
@@ -420,6 +467,7 @@ class EntryFormModel(
             val endText: String,
             val original: Picked,
             val onPhone: Boolean,
+            val snapshot: CachedTimeEntry,
         ) : Target
     }
 

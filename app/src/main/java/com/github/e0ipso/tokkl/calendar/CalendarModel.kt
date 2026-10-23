@@ -14,6 +14,8 @@ import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.entry.TimeRange
 import com.github.e0ipso.tokkl.entry.fields
+import com.github.e0ipso.tokkl.history.reconcileEntryRows
+import com.github.e0ipso.tokkl.history.resolveEntryOverrides
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Clock
@@ -159,7 +161,18 @@ class CalendarModel(
      */
     private val edited = MutableStateFlow<Map<Long, Edit>>(emptyMap())
 
-    private val choice = combine(selected, loaded) { day, weeks -> day to weeks }
+    private val reconciliation = MutableStateFlow<Map<Long, CachedTimeEntry?>>(emptyMap())
+
+    fun reconcile(overrides: Map<Long, CachedTimeEntry?>) {
+        val before = reconciliation.value
+        val restored = overrides.filter { (id, entry) -> entry != null && before[id] != entry }.values.filterNotNull()
+        // A response started before Undo must not replace its restored snapshot. Later loads
+        // replace these entries through the same held/sent guard as older calendar edits.
+        edited.update { edits -> edits + restored.associate { it.id to Edit(it, held = false) } }
+        reconciliation.value = overrides
+    }
+
+    private val choice = combine(selected, loaded, reconciliation) { day, weeks, overrides -> Triple(day, weeks, overrides) }
 
     /** The app went to the background, and has not come back yet. */
     private var backgrounded = false
@@ -172,7 +185,7 @@ class CalendarModel(
      */
     val foregrounds: StateFlow<Int> = foregroundCount
 
-    val state: StateFlow<CalendarState> = combine(entries, projects, tasks, accountSettings, choice) { cached, projectRows, taskRows, settings, (day, weeks) ->
+    val state: StateFlow<CalendarState> = combine(entries, projects, tasks, accountSettings, choice) { cached, projectRows, taskRows, settings, (day, weeks, overrides) ->
         val time = settings?.time(clock)
         when {
             settings == null -> CalendarState.Loading
@@ -182,14 +195,19 @@ class CalendarModel(
                 val shown = day ?: today
                 val weekStart = time.startOfWeek(shown)
                 val server = weeks[spanOf(time, weekStart, today)]
-                val edits = keepEdits(cached, weeks, time)
+                val resolved = resolveEntryOverrides(overrides, changes::currentId)
+                val edits = keepEdits(cached, weeks, time, resolved.values.filterNotNull().mapTo(HashSet()) { it.id })
+                val restored = resolved.mapValues { (id, entry) ->
+                    entry?.let { edits[id]?.entry ?: server?.entries?.firstOrNull { it.id == id } ?: it }
+                }
+                val (current, serverRows) = reconcileEntryRows(cached, server?.entries.orEmpty().map { edits[it.id]?.entry ?: it }, restored)
                 CalendarState.Shown(
                     selected = shown,
                     weekStart = weekStart,
                     today = today,
                     zone = time.zone,
                     settings = settings,
-                    entries = weekEntries(cached, server?.entries.orEmpty().map { edits[it.id]?.entry ?: it }, projectRows, taskRows, time, weekStart),
+                    entries = weekEntries(current, serverRows, projectRows, taskRows, time, weekStart),
                     week = if (isCached(weekStart, today)) WeekSource.Cached else server?.status ?: WeekSource.Loading,
                 )
             }
@@ -286,8 +304,8 @@ class CalendarModel(
      * stores for it. One that the cache holds inside its window shows from the cache, and one that
      * the cache dropped keeps its copy, no longer held.
      */
-    private fun keepEdits(cached: List<EntryWithSendState>, weeks: Map<Span, ServerWeek>, time: AccountTime): Map<Long, Edit> {
-        val ids = weeks.values.flatMapTo(HashSet()) { week -> week.entries.map { it.id } }
+    private fun keepEdits(cached: List<EntryWithSendState>, weeks: Map<Span, ServerWeek>, time: AccountTime, restored: Set<Long>): Map<Long, Edit> {
+        val ids = weeks.values.flatMapTo(HashSet()) { week -> week.entries.map { it.id } } + restored
         val windowStart = HistoryWindow.endingToday(time).start
         val held = cached.filter { it.entry.id in ids }.associateBy { it.entry.id }
         return edited.updateAndGet { edits ->

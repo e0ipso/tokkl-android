@@ -87,6 +87,7 @@ fun HistoryList(
     onContinue: (Long) -> Unit,
     modifier: Modifier = Modifier,
     favorites: FavoritesModel? = null,
+    showActions: Boolean = true,
 ) {
     val state by model.state.collectAsState()
     val actionsState by actions.state.collectAsState()
@@ -102,7 +103,7 @@ fun HistoryList(
             onDelete = actions::delete,
             pin = pin,
         )
-        EntryActionsHost(
+        if (showActions) EntryActionsHost(
             state = actionsState,
             onUndo = actions::undo,
             onNoticeDone = actions::noticeDone,
