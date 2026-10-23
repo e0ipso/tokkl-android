@@ -42,6 +42,8 @@ APK_PATHS = ['app/build/outputs/apk/debug/app-debug.apk',
 
 def validate_plan(config):
     jobs = config['plan']
+    if any(isinstance(j.get('result_recipe'), dict) and j['result_recipe'].get('profile') == 'catalog-frame-api-v1' for j in jobs):
+        catalog_profile().validate_plan(config)
     if 'plan_recipe' not in config:
         require(not jobs[0]['standalone'], 'first opening preparation preserves the device budget')
         return
@@ -153,6 +155,8 @@ def declare(project, classes):
 
 def validate_recipe(project, job, pins):
     recipe = job.get('result_recipe')
+    if isinstance(recipe, dict) and recipe.get('profile') == 'catalog-frame-api-v1':
+        return catalog_profile().validate_recipe(project, job, pins)
     if isinstance(recipe, dict) and recipe.get('profile') == BENCHMARK_API:
         expected = declare_benchmark_api(project, recipe.get('device_build'))
         require(recipe == expected, 'benchmark/API recipe differs from complete source/APK inventory')
@@ -178,6 +182,9 @@ def validate_recipe(project, job, pins):
 
 
 def assess_scoped(config, api, label, args, seconds, record, started, exit_code, stop_reason):
+    if any(job.get('label') == label and job.get('result_recipe', {}).get('profile') == 'catalog-frame-api-v1'
+           for job in config['plan']):
+        return catalog_profile().assess(config, api, label, args, seconds, record, started, exit_code, stop_reason)
     if any(job.get('label') == label and job.get('result_recipe', {}).get('profile') == BENCHMARK_API
            for job in config['plan']):
         return assess_benchmark_api(config, api, label, args, seconds, record, started, exit_code, stop_reason)
@@ -237,6 +244,15 @@ def assess_scoped(config, api, label, args, seconds, record, started, exit_code,
     except (OSError, ValueError, KeyError, TypeError, ET.ParseError) as error:
         result['reason'] = str(error)
     return result
+
+
+def catalog_profile():
+    # Lazy import supports both the source package and an immutable run snapshot.
+    if __package__:
+        from . import catalog_profile as module
+    else:
+        import catalog_profile as module
+    return module
 
 
 def checked_file(root, relative):

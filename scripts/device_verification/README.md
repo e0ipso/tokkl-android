@@ -648,6 +648,198 @@ matching root adoption and separate allowance authorization. The closed phase
 remains four preparations used, zero left, 3716812800 bytes reserved and
 2725638144 remaining. This profile grants no reset, refund or additional run.
 
+## Historical Catalog capture and offline assessment
+
+`catalog-frame-api-v1` is a separate finite historical profile. Its only job has
+label `catalog-frame-api`, API36, `standalone: false` and exactly 7200 payload
+seconds. The existing configuration, controller, Session, cleanup, monitoring,
+preparation, duration and accounting code is unchanged. This profile grants no
+execution, preparation, count, byte budget or installed-byte identity. Existing
+profiles keep their original selectors and acceptance rules.
+
+The two approved `catalogRevision` values are the original eager
+`d16c97a5e98ab0747041b02b8dd9a058bc84c700` and lazy
+`4b3891e69f3d5290de73570aa759eb1c3337914a` bases. They differ from each
+candidate's composite `checked_head` and `checked_tree`. Declaration checks the
+whole committed historical delta, permits only the seven reviewed driver files,
+two verification helpers, profiling documentation and host canary, and requires
+a clean candidate. It fingerprints the historical production/build/API sources
+and exact overlays. Git normalizes `gradlew.bat` to LF in its blob; the declared
+CRLF checkout has its own exact input SHA256. All other tracked files, including
+the 68 screenshot references, must retain their historical Git object identities.
+
+Generate a recipe with the pure declaration function
+`runtime.catalog_profile.declare(project, args, device_build, reviewed_tool_inputs, accepted_seed=None)`.
+The returned object is the entire `result_recipe`; truncate or alter none of it.
+`device_build` is the reviewed complete benchmark `context.build`. Four already
+existing local APKs use the same paths as the benchmark/API recipe. Their hashes
+identify local artifacts and do not attest installed bytes.
+
+`reviewed_tool_inputs` has exactly `java`, `java_release`, `android_jar`, `adb`,
+`aapt2`, `gradle_launcher` and `resolved_dependencies`. Each value has an absolute
+canonical `path` and its `sha256`. Java and SDK paths must match the configured
+environment; the launcher JAR must match the historical wrapper version. The
+dependency input is bounded strict JSON with schema
+`catalog-resolved-dependencies-v1`, `build_sources_sha256` and nonempty `files`.
+The build hash covers the canonical declaration's ordered source rows ending in
+`.kts`, `.toml`, `.properties` or `.jar`, plus both Gradle launchers. Each file
+row has a distinct `artifact`, `path` and `sha256`. These are reviewed retained
+build inputs, never a request to resolve or install dependencies. Put every
+source/APK row, tool and dependency file in the configuration's `input_pins`.
+
+The launcher/task/package prefix is exactly:
+
+```json
+[
+  "scripts/instrumented-tests.sh",
+  ":macrobenchmark:connectedBenchmarkAndroidTest",
+  "-Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.catalogprofile,com.github.e0ipso.tokkl.api"
+]
+```
+
+Only the reviewed ordered `catalog*` runner arguments are admitted. Seed and
+replay are distinct declarations; a seeded fixture is an observed output until
+a separate replay freezes its exact transport and hash. Credentials, launcher
+URLs, `additionalTestOutputDir`, extra tasks, shell wrappers and every alternate
+class/package/exclusion/testFile filter are caller-forbidden. Configuration and
+adoption canaries exercise these refusals before a payload call, rather than
+injecting an unreachable tuple into a workload function after adoption.
+
+The final driver binding is source correction
+`9e9b36ac362880ab44374415990cebae9dd346cc`, following preserved `40d6f3d1`.
+Seed appends exactly `catalogRunId`, `catalogRevision`, `catalogSeed=true` and
+`catalogServerImage`, in that order, with the eager base and pinned 1.8.1 image.
+It omits all three previously unknown environment/viewport expectations and both
+fixture arguments. Lazy replay appends exactly `catalogRunId`, `catalogRevision`,
+`catalogEnvironmentSha256`, `catalogTagsViewport`, `catalogTrashViewport`,
+`catalogFixture` and `catalogFixtureSha256`, in that order. Eager replay, lazy
+reseeding, `catalogSeed=false`, partial expectations and mixed shapes refuse.
+
+Before its first measured window for each workload, the seed freezes the actual
+ready environment and Float viewport. The unchanged window schema gains no
+invented fields. The two `<run>-<revision>-<workload>-baseline.json` records use
+`catalog-workload-baseline-v1`; the combined `<run>-<revision>-baseline.json`
+uses `catalog-baseline-v1`. Exact `environment_serialized`, its UTF-8 hash,
+`viewport_serialized`, `viewport_argument`, fixture/run/revision/mode and
+`source_phase` must agree across the records and observations. Either first or
+steady may supply the first ready observation. Later methods, ready snapshots,
+settled gestures and terminal anchors must retain the same serialization and
+geometry. The combined record can exist before the final method finishes; its
+existence alone never accepts a seed.
+
+After a complete raw seed, the pure
+`make_seed_reference(run_dir, adoption_path)` returns
+`catalog-accepted-seed-v1`. Supply it as the replay recipe's `accepted_seed` and
+merge every reference `inputs` pin into the replay configuration. The reference
+binds the adopted seed configuration, certified receipt, controller state and
+complete source/runtime/original/retained evidence. Replay revalidates all ten
+API cases, four methods, forty windows/traces, observations, cleanup and the
+unchanged capture receipt before using its exact fixture transport and combined
+`replay_arguments`. Failed, partial, changed, foreign and cyclic references
+refuse. No new driver parameter or observation job is introduced. An accepted
+raw seed authorizes no execution or paired performance conclusion.
+
+There are two result stages:
+
+1. The unchanged controller calls the scoped hook immediately after the device
+   payload and cleanup. This stage validates ten API cases and four Catalog
+   methods, zero failures/errors/skips, forty indexed windows, forty distinct
+   nonempty traces, 22 opening/ready pairs, four terminal anchors and identical
+   per-method fixture bytes. It checks actual driver sidecar schemas, generation
+   cursors, handler barriers, listener closure, injected/received events, clock
+   records, environment, viewport, fixture origin declarations and seed cleanup.
+   It inspects both original AGP artifacts and retained copies. The existing
+   collector dereferences symlinks and hard links during `copytree`, so inspecting
+   only copied files would erase source alias provenance. Catalog refuses these
+   aliases without changing that protected collector.
+2. Separately authorized offline work can later produce exports and receipts.
+   The public pure function `assess_comparison(declaration_path)` checks them.
+   It launches no processor, shell wrapper, Android workload or sampler. The
+   read-only CLI is:
+
+   ```sh
+   python3 -B scripts/device_verification/runtime/catalog_profile.py \
+     --offline-declaration /disk/catalog-offline-declaration.json
+   ```
+
+A raw pass certifies only operational/product/raw-capture completeness.
+Its receipt retains `capture_started`, configuration/recipe/runtime hashes and
+original/retained artifact hashes. `evidence_complete` and `comparative_valid`
+remain false, offline assessment is `PENDING`, and matched work and quiet host
+remain `UNKNOWN`. Missing exports do not turn a raw pass into a comparison.
+Actual TKA-0263 acceptance and fresh coordinator adoption remain separate.
+
+The later `catalog-offline-declaration-v1` lives at the common evidence root. It
+has `reviewed_by`, complete relative-file `pins`, canonical absolute
+`external_pins` for original capture inputs, a `host` identity with `host_id`,
+`boot_id` and `runtime_id`, ordered eager/lazy `captures`, `corpus`, `processor`,
+`queries` and `quiet_authority`. Every read must have a frozen pin. Keep original
+AGP capture directories until assessment; changed or missing originals refuse.
+Each capture supplies `revision`, `run`, `adoption`, `controller_state`, the exact
+certified `started`, `fixture_origin` and `quiet_receipt`. It revalidates the
+adopted configuration and raw result and requires equality with the original
+certified capture receipt. Refreezing an export declaration cannot replace raw
+evidence or move its freshness boundary.
+
+The driver `catalog-corpus-v1` schema remains unchanged. Its `overlay_sha256` is
+the SHA256 of canonical sorted compact JSON mapping the seven paths to their
+reviewed hashes. Its revision entries still contain `revision`, `benchmarks`,
+`windows` and `analysis`; the assessor adds `commands` beside each analysis
+entry's existing `trace_sha256`, `directory` and seven `csv_sha256` values.
+These command receipts are assessor evidence, not fields invented in driver
+window or phase sidecars. The processor descriptor binds `path`, `sha256`,
+`version`, `source`, `source_sha256`, `source_version` and `source_url`.
+
+Every trace requires all seven literal driver SQL exports. Each
+`catalog-export-command-v1` receipt records `trace`, `trace_sha256`,
+`processor_sha256`, `query_sha256`, exact `argv`, `stdout`, `stdout_sha256`,
+retained empty `stderr`, zero `exit`, wall-clock `started`/`finished` and
+`wrapper`. The exact command is the declared processor path followed by
+`query -f <literal-query-path> <immutable-trace-path>`. A CSV hash alone cannot
+establish derivation. Headers, row arity, integer cells and native `[NULL]`
+encoding are strict. Aliases, reused trace bytes, changed files, stale execution,
+foreign query/trace/tool hashes, missing commands and failed exports refuse.
+
+The referenced `catalog-bounded-export-v1` receipt binds the reviewed wrapper
+`source`/`source_sha256`, exact `command_receipt`, singleton actual `cpu` affinity,
+`wall_seconds`/`wall_limit_seconds`, cumulative `cpu_seconds`/`cpu_limit_seconds`,
+and successful `closed`/`cleanup_complete` outcomes. Limits are finite at most
+60 wall and 30 CPU seconds. Absence of optional cpuset files is not a criterion.
+This validates retained wrapper evidence and never runs or authorizes a wrapper.
+
+`catalog-fixture-origin-v1` binds the fixture hash, owned server identity, exact
+server/proxy images, source receipt and credential-handling source hashes,
+confirmed 204 account deletion and 401/403 deleted authentication. It must state
+that credentials were not retained and that the historical diagnostic used
+1.5.0. Both new sides use the common declared 1.8.1 condition. A seed image
+argument alone does not prove the actual owned server's identity.
+
+`catalog-quiet-receipt-v1` binds the externally reviewed `quiet_authority` hash,
+configuration/revision/host identities, exact workload monotonic intervals,
+threshold document and input hashes. Continuous coverage, closed observation,
+`PASS`, and empty gap/breach/unknown lists are required. The external owner
+defines existing thresholds and sampling; this profile adds neither. Memory
+admission does not establish quiet host evidence.
+
+Only complete offline evidence can set `comparative_valid: true`. Comparison
+matches ordered achieved anchors after each gesture and at terminal anchors,
+actual input timing, fixture/environment/viewport, identical tools/dependencies
+and driver overlays. FrameTimeline uniquely paired phase-contained frames form
+the deadline denominator. Callback totals never do. Boundary, unfinished,
+unpaired and expected-only frames stay separate. Per-window samples and
+distributions retain guest Main/RenderThread scheduled CPU, runnable delay,
+overruns, deadline misses and wall time. This is not physical host CPU or an
+across-session repeatability claim. Absolute pixel travel, composed-row count,
+dropped-report phase attribution and late callback boundary ambiguity remain
+explicit unknowns; the independent opening/bounded-row criterion is unverified.
+
+Synthetic fixtures exercise validators, including a complete pair and refrozen
+negative receipts. They establish no real server, Android, trace derivation,
+quiet-host or performance result. All results retain
+`runtime_acceptance: UNVERIFIED`, and no automatic no-regression conclusion is
+drawn. Renewed actual applicability, frozen artifacts, finite accounting and
+matching root adoption remain the coordinator's separate work.
+
 ## Failed capture diagnostics
 
 TKA-0292 replayed all 89 retained monitoring frames from the compile/scoped stage
