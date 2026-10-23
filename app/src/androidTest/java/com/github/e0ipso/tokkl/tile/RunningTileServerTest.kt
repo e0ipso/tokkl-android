@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
@@ -237,17 +238,26 @@ class RunningTileServerTest {
             }
             val queued = unsentCount()
 
+            val stopped = TapToVisibleDeadline("tile Stop")
             QuickSettingsTile.click()
-            runBlocking { withTimeout(AT_ONCE_MS) { app.cache.running.first { it == null } } }
-            QuickSettingsTile.awaitText("the stopped timer", context.getString(R.string.tile_continue))
+            stopped.await("the cache stops") { runBlocking { app.cache.running.first() } == null }
+            stopped.await("the stopped timer shows") {
+                QuickSettingsTile.showsVisibleText(context.getString(R.string.tile_continue))
+            }
+            assertEquals("Stop stays queued unsent", queued + 1, unsentCount())
+            assertTrue("a connection still hangs before Continue", relay.hungConnections > 0)
 
+            val started = TapToVisibleDeadline("tile Continue")
             QuickSettingsTile.click()
-            val continued = runBlocking { withTimeout(AT_ONCE_MS) { app.cache.running.first { it != null } } }!!.entry
+            started.await("the cache runs") { runBlocking { app.cache.running.first() } != null }
+            started.await("the continued entry shows") {
+                QuickSettingsTile.showsVisibleText(context.getString(R.string.tile_running_subtitle))
+            }
+            val continued = runBlocking { app.cache.running.first() }!!.entry
             assertNotEquals(original, continued.id)
             assertEquals("The network never answers", continued.description)
             assertEquals("both taps stay queued while the request hangs", queued + 2, unsentCount())
             assertTrue("the sender still waits on the network", relay.hungConnections > 0)
-            QuickSettingsTile.awaitText("the continued entry", context.getString(R.string.tile_running_subtitle))
         }
     }
 

@@ -79,6 +79,14 @@ class NativeWidget : AutoCloseable {
 
     fun hasDescription(label: String): Boolean = onMain { descendants().any { it.contentDescription?.toString() == label } }
 
+    /** Reads the rendered control without starting another timeout after a measured tap. */
+    fun hasVisibleDescription(label: String): Boolean = onMain {
+        descendants().any {
+            it.contentDescription?.toString() == label && it.isShown &&
+                it.getGlobalVisibleRect(android.graphics.Rect())
+        }
+    }
+
     fun hasText(text: String): Boolean = onMain { descendants().any { it is TextView && it.text.toString() == text } }
 
     fun click(label: String) {

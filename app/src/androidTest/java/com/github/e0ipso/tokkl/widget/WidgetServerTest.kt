@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
@@ -287,13 +288,28 @@ class WidgetServerTest {
         HangingRelay(TokklTestServer.url).use { relay ->
             signIn(relay.url, account.apiToken)
             relay.hang()
+            native.awaitDescription(context.getString(R.string.widget_start_description))
+            val started = TapToVisibleDeadline("widget Start")
             native.click(context.getString(R.string.widget_start_description))
-            runBlocking { withTimeout(1_000) { app.cache.running.filterNotNull().first() } }
-            native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)
+            started.await("the cache runs") { runBlocking { app.cache.running.first() } != null }
+            started.await("the native Stop control shows") {
+                native.hasVisibleDescription(context.getString(R.string.widget_stop_description))
+            }
+            assertEquals("Start stays queued unsent", 1, unsentCount())
+            runBlocking {
+                withTimeout(60_000) {
+                    while (relay.hungConnections == 0) kotlinx.coroutines.delay(20)
+                }
+            }
+            assertTrue("a connection hangs before Stop", relay.hungConnections > 0)
+            val stopped = TapToVisibleDeadline("widget Stop")
             native.click(context.getString(R.string.widget_stop_description))
-            runBlocking { withTimeout(1_000) { app.cache.running.first { it == null } } }
-            native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
+            stopped.await("the cache stops") { runBlocking { app.cache.running.first() } == null }
+            stopped.await("the native Start control shows") {
+                native.hasVisibleDescription(context.getString(R.string.widget_start_description))
+            }
             assertEquals(2, unsentCount())
+            assertTrue("the sender still waits on the network", relay.hungConnections > 0)
         }
     }
 

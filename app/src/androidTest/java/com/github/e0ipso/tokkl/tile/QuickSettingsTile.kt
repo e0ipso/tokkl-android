@@ -51,14 +51,17 @@ object QuickSettingsTile {
         }
     }
 
-    private fun shows(text: String): Boolean {
+    /** A single visible-state observation for the shared tap deadline. */
+    fun showsVisibleText(text: String): Boolean = shows(text, visibleOnly = true)
+
+    private fun shows(text: String, visibleOnly: Boolean = false): Boolean {
         val automation = instrumentation.uiAutomation
         val info = automation.serviceInfo
         if (info.flags and AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS == 0) {
             automation.serviceInfo = info.apply { flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS }
         }
         val roots = automation.windows.mapNotNull { it.root } + listOfNotNull(automation.rootInActiveWindow)
-        return roots.any { root -> root.findAccessibilityNodeInfosByText(text).any { it.says(text) } }
+        return roots.any { root -> root.findAccessibilityNodeInfosByText(text).any { it.says(text) && (!visibleOnly || it.isVisibleToUser) } }
     }
 
     /** The search matches part of a text, in any case: this checks the whole of it. */

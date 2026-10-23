@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
@@ -26,6 +27,7 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
@@ -118,10 +120,15 @@ class TimerServerTest {
         launch {
             relay.hang()
             description().performTextInput("Write the timer")
+            val started = TapToVisibleDeadline("app Start")
             start().performClick()
-            awaitAtOnce("Stop shows") { shows(stopButton()) }
-            awaitAtOnce("the running state shows in words") { shows(composeRule.onNode(hasText(string(R.string.timer_running)))) }
+            started.await("Stop shows") { stopButton().isDisplayed() }
+            started.await("the running state shows in words") {
+                composeRule.onNode(hasText(string(R.string.timer_running))).isDisplayed()
+            }
+            assertEquals("Start stays queued unsent", 1, runBlocking { app.changes.unsentCount.first() })
             assertTrue("the clock starts at zero: ${clockText()}", clockText().startsWith("0:00:0"))
+            composeRule.waitUntil("Start reaches the hanging connection", NETWORK_TIMEOUT.toMillis()) { relay.hungConnections > 0 }
 
             billable().performClick()
             awaitAtOnce("billable is on") { billableState() == ToggleableState.On }
@@ -137,9 +144,13 @@ class TimerServerTest {
             description().performTextClearance()
             description().performTextInput("Write the timer screen")
             description().performImeAction()
+            val queued = runBlocking { app.changes.unsentCount.first() }
+            assertTrue("a connection still hangs before Stop", relay.hungConnections > 0)
+            val stopped = TapToVisibleDeadline("app Stop")
             stop().performClick()
-            awaitAtOnce("Start shows") { shows(startButton()) }
-            awaitAtOnce("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
+            stopped.await("Start shows") { startButton().isDisplayed() }
+            stopped.await("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
+            assertEquals("Stop stays queued unsent", queued + 1, runBlocking { app.changes.unsentCount.first() })
             shortStop = localShortStop()
 
             assertTrue("the app tried to send while the network hung", relay.hungConnections > 0)

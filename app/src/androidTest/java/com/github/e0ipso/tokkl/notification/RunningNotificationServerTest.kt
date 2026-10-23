@@ -7,10 +7,12 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
@@ -22,6 +24,8 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.trash.TrashServer
+import java.time.Instant
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -186,6 +190,48 @@ class RunningNotificationServerTest {
         } else {
             val sent = web.get(web.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer()).orFail("GET the entry")
             assertTrue("the stop reached the server", sent["stop"] !is JsonNull)
+        }
+    }
+
+    @Test
+    fun stopFromTheNotificationDoesNotWaitForANetworkThatNeverAnswers() {
+        val description = "Stopped while the network hangs"
+        // An existing long entry keeps the Stop itself as the only queued change.
+        val serverId = account.createEntry(description, Instant.now().minusSeconds(600))
+        HangingRelay(TokklTestServer.url).use { relay ->
+            signIn(relay.url, account.apiToken)
+            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id == serverId } } }
+            val shown = RunningNotifications.awaitShown("the existing entry") { it.title() == description }
+            assertEquals("the fixture has no queued changes", 0, unsentCount())
+
+            relay.hang()
+            val refresh = app.accountSettings.refresh()
+            try {
+                runBlocking {
+                    withTimeout(TIMEOUT_MS) {
+                        while (relay.hungConnections == 0) delay(20)
+                    }
+                }
+                assertTrue("a real accepted connection hangs before Stop", relay.hungConnections > 0)
+                val stopped = TapToVisibleDeadline("notification Stop")
+                shown.notification.actions.single().actionIntent.send()
+                stopped.await("the cache stops") { runBlocking { app.cache.running.first() } == null }
+                stopped.await("the notification disappears") { RunningNotifications.shown() == null }
+                assertEquals("Stop stays queued unsent", 1, unsentCount())
+                assertTrue("the connection still hangs after Stop", relay.hungConnections > 0)
+            } finally {
+                relay.release()
+                runBlocking { refresh.join() }
+            }
+
+            runBlocking { app.sender.sendAndWait() }
+            assertEquals("Stop eventually reaches the server", 0, unsentCount())
+            val sent = web.get(web.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer())
+                .orFail("GET the notification's stopped entry")
+            assertEquals(serverId, sent.getValue("id").jsonPrimitive.long)
+            assertEquals(description, sent.getValue("description").jsonPrimitive.content)
+            assertTrue("the captured Stop reached the server", sent["stop"] !is JsonNull)
         }
     }
 
