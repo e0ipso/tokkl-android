@@ -29,7 +29,7 @@ import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
-/** The licences of what the app bundles: so far the Anybody font, under the SIL OFL 1.1. */
+/** The licences of the bundled Anybody font and Tokkl's Pomodoro transition sounds. */
 @Composable
 fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val resources = LocalResources.current
@@ -37,6 +37,9 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val oflText = remember(resources) {
         resources.openRawResource(R.raw.anybody_ofl).bufferedReader().use { it.readText() }
             .replace("\r\n", "\n")
+    }
+    val soundsMitText = remember(resources) {
+        resources.openRawResource(R.raw.pomodoro_sounds_mit).bufferedReader().use { it.readText() }
     }
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -65,6 +68,19 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
             LicenceText(oflText)
+            HorizontalDivider(Modifier.padding(vertical = TokklTheme.spacing.betweenGroups))
+            Text(
+                text = stringResource(R.string.licence_pomodoro_sounds_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(
+                text = stringResource(R.string.licence_pomodoro_sounds_licence),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+            LicenceText(soundsMitText)
         }
     }
 }

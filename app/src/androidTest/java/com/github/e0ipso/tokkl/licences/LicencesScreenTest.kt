@@ -54,6 +54,24 @@ class LicencesScreenTest {
     }
 
     @Test
+    fun aboutEntryReachesTokklSoundCreditWithTheFullMitNotice() {
+        openLicences()
+
+        composeRule.onNode(
+            hasText(string(R.string.licence_pomodoro_sounds_title)) and isHeading(),
+        ).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(string(R.string.licence_pomodoro_sounds_licence))
+            .performScrollTo().assertIsDisplayed()
+        val notice = composeRule.onNode(hasText("Copyright (c) 2026 Tokkl contributors", substring = true))
+            .performScrollTo().assertIsDisplayed()
+            .fetchSemanticsNode().config[SemanticsProperties.Text]
+            .joinToString("") { it.text }
+        val shipped = composeRule.activity.resources.openRawResource(R.raw.pomodoro_sounds_mit)
+            .bufferedReader().use { it.readText() }
+        assertEquals(shipped, notice)
+    }
+
+    @Test
     fun backButtonReturnsToSettings() {
         openLicences()
 

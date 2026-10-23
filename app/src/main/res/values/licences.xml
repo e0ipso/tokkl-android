@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="licence_pomodoro_sounds_title">Tokkl Pomodoro transition sounds</string>
+    <string name="licence_pomodoro_sounds_licence">MIT License</string>
+</resources>

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    anybody_font_source.txt records where res/font/anybody_wdth_wght.ttf comes from, and
-    brand_images_source.txt where the tokkl_wordmark_* drawables come from.
-    No code reads them; they sit in res/raw because res/font accepts only font files and
-    res/drawable-* only drawables.
+    Retain the font, brand and Pomodoro sound source records, which no code reads.
+    Keep all four Pomodoro transitions before playback references are introduced.
+    The MIT notice stays with the audio even when resources are shrunk.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@raw/anybody_font_source,@raw/brand_images_source" />
+    tools:keep="@raw/anybody_font_source,@raw/brand_images_source,@raw/pomodoro_sounds_source,@raw/pomodoro_sounds_mit,@raw/pomodoro_work_to_short_rest,@raw/pomodoro_short_rest_to_work,@raw/pomodoro_work_to_long_rest,@raw/pomodoro_long_rest_to_work" />
