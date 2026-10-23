@@ -19,7 +19,8 @@ import androidx.room.TypeConverters
  * `pending_changes.held` and `pending_changes.refusal`. Version 6 keeps the immutable captured
  * Stop instant and short Stop Undo records without changing older queued requests. Version 7
  * adds `pause_chain` and `timer_session` for Pause and Resume and leaves every earlier row as it
- * is.
+ * is. Version 8 adds `pomodoro_session` for the running Pomodoro and leaves every earlier row
+ * as it is.
  */
 @Database(
     entities = [
@@ -34,8 +35,9 @@ import androidx.room.TypeConverters
         ShortStopUndo::class,
         PauseChain::class,
         TimerSession::class,
+        PomodoroSession::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -44,6 +46,7 @@ import androidx.room.TypeConverters
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8),
     ],
 )
 @TypeConverters(CacheConverters::class)
@@ -52,6 +55,8 @@ abstract class CacheDatabase : RoomDatabase() {
     abstract fun cache(): CacheDao
 
     abstract fun changes(): ChangeDao
+
+    abstract fun pomodoroSessions(): PomodoroSessionDao
 
     companion object {
         const val FILE_NAME = "account_cache.db"

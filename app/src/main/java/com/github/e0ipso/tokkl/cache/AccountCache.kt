@@ -113,9 +113,10 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     }
 
     /**
-     * Deletes every cached row, the queue of unsent changes and the pause chain. Signing out calls
-     * this, together with clearing the stored session and settings. A new timer session starts,
-     * so a timer action shown before cannot act after it. Blocks, so call it off the main thread.
+     * Deletes every cached row, the queue of unsent changes, the pause chain and the pomodoro
+     * session. Signing out calls this, together with clearing the stored session and settings.
+     * A new timer session starts, so a timer action shown before cannot act after it. Blocks, so
+     * call it off the main thread.
      */
     fun clear() {
         database.clearAllTables()

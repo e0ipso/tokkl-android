@@ -291,6 +291,18 @@ class ChangeQueue(
     }
 
     /**
+     * Queues a stopped entry as [create] does, on this thread and in the caller's transaction.
+     * A pomodoro session row changes in that same transaction, so a process death keeps both
+     * writes or neither. This does not ask for the queue to be sent; the caller does that after
+     * the commit. The row is an ordinary [ChangeKind.CREATE], so a post whose answer was lost is
+     * found again by [PendingChange.maybeSent].
+     */
+    internal fun queueStoppedCreate(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+        require(!stop.isBefore(start)) { "The stop comes before the start." }
+        return queueCreate(workspaceId, fields, start, stop)
+    }
+
+    /**
      * Sets every field of the cached entry [entryId]. A null [stop] makes it run. Returns false
      * when the entry is not cached. A stop given to the running clone, or a stopped entry made
      * to run, ends the pause chain, as a Stop or a Start would.

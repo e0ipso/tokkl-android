@@ -15,8 +15,9 @@ import org.junit.Test
  * A cache written by version 1, before the queue, by version 2, before
  * `pending_changes.maybeSent`, or by version 3, before `pending_changes.existingIds`, opens under
  * the current version through Room's migrations, keeps its rows and its queue, and takes queued
- * changes. Room checks the migrated tables against the exported schema when it opens the file, so
- * a migration that left them wrong fails here.
+ * changes. Version 7, before the pomodoro session, keeps its pause chain and its queue. Room
+ * checks the migrated tables against the exported schema when it opens the file, so a migration
+ * that left them wrong fails here.
  */
 class CacheDatabaseMigrationTest {
 
@@ -222,6 +223,53 @@ class CacheDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun version7KeepsThePauseChainTheQueueAndGainsAnEmptyPomodoroSession() {
+        context.deleteDatabase(FILE)
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+            VERSION_7.forEach(db::execSQL)
+            db.execSQL(
+                "INSERT INTO pending_changes VALUES " +
+                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Queued before the update', ${START.toEpochMilli()}, NULL, 0, " +
+                    "'[]', '[]', 0, '[]', 0, NULL, NULL, 0)",
+            )
+            db.execSQL(
+                "INSERT INTO pause_chain VALUES " +
+                    "(0, 11, 2, 3, 600, NULL, 7, 'Paused focus', NULL, NULL, '[]', 0)",
+            )
+            db.execSQL("INSERT INTO timer_session VALUES (0, 44)")
+            db.version = 7
+        }
+
+        val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            assertEquals("Queued before the update", RoomChangeStore(database).first()!!.description)
+            assertEquals(false, RoomChangeStore(database).first()!!.maybeSent)
+            val chain = database.changes().pauseChain()!!
+            assertEquals("Paused focus", chain.fields.description)
+            assertEquals(11L, chain.chainId)
+            assertEquals(44L, database.changes().timerSession())
+            assertEquals(null, database.pomodoroSessions().current())
+            val session = PomodoroSession(
+                workspaceId = 7,
+                workMinutes = 25.0,
+                shortRestMinutes = 5.0,
+                longRestMinutes = 15.0,
+                longRestEvery = 4.0,
+                phaseKind = "work",
+                phaseStartedAt = START,
+                pomodoroStartedAt = START,
+                completed = 0.0,
+                fields = EntryFields(description = "Focus"),
+            )
+            database.pomodoroSessions().upsert(session)
+            assertEquals(session, database.pomodoroSessions().current())
+        } finally {
+            database.close()
+            assertTrue(context.deleteDatabase(FILE))
+        }
+    }
+
     private companion object {
         const val FILE = "cache-migration-test.db"
         val START: Instant = Instant.parse("2026-10-19T08:00:00Z")
@@ -295,6 +343,20 @@ class CacheDatabaseMigrationTest {
                 "`stopped_stop` INTEGER, `stopped_billable` INTEGER NOT NULL, `stopped_tags` TEXT NOT NULL, " +
                 "`stopped_tagIds` TEXT NOT NULL, PRIMARY KEY(`entryId`))",
             "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '056926b082c8c580bac4595b21f4295a')",
+        )
+
+        /**
+         * The tables of version 7, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/7.json:
+         * those of version 6, plus the pause chain and the timer session.
+         */
+        val VERSION_7 = VERSION_6.dropLast(1) + listOf(
+            "CREATE TABLE IF NOT EXISTS `pause_chain` (`slot` INTEGER NOT NULL, `chainId` INTEGER NOT NULL, " +
+                "`revision` INTEGER NOT NULL, `epoch` INTEGER NOT NULL, `stoppedSeconds` INTEGER NOT NULL, " +
+                "`runningId` INTEGER, `workspaceId` INTEGER NOT NULL, `snapshot_description` TEXT NOT NULL, " +
+                "`snapshot_projectId` INTEGER, `snapshot_taskId` INTEGER, `snapshot_tags` TEXT NOT NULL, " +
+                "`snapshot_billable` INTEGER NOT NULL, PRIMARY KEY(`slot`))",
+            "CREATE TABLE IF NOT EXISTS `timer_session` (`slot` INTEGER NOT NULL, `id` INTEGER NOT NULL, PRIMARY KEY(`slot`))",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7747807ae7eb20f454ad9d96203e5375')",
         )
     }
 }
