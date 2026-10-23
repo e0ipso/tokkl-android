@@ -44,8 +44,8 @@ import com.github.e0ipso.tokkl.entry.DescriptionSuggestion
 import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
 import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.entry.descriptionSuggestions
-import com.github.e0ipso.tokkl.favorites.Favorites
 import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.TemplatesPopup
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.reports.spokenDuration
@@ -71,8 +71,10 @@ typealias WorkspacePicker =
  * The timer at the top of the Timer page (docs/PRD.md T1), from [model], with the cached
  * projects, tasks and tags of [cache] in its picker. While an entry runs, the clock counts from
  * its start on the phone, a tick at each whole second while the screen shows, and asks the server
- * nothing (principle 3). Its button for a past entry calls [onAddEntry] (M1). Under it come the
- * [favorites] (T5), which start through the timer and pin what it shows.
+ * nothing (principle 3). Its button for a past entry calls [onAddEntry] (M1). Its timer-templates
+ * icon, when [favorites] is set, opens a popup of cached templates (T5). Choosing one starts it
+ * through the timer. Save as template stores what the timer shows, and Manage templates calls
+ * [onManageTemplates].
  */
 @Composable
 fun TimerBar(
@@ -81,6 +83,7 @@ fun TimerBar(
     onAddEntry: () -> Unit,
     modifier: Modifier = Modifier,
     favorites: FavoritesModel? = null,
+    onManageTemplates: () -> Unit = {},
     clock: Clock = Clock.systemUTC(),
 ) {
     val state by model.state.collectAsState()
@@ -93,25 +96,45 @@ fun TimerBar(
     val running = state as? TimerState.Running
     val elapsed = (running?.accumulatedSeconds ?: 0) + rememberElapsedSeconds(running?.start, clock)
     val focusManager = LocalFocusManager.current
+    val timerFields = when (val shown = state) {
+        is TimerState.Running -> shown.fields
+        is TimerState.Paused -> shown.fields
+        is TimerState.Idle -> shown.fields
+        TimerState.Loading -> null
+    }
     Column(modifier) {
-        TimerBarCore(model, cache, state, elapsed, onAddEntry)
-        if (favorites != null) {
-            val shown = state
-            Favorites(
-                model = favorites,
-                timerFields = (shown as? TimerState.Running)?.fields ?: (shown as? TimerState.Idle)?.fields,
-                onStart = { fields ->
+        TimerBarCore(model, cache, state, elapsed, onAddEntry) {
+            val templates = favorites
+            if (templates != null) {
+                TemplatePopup(templates, timerFields, onManageTemplates) { fields ->
                     model.startFrom(fields)
                     settleDescription(focusManager)
-                },
-                modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),
-            )
+                }
+            }
         }
     }
 }
 
+/** The panel popup for [favorites]. A choice starts through [onStart], which ends a pause chain. */
+@Composable
+private fun TemplatePopup(
+    favorites: FavoritesModel,
+    timerFields: EntryFields?,
+    onManageTemplates: () -> Unit,
+    onStart: (EntryFields) -> Unit,
+) {
+    val state by favorites.state.collectAsState()
+    TemplatesPopup(
+        state = state,
+        timerFields = timerFields,
+        onStart = onStart,
+        onSave = { fields, onDone -> favorites.add(fields, onDone) },
+        onManage = onManageTemplates,
+    )
+}
+
 /**
- * Ends typing in the timer's description after a favorite or Continue has started an entry, as
+ * Ends typing in the timer's description after a template or Continue has started an entry, as
  * Start and Stop do. A tap on those buttons leaves focus in the field, which keeps showing what
  * was typed, and would hand that text on to the new entry when it lost focus later. The start has
  * already given the text to the running entry it was typed for, which it stopped, or dropped the
@@ -122,7 +145,14 @@ fun TimerBar(
 fun settleDescription(focusManager: FocusManager) = focusManager.clearFocus()
 
 @Composable
-private fun TimerBarCore(model: TimerModel, cache: AccountCache, state: TimerState, elapsed: Long, onAddEntry: () -> Unit) {
+private fun TimerBarCore(
+    model: TimerModel,
+    cache: AccountCache,
+    state: TimerState,
+    elapsed: Long,
+    onAddEntry: () -> Unit,
+    templates: @Composable () -> Unit,
+) {
     val entries by cache.timeEntries.collectAsState(initial = emptyList())
     val projects by cache.projects.collectAsState(initial = emptyList())
     val clients by cache.clients.collectAsState(initial = emptyList())
@@ -143,6 +173,7 @@ private fun TimerBarCore(model: TimerModel, cache: AccountCache, state: TimerSta
         },
         onPause = model::pause,
         onResume = model::resume,
+        templates = templates,
     )
 }
 
@@ -175,6 +206,7 @@ fun TimerBarContent(
     onSuggestion: (DescriptionSuggestion) -> Unit = {},
     onPause: () -> Unit = {},
     onResume: () -> Unit = {},
+    templates: @Composable () -> Unit = {},
 ) {
     val running = state as? TimerState.Running
     val paused = state as? TimerState.Paused
@@ -238,6 +270,7 @@ fun TimerBarContent(
                 }
             }
             TokklGhostButton(onClick = onAddEntry) { Text(stringResource(R.string.timer_add_entry)) }
+            templates()
         }
     }
 }

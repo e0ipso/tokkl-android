@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The favorites' launcher shortcuts (docs/PRD.md N6). Their labels are the favorites' names, as
-    the Timer page shows them; these are the toasts a tap on one shows.
+    Launcher shortcuts for timer templates (docs/PRD.md N6). Their labels are the templates'
+    names; these are the toasts a tap on one shows.
 -->
 <resources>
-    <!-- A tap on a favorite's shortcut started its timer: Started Write the report -->
+    <!-- A tap on a template's shortcut started its timer: Started Write the report -->
     <string name="shortcut_started">Started %1$s</string>
-    <!-- A shortcut the user pinned to the home screen, for a favorite that is no longer there. -->
-    <string name="shortcut_gone">That favorite is no longer in Tokkl</string>
+    <!-- A shortcut the user pinned to the home screen, for a template that is no longer there. -->
+    <string name="shortcut_gone">That timer template is no longer in Tokkl</string>
     <string name="shortcut_failed">Tokkl could not start the timer</string>
 </resources>

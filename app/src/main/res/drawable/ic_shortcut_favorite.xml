@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The icon of a favorite's launcher shortcut (docs/PRD.md N6): the timer's play triangle on the
+    The icon of a timer template's launcher shortcut (docs/PRD.md N6): the timer's play triangle on the
     launcher icon's plum, as an adaptive icon, so the launcher gives it the app icon's shape.
 -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">

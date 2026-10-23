@@ -75,8 +75,8 @@ import java.util.Locale
  * total, and at the end the older days, which load from the server as the end shows. A tap on an
  * entry hands its id to [onEdit] (docs/PRD.md H2), also on the older days. The menu of an entry the
  * phone holds duplicates, splits or deletes it through [actions], whose messages show at the
- * bottom of the list (H3, H5, H6). When the server keeps Tokkl's [favorites], the menu also pins
- * the entry as one (T5). Its Continue button, on every entry and group, hands the entry's id to
+ * bottom of the list (H3, H5, H6). When the server keeps Tokkl's [favorites], the menu also saves
+ * the entry as a timer template (T5). Its Continue button, on every entry and group, hands the entry's id to
  * [onContinue] (T2).
  */
 @Composable
@@ -119,12 +119,12 @@ fun HistoryList(
 }
 
 /**
- * The menu's Pin as favorite: [onPin] gets the entry's id, and [enabled] is false while another
- * change to the favorites is on its way to the server.
+ * The menu's Save as template: [onPin] gets the entry's id, and [enabled] is false while another
+ * change to the templates is on its way to the server.
  */
 internal class PinAction(val enabled: Boolean, val onPin: (Long) -> Unit)
 
-/** Pin as favorite through [favorites], or null when the server keeps no favorites. */
+/** Save as template through [favorites], or null when the server keeps no timer templates. */
 @Composable
 internal fun pinAction(actions: EntryActionsModel, favorites: FavoritesModel): PinAction? {
     val shown by favorites.state.collectAsState()
@@ -133,7 +133,7 @@ internal fun pinAction(actions: EntryActionsModel, favorites: FavoritesModel): P
     return PinAction(enabled = !shown.saving) { entryId -> actions.pin(entryId, favorites, offline) }
 }
 
-/** [HistoryList] without its models. Without [pin], the menu offers no Pin as favorite. */
+/** [HistoryList] without its models. Without [pin], the menu offers no Save as template. */
 @Composable
 internal fun HistoryContent(
     state: HistoryState,

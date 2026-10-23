@@ -1,9 +1,6 @@
 package com.github.e0ipso.tokkl.favorites
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -15,6 +12,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
@@ -33,12 +31,9 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -67,10 +62,10 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 
 /**
- * The favorites on the Timer page against the real Tokkl container (docs/PRD.md T5), pinned from
- * the timer or from a history entry's menu. The test's own requests stand in for the web app: they
- * set favorites in `/me/preferences` as TimerPage.tsx does, and read back what the phone stored. Each test signs in to an account of its own and
- * deletes it after.
+ * Timer templates against the real Tokkl container (docs/PRD.md T5), saved from the timer's popup
+ * or from a history entry's menu, and managed on More > Timer templates. The test's own requests
+ * stand in for the web app: they set the favorites key in `/me/preferences` as TimerPage.tsx does,
+ * and read back what the phone stored. Each test signs in to an account of its own and deletes it after.
  */
 class FavoritesServerTest {
     private val composeRule = createEmptyComposeRule()
@@ -121,11 +116,12 @@ class FavoritesServerTest {
             """,
         )
         launch {
-            awaitShown("the first favorite with its project") { favorite("Write the report, Favorites project") }
-            awaitShown("the second favorite by its project's name") { favorite("Favorites project") }
+            openTemplates()
+            awaitShown("the first template with its project") { favorite("Write the report, Favorites project") }
+            awaitShown("the second template by its project's name") { favorite("Favorites project") }
 
             AirplaneMode.set(true, web)
-            favorite("Write the report, Favorites project").performClick()
+            favorite("Write the report, Favorites project").performSemanticsAction(SemanticsActions.OnClick)
             awaitAtOnce("Stop shows") { shows(stopButton()) }
             awaitAtOnce("the favorite's description runs") {
                 shows(composeRule.onNode(hasSetTextAction() and hasText("Write the report")))
@@ -144,7 +140,7 @@ class FavoritesServerTest {
     }
 
     /**
-     * A favorite tapped while the idle timer's description is still being typed starts with its
+     * A template tapped while the idle timer's description is still being typed starts with its
      * own description. The typed text makes way for it and does not come back when the keyboard's
      * Done is pressed after the start (TKA-0237).
      */
@@ -152,9 +148,9 @@ class FavoritesServerTest {
     fun aFavoriteTappedWhileADescriptionIsTypedRunsWithItsOwnDescription() {
         saveOnTheWeb("""{"favorites": [{"description": "Report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
         launch {
-            awaitShown("the favorite") { favorite("Report") }
             description().performTextInput("Draft")
-            favorite("Report").performClick()
+            openTemplates()
+            favorite("Report").performSemanticsAction(SemanticsActions.OnClick)
             composeRule.waitUntil("the phone runs the favorite", NETWORK_TIMEOUT.toMillis()) {
                 runBlocking { app.cache.running.first() }?.entry?.description == "Report"
             }
@@ -177,7 +173,7 @@ class FavoritesServerTest {
     }
 
     /**
-     * Pinning, moving and removing on the phone store the list in the web app's format, and leave
+     * Saving, moving and deleting on the phone store the list in the web app's format, and leave
      * every other preference key as it was.
      */
     @Test
@@ -192,14 +188,18 @@ class FavoritesServerTest {
         launch {
             description().performTextInput("Pinned on the phone")
             description().performImeAction()
-            editButton().performClick()
-            pinButton().performClick()
-            awaitShown("the pinned favorite can move up") { control(R.string.favorites_move_up, "Pinned on the phone") }
+            openTemplates()
+            tapMenu(R.string.favorites_save)
+            composeRule.waitUntil("the phone caches the new template", NETWORK_TIMEOUT.toMillis()) {
+                runBlocking { app.cache.favorites.first() }.any { it.description == "Pinned on the phone" }
+            }
+            tapMenu(R.string.favorites_manage)
+            awaitShown("the new template can move up") { control(R.string.favorites_move_up, "Pinned on the phone") }
             awaitEnabled(control(R.string.favorites_move_up, "Pinned on the phone")).performClick()
-            awaitShown("the old favorite can move down") { control(R.string.favorites_move_down, "Write the report") }
-            awaitEnabled(control(R.string.favorites_remove, "Write the report")).performClick()
-            composeRule.waitUntil("the old favorite is gone", NETWORK_TIMEOUT.toMillis()) {
-                !shows(control(R.string.favorites_remove, "Write the report"))
+            awaitShown("the old template can be deleted") { control(R.string.favorites_delete, "Write the report") }
+            awaitEnabled(control(R.string.favorites_delete, "Write the report")).performClick()
+            composeRule.waitUntil("the old template is gone", NETWORK_TIMEOUT.toMillis()) {
+                !shows(control(R.string.favorites_delete, "Write the report"))
             }
             composeRule.waitUntil("the phone caches what it stored", NETWORK_TIMEOUT.toMillis()) {
                 runBlocking { app.cache.favorites.first() }.map { it.description } == listOf("Pinned on the phone")
@@ -222,13 +222,13 @@ class FavoritesServerTest {
         }
         saveOnTheWeb("""{"favorites": [$nine]}""")
         launch {
-            awaitShown("the ninth favorite") { favorite("Favorite 9") }
             description().performTextInput("A tenth")
             description().performImeAction()
-            editButton().performClick()
+            openTemplates()
+            awaitShown("the ninth template") { favorite("Favorite 9") }
             val full = context.resources.getQuantityString(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
             awaitShown("the list says it is full") { composeRule.onNode(hasText(full)) }
-            pinButton().assertIsNotEnabled()
+            composeRule.onNode(hasText(string(R.string.favorites_save))).assertIsNotEnabled()
         }
         val stored = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
         assertEquals(MAX_FAVORITES, stored.getValue("favorites").jsonArray.size)
@@ -238,19 +238,20 @@ class FavoritesServerTest {
     fun editingOfflineSaysItNeedsTheServer() {
         saveOnTheWeb("""{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
         launch {
-            awaitShown("the favorite") { favorite("Write the report") }
+            openTemplates()
+            tapMenu(R.string.favorites_manage)
+            awaitShown("the management page") { composeRule.onNode(hasText(string(R.string.nav_templates)) and isHeading()) }
             AirplaneMode.set(true, web)
-            editButton().performClick()
             awaitShown("the offline notice") { composeRule.onNode(hasText(string(R.string.favorites_offline))) }
-            control(R.string.favorites_remove, "Write the report").assertIsNotEnabled()
-            pinButton().assertIsNotEnabled()
+            control(R.string.favorites_delete, "Write the report").assertIsNotEnabled()
+            composeRule.onNode(hasText(string(R.string.favorites_new)) and hasClickAction()).assertIsNotEnabled()
             AirplaneMode.set(false, web)
         }
     }
 
     /**
-     * Pin as favorite in a history entry's menu adds the entry's fields after the web app's
-     * favorites, in its format, as its EntryList.tsx pins, and says so.
+     * Save as template in a history entry's menu adds the entry's fields after the web app's
+     * templates, in its format, as its EntryList.tsx pins, and says so.
      */
     @Test
     fun pinningAHistoryEntryReachesTheWebInItsFormat() {
@@ -285,7 +286,9 @@ class FavoritesServerTest {
         }
         saveOnTheWeb("""{"favorites": [$nine]}""")
         launch {
-            awaitShown("the ninth favorite") { favorite("Favorite 9") }
+            composeRule.waitUntil("the ninth template is cached", NETWORK_TIMEOUT.toMillis()) {
+                runBlocking { app.cache.favorites.first() }.size == MAX_FAVORITES
+            }
             pinFromHistory("Pin me")
             val full = context.resources.getQuantityString(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
             awaitShown("the message") { composeRule.onNode(hasText(full)) }
@@ -299,7 +302,9 @@ class FavoritesServerTest {
         createEntry("Pin me", project = null)
         saveOnTheWeb("""{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
         launch {
-            awaitShown("the favorite") { favorite("Write the report") }
+            composeRule.waitUntil("the template is cached", NETWORK_TIMEOUT.toMillis()) {
+                runBlocking { app.cache.favorites.first() }.any { it.description == "Write the report" }
+            }
             AirplaneMode.set(true, web)
             pinFromHistory("Pin me")
             awaitShown("the message") { composeRule.onNode(hasText(string(R.string.history_pin_needs_server))) }
@@ -307,40 +312,6 @@ class FavoritesServerTest {
         }
         val stored = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
         assertEquals(listOf("Write the report"), stored.getValue("favorites").jsonArray.map { it.jsonObject.getValue("description").jsonPrimitive.content })
-    }
-
-    /**
-     * A server without Tokkl's favorites, such as Toggl Track, shows no favorites control. The
-     * same favorites show once the capability is there, so the screen did draw.
-     */
-    @Test
-    fun withoutTheCapabilityNoFavoritesControlShows() {
-        val favorites = listOf(FavoriteItem(EntryFields(description = "Write the report"), EntryLabels()))
-        val available = mutableStateOf(false)
-        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                activity.setContent {
-                    TokklTheme {
-                        FavoritesSection(
-                            state = FavoritesState(available = available.value, favorites = favorites),
-                            timerFields = EntryFields(description = "Typed"),
-                            onStart = {},
-                            onAdd = {},
-                            onRemove = {},
-                            onMove = { _, _ -> },
-                        )
-                    }
-                }
-            }
-            composeRule.waitForIdle()
-            assertEquals(0, count(hasText(string(R.string.favorites_title))))
-            assertEquals(0, count(hasContentDescription(string(R.string.favorites_edit_spoken))))
-            assertEquals(0, count(hasContentDescription(string(R.string.favorites_start_spoken, "Write the report"))))
-
-            scenario.onActivity { available.value = true }
-            composeRule.waitForIdle()
-            assertEquals(1, count(hasContentDescription(string(R.string.favorites_start_spoken, "Write the report")) and hasClickAction()))
-        }
     }
 
     private fun count(matcher: SemanticsMatcher): Int = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
@@ -395,29 +366,37 @@ class FavoritesServerTest {
         ).orFail("POST an entry")
     }
 
-    /** Opens the menu of the history entry [description] and taps Pin as favorite. */
+    /** Opens the menu of the history entry [description] and taps Save as template. */
     private fun pinFromHistory(description: String) {
         val more = composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, description)) and hasClickAction())
         awaitShown("the entry's menu button") { more }
         more.performSemanticsAction(SemanticsActions.OnClick)
         val pin = composeRule.onNode(hasText(string(R.string.history_pin)) and hasClickAction())
-        awaitShown("Pin as favorite") { pin }
+        awaitShown("Save as template") { pin }
         pin.performSemanticsAction(SemanticsActions.OnClick)
     }
 
-    /** A favorite's start button, as TalkBack reads it for [spokenName]. */
+    /** Opens the timer panel's timer-templates popup. */
+    private fun openTemplates() {
+        val icon = composeRule.onNode(hasContentDescription(string(R.string.favorites_open)) and hasClickAction())
+        awaitShown("the timer templates icon") { icon }
+        icon.performClick()
+    }
+
+    /** Taps the popup item whose text is [label]. */
+    private fun tapMenu(@StringRes label: Int) {
+        val item = composeRule.onNode(hasText(string(label)) and hasClickAction())
+        awaitShown(string(label)) { item }
+        item.performSemanticsAction(SemanticsActions.OnClick)
+    }
+
+    /** A template's start item, as TalkBack reads it for [spokenName]. */
     private fun favorite(spokenName: String): SemanticsNodeInteraction =
         composeRule.onNode(hasContentDescription(string(R.string.favorites_start_spoken, spokenName)) and hasClickAction())
 
-    /** A button beside the favorite [name] while editing. */
+    /** A button on the management row [name]. */
     private fun control(@StringRes label: Int, name: String): SemanticsNodeInteraction =
         composeRule.onNode(hasContentDescription(string(label, name)) and hasClickAction())
-
-    private fun editButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasContentDescription(string(R.string.favorites_edit_spoken)) and hasClickAction())
-
-    private fun pinButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasText(string(R.string.favorites_pin)) and hasClickAction())
 
     private fun description(): SemanticsNodeInteraction =
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description)))

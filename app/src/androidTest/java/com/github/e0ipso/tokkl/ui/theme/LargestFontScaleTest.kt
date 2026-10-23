@@ -68,7 +68,7 @@ import org.junit.runners.model.Statement
  * text is cut off, leaves the screen or overlaps another. The sign-in form and the settings
  * scroll, so each of their parts has to fit once scrolled into view. So do the trust prompts,
  * from sign-in and over the Timer page, and the notice left after cancelling one. The Timer
- * page's idle timer, its button for a past entry and its favorites fit above its history, and
+ * page's idle timer, its button for a past entry and its timer-templates icon fit above its history, and
  * so does each part of the entry form, scrolled into view. The bottom bar's five items fit side
  * by side, each label whole. With the keyboard open, the sign-in field being typed in stays
  * above it.
@@ -95,8 +95,11 @@ class LargestFontScaleTest {
         composeRule.awaitTimerPage()
         // The test account has no entries, so the history says so once the cache has loaded.
         composeRule.awaitText(string(R.string.history_empty_title), NETWORK_TIMEOUT_MS)
+        composeRule.waitUntil("the timer templates icon shows", NETWORK_TIMEOUT_MS) {
+            composeRule.onAllNodes(hasContentDescription(string(R.string.favorites_open)) and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
+        }
 
-        assertFitWithoutOverlap(*(timerPageParts() + favoritesParts()).toTypedArray(), text(R.string.history_empty_title))
+        assertFitWithoutOverlap(*(timerPageParts() + templateParts()).toTypedArray(), text(R.string.history_empty_title))
         assertLabelsWhole()
     }
 
@@ -705,10 +708,10 @@ class LargestFontScaleTest {
     /**
      * The notice sits over the Timer page, so it may cover none of the page's own parts or the bar
      * either. The refused session never reads `/me`, so the server's capabilities stay unknown and
-     * the page shows no favorites.
+     * the page shows no timer templates.
      */
     private fun assertNoticeFits(@StringRes message: Int) {
-        composeRule.onNode(hasText(string(R.string.favorites_title)) and isHeading()).assertDoesNotExist()
+        composeRule.onNode(hasContentDescription(string(R.string.favorites_open))).assertDoesNotExist()
         val app = composeRule.activity.application as TokklApplication
         assertEquals("refused session has no loaded capabilities", Capabilities.NONE, app.capabilities.state.value)
         assertNull("refused session has no loaded account settings", app.accountSettings.state.value)
@@ -747,14 +750,12 @@ class LargestFontScaleTest {
         ) + BAR_LABELS.map { label -> "${string(label)} item" to button(label) }
 
     /**
-     * The favorites under the idle timer, shown once the server says it keeps them. The test
-     * account has none, so they show their heading, Edit and a hint.
+     * The timer panel's timer-templates icon, shown once the server says it keeps them. The test
+     * account has none, so the icon is the only part until the popup opens.
      */
-    private fun favoritesParts(): List<Pair<String, SemanticsNodeInteraction>> =
+    private fun templateParts(): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
-            "favorites heading" to composeRule.onNode(hasText(string(R.string.favorites_title)) and isHeading()),
-            "edit favorites button" to composeRule.onNode(hasContentDescription(string(R.string.favorites_edit_spoken)) and hasClickAction()),
-            text(R.string.favorites_empty),
+            "timer templates" to composeRule.onNode(hasContentDescription(string(R.string.favorites_open)) and hasClickAction()),
         )
 
     /** Each timer control's, each segment's and each bar item's label shows in full, inside its control. */

@@ -2,7 +2,7 @@
 <!--
     The home screen widget (docs/PRD.md N3). updatePeriodMillis is 0, so the system never wakes the
     app to update it: the app updates it when the phone's state changes, and the elapsed time is a
-    Chronometer the launcher ticks. Under the timer row, the widget shows as many favorites as its
+    Chronometer the launcher ticks. Under the timer row, the widget shows as many timer templates as its
     height and font size fit. At the largest font, its smallest size holds only the timer row.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"

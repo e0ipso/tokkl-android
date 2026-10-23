@@ -71,6 +71,7 @@ enum class TopLevelPage(
     TIMER(Destination.TIMER, R.string.nav_timer, R.drawable.ic_nav_timer, SectionHues.timer),
     REPORTS(Destination.REPORTS, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports),
     PROJECTS(Destination.PROJECTS, R.string.nav_projects, R.drawable.ic_nav_projects, SectionHues.projects),
+    TEMPLATES(Destination.TEMPLATES, R.string.nav_templates, R.drawable.ic_nav_templates, SectionHues.more, inMore = true),
     CLIENTS(Destination.CLIENTS, R.string.nav_clients, R.drawable.ic_nav_clients, SectionHues.more, inMore = true),
     TAGS(Destination.TAGS, R.string.nav_tags, R.drawable.ic_nav_tags, SectionHues.more, inMore = true),
     TRASH(Destination.TRASH, R.string.nav_trash, R.drawable.ic_nav_trash, SectionHues.more, inMore = true),

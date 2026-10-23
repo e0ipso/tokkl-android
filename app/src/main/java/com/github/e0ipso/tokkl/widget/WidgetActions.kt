@@ -13,8 +13,8 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerTarget
 
 /**
- * The widget's Start and its favorites (docs/PRD.md N3). It starts a timer on the phone and queues
- * the change, as Start in the app does, without opening the app or waiting for the network. A
+ * The widget's Start and its timer templates (docs/PRD.md N3). It starts a timer on the phone
+ * and queues the change, as Start in the app does, without opening the app or waiting for the network. A
  * running entry stops at the new one's start. The start goes in the account's default workspace,
  * which the phone keeps, so it works offline.
  *
@@ -85,7 +85,7 @@ class ResumeTimerAction : ActionCallback {
     }
 }
 
-/** Starts a timer with [fields], the empty ones for Start and a favorite's for that favorite. */
+/** Starts a timer with [fields], the empty ones for Start and a template's for that template. */
 fun startTimer(fields: EntryFields = EntryFields()): Action = actionRunCallback<StartTimerAction>(fields.toParameters())
 
 /** Stops what [target] shows: the running entry or the paused timer. */

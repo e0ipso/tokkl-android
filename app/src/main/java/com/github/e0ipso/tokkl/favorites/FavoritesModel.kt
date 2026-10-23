@@ -35,10 +35,10 @@ sealed interface FavoritesProblem {
 }
 
 /**
- * The favorites on the Timer page.
+ * Timer templates as the app shows them.
  *
- * @property available the server keeps Tokkl's favorites. Without them, as on Toggl Track, the
- *   page shows no favorites control at all.
+ * @property available the server keeps Tokkl's favorites key. Without it, as on Toggl Track, the
+ *   timer shows no template control and More leaves out the management page.
  * @property saving a change is on its way to the server, so no other change starts.
  * @property problem why the last change did not happen, until the next change.
  */
@@ -53,13 +53,13 @@ data class FavoritesState(
 }
 
 /**
- * Tokkl's favorites (docs/PRD.md T5): up to [MAX_FAVORITES] entries the user starts in one tap,
- * the same ones the web app shows, from the cache, so they show and start offline. Adding,
- * removing and moving one needs the server: [save] stores the whole list there and then in the
- * cache, and until it answers, no other change starts. A change the server does not store
- * leaves the list as it was and says why.
+ * Tokkl's timer templates (docs/PRD.md T5): up to [MAX_FAVORITES] saved entries the user starts
+ * in one tap, the same favorites the web app stores, from the cache, so they show and start
+ * offline. Adding, editing, removing and moving one needs the server: [save] stores the whole
+ * list there and then in the cache, and until it answers, no other change starts. A change the
+ * server does not store leaves the list as it was and says why.
  *
- * Starting a favorite is the timer's: TimerModel.startFrom.
+ * Starting a template is the timer's: TimerModel.startFrom.
  *
  * @param available whether the server keeps Tokkl's favorites, from the capabilities.
  * @param save posts the list and caches it, blocking, so it runs on [io].
@@ -94,7 +94,12 @@ class FavoritesModel(
     fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {}) =
         change(onDone) { list -> if (list.size >= MAX_FAVORITES) null else list + fields }
 
-    /** Removes the favorite at [index]. */
+    /** Replaces the template at [index] with [fields]. [onDone] hears how the save went. */
+    fun replace(index: Int, fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {}) = change(onDone) { list ->
+        if (index !in list.indices) list else list.toMutableList().also { it[index] = fields }
+    }
+
+    /** Removes the template at [index]. */
     fun remove(index: Int) = change { list -> list.filterIndexed { at, _ -> at != index } }
 
     /** Moves the favorite at [index] one place earlier, or with [later], one place later. */

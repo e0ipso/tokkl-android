@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 
 /**
  * Keeps the timer's draft and the taps the cache does not show yet across configuration changes,
- * and the favorites under it.
+ * and the timer templates on its panel.
  */
 class TimerViewModel(application: Application) : AndroidViewModel(application) {
 

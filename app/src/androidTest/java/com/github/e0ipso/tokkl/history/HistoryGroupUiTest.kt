@@ -86,7 +86,7 @@ class HistoryGroupUiTest {
         }
     }
 
-    /** The entry menu, Pin as favorite included, keeps every item whole and tappable at the largest font scale. */
+    /** The entry menu, Save as template included, keeps every item whole and tappable at the largest font scale. */
     @Test
     fun noItemOfTheEntryMenuIsCutOffAtTheLargestFontScale() {
         show(pin = PinAction(enabled = true) {})

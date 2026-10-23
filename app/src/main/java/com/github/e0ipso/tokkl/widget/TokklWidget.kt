@@ -62,7 +62,7 @@ import kotlinx.coroutines.flow.first
 /**
  * The home screen widget (docs/PRD.md N3): the running entry's description, project and elapsed
  * time with Pause and Stop buttons, the paused timer's total with Resume and Stop (T1), or Start
- * when no timer runs, and below them as many favorites as fit. It reads only the phone, through
+ * when no timer runs, and below them as many timer templates as fit. It reads only the phone, through
  * [TokklApplication.widgetState], and its taps change the phone and queue the change, so all of
  * it works offline.
  *
@@ -74,7 +74,7 @@ import kotlinx.coroutines.flow.first
  */
 class TokklWidget : GlanceAppWidget() {
 
-    /** Each placed size gets its own layout, so the favorites fill the widget's height. */
+    /** Each placed size gets its own layout, so the timer templates fill the widget's height. */
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {

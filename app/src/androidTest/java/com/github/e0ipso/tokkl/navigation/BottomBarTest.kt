@@ -114,17 +114,18 @@ class BottomBarTest {
     }
 
     @Test
-    fun theMoreSheetListsClientsTagsAndTrashAndOpensEach() {
+    fun theMoreSheetListsTemplatesClientsTagsAndTrashAndOpensEach() {
         launch { scenario ->
-            // The sheet lists Trash once the refresh's probe has found it.
+            // The sheet lists Trash and Timer templates once the refresh's probe has found them.
             composeRule.waitUntil("the refresh finds the trash", NETWORK_TIMEOUT_MS) { app.capabilities.state.value.trash }
-            for (page in listOf(TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
+            composeRule.waitUntil("the refresh finds timer templates", NETWORK_TIMEOUT_MS) { app.capabilities.state.value.favorites }
+            for (page in listOf(TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
                 openMore()
                 val items = composeRule.onAllNodes(sheetItem())
                     .fetchSemanticsNodes()
                     .sortedBy { it.boundsInRoot.top }
                     .map { node -> node.config[SemanticsProperties.Text].joinToString(" ") { it.text } }
-                assertEquals(listOf(R.string.nav_clients, R.string.nav_tags, R.string.nav_trash).map(::string), items)
+                assertEquals(listOf(R.string.nav_templates, R.string.nav_clients, R.string.nav_tags, R.string.nav_trash).map(::string), items)
 
                 composeRule.onNode(sheetItem() and hasText(string(page.label))).performClick()
 
@@ -253,7 +254,10 @@ class BottomBarTest {
 
     /** The sheet's page items. No item of the bar has their labels. */
     private fun sheetItem(): SemanticsMatcher =
-        isSelectable() and (hasText(string(R.string.nav_clients)) or hasText(string(R.string.nav_tags)) or hasText(string(R.string.nav_trash)))
+        isSelectable() and (
+            hasText(string(R.string.nav_templates)) or hasText(string(R.string.nav_clients)) or
+                hasText(string(R.string.nav_tags)) or hasText(string(R.string.nav_trash))
+            )
 
     private fun heading(@StringRes label: Int): SemanticsNodeInteraction = composeRule.onNode(hasText(string(label)) and isHeading())
 

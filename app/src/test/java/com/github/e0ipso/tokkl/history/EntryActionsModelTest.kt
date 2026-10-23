@@ -41,9 +41,9 @@ import org.junit.Test
  * record what they are asked to do. With Tokkl's restore endpoint a delete offers Undo at once, as
  * the web app's EntryList.tsx does; without it the delete asks first and offers none. Duplicate
  * copies a stopped entry's fields and times, as the web app's duplicate does, and Split cuts one
- * in two at a clock time in the account's timezone, as the web app's editor does. Pin as favorite
- * saves the entry's fields at the end of the favorites, as the web app's EntryList.tsx does, and
- * says why when it pins nothing.
+ * in two at a clock time in the account's timezone, as the web app's editor does. Save as template
+ * saves the entry's fields at the end of the timer templates, as the web app's EntryList.tsx does, and
+ * says why when it saves nothing.
  */
 class EntryActionsModelTest {
 

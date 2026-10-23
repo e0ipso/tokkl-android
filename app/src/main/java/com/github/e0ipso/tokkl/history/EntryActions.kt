@@ -215,11 +215,11 @@ class EntryActionsModel(
     }
 
     /**
-     * Pins the cached entry [entryId] as a favorite through [favorites]: its description, project,
-     * task, tags and billable, as `pin` in ../tokkl/packages/web/src/components/EntryList.tsx
-     * does. Favorites live on the server, so when the phone is [offline] nothing is tried and the
+     * Saves the cached entry [entryId] as a timer template through [favorites]: its description,
+     * project, task, tags and billable, as `pin` in ../tokkl/packages/web/src/components/EntryList.tsx
+     * does. Templates live on the server, so when the phone is [offline] nothing is tried and the
      * message says the server is needed. A full list, or a server that cannot be reached or does
-     * not store the list, says why nothing was pinned. An entry the cache no longer holds pins
+     * not store the list, says why nothing was saved. An entry the cache no longer holds saves
      * nothing.
      */
     fun pin(entryId: Long, favorites: FavoritesModel, offline: Boolean) {

@@ -133,6 +133,31 @@ class FavoritesModelTest {
     }
 
     @Test
+    fun replacingSavesTheEditedTemplateInPlace() {
+        awaitState("the favorites show") { it.favorites.size == 2 }
+        val edited = REPORT.fields().copy(description = "Rewrite the report", billable = false)
+        onMain { model.replace(0, edited) }
+        val shown = awaitState("the edited template shows") {
+            it.favorites.first().fields.description == "Rewrite the report" && !it.saving
+        }
+        assertEquals(listOf(listOf(edited, WEBSITE.fields())), saved)
+        assertEquals(edited, shown.favorites.first().fields)
+        assertEquals(WEBSITE.fields(), shown.favorites[1].fields)
+        assertNull(shown.problem)
+    }
+
+    @Test
+    fun aFailedReplaceLeavesTheList() {
+        awaitState("the favorites show") { it.favorites.size == 2 }
+        answer = ApiResult.Failure(ApiError.Network(IOException("offline")))
+        onMain { model.replace(0, EntryFields(description = "Not stored")) }
+        val shown = awaitState("the problem shows") { it.problem != null }
+        assertEquals(FavoritesProblem.Server(ServerProblem.Unreachable), shown.problem)
+        assertEquals(listOf(REPORT.fields(), WEBSITE.fields()), shown.favorites.map { it.fields })
+        assertFalse(shown.saving)
+    }
+
+    @Test
     fun aChangeTheServerDoesNotStoreLeavesTheListAndSaysWhy() {
         awaitState("the favorites show") { it.favorites.size == 2 }
         answer = ApiResult.Failure(ApiError.Network(IOException("offline")))
@@ -143,7 +168,7 @@ class FavoritesModelTest {
         assertFalse(shown.saving)
     }
 
-    /** The history's Pin as favorite learns how each add went, to say so. */
+    /** The history's Save as template learns how each add went, to say so. */
     @Test
     fun anAddTellsItsCallerHowItWent() {
         awaitState("the favorites show") { it.favorites.size == 2 }

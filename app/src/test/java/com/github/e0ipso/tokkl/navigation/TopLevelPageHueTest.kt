@@ -18,6 +18,7 @@ class TopLevelPageHueTest {
             TopLevelPage.TIMER to Color(0xFFF05A00),
             TopLevelPage.REPORTS to Color(0xFF00B9FA),
             TopLevelPage.PROJECTS to Color(0xFF8722FF),
+            TopLevelPage.TEMPLATES to Color(0xFFFF008C),
             TopLevelPage.CLIENTS to Color(0xFFFF008C),
             TopLevelPage.TAGS to Color(0xFFFF008C),
             TopLevelPage.TRASH to Color(0xFFFF008C),

@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The favorites on the Timer page (docs/PRD.md T5), the same ones the web app shows. -->
+<!-- Timer templates (docs/PRD.md T5). The server still stores them under the favorites key. -->
 <resources>
-    <string name="favorites_title">Favorites</string>
-    <string name="favorites_edit">Edit</string>
-    <string name="favorites_edit_spoken">Edit favorites</string>
-    <string name="favorites_done">Done</string>
-    <string name="favorites_done_spoken">Done editing favorites</string>
-    <string name="favorites_empty">No favorites yet. Use Edit to pin the timer\'s entry, then start it here in one tap.</string>
-    <!-- A favorite with neither a description nor a project, as the web app names it. -->
+    <!-- The timer panel's icon, and what TalkBack reads for it. -->
+    <string name="favorites_open">Timer templates</string>
+    <string name="favorites_empty">No timer templates yet.</string>
+    <!-- A template with neither a description nor a project, as the web app names a favorite. -->
     <string name="favorites_untitled">Untitled</string>
-    <!-- What TalkBack reads for a favorite's button: Start Write the report, Website -->
+    <!-- What TalkBack reads for a template in the popup: Start Write the report, Website -->
     <string name="favorites_start_spoken">Start %1$s</string>
-    <!-- A favorite's description and its project, as the web app's label joins them: Write the report, Website -->
+    <!-- A template's description and its project: Write the report, Website -->
     <string name="favorites_with_project">%1$s, %2$s</string>
-    <string name="favorites_pin">Pin the timer\'s entry</string>
-    <string name="favorites_pin_hint">Type a description or pick a project in the timer to pin it.</string>
-    <!-- What TalkBack reads for the buttons beside a favorite while editing: Move Write the report up -->
+    <string name="favorites_save">Save as template</string>
+    <string name="favorites_manage">Manage templates</string>
+    <string name="favorites_new">New template</string>
+    <string name="favorites_edit">Edit</string>
+    <!-- What TalkBack reads for Edit on a row: Edit Write the report -->
+    <string name="favorites_edit_spoken">Edit %1$s</string>
+    <string name="favorites_save_action">Save</string>
+    <string name="favorites_cancel">Cancel</string>
+    <string name="favorites_saved">Template saved</string>
+    <string name="favorites_description_hint">What this template starts</string>
+    <!-- What TalkBack reads for the buttons on a row: Move Write the report up -->
     <string name="favorites_move_up">Move %1$s up</string>
     <string name="favorites_move_down">Move %1$s down</string>
-    <string name="favorites_remove">Remove %1$s from favorites</string>
-    <!-- As the web app says it: You can pin up to 9 favorites -->
+    <string name="favorites_delete">Delete %1$s</string>
     <plurals name="favorites_full">
-        <item quantity="one">You can pin up to %d favorite</item>
-        <item quantity="other">You can pin up to %d favorites</item>
+        <item quantity="one">You can save up to %d timer template</item>
+        <item quantity="other">You can save up to %d timer templates</item>
     </plurals>
-    <string name="favorites_offline">Changing favorites needs the server, which can\'t be reached now. Your favorites still start offline.</string>
+    <string name="favorites_offline">Changing timer templates needs the server, which can\'t be reached now. Saved templates still start offline.</string>
 </resources>

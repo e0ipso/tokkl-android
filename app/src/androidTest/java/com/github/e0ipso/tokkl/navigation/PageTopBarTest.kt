@@ -50,7 +50,7 @@ class PageTopBarTest {
             composeRule.onNode(barItem(page)).performClick()
             assertTopBar(page, back = false)
         }
-        for (page in listOf(R.string.nav_clients, R.string.nav_tags, R.string.nav_trash)) {
+        for (page in listOf(R.string.nav_templates, R.string.nav_clients, R.string.nav_tags, R.string.nav_trash)) {
             composeRule.onNode(barItem(R.string.nav_more)).performClick()
             composeRule.waitUntil("the More sheet opens", TIMEOUT_MS) { exists(isSelectable() and hasText(string(page))) }
             composeRule.onNode(isSelectable() and hasText(string(page))).performClick()

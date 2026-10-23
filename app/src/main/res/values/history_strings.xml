@@ -49,10 +49,10 @@
     <string name="history_split_outside">The split time must fall inside the entry</string>
     <string name="history_split_clock_change">The clocks change during this entry, so it can\'t be split at that time</string>
     <string name="history_split_done">Entry split in two</string>
-    <!-- The menu item that pins an entry's description, project, task, tags and billable as a favorite (docs/PRD.md T5), as the web app's entry menu says it. -->
-    <string name="history_pin">Pin as favorite</string>
-    <string name="history_pinned">Pinned to favorites</string>
-    <string name="history_pin_needs_server">Pinning a favorite needs the server, which can\'t be reached now.</string>
+    <!-- Saves an entry's description, project, task, tags and billable as a timer template (docs/PRD.md T5). -->
+    <string name="history_pin">Save as template</string>
+    <string name="history_pinned">Saved as a template</string>
+    <string name="history_pin_needs_server">Saving a timer template needs the server, which can\'t be reached now.</string>
     <string name="history_delete">Delete</string>
     <string name="history_deleted">Entry deleted</string>
     <string name="history_undo">Undo</string>

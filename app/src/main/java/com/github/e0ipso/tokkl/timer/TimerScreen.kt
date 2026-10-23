@@ -54,9 +54,8 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
  * height, such as a phone held sideways or upright at the largest font scale, the bar, the timer
  * and the switch scroll away as the entries scroll on, so the entries get the page's whole
  * height ([ScrollAwayColumn]). A bar pinned there would leave the week grid too little room.
- * The Calendar view does the same at every height: on a phone held upright the timer, the
- * favorites under it and the switch would leave the grid under two hours, and once they have
- * scrolled away the grid has the page's height under the calendar's toolbar.
+ * The Calendar view does the same at every height: on a phone held upright the timer and the
+ * switch scroll away, and the grid has the page's height under the calendar's toolbar.
  * On a phone held sideways the page opens in the Calendar view with all of that, the calendar's
  * toolbar too, already scrolled away, so the week shows at least four hour rows at once. A drag
  * on the day heads, or the grid back at midnight, brings them back, and TalkBack scrolls to them.

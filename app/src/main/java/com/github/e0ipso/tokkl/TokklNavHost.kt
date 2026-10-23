@@ -54,6 +54,7 @@ import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entry.EntryFormModel
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
 import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.TemplatesScreen
 import com.github.e0ipso.tokkl.history.EntryActionsHost
 import com.github.e0ipso.tokkl.history.EntryActionsModel
 import com.github.e0ipso.tokkl.history.HistoryList
@@ -111,7 +112,7 @@ import kotlinx.coroutines.withContext
  * The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model
  * holds. NEEDS_ATTENTION lists the changes the server refused.
  */
-enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, SETTINGS, LICENCES, ENTRY, NEEDS_ATTENTION }
+enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, TEMPLATES, SETTINGS, LICENCES, ENTRY, NEEDS_ATTENTION }
 
 /**
  * The app's navigation host: a back stack of [Destination]s that survives configuration changes
@@ -130,6 +131,7 @@ enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH
  * ([SignedInPanes]), an entry's menu deletes it through
  * [entryActions], and its Continue button starts [timer] with its fields. Trash, on [trash], shows
  * only while the server's [capabilities] have it: when they lose it, the page goes back to Timer.
+ * Timer templates, on [favorites], show in More the same way, while the server keeps that key.
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -219,9 +221,13 @@ fun TokklNavHost(
     LaunchedEffect(openReminderTimer) {
         if (openReminderTimer > 0) backStack.open(TopLevelPage.TIMER)
     }
-    val offersTrash = capabilities.collectAsState().value.trash
-    LaunchedEffect(offersTrash) {
-        if (!offersTrash && Destination.TRASH in backStack) backStack.open(TopLevelPage.TIMER)
+    val capabilityFlags = capabilities.collectAsState().value
+    val offersTrash = capabilityFlags.trash
+    val offersTemplates = capabilityFlags.favorites && favorites != null
+    LaunchedEffect(offersTrash, offersTemplates) {
+        if ((!offersTrash && Destination.TRASH in backStack) || (!offersTemplates && Destination.TEMPLATES in backStack)) {
+            backStack.open(TopLevelPage.TIMER)
+        }
     }
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
@@ -251,7 +257,10 @@ fun TokklNavHost(
         current = backStack.currentPage(),
         onOpen = backStack::open,
         timerRunning = running,
-        hidden = if (offersTrash) emptySet() else setOf(TopLevelPage.TRASH),
+        hidden = buildSet {
+            if (!offersTrash) add(TopLevelPage.TRASH)
+            if (!offersTemplates) add(TopLevelPage.TEMPLATES)
+        },
         syncStatus = status,
         onOpenNeedsAttention = needsAttention?.let { { if (backStack.lastOrNull() != Destination.NEEDS_ATTENTION) backStack.add(Destination.NEEDS_ATTENTION) } },
         onSignInAgain = {
@@ -298,10 +307,16 @@ fun TokklNavHost(
                 needsAttention = needsAttention,
                 settings = settings,
             ) {
-                TimerBar(timer, cache, favorites = favorites, onAddEntry = {
-                    entryForm.new()
-                    openEntry()
-                })
+                TimerBar(
+                    timer,
+                    cache,
+                    favorites = favorites,
+                    onManageTemplates = { backStack.open(TopLevelPage.TEMPLATES) },
+                    onAddEntry = {
+                        entryForm.new()
+                        openEntry()
+                    },
+                )
             }
         }
         if (discarded > 0) DiscardNotice(discarded, onDismiss = onDismissDiscarded, modifier = Modifier.align(Alignment.BottomCenter))
@@ -515,6 +530,10 @@ private fun Screen(
         Destination.CLIENTS -> ClientsScreen(model = clients)
         Destination.TAGS -> TagsScreen(model = tags)
         Destination.TRASH -> TrashScreen(model = trash)
+        Destination.TEMPLATES -> if (favorites != null) {
+            val account by settings.collectAsState()
+            TemplatesScreen(model = favorites, cache = cache, workspaceId = account?.defaultWorkspaceId)
+        }
         Destination.SETTINGS -> SettingsScreen(
             model = themeSettings,
             reminder = reminderSettings,

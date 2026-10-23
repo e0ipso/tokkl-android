@@ -49,9 +49,9 @@ import org.junit.Test
 
 /**
  * The history's entry actions on screen, against a change queue and an Undo that record what they
- * are asked: the labels TalkBack reads for the menu, Duplicate, Split, the split time, Pin as
- * favorite and Delete, the message whose Undo TalkBack announces, and the question before a delete
- * that a server without restore cannot undo. Pin as favorite shows only with the favorites
+ * are asked: the labels TalkBack reads for the menu, Duplicate, Split, the split time, Save as
+ * template and Delete, the message whose Undo TalkBack announces, and the question before a delete
+ * that a server without restore cannot undo. Save as template shows only with the timer templates
  * capability.
  */
 class EntryActionsUiTest {
@@ -199,7 +199,7 @@ class EntryActionsUiTest {
 
         // The same menu offers it once the server has favorites, so the menu did draw its items.
         available.value = true
-        composeRule.waitUntil("Pin as favorite shows", TIMEOUT_MS) {
+        composeRule.waitUntil("Save as template shows", TIMEOUT_MS) {
             composeRule.onAllNodes(hasText(string(R.string.history_pin)) and hasClickAction()).fetchSemanticsNodes().size == 1
         }
     }

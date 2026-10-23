@@ -6,9 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -37,9 +35,6 @@ import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entry.EntryLabels
-import com.github.e0ipso.tokkl.favorites.FavoriteItem
-import com.github.e0ipso.tokkl.favorites.FavoritesSection
-import com.github.e0ipso.tokkl.favorites.FavoritesState
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timer.TimerBarContent
@@ -74,7 +69,6 @@ abstract class LandscapeCalendarTest(
     private val fontScale: Float,
     private val hourRows: Int,
     private val landscape: Boolean = true,
-    private val favorites: Boolean = false,
 ) {
     private val composeRule = createEmptyComposeRule()
 
@@ -117,7 +111,7 @@ abstract class LandscapeCalendarTest(
             }
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
-                activity.setContent { TokklTheme(darkTheme = false) { CalendarPage(favorites) } }
+                activity.setContent { TokklTheme(darkTheme = false) { CalendarPage() } }
             }
             composeRule.awaitText(string(thisWeek))
             val window = composeRule.onRoot().getBoundsInRoot()
@@ -216,18 +210,17 @@ class LargestFontLandscapeCalendarTest : LandscapeCalendarTest(fontScale = Syste
 class LargestFontUprightCalendarTest : LandscapeCalendarTest(fontScale = SystemFontScale.LARGEST, hourRows = 8, landscape = false)
 
 /**
- * On a phone held upright at the usual font scale, with the favorites under the timer, the title,
- * the timer, the favorites and the switch scroll away as the calendar scrolls on, so the grid
- * shows four hour rows, not the two it had with all of them pinned above it.
+ * On a phone held upright at the usual font scale, the title, the timer and the switch scroll
+ * away as the calendar scrolls on, so the grid shows four hour rows.
  */
-class FavoritesUprightCalendarTest : LandscapeCalendarTest(fontScale = 1f, hourRows = 4, landscape = false, favorites = true)
+class UsualFontUprightCalendarTest : LandscapeCalendarTest(fontScale = 1f, hourRows = 4, landscape = false)
 
 /**
  * The Timer page in the Calendar view, with the idle timer, above the bottom bar, at noon on the
- * Thursday of [WEEK]. With [favorites], two favorites show under the timer, as TimerBar puts them.
+ * Thursday of [WEEK].
  */
 @Composable
-private fun CalendarPage(favorites: Boolean) {
+private fun CalendarPage() {
     SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
         TimerScreen(
             view = TimerView.CALENDAR,
@@ -246,17 +239,6 @@ private fun CalendarPage(favorites: Boolean) {
                         onAddEntry = {},
                         picker = { _, _, _, _, _ -> },
                     )
-                    if (favorites) {
-                        FavoritesSection(
-                            state = FavoritesState(available = true, favorites = FAVORITES),
-                            timerFields = null,
-                            onStart = {},
-                            onAdd = {},
-                            onRemove = {},
-                            onMove = { _, _ -> },
-                            modifier = Modifier.padding(top = TokklTheme.spacing.betweenGroups),
-                        )
-                    }
                 }
             },
             listContent = {},
@@ -264,12 +246,6 @@ private fun CalendarPage(favorites: Boolean) {
         )
     }
 }
-
-/** Two favorites, as the timer shows them under it. */
-private val FAVORITES = listOf(
-    FavoriteItem(EntryFields(description = "Write the report"), EntryLabels(project = "Tokkl for Android", projectColor = "#0b83d9")),
-    FavoriteItem(EntryFields(description = "Code review"), EntryLabels()),
-)
 
 private val NOON: Instant = Instant.parse("2026-10-15T12:00:00Z")
 

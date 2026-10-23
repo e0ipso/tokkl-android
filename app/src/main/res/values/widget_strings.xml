@@ -3,12 +3,12 @@
 <resources>
     <!-- The widget's name and description in the launcher's widget picker. -->
     <string name="widget_name">Timer</string>
-    <string name="widget_description">The running timer with Start, Stop and your favorites.</string>
+    <string name="widget_description">The running timer with Start, Stop and your timer templates.</string>
     <!-- Without an account the whole widget is one button, which opens the app. -->
     <string name="widget_sign_in">Open Tokkl to sign in</string>
     <!-- The state when no timer runs, said in words so colour is not the only sign. -->
     <string name="widget_idle">No timer running</string>
-    <!-- The description of a running entry or a favorite without one. -->
+    <!-- The description of a running entry or a timer template without one. -->
     <string name="widget_no_description">No description</string>
     <!-- A project and one of its tasks: Tokkl for Android · Design -->
     <string name="widget_project_task">%1$s · %2$s</string>
@@ -17,8 +17,8 @@
     <string name="widget_start_description">Start a timer</string>
     <string name="widget_stop">Stop</string>
     <string name="widget_stop_description">Stop the timer</string>
-    <!-- What TalkBack reads for a favorite: Start Writing the PRD -->
+    <!-- What TalkBack reads for a timer template: Start Writing the PRD -->
     <string name="widget_start_favorite">Start %1$s</string>
-    <!-- The same with the favorite's project: Start Writing the PRD, Tokkl for Android -->
+    <!-- The same with the template's project: Start Writing the PRD, Tokkl for Android -->
     <string name="widget_start_favorite_project">Start %1$s, %2$s</string>
 </resources>
