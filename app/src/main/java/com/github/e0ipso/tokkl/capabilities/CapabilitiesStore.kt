@@ -24,8 +24,14 @@ class CapabilitiesStore(context: Context) {
             favorites = preferences.getBoolean(KEY_FAVORITES, false),
             timeResolution = preferences.getBoolean(KEY_TIME_RESOLUTION, false),
             negatedFilters = preferences.getBoolean(KEY_NEGATED_FILTERS, false),
+            summaryCsv = readCsv(KEY_SUMMARY_CSV),
+            detailedCsv = readCsv(KEY_DETAILED_CSV),
         )
     }
+
+    /** Missing keys are not-yet-known, so an older file does not count as endpoint absence. */
+    private fun readCsv(key: String): Boolean? =
+        if (preferences.contains(key)) preferences.getBoolean(key, false) else null
 
     /** Replaces the stored capabilities in one write. */
     @Throws(IOException::class)
@@ -36,12 +42,18 @@ class CapabilitiesStore(context: Context) {
             putBoolean(KEY_FAVORITES, capabilities.favorites)
             putBoolean(KEY_TIME_RESOLUTION, capabilities.timeResolution)
             putBoolean(KEY_NEGATED_FILTERS, capabilities.negatedFilters)
+            putCsv(KEY_SUMMARY_CSV, capabilities.summaryCsv)
+            putCsv(KEY_DETAILED_CSV, capabilities.detailedCsv)
         }
     }
 
     @Throws(IOException::class)
     fun clear() {
         commit { clear() }
+    }
+
+    private fun SharedPreferences.Editor.putCsv(key: String, value: Boolean?) {
+        if (value == null) remove(key) else putBoolean(key, value)
     }
 
     private fun commit(change: SharedPreferences.Editor.() -> Unit) {
@@ -55,5 +67,7 @@ class CapabilitiesStore(context: Context) {
         private const val KEY_FAVORITES = "favorites"
         private const val KEY_TIME_RESOLUTION = "time_resolution"
         private const val KEY_NEGATED_FILTERS = "negated_filters"
+        private const val KEY_SUMMARY_CSV = "summary_csv"
+        private const val KEY_DETAILED_CSV = "detailed_csv"
     }
 }

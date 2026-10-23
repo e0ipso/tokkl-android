@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.capabilities
 
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.reports.ReportCsvKind
 import com.github.e0ipso.tokkl.session.Me
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +31,19 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
      * and the disk, so call it off the main thread. Returns the new flags.
      */
     @Synchronized
-    fun refresh(api: TogglApiClient, me: Me): Capabilities = update(mutableState.value.updatedWith(me, probeTrash(api)))
+    fun refresh(api: TogglApiClient, me: Me): Capabilities =
+        update(mutableState.value.updatedWith(me, probeTrash(api)))
+
+    /** A CSV request got definite endpoint absence. It affects only this export kind. */
+    @Synchronized
+    fun csvMissing(kind: ReportCsvKind) {
+        val current = mutableState.value
+        if (!current.supports(kind)) return
+        update(when (kind) {
+            ReportCsvKind.SUMMARY -> current.copy(summaryCsv = false)
+            ReportCsvKind.DETAILED -> current.copy(detailedCsv = false)
+        })
+    }
 
     /**
      * A trash call outside the probe got the probe's answer for a server without the trash, a 404

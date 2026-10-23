@@ -65,7 +65,7 @@ Decisions:
 
 ## 4. Principles
 
-1. **Data stays between the phone and the server.** No telemetry, analytics, crash reporting or ads, and no request to any host other than the configured server. This carries Tokkl's first principle over and matches F-Droid's rules.
+1. **Data stays between the phone and the server.** No telemetry, analytics, crash reporting or ads, and no request to any host other than the configured server. An explicit Share CSV action may grant the Android app the user chooses temporary read access to that report file; the receiving app controls any onward sharing. This carries Tokkl's first principle over and matches F-Droid's rules.
 2. **Offline first.** Tapping Start or Stop never fails because the server is out of reach. The change is kept on the phone and sent later.
 3. **Few requests.** The app refreshes on events (app opened, timer changed, network back), not on a short polling timer. The running clock ticks on the phone from the start time. A Pomodoro session (section 5.12) adds no polling. It runs on the phone, its timing comes from alarms, and its only requests are the queued changes for the entries it saves or stops. The four defaults arrive with the preferences the app already reads, and changing one is a single write.
 4. **Tokkl behavior.** Same time parsing, favorites, grouping and undo as the web app, in the account's timezone, so moving between the laptop and the phone needs no relearning.
@@ -157,6 +157,10 @@ The first release is feature complete: it ships every requirement below, so they
 | R3 | Weekly report: the project-by-week grid. |
 | R4 | Filters by project, client, tag and billable, as in the web app. |
 | R5 | Reports need the server. With no connection the screen says so instead of showing stale numbers. |
+| R6 | Share CSV on supported Summary and Detailed tabs sends authenticated JSON POST to the configured server's `/api/app/report/summary.csv` or `/api/app/report/detailed.csv`, preserving URL prefixes, shared trust and failure handling. Weekly has no Share action. Tokkl's `role` in `/me` offers both kinds. A 404 or 410 from one POST removes only that kind; transient failures never remove support. |
+| R7 | CSV exports snapshot inclusive account dates, every report filter, workspace rounding and rounding minutes, and account duration format. Summary groups and subgroups by projects; Detailed sorts by date descending and includes all matching rows independently of loaded pages. Server CSV bytes are preserved, including Unicode, quoting and empty results. |
+| R8 | Export progress prevents duplicate requests. Only a successful, complete, validated CSV may reach the Android chooser as `tokkl-{kind}-{from}-to-{to}.csv`, using a `content://` URI, `text/csv` and temporary read permission. Missing receivers and preparation failures show feedback; cancelling the chooser is harmless. Account replacement and sign-out cancel or invalidate old exports before a chooser can launch. |
+| R9 | Export files stay in a private area, outside backups. Each file is capped at 16 MiB, with at most four completed and four staging files, pruned on export. Completed files expire after 24 hours and the provider refuses expired reads. Sign-out clears the area. The provider exposes only completed exports, never partial downloads, credentials, cache databases or other private files. |
 
 ### 5.8 Android integration
 
@@ -256,7 +260,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 |---|---|
 | Speed | A tap on Start or Stop in the app, notification, widget or tile changes the state on the phone without waiting for the server. Tests prove it with a network that never answers. Jetpack Macrobenchmark runs cold start (`StartupTimingMetric`) and tap-to-state (`TraceSectionMetric`) on the CI emulator and fails a build that is slower than the previous one. The goals are 200 ms from tap to new state and 1.5 s cold start on a mid-range phone; no real phone checks them, so they guide design but do not gate releases. |
 | Compatibility | Android 12 (API 31) and later. Phones first; tablets and foldables get adaptive layouts. |
-| Privacy | No network traffic to any host but the configured server. |
+| Privacy | No app network traffic to any host but the configured server. Explicit Share CSV grants the chosen receiving app temporary access to that report only, as in R6 to R9. |
 | Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. While a timer runs, one check every 15 minutes (section 6.3), plus at most one delayed inexact wakeup for its long-running reminder (N7), cancelled when it stops or changes. The reminder adds no periodic job or idle wakeup. While a Pomodoro session runs, one exact wakeup per planned phase end (W7). |
 | Accessibility | WCAG AA contrast, TalkBack labels on every control, colour never the only signal, layouts that survive the largest font scale. |
 | Language | English. All text lives in string resources. No other language is planned; contributors can add translations. |

@@ -33,6 +33,14 @@
     <!-- Android 16 Live Updates (N2). This permission needs no runtime request. -->
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 
+    <!-- Inspect only CSV receivers, to report when no app can handle explicit sharing. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/csv" />
+        </intent>
+    </queries>
+
     <!--
         No Android backup or device transfer (docs/PRD.md S8): Keystore keys
         stay on the phone, so a restored token could not be decrypted, and a
@@ -66,6 +74,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Only completed report CSV files, with per-URI temporary read grants. -->
+        <provider
+            android:name=".reports.ReportExportProvider"
+            android:authorities="${applicationId}.report-exports"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
         <!-- See FOREGROUND_SERVICE above: no worker runs in the foreground. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

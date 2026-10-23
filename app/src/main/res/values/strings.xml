@@ -224,4 +224,8 @@
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>
     </plurals>
+    <string name="reports_share">Share CSV</string>
+    <string name="reports_export_preparing">Preparing CSV…</string>
+    <string name="reports_export_no_targets">No app can receive a CSV file. Install a compatible app and try again.</string>
+    <string name="reports_export_failed">The CSV could not be prepared or shared. Try again.</string>
 </resources>

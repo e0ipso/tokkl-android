@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.api
 
 import java.io.IOException
+import java.io.OutputStream
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -80,11 +82,55 @@ class TogglApiClient(
     fun sendNoContent(method: String, url: HttpUrl, body: JsonElement? = null, resend: Boolean = true): ApiResult<Unit> =
         execute(method, url, body, resend) { ApiResult.Success(Unit) }
 
+    /**
+     * Streams CSV bytes unchanged through the shared transport. The caller owns the private
+     * staging stream and publishes it only after success. Content length and the byte limit are
+     * checked while reading, including for chunked responses. No error body reaches the stream.
+     */
+    fun downloadCsv(
+        url: HttpUrl,
+        body: JsonElement,
+        output: OutputStream,
+        maxBytes: Long,
+        cancellation: ApiCallCancellation,
+    ): ApiResult<Long> {
+        require(maxBytes > 0)
+        return execute("POST", url, body, resend = true, cancellation = cancellation) { response ->
+            val content = response.body
+            val type = content.contentType()
+            val length = content.contentLength()
+            if (response.code != 200 || type == null || type.type != "text" || type.subtype != "csv" || length > maxBytes) {
+                return@execute ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("Expected a bounded CSV response")))
+            }
+            var total = 0L
+            content.byteStream().use { input ->
+                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                while (true) {
+                    cancellation.check()
+                    val read = input.read(buffer)
+                    if (read == -1) break
+                    total += read
+                    if (total > maxBytes) {
+                        return@execute ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("CSV exceeds the export limit")))
+                    }
+                    output.write(buffer, 0, read)
+                }
+            }
+            cancellation.check()
+            if (length >= 0 && length != total) {
+                ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("Incomplete CSV response")))
+            } else {
+                ApiResult.Success(total)
+            }
+        }
+    }
+
     private fun <T> execute(
         method: String,
         url: HttpUrl,
         body: JsonElement?,
         resend: Boolean,
+        cancellation: ApiCallCancellation? = null,
         onSuccess: (Response) -> ApiResult<T>,
     ): ApiResult<T> {
         val json = body?.let { ApiJson.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) }
@@ -93,8 +139,13 @@ class TogglApiClient(
             .header("Authorization", credentials.authorizationHeader)
             .method(method, json)
             .build()
+        val call = (if (resend) httpClient else sendingOnce).newCall(request)
+        // Exports have a finite whole-call deadline as well as the shared connect/read timeouts.
+        if (cancellation != null) call.timeout().timeout(60, TimeUnit.SECONDS)
+        cancellation?.attach(call)
         return try {
-            (if (resend) httpClient else sendingOnce).newCall(request).execute().use { response ->
+            cancellation?.check()
+            call.execute().use { response ->
                 // The server answered, so it passed the trust checks.
                 trustListener?.answered()
                 if (response.isSuccessful) {
@@ -115,6 +166,8 @@ class TogglApiClient(
                 e.certificateHostMismatch() -> refused(ApiError.CertificateHostMismatch(url.host))
                 else -> ApiResult.Failure(ApiError.Network(e))
             }
+        } finally {
+            cancellation?.detach(call)
         }
     }
 

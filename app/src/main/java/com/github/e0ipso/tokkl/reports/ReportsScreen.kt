@@ -1,6 +1,10 @@
 package com.github.e0ipso.tokkl.reports
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -25,12 +29,14 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
@@ -45,6 +51,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.ui.TokklTopBar
+import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -79,6 +86,36 @@ fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
+    val context = LocalContext.current
+    val shareTitle = stringResource(R.string.reports_share)
+    val exportState by model.exportState.collectAsState()
+    val capabilities by model.exportCapabilities.collectAsState()
+    val lifecycleState by lifecycle.currentStateFlow.collectAsState()
+    val chooser = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        // The chooser may return RESULT_CANCELED even after a selection. Files stay bounded
+        // and readable for receivers that open their stream after the chooser has closed.
+        model.exportShareFinished()
+    }
+    LaunchedEffect(exportState, lifecycleState) {
+        if (exportState is ReportExportState.Ready && lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
+            model.launchExportShare { file ->
+                try {
+                    val send = ReportCsvShare.intent(context, file)
+                    if (ReportCsvShare.hasTarget(context, send)) {
+                        chooser.launch(Intent.createChooser(send, shareTitle))
+                    } else {
+                        model.exportNoShareTarget()
+                    }
+                } catch (e: ActivityNotFoundException) {
+                    model.exportNoShareTarget()
+                } catch (e: IllegalArgumentException) {
+                    model.exportShareFailed()
+                } catch (e: SecurityException) {
+                    model.exportShareFailed()
+                }
+            }
+        }
+    }
     val state by model.state.collectAsState()
     val tab by model.tab.collectAsState()
     val settings by model.accountSettings.collectAsState()
@@ -99,6 +136,9 @@ fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
         onFilters = model::applyFilters,
         onRetry = model::retry,
         onLoadMore = model::loadMore,
+        exportSupported = ReportCsvKind.of(tab)?.let(capabilities::supports) == true,
+        exportState = exportState,
+        onExport = model::exportCsv,
         modifier = modifier,
     )
 }
@@ -125,10 +165,29 @@ internal fun ReportsContent(
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier,
+    exportSupported: Boolean = false,
+    exportState: ReportExportState = ReportExportState.Idle,
+    onExport: () -> Unit = {},
 ) {
     val header: @Composable () -> Unit = {
         Header(state, tab, time, onTab, onShift, onPreset, onCustom)
         FilterControl(filters, filterOptions, onFilters)
+        if (exportSupported && tab != ReportTab.WEEKLY) {
+            OutlinedButton(
+                onClick = onExport,
+                enabled = state is ReportsState.Loaded && time != null && settings != null &&
+                    (exportState == ReportExportState.Idle || exportState is ReportExportState.Failed),
+            ) { Text(stringResource(R.string.reports_share)) }
+        }
+        when (exportState) {
+            ReportExportState.Preparing -> Loading(stringResource(R.string.reports_export_preparing))
+            is ReportExportState.Failed -> when {
+                exportState.noTargets -> ErrorBanner(stringResource(R.string.reports_export_no_targets))
+                exportState.error != null -> Failure(reportFailureOf(exportState.error), onExport)
+                else -> ErrorBanner(stringResource(R.string.reports_export_failed))
+            }
+            else -> Unit
+        }
         Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
     }
     val detailed = (state as? ReportsState.Loaded)?.report as? DetailedReport

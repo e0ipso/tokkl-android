@@ -70,6 +70,14 @@ class CapabilitiesServerTest {
     private fun currentProcess(): String = "${Process.myPid()}@${Process.getStartElapsedRealtime()}"
 
     private companion object {
-        val ALL = Capabilities(trash = true, restore = true, favorites = true, timeResolution = true, negatedFilters = true)
+        val ALL = Capabilities(
+            trash = true,
+            restore = true,
+            favorites = true,
+            timeResolution = true,
+            negatedFilters = true,
+            summaryCsv = true,
+            detailedCsv = true,
+        )
     }
 }

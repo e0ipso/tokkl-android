@@ -8,6 +8,8 @@ import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.reports.ReportExportFiles
+import java.io.File
 import java.io.IOException
 import java.security.GeneralSecurityException
 
@@ -26,6 +28,7 @@ class Session(
     private val tokens: ApiTokenStore,
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
+    private val clearExports: () -> Unit = {},
 ) {
 
     /**
@@ -37,6 +40,7 @@ class Session(
         ApiTokenStore(context),
         (context.applicationContext as? TokklApplication)?.sessionTrust,
         (context.applicationContext as? TokklApplication)?.let { app -> SuccessListener { app.lastAnswer.succeeded() } },
+        { ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY)).clear() },
     )
 
     /**
@@ -75,9 +79,12 @@ class Session(
      */
     @Throws(GeneralSecurityException::class, IOException::class)
     fun save(server: ServerUrl, token: String) {
-        servers.clear()
-        tokens.save(token)
-        servers.save(server)
+        exports.change {
+            servers.clear()
+            clearExports()
+            tokens.save(token)
+            servers.save(server)
+        }
     }
 
     /**
@@ -86,7 +93,18 @@ class Session(
      */
     @Throws(GeneralSecurityException::class, IOException::class)
     fun clear() {
-        servers.clear()
-        tokens.clear()
+        exports.change {
+            try {
+                servers.clear()
+                tokens.clear()
+            } finally {
+                clearExports()
+            }
+        }
+    }
+
+    companion object {
+        /** Shared by Session instances, as sign-in, sign-out and screens create their own. */
+        val exports = ExportAccount()
     }
 }

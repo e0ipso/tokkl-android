@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.capabilities
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.reports.ReportCsvKind
 import com.github.e0ipso.tokkl.session.Me
 import kotlinx.serialization.json.JsonArray
 
@@ -21,6 +22,9 @@ import kotlinx.serialization.json.JsonArray
  * @property negatedFilters report requests take `exclude_project_ids`, `exclude_client_ids` and
  *   `exclude_tag_ids`, the web app's "Is not" filters. Toggl Track's Reports API v3 has no
  *   negation, and every Tokkl release takes them, so Tokkl's `role` in `GET /api/v9/me` decides it.
+ * @property summaryCsv Share on Summary. Null until a refresh. True when `/me` has Tokkl's `role`,
+ *   until `POST /api/app/report/summary.csv` returns 404 or 410. False on Toggl Track and after that.
+ * @property detailedCsv the same for Detailed and `POST /api/app/report/detailed.csv`.
  */
 data class Capabilities(
     val trash: Boolean,
@@ -28,25 +32,47 @@ data class Capabilities(
     val favorites: Boolean,
     val timeResolution: Boolean,
     val negatedFilters: Boolean,
+    val summaryCsv: Boolean? = null,
+    val detailedCsv: Boolean? = null,
 ) {
 
     /**
      * The flags from [me] and the [trash] probe. A probe that got no clear answer keeps the
-     * trash and restore flags as they were.
+     * trash and restore flags as they were. CSV routes are POST only, so refresh does not send
+     * OPTIONS: that 404 is not absence. Tokkl offers Share until a POST proves one kind is gone,
+     * and a recorded false stays false across later refreshes.
      */
+    fun supports(kind: ReportCsvKind): Boolean = when (kind) {
+        ReportCsvKind.SUMMARY -> summaryCsv == true
+        ReportCsvKind.DETAILED -> detailedCsv == true
+    }
+
     fun updatedWith(me: Me, trash: TrashProbe): Capabilities {
         val hasTrash = when (trash) {
             TrashProbe.PRESENT -> true
             TrashProbe.ABSENT -> false
             TrashProbe.UNKNOWN -> this.trash
         }
+        val tokkl = me.role != null
         return Capabilities(
             trash = hasTrash,
             restore = if (trash == TrashProbe.UNKNOWN) restore else hasTrash,
-            favorites = me.role != null,
+            favorites = tokkl,
             timeResolution = me.timeResolutionMinutes != null,
-            negatedFilters = me.role != null,
+            negatedFilters = tokkl,
+            summaryCsv = csvOffered(tokkl, summaryCsv),
+            detailedCsv = csvOffered(tokkl, detailedCsv),
         )
+    }
+
+    /**
+     * [previous] false is a POST 404 or 410, or Toggl Track, and stays false. Null and true become
+     * true on Tokkl. Sign-out forgets the flags, so the next account is judged again.
+     */
+    private fun csvOffered(tokkl: Boolean, previous: Boolean?): Boolean? = when {
+        !tokkl -> false
+        previous == false -> false
+        else -> true
     }
 
     companion object {

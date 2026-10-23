@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.reports
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.capabilities.Capabilities
+import java.io.File
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Clock
@@ -76,8 +78,8 @@ sealed interface ReportFailure {
  * or the app comes back to the foreground, it asks the configured server for the report, and it
  * never asks on a timer. Every tab's request carries the filters. The detailed tab asks for its
  * next page when the list nears its end, and the weekly tab always shows one whole week from the
- * account's week start. Reports live in memory while the screen is open; [close] drops them, and
- * nothing is written to the phone.
+ * account's week start. Reports live in memory while the screen is open; [close] drops them.
+ * Explicit CSV sharing uses a separate bounded private export area.
  * When a request fails, the screen shows why and no numbers or entries, even those of pages that
  * loaded before.
  *
@@ -95,7 +97,29 @@ class ReportsModel(
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),
     val filterOptions: StateFlow<FilterOptions> = MutableStateFlow(FilterOptions.NONE),
+    val exportCapabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
+    private val exporter: ReportExportController? = null,
 ) {
+
+    val exportState: StateFlow<ReportExportState> = exporter?.state ?: MutableStateFlow(ReportExportState.Idle)
+
+    /** Snapshot every export setting now, independently of the rows loaded by Detailed. */
+    fun exportCsv() {
+        val shown = state.value as? ReportsState.Loaded ?: return
+        val kind = ReportCsvKind.of(tab.value) ?: return
+        if (!exportCapabilities.value.supports(kind) || accountTime() == null) return
+        val settings = accountSettings.value ?: return
+        val knownWorkspace = workspace ?: return
+        val selectedFilters = filters.value.let {
+            it.copy(projects = it.projects.toList(), clients = it.clients.toList(), tags = it.tags.toList())
+        }
+        exporter?.start(ReportCsvRequest(kind, shown.selection.range, selectedFilters, knownWorkspace, settings.durationFormat))
+    }
+
+    fun launchExportShare(launch: (File) -> Unit) { exporter?.launchShare(launch) }
+    fun exportShareFinished() { exporter?.shareFinished() }
+    fun exportNoShareTarget() { exporter?.noShareTarget() }
+    fun exportShareFailed() { exporter?.shareFailed() }
 
     private val mutableState = MutableStateFlow<ReportsState>(ReportsState.Closed)
     val state: StateFlow<ReportsState> = mutableState.asStateFlow()
@@ -214,6 +238,7 @@ class ReportsModel(
 
     /** Closes the screen: stops waiting for an answer and forgets the report and the workspace. */
     fun close() {
+        exporter?.cancel()
         loading?.cancel()
         loading = null
         workspace = null
@@ -303,18 +328,15 @@ class ReportsModel(
         }
     }
 
-    private fun failureOf(error: ApiError): ReportFailure = when (error) {
-        is ApiError.Network -> ReportFailure.Unreachable
-        // A reverse proxy answers these while the Tokkl server behind it is down.
-        is ApiError.UnexpectedStatus -> if (error.status in PROXY_UNREACHABLE) ReportFailure.Unreachable else ReportFailure.Unexpected(error.status)
-        ApiError.AuthFailed -> ReportFailure.AuthFailed
-        is ApiError.TrustRefused -> ReportFailure.TrustRefused
-        is ApiError.RateLimited -> ReportFailure.Unexpected(error.status)
-        is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> ReportFailure.Unexpected(null)
-    }
+    private fun failureOf(error: ApiError): ReportFailure = reportFailureOf(error)
+}
 
-    private companion object {
-        /** Bad gateway, service unavailable and gateway timeout. */
-        val PROXY_UNREACHABLE = setOf(502, 503, 504)
-    }
+internal fun reportFailureOf(error: ApiError): ReportFailure = when (error) {
+    is ApiError.Network -> ReportFailure.Unreachable
+    // A reverse proxy answers these while the Tokkl server behind it is down.
+    is ApiError.UnexpectedStatus -> if (error.status in setOf(502, 503, 504)) ReportFailure.Unreachable else ReportFailure.Unexpected(error.status)
+    ApiError.AuthFailed -> ReportFailure.AuthFailed
+    is ApiError.TrustRefused -> ReportFailure.TrustRefused
+    is ApiError.RateLimited -> ReportFailure.Unexpected(error.status)
+    is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> ReportFailure.Unexpected(null)
 }
