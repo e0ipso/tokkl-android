@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarModel
@@ -65,6 +66,8 @@ import com.github.e0ipso.tokkl.navigation.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
+import com.github.e0ipso.tokkl.pomodoro.PomodoroScreen
+import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
@@ -112,7 +115,7 @@ import kotlinx.coroutines.withContext
  * The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model
  * holds. NEEDS_ATTENTION lists the changes the server refused.
  */
-enum class Destination { SIGN_IN, TIMER, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, TEMPLATES, SETTINGS, LICENCES, ENTRY, NEEDS_ATTENTION }
+enum class Destination { SIGN_IN, TIMER, POMODORO, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, TEMPLATES, SETTINGS, LICENCES, ENTRY, NEEDS_ATTENTION }
 
 /**
  * The app's navigation host: a back stack of [Destination]s that survives configuration changes
@@ -534,6 +537,10 @@ private fun Screen(
                 )
             },
         )
+        Destination.POMODORO -> {
+            val pomodoro: PomodoroViewModel = viewModel()
+            PomodoroScreen(model = pomodoro.model, cache = cache)
+        }
         Destination.REPORTS -> ReportsScreen(model = reports)
         Destination.PROJECTS -> ProjectsScreen(model = projects)
         Destination.CLIENTS -> ClientsScreen(model = clients)
