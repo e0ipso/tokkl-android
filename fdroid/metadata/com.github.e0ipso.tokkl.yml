@@ -1,0 +1,35 @@
+Categories:
+  - Time
+License: MIT
+SourceCode: https://github.com/e0ipso/tokkl-android
+IssueTracker: https://github.com/e0ipso/tokkl-android/issues
+Changelog: https://github.com/e0ipso/tokkl-android/blob/main/CHANGELOG.md
+
+AutoName: Tokkl
+
+RepoType: git
+Repo: https://github.com/e0ipso/tokkl-android.git
+Binaries: https://github.com/e0ipso/tokkl-android/releases/download/v%v/tokkl-android-%v.apk
+
+Builds:
+  - versionName: 0.2.0
+    versionCode: 2000
+    commit: v0.2.0
+    subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-21-jdk-headless
+      - update-java-alternatives --set java-1.21.0-openjdk-amd64
+    gradle:
+      - yes
+    prebuild:
+      - sdkmanager 'platforms;android-37' 'build-tools;36.0.0'
+
+AllowedAPKSigningKeys:
+  - a136818136320223ea0dcccf4735e62a63badaf69be6b14e2b154f484f4c6196
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: gradle/version.properties|versionCode=(\d+)|.|versionName=(\S+)
+CurrentVersion: 0.2.0
+CurrentVersionCode: 2000
