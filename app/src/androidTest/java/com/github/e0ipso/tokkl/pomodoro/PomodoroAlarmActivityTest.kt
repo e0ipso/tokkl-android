@@ -47,6 +47,7 @@ class PomodoroAlarmActivityTest {
     private lateinit var database: CacheDatabase
     private var originalFullScreenMode: String? = null
     private var screenWasOn = true
+    private var restoreLockscreenDisabled = false
 
     @Before fun prepareDisposableSessionAndGrantFullScreenAccess() {
         screenWasOn = device.isScreenOn
@@ -86,6 +87,10 @@ class PomodoroAlarmActivityTest {
         } finally {
             try {
                 originalFullScreenMode?.let(::setFullScreenMode)
+                if (restoreLockscreenDisabled) {
+                    DeviceShell.run("locksettings set-disabled true")
+                    restoreLockscreenDisabled = false
+                }
                 if (screenWasOn) device.wakeUp() else device.sleep()
             } finally {
                 if (::database.isInitialized) database.close()
@@ -94,6 +99,11 @@ class PomodoroAlarmActivityTest {
     }
 
     @Test fun lockedScreenPhaseEndLaunchesAlarmTurnsScreenOnAndKeepsItAwake() {
+        // The API 31 emulator boots with the lock screen disabled, so sleep never locks it.
+        if (DeviceShell.run("settings get secure lockscreen.disabled").trim() == "1") {
+            restoreLockscreenDisabled = true
+            DeviceShell.run("locksettings set-disabled false")
+        }
         device.pressHome()
         device.sleep()
         assertFalse(device.isScreenOn)

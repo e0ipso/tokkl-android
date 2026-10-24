@@ -1131,8 +1131,11 @@ private val SlideDistance: Dp = 30.dp
 /** How long a day's column takes to slide in: Material's shared axis transition takes 300ms. */
 private const val SLIDE_MS = 300
 
-/** The smallest a line of a strip day shrinks to. */
-private val StripMinFontSize = 6.sp
+/**
+ * The smallest a line of a strip day shrinks to. Low enough that a short total such as
+ * "45 min" stays whole in a day of the strip at the largest font scale and display size.
+ */
+private val StripMinFontSize = 4.sp
 
 
 private const val MINUTE_MS = 60_000L

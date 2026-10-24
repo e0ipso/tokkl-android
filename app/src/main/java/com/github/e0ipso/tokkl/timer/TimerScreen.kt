@@ -24,7 +24,6 @@ import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.TopBarStatusBand
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.compactHeightWindow
-import com.github.e0ipso.tokkl.ui.shortWindow
 import com.github.e0ipso.tokkl.ui.windowWidth
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
@@ -96,7 +95,9 @@ fun TimerScreen(
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding),
             scrollAway = scrollAway,
-            startScrolledAway = view == TimerView.CALENDAR && shortWindow(),
+            // A short window, and an upright phone at the largest font scale, open the calendar
+            // with the title and timer already scrolled away so the grid has the height.
+            startScrolledAway = view == TimerView.CALENDAR && compactHeightWindow(),
             top = {
                 if (scrollAway) TokklTopBar(title, windowInsets = WindowInsets(0))
                 Column(Modifier.screenContent(columnWidth)) {
