@@ -31,6 +31,14 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <!--
+        Only the high-importance Pomodoro phase-end alarm opens over the lock screen.
+        API 34+ special app access can be denied, including by third-party installers;
+        the Pomodoro page checks canUseFullScreenIntent and links the per-app setting.
+        https://developer.android.com/about/versions/14/behavior-changes-14#secure-fsi
+        https://source.android.com/docs/core/permissions/fsi-limits
+    -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!--
         The running timer's notification (docs/PRD.md N1). Android 13 and later show it only once
         the user allows it; asking is TKA-0058's.
     -->
@@ -93,6 +101,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- The alarm has its own task so Back/Home leave playback with the service. -->
+        <activity
+            android:name=".pomodoro.PomodoroAlarmActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.pomodoroAlarm"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.Tokkl" />
         <!-- Only completed report CSV files, with per-URI temporary read grants. -->
         <provider
             android:name=".reports.ReportExportProvider"

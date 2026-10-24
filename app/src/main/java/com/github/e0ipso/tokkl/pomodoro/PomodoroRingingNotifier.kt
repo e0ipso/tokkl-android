@@ -43,7 +43,10 @@ internal class PomodoroRingingNotifier(private val context: Context) {
             .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(open)
         if (phase != null) {
+            val alarm = pomodoroAlarmPendingIntent(context, phase)
             builder
+                .setContentIntent(alarm)
+                .setFullScreenIntent(alarm, true)
                 .setDeleteIntent(actionIntent(PomodoroRingingActionReceiver.REPOST, phase))
                 .addAction(action(R.drawable.ic_play, R.string.pomodoro_alarm_next, PomodoroRingingActionReceiver.NEXT, phase))
                 .addAction(action(R.drawable.ic_stop, R.string.pomodoro_alarm_end, PomodoroRingingActionReceiver.END, phase))

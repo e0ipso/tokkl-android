@@ -35,6 +35,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -43,7 +44,8 @@ import org.junit.Test
 
 /**
  * Device acceptance source for API 31..36; no audible emulator output is assumed. Inspect the
- * actual MediaPlayer, applied attributes and vibrator request. No activity is launched.
+ * actual MediaPlayer, applied attributes and vibrator request. Full-screen alarm Activity
+ * acceptance is covered separately in PomodoroAlarmActivityTest.
  * Instrumentation shares the app process, so this cannot model force-stop/process death.
  */
 @SignedOut
@@ -129,7 +131,10 @@ class PomodoroRingingServiceTest {
         val notification = ringingNotification()
         assertEquals(Notification.CATEGORY_ALARM, notification.category)
         assertEquals(0L, notification.timeoutAfter)
-        assertNull(notification.fullScreenIntent)
+        // The phase alarm now requests the lock-screen Activity. A denied system grant may
+        // suppress launch, but never removes sound, vibration or the notification actions.
+        assertNotNull(PomodoroRingingNotifier(context).build(original.phaseKey()).fullScreenIntent)
+        if (canShowPomodoroFullScreen(context)) assertNotNull(notification.fullScreenIntent)
         assertTrue(notification.flags and Notification.FLAG_FOREGROUND_SERVICE != 0)
         assertEquals(NotificationManager.IMPORTANCE_HIGH, notifications.getNotificationChannel(PomodoroRingingNotifier.CHANNEL_ID).importance)
         assertNull(notifications.getNotificationChannel(PomodoroRingingNotifier.CHANNEL_ID).sound)

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import android.content.ActivityNotFoundException
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -56,9 +58,14 @@ fun PomodoroScreen(model: PomodoroScreenModel, cache: AccountCache, modifier: Mo
     val projects by cache.projects.collectAsState(initial = emptyList())
     val tasks by cache.tasks.collectAsState(initial = emptyList())
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    DisposableEffect(model, lifecycle) {
+    val context = LocalContext.current
+    var fullScreenSettingsUnavailable by remember { mutableStateOf(false) }
+    DisposableEffect(model, lifecycle, context) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) model.reload()
+            if (event == Lifecycle.Event.ON_RESUME) {
+                model.fullScreenPermissionChanged(canShowPomodoroFullScreen(context))
+                model.reload()
+            }
         }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
@@ -79,6 +86,19 @@ fun PomodoroScreen(model: PomodoroScreenModel, cache: AccountCache, modifier: Mo
             }
         },
         modifier = modifier,
+        onFullScreenSettings = {
+            pomodoroFullScreenSettings(context)?.let { settings ->
+                try {
+                    context.startActivity(settings)
+                    fullScreenSettingsUnavailable = false
+                } catch (_: ActivityNotFoundException) {
+                    fullScreenSettingsUnavailable = true
+                } catch (_: SecurityException) {
+                    fullScreenSettingsUnavailable = true
+                }
+            }
+        },
+        fullScreenSettingsUnavailable = fullScreenSettingsUnavailable,
     )
 }
 
@@ -97,6 +117,8 @@ fun PomodoroContent(
     tasks: List<CachedTask> = emptyList(),
     picker: EntryPicker = { _, _, _, _ -> },
     clock: Clock = Clock.systemUTC(),
+    onFullScreenSettings: () -> Unit = {},
+    fullScreenSettingsUnavailable: Boolean = false,
 ) {
     val spacing = TokklTheme.spacing
     val focus = LocalFocusManager.current
@@ -109,6 +131,15 @@ fun PomodoroContent(
     CatalogPage(title = stringResource(R.string.pomodoro_title), done = null, onDoneShown = {}, modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(spacing.betweenGroups)) {
             PomodoroFeedback(state)
+            if (state.fullScreenDenied) {
+                ErrorBanner(stringResource(R.string.pomodoro_fullscreen_denied))
+                TokklGhostButton(onClick = onFullScreenSettings, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.pomodoro_fullscreen_settings))
+                }
+                if (fullScreenSettingsUnavailable) {
+                    ErrorBanner(stringResource(R.string.pomodoro_fullscreen_settings_unavailable))
+                }
+            }
             if (state.loading) {
                 Text(stringResource(R.string.pomodoro_loading))
                 if (state.problem != null) {

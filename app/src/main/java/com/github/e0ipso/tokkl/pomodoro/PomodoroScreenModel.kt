@@ -60,6 +60,7 @@ data class PomodoroPageState(
     val session: PomodoroSession? = null,
     val account: AccountSettings? = null,
     val alarmDenied: Boolean = false,
+    val fullScreenDenied: Boolean = false,
     val unsentCount: Int? = null,
     val refused: List<PendingChange> = emptyList(),
     val notice: PomodoroNotice? = null,
@@ -99,6 +100,11 @@ class PomodoroScreenModel(
         scope.launch { settings.collect { account -> mutableState.update { it.copy(account = account) } } }
         scope.launch { unsent.collect { count -> mutableState.update { it.copy(unsentCount = count) } } }
         scope.launch { refused.collect { changes -> mutableState.update { it.copy(refused = changes) } } }
+    }
+
+    /** Refreshed on resume after returning from full-screen special app access settings. */
+    fun fullScreenPermissionChanged(allowed: Boolean) {
+        mutableState.update { it.copy(fullScreenDenied = !allowed) }
     }
 
     /** Called on opening and resuming the page; never polls or sends a request. */

@@ -8,9 +8,10 @@ import org.junit.Test
  * The permissions every store page lists stay the ones the app uses. WorkManager's manifest adds
  * FOREGROUND_SERVICE and SystemForegroundService for workers that call setForeground, which the
  * queue's worker never does. Only the Pomodoro ringing service uses mediaPlayback; the worker
- * service stays removed. Its type permission and VIBRATE are the only additions. WAKE_LOCK and
+ * service stays removed. Its type permission and VIBRATE support ringing. WAKE_LOCK and
  * RECEIVE_BOOT_COMPLETED stay for the background send. A Pomodoro phase end adds the exact-alarm
  * permission each API allows: SCHEDULE_EXACT_ALARM through API 32, and USE_EXACT_ALARM from API 33.
+ * USE_FULL_SCREEN_INTENT is only for its lock-screen alarm Activity.
  */
 class MergedPermissionsTest {
 
@@ -34,11 +35,27 @@ class MergedPermissionsTest {
                 "android.permission.RECEIVE_BOOT_COMPLETED",
                 "android.permission.SCHEDULE_EXACT_ALARM",
                 "android.permission.USE_EXACT_ALARM",
+                "android.permission.USE_FULL_SCREEN_INTENT",
                 "android.permission.VIBRATE",
                 "android.permission.WAKE_LOCK",
             ),
             permissions,
         )
+    }
+
+    @Test
+    fun pomodoroAlarmHasAnUnexportedLockScreenTask() {
+        val alarm = MergedManifest.application().childElements().single {
+            it.tagName == "activity" && it.androidAttribute("name").endsWith(".PomodoroAlarmActivity")
+        }
+        assertEquals("false", alarm.androidAttribute("exported"))
+        assertEquals("true", alarm.androidAttribute("showWhenLocked"))
+        assertEquals("true", alarm.androidAttribute("turnScreenOn"))
+        assertEquals("true", alarm.androidAttribute("excludeFromRecents"))
+        assertEquals("singleTask", alarm.androidAttribute("launchMode"))
+        assertEquals("com.github.e0ipso.tokkl.pomodoroAlarm", alarm.androidAttribute("taskAffinity"))
+        assertEquals("@style/Theme.Tokkl", alarm.androidAttribute("theme"))
+        assertFalse(alarm.childElements().any { it.tagName == "intent-filter" })
     }
 
     @Test

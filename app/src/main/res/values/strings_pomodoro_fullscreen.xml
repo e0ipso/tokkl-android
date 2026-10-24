@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pomodoro_fullscreen_work_short">Work done: start short rest</string>
+    <string name="pomodoro_fullscreen_work_long">Work done: start long rest</string>
+    <string name="pomodoro_fullscreen_short_work">Short rest done: start work</string>
+    <string name="pomodoro_fullscreen_long_work">Long rest done: start work</string>
+    <string name="pomodoro_fullscreen_denied">Full-screen alarms are off. The phase-end alarm still rings, but cannot open over the lock screen.</string>
+    <string name="pomodoro_fullscreen_settings">Allow full-screen alarms</string>
+    <string name="pomodoro_fullscreen_settings_unavailable">Full-screen alarm settings could not be opened. Open Settings, Apps, Special app access, Full-screen notifications.</string>
+    <string name="pomodoro_fullscreen_save_failed">The session could not be updated on this phone. The alarm keeps ringing. Try Next phase or End session again.</string>
+</resources>
