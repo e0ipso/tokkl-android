@@ -228,19 +228,33 @@ Without the script, `./gradlew connectedDebugAndroidTest` fails the tests that n
 
 ### Screenshot tests
 
-`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/` captures sign-in with each method, the Timer page with its List and Calendar views, the List view beside the navigation rail on a medium window, the entry form beside the history on an expanded window, Settings, Licences, the Summary, Detailed and Weekly report tabs, Projects, Clients, Tags, the More sheet, the http warning and the certificate prompt, in the light and the dark theme, at font scale 1.0 and 2.0. That is 17 screens and 68 reference images. The More sheet has a window of its own, which a capture of a compose node leaves out, so its test copies that window with `PixelCopy`. Each capture shrinks to a third in each direction and is compared with its reference image in `app/src/androidTest/assets/screenshots/`. The references come from `tokkl-api36`, because density and system fonts change the pixels. Each class carries `@SdkSuppress` for API 36, so on any other version the runner leaves the screenshot tests out. An assumption would not do, because the Android Gradle plugin reports a failed assumption as a failed test. Run all four classes with:
+`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/` declares captures of sign-in with each method, the Timer page with its List and Calendar views, the List view beside the navigation rail on a medium window, the entry form beside the history on an expanded window, Settings, Licences, the Summary, Detailed and Weekly report tabs, Projects, Clients, Tags, the More sheet, the http warning and the certificate prompt. It also declares the real Pomodoro idle start form, running work in overtime, and full-screen alarm. Each Pomodoro state has a top capture and a capture scrolled to its actions, including at the largest font scale. The page uses `SignedInFrame`, including the running Pomodoro mark; the alarm fills its own content window without navigation. Fixed page/model state and a UTC clock hold work at 1:05 overtime without starting a session, scheduling an alarm or playing sound. Activity, session, theme and font-scale rules retain their cleanup.
+
+Source declares 20 screen/state scenarios in 25 capture cases, each in the light and dark themes at font scales 1.0 and 2.0. The four classes therefore expect 100 images and 100 test executions. This includes two extra header frames, one for each Timer view, scrolled to Today and This week so both totals appear even at the largest font scale. Timer fixtures use the production `TimerTotals` from TKA-0317 with fixed cached rows matching their history/calendar and the current TKA-0318 timer controls, including the running timer's fullscreen action. The expanded entry/history frame uses that same header.
+
+There are currently 68 reference PNGs in `app/src/androidTest/assets/screenshots/`; the 24 new Pomodoro images and eight new Timer totals images have not been recorded, and the existing signed-in navigation references still need recapture. These are authored expectations, not executed results. TKA-0255 intentionally leaves every PNG unchanged and defers recording, visual review and comparison until every backlog implementation ticket is done.
+
+The More sheet has a window of its own, which a capture of a compose node leaves out, so its test copies that window with `PixelCopy`. Each capture shrinks to a third in each direction and is compared with its reference PNG, preserving the existing channel and differing-pixel tolerances. References must come from `tokkl-api36`, because density and system fonts change the pixels. Each class carries `@SdkSuppress` for API 36, so other versions leave these tests out; API 31 visual compatibility remains a separate deferred check. At the final gate, after all implementation tickets are done, run all four classes with:
 
 ```sh
-scripts/instrumented-tests.sh \
+TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh \
   -Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.ui.screenshot
 ```
 
-A capture that differs from its reference, or has none, fails its test. The capture and a diff, with the differing pixels in magenta, land in `actual/` and `diff/` under `app/build/outputs/connected_android_test_additional_output/debugAndroidTest/connected/<device>/screenshots/`. A change to how a screen looks updates its references in the same commit. Look at every diff and capture. When all of them show the intended change, copy them into the references and run the tests again:
+A capture that differs from its reference, or has none, fails its test. The capture and a diff, with the differing pixels in magenta, land in `actual/` and `diff/` under `app/build/outputs/connected_android_test_additional_output/debugAndroidTest/connected/<device>/screenshots/`. Use outputs from this run only. Visually inspect every emitted capture and every diff in all four variants, then copy only reviewed images into the references:
+
+- Record all changed signed-in bar and rail frames, including Timer List/Calendar, the medium rail, expanded entry/history, Settings, Licences, Projects, Clients and Tags. Review the TKA-0317/TKA-0318 Timer header changes, including both totals and the running timer's fullscreen action. Also review all eight new `{timer-totals,calendar-totals}-{light,dark}-{100,200}.png` header captures. Timer content changes are expected alongside navigation changes.
+- Review the Summary, Detailed and Weekly reports inside the real navigation frame. The More sheet must retain the production Reports/Templates order and selected-page treatment. For other existing frames, account for each change beyond the bar, rail or More list before accepting it.
+- Review all 24 new `pomodoro-{idle,idle-actions,overtime,overtime-actions,alarm,alarm-actions}-{light,dark}-{100,200}.png` images. Check the idle length form and entry controls, overtime clock, selected/running navigation marks and alarm's two actions, including the scrolled largest-font captures.
+
+The following copy is for a reviewed final-gate run only, not a recording step performed by TKA-0255:
 
 ```sh
 cp app/build/outputs/connected_android_test_additional_output/debugAndroidTest/connected/*/screenshots/actual/*.png \
   app/src/androidTest/assets/screenshots/
 ```
+
+Commit the reviewed PNG changes at that gate, then repeat the same API 36 package command in comparison mode. Require all 100 declared cases and references, confirm the runner's actual test/failure counts and fixture/device cleanup, and retain the logs and visual review evidence. Missing images and the expected first-run comparison failures are not passes. No source tests remain to be authored for these scenarios; their execution and all PNG work remain pending.
 
 ### Benchmarks
 

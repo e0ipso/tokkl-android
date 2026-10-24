@@ -10,20 +10,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.WindowSize
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.DpSize
@@ -44,6 +50,8 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.PomodoroSession
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.calendar.CalendarEntry
 import com.github.e0ipso.tokkl.calendar.CalendarState
@@ -58,9 +66,13 @@ import com.github.e0ipso.tokkl.history.HistoryEntry
 import com.github.e0ipso.tokkl.history.HistoryState
 import com.github.e0ipso.tokkl.history.OlderDays
 import com.github.e0ipso.tokkl.navigation.SampleEntryForm
-import com.github.e0ipso.tokkl.navigation.SampleTimerPage
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContent
+import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmState
+import com.github.e0ipso.tokkl.pomodoro.PomodoroContent
+import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
+import com.github.e0ipso.tokkl.pomodoro.PomodoroPageState
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
 import com.github.e0ipso.tokkl.reports.DetailedEntry
@@ -90,6 +102,7 @@ import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
+import com.github.e0ipso.tokkl.timer.TimerTotals
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
@@ -105,6 +118,7 @@ import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
@@ -124,8 +138,9 @@ import org.junit.rules.RuleChain
  * The references are in app/src/androidTest/assets/screenshots, recorded on tokkl-api36, since
  * density and system fonts change the pixels. They run only on its Android version, API 36: every
  * other version draws text and shapes differently, so each comparison there would fail without
- * saying anything about the app. A change to how a screen looks updates its references in the same
- * commit:
+ * saying anything about the app. TKA-0255 authors the new scenarios only. After every backlog
+ * implementation ticket is done, the final gate must record and review the changed navigation
+ * frames and the new Pomodoro frames on tokkl-api36, then commit the references and compare again:
  *
  * 1. Run the four classes, which share this package, through scripts/instrumented-tests.sh with
  *    `-Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.ui.screenshot`.
@@ -179,13 +194,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun timer() {
         show({
             SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, syncStatus = SYNC_STATUS, syncStatusClock = TODAY) {
-                TimerScreen(
-                    view = TimerView.LIST,
-                    onViewChange = {},
-                    timer = { Timer(IDLE_TIMER, elapsedSeconds = 0) },
-                    listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
-                    calendarContent = {},
-                )
+                TimerPage(TimerView.LIST)
             }
         }) {
             composeRule.awaitTimerPage()
@@ -204,13 +213,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun calendar() {
         show({
             SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, timerRunning = true) {
-                TimerScreen(
-                    view = TimerView.CALENDAR,
-                    onViewChange = {},
-                    timer = { Timer(RUNNING_TIMER, elapsedSeconds = RUNNING_SECONDS) },
-                    listContent = {},
-                    calendarContent = { CalendarContent(state = CALENDAR, now = TODAY.instant(), onStep = {}, onSelect = {}, onToday = {}, onRetry = {}) },
-                )
+                TimerPage(TimerView.CALENDAR)
             }
         }) {
             composeRule.awaitTimerPage()
@@ -229,13 +232,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(MEDIUM_WINDOW)) {
                 SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, syncStatus = SYNC_STATUS, syncStatusClock = TODAY) {
-                    TimerScreen(
-                        view = TimerView.LIST,
-                        onViewChange = {},
-                        timer = { Timer(IDLE_TIMER, elapsedSeconds = 0) },
-                        listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
-                        calendarContent = {},
-                    )
+                    TimerPage(TimerView.LIST)
                 }
             }
         }) {
@@ -253,7 +250,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
                 SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
                     SignedInPanes(destination = Destination.ENTRY, entryBeside = true, entryKey = 0) { shown ->
-                        if (shown == Destination.ENTRY) SampleEntryForm() else SampleTimerPage(TimerView.LIST)
+                        if (shown == Destination.ENTRY) SampleEntryForm() else TimerPage(TimerView.LIST)
                     }
                 }
             }
@@ -262,6 +259,72 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             composeRule.awaitText(string(R.string.entry_form_edit))
             assertScreen("entry-beside")
         }
+    }
+
+    /** Explicit header frames keep both totals in the reference even when large text scrolls. */
+    @SignedOut
+    @Test
+    fun timerTotals() = showTimerTotals(TimerView.LIST, "timer-totals")
+
+    @SignedOut
+    @Test
+    fun calendarTotals() = showTimerTotals(TimerView.CALENDAR, "calendar-totals")
+
+    /** The real start form, with fixed account defaults and no running session. */
+    @SignedOut
+    @Test
+    fun pomodoroIdle() = showPomodoro(IDLE_POMODORO) {
+        composeRule.awaitText(string(R.string.pomodoro_work_minutes))
+        assertScreen("pomodoro-idle")
+    }
+
+    /** The bottom of the form keeps its entry controls and Start visible at font scale 2.0. */
+    @SignedOut
+    @Test
+    fun pomodoroIdleActions() = showPomodoro(IDLE_POMODORO) {
+        composeRule.onNode(hasText(string(R.string.pomodoro_start)) and hasClickAction())
+            .performScrollTo().assertIsDisplayed().assertIsEnabled()
+        assertScreen("pomodoro-idle-actions")
+    }
+
+    /** Work ended 65 seconds ago; the page and navigation still show a running Pomodoro. */
+    @SignedOut
+    @Test
+    fun pomodoroOvertime() = showPomodoro(RUNNING_POMODORO) {
+        composeRule.onNode(hasContentDescription(string(
+            R.string.pomodoro_overtime_clock,
+            POMODORO_ACCOUNT.formatDuration(65),
+        ))).assertIsDisplayed()
+        assertScreen("pomodoro-overtime")
+    }
+
+    @SignedOut
+    @Test
+    fun pomodoroOvertimeActions() = showPomodoro(RUNNING_POMODORO) {
+        composeRule.onNode(hasText(string(R.string.pomodoro_end)) and hasClickAction())
+            .performScrollTo().assertIsDisplayed().assertIsEnabled()
+        composeRule.onNode(hasText(string(R.string.pomodoro_start_short_rest)) and hasClickAction())
+            .assertIsDisplayed().assertIsEnabled()
+        assertScreen("pomodoro-overtime-actions")
+    }
+
+    /** The production alarm content fills the window without signed-in navigation. */
+    @SignedOut
+    @Test
+    fun pomodoroAlarm() = showPomodoroAlarm {
+        composeRule.onNode(hasContentDescription(string(R.string.pomodoro_overtime_clock, "1:05")))
+            .assertIsDisplayed()
+        assertScreen("pomodoro-alarm")
+    }
+
+    @SignedOut
+    @Test
+    fun pomodoroAlarmActions() = showPomodoroAlarm {
+        composeRule.onNode(hasText(string(R.string.pomodoro_alarm_end)) and hasClickAction())
+            .performScrollTo().assertIsDisplayed().assertIsEnabled()
+        composeRule.onNode(hasText(string(R.string.pomodoro_alarm_next)) and hasClickAction())
+            .assertIsDisplayed().assertIsEnabled()
+        assertScreen("pomodoro-alarm-actions")
     }
 
     @Test
@@ -287,23 +350,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun reports() {
-        show({
-            ReportsContent(
-                state = ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), REPORT),
-                tab = ReportTab.SUMMARY,
-                settings = ACCOUNT,
-                time = ACCOUNT.time(TODAY),
-                filters = ReportFilters(),
-                filterOptions = FilterOptions.NONE,
-                onTab = {},
-                onShift = {},
-                onPreset = {},
-                onCustom = {},
-                onFilters = {},
-                onRetry = {},
-                onLoadMore = {},
-            )
-        }) {
+        show({ ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), REPORT), ReportTab.SUMMARY) }) {
             composeRule.awaitText(string(R.string.reports_projects))
             assertScreen("reports")
         }
@@ -443,41 +490,104 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
-    /** The timer in [state], its clock at [elapsedSeconds], with no picker to open. */
+    private fun showPomodoro(state: PomodoroPageState, steps: () -> Unit) {
+        show({
+            SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = state.session != null) {
+                PomodoroContent(
+                    state = state,
+                    onLengths = {}, onFields = {}, onStart = {}, onNext = {}, onEnd = {}, onReload = {},
+                    clock = TODAY,
+                )
+            }
+        }) {
+            composeRule.awaitText(string(R.string.pomodoro_title))
+            steps()
+        }
+    }
+
+    private fun showPomodoroAlarm(steps: () -> Unit) {
+        show({
+            PomodoroAlarmContent(PomodoroAlarmState(session = POMODORO_SESSION), onNext = {}, onEnd = {}, clock = TODAY)
+        }) {
+            composeRule.awaitText(string(R.string.pomodoro_alarm_title))
+            steps()
+        }
+    }
+
+    private fun showTimerTotals(view: TimerView, name: String) {
+        show({
+            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, timerRunning = view == TimerView.CALENDAR) {
+                TimerPage(view)
+            }
+        }) {
+            composeRule.awaitTimerPage()
+            composeRule.onNodeWithTag("timer_totals_week").performScrollTo().assertIsDisplayed()
+            composeRule.onNodeWithTag("timer_totals_today").assertIsDisplayed()
+            assertScreen(name)
+        }
+    }
+
+    /** Use the current header in every fixture, including the expanded entry/history frame. */
+    @Composable
+    private fun TimerPage(view: TimerView) {
+        TimerScreen(
+            view = view,
+            onViewChange = {},
+            timer = {
+                if (view == TimerView.CALENDAR) Timer(RUNNING_TIMER, RUNNING_SECONDS)
+                else Timer(IDLE_TIMER, 0)
+            },
+            listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
+            calendarContent = {
+                CalendarContent(state = CALENDAR, now = TODAY.instant(), onStep = {}, onSelect = {}, onToday = {}, onRetry = {})
+            },
+        )
+    }
+
+    /** The real controls and cache-derived totals, with both clocks fixed on [TODAY]. */
     @Composable
     private fun Timer(state: TimerState, elapsedSeconds: Long) {
-        TimerBarContent(
-            state = state,
-            elapsedSeconds = elapsedSeconds,
-            onDescriptionChange = {},
-            onDescriptionDone = {},
-            onPick = {},
-            onBillableChange = {},
-            onStart = {},
-            onStop = {},
-            onAddEntry = {},
-            picker = { _, _, _, _, _ -> },
-        )
+        val entries = remember(state) {
+            MutableStateFlow(if (state is TimerState.Running) CALENDAR_ROWS else HISTORY_ROWS)
+        }
+        val account = remember { MutableStateFlow<AccountSettings?>(ACCOUNT) }
+        Column {
+            TimerBarContent(
+                state = state,
+                elapsedSeconds = elapsedSeconds,
+                onDescriptionChange = {},
+                onDescriptionDone = {},
+                onPick = {},
+                onBillableChange = {},
+                onStart = {},
+                onStop = {},
+                onAddEntry = {},
+                picker = { _, _, _, _, _ -> },
+            )
+            TimerTotals(entries, account, clock = TODAY)
+        }
     }
 
     /** The reports screen with [state] on [tab], on [TODAY]. */
     @Composable
     private fun ReportsTab(state: ReportsState, tab: ReportTab) {
-        ReportsContent(
-            state = state,
-            tab = tab,
-            settings = ACCOUNT,
-            time = ACCOUNT.time(TODAY),
-            filters = ReportFilters(),
-            filterOptions = FilterOptions.NONE,
-            onTab = {},
-            onShift = {},
-            onPreset = {},
-            onCustom = {},
-            onFilters = {},
-            onRetry = {},
-            onLoadMore = {},
-        )
+        SignedInFrame(current = TopLevelPage.REPORTS, onOpen = {}) {
+            ReportsContent(
+                state = state,
+                tab = tab,
+                settings = ACCOUNT,
+                time = ACCOUNT.time(TODAY),
+                filters = ReportFilters(),
+                filterOptions = FilterOptions.NONE,
+                onTab = {},
+                onShift = {},
+                onPreset = {},
+                onCustom = {},
+                onFilters = {},
+                onRetry = {},
+                onLoadMore = {},
+            )
+        }
     }
 
     /**
@@ -528,6 +638,24 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
         /** A Thursday at noon, in the middle of [WEEK]. */
         val TODAY: Clock = Clock.fixed(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
+
+        val POMODORO_ACCOUNT = ACCOUNT.copy(defaultWorkspaceId = 1)
+
+        val POMODORO_FIELDS = EntryFields(description = "Write screenshot scenarios", billable = true)
+
+        val IDLE_POMODORO = PomodoroPageState(
+            loading = false, account = POMODORO_ACCOUNT, fields = POMODORO_FIELDS,
+            lengths = PomodoroLengths("25", "5", "15", "4"),
+        )
+
+        /** Default 25-minute work phase, fixed at 1:05 overtime on [TODAY]. No store or alarm runs. */
+        val POMODORO_SESSION = PomodoroSession(
+            workspaceId = 1, workMinutes = 25.0, shortRestMinutes = 5.0, longRestMinutes = 15.0, longRestEvery = 4.0,
+            phaseKind = "work", phaseStartedAt = TODAY.instant().minusSeconds(25 * 60 + 65),
+            pomodoroStartedAt = TODAY.instant().minusSeconds(25 * 60 + 65), completed = 0.0, fields = POMODORO_FIELDS,
+        )
+
+        val RUNNING_POMODORO = IDLE_POMODORO.copy(session = POMODORO_SESSION)
 
         val WEEK = ReportRange(LocalDate.of(2026, 10, 12), LocalDate.of(2026, 10, 18))
 
@@ -602,6 +730,17 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             ),
             week = WeekSource.Cached,
         )
+
+        /** Rows match each visible fixture, including the Calendar's single running entry. */
+        val HISTORY_ROWS = HISTORY.days.flatMap { it.entries }.map { entry ->
+            CachedTimeEntry(entry.id, 1, entry.projectId, entry.taskId, entry.description,
+                entry.start, entry.stop, entry.billable, entry.tags, emptyList())
+        }
+
+        val CALENDAR_ROWS = CALENDAR.entries.map { entry ->
+            CachedTimeEntry(entry.id, 1, null, null, entry.description,
+                entry.start, entry.stop, false, emptyList(), emptyList())
+        }
 
         /** The timer with nothing running, in the account's workspace. */
         val IDLE_TIMER = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1)
