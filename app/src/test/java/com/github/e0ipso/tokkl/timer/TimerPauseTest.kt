@@ -249,6 +249,68 @@ class TimerPauseTest {
         assertNull(runBlocking { withTimeout(TIMEOUT_MS) { opening.await() } })
     }
 
+    @Test
+    fun focusedCallbacksCannotPauseStopOrEditAReplacement() {
+        controls.value = running(accumulatedSeconds = 600)
+        val old = awaitState("old focused context") { it is TimerState.Running } as TimerState.Running
+        val next = running().let { it.copy(entry = it.entry.copy(id = 99), target = RUNNING.copy(entryId = 99)) }
+        controls.value = next
+        awaitState("replacement context") { it is TimerState.Running && it.entryId == 99L }
+        onMain {
+            model.pauseShown(old.target!!)
+            model.stopShown(old.target!!)
+        }
+        assertNull(runBlocking(mainDispatcher) { model.runningForEditShown(old.target!!) })
+        assertEquals(emptyList<String>(), changes.calls)
+        assertEquals(next.target, model.state.value.target)
+    }
+
+    @Test
+    fun focusedPauseAndResumeKeepCumulativeTimeAndFenceOldRevision() {
+        controls.value = running(accumulatedSeconds = 600)
+        val running = awaitState("running context") { it is TimerState.Running } as TimerState.Running
+        onMain { model.pauseShown(running.target!!) }
+        val paused = awaitState("settled paused context") { it is TimerState.Paused && it.target?.let(model::isShown) == true } as TimerState.Paused
+        assertEquals(690L, paused.seconds)
+        val calls = changes.calls.toList()
+        onMain { model.resumeShown(running.target!!) }
+        assertEquals("stale running callback cannot resume a paused successor", calls, changes.calls)
+        onMain { model.resumeShown(paused.target!!) }
+        val resumed = awaitState("settled resumed context") { it is TimerState.Running && it.target?.let(model::isShown) == true } as TimerState.Running
+        assertEquals(690L, resumed.accumulatedSeconds)
+        assertEquals(CLONE_ID, resumed.entryId)
+        val identity = runBlocking(mainDispatcher) { model.runningForEditShown(resumed.target!!) }
+        assertEquals(RunningEntryIdentity(CLONE_ID, WORKSPACE, TAP), identity)
+    }
+
+    @Test
+    fun focusedStopExitsOnlyAfterAuthoritativeIdleAndCannotRepeat() {
+        controls.value = running()
+        val shown = awaitState("running context") { it is TimerState.Running } as TimerState.Running
+        changes.gate = CompletableDeferred()
+        onMain { model.stopShown(shown.target!!) }
+        val pending = awaitIdle()
+        assertFalse("optimistic idle must retain focused route", pending.authoritative)
+        assertNull(pending.target)
+        changes.gate.complete(Unit)
+        awaitState("authoritative stop") { it is TimerState.Idle && it.authoritative }
+        val calls = changes.calls.toList()
+        onMain { model.stopShown(shown.target!!) }
+        assertEquals(calls, changes.calls)
+        assertEquals(listOf("stop ${shown.target} null"), calls)
+    }
+
+    @Test
+    fun focusedPausedEditorTargetCannotActAfterAChainReplacement() {
+        controls.value = PAUSED
+        val old = awaitState("paused context") { it is TimerState.Paused } as TimerState.Paused
+        controls.value = PAUSED.copy(target = PAUSED_TARGET.copy(chainId = CHAIN + 1))
+        awaitState("replacement paused context") { it is TimerState.Paused && it.target?.chainId == CHAIN + 1 }
+        onMain { model.resumeShown(old.target!!); model.stopShown(old.target!!) }
+        assertFalse(model.isShown(old.target!!))
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
     private fun awaitIdle(): TimerState.Idle = awaitState("the idle timer shows") { it is TimerState.Idle } as TimerState.Idle
 
     private fun awaitState(what: String, condition: (TimerState) -> Boolean): TimerState {

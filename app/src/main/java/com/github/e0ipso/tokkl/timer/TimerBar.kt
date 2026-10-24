@@ -99,6 +99,7 @@ fun TimerBar(
     onManageTemplates: () -> Unit = {},
     clock: Clock = Clock.systemUTC(),
     onEditRunning: () -> Unit = {},
+    onOpenFullscreen: () -> Unit = {},
 ) {
     val state by model.state.collectAsState()
     // The next frame starts once the frame that composed a new state has drawn it. That ends the
@@ -117,7 +118,7 @@ fun TimerBar(
         TimerState.Loading -> null
     }
     Column(modifier) {
-        TimerBarCore(model, cache, state, elapsed, onAddEntry, onEditRunning) {
+        TimerBarCore(model, cache, state, elapsed, onAddEntry, onEditRunning, onOpenFullscreen) {
             val templates = favorites
             if (templates != null) {
                 TemplatePopup(templates, timerFields, onManageTemplates) { fields ->
@@ -167,6 +168,7 @@ private fun TimerBarCore(
     elapsed: Long,
     onAddEntry: () -> Unit,
     onEditRunning: () -> Unit,
+    onOpenFullscreen: () -> Unit,
     templates: @Composable () -> Unit,
 ) {
     val entries by cache.timeEntries.collectAsState(initial = emptyList())
@@ -185,6 +187,7 @@ private fun TimerBarCore(
         onStop = model::stop,
         onAddEntry = onAddEntry,
         onEditRunning = onEditRunning,
+        onOpenFullscreen = onOpenFullscreen,
         picker = { workspaceId, original, picked, onPickedChange, pickerModifier ->
             EntityPicker(cache, workspaceId, original, picked, onPickedChange, pickerModifier)
         },
@@ -225,6 +228,7 @@ fun TimerBarContent(
     onResume: () -> Unit = {},
     templates: @Composable () -> Unit = {},
     onEditRunning: () -> Unit = {},
+    onOpenFullscreen: () -> Unit = {},
 ) {
     val running = state as? TimerState.Running
     val paused = state as? TimerState.Paused
@@ -291,6 +295,11 @@ fun TimerBarContent(
                 }
             }
             TokklGhostButton(onClick = onAddEntry) { Text(stringResource(R.string.timer_add_entry)) }
+            if (running != null || paused != null) {
+                TokklGhostButton(onClick = { focusManager.clearFocus(); onOpenFullscreen() }) {
+                    Text(stringResource(R.string.timer_open_fullscreen))
+                }
+            }
             templates()
         }
     }
@@ -464,7 +473,7 @@ private fun rememberTotalsNow(clock: Clock, settings: AccountSettings?, hasRunni
  * shows, or zero without [start]. Nothing here asks the server.
  */
 @Composable
-private fun rememberElapsedSeconds(start: Instant?, clock: Clock): Long {
+internal fun rememberElapsedSeconds(start: Instant?, clock: Clock): Long {
     var now by remember(clock) { mutableStateOf(clock.instant()) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     if (start != null) {

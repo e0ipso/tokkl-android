@@ -28,4 +28,8 @@
     <string name="timer_total_this_week">This week</string>
     <!-- TalkBack reads the period and the duration in words, so 1:05:00 is not a time of day. -->
     <string name="timer_total_spoken">%1$s, %2$s</string>
+    <string name="timer_open_fullscreen">Fullscreen timer</string>
+    <string name="timer_exit_fullscreen">Exit fullscreen timer</string>
+    <string name="timer_focused_edit">Edit timer</string>
+    <string name="timer_fields_done">Done editing timer fields</string>
 </resources>

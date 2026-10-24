@@ -53,6 +53,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -569,7 +570,13 @@ private fun Grid(
     val hour = with(LocalDensity.current) { HourHeight.roundToPx() }
     // The hour's line sits a little under the top, so its label shows whole.
     val above = with(LocalDensity.current) { TokklSpacing.space4.roundToPx() }
-    LaunchedEffect(Unit) { scroll.scrollTo(FIRST_HOUR * hour - above) }
+    var initiallyPositioned by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!initiallyPositioned) {
+            scroll.scrollTo(FIRST_HOUR * hour - above)
+            initiallyPositioned = true
+        }
+    }
     Column(
         Modifier
             .fillMaxSize()

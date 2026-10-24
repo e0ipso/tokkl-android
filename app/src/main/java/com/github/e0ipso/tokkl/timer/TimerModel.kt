@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.seconds
 import com.github.e0ipso.tokkl.entry.EntryLabels
@@ -48,7 +49,7 @@ sealed interface TimerState {
      * No entry runs. Start starts one with [fields] in [workspaceId], the account's default
      * workspace, which is null until the phone has read it from the server. Start waits for it.
      */
-    data class Idle(val fields: EntryFields, val labels: EntryLabels, val workspaceId: Long?) : TimerState
+    data class Idle(val fields: EntryFields, val labels: EntryLabels, val workspaceId: Long?, val authoritative: Boolean = false) : TimerState
 
     /**
      * An entry runs since [start], with [fields]: the cached entry's, or an edit the cache does not
@@ -70,6 +71,7 @@ sealed interface TimerState {
         val original: Picked,
         val unsent: Boolean,
         val accumulatedSeconds: Long = 0,
+        val target: TimerTarget? = null,
     ) : TimerState
 
     /**
@@ -86,6 +88,7 @@ sealed interface TimerState {
         val fields: EntryFields,
         val labels: EntryLabels,
         val original: Picked,
+        val target: TimerTarget? = null,
     ) : TimerState
 }
 
@@ -271,7 +274,7 @@ class TimerModel(
         }
     }
 
-    private fun stopRunning(shown: TimerState.Running) {
+    private fun stopRunning(shown: TimerState.Running, target: TimerTarget? = null) {
         val entryId = shown.entryId ?: return
         val edited = editFor(shown)?.fields
         beginTap(TapTrace.STOP) { it is TimerState.Idle }
@@ -279,7 +282,8 @@ class TimerModel(
         local.update { it.copy(pending = stopping, edit = null) }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                if (changes.stop(entryId, edited)) settle { it.runningEntry()?.start != shown.start }
+                val stopped = if (target == null) changes.stop(entryId, edited) else changes.stop(target, edited)
+                if (stopped) settle { it.runningEntry()?.start != shown.start }
             } finally {
                 local.update { if (it.pending == stopping) it.copy(pending = null) else it }
             }
@@ -346,6 +350,28 @@ class TimerModel(
             }
         }
     }
+
+    /** A focused control keeps the durable target that supplied its displayed context. */
+    fun isShown(target: TimerTarget): Boolean = local.value.pending == null && when (val current = cachedControls()) {
+        is TimerControls.Running -> current.target == target
+        is TimerControls.Paused -> current.target == target
+        else -> false
+    }
+
+    fun pauseShown(target: TimerTarget) { if (isShown(target)) pause() }
+    fun resumeShown(target: TimerTarget) { if (isShown(target)) resume() }
+    fun stopShown(target: TimerTarget) {
+        if (!isShown(target)) return
+        when (val shown = snapshot()) {
+            is TimerState.Running -> stopRunning(shown, target)
+            is TimerState.Paused -> stopPaused()
+            else -> Unit
+        }
+    }
+
+    /** Reuse the editor's local-write settlement and identity/remap checks. */
+    suspend fun runningForEditShown(target: TimerTarget): RunningEntryIdentity? =
+        if (isShown(target)) runningForEdit() else null
 
     /** Shows [description] as typed. It goes to the queue with [descriptionDone], a pick, Pause or Stop. */
     fun editDescription(description: String) = edit(send = false) { it.copy(description = description) }
@@ -518,7 +544,7 @@ class TimerModel(
     private fun timerState(cached: CachedControls, defaultWorkspaceId: Long?, taps: Local): TimerState {
         if (cached !is CachedControls.Read) return TimerState.Loading
         val controls = cached.controls
-        val idle = TimerState.Idle(taps.draft, EntryLabels(), defaultWorkspaceId)
+        val idle = TimerState.Idle(taps.draft, EntryLabels(), defaultWorkspaceId, authoritative = controls == TimerControls.Idle && taps.pending == null)
         when (val pending = taps.pending) {
             // The cache's entry shows once the start has settled, with an id that Stop can take.
             is Pending.Starting -> return TimerState.Running(
@@ -546,6 +572,7 @@ class TimerModel(
                 fields = taps.pausedEdit?.takeIf { it.chainId == controls.target.chainId }?.fields ?: controls.fields,
                 labels = EntryLabels(),
                 original = Picked(controls.fields.projectId, controls.fields.taskId, controls.fields.tags),
+                target = controls.target,
             )
             is TimerControls.Running -> {
                 val entry = controls.entry
@@ -559,6 +586,7 @@ class TimerModel(
                     original = Picked(cachedFields.projectId, cachedFields.taskId, cachedFields.tags),
                     unsent = controls.unsent,
                     accumulatedSeconds = controls.accumulatedSeconds,
+                    target = controls.target,
                 )
             }
         }
@@ -637,3 +665,11 @@ class TimerModel(
         const val SETTLE_MS = 5_000L
     }
 }
+
+/** No durable target during an optimistic transition; stale controls cannot act on its successor. */
+internal val TimerState.target: TimerTarget?
+    get() = when (this) {
+        is TimerState.Running -> target
+        is TimerState.Paused -> target
+        else -> null
+    }

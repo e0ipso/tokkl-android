@@ -34,6 +34,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -89,6 +90,9 @@ import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.sync.SyncStatusBand
 import com.github.e0ipso.tokkl.tags.TagsModel
 import com.github.e0ipso.tokkl.tags.TagsScreen
+import com.github.e0ipso.tokkl.timer.FullscreenTimerScreen
+import com.github.e0ipso.tokkl.timer.TimerState
+import com.github.e0ipso.tokkl.timer.target
 import com.github.e0ipso.tokkl.timer.TimerBar
 import com.github.e0ipso.tokkl.timer.TimerModel
 import com.github.e0ipso.tokkl.timer.TimerScreen
@@ -116,7 +120,7 @@ import kotlinx.coroutines.withContext
  * The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model
  * holds. NEEDS_ATTENTION lists the changes the server refused.
  */
-enum class Destination { SIGN_IN, TIMER, POMODORO, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, TEMPLATES, SETTINGS, LICENCES, ENTRY, NEEDS_ATTENTION }
+enum class Destination { SIGN_IN, TIMER, FULLSCREEN_TIMER, POMODORO, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, TEMPLATES, SETTINGS, LICENCES, ENTRY, NEEDS_ATTENTION }
 
 /**
  * The app's navigation host: a back stack of [Destination]s that survives configuration changes
@@ -187,6 +191,7 @@ fun TokklNavHost(
     val appContext = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val timerPageState = rememberSaveableStateHolder()
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
     // A signed-in page restored from saved state can outlive its session: a sign-out that finished
     // in the background before the process died, or a token that no longer decrypts. The page
@@ -213,6 +218,7 @@ fun TokklNavHost(
     BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
     val destination = backStack.last()
     if (destination == Destination.SIGN_IN) {
+        LaunchedEffect(Unit) { timerPageState.removeState("timer-page") }
         SignInScreen(
             model = signInModel,
             onSignedIn = {
@@ -248,6 +254,15 @@ fun TokklNavHost(
         entryOpenings++
         if (backStack.lastOrNull() != Destination.ENTRY) backStack.add(Destination.ENTRY)
     }
+    val focused = destination == Destination.FULLSCREEN_TIMER ||
+        (destination == Destination.ENTRY && backStack.getOrNull(backStack.lastIndex - 1) == Destination.FULLSCREEN_TIMER)
+    val timerState by timer.state.collectAsState()
+    LaunchedEffect(focused, timerState) {
+        if (focused && (timerState as? TimerState.Idle)?.authoritative == true) {
+            if (backStack.lastOrNull() == Destination.ENTRY) entryForm.close()
+            while (backStack.size > 1 && backStack.lastOrNull() != Destination.TIMER) backStack.removeAt(backStack.lastIndex)
+        }
+    }
     val discarded by discardedChanges.collectAsState()
     val changes = (appContext as TokklApplication).changes
     val shortUndo by changes.shortStopUndo.collectAsState(initial = null)
@@ -263,6 +278,7 @@ fun TokklNavHost(
     }
     SignedInFrame(
         current = backStack.currentPage(),
+        showNavigation = !focused,
         onOpen = backStack::open,
         timerRunning = running,
         pomodoroRunning = pomodoroRunning,
@@ -282,61 +298,87 @@ fun TokklNavHost(
         },
         width = width,
     ) {
-        SignedInPanes(
-            destination = destination,
-            entryBeside = showsEntryBeside(width, view, backStack),
-            entryKey = entryOpenings,
-        ) { shown ->
-            Screen(
-                destination = shown,
-                backStack = backStack,
-                themeSettings = themeSettings,
-                reminderSettings = reminderSettings,
-                pomodoroDefaults = (appContext as TokklApplication).pomodoroDefaults,
-                pomodoroSharedWithWeb = capabilityFlags.favorites,
-                signOut = signOut,
-                reports = reports,
-                history = history,
-                entryActions = entryActions,
-                calendar = calendar,
-                projects = projects,
-                clients = clients,
-                tags = tags,
-                trash = trash,
-                entryForm = entryForm,
-                cache = cache,
-                timerView = view,
-                onTimerViewChange = timerView::choose,
-                onContinue = { entryId ->
-                    history.entry(entryId)?.let { source ->
-                        timer.continueEntry(source)
-                        settleDescription(focusManager)
+        if (destination == Destination.FULLSCREEN_TIMER) {
+            FullscreenTimerScreen(
+                model = timer, cache = cache,
+                onExit = { if (backStack.lastOrNull() == Destination.FULLSCREEN_TIMER) backStack.removeAt(backStack.lastIndex) },
+                onEditRunning = { target ->
+                    scope.launch {
+                        if (backStack.lastOrNull() != Destination.FULLSCREEN_TIMER) return@launch
+                        val identity = timer.runningForEditShown(target) ?: return@launch
+                        if (backStack.lastOrNull() == Destination.FULLSCREEN_TIMER) {
+                            entryForm.editRunning(identity)
+                            openEntry()
+                        }
                     }
                 },
-                onOpenEntry = openEntry,
-                favorites = favorites,
-                needsAttention = needsAttention,
-                settings = settings,
-            ) {
-                TimerBar(
-                    timer,
-                    cache,
-                    favorites = favorites,
-                    onManageTemplates = { backStack.open(TopLevelPage.TEMPLATES) },
-                    onAddEntry = {
-                        entryForm.new()
-                        openEntry()
-                    },
-                    onEditRunning = {
-                        scope.launch {
-                            val identity = timer.runningForEdit() ?: return@launch
-                            if (backStack.lastOrNull() == Destination.TIMER || backStack.lastOrNull() == Destination.ENTRY) {
-                                entryForm.editRunning(identity)
-                                openEntry()
+            )
+        } else {
+            SignedInPanes(
+                destination = destination,
+                entryBeside = showsEntryBeside(width, view, backStack),
+                entryKey = entryOpenings,
+            ) { shown ->
+                val render: @Composable () -> Unit = {
+                    Screen(
+                        destination = shown,
+                        backStack = backStack,
+                        themeSettings = themeSettings,
+                        reminderSettings = reminderSettings,
+                        pomodoroDefaults = (appContext as TokklApplication).pomodoroDefaults,
+                        pomodoroSharedWithWeb = capabilityFlags.favorites,
+                        signOut = signOut,
+                        reports = reports,
+                        history = history,
+                        entryActions = entryActions,
+                        calendar = calendar,
+                        projects = projects,
+                        clients = clients,
+                        tags = tags,
+                        trash = trash,
+                        entryForm = entryForm,
+                        cache = cache,
+                        timerView = view,
+                        onTimerViewChange = timerView::choose,
+                        onContinue = { entryId ->
+                            history.entry(entryId)?.let { source ->
+                                timer.continueEntry(source)
+                                settleDescription(focusManager)
                             }
-                        }
-                    },
-                )
+                        },
+                        onOpenEntry = openEntry,
+                        favorites = favorites,
+                        needsAttention = needsAttention,
+                        settings = settings,
+                    ) {
+                        TimerBar(
+                            timer,
+                            cache,
+                            favorites = favorites,
+                            onManageTemplates = { backStack.open(TopLevelPage.TEMPLATES) },
+                            onOpenFullscreen = {
+                                if (backStack.lastOrNull() == Destination.TIMER && timerState.target != null) {
+                                    backStack.add(Destination.FULLSCREEN_TIMER)
+                                }
+                            },
+                            onAddEntry = {
+                                entryForm.new()
+                                openEntry()
+                            },
+                            onEditRunning = {
+                                scope.launch {
+                                    val identity = timer.runningForEdit() ?: return@launch
+                                    if (backStack.lastOrNull() == Destination.TIMER || backStack.lastOrNull() == Destination.ENTRY) {
+                                        entryForm.editRunning(identity)
+                                        openEntry()
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+                if (shown == Destination.TIMER) timerPageState.SaveableStateProvider("timer-page", content = render)
+                else render()
             }
         }
         if (discarded > 0) DiscardNotice(discarded, onDismiss = onDismissDiscarded, modifier = Modifier.align(Alignment.BottomCenter))
@@ -428,9 +470,10 @@ internal fun SignedInFrame(
     onSignInAgain: (() -> Unit)? = null,
     syncStatusClock: Clock = Clock.systemUTC(),
     width: WindowWidth = windowWidth(),
+    showNavigation: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val rail = width != WindowWidth.COMPACT
+    val rail = showNavigation && width != WindowWidth.COMPACT
     Row(Modifier.fillMaxSize()) {
         if (rail) {
             AppNavigationRail(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
@@ -442,7 +485,7 @@ internal fun SignedInFrame(
             bottomBar = {
                 Column {
                     if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, onSignInAgain = onSignInAgain, clock = syncStatusClock)
-                    if (!rail) {
+                    if (showNavigation && !rail) {
                         AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
                     } else if (syncStatus != null) {
                         // Without the bar, the band keeps above the system navigation bar on its own.
@@ -501,7 +544,7 @@ private fun Screen(
 ) {
     when (destination) {
         // TokklNavHost draws sign-in on its own, without the bar.
-        Destination.SIGN_IN -> Unit
+        Destination.SIGN_IN, Destination.FULLSCREEN_TIMER -> Unit
         Destination.TIMER -> TimerScreen(
             view = timerView,
             onViewChange = onTimerViewChange,
