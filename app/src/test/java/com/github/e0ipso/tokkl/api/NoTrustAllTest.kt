@@ -58,7 +58,9 @@ class NoTrustAllTest {
             SOURCE_RULES.filter { (pattern, allowedIn) -> pattern.containsMatchIn(text) && file.name !in allowedIn }
                 .map { (pattern, _) -> "${file.relativeTo(root)} matches ${pattern.pattern}" }
         } + scripts.flatMap { file ->
-            val text = file.readText()
+            // A JSON fixture keeps a whole script on one file line, with `\n` between commands.
+            // Expand those before matching, so `journalctl -k` is not read as `curl -k`.
+            val text = file.readText().replace("\\n", "\n")
             SCRIPT_RULES.filter { it.containsMatchIn(text) }.map { "${file.relativeTo(root)} matches ${it.pattern}" }
         }
 

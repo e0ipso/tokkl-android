@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Intent
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performSemanticsAction

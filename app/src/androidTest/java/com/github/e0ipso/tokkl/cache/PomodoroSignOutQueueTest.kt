@@ -47,7 +47,7 @@ class PomodoroSignOutQueueTest {
 
     private fun connect() {
         db = Room.databaseBuilder(context, CacheDatabase::class.java, filename).build()
-        queue = ChangeQueue(db, Dispatchers.IO, clock = clock, pomodoro = { store })
+        queue = ChangeQueue(db, Dispatchers.IO, onQueued = {}, clock = clock, pomodoro = { store })
         store = PomodoroSessionStore.open(
             db, queue, Dispatchers.IO, clock, accountTime = { TIME },
             alarms = IdlePomodoroAlarms, phaseEnds = MemoryPomodoroPhaseEnds(),

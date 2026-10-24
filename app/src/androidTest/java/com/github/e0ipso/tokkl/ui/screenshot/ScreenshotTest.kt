@@ -622,6 +622,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     private fun string(@StringRes id: Int): String =
         InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
 
+    private fun string(@StringRes id: Int, vararg arguments: Any): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *arguments)
+
     internal companion object {
         const val TIMEOUT_MS = 5_000L
 

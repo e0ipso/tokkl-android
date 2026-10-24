@@ -70,7 +70,7 @@ class PomodoroSessionNotificationQueueTest {
 
     private fun connect() {
         db = Room.databaseBuilder(context, CacheDatabase::class.java, filename).build()
-        queue = ChangeQueue(db, Dispatchers.IO, clock = clock)
+        queue = ChangeQueue(db, Dispatchers.IO, onQueued = {}, clock = clock)
         store = PomodoroSessionStore.open(
             db, queue, Dispatchers.IO, clock, accountTime = { app.accountSettings.state.value?.time(clock) },
             alarms = IdlePomodoroAlarms, phaseEnds = MemoryPomodoroPhaseEnds(),

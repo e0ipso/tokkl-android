@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
