@@ -17,6 +17,7 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
+import androidx.compose.material3.TextFieldLabelPosition
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -65,7 +66,10 @@ internal fun ReminderSection(preferences: ReminderPreferences, change: (Reminder
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
                     OutlinedTextField(
                         value = hours, onValueChange = { hours = it },
+                        // A minimized attached label is placed halfway above this field. The dialog
+                        // scroll starts at the top and cannot bring that part into view.
                         label = { Text(stringResource(R.string.reminder_hours_label)) },
+                        labelPosition = TextFieldLabelPosition.Above(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true, isError = value == null, modifier = Modifier.fillMaxWidth(),
                     )

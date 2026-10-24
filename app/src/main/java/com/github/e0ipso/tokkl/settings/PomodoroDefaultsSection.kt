@@ -17,6 +17,7 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldLabelPosition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,7 +74,10 @@ internal fun PomodoroDefaultsSection(defaults: PomodoroDefaults, sharedWithWeb: 
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     OutlinedTextField(
                         value = input, onValueChange = { input = it },
+                        // A minimized attached label is placed halfway above this field. The dialog
+                        // scroll starts at the top and cannot bring that part into view.
                         label = { Text(stringResource(field.label)) },
+                        labelPosition = TextFieldLabelPosition.Above(),
                         supportingText = { Text(stringResource(R.string.pomodoro_length_range, field.range.first, field.range.last)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true, isError = !valid, modifier = Modifier.fillMaxWidth(),
