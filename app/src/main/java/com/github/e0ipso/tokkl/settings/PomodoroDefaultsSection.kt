@@ -17,13 +17,13 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldLabelPosition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -71,13 +71,13 @@ internal fun PomodoroDefaultsSection(defaults: PomodoroDefaults, sharedWithWeb: 
             onDismissRequest = { editing = null },
             title = { Text(stringResource(R.string.settings_pomodoro_edit), modifier = Modifier.semantics { heading() }) },
             text = {
-                Column(Modifier.verticalScroll(rememberScrollState())) {
+                // A minimized label is placed halfway above the field. Room above the field keeps
+                // that half inside this scroll, which starts at the top and cannot move up to it.
+                val labelRoom = with(LocalDensity.current) { MaterialTheme.typography.bodySmall.lineHeight.toDp() } + TokklTheme.spacing.space2
+                Column(Modifier.verticalScroll(rememberScrollState()).padding(top = labelRoom)) {
                     OutlinedTextField(
                         value = input, onValueChange = { input = it },
-                        // A minimized attached label is placed halfway above this field. The dialog
-                        // scroll starts at the top and cannot bring that part into view.
                         label = { Text(stringResource(field.label)) },
-                        labelPosition = TextFieldLabelPosition.Above(),
                         supportingText = { Text(stringResource(R.string.pomodoro_length_range, field.range.first, field.range.last)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true, isError = !valid, modifier = Modifier.fillMaxWidth(),
