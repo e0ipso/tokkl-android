@@ -29,12 +29,16 @@ import com.github.e0ipso.tokkl.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.withContext
 
 /**
- * Asks for the notification permission at the first timer start made in the app (docs/PRD.md
- * N5), as [ask] decides, for each item [starts] gives after the start. The timer never waits for
- * the answer. A refusal shows a snackbar that says what is lost and offers the app's notification
+ * Asks for the notification permission at the first timer or Pomodoro start made in the app
+ * (docs/PRD.md N5), as [ask] decides, for each item [starts] gives after the start. Neither start
+ * waits for the answer. Explicit [retries] ask or open settings using the same request history.
+ * A refusal shows a snackbar that says what is lost and offers the app's notification
  * settings through [openSettings]. The snackbar is a polite live region, as Material's
  * SnackbarHost makes each one, so TalkBack reads it, and it stays for Material's long duration.
  */
@@ -45,30 +49,38 @@ fun NotificationPermissionPrompt(
     modifier: Modifier = Modifier,
     openSettings: (Context) -> Unit = ::openNotificationSettings,
     onAllowed: () -> Unit = {},
+    retries: Flow<Unit> = emptyFlow(),
+    onResult: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val host = remember { SnackbarHostState() }
     var refused by rememberSaveable { mutableStateOf(false) }
     val allowedNow by rememberUpdatedState(onAllowed)
+    val resultNow by rememberUpdatedState(onResult)
     val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
+        resultNow(allowed)
         if (allowed) allowedNow() else refused = true
     }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(starts, ask, lifecycle) {
+    val settings by rememberUpdatedState(openSettings)
+    LaunchedEffect(starts, retries, ask, lifecycle) {
         // A start finishing as the app goes to the background waits until it is on screen again.
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            starts.collect {
+            // One collector serializes timer and Pomodoro starts, including explicit retries.
+            merge(starts.map { false }, retries.map { true }).collect { retry ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && withContext(Dispatchers.IO) { ask.atStartInApp() }) {
                     request.launch(Manifest.permission.POST_NOTIFICATIONS)
                     // Once launched, persist even if a rotation or a background trip cancels collection.
                     withContext(NonCancellable + Dispatchers.IO) { ask.requested() }
+                } else if (retry) {
+                    // Settings also works after Android stops displaying a repeatedly denied dialog.
+                    settings(context)
                 }
             }
         }
     }
     val message = stringResource(R.string.notification_permission_refused)
     val settingsLabel = stringResource(R.string.notification_permission_settings)
-    val settings by rememberUpdatedState(openSettings)
     LaunchedEffect(refused) {
         if (!refused) return@LaunchedEffect
         val result = host.showSnackbar(

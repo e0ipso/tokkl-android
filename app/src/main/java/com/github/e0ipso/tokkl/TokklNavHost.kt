@@ -110,10 +110,13 @@ import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
 import com.github.e0ipso.tokkl.ui.windowWidth
 import java.time.Clock
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -193,6 +196,11 @@ fun TokklNavHost(
     }
     val appContext = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
+    val pomodoroStarts = remember { Channel<Unit>(Channel.UNLIMITED) }
+    val notificationRetries = remember { Channel<Unit>(Channel.UNLIMITED) }
+    val permissionStarts = remember(timer, pomodoroStarts) { merge(timer.starts, pomodoroStarts.receiveAsFlow()) }
+    val permissionRetries = remember(notificationRetries) { notificationRetries.receiveAsFlow() }
+    var notificationPermissionRevision by remember { mutableIntStateOf(0) }
     val focusManager = LocalFocusManager.current
     val timerPageState = rememberSaveableStateHolder()
     val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
@@ -369,6 +377,9 @@ fun TokklNavHost(
                         favorites = favorites,
                         needsAttention = needsAttention,
                         settings = settings,
+                        onPomodoroStarted = { pomodoroStarts.trySend(Unit) },
+                        onNotificationRetry = { notificationRetries.trySend(Unit) },
+                        notificationPermissionRevision = notificationPermissionRevision,
                     ) {
                         TimerBar(
                             timer,
@@ -405,10 +416,12 @@ fun TokklNavHost(
         SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
         if (notificationPermission != null) {
             NotificationPermissionPrompt(
-                timer.starts,
+                permissionStarts,
                 notificationPermission,
                 onAllowed = onNotificationsAllowed,
                 modifier = Modifier.align(Alignment.BottomCenter),
+                retries = permissionRetries,
+                onResult = { notificationPermissionRevision++ },
             )
         }
     }
@@ -559,6 +572,9 @@ private fun Screen(
     favorites: FavoritesModel?,
     needsAttention: NeedsAttentionModel?,
     settings: StateFlow<AccountSettings?>,
+    onPomodoroStarted: () -> Unit,
+    onNotificationRetry: () -> Unit,
+    notificationPermissionRevision: Int,
     timer: @Composable () -> Unit,
 ) {
     when (destination) {
@@ -612,7 +628,12 @@ private fun Screen(
         )
         Destination.POMODORO -> {
             val pomodoro: PomodoroViewModel = viewModel()
-            PomodoroScreen(model = pomodoro.model, cache = cache)
+            PomodoroScreen(
+                model = pomodoro.model, cache = cache,
+                onNotificationStart = onPomodoroStarted,
+                onNotificationRetry = onNotificationRetry,
+                notificationPermissionRevision = notificationPermissionRevision,
+            )
         }
         Destination.REPORTS -> ReportsScreen(model = reports)
         Destination.PROJECTS -> ProjectsScreen(model = projects)

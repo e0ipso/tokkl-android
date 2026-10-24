@@ -61,6 +61,7 @@ data class PomodoroPageState(
     val account: AccountSettings? = null,
     val alarmDenied: Boolean = false,
     val fullScreenDenied: Boolean = false,
+    val notificationsDenied: Boolean = false,
     val unsentCount: Int? = null,
     val refused: List<PendingChange> = emptyList(),
     val notice: PomodoroNotice? = null,
@@ -92,6 +93,7 @@ class PomodoroScreenModel(
     private var lengthsEdited = false
     private var fieldsRevision = 0L
     private var storedFieldsRevision = 0L
+    private var exactAlarmAllowed: Boolean? = null
 
     init {
         scope.launch { defaults.collect { value ->
@@ -107,6 +109,16 @@ class PomodoroScreenModel(
         mutableState.update { it.copy(fullScreenDenied = !allowed) }
     }
 
+    /** Permission changes update notices only; a late grant never restarts a session. */
+    internal fun permissionsChanged(grants: PomodoroPermissions) {
+        exactAlarmAllowed = grants.exactAlarm
+        mutableState.update {
+            it.copy(notificationsDenied = !grants.notifications, alarmDenied = !grants.exactAlarm, fullScreenDenied = !grants.fullScreen)
+        }
+    }
+
+    private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: store.exactAlarmPermissionDenied()
+
     /** Called on opening and resuming the page; never polls or sends a request. */
     fun reload(): Job = scope.launch {
         commands.withLock {
@@ -120,7 +132,7 @@ class PomodoroScreenModel(
                         loading = false, session = current,
                         lengths = if (ended) PomodoroLengths.from(defaults.value) else it.lengths,
                         fields = if (revision == fieldsRevision && fieldsRevision == storedFieldsRevision) current?.fields ?: it.fields else it.fields,
-                        alarmDenied = store.exactAlarmPermissionDenied(),
+                        alarmDenied = alarmDenied(),
                         problem = it.problem?.takeUnless { problem -> problem.action == PomodoroAction.LOAD },
                     )
                 }
@@ -160,7 +172,7 @@ class PomodoroScreenModel(
         }
     }
 
-    fun start(): Job? {
+    fun start(onStarted: () -> Unit = {}): Job? {
         val before = state.value
         if (!before.canStart || before.session != null) return null
         val lengths = before.lengths.config() ?: return null
@@ -169,6 +181,8 @@ class PomodoroScreenModel(
             val current = store.start(lengths, before.fields, workspace)
             storedFieldsRevision = fieldsRevision
             mutableState.update { it.copy(session = current, fields = current.fields) }
+            // The session is committed before requesting anything; no grant is awaited.
+            onStarted()
         }
     }
 
@@ -230,7 +244,7 @@ class PomodoroScreenModel(
                     }
                     mutableState.update { it.copy(problem = PomodoroSaveProblem(action, e.message)) }
                 } finally {
-                    mutableState.update { it.copy(busy = false, alarmDenied = store.exactAlarmPermissionDenied()) }
+                    mutableState.update { it.copy(busy = false, alarmDenied = alarmDenied()) }
                 }
             }
         }

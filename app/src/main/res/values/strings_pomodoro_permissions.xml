@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pomodoro_notifications_denied">Notifications are off. The session keeps running, but its notification and phase-end alarm notification cannot appear.</string>
+    <string name="pomodoro_notifications_settings">Allow Pomodoro notifications</string>
+    <string name="pomodoro_exact_alarm_settings">Allow exact alarms</string>
+    <string name="pomodoro_exact_alarm_settings_unavailable">Exact alarm settings could not be opened. Open Settings, Apps, Special app access, Alarms and reminders.</string>
+</resources>

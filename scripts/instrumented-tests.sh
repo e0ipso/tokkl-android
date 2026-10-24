@@ -253,8 +253,10 @@ case $fresh_notification_permission in
     0) ;;
     1)
         if [ "$#" -ne 1 ] || { [ "$1" != "-P$RUNNER_ARGS.class=com.github.e0ipso.tokkl.notification.NativeNotificationPermissionTest#allowingTheNativeDialogPostsTheAlreadyRunningTimer" ] &&
-            [ "$1" != "-P$RUNNER_ARGS.class=com.github.e0ipso.tokkl.notification.NativeNotificationPermissionTest#denyingTheNativeDialogKeepsTheTimerAndOpensItsSettings" ]; }; then
-            echo "$0: a fresh notification permission requires exactly one NativeNotificationPermissionTest method, selected with class=, before startup." >&2
+            [ "$1" != "-P$RUNNER_ARGS.class=com.github.e0ipso.tokkl.notification.NativeNotificationPermissionTest#denyingTheNativeDialogKeepsTheTimerAndOpensItsSettings" ] &&
+            [ "$1" != "-P$RUNNER_ARGS.class=com.github.e0ipso.tokkl.pomodoro.NativePomodoroPermissionTest#grantingTheFirstSessionDialogKeepsTheSameStartedSession" ] &&
+            [ "$1" != "-P$RUNNER_ARGS.class=com.github.e0ipso.tokkl.pomodoro.NativePomodoroPermissionTest#denyingThenRecreatingKeepsPromptsAndLaterStartsAskOnlyOnExplicitRetry" ]; }; then
+            echo "$0: a fresh notification permission requires exactly one supported native notification-permission method, selected with class=, before startup." >&2
             exit 2
         fi
         gradle_args+=("-PtokklFreshNotificationPermission=true")

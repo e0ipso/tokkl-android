@@ -53,17 +53,28 @@ import kotlinx.coroutines.delay
 
 /** The destination can be opened directly; the navigation item is added separately. */
 @Composable
-fun PomodoroScreen(model: PomodoroScreenModel, cache: AccountCache, modifier: Modifier = Modifier) {
+fun PomodoroScreen(
+    model: PomodoroScreenModel,
+    cache: AccountCache,
+    modifier: Modifier = Modifier,
+    onNotificationStart: () -> Unit = {},
+    onNotificationRetry: () -> Unit = {},
+    notificationPermissionRevision: Int = 0,
+) {
     val state by model.state.collectAsState()
     val projects by cache.projects.collectAsState(initial = emptyList())
     val tasks by cache.tasks.collectAsState(initial = emptyList())
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val context = LocalContext.current
     var fullScreenSettingsUnavailable by remember { mutableStateOf(false) }
+    var exactAlarmSettingsUnavailable by remember { mutableStateOf(false) }
+    LaunchedEffect(model, context, notificationPermissionRevision) {
+        model.permissionsChanged(pomodoroPermissions(context))
+    }
     DisposableEffect(model, lifecycle, context) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                model.fullScreenPermissionChanged(canShowPomodoroFullScreen(context))
+                model.permissionsChanged(pomodoroPermissions(context))
                 model.reload()
             }
         }
@@ -74,7 +85,10 @@ fun PomodoroScreen(model: PomodoroScreenModel, cache: AccountCache, modifier: Mo
         state = state,
         onLengths = model::editLengths,
         onFields = { model.editFields(it) },
-        onStart = { model.start() },
+        onStart = {
+            model.permissionsChanged(pomodoroPermissions(context))
+            model.start(onNotificationStart)
+        },
         onNext = { model.next() },
         onEnd = { model.end() },
         onReload = { model.reload() },
@@ -99,6 +113,18 @@ fun PomodoroScreen(model: PomodoroScreenModel, cache: AccountCache, modifier: Mo
             }
         },
         fullScreenSettingsUnavailable = fullScreenSettingsUnavailable,
+        onNotificationRetry = onNotificationRetry,
+        onExactAlarmSettings = {
+            try {
+                context.startActivity(pomodoroExactAlarmSettings(context))
+                exactAlarmSettingsUnavailable = false
+            } catch (_: ActivityNotFoundException) {
+                exactAlarmSettingsUnavailable = true
+            } catch (_: SecurityException) {
+                exactAlarmSettingsUnavailable = true
+            }
+        },
+        exactAlarmSettingsUnavailable = exactAlarmSettingsUnavailable,
     )
 }
 
@@ -119,6 +145,9 @@ fun PomodoroContent(
     clock: Clock = Clock.systemUTC(),
     onFullScreenSettings: () -> Unit = {},
     fullScreenSettingsUnavailable: Boolean = false,
+    onNotificationRetry: () -> Unit = {},
+    onExactAlarmSettings: () -> Unit = {},
+    exactAlarmSettingsUnavailable: Boolean = false,
 ) {
     val spacing = TokklTheme.spacing
     val focus = LocalFocusManager.current
@@ -131,6 +160,18 @@ fun PomodoroContent(
     CatalogPage(title = stringResource(R.string.pomodoro_title), done = null, onDoneShown = {}, modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(spacing.betweenGroups)) {
             PomodoroFeedback(state)
+            if (state.notificationsDenied) {
+                ErrorBanner(stringResource(R.string.pomodoro_notifications_denied))
+                TokklGhostButton(onClick = onNotificationRetry, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.pomodoro_notifications_settings))
+                }
+            }
+            if (state.alarmDenied) {
+                TokklGhostButton(onClick = onExactAlarmSettings, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.pomodoro_exact_alarm_settings))
+                }
+                if (exactAlarmSettingsUnavailable) ErrorBanner(stringResource(R.string.pomodoro_exact_alarm_settings_unavailable))
+            }
             if (state.fullScreenDenied) {
                 ErrorBanner(stringResource(R.string.pomodoro_fullscreen_denied))
                 TokklGhostButton(onClick = onFullScreenSettings, modifier = Modifier.fillMaxWidth()) {

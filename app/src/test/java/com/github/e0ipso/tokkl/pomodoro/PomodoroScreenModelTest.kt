@@ -316,6 +316,71 @@ class PomodoroScreenModelTest {
         assertTrue(page.state.value.canStart)
     }
 
+    @Test
+    fun permissionRequestRunsAfterTheSessionIsStoredAndDoesNotWaitForAnAnswer() = runBlocking {
+        val page = model()
+        var requests = 0
+        page.start {
+            assertNotNull(database.row)
+            assertEquals(database.row, page.state.value.session)
+            requests++ // Intentionally leave permission unanswered.
+        }!!.join()
+        assertEquals(1, requests)
+        assertNotNull(store.current())
+        assertFalse(page.state.value.busy)
+        assertNull(page.start { requests++ })
+        assertEquals(1, requests)
+        now = now.plusSeconds(60)
+        page.end()!!.join()
+        assertNull(store.current())
+    }
+
+    @Test
+    fun failedAndInvalidStartsDoNotRequestPermission() = runBlocking {
+        val page = model()
+        var requests = 0
+        database.failSave = true
+        page.start { requests++ }!!.join()
+        assertNull(store.current())
+        assertEquals(0, requests)
+        database.failSave = false
+        page.editLengths(PomodoroLengths("", "5", "15", "4"))
+        assertNull(page.start { requests++ })
+        assertEquals(0, requests)
+    }
+
+    @Test
+    fun actualDeniedGrantsPersistAcrossCommandsAndLateGrantsKeepTheStartedSession() = runBlocking {
+        val page = model()
+        page.permissionsChanged(PomodoroPermissions(false, false, false))
+        assertTrue(page.state.value.canStart)
+        page.start()!!.join()
+        val started = store.current()!!
+        page.reload().join()
+        assertTrue(page.state.value.notificationsDenied)
+        assertTrue(page.state.value.alarmDenied)
+        assertTrue(page.state.value.fullScreenDenied)
+        page.permissionsChanged(PomodoroPermissions(true, true, true))
+        page.reload().join()
+        assertFalse(page.state.value.notificationsDenied)
+        assertFalse(page.state.value.alarmDenied)
+        assertFalse(page.state.value.fullScreenDenied)
+        assertEquals(started, store.current())
+        assertEquals(started, page.state.value.session)
+        assertTrue(database.creates.isEmpty())
+    }
+
+    @Test
+    fun recreatingThePageLoadsTheRunningSessionWithoutEmittingAStart() = runBlocking {
+        var requests = 0
+        val page = model()
+        page.start { requests++ }!!.join()
+        val restored = model()
+        assertEquals(page.state.value.session, restored.state.value.session)
+        assertNull(restored.start { requests++ })
+        assertEquals(1, requests)
+    }
+
     private data class Created(val fields: EntryFields, val start: Instant, val stop: Instant)
 
     private inner class PageDatabase : PomodoroSessionDatabase {
