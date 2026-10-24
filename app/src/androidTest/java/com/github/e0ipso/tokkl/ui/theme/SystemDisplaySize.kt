@@ -26,13 +26,18 @@ class SystemDisplaySize : TestRule {
                 ?: error("cannot read the default display size: $size")
             val minDimension = minOf(dimensions.groupValues[1].toInt(), dimensions.groupValues[2].toInt())
             val settings = context.packageManager.getResourcesForApplication("com.android.settings")
-            fun fraction(name: String): Float {
+            fun fraction(name: String, legacy: Float): Float {
                 val id = settings.getIdentifier(name, "fraction", "com.android.settings")
-                check(id != 0) { "AOSP Settings has no $name; verify its display-size steps before running this audit" }
-                return settings.getFraction(id, 1, 1)
+                return if (id == 0) legacy else settings.getFraction(id, 1, 1)
             }
-            val maxScale = minOf(fraction("display_density_max_scale"), (160 * minDimension / 320).toFloat() / original.physical)
-            val interval = fraction("display_density_min_scale_interval")
+            // Android 12 SettingsLib DisplayDensityUtils hardcodes these. Later Settings
+            // moved them into fraction resources. An image without those resources, such as
+            // the API 31 emulator, still uses the hardcoded steps.
+            val maxScale = minOf(
+                fraction("display_density_max_scale", legacy = 1.50f),
+                (160 * minDimension / 320).toFloat() / original.physical,
+            )
+            val interval = fraction("display_density_min_scale_interval", legacy = 0.09f)
             check(interval > 0f && maxScale >= 1f) { "unexpected AOSP display-size bounds: $maxScale / $interval" }
             // Settings has up to three larger steps. Its final step is rounded down to an even dpi.
             val largerSteps = ((maxScale - 1f) / interval).toInt().coerceIn(0, 3)

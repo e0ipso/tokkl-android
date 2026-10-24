@@ -30,7 +30,7 @@ class LaunchScreenTest {
 
     /**
      * The page shows its title, where the timer goes, and the List and Calendar switch with List
-     * chosen. The bar holds the web app's phone items in its order, and marks Timer.
+     * chosen. The bar holds Timer, Pomodoro, Projects, Settings and More, and marks Timer.
      */
     @Test
     fun opensOnTheTimerPageWithTheBottomBar() {
@@ -44,7 +44,13 @@ class LaunchScreenTest {
             .fetchSemanticsNodes()
             .sortedBy { it.boundsInRoot.left }
         val labels = tabs.map { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { text -> text.text } }
-        val expected = listOf(R.string.nav_timer, R.string.reports, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val expected = listOf(
+            R.string.nav_timer,
+            R.string.pomodoro_title,
+            R.string.nav_projects,
+            R.string.settings,
+            R.string.nav_more,
+        )
         assertEquals(expected.map(::string), labels)
         assertEquals(listOf(true, false, false, false, false), tabs.map { it.config.getOrNull(SemanticsProperties.Selected) })
     }

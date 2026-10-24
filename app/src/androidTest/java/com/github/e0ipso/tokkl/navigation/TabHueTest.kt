@@ -15,6 +15,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
+import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -110,7 +111,7 @@ class TabHueTest {
         }
     }
 
-    /** For each page, shown as the current one: its tab, or More's, fills with its hue, and no other tab does. */
+    /** For each page, shown as the current one: its own tab fills with its hue. A More-sheet page marks More in More's pink, and no other tab takes that fill. */
     private fun assertEveryTab(dark: Boolean, rail: Boolean) {
         var current by mutableStateOf(TopLevelPage.TIMER)
         composeRule.setContent {
@@ -124,8 +125,9 @@ class TabHueTest {
             current = page
             composeRule.waitForIdle()
             val marked = if (page.inMore) context.getString(R.string.nav_more) else context.getString(page.label)
+            val markedHue = if (page.inMore) SectionHues.more else page.hue
             for (label in tabs) {
-                val pixels = huePixels(tab(label), page.hue)
+                val pixels = huePixels(tab(label), markedHue)
                 if (label == marked) {
                     assertTrue("the $label tab shows $pixels pixels of its hue while $page shows", pixels >= minimumIndicatorPixels(rail))
                 } else {

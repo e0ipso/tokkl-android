@@ -363,7 +363,7 @@ class RunningEntryEditorServerTest {
             startButton().performTouchInput { click() }
             awaitSignal(writes.startEntered)
             awaitUi("pending Start shows its clock") { exists(clock()) }
-            clock().performScrollTo().performTouchInput { click() }
+            clock().performTouchInput { click() }
             composeRule.waitForIdle()
             assertFalse("no editor while the initial local Start is held", formOpen())
             assertEquals("held Start has not written a row", 0, queued())
@@ -380,7 +380,7 @@ class RunningEntryEditorServerTest {
             timerDescription().performScrollTo().performTextClearance()
             timerDescription().performTextInput("Latest focused typing")
             // Do not press IME Done: tapping the actual clock must settle this focused text.
-            clock().performScrollTo().performTouchInput { click() }
+            clock().performTouchInput { click() }
             awaitSignal(writes.updateEntered)
             composeRule.waitForIdle()
             assertFalse("no editor while the description's local write is held", formOpen())
@@ -561,7 +561,7 @@ class RunningEntryEditorServerTest {
 
     private fun openClock() {
         awaitUi("labeled running clock is available") { exists(clock()) }
-        clock().performScrollTo().assertIsDisplayed().performTouchInput { click() }
+        clock().assertIsDisplayed().performTouchInput { click() }
         awaitEditor()
     }
 
