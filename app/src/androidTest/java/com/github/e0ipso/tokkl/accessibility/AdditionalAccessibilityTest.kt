@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -60,6 +61,24 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
     }
 
     @Test
+    fun pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes() {
+        val running = mutableStateOf(true)
+        show {
+            SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = running.value) {
+                Text(context.getString(R.string.pomodoro_title))
+            }
+        }
+        val marker = bottomBarItem(R.string.pomodoro_title) and
+            SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.nav_pomodoro_running))
+        compose.onNode(marker).assertIsDisplayed()
+        assertVisibleTextFits()
+        compose.runOnIdle { running.value = false }
+        assertEquals(0, compose.onAllNodes(marker).fetchSemanticsNodes().size)
+        compose.onNode(bottomBarItem(R.string.pomodoro_title)).assertIsDisplayed()
+        compose.checkAccessibility()
+    }
+
+    @Test
     fun everyMoreChoiceIsReachableAtMaximumSizes() {
         val current = mutableStateOf(TopLevelPage.TIMER)
         show {
@@ -67,7 +86,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
                 Text(context.getString(current.value.label))
             }
         }
-        for (page in listOf(TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
+        for (page in listOf(TopLevelPage.REPORTS, TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
             compose.onNode(bottomBarItem(R.string.nav_more)).performClick()
             val choice = compose.onNode(hasText(context.getString(page.label)) and hasClickAction())
             choice.performScrollTo().assertIsDisplayed()

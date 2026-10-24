@@ -6,6 +6,10 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelected
+import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.performScrollTo
+import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
@@ -45,11 +49,26 @@ fun bottomBarItem(@StringRes label: Int): SemanticsMatcher {
     return hasText(text) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 }
 
-/** Waits until the bottom bar shows its item named [label], then taps it. */
+/** Opens a top-level page, using More for pages that live on its sheet. */
 fun ComposeTestRule.openBarPage(@StringRes label: Int, timeoutMillis: Long = START_TIMEOUT_MS) {
+    if (TopLevelPage.entries.any { it.label == label && it.inMore }) {
+        openMorePage(label, timeoutMillis)
+        return
+    }
     val item = bottomBarItem(label)
     waitUntil("the bar item shows", timeoutMillis) { onAllNodes(item).fetchSemanticsNodes().isNotEmpty() }
     onNode(item).performClick()
+}
+
+/** Opens [label] through More and waits until the sheet has closed. Works with bar and rail. */
+fun ComposeTestRule.openMorePage(@StringRes label: Int, timeoutMillis: Long = START_TIMEOUT_MS) {
+    openBarPage(R.string.nav_more, timeoutMillis)
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    val choice = hasText(context.getString(label)) and isSelectable()
+    waitUntil("the More choice shows", timeoutMillis) { onAllNodes(choice).fetchSemanticsNodes().isNotEmpty() }
+    onNode(choice).performScrollTo().performClick()
+    val sheet = hasText(context.getString(R.string.nav_more)) and isHeading()
+    waitUntil("the More sheet closes", timeoutMillis) { onAllNodes(sheet).fetchSemanticsNodes().isEmpty() }
 }
 
 /**

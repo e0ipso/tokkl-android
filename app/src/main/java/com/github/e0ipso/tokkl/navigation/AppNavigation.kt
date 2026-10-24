@@ -69,7 +69,8 @@ enum class TopLevelPage(
     val inMore: Boolean = false,
 ) {
     TIMER(Destination.TIMER, R.string.nav_timer, R.drawable.ic_nav_timer, SectionHues.timer),
-    REPORTS(Destination.REPORTS, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports),
+    POMODORO(Destination.POMODORO, R.string.pomodoro_title, R.drawable.ic_nav_pomodoro, SectionHues.timer),
+    REPORTS(Destination.REPORTS, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports, inMore = true),
     PROJECTS(Destination.PROJECTS, R.string.nav_projects, R.drawable.ic_nav_projects, SectionHues.projects),
     TEMPLATES(Destination.TEMPLATES, R.string.nav_templates, R.drawable.ic_nav_templates, SectionHues.more, inMore = true),
     CLIENTS(Destination.CLIENTS, R.string.nav_clients, R.drawable.ic_nav_clients, SectionHues.more, inMore = true),
@@ -85,14 +86,15 @@ enum class TopLevelPage(
 }
 
 /**
- * The bottom bar of a signed-in screen on a compact window: Timer, Reports, Projects, Settings and
+ * The bottom bar of a signed-in screen on a compact window: Timer, Pomodoro, Projects, Settings and
  * More, with [current] marked. More opens a sheet with the other pages, and is marked while one of
  * them shows. [onOpen] opens a page. A 1dp line in the border colour sits above the bar, as the
  * web app draws it. Wider windows get [AppNavigationRail] with the same items.
  *
  * While [timerRunning] is true, because a time entry runs, the Timer item carries a dot, as the
  * web app's `.running-dot`, and TalkBack reads "Timer running" as its state, so the dot is not
- * the only sign. The pages in [hidden], such as Trash on a server without it, show nowhere.
+ * the only sign. [pomodoroRunning] gives Pomodoro the same mark and its own spoken state.
+ * The pages in [hidden], such as Trash on a server without it, show nowhere.
  */
 @Composable
 fun AppNavigationBar(
@@ -100,6 +102,7 @@ fun AppNavigationBar(
     onOpen: (TopLevelPage) -> Unit,
     modifier: Modifier = Modifier,
     timerRunning: Boolean = false,
+    pomodoroRunning: Boolean = false,
     hidden: Set<TopLevelPage> = emptySet(),
 ) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
@@ -111,11 +114,11 @@ fun AppNavigationBar(
                 TokklNavigationBarItem(
                     selected = item.selected(current),
                     onClick = { if (item.page == null) moreOpen = true else onOpen(item.page) },
-                    icon = { ItemIcon(item, current, timerRunning) },
+                    icon = { ItemIcon(item, current, timerRunning, pomodoroRunning) },
                     label = item.label,
                     hue = item.hue,
                     barLabels = items.map { it.label },
-                    modifier = Modifier.runningState(item, timerRunning),
+                    modifier = Modifier.runningState(item, timerRunning, pomodoroRunning),
                 )
             }
         }
@@ -136,6 +139,7 @@ fun AppNavigationRail(
     onOpen: (TopLevelPage) -> Unit,
     modifier: Modifier = Modifier,
     timerRunning: Boolean = false,
+    pomodoroRunning: Boolean = false,
     hidden: Set<TopLevelPage> = emptySet(),
 ) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
@@ -153,11 +157,11 @@ fun AppNavigationRail(
                     TokklNavigationRailItem(
                         selected = item.selected(current),
                         onClick = { if (item.page == null) moreOpen = true else onOpen(item.page) },
-                        icon = { ItemIcon(item, current, timerRunning) },
+                        icon = { ItemIcon(item, current, timerRunning, pomodoroRunning) },
                         label = item.label,
                         hue = item.hue,
                         railLabels = items.map { it.label },
-                        modifier = Modifier.runningState(item, timerRunning),
+                        modifier = Modifier.runningState(item, timerRunning, pomodoroRunning),
                     )
                 }
             }
@@ -176,27 +180,32 @@ private class NavigationItem(val page: TopLevelPage?, val label: String, @param:
     fun selected(current: TopLevelPage): Boolean = if (page == null) current.inMore else page == current
 
     /** Whether the item carries the running dot. */
-    fun dot(timerRunning: Boolean): Boolean = timerRunning && page == TopLevelPage.TIMER
+    fun dot(timerRunning: Boolean, pomodoroRunning: Boolean): Boolean = when (page) {
+        TopLevelPage.TIMER -> timerRunning
+        TopLevelPage.POMODORO -> pomodoroRunning
+        else -> false
+    }
 }
 
-/** TalkBack's "Timer running" state on [item], while it carries the dot. */
-private fun Modifier.runningState(item: NavigationItem, timerRunning: Boolean): Modifier =
-    if (item.dot(timerRunning)) semantics { stateDescription = item.runningLabel } else this
+/** TalkBack's running state on [item], while it carries the dot. */
+private fun Modifier.runningState(item: NavigationItem, timerRunning: Boolean, pomodoroRunning: Boolean): Modifier =
+    if (item.dot(timerRunning, pomodoroRunning)) semantics { stateDescription = item.runningLabel } else this
 
 /** The pages outside More, less those in [hidden], then More. */
 @Composable
 private fun navigationItems(hidden: Set<TopLevelPage>): List<NavigationItem> {
     val running = stringResource(R.string.nav_timer_running)
+    val pomodoroRunning = stringResource(R.string.nav_pomodoro_running)
     val pages = TopLevelPage.entries.filterNot { it.inMore || it in hidden }
-        .map { NavigationItem(it, stringResource(it.label), it.icon, running) }
+        .map { NavigationItem(it, stringResource(it.label), it.icon, if (it == TopLevelPage.POMODORO) pomodoroRunning else running) }
     return pages + NavigationItem(null, stringResource(R.string.nav_more), R.drawable.ic_nav_more, running)
 }
 
-/** The [item]'s icon, with the running dot while [timerRunning] on Timer. */
+/** The [item]'s icon, with its own running dot for Timer or Pomodoro. */
 @Composable
-private fun ItemIcon(item: NavigationItem, current: TopLevelPage, timerRunning: Boolean) {
+private fun ItemIcon(item: NavigationItem, current: TopLevelPage, timerRunning: Boolean, pomodoroRunning: Boolean) {
     val icon = @Composable { Icon(painterResource(item.icon), contentDescription = null) }
-    if (item.dot(timerRunning)) BadgedBox(badge = { RunningDot(item.selected(current), item.hue) }, content = { icon() }) else icon()
+    if (item.dot(timerRunning, pomodoroRunning)) BadgedBox(badge = { RunningDot(item.selected(current), item.hue) }, content = { icon() }) else icon()
 }
 
 /**
@@ -226,7 +235,7 @@ private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: 
     ModalBottomSheet(onDismissRequest = onClose, sheetState = sheetState, dragHandle = null) {
         SheetWindowEdgeToEdge()
         Column(
-            modifier = Modifier.padding(
+            modifier = Modifier.verticalScroll(rememberScrollState()).padding(
                 start = TokklTheme.spacing.space2,
                 end = TokklTheme.spacing.space2,
                 top = TokklTheme.spacing.space2,

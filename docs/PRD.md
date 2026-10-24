@@ -202,7 +202,7 @@ The app moves between pages as Tokkl's web app does on a phone (`NAV` and the Mo
 
 | ID | Requirement |
 |---|---|
-| B1 | Every signed-in screen has a bottom navigation bar with Timer, Pomodoro, Projects, Settings and More, in that order. On medium and expanded window widths a navigation rail at the side holds the same items. More opens a sheet with Reports, Clients, Tags and Trash. The Pomodoro item carries a running mark while a session runs (W11). Admin stays out, since the app has no admin features. Sign-in has no bar. The web app's phone bar changes the same way (TT-0324 in `../tokkl`). |
+| B1 | Every signed-in screen has a bottom navigation bar with Timer, Pomodoro, Projects, Settings and More, in that order. On medium and expanded window widths a navigation rail at the side holds the same items. More opens a sheet with Reports, Timer templates, Clients, Tags and Trash, with capability-dependent pages hidden when unsupported. The Pomodoro item carries a running mark while a session runs (W11). Admin stays out, since the app has no admin features. Sign-in has no bar. The web app's phone bar changes the same way (TT-0324 in `../tokkl`). |
 | B2 | Timer is the first page after sign-in. History (H1) and the calendar (K1) show on it, behind a List and Calendar switch, as on the web app's Timer page. |
 | B3 | Back from any page in the bar or the sheet, Pomodoro and Reports included, goes to Timer, and Back from Timer leaves the app. A screen opened from a page, such as Licences from Settings, goes back to that page. |
 

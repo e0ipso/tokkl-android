@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- An hourglass distinguishes a Pomodoro session from the regular stopwatch. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M6 2h12M6 22h12M7 2v4c0,3 5,4 5,6s-5,3 -5,6v4M17 2v4c0,3 -5,4 -5,6s5,3 5,6v4M9 18h6" />
+</vector>

@@ -896,7 +896,7 @@ class LargestFontScaleTest {
         val MIN_TOUCH_TARGET = 48.dp
 
         /** The bottom bar's items, in order. */
-        val BAR_LABELS = listOf(R.string.nav_timer, R.string.reports, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val BAR_LABELS = listOf(R.string.nav_timer, R.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
 
         /** The subject of the certificate that scripts/instrumented-tests.sh makes. */
         const val CERTIFICATE_SUBJECT = "CN=Tokkl instrumented tests"

@@ -234,6 +234,10 @@ fun TokklNavHost(
     }
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
+    val pomodoroRunningFlow = remember(appContext) {
+        (appContext as TokklApplication).cacheDatabase.pomodoroSessions().running()
+    }
+    val pomodoroRunning by pomodoroRunningFlow.collectAsState(initial = false)
     val status by syncStatus.collectAsState(initial = null)
     val width = windowWidth()
     // Counts the openings of the entry form, so a form opened beside the history over another one
@@ -260,6 +264,7 @@ fun TokklNavHost(
         current = backStack.currentPage(),
         onOpen = backStack::open,
         timerRunning = running,
+        pomodoroRunning = pomodoroRunning,
         hidden = buildSet {
             if (!offersTrash) add(TopLevelPage.TRASH)
             if (!offersTemplates) add(TopLevelPage.TEMPLATES)
@@ -413,6 +418,7 @@ internal fun SignedInFrame(
     current: TopLevelPage,
     onOpen: (TopLevelPage) -> Unit,
     timerRunning: Boolean = false,
+    pomodoroRunning: Boolean = false,
     hidden: Set<TopLevelPage> = emptySet(),
     syncStatus: SyncStatus? = null,
     onOpenNeedsAttention: (() -> Unit)? = null,
@@ -424,7 +430,7 @@ internal fun SignedInFrame(
     val rail = width != WindowWidth.COMPACT
     Row(Modifier.fillMaxSize()) {
         if (rail) {
-            AppNavigationRail(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden)
+            AppNavigationRail(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
         }
         Scaffold(
             modifier = Modifier
@@ -434,7 +440,7 @@ internal fun SignedInFrame(
                 Column {
                     if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, onSignInAgain = onSignInAgain, clock = syncStatusClock)
                     if (!rail) {
-                        AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, hidden = hidden)
+                        AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
                     } else if (syncStatus != null) {
                         // Without the bar, the band keeps above the system navigation bar on its own.
                         Spacer(

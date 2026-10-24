@@ -34,7 +34,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.finishWithin
-import com.github.e0ipso.tokkl.openBarPage
+import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -447,7 +447,7 @@ class ReportFiltersTest {
     /** Starts the app, opens Reports and waits for this week's summary. */
     private fun openReports() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        composeRule.openBarPage(R.string.reports, LOAD_TIMEOUT_MS)
+        composeRule.openMorePage(R.string.reports, LOAD_TIMEOUT_MS)
         awaitReport<SummaryReport>()
     }
 

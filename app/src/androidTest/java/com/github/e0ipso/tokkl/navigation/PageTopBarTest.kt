@@ -46,14 +46,14 @@ class PageTopBarTest {
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
         assertTopBar(R.string.nav_timer, back = false)
 
-        for (page in listOf(R.string.reports, R.string.nav_projects, R.string.settings)) {
+        for (page in listOf(R.string.pomodoro_title, R.string.nav_projects, R.string.settings)) {
             composeRule.onNode(barItem(page)).performClick()
             assertTopBar(page, back = false)
         }
-        for (page in listOf(R.string.nav_templates, R.string.nav_clients, R.string.nav_tags, R.string.nav_trash)) {
+        for (page in listOf(R.string.reports, R.string.nav_templates, R.string.nav_clients, R.string.nav_tags, R.string.nav_trash)) {
             composeRule.onNode(barItem(R.string.nav_more)).performClick()
             composeRule.waitUntil("the More sheet opens", TIMEOUT_MS) { exists(isSelectable() and hasText(string(page))) }
-            composeRule.onNode(isSelectable() and hasText(string(page))).performClick()
+            composeRule.onNode(isSelectable() and hasText(string(page))).performScrollTo().performClick()
             composeRule.waitUntil("the More sheet closes", TIMEOUT_MS) { !exists(hasText(string(R.string.nav_more)) and isHeading()) }
             assertTopBar(page, back = false)
         }

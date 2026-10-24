@@ -127,7 +127,7 @@ class SyncStatusFitTest {
         val SLACK = 0.5.dp
         val MIN_TOUCH_TARGET = 48.dp
 
-        val BAR_ITEMS = listOf(R.string.nav_timer, R.string.reports, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val BAR_ITEMS = listOf(R.string.nav_timer, R.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
 
         val NOW: Clock = Clock.fixed(Instant.parse("2026-10-16T01:00:00Z"), ZoneOffset.UTC)
 

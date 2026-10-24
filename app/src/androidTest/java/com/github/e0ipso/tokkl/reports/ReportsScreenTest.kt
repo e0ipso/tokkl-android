@@ -31,7 +31,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.finishWithin
-import com.github.e0ipso.tokkl.openBarPage
+import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
@@ -312,7 +312,7 @@ class ReportsScreenTest {
     /** Launches the app, opens the reports and returns the report once it loads. */
     private fun openReports(): SummaryReport {
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        compose.openBarPage(R.string.reports, LOAD_TIMEOUT_MS)
+        compose.openMorePage(R.string.reports, LOAD_TIMEOUT_MS)
         compose.waitUntil("a report loads", LOAD_TIMEOUT_MS) { modelState().let { it !is ReportsState.Loading && it != ReportsState.Closed } }
         val state = modelState()
         assertTrue("a report loads: $state", state is ReportsState.Loaded)

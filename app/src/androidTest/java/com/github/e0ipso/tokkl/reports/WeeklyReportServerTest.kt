@@ -26,7 +26,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.finishWithin
-import com.github.e0ipso.tokkl.openBarPage
+import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -279,7 +279,7 @@ class WeeklyReportServerTest {
     /** Starts the app and opens Reports on its summary. */
     private fun openReports() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        composeRule.openBarPage(R.string.reports, LOAD_TIMEOUT_MS)
+        composeRule.openMorePage(R.string.reports, LOAD_TIMEOUT_MS)
         composeRule.waitUntil("the summary loads", LOAD_TIMEOUT_MS) { state() is ReportsState.Loaded }
     }
 
