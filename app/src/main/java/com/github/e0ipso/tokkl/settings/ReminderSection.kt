@@ -7,11 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -19,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldLabelPosition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,7 +28,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -59,23 +60,26 @@ internal fun ReminderSection(preferences: ReminderPreferences, change: (Reminder
         Text(pluralStringResource(R.plurals.reminder_after_hours, preferences.hours, preferences.hours), style = MaterialTheme.typography.bodyLarge)
     }
     if (editing) {
-        val value = hours.toIntOrNull()?.takeIf { it in ReminderPreferences.HOURS }
+        // A new state each time the dialog opens. An attached label is drawn halfway above the
+        // field, and this scroll starts at the top, so it can never bring that half into view.
+        val state = rememberTextFieldState(hours)
+        val text = state.text.toString()
+        val value = text.toIntOrNull()?.takeIf { it in ReminderPreferences.HOURS }
         AlertDialog(
             onDismissRequest = { editing = false },
             title = { Text(stringResource(R.string.reminder_hours_label), modifier = Modifier.semantics { heading() }) },
             text = {
-                // A minimized label is placed halfway above the field. Room above the field keeps
-                // that half inside this scroll, which starts at the top and cannot move up to it.
-                val labelRoom = with(LocalDensity.current) { MaterialTheme.typography.bodySmall.lineHeight.toDp() } + TokklTheme.spacing.space2
                 Column(
-                    Modifier.verticalScroll(rememberScrollState()).padding(top = labelRoom),
+                    Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
                 ) {
                     OutlinedTextField(
-                        value = hours, onValueChange = { hours = it },
+                        state = state,
                         label = { Text(stringResource(R.string.reminder_hours_label)) },
+                        labelPosition = TextFieldLabelPosition.Above(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true, isError = value == null, modifier = Modifier.fillMaxWidth(),
+                        lineLimits = TextFieldLineLimits.SingleLine,
+                        isError = value == null, modifier = Modifier.fillMaxWidth(),
                     )
                     Text(stringResource(R.string.reminder_hours_range))
                 }
@@ -83,7 +87,10 @@ internal fun ReminderSection(preferences: ReminderPreferences, change: (Reminder
             confirmButton = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
                     TokklGhostButton(onClick = { editing = false }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.reminder_cancel)) }
-                    TokklButton(onClick = { value?.let { change(preferences.copy(hours = it)); editing = false } }, enabled = value != null, modifier = Modifier.fillMaxWidth()) {
+                    TokklButton(
+                        onClick = { value?.let { change(preferences.copy(hours = it)); editing = false } },
+                        enabled = value != null, modifier = Modifier.fillMaxWidth(),
+                    ) {
                         Text(stringResource(R.string.reminder_save))
                     }
                 }

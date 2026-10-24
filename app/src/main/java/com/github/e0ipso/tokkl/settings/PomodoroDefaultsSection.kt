@@ -11,19 +11,21 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldLabelPosition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -66,21 +68,24 @@ internal fun PomodoroDefaultsSection(defaults: PomodoroDefaults, sharedWithWeb: 
     }
     val field = editing?.let { name -> PomodoroDefaultField.entries.firstOrNull { it.name == name } }
     if (field != null) {
-        val valid = field.parse(input) != null
+        // A new state each time the dialog opens. An attached label is drawn halfway above the
+        // field, and this scroll starts at the top, so it can never bring that half into view.
+        val state = rememberTextFieldState(input)
+        val text = state.text.toString()
+        val valid = field.parse(text) != null
         AlertDialog(
             onDismissRequest = { editing = null },
             title = { Text(stringResource(R.string.settings_pomodoro_edit), modifier = Modifier.semantics { heading() }) },
             text = {
-                // A minimized label is placed halfway above the field. Room above the field keeps
-                // that half inside this scroll, which starts at the top and cannot move up to it.
-                val labelRoom = with(LocalDensity.current) { MaterialTheme.typography.bodySmall.lineHeight.toDp() } + TokklTheme.spacing.space2
-                Column(Modifier.verticalScroll(rememberScrollState()).padding(top = labelRoom)) {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     OutlinedTextField(
-                        value = input, onValueChange = { input = it },
+                        state = state,
                         label = { Text(stringResource(field.label)) },
+                        labelPosition = TextFieldLabelPosition.Above(),
                         supportingText = { Text(stringResource(R.string.pomodoro_length_range, field.range.first, field.range.last)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true, isError = !valid, modifier = Modifier.fillMaxWidth(),
+                        lineLimits = TextFieldLineLimits.SingleLine,
+                        isError = !valid, modifier = Modifier.fillMaxWidth(),
                     )
                 }
             },
@@ -90,7 +95,7 @@ internal fun PomodoroDefaultsSection(defaults: PomodoroDefaults, sharedWithWeb: 
                         Text(stringResource(R.string.settings_pomodoro_cancel))
                     }
                     TokklButton(
-                        onClick = { field.edited(defaults, input)?.let { change(it); editing = null } },
+                        onClick = { field.edited(defaults, text)?.let { change(it); editing = null } },
                         enabled = valid, modifier = Modifier.fillMaxWidth(),
                     ) { Text(stringResource(R.string.settings_pomodoro_save)) }
                 }
