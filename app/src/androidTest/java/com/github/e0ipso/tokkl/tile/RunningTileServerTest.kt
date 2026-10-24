@@ -3,6 +3,11 @@ package com.github.e0ipso.tokkl.tile
 import android.net.ConnectivityManager
 import android.service.quicksettings.Tile
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
@@ -17,6 +22,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -85,6 +91,11 @@ class RunningTileServerTest {
     @After
     fun cleanUp() {
         try {
+            val instrumentation = InstrumentationRegistry.getInstrumentation()
+            instrumentation.runOnMainSync {
+                ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                    .filterIsInstance<TileControlsActivity>().forEach { it.finish() }
+            }
             QuickSettingsTile.collapse()
             QuickSettingsTile.remove()
             // Waits for the network, which the account's deletion and the next test need.
@@ -239,6 +250,61 @@ class RunningTileServerTest {
         assertEquals(listOf("tile"), running.tags)
         assertEquals("the start waits in the queue", queued + 1, unsentCount())
         QuickSettingsTile.awaitText("the continued entry", context.getString(R.string.tile_running_subtitle))
+    }
+
+    @Test
+    fun longPressOpensCompactControlsThatPauseResumeAndStopOffline() {
+        AirplaneMode.set(true, web)
+        val fields = EntryFields(description = "Long press controls", projectId = project)
+        val first = runBlocking { app.changes.start(workspace, fields) }
+        ageRunning(first, fields)
+        QuickSettingsTile.expand()
+        QuickSettingsTile.awaitText("the entry offered by long press", fields.description)
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val tile = checkNotNull(device.wait(Until.findObject(By.text(fields.description)), TIMEOUT_MS)) {
+            "SystemUI did not expose the running tile"
+        }
+        tile.longClick()
+
+        fun press(label: Int) {
+            val button = checkNotNull(device.wait(
+                Until.findObject(By.pkg(context.packageName).desc(context.getString(label))), TIMEOUT_MS,
+            )) { "Compact controls did not show ${context.getString(label)}" }
+            button.click()
+        }
+        press(R.string.timer_pause_spoken)
+        runBlocking { withTimeout(TIMEOUT_MS) { app.changes.timerControls.first { it is TimerControls.Paused } } }
+        assertEquals("Pause stops the displayed entry", null, runBlocking { app.cache.running.first() })
+        assertNotNull(runBlocking { app.cache.timeEntries.first() }.single { it.id == first }.stop)
+
+        press(R.string.timer_resume_spoken)
+        val resumed = runBlocking {
+            withTimeout(TIMEOUT_MS) { app.changes.timerControls.first { it is TimerControls.Running } }
+        } as TimerControls.Running
+        assertNotEquals("Resume creates a new segment", first, resumed.entry.id)
+        assertEquals(fields.description, resumed.entry.description)
+        assertEquals(project, resumed.entry.projectId)
+        ageRunning(resumed.entry.id, fields)
+        device.waitForIdle()
+        press(R.string.timer_stop_spoken)
+        runBlocking { withTimeout(TIMEOUT_MS) { app.changes.timerControls.first { it == TimerControls.Idle } } }
+        assertTrue("both segments are durably stopped offline",
+            runBlocking { app.cache.timeEntries.first() }.all { it.stop != null })
+        assertTrue("the changes wait for connectivity", unsentCount() > 0)
+        assertTrue("Stop closes the compact dialog", device.wait(Until.gone(By.pkg(context.packageName)
+            .desc(context.getString(R.string.timer_stop_spoken))), TIMEOUT_MS))
+
+        AirplaneMode.set(false, web)
+        runBlocking { app.sender.send().join() }
+        assertEquals("the normal sender drains the offline controls", 0, unsentCount())
+        val stored = runBlocking { app.cache.timeEntries.first() }
+        assertEquals(2, stored.size)
+        stored.forEach { entry ->
+            assertTrue(entry.id > 0)
+            val remote = account.entry(entry.id)
+            assertEquals(fields.description, remote.getValue("description").jsonPrimitive.content)
+            assertNotNull(remote["stop"])
+        }
     }
 
     @Test

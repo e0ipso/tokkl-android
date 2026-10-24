@@ -35,6 +35,8 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.orFail
@@ -118,6 +120,53 @@ class CalendarServerTest {
             show(model, day)
 
             awaitBlock(spoken("Write the report", day.atTime(9, 0), day.atTime(10, 30)))
+        }
+    }
+
+    @Test
+    fun deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline() {
+        val day = today.minusDays(1)
+        val description = "Delete from the calendar editor"
+        val id = seed(description, day.atTime(9, 0), day.atTime(10, 30))
+        refresh()
+        assertTrue("Tokkl offers Undo for this editor", app.capabilities.state.value.restore)
+
+        withCalendar { model ->
+            show(model, day)
+            val label = spoken(description, day.atTime(9, 0), day.atTime(10, 30))
+            awaitBlock(label)
+            AirplaneMode.set(true, account.client)
+            fun deleteFromEditor() {
+                composeRule.onNode(blockOf(description)).performScrollTo()
+                    .performSemanticsAction(SemanticsActions.OnClick)
+                composeRule.waitUntil("the calendar opens its entry editor", LOAD_TIMEOUT_MS) {
+                    exists(hasText(string(R.string.entry_form_edit))) &&
+                        exists(hasText(string(R.string.history_delete)) and hasClickAction())
+                }
+                composeRule.onNode(hasText(string(R.string.history_delete)) and hasClickAction())
+                    .performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
+                composeRule.waitUntil("Delete closes the editor and removes the calendar block", LOAD_TIMEOUT_MS) {
+                    !exists(hasText(string(R.string.entry_save))) && !exists(blockOf(description)) &&
+                        runBlocking { app.cache.entries.first() }.none { it.entry.id == id }
+                }
+                assertEquals(1, runBlocking { app.changes.unsentCount.first() })
+            }
+
+            deleteFromEditor()
+            composeRule.onNode(hasText(string(R.string.history_undo)) and hasClickAction())
+                .performSemanticsAction(SemanticsActions.OnClick)
+            awaitBlock(label)
+            assertEquals("Undo cancels the offline delete", 0, runBlocking { app.changes.unsentCount.first() })
+            assertEquals(id, runBlocking { app.cache.entries.first() }.single().entry.id)
+
+            deleteFromEditor()
+            AirplaneMode.set(false, account.client)
+            sendTheQueue()
+            val answer = account.client.get(
+                account.client.server.api("me", "time_entries", id.toString()), JsonObject.serializer(),
+            )
+            assertEquals("the editor's queued delete reaches the server", 404,
+                ((answer as? ApiResult.Failure)?.error as? ApiError.UnexpectedStatus)?.status)
         }
     }
 
