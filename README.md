@@ -174,11 +174,14 @@ failures to the focused selection rather than repeating a full run per fix.
 
 `test/filters/api31-suggestions-and-clock.txt` selects both failures from the
 complete API 31 report in run 39851423063. Use it with the same command above
-and check for exactly two passing cases. To exercise their timing repeatedly,
-select `com.github.e0ipso.tokkl.timer.DescriptionSuggestionsRepeatTest` and
-`com.github.e0ipso.tokkl.widget.WidgetClockRepeatTest` as a comma-separated
-`class=` list. All 20 independent cases must pass; a failed case is never retried
-or discarded.
+and check for exactly two passing cases. An unfiltered run leaves out
+`ProjectsTaskDeleteRepeatTest`, `DescriptionSuggestionsRepeatTest` and
+`WidgetClockRepeatTest`. Each repeats a scenario the suite already runs, so a
+race a single case missed can show up. Select those classes with a
+comma-separated `class=` list, or pass `includeSustainedRepeat=true`, to run
+them. All 20 independent cases of the suggestions and clock classes must pass;
+a failed case is never retried or discarded. The task class is 20 cases of the
+same create, edit and delete.
 
 The native Android 13+ notification permission probes need a permission reset before their
 instrumentation process starts. Run each method separately on an emulator the script boots:

@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.widget
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.github.e0ipso.tokkl.SustainedRepeat
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -9,6 +10,7 @@ import org.junit.runner.RunWith
 
 /** Every repetition must pass; these are independent cases, not retries after a failure. */
 @RunWith(AndroidJUnit4::class)
+@SustainedRepeat
 class WidgetClockRepeatTest {
     private val scenario = WidgetServerTest()
 

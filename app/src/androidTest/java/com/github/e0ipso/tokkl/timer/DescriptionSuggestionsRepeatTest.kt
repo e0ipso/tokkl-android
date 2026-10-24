@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.github.e0ipso.tokkl.SustainedRepeat
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -9,6 +10,7 @@ import org.junit.runner.RunWith
 
 /** Repeat the original assertions with a fresh account and orchestrator process each time. */
 @RunWith(AndroidJUnit4::class)
+@SustainedRepeat
 class DescriptionSuggestionsRepeatTest {
     private val scenario = DescriptionSuggestionsServerTest()
 

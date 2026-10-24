@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.projects
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.github.e0ipso.tokkl.SustainedRepeat
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -14,6 +15,7 @@ import org.junit.runner.RunWith
  * Each named test gets its own process from Android Test Orchestrator, as in the full suite.
  */
 @RunWith(AndroidJUnit4::class)
+@SustainedRepeat
 class ProjectsTaskDeleteRepeatTest {
     private val scenario = ProjectsServerTest()
 
