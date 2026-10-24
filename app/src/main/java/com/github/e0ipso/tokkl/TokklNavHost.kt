@@ -45,7 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarModel
@@ -627,7 +628,9 @@ private fun Screen(
             },
         )
         Destination.POMODORO -> {
-            val pomodoro: PomodoroViewModel = viewModel()
+            val pomodoro = ViewModelProvider(
+                LocalContext.current as ViewModelStoreOwner,
+            )[PomodoroViewModel::class.java]
             PomodoroScreen(
                 model = pomodoro.model, cache = cache,
                 onNotificationStart = onPomodoroStarted,

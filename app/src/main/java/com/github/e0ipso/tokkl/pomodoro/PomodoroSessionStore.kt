@@ -512,7 +512,7 @@ internal class RoomPomodoroSessionDatabase(
 
     override fun stopTimers(at: Instant): Boolean = queue.stopTimersForPomodoro(at)
 
-    override fun <T> transaction(block: () -> T): T = database.runInTransaction { block() }
+    override fun <T> transaction(block: () -> T): T = database.runInTransaction<T> { block() }
 }
 
 private fun PomodoroSession.phase() = SessionPhase(phaseKind, phaseStartedAt, completed)
