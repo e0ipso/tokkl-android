@@ -103,5 +103,29 @@
     "before": " text=log.read_text(errors='replace');result_root=project/'app/build/outputs/androidTest-results/connected/debug'",
     "after": " if stop_reason:state['failure_evidence']=capture.persist(stop_reason,{'scope_completion_directory':str(completion.path),'stop_reason':stop_reason})\n text=log.read_text(errors='replace');result_root=project/'app/build/outputs/androidTest-results/connected/debug'",
     "occurrences": 1
+  },
+  {
+    "before": "def run_workload(api, label, args, seconds, standalone=False):\n global owned_scope\n",
+    "after": "def run_workload(api, label, args, seconds, standalone=False):\n global owned_scope\n from final_gate_profiles import reset_flag,retain_captures\n",
+    "occurrences": 1,
+    "ticket": "TKA-0332"
+  },
+  {
+    "before": "'TOKKL_TEST_AVD=tokkl-api'+str(api),gate,",
+    "after": "'TOKKL_TEST_AVD=tokkl-api'+str(api),'TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION='+reset_flag(config,label),gate,",
+    "occurrences": 1,
+    "ticket": "TKA-0332"
+  },
+  {
+    "before": " stable=not stop_reason and counts['tests']>0",
+    "after": " rec['app_additional_output']=app_additional_output;save()\n stable=not stop_reason and counts['tests']>0",
+    "occurrences": 1,
+    "ticket": "TKA-0332"
+  },
+  {
+    "before": " text=log.read_text(errors='replace');result_root=",
+    "after": " app_additional_output=retain_captures(config,label,name+'-'+tag,start_wall)\n text=log.read_text(errors='replace');result_root=",
+    "occurrences": 1,
+    "ticket": "TKA-0332"
   }
 ]

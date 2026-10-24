@@ -276,7 +276,20 @@ class FiniteRecipeTests(unittest.TestCase):
                  'planned-watchdog.py', 'watchdog_lifetime.py', 'window-rollback.py', 'shim/adb', 'shim/systemd-run']
         for name in paths:
             original = subprocess.check_output(['git', 'show', '2c9192c:scripts/device_verification/runtime/'+name], cwd=PACKAGE)
-            self.assertEqual((PACKAGE/'runtime'/name).read_bytes(), original, name)
+            current = (PACKAGE/'runtime'/name).read_bytes()
+            if name == 'controller.py':
+                # Only the four reviewed final-gate insertions may differ. The
+                # entire remaining controller and every protected module still
+                # match the same original bytes, including all guard order.
+                deltas = [d for d in json.loads((PACKAGE/'provenance/configuration-delta.json').read_text())
+                          if d.get('ticket') == 'TKA-0332']
+                self.assertEqual(len(deltas), 4)
+                text = current.decode()
+                for delta in reversed(deltas):
+                    self.assertEqual(text.count(delta['after']), delta['occurrences'])
+                    text = text.replace(delta['after'], delta['before'])
+                current = text.encode()
+            self.assertEqual(current, original, name)
 
     def test_bound_main_runs_both_tiny_children_with_adoption_and_owned_scope_modeled(self):
         self.freeze()

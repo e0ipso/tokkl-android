@@ -352,8 +352,8 @@ resolves configured tools and records SDK/JDK metadata, screenshot-reference
 count and benchmark source fingerprints. This never admits or launches work.
 Snapshots expire; root must reread conditions under the eventual exclusive lease.
 
-After scoped repairs, the final SDK/API36 full app and benchmark matrix, all 68
-screenshot references, authoritative assemble/check and reproducibility remain
+After scoped repairs, the final SDK/API36 full app and benchmark matrix, all 100
+screenshot comparisons, authoritative assemble/check and reproducibility remain
 coordinator obligations. Prior full-stage receipts retain their own input pins
 and outcomes; source changes do not inherit a full-gate pass.
 The approved full plan uses a 90-minute API36 payload floor, one slot, followed
@@ -1018,3 +1018,92 @@ fresh actual cheap-fixture applicability and matching root adoption; no SDK,
 Gradle, device, reproducibility workload or shared-resource operation is authorized
 by these host checks. Final integrated checks and API31 compatibility remain the
 coordinator's separate obligations.
+
+## Exact final-gate source profiles
+
+TKA-0332 adds separate profiles in runtime/final_gate_profiles.py. Legacy
+scoped-class and development recipes retain their API36 restrictions. Only
+compatibility admits API31, and only the exact diagnostic/final profiles below.
+This source change grants no invocation, preparation, budget, retry or adoption.
+
+| Profile | API | Exact selection | Payload seconds |
+| --- | --- | --- | --- |
+| screenshot-api36-v1 | 36 | screenshot package, capture or compare | 1800 |
+| native-permission-method-v1 | 36 | one of four reviewed optional-source methods | 1800 |
+| widget-clock-api31-v1 | 31 | original WidgetServerTest clock method | 1800 |
+| benchmark-api31-v1 | 31 | ten API cases and two production benchmarks | 1800 |
+| final-app-bench-v1 | 31 or 36 | complete applicable app inventory and two production benchmarks | 5400 to 7200 |
+
+Use the source-only declare(project, profile, device_build, ...) function to
+inspect a declaration, then job_spec(recipe) for the exact label/argv/deadline.
+Declaration reads artifacts; it does not freeze, prepare or authorize execution.
+Root must supply the reviewed same-API build and independently frozen complete
+source/build/dependency/tool/APK pins. Runtime/API/argv/source/phase changes refuse.
+All new profiles retain strict post-input validation. The optional Gradle-index
+observation policy still belongs exclusively to its existing scoped API36 profile.
+
+runtime/final_gate_inventory.json binds all 162 current androidTest Kotlin
+sources to 150 concrete classes and their exact methods. The source-bound
+inventories contain 697 API31 and 806 API36 identities, not measured device
+counts. They explicitly expand 19 inherited classes and the four named
+PomodoroDefaultsUiTest parameter sets. JUnit4 MessageFormat renders the integral
+float values as font=1 and font=2 in case names. SDK-inapplicable identities are listed as
+filtered out, never accepted as JUnit skips. Ordinary inventories exclude both
+optional native probe classes. An added, changed or removed source requires a
+new review of the table and its fixed digest. Full36 requires 100 reference names;
+full31 excludes the 100 API36-only screenshot identities through the reviewed SDK
+guards. The full selector excludes only CatalogFrameBenchmark's four separate
+experiments, retaining all applicable app cases, Startup.coldStart and
+TimerTap.startAndStop. Catalog source/helper bytes remain bound. Production
+benchmark results retain the 75 positive finite values and 45 complete distinct
+traces, source iterations, assertions, retries and device build context.
+
+The screenshot profile binds all four concrete subclass variants and 25 inherited
+method/basename mappings. Capture requires exactly the reviewed 68 old reference
+names and 32 missing names. Compare requires exactly 100 names. Every reference
+digest is input-pinned. Scale3, channel tolerance8 and maximum20 differing pixels
+stay unchanged. Capture is a sole job. Complete capture evidence can report
+capture_complete=true with 32 or more assertion failures, but the result, payload
+and controller stay failed. PNG acceptance and a new frozen comparison remain
+separate coordinator work. No reference assets are changed here.
+
+Before JUnit assessment the controller copies only fresh canonical screenshot
+actual/diff files from the exact app additional-output root into an exclusive
+`app-additional-output/connected/<device>/screenshots/` tree.
+Its sibling JSON receipt records origin, relative path, SHA256, size, freshness
+and copy errors. Partial retained files and original failures survive refusal.
+Symlinks, escapes, stale/duplicate/unstable files, invalid PNG framing/CRC/compressed rows,
+unrecorded files and missing required actual/diff outputs refuse. Passing cases
+may emit no images. A complete 100-case XML does not imply 100 fresh captures.
+
+Each native selector is one job/preparation/emulator lifetime. The controller
+derives its literal reset flag only from that exact profile, sets0 on every
+other job and clears an inherited flag during execution setup. It checks exactly
+one reset line for the actual owned emulator and exactly one finalized selected
+case; source inclusion, SDK guards and native-dialog assertions remain bound.
+
+Unresolved metadata: the maintained launcher/parser logs owned AVD and SDK but
+emits no app-only actual build fingerprint. Screenshot, native and widget
+profiles therefore retain their counts/captures and report this precise missing
+metadata with passed=false. This change does not invent a build receipt or
+extend the launcher. Benchmark/API and full profiles check actual build context
+through their benchmark JSON. Matching synthetic fixtures are source checks
+only, never device evidence. Root must resolve the app-only metadata dependency
+before adopting a passing comparison/native/widget route.
+
+audit_plan.py now checks exact reference phase/name sets and records SDK/AVD
+metadata for APIs present in the plan. A host reference audit may describe the
+68+32-pending tree; it never certifies screenshot comparison. The audit with a
+configuration still reads live resources and is outside this source-only sitting.
+
+Run focused modeled fixtures before the full host suite. TOKKL_HOST_TEST_CACHE
+only selects the host runner's disk scratch parent. It is not a runtime setting.
+No SDK, Gradle, device, live-resource or baseline execution was performed for
+this change. Preparation helpers are exercised only against disposable modeled
+projects by the pure host suite. Fresh matching actual cheap-live applicability,
+independent root review, complete input freeze/adoption/lease, PNG review and
+all actual device/release/baseline criteria remain pending. Historical failures
+and unknowns remain valid. Existing accounting remains26/32 preparations used
+and31,838,445,568 of34,359,738,368 bytes carried, with2,521,292,800 remaining.
+Six remaining slots are arithmetic only. The minimum nine final preparations,
+eleven with both API31 diagnostics, still exceeds that capacity.

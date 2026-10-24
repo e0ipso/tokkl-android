@@ -82,7 +82,8 @@ def snapshot(path):
  return r
 def run_workload(api, label, args, seconds, standalone=False):
  global owned_scope
- name=label+('-api'+str(api) if api else '');log=base/(name+'-'+tag+'.log');telemetry=base/(name+'-'+tag+'-memory.jsonl');owned_scope='tokkl-0273-'+label+'-'+tag+'.scope';cmd=['systemd-run','--user','--scope','--quiet','--unit='+owned_scope,'-p','OOMPolicy=continue','--','choom','-n','1000','--','env','PATH='+config['environment']['PATH'],'JAVA_HOME='+config['environment']['JAVA_HOME'],'ANDROID_HOME='+config['environment']['ANDROID_HOME'],'MEM_GATE_CGROUP_MB='+('5000' if standalone else '8192'),'MEM_GATE_WAIT_S=300','TMPDIR='+str(base/'scratch'),'TOKKL_TEST_AVD=tokkl-api'+str(api),gate,'timeout','--signal=TERM','--kill-after=30s',str(seconds)+'s']+args
+ from final_gate_profiles import reset_flag,retain_captures
+ name=label+('-api'+str(api) if api else '');log=base/(name+'-'+tag+'.log');telemetry=base/(name+'-'+tag+'-memory.jsonl');owned_scope='tokkl-0273-'+label+'-'+tag+'.scope';cmd=['systemd-run','--user','--scope','--quiet','--unit='+owned_scope,'-p','OOMPolicy=continue','--','choom','-n','1000','--','env','PATH='+config['environment']['PATH'],'JAVA_HOME='+config['environment']['JAVA_HOME'],'ANDROID_HOME='+config['environment']['ANDROID_HOME'],'MEM_GATE_CGROUP_MB='+('5000' if standalone else '8192'),'MEM_GATE_WAIT_S=300','TMPDIR='+str(base/'scratch'),'TOKKL_TEST_AVD=tokkl-api'+str(api),'TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION='+reset_flag(config,label),gate,'timeout','--signal=TERM','--kill-after=30s',str(seconds)+'s']+args
  completion=Session(base/('completion-'+name+'-'+tag),app,owned_scope,seconds,capture);cmd,command_env=completion.wrap_command(cmd,gate)
  event_baseline=completion.capture();monitor=Monitor(event_baseline,app,app/owned_scope,sampler=lambda root,deadline:completion.capture(root,deadline=deadline));paths=set();tmp_paths=set();scope_paths={};em_initial={};observed_env={};stop_reason=None;pre_shared={x.name for x in Path('/tmp/android-e0ipso').iterdir()};start=time.monotonic();start_wall=time.time()
  (base/(name+'-'+tag+'-baseline.json')).write_text(json.dumps(event_baseline,indent=2)+'\n')
@@ -147,6 +148,7 @@ def run_workload(api, label, args, seconds, standalone=False):
   try:completion.await_cleanup(deadline=cleanup_deadline)
   except (EvidenceError,OSError,ValueError,KeyError,TypeError) as error:stop_reason=stop_reason or 'scope cleanup evidence: '+repr(error)
  if stop_reason:state['failure_evidence']=capture.persist(stop_reason,{'scope_completion_directory':str(completion.path),'stop_reason':stop_reason})
+ app_additional_output=retain_captures(config,label,name+'-'+tag,start_wall)
  text=log.read_text(errors='replace');result_root=project/'app/build/outputs/androidTest-results/connected/debug';copied=base/(name+'-'+tag+'-results');counts={'tests':0,'failures':0,'errors':0,'skipped':0};failures=[]
  if not standalone and result_root.exists():
   shutil.copytree(result_root,copied)
@@ -193,6 +195,7 @@ def run_workload(api, label, args, seconds, standalone=False):
     for kind in ['failure','error','skipped']:
      if case.findall(kind):benchmark_counts[{'failure':'failures','error':'errors','skipped':'skipped'}[kind]]+=1
   rec['benchmark_counts']=benchmark_counts;rec['benchmark_cases']=benchmark_cases;save()
+ rec['app_additional_output']=app_additional_output;save()
  stable=not stop_reason and counts['tests']>0 and bool(rec['device_lines']) and bool(tmp_paths) and bool(observed_env) and all(v['ANDROID_TMP'] in tmp_paths for v in observed_env.values()) and cleanup['work_directories_removed'] and cleanup['private_android_tmp_removed'] and cleanup['emulator_scopes_absent'] and not cleanup['new_shared_android_files']
  if not standalone and any(job['label']==label and 'result_recipe' in job for job in config['plan']):
   rec['result_contract']=assess_scoped(config,api,label,args,seconds,rec,start_wall,exit_code,stop_reason);save()

@@ -155,6 +155,8 @@ def declare(project, classes):
 
 def validate_recipe(project, job, pins):
     recipe = job.get('result_recipe')
+    if final_gate_profiles().selected(job):
+        return final_gate_profiles().validate_recipe(project, job, pins)
     if isinstance(recipe, dict) and recipe.get('profile') == 'catalog-frame-api-v1':
         return catalog_profile().validate_recipe(project, job, pins)
     if isinstance(recipe, dict) and recipe.get('profile') == BENCHMARK_API:
@@ -182,6 +184,8 @@ def validate_recipe(project, job, pins):
 
 
 def assess_scoped(config, api, label, args, seconds, record, started, exit_code, stop_reason):
+    if any(job.get('label') == label and final_gate_profiles().selected(job) for job in config['plan']):
+        return final_gate_profiles().assess(config, api, label, args, seconds, record, started, exit_code, stop_reason)
     if any(job.get('label') == label and job.get('result_recipe', {}).get('profile') == 'catalog-frame-api-v1'
            for job in config['plan']):
         return catalog_profile().assess(config, api, label, args, seconds, record, started, exit_code, stop_reason)
@@ -534,3 +538,11 @@ def assess_benchmark_api(config, api, label, args, seconds, record, started, exi
             zipfile.BadZipFile, RuntimeError, struct.error, zlib.error) as error:
         result['reason'] = str(error)
     return result
+
+
+def final_gate_profiles():
+    if __package__:
+        from . import final_gate_profiles as module
+    else:
+        import final_gate_profiles as module
+    return module

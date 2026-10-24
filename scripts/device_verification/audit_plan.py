@@ -16,6 +16,18 @@ sys.path[:0] = [str(B), str(B/'runtime')]
 from conformance import verify
 from configuration import load, validate
 from duration_policy import window_bounds
+from final_gate_profiles import screenshot_audit, SCREENSHOT
+
+
+
+def sdk_metadata_paths(config):
+    sdk = Path(config['environment']['ANDROID_HOME'])
+    paths = [Path(config['environment']['JAVA_HOME'])/'release', sdk/'emulator/source.properties',
+             sdk/'platform-tools/source.properties']
+    for api in sorted({j['api'] for j in config['plan'] if not j['standalone']}):
+        paths += [sdk/('system-images/android-'+str(api)+'/default/x86_64/source.properties'),
+                  Path.home()/('.android/avd/tokkl-api'+str(api)+'.avd/config.ini')]
+    return paths
 
 
 def audit(config):
@@ -49,7 +61,13 @@ def audit(config):
     if not Path('/tmp/android-e0ipso').is_dir(): blockers.append('actual controller shared Android directory is absent')
     project = Path(config['project'])
     screenshots = sorted(project.glob('app/src/androidTest/assets/screenshots/**/*.png'))
-    if len(screenshots) != 68: blockers.append('expected 68 unchanged screenshot references, found '+str(len(screenshots)))
+    phases = [j['result_recipe']['phase'] for j in config['plan']
+              if j.get('result_recipe', {}).get('profile') == SCREENSHOT]
+    screenshot_state = None
+    try:
+        screenshot_state = screenshot_audit(project, phases[0] if phases else None)
+    except (OSError, ValueError) as error:
+        blockers.append('screenshot reference contract: '+str(error))
     benchmarks = {}
     for path in project.glob('macrobenchmark/src/**/*.kt'):
         text = path.read_text()
@@ -58,10 +76,7 @@ def audit(config):
                                                         'iteration_lines': [l.strip() for l in text.splitlines() if 'iterations' in l],
                                                         'retry_lines': [l.strip() for l in text.splitlines() if 'repeat(' in l]}
     versions = {}
-    sdk = Path(config['environment']['ANDROID_HOME'])
-    for path in [Path(config['environment']['JAVA_HOME'])/'release', sdk/'emulator/source.properties',
-                 sdk/'platform-tools/source.properties', sdk/'system-images/android-36/default/x86_64/source.properties',
-                 Path.home()/'.android/avd/tokkl-api36.avd/config.ini']:
+    for path in sdk_metadata_paths(config):
         versions[str(path)] = {'sha256': hashlib.sha256(path.read_bytes()).hexdigest(), 'content': path.read_text()} if path.is_file() else {'unavailable': True}
     plan = [(x['api'], x['label'], x['args'], x['seconds'], x['standalone']) for x in config['plan']]
     return {'configuration_sha256': checked['_sha256'], 'proof': proof, 'observed_at': namespace['now'](),
@@ -70,6 +85,7 @@ def audit(config):
             'preparation_policy': policy, 'reclaim_budget_bytes': checked['reclaim_budget_bytes'],
             'carried_reclaim_bytes': checked['carried_reclaim_bytes'], 'plan_bounds': window_bounds(plan),
             'tools': tools, 'versions': versions, 'screenshot_reference_count': len(screenshots),
+            'screenshot_reference_state': screenshot_state,
             'benchmark_sources': benchmarks, 'blockers_at_observation': blockers,
             'admission_or_activation': False, 'note': 'snapshot only; conditions must be reread immediately before authorized work',
             'unverified': ['actual SDK/API36 full app and benchmark gate', 'metric/sample finalization',

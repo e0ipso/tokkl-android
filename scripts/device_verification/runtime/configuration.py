@@ -15,12 +15,12 @@ import re
 import stat
 import struct
 if __package__:
-    from .scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
+    from .scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST, final_gate_profiles
     from .check_and_repro import validate_grouped_job
     from .compile_only import validate_bootstrap_plan
     from . import post_input_policy
 else:
-    from scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST
+    from scoped_results import validate_recipe, validate_plan, COMPILE_ARGS, COMPILE_FIRST, final_gate_profiles
     from check_and_repro import validate_grouped_job
     from compile_only import validate_bootstrap_plan
     import post_input_policy
@@ -118,7 +118,7 @@ def validate(config, *, fresh=True):
 def _validated(config, fresh, *, post):
     """Only post_input_configuration passes post=True, under a declared policy."""
     require(config.get('schema_version') == 1, 'unsupported configuration schema')
-    require(config.get('stage') == 'development', 'this candidate supports API36 development only; API31 stays deferred')
+    require(config.get('stage') in ('development', 'compatibility'), 'unsupported verification stage')
     for key in ['run_id', 'lease_id', 'budget_authorization']:
         require(isinstance(config.get(key), str) and config[key].strip(), 'missing '+key)
     require(re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', config['run_id']), 'unsafe run identity')
@@ -165,6 +165,7 @@ def _validated(config, fresh, *, post):
     jobs = config.get('plan')
     require(isinstance(jobs, list) and 0 < len(jobs) <= 4, 'one to four finite sequential jobs required')
     require(len(jobs) <= policy['max_preparations'], 'plan exceeds preparation count allowance')
+    final_gate_profiles().validate_stage(config)
     bootstrap = validate_bootstrap_plan(config)
     if not bootstrap:
         validate_plan(config)
@@ -180,7 +181,8 @@ def _validated(config, fresh, *, post):
         require('--stop' not in args, 'stopping another Gradle daemon is prohibited')
         grouped = validate_grouped_job(config, job)
         if not job['standalone']:
-            require(job['api'] == 36 and args[0] == 'scripts/instrumented-tests.sh', 'device jobs must use authorized script on API36')
+            require((job['api'] == 36 or final_gate_profiles().selected(job))
+                    and args[0] == 'scripts/instrumented-tests.sh', 'device jobs require the authorized API/profile script')
             if 'result_recipe' in job:
                 require(isinstance(job['result_recipe'], dict), 'explicit scoped recipe required')
             else:
@@ -285,7 +287,8 @@ def execution_configuration(controller):
     # enforced by the unchanged gate and controller, never lowered here.
     for name in ['FIX_RUN', 'CARRIED_RECLAIM', 'PRIOR_WINDOW', 'NO_RECLAIM',
                  'MEM_GATE_MIN_MB', 'MEM_GATE_CGROUP_MB', 'MEM_GATE_WAIT_S',
-                 'MEM_GATE_SETTLE_S', 'TOKKL_TEST_SLOTS', 'TOKKL_TEST_AVD', 'ANDROID_SERIAL']:
+                 'MEM_GATE_SETTLE_S', 'TOKKL_TEST_SLOTS', 'TOKKL_TEST_AVD', 'ANDROID_SERIAL',
+                 'TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION']:
         os.environ.pop(name, None)
     os.environ['TOKKL_TEST_SLOTS'] = str(config['slots'])
     os.environ['TOKKL_VERIFICATION_ADOPTION'] = str(args.adoption.resolve())

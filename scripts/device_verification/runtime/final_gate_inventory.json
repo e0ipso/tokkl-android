@@ -1,0 +1,1282 @@
+{
+  "schema_version": 1,
+  "source_revision": "d9ecbf3f7f7c291ad33bcbb4e5d6e53820cd0933",
+  "note": "Exact reviewed source table. SDK-inapplicable cases are absent, never accepted as skipped. Optional notificationPermissionTest sources are excluded from ordinary app suites. Catalog experiments are excluded only from final benchmark selection.",
+  "sources": [
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/AirplaneMode.kt", "sha256": "1155e66192f07ab308e648d721cfb7291f00994d69137e86af86cd6bea27c7d7"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/BackgroundTrip.kt", "sha256": "3d0085726ddb67655a8c8a57131cb9339c619c74434d9a851f95079af8861cfc"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/BackupRefusedTest.kt", "sha256": "a10208ad2ff0de8b4d1500b6ae9be6f44faa91192c83094a625c4370168dd839"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ComposeWaits.kt", "sha256": "42cc6caf305901f4040db1cfb8754e5001170bd36a3e091ab1722bbcc87cd17c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/DeviceShell.kt", "sha256": "8940f74ff64c76b84c5698999dd2bea4cf4d4be897b2a9185510e669d174e63a"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/HangingRelay.kt", "sha256": "6b776d87228b40eed75e6040ee37a208055148df9e0f695a725d6b734c3fe736"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/LaunchScreenTest.kt", "sha256": "105667419364a4eb4e67321d98771c981f1907e6b84c2319330cc249e1b47a5a"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/LaunchSplashTest.kt", "sha256": "6e96a247826d46e476c1a561ef7c9383ee9e9357ed886281abc9d295fffec8f1"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/LauncherIconTest.kt", "sha256": "f9a50b42ca4df7c805ec0f5127cb763056c616d90eaa0018a2ee3ea8d2131a0e"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/LoopbackRelay.kt", "sha256": "306db603073df1a5b4f8c3c89879fed5beedd71b07bc356235c3b706228ec4f6"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/RequestCounter.kt", "sha256": "38f07b297f275c564c1ae84289e99aa205c6f27d82ea3ac89e543a2011ac40d4"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/SessionRule.kt", "sha256": "36033f91f12ed9bb36dbb9852dc86358930261737b3070f66dd80b73724f5892"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/TapToVisibleDeadline.kt", "sha256": "5dd2704e89135aa898966e83a48c7fa51c0fff66abfd51dece913d30fe9ce703"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/TestAccounts.kt", "sha256": "c2c025ba6c0097ac803b32d980a3825b90fca723af12d5b9b36fa834fe41d393"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/TokklTestServer.kt", "sha256": "96e42cc7d7f099046462d4a1e1977f5f1bd45c3e0bae3563c08112fe515f751e"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AccessibilityChecksTest.kt", "sha256": "b64e1876c5e32a6789c5e0d133efebb6694f585cdc02eb14f8a0242be8ebde64"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AccessibilityComposeRules.kt", "sha256": "8f866fcdc44c1947865e2f801df47d8449cf3025302cd2909d297f9dcbd237cd"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AccessibilityTestRunner.kt", "sha256": "312692ceb9c3c821865453298952213f813135d31bc0d5409dbdbe593e7ae74c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AdditionalAccessibilityTest.kt", "sha256": "0afcb475568a55d0429b64e4b5d6564bcdd9b37a4934f726fc85ae4379f8c41c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/ViewAccessibilityChecksTest.kt", "sha256": "110bdaa3ec7cce57eabc0c45548170cee7582aa2d15022258ee888fb66e6ff52"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/api/PinnedCertificateTest.kt", "sha256": "c9c66e1fc1517e594f429ea90069f404f7b48ba77db8388385937dcacdbcf161"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/api/ServerSmokeTest.kt", "sha256": "ac5123b0dd24a1ff928b3e6dd0b53deb222c06bf853e0891dbcacab063cd7386"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/AccountCacheServerTest.kt", "sha256": "b660e7cabe7dc0e107f2b304525bda12aa363727f223da7cbca5ac00c2a2aaf9"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/BackgroundSendServerTest.kt", "sha256": "fbef15832b1533b1b627848806cec2620fe919605a2945835c6bb26aecea24f8"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/CacheDatabaseMigrationTest.kt", "sha256": "88495345ed411e8db0b3abd6d3485fd4fa6e2e3efb31c99baeaa65b4c94a1e27"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/ChangeQueueLostAnswerRestartTest.kt", "sha256": "61183cc55c6abeebce604e0e9311eb8485449eecc45c655cc0d9cecf5aa16689"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/ChangeQueueRestartTest.kt", "sha256": "902dbd7d55621d254d3115058c90fc0f8ccee4190c3051d39d7119b223e47285"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/ChangeQueueServerTest.kt", "sha256": "0dc5c12d019a3c2732279454450a95ebfc0d20217ca5cd78de3d525b9aa627df"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/ChangeRejectionServerTest.kt", "sha256": "52f64a7a67af1f49ef39cc6e694ee4efb6eaeba97ab4eeb79effb47155389b27"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PauseChainDiscardQueueTest.kt", "sha256": "b0790672c40fe7044e29a999160039b932d57c785c93e5e20b085fd9e93165b3"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PauseChainTest.kt", "sha256": "47364211014926a272d77808e3a94b85842b8bfc520ce5cd52a1cb648b79a800"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PomodoroHandoffQueueTest.kt", "sha256": "6d46e6717974ffdf7442302b65d7ba64d8b9857de905851713bf420c7a60bacb"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PomodoroHandoffServerTest.kt", "sha256": "677a90b521c49bc02bf471eb2f440c06d77ce21914c7b6ce866c670f606d0a07"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PomodoroSignOutQueueTest.kt", "sha256": "2e64f3b9dd3ade2b33a579b8f29dff887bc6d9ce53c0192ca40ecfe6bb5c44f9"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/RunningCheckServerTest.kt", "sha256": "9180e0be222f876a6048cea88311effef01de18af0517fc9bf24fb7fbf73aa92"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/RunningEntryQueueTest.kt", "sha256": "63a6f0e2c1089a5e8ee016452ac27fd05cba04087373f23d784a5baeb6d582e2"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/CalendarGesturesTest.kt", "sha256": "6d88e39b77f567d1472c7e0edcf87961333f2646afcbaf9795ee28748272ec06"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/CalendarServerTest.kt", "sha256": "e029b56ececdec1f985e8e2199e6683abfd98468a880e48a0d3c85b1d104cc60"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/DayCalendarTest.kt", "sha256": "8a5f075d634058e21256ea80be12078dd94a3482de80d03381b2d788101dfb11"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/LandscapeCalendarTest.kt", "sha256": "23b161a38b58ba995c59ab10d4637583cc52b4f503db1dc3e5537b73b6f158b2"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/WeekStripFitTest.kt", "sha256": "2c4ef730559b60b8e6ad55557dbe259df769d713f92af7153843378f2c383179"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/capabilities/CapabilitiesServerTest.kt", "sha256": "9ec5fe0a61e9badca4866af91e9567d3918252b2a51c99129989b4b527715bbf"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/catalog/CatalogFitTest.kt", "sha256": "d644928e0b3ffa726ae2aee5b14240b91908ae9e49531de3d7153e1a0835aa3a"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/catalog/CatalogForegroundTest.kt", "sha256": "4db5aee853cb7737431b42698654ffd19636efdbdd486820810d319e388bf33a"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/catalog/CatalogSamples.kt", "sha256": "68c028fd14e33b60f14c9d4254d08ca8522bbf5d0dfde03d921db40b752a70ee"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/clients/ClientsServerTest.kt", "sha256": "dc941d9b5cb3480736ae0fc741f2203908b900ec5792607580231ceec16fab6f"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/credentials/ApiTokenStoreRestartTest.kt", "sha256": "65b9f2e378064593175b0cbd3acfe17846e07ddb8c10de6ae5b8a7b416a582ae"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/credentials/ApiTokenStoreTest.kt", "sha256": "6951fc5464b80880633d3e1031bd2f2c68278b8bc18b3f44c7d86656396098c6"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/entry/EntryFormServerTest.kt", "sha256": "f5eeb280cdfc8721bcd520568c32a299999577899e1dba7c8b4189d071d9c0fa"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/entry/RunningEntryEditorServerTest.kt", "sha256": "fe2ee1cbc2d50d238f3539900befd6b0d91a68a1d02a98388bbd0deba621c227"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/favorites/FavoritesServerTest.kt", "sha256": "5988821512df878b878eed754818f00b3cacb943c5e3052172cecdc1d1a3eec2"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/favorites/TemplatesUiTest.kt", "sha256": "49c381db237bbf4472a7f9491dedb15ddffc14b7cac8c4eb311b562effd6fb33"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/ContinueServerTest.kt", "sha256": "8a3f7a7c51ba26bf47ec95e3c3e9208eb4421f2e84de4bb0bdfd0867bff49d70"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/DeleteUndoServerTest.kt", "sha256": "12f4f06e6efd6b87b81380d329bcbefcc657369070984de4d8ad8fb39705ff22"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/DuplicateServerTest.kt", "sha256": "be0efc23ecf764fb27527d290d5bf41fed70d463f542f9ed8b650961e8effcde"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/EntryActionsUiTest.kt", "sha256": "ff4c0d33744e8c6cf30d2a6d4e1171410622c53696d80976e7169ef52b7a8d79"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/HistoryFitTest.kt", "sha256": "4ebfab56cbc16f1844f6358b909b6ba7b403ca554b975372e6bc727e97df02ec"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/HistoryGroupUiTest.kt", "sha256": "3350059402e16ef038fe2b80ea54a216b2d00baf0c3e3488bc78931ee1f7e3d2"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/HistoryServerTest.kt", "sha256": "ad482440bb5e979ff267c79bfcc0e98acad2919d824914f6d0410f109e5e9218"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/SplitServerTest.kt", "sha256": "7c79131c2fd5d472f68fbf27b740a894893bedafee09b772b5204dfbf54d1ae1"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/licences/LicencesScreenTest.kt", "sha256": "318e154bcd0488b5e2c15aee0ed2c15ba3b232a6f44f480c61938647fbdce1dd"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/AdaptiveLayoutTest.kt", "sha256": "91c879ad5cc78d7ffc170fb254e703f61ad9061001fbfa0d481a07d014f9d520"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/AdaptiveStateTest.kt", "sha256": "06fde48b278051cdefa0dae866bd71a844cb440fa966e8aa87ba55fff00ad515"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/BottomBarTest.kt", "sha256": "1f2400057984ede6de8bbb33ab48cae2df7964b382989a11822b99be3d509efa"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/PageTopBarTest.kt", "sha256": "c613b2065882396df09f18226a94cd6c3944709bb3a22c2406102991171f6f04"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/RestoredBackStackTest.kt", "sha256": "2621a31e430d13da234692eaee8343303bf78a6f1e8198045b2ea06ad6faf738"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/TabHueTest.kt", "sha256": "a5b9dea98aa7f6b8ed50a5bf054fa5ea071d4818b998355f48a4dfb4b0606ecc"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/NotificationPermissionPromptTest.kt", "sha256": "1605a0c810720093432aa9bbb5cefb4fafbf7ad02d9c34c4b7b3bfe77da1cec9"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningLiveUpdateTest.kt", "sha256": "d1be8fced68457b76a4dee44f3b8045e38177b8cd4c136f1779d512cb75304e5"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningNotificationRestartTest.kt", "sha256": "cdcf35c83477587270e3c13f80a5a63ab34c5b94ff445fd936f47fc2590a96d0"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningNotificationServerTest.kt", "sha256": "31bcf9d43adf5b0398e12fccef79b1301936ad559e03edbb0b7293011a3f1608"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningNotifications.kt", "sha256": "b5919d0c003ffad2e24ae0de55fa40bcd44810250f6fff50348861de69a4656c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/picker/EntityPickerFontScaleTest.kt", "sha256": "70e758adf849c53195744f80569cdd250f668726674e6766cef2922aab856218"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/picker/EntityPickerServerTest.kt", "sha256": "dc60d8428d9201b57f25fa7f2066d99e99a08434f37264c3e4f9c83cf5b4dab5"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroAlarmActivityTest.kt", "sha256": "ae7f731f741f52198df3703d314fe91bcdf4977ddf6355d8806210e536120333"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroAlarmContentTest.kt", "sha256": "d7c73e1ed465fad717c27578ba6a425126e7cf0f462ad0e713372d3c51c7f447"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroDefaultsServerTest.kt", "sha256": "81f075affb2b8011f6c16fe3834efa0a34eec86f774fe496ebe142d1ca2f56ea"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroDefaultsStoreTest.kt", "sha256": "de273158d35bcdfeec4469e039feb7bd8caaa2c9c98a21ff606979ebdd4d874f"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroFullScreenPageTest.kt", "sha256": "2f8b13663d843007b8bff031251765be45b192ff55c70e0381b47e546eeee8da"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPageFontScaleTest.kt", "sha256": "5f17110ba57d7fc3b75591ba5f918f5ea3323ed8b811416d3e539221ee10a87a"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPageServerTest.kt", "sha256": "9f871fc95d0b1bdbbbc651825176cfbffb05d9039426610f501f0d8ae0c2e17f"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPermissionPersistenceTest.kt", "sha256": "aa80d6fa0989e004d45cee7d114c18fbc2ef3ccb94302c1f69077d9afef0e49d"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPermissionPromptTest.kt", "sha256": "eb6e8865621ed1739191aa727fc8ec45e2e4f0c00cb86f3e9d0a55d1a80d5c2f"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPhaseAlarmRearmTest.kt", "sha256": "ef9717915886f1b8207244fd5b79fb85e089fa61243f62cc608a4f0e625e71ff"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroRingingServiceTest.kt", "sha256": "198d76ee8c5c90605b47d87f8ce84ad6b0d720d4a1a32e93b86f2fd057be54fe"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSessionNotificationQueueTest.kt", "sha256": "8286dfa6e27b8eddad2fedd8625ca64304c4ca8043758654f2967e4f563c7278"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSessionNotificationRestartTest.kt", "sha256": "e528c788485db1a9a54bda0b06e2215d4078ed2e7fdfd553af3ceede86ff894b"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSessionNotificationServerTest.kt", "sha256": "b0334c54f85b5319e0a8a6e7cd10678ee477cc13a2f21f71000f2c9034aae4fc"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSessionNotifierTest.kt", "sha256": "c8d84607da21ce0c134c4fc08fdaf8278f760ba8e90bbb3d24ee52e6ab45086c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSignOutServerTest.kt", "sha256": "2f779ceffbbba1a1f2af2bd0e8bbdd35fc675cd1dc18bd5a2a4aa4430537bdb4"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/projects/ProjectsServerTest.kt", "sha256": "44cc59edbd1a3ce8c98d3385f2fc48d3fb56918d8581a58c4feb6a0b4f773bc0"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/projects/ProjectsTaskDeleteRepeatTest.kt", "sha256": "8fab605d8cb53f7fca1de4fd23b3f2f4ee1088cb8ef0151cf318db57fc67ac9f"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reminder/ReminderServerTest.kt", "sha256": "94389e951e8e7d98478567fefb518622b7735186799e13493bd649532a5af890"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/AppSummaryPresentationTest.kt", "sha256": "62e80d6a747593823b59e9e79f94e183cebd04b6603ef4a8faf22aa80ce800b5"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/DetailedReportServerTest.kt", "sha256": "c682893541506b6caf395b7db43e80c2d2c92b6a93b2c577e5c009a1926e5b9c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportCsvServerTest.kt", "sha256": "fabf724c13c0817e307c0e5f8abb1d72fbc6d61983a79e24d8489fd38e17ab34"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportFiltersFitTest.kt", "sha256": "97e613371be1cbc3e5a6225e9ff4e0411cd87a101d3d10136a361402eb5c9a67"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportFiltersTest.kt", "sha256": "790636f31522967adb262c5649fb5cb38e8ab90eebb0a816d71ad841f0cfd964"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportTabsTestSupport.kt", "sha256": "86ccd6db12b8879a219aa61c55307292012b265ca82225ca1b3974f6dbac7abd"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportsForegroundTest.kt", "sha256": "698dce05c890009385cf5994c88a212f2a688a0feae22d63a47b5958dbdd7373"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportsScreenTest.kt", "sha256": "96197bbd0576c4c2fcf6c432744dd14c0ebf1de592d2f3955c6773752cc07476"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/SharePercentOnDeviceTest.kt", "sha256": "ee02446c052614fc879a72a22190dffe7a0277cc884298017a4f56299dac8bec"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/WeeklyReportServerTest.kt", "sha256": "f7e786ef83256e57814aef5f396d0d45b9b1c53852d17ed63a3a67bd97ccbce3"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/session/AccountSettingsRestartTest.kt", "sha256": "7d2d50289af74c832438a458e51f5ce412022a2165ee9a299e9de9f857c962d5"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/session/AccountSettingsServerTest.kt", "sha256": "ee3d88f97881d9564459785565d4b7d2f849c520da12a32c17177226d6e95d02"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/session/DefaultWorkspaceRestartTest.kt", "sha256": "a6ff779d1a16708a9064aa832338c9237c1a2f7032784b12c2f8646dc35be38f"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/session/ForegroundRefreshServerTest.kt", "sha256": "21a5973109446e32c82c4995d832dcfbbc0bf0483e9a09889adb77bd8f078be3"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/PomodoroDefaultsUiTest.kt", "sha256": "08487e23888fd67104a05bdff5ff58a5d49acb6411ee20c13af93038e2a5b54b"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SettingsScreenTest.kt", "sha256": "52a78e62da6d971c4b53663700c006867a9dbe4eaf8f917a814d0c88b5b8d740"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SignOutFitTest.kt", "sha256": "a93a908db8a05979e81718a75e3178adfe6c107a119109e945b5858044a298c9"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SignOutServerTest.kt", "sha256": "5113ffc18b446e3868829886d83ee8f47d01da1d5709c45394eded775e894f41"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/ThemeSettingsRestartTest.kt", "sha256": "127a9e687643b5a9237134a389e7accc66600afbd6cf4ccd9b8bc8913225620c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/ThemeSettingsTestSupport.kt", "sha256": "4f3ac095ab3de23bd24a09f782a442aeebd318351cbdf9a33887be47a37c44fa"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/shortcuts/FavoriteShortcutsServerTest.kt", "sha256": "f3363dee07415b0246656020009173d91e6d0e6dd215edde384772d9f4ddca8c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/CertificateHostMismatchTest.kt", "sha256": "88b14f63c0a610a055622a7accc3adb7e905f16beb9549c543debda406a3f1bb"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/CertificatePromptTest.kt", "sha256": "ddd2052d46b9658e4c3aa0c5a3c5a19a521360d756545c4c6133c6f0568da315"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInCooldownStoreTest.kt", "sha256": "9773b0d7dba2d7987cb9f8fee81b39b21e5793b549856af7ab0cd6486d4d609f"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInFormLayout.kt", "sha256": "cc28cf05df28bac1a0cdafe788b82935bbb2d1dc4c9702ba3ea49447c6d3200c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInRateLimitTest.kt", "sha256": "eaf5554fa99a0606c2eeeb5300a75e82d3749e286e650c65ac15828bf576f5e9"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInScreenTest.kt", "sha256": "e62a87a0d4beced864b6a97fe902db3b0e661af67ab7145fd592e2f60e568d3f"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInUnderPathPrefixTest.kt", "sha256": "d1967efda4ecaadd7bcf44d5ae5d77ba9bfbef1f2b4de729a2c2d4acb9a98e1b"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/sync/SyncStatusFitTest.kt", "sha256": "d0c9164f4cb63eea894c0d68fdaf62f34a406a60bfc05f30644d19e8d22ea159"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/sync/SyncStatusServerTest.kt", "sha256": "0544e61bd3e502757331ad1bfb80635cdec5805829538362409bfce6ce50c6c8"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/tags/TagsServerTest.kt", "sha256": "affc5265d3283e5baa616b366f530fc5d5911895875c82407aeeafd7359e06b5"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/tile/QuickSettingsTile.kt", "sha256": "24900575de6fd1f29007c10ab7f4cc86a4a221c29cc11b1ecb24a7bbc95e86f5"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/tile/RunningTileServerTest.kt", "sha256": "2688362d852ae31164b1f8d3fe94024166587762ea9abbc6458679bb2c772c46"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/DescriptionSuggestionsRepeatTest.kt", "sha256": "f810c219bd9c4ede7d85806e974b5960e9f707c9b5cb454ebb3d8b8f66196971"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/DescriptionSuggestionsServerTest.kt", "sha256": "f282f8ff3ccf684d27a1dc35e61aedcc1787b261f921f70580458fbdcd242950"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/FullscreenTimerServerTest.kt", "sha256": "8869994d21b7251aacdb07a13d4273dfa08c65f23fa6ad1d341a28c686a1b906"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerAcceptanceFixture.kt", "sha256": "c8c4b113fb5c4bc4bb4a28c2327d525360612300e24ece900e9de1f827740dc8"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerServerTest.kt", "sha256": "5385d17d8f590969377f924c5f4c8133aabc3bdeb14ee371624ccf1161d1a5cd"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerTotalsLargeTextTest.kt", "sha256": "f2128dc5ceb0cb4b2d36d36d7486e400743d180cf319146cd127640fb134892d"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerTotalsServerTest.kt", "sha256": "a91489fed5fc5cc0991f0da467747d62a4273d22c2c29ac0aee4c037f0f081ff"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerViewServerTest.kt", "sha256": "5f57ad01972a773dcc8b15f97f5ec94756eddeb3c6797f2049d7b1d58bec93b9"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trash/LazyCatalogAccessibilityTest.kt", "sha256": "5cfa0e3d4584177615fbb7fad0776a63938ee45fb4abeb309a2454df7cb63771"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trash/LongCatalogListTest.kt", "sha256": "4fab4106844aa8ca34f0f3b8e4f7b6e84407446fbfd1f8c6dfd91fcbb73c887b"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trash/TrashFitTest.kt", "sha256": "142f4b6605c7de83f4b6b0d30eaf6a4c5b781aebad5cda01c73456302a4507ee"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trash/TrashServerTest.kt", "sha256": "f53ee32e9d7a73329f7710a31a442d71f2bc42a471cc175eda75d9a4e8dcbf82"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/CertificateHostMismatchWhileSignedInTest.kt", "sha256": "1e46775da6a8f421a0ce954b8f8eaa5f6c723d73e4eefa5f5091e50f2616a968"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/ChangedCertificateWhileSignedInTest.kt", "sha256": "a1f4c6e6a32aa48058ed3d60e8fd56c85d51c5abf23e3eba49c617e6190e81c6"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/NewKeyWhileSignedInTest.kt", "sha256": "0fcb5a07ef490df6c4729940d0bbe9b418f53727ff9fba3d58ac5fc7626eafcf"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/UnconfirmedHttpWhileSignedInTest.kt", "sha256": "455a084be7d03869b79010c368693281164e5a0a0aa3c9d6e329bbc8d935519c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/UserCaCertificateTest.kt", "sha256": "3976ef6b64ef89f0566a6600c33f93893b227c6a6d95a93b2136ae9a532f1151"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/BrandTest.kt", "sha256": "7169e7abda4fe259ecedc11b3aa8106a05b7bacf5373138a7bbe7eb10c723559"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/StickerCardTest.kt", "sha256": "b22dc6e2953ba936685b574f361adc547f50e23fc00c07a77e1a0afe4bac0fd0"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/TopBarTest.kt", "sha256": "f176b8c6812471b4492ab3d3415e4c9eb458b0776236ee0ccc41bdb0ab5c2ec4"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ReferenceImages.kt", "sha256": "ff0db600abe547276710c8e37cca64901eeaecc926dfd75104f4c2162598ddf5"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ScreenshotTest.kt", "sha256": "31c9d9784a3a91e2d45c4f162f097faad1634ff59ca5ba9039a9c092d2dfe38a"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ClockAndTotalStylesFitTest.kt", "sha256": "ba3d56f9333a3e082ee8bbdd2fd4866294a42ef5fa48ad21a49f6aa96bb2704a"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ConfigurationRestorationTest.kt", "sha256": "4e2dc1c4de3a785aa6f2e006b71093935f7aae3d527c1ca96812d8b99f133026"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/LargestFontScaleTest.kt", "sha256": "73d0b4946d6fa5431e186f47c62cce3fea00108ab16dc206f20ef60d6631a2ba"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ScreenContentTest.kt", "sha256": "344c670a518d55f8452ca2b9ac34d16df1db09b83c465651c1155f6e1a954eb2"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ShapesTest.kt", "sha256": "3bebb77052975dd4393c21f49805acb68c6a57f0c5a007c9e97a86c898867803"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/SystemDisplaySize.kt", "sha256": "17777e6ad4c8950482a4e82c3d6a4fb088dd3adef693e41d83a87a899a7ae185"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/SystemFontScale.kt", "sha256": "c109ceadb385b70da60304487aabc81e048cd6d3569b60e06e2e899436dfebd5"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/SystemNightMode.kt", "sha256": "0f689099bc473d956e32bf2acf7e0249d9548ecc68f049d7aa76f68a6deb58c8"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/TypeScaleTest.kt", "sha256": "c912f2a7a3132e75d2d0824cf0069ab088350ba463256b280df0d3383ace6e0c"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/WindowBackgroundTest.kt", "sha256": "4152dfca0ee3133a9a87bd7d66c760e9cf8012ef8950c462c998d2a50bf451c9"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/NativeWidget.kt", "sha256": "5e79c67765022b3b0b8adf7fb251c43f775c1aa1499cb389e9d5e59197c1afb8"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetClockRepeatTest.kt", "sha256": "315b8f3e35a4832a2e5432df92ee8122be2bd6c0244aee161ce8c229dd573525"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetLargeTextTest.kt", "sha256": "d06680f3e61e8e1349ccd928a0bf2111b9d7ac5e76d597c58dd3c2b272156084"},
+    {"source": "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetServerTest.kt", "sha256": "93fb3c28180e7b0aa4bab7339d9470c7860c0c27ff7d32a6a6ab89f4def1dd59"}
+  ],
+  "classes": [
+    {"class": "com.github.e0ipso.tokkl.BackupRefusedTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/BackupRefusedTest.kt", "inherited_from": null, "constructor": "class BackupRefusedTest", "runner": "JUnit4", "methods": [
+      {"name": "backupManagerRefusesToBackUpTheApp", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.LaunchScreenTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/LaunchScreenTest.kt", "inherited_from": null, "constructor": "class LaunchScreenTest", "runner": "JUnit4", "methods": [
+      {"name": "opensOnTheTimerPageWithTheBottomBar", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theTitleIsOneTalkBackHeadingAndNoWordmarkShows", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.LaunchSplashTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/LaunchSplashTest.kt", "inherited_from": null, "constructor": "class LaunchSplashTest", "runner": "JUnit4", "methods": [
+      {"name": "mainActivityStartsInTheThemeWithTheSplash", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inLightTheSplashIsTheWordmarkOnTheWindowBackground", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inDarkTheSplashIsTheWordmarkOnTheWindowBackground", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theSplashIconFitsTheWordmarkInTheCircle", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inDarkTheHaloTracesTheWordmark", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theFirstScreenShowsWithoutWaitingOnTheSplash", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.LauncherIconTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/LauncherIconTest.kt", "inherited_from": null, "constructor": "class LauncherIconTest", "runner": "JUnit4", "methods": [
+      {"name": "launcherGetsAnAdaptiveIconForMainActivity", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.accessibility.AccessibilityChecksTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AccessibilityChecksTest.kt", "inherited_from": null, "constructor": "class AccessibilityChecksTest", "runner": "JUnit4", "methods": [
+      {"name": "anActionOnAnUnlabelledControlFailsBeforeItClicks", "apis": [36], "sdk": [34, 10000]},
+      {"name": "aStaticUnlabelledControlFailsAnExplicitCheck", "apis": [36], "sdk": [34, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.accessibility.LightAdditionalAccessibilityTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AdditionalAccessibilityTest.kt", "inherited_from": "AdditionalAccessibilityTest", "constructor": "class LightAdditionalAccessibilityTest : AdditionalAccessibilityTest(dark = false)", "runner": "JUnit4", "methods": [
+      {"name": "pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyMoreChoiceIsReachableAtMaximumSizes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.accessibility.DarkAdditionalAccessibilityTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AdditionalAccessibilityTest.kt", "inherited_from": "AdditionalAccessibilityTest", "constructor": "class DarkAdditionalAccessibilityTest : AdditionalAccessibilityTest(dark = true)", "runner": "JUnit4", "methods": [
+      {"name": "pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyMoreChoiceIsReachableAtMaximumSizes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.accessibility.ViewAccessibilityChecksTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/ViewAccessibilityChecksTest.kt", "inherited_from": null, "constructor": "class ViewAccessibilityChecksTest", "runner": "JUnit4", "methods": [
+      {"name": "anEspressoActionRejectsAnUnlabelledNativeControlBeforeItClicks", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.api.PinnedCertificateTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/api/PinnedCertificateTest.kt", "inherited_from": null, "constructor": "class PinnedCertificateTest", "runner": "JUnit4", "methods": [
+      {"name": "unpinnedCertificateFailsTheHandshakeWithItsFingerprint", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pinnedCertificateReachesTokkl", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anotherPinnedCertificateFailsAsAChangedCertificate", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.api.ServerSmokeTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/api/ServerSmokeTest.kt", "inherited_from": null, "constructor": "class ServerSmokeTest", "runner": "JUnit4", "methods": [
+      {"name": "unconfirmedHttpServerGetsNoRequest", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "withNoStoredServerTheGuardRefusesTheRequest", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "apiTokenAuthenticatesWithGetMe", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "emailAndPasswordAuthenticateWithGetMe", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "wrongApiTokenGets403", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "deleteWithAnEmptyResponseBodySucceeds", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "reportsSearchFindsAnEntryCreatedThroughTheApi", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.AccountCacheServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/AccountCacheServerTest.kt", "inherited_from": null, "constructor": "class AccountCacheServerTest", "runner": "JUnit4", "methods": [
+      {"name": "afterOneRefreshEveryCachedKindReadsInAirplaneMode", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/BackgroundSendServerTest.kt", "inherited_from": null, "constructor": "class BackgroundSendServerTest", "runner": "JUnit4", "methods": [
+      {"name": "restoringTheNetworkSendsTheQueueWithTheAppClosed", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "callsThatQueueNothingScheduleNoWork", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTransientFailureRetriesAfterABackoff", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theRetryAfterTheBackoffSendsTheQueue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anAppDrainThatEmptiesTheQueueCancelsTheWaitingRetry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRunningWorkerThatJoinedTheAppsDrainSucceeds", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aWorkerJoiningAfterTheWaitingReadStillSucceeds", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/CacheDatabaseMigrationTest.kt", "inherited_from": null, "constructor": "class CacheDatabaseMigrationTest", "runner": "JUnit4", "methods": [
+      {"name": "version1MigratesAndKeepsTheCachedRows", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "version2MigratesAndKeepsTheQueue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "version3MigratesKeepsTheMarkedQueueAndRecordsTheServersEntriesOnANewCreate", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "version4MigratesAndHeldChangesSurviveAReopen", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "version5KeepsAnAlreadyQueuedStopAndAddsUndoStorage", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "version6KeepsARunningTimerAndItsQueueAndPausesItAfterTheUpdate", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "version7KeepsThePauseChainTheQueueAndGainsAnEmptyPomodoroSession", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/ChangeQueueLostAnswerRestartTest.kt", "inherited_from": null, "constructor": "class ChangeQueueLostAnswerRestartTest", "runner": "JUnit4", "methods": [
+      {"name": "step1SendsACreateAndDiesBeforeTheAnswer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2SendsTheQueueWithoutASecondCopy", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.ChangeQueueRestartTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/ChangeQueueRestartTest.kt", "inherited_from": null, "constructor": "class ChangeQueueRestartTest", "runner": "JUnit4", "methods": [
+      {"name": "step1QueuesStartEditAndStopWithNoRouteToTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2SendsTheQueueInANewProcess", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/ChangeQueueServerTest.kt", "inherited_from": null, "constructor": "class ChangeQueueServerTest", "runner": "JUnit4", "methods": [
+      {"name": "startAndStopShowAtOnceWhileTheNetworkHangsAndTheServerGetsTheTapTimes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "createEditStopAndDeleteOfAnOfflineEntryReachTheServerInOrder", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theChangeThatReachesTheServerLastWinsWithoutAMerge", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRefreshThatReadTheTimerBeforeItsStopWasSentDoesNotLeaveItRunning", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aQueuedStartEndsWhereALaterTimerOnTheServerStartsAndThatTimerKeepsRunning", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTimerStartedOnThePhoneEndsTheRunningOneWhereItsOwnStartSnaps", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aStopTappedOnThePhoneIsStoredAsTheWebAppStoresAStopAtTheSameMoment", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aQueuedStartRunsWhenNoTimerRunsOnTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aQueuedStartRunsAndTheServerStopsAnEarlierTimer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aCreateWhoseAnswerWasLostIsStoredOnceAndLaterChangesApplyToIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aCreateWhoseAnswerWasLostIsStoredOnceWhenTheServerHasItsTagInAnotherCase", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aCreateThatNeverReachedTheServerIsNotTakenForAnEntryWithOtherTags", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aCreateThatNeverReachedTheServerIsPostedOnce", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aDuplicateThatNeverReachedTheServerIsPostedBesideItsSource", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/ChangeRejectionServerTest.kt", "inherited_from": null, "constructor": "class ChangeRejectionServerTest", "runner": "JUnit4", "methods": [
+      {"name": "anAlreadyStopped409LeavesTheQueueWithoutADiscardNotice", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "a404DropsChangesToTheDeletedEntryAndAggregatesTheNotice", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "a400HoldsItsEntryWhileOthersSendAndAFixResendsIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "editingAHeldCreateKeepsExistingEntriesOutOfALostPostLookup", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aHeldChangeCanBeSentAgainOrDiscardedWithItsCachedDraft", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "resetToken403PausesEverythingUntilTheSameAccountSignsInAgain", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.PauseChainDiscardQueueTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PauseChainDiscardQueueTest.kt", "inherited_from": null, "constructor": "class PauseChainDiscardQueueTest", "runner": "JUnit4", "methods": [
+      {"name": "discardingAnAlreadyPausedRefusedResumeRestoresAllFieldsAndTheNextResumeTotal", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aStillRunningRefusedResumeReturnsToItsPreStartMetadata", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "discardingAnEarlierRefusedSegmentPreservesALaterAnsweredSegmentWithTheSameFields", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEarlierDiscardKeepsTheLaterRunningEntryAndRebasesItsFutureDiscard", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "twoPausedDiscardsRemoveEachContributionOnceAndRestoreTheOriginalFields", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "editingTheStoppedEntryTimesDoesNotChangeItsRecordedChainContribution", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aManualCreateWithCoincidentFieldsAndTimesCannotClaimTheChainsContribution", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "discardingAShortPausedCreateAlsoRemovesItsUndoAndQueuedRestore", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theInitialRefusedStartCanBeDiscardedAfterItsFirstPause", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "checkpointsSurviveReopeningTheDatabaseAndDisappearWhenTheChainEnds", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "discardingARefusedSegmentFromAnEndedChainLeavesANewerChainAlone", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.PauseChainTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PauseChainTest.kt", "inherited_from": null, "constructor": "class PauseChainTest", "runner": "JUnit4", "methods": [
+      {"name": "eachResumeStartsANewEntryWithTheKeptFieldsAndTheClockGoesOnFromTheSnappedTotal", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aShortSegmentAddsNothingOffersItsUndoAndStaysResumable", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEditWhilePausedChangesTheNextEntryAndNotTheStoppedOne", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aControlActsOnlyOnTheTimerItShowed", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "twoResumesAtOnceStartOneEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aPausedChainSurvivesTheProcess", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "stopWhilePausedEndsTheChainWithoutARequest", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anotherStartOrTheClonesStopEndsTheChain", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "discardingTheClonesRefusedStartPausesTheChainAgain", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theServersIdForTheCloneKeepsItInTheChain", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRefreshEndsThePausedChainOnlyWhenATimerRunsElsewhere", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRefreshReadBeforeAResumeLeavesTheChainAlone", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signOutDropsTheChainAndAControlShownBeforeActsOnNothing", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.PomodoroHandoffQueueTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PomodoroHandoffQueueTest.kt", "inherited_from": null, "constructor": "class PomodoroHandoffQueueTest", "runner": "JUnit4", "methods": [
+      {"name": "sessionStopsAllRunningRowsOnTheGridUsingTheSameCapturedInstant", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "sameGridSwitchKeepsTrashUndoAndTheImmutableStopAheadOfRestore", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "startFavoriteAndContinueModelsUseTheSameAtomicQueueHandoff", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tileContinueAndLauncherFavoriteUseTheSharedQueue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "foreignRefreshEndsAtItsStartAndRepeatOrRemappingCannotSaveAgain", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "failedTimerCreateRollsBackThePomodoroSaveAndSessionRemoval", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "failedSessionInsertRollsBackEveryStopAndUndoOffer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "failedRefreshSaveRollsBackTheIncomingRowAndKeepsTheSessionForRetry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "concurrentStartsSaveOnePartialAndQueueEachStartInOrder", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "timerStartCollidingWithPhaseConfirmationCannotResurrectTheEndedSession", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pausedCheckpointsSurviveASessionAndARefusedResumeStillRestoresThem", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "heldStopsStayHeldWhileThePartialAndNewTimerRemainDurableAcrossReopen", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.PomodoroHandoffServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PomodoroHandoffServerTest.kt", "inherited_from": null, "constructor": "class PomodoroHandoffServerTest", "runner": "JUnit4", "methods": [
+      {"name": "offlineTimerSessionTimerChangesDrainInOrderWithMeetingStoredBoundaries", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "fullRefreshUsesTheForeignStartEvenWhenSeenAfterTheRestBegan", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "remappedPhoneStartsAndUnansweredPostEchoesDoNotEndTheSessionAgain", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "shortTimerSwitchIsTrashedAndUndoRestoresOnlyTheZeroLengthTimer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "widgetCallbackReachesTheApplicationQueueAndEndsAPersistedSession", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.PomodoroSignOutQueueTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/PomodoroSignOutQueueTest.kt", "inherited_from": null, "constructor": "class PomodoroSignOutQueueTest", "runner": "JUnit4", "methods": [
+      {"name": "queuedCompletedWorkAndCurrentSpanSurviveReopenAndAreNeverCountedTwice", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "countCannotObserveBothTheOldOpenSpanAndItsNewQueuedCreate", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "heldAndPossiblySentPomodoroCreatesAreIncludedInTheOrdinaryQueueCount", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineForgetAndCacheClearRemoveAllCredentialBoundWorkAcrossReopen", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.RunningCheckServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/RunningCheckServerTest.kt", "inherited_from": null, "constructor": "class RunningCheckServerTest", "runner": "JUnit4", "methods": [
+      {"name": "startingATimerSchedulesOneCheckAndStoppingItCancelsIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTimerStoppedOnTheServerLeavesTheCacheAndTheNotificationAtTheNextCheck", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTimerStartedOnTheServerTakesThePlaceOfTheOneItStopped", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theCheckLeavesAnEntryWithUnsentChangesAsItIs", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/cache/RunningEntryQueueTest.kt", "inherited_from": null, "constructor": "class RunningEntryQueueTest", "runner": "JUnit4", "methods": [
+      {"name": "runningUpdateQueuesExactUnsnappedStartAndNullStop", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "originalLocalIdentityResolvesAfterRemapAndDatabaseReopen", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "stoppedEntryRejectsStaleSaveWithoutAnotherQueuedChange", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "sameInstantReplacementRejectsTheOriginalIdentity", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "workspaceMismatchCannotWrite", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "competingStartCorrectionInvalidatesAnOlderEditor", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "shortStopAndItsUndoCannotReviveTheRunningEditor", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "correctingAResumedSegmentChangesOnlyItsElapsedContribution", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pauseAndResumeCannotMakeAnEarlierEditorsIdentityCurrentAgain", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/CalendarGesturesTest.kt", "inherited_from": null, "constructor": "class CalendarGesturesTest", "runner": "JUnit4", "methods": [
+      {"name": "aDragOnEmptySpaceCreatesAnEntryAndOpensIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aDragOnABlockMovesIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aDragOnABlocksEdgesMovesThatEnd", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aHeldBlockDraggedSidewaysStaysOnItsDay", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theWeekViewCreatesAndMovesEntriesToo", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTapOrTalkBacksClickOpensTheBlockInTheForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "eachDaysHeadOffersTalkBackAnActionThatAddsAnEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theWeekViewsDayHeadsOfferTheActionToo", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/CalendarServerTest.kt", "inherited_from": null, "constructor": "class CalendarServerTest", "runner": "JUnit4", "methods": [
+      {"name": "aBlockReadsItsEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anUnsentBlockSaysNotSentUntilTheServerHasIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineLastWeekShowsAndAnOlderWeekLoadsWhenTheNetworkReturns", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "swipesMoveBetweenDays", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theArrowsAndTheStripCrossIntoAWeekOnlyTheServerHas", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEntryFromTheEveningBeforeTheCacheShowsInLastWeek", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEntryFromTwoDaysBeforeAnOlderWeekShowsInIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEntryDeletedElsewhereGoesFromAnOlderWeekAfterTheForeground", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineADragMovesACachedEntryThroughTheQueue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aDragOnAnOlderWeekKeepsItsTimesAfterTheSend", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineADragOnEmptySpaceCreatesAnEntryAndOpensTheForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineTheForegroundKeepsAnOlderWeek", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/DayCalendarTest.kt", "inherited_from": null, "constructor": "class DayCalendarTest", "runner": "JUnit4", "methods": [
+      {"name": "anUprightPhoneShowsTheChosenDayUnderTheStripOfItsWeek", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTapOnADayOfTheStripShowsIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theArrowsAndSwipesCrossIntoTheWeekBeforeAndTheWeekAfter", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aWindowOfMediumWidthShowsTheWeekWithItsDayHeads", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "lightWeekDayHeadsUseTheCurrentSectionHue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "darkWeekDayHeadsUseTheCurrentSectionHue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theChosenDayIsFramed", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theNextDaySlidesIn", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "reducedMotionChangesTheDayAtOnce", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.calendar.UsualFontLandscapeCalendarTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/LandscapeCalendarTest.kt", "inherited_from": "LandscapeCalendarTest", "constructor": "class UsualFontLandscapeCalendarTest : LandscapeCalendarTest(fontScale = 1f, hourRows = 4)", "runner": "JUnit4", "methods": [
+      {"name": "theGridGetsTheRoom", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.calendar.LargestFontLandscapeCalendarTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/LandscapeCalendarTest.kt", "inherited_from": "LandscapeCalendarTest", "constructor": "class LargestFontLandscapeCalendarTest : LandscapeCalendarTest(fontScale = SystemFontScale.LARGEST, hourRows = 1)", "runner": "JUnit4", "methods": [
+      {"name": "theGridGetsTheRoom", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.calendar.LargestFontUprightCalendarTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/LandscapeCalendarTest.kt", "inherited_from": "LandscapeCalendarTest", "constructor": "class LargestFontUprightCalendarTest : LandscapeCalendarTest(fontScale = SystemFontScale.LARGEST, hourRows = 8, landscape = false)", "runner": "JUnit4", "methods": [
+      {"name": "theGridGetsTheRoom", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.calendar.UsualFontUprightCalendarTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/LandscapeCalendarTest.kt", "inherited_from": "LandscapeCalendarTest", "constructor": "class UsualFontUprightCalendarTest : LandscapeCalendarTest(fontScale = 1f, hourRows = 4, landscape = false)\n\n   \n                                                                                                 \n                      \n   \n@Composable\nprivate fun CalendarPage()", "runner": "JUnit4", "methods": [
+      {"name": "theGridGetsTheRoom", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.calendar.WeekStripFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/calendar/WeekStripFitTest.kt", "inherited_from": null, "constructor": "class WeekStripFitTest", "runner": "JUnit4", "methods": [
+      {"name": "theDaysFitAndTheChosenDayStaysMarked", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyDayShowsItsWeekdayDateAndTotalWhole", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/capabilities/CapabilitiesServerTest.kt", "inherited_from": null, "constructor": "class CapabilitiesServerTest", "runner": "JUnit4", "methods": [
+      {"name": "step1RefreshTurnsEveryCapabilityOnForAFreshTokklAccount", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2TheFlagsSurviveARestart", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/catalog/CatalogFitTest.kt", "inherited_from": "CatalogFitTest", "constructor": "class UsualFontCatalogFitTest : CatalogFitTest(fontScale = 1f)", "runner": "JUnit4", "methods": [
+      {"name": "projectsList", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "projectsOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "projectForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "newProjectFormWithMistakes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "projectFormWithTasks", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "projectFormWithTasksOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "taskForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "taskDeleteQuestion", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clientsList", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clientArchiveQuestion", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clientForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clientsOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagsList", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagDeleteQuestion", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagRenameForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagsOffline", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/catalog/CatalogFitTest.kt", "inherited_from": "CatalogFitTest", "constructor": "class LargestFontCatalogFitTest : CatalogFitTest(fontScale = SystemFontScale.LARGEST)", "runner": "JUnit4", "methods": [
+      {"name": "projectsList", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "projectsOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "projectForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "newProjectFormWithMistakes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "projectFormWithTasks", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "projectFormWithTasksOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "taskForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "taskDeleteQuestion", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clientsList", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clientArchiveQuestion", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clientForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clientsOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagsList", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagDeleteQuestion", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagRenameForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagsOffline", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.catalog.CatalogForegroundTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/catalog/CatalogForegroundTest.kt", "inherited_from": null, "constructor": "class CatalogForegroundTest", "runner": "JUnit4", "methods": [
+      {"name": "aProjectRenamedElsewhereShowsAfterTheForegroundAndARotationLoadsNothing", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aClientAndATagRenamedElsewhereShowAfterTheForeground", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.clients.ClientsServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/clients/ClientsServerTest.kt", "inherited_from": null, "constructor": "class ClientsServerTest", "runner": "JUnit4", "methods": [
+      {"name": "createEditArchiveAndRestoreAClientAndTheCacheFollowsEachChange", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aClientWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRefusedCreateShowsTheServersReasonAndKeepsTheForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancellingTheArchiveQuestionKeepsTheClient", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theServerOutOfReachListsThePhonesClientsWithTheArchivedOnesMarked", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyControlHasALabel", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreRestartTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/credentials/ApiTokenStoreRestartTest.kt", "inherited_from": null, "constructor": "class ApiTokenStoreRestartTest", "runner": "JUnit4", "methods": [
+      {"name": "step1SavesTheToken", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2LoadsTheTokenInANewProcess", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/credentials/ApiTokenStoreTest.kt", "inherited_from": null, "constructor": "class ApiTokenStoreTest", "runner": "JUnit4", "methods": [
+      {"name": "loadsNullWhenNothingIsStored", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "savedTokenLoadsBack", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "savingReplacesTheStoredToken", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "storedBytesNeverContainThePlainToken", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "keyIsANonExportableAesGcmKeyInTheKeystore", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clearDeletesTheKeyAndTheCiphertext", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "changedCiphertextLoadsNull", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "ciphertextWithoutItsKeyLoadsNull", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/entry/EntryFormServerTest.kt", "inherited_from": null, "constructor": "class EntryFormServerTest", "runner": "JUnit4", "methods": [
+      {"name": "everyFieldOfAnEntryChangesAndReachesTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEditMadeInAirplaneModeReachesTheServerWhenTheNetworkReturns", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEntryFromAnOlderDayOpensAndTheHistoryShowsItsEditAfterTheRefresh", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anOfflineEditOfAnOlderEntryShowsAsNotSentAndReachesTheServerWhenTheNetworkReturns", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anOlderEntryReopenedBeforeItsEditWasSentSavesAfterTheRefreshDropsIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "timesThatCannotBeReadShowAMessageAndQueueNothing", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyFieldAndControlHasALabel", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "backOnAPhoneClosesTheFormAndDropsItsUnsavedEdits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anotherEntryOpenedBesideTheHistoryDropsTheOpenFormsUnsavedEdits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pastEntriesByDurationAndAcrossMidnightReachTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aPastEntrySavedInAirplaneModeReachesTheServerWhenTheNetworkReturns", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "typedCreateAndEditPredictionsMatchLatestServerAcrossAccountZonesAndDst", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "shortTypedSpansShowValidationAndCreateNoPendingChange", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aLegacyZeroLengthEntryKeepsItsTimesOnADescriptionEdit", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/entry/RunningEntryEditorServerTest.kt", "inherited_from": null, "constructor": "class RunningEntryEditorServerTest", "runner": "JUnit4", "methods": [
+      {"name": "compactListAndCalendarClocksOpenTheRunningEditor", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "mediumListAndCalendarClocksOpenTheRunningEditor", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "expandedListAndCalendarClocksKeepTheirExistingPaneRoutes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancelBackAndActualRotationsKeepOrDiscardTheRightDraft", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "metadataSaveKeepsSecondsAndInvalidStartFlushesNothing", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineMidnightCorrectionPersistsOnDiskAndRemapsOneRunningEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clockWaitsForInitialStartAndPendingDescriptionWrites", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aStopWhileTheEditorIsOpenCannotBeRevivedBySave", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aPauseWhileTheEditorIsOpenCannotBeRevivedBySave", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aSameStartReplacementCannotReceiveTheOpenEditorsStaleSave", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.favorites.FavoritesServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/favorites/FavoritesServerTest.kt", "inherited_from": null, "constructor": "class FavoritesServerTest", "runner": "JUnit4", "methods": [
+      {"name": "theWebAppsFavoritesShowAndOneTapStartsOneOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aFavoriteTappedWhileADescriptionIsTypedRunsWithItsOwnDescription", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "favoritesEditedOnThePhoneReachTheWebInItsFormat", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "nineFavoritesAreTheMost", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "editingOfflineSaysItNeedsTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pinningAHistoryEntryReachesTheWebInItsFormat", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pinningAHistoryEntryWithNineFavoritesSaysTheListIsFull", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pinningAHistoryEntryOfflineSaysItNeedsTheServer", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/favorites/TemplatesUiTest.kt", "inherited_from": null, "constructor": "class TemplatesUiTest", "runner": "JUnit4", "methods": [
+      {"name": "thePopupHidesWithoutTheCapabilityThenStartsInSavedOrder", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEmptyPopupOffersSaveAndManage", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "saveKeepsThePopupOpen", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aFullListDisablesSave", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancelLeavesTheListAndSaveStoresANewTemplate", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "editingSavesInPlaceAndCancelLeavesTheRow", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineDisablesManagement", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theBarListsTemplatesFirstAndHidesThemWithoutTheCapability", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theRailListsTemplatesFirstAndHidesThemWithoutTheCapability", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.history.ContinueServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/ContinueServerTest.kt", "inherited_from": null, "constructor": "class ContinueServerTest", "runner": "JUnit4", "methods": [
+      {"name": "continueFromTheHistoryInAirplaneModeStartsTheEntryAgainAndReachesTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "continueWhileADescriptionIsTypedKeepsTheContinuedEntrysDescription", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "continueLastInAirplaneModeStartsTheLatestStoppedEntryAndReachesTheServer", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.history.DeleteUndoServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/DeleteUndoServerTest.kt", "inherited_from": null, "constructor": "class DeleteUndoServerTest", "runner": "JUnit4", "methods": [
+      {"name": "undoOfASentDeleteRestoresTheEntryThroughTheRestoreEndpoint", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "undoOfAnUnsentDeleteTakesItOutOfTheQueueWithNoRequest", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "undoOfADeleteWhoseAnswerWasLostRestoresTheEntryThroughTheRestoreEndpoint", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "undoOfADeleteWhoseConnectionDroppedAfterTheAnswerRestoresTheEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theEntrysMenuDeletesItAndUndoBringsItBack", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.history.DuplicateServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/DuplicateServerTest.kt", "inherited_from": null, "constructor": "class DuplicateServerTest", "runner": "JUnit4", "methods": [
+      {"name": "aDuplicateMadeInAirplaneModeReachesTheServerWhenTheNetworkReturns", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/EntryActionsUiTest.kt", "inherited_from": null, "constructor": "class EntryActionsUiTest", "runner": "JUnit4", "methods": [
+      {"name": "theMenuAndDeleteHaveTalkBackLabelsAndTalkBackAnnouncesUndo", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "withoutRestoreDeleteAsksFirstAndTheMessageOffersNoUndo", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancellingTheQuestionDeletesNothing", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "undoOfflineSaysItNeedsTheServerAndOffersUndoAgain", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "duplicateHasATalkBackLabelAndCopiesTheEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "splitAndItsTimeFieldHaveTalkBackLabelsAndSplitCutsTheEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pinAsFavoriteHasATalkBackLabelAndPinsTheEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "withoutTheFavoritesCapabilityTheMenuHasNoPin", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.history.HistoryFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/HistoryFitTest.kt", "inherited_from": null, "constructor": "class HistoryFitTest", "runner": "JUnit4", "methods": [
+      {"name": "theRowMenuFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theUndoMessagesFit", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theSplitDialogFitsWithItsPreviewAndItsLongestMessage", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aGroupFitsCollapsedAndExpanded", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.history.HistoryGroupUiTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/HistoryGroupUiTest.kt", "inherited_from": null, "constructor": "class HistoryGroupUiTest", "runner": "JUnit4", "methods": [
+      {"name": "aGroupShowsItsCountAndTotalAndExpandsToItsMembersWithTheStateForTalkBack", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "noTextOfAGroupIsCutOffAtTheLargestFontScale", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "noItemOfTheEntryMenuIsCutOffAtTheLargestFontScale", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.history.HistoryServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/HistoryServerTest.kt", "inherited_from": null, "constructor": "class HistoryServerTest", "runner": "JUnit4", "methods": [
+      {"name": "serverTimesShowAsStoredAndOlderDaysLoadOnScroll", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "unreachableOlderDaysNeedTheServerAndTryAgainLoadsThem", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineOlderDaysLoadOnceTheNetworkComesBack", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anUnsentEntryShowsTheTimesTheServerWillStore", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.history.SplitServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/history/SplitServerTest.kt", "inherited_from": null, "constructor": "class SplitServerTest", "runner": "JUnit4", "methods": [
+      {"name": "aSplitMadeInAirplaneModeReachesTheServerAndTheHalvesAddUpToTheWhole", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.licences.LicencesScreenTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/licences/LicencesScreenTest.kt", "inherited_from": null, "constructor": "class LicencesScreenTest", "runner": "JUnit4", "methods": [
+      {"name": "aboutEntryOpensTheFullOflText", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aboutEntryReachesTokklSoundCreditWithTheFullMitNotice", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "backButtonReturnsToSettings", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theBarStaysWhileTheTextScrolls", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "systemBackReturnsToSettingsThenTimer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "licencesStayOpenWhenTheActivityIsRecreated", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/AdaptiveLayoutTest.kt", "inherited_from": "AdaptiveLayoutTest", "constructor": "class CompactAdaptiveLayoutTest : AdaptiveLayoutTest(DpSize(411.dp, 891.dp), WindowWidth.COMPACT)", "runner": "JUnit4", "methods": [
+      {"name": "theWindowHasItsWidthClass", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theNavigationFollowsTheWidth", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theRailScrollsWhereTheWindowIsShort", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyScreenFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theEntryFormShowsBesideTheHistoryOnlyWhenExpanded", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theCalendarTakesTheExtraWidthOnlyWhenExpanded", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/AdaptiveLayoutTest.kt", "inherited_from": "AdaptiveLayoutTest", "constructor": "class MediumAdaptiveLayoutTest : AdaptiveLayoutTest(DpSize(700.dp, 1000.dp), WindowWidth.MEDIUM)", "runner": "JUnit4", "methods": [
+      {"name": "theWindowHasItsWidthClass", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theNavigationFollowsTheWidth", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theRailScrollsWhereTheWindowIsShort", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyScreenFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theEntryFormShowsBesideTheHistoryOnlyWhenExpanded", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theCalendarTakesTheExtraWidthOnlyWhenExpanded", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/AdaptiveLayoutTest.kt", "inherited_from": "AdaptiveLayoutTest", "constructor": "class ExpandedAdaptiveLayoutTest : AdaptiveLayoutTest(DpSize(1280.dp, 800.dp), WindowWidth.EXPANDED)", "runner": "JUnit4", "methods": [
+      {"name": "theWindowHasItsWidthClass", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theNavigationFollowsTheWidth", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theRailScrollsWhereTheWindowIsShort", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyScreenFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theEntryFormShowsBesideTheHistoryOnlyWhenExpanded", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theCalendarTakesTheExtraWidthOnlyWhenExpanded", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.AdaptiveStateTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/AdaptiveStateTest.kt", "inherited_from": null, "constructor": "class AdaptiveStateTest", "runner": "JUnit4", "methods": [
+      {"name": "aFoldKeepsTheFormAndThePageBesideIt", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.AdaptiveRotationTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/AdaptiveStateTest.kt", "inherited_from": null, "constructor": "class AdaptiveRotationTest", "runner": "JUnit4", "methods": [
+      {"name": "aRotationKeepsTheEntryBeingAdded", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.BottomBarTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/BottomBarTest.kt", "inherited_from": null, "constructor": "class BottomBarTest", "runner": "JUnit4", "methods": [
+      {"name": "eachBarItemOpensItsPageAndBackGoesToTimer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aPageOpenedFromAnotherGoesBackToTimer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "backFromTimerLeavesTheApp", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theMoreSheetListsReportsTemplatesClientsTagsAndTrashAndOpensEach", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theMoreSheetClosesOnCloseAndOnBack", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "thePageTheStackTheViewAndTheSheetSurviveRecreation", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theTimerItemSaysWhenATimerRuns", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "thePomodoroItemFollowsTheStoredSessionAndBackReturnsToTimer", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.PageTopBarTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/PageTopBarTest.kt", "inherited_from": null, "constructor": "class PageTopBarTest", "runner": "JUnit4", "methods": [
+      {"name": "thePagesOfTheBarAndTheSheetHaveTheBarWithoutABackButton", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "licencesHasTheBarWithABackButton", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theEntryFormHasTheBarWithABackButton", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theProjectAndClientFormsHaveTheBarWithABackButton", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.RestoredBackStackTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/RestoredBackStackTest.kt", "inherited_from": null, "constructor": "class RestoredBackStackTest", "runner": "JUnit4", "methods": [
+      {"name": "aStackRestoredWithoutASessionOpensSignIn", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aStackRestoredWithASessionShowsThePageItHeld", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.navigation.TabHueTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/TabHueTest.kt", "inherited_from": null, "constructor": "class TabHueTest", "runner": "JUnit4", "methods": [
+      {"name": "inLightEachBarTabTakesItsPagesHue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inDarkEachBarTabTakesItsPagesHue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inLightEachRailTabTakesItsPagesHue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inDarkEachRailTabTakesItsPagesHue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inLightTheActiveMorePageTakesMoresHue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inDarkTheActiveMorePageTakesMoresHue", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inLightTheBarKeepsTheRunningDotVisible", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inDarkTheBarKeepsTheRunningDotVisible", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inLightTheRailKeepsTheRunningDotVisible", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inDarkTheRailKeepsTheRunningDotVisible", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.notification.NotificationPermissionPromptTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/NotificationPermissionPromptTest.kt", "inherited_from": null, "constructor": "class NotificationPermissionPromptTest", "runner": "JUnit4", "methods": [
+      {"name": "theFirstStartAsksAndARefusalSaysWhatIsLostAndOffersTheSettings", "apis": [36], "sdk": [33, 10000]},
+      {"name": "anAllowShowsNoMessage", "apis": [36], "sdk": [33, 10000]},
+      {"name": "belowAndroid13AStartAsksNothing", "apis": [31], "sdk": [31, 32]},
+      {"name": "theSettingsActionOpensAScreenTheDeviceHas", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningLiveUpdateTest.kt", "inherited_from": null, "constructor": "class RunningLiveUpdateTest", "runner": "JUnit4", "methods": [
+      {"name": "theRequestMeetsEveryPromotionRequirement", "apis": [36], "sdk": [36, 10000]},
+      {"name": "thePostedRequestChecksTheSystemsPermissionAndKeepsTheNotificationWhenDeclined", "apis": [36], "sdk": [36, 10000]},
+      {"name": "aDeclinedRequestStillPostsTheRegularNotificationWithItsClockAndStop", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "belowAndroid16NoPromotionRequestOrColorIsAdded", "apis": [31], "sdk": [31, 35]},
+      {"name": "aPausedTimerIsQuietDismissibleAndAsksForNoPromotion", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aResumedTimersClockCountsOnFromTheChainsStoredTime", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.notification.RunningNotificationRestartTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningNotificationRestartTest.kt", "inherited_from": null, "constructor": "class RunningNotificationRestartTest", "runner": "JUnit4", "methods": [
+      {"name": "step1StartsATimerAndDismissesItsNotification", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2OpensTheAppInANewProcessAndAnEditPostsTheNotificationAgain", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningNotificationServerTest.kt", "inherited_from": null, "constructor": "class RunningNotificationServerTest", "runner": "JUnit4", "methods": [
+      {"name": "anOfflineStartShowsTheEntryWithAClockTheSystemTicks", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anOfflineStartCorrectionMovesTheNotificationsChronometerToTheCachedStart", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aStopRemovesTheNotification", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aStartStopsTheRunningEntryAndShowsTheNewOne", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "stopFromTheNotificationWorksOfflineAndTheQueueSendsItWhenTheNetworkReturns", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pauseAndResumeFromTheNotificationWorkOfflineAndResumeStartsANewEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "stopFromTheNotificationDoesNotWaitForANetworkThatNeverAnswers", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aDismissedNotificationStaysGoneWhenTheAppOpensAndTheNextEditOrStartPostsItAgain", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aDismissedNotificationStaysGoneWhenTheServerAnswersAnOfflineStart", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.picker.EntityPickerFontScaleTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/picker/EntityPickerFontScaleTest.kt", "inherited_from": null, "constructor": "class EntityPickerFontScaleTest", "runner": "JUnit4", "methods": [
+      {"name": "everyKindOfOptionCanBeReachedAndTappedAtTheLargestFontScale", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.picker.EntityPickerServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/picker/EntityPickerServerTest.kt", "inherited_from": null, "constructor": "class EntityPickerServerTest", "runner": "JUnit4", "methods": [
+      {"name": "theOldEntrysArchivedItemsStaySelectedWithALabelAndNoOtherArchivedItemIsOffered", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "searchAndSelectionWorkInAirplaneModeAndThePickerSaysCreatingNeedsAConnection", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTagTypedInAirplaneModeJoinsTheEntryByNameAndTheServerHasItOnceTheQueueSendsIt", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroAlarmActivityTest.kt", "inherited_from": null, "constructor": "class PomodoroAlarmActivityTest", "runner": "JUnit4", "methods": [
+      {"name": "lockedScreenPhaseEndLaunchesAlarmTurnsScreenOnAndKeepsItAwake", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "backAndHomeLeaveTheSameAlarmSoundAndDurablePhaseRunning", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "nextAndEndUseTheDurableGuardedActionsAndStopBothOutputs", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "recreationDuplicateAndStaleIntentsCannotAdvanceOrReplaceTheAlarm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "deniedAndGrantedFullScreenPermissionFollowSystemAccessAndUsePerAppSettings", "apis": [36], "sdk": [34, 10000]},
+      {"name": "api31Through33HaveNoSpecialAccessSettingsAction", "apis": [31], "sdk": [31, 33]},
+      {"name": "deniedAccessKeepsRingingAndNotificationActionsWithoutOpeningTheLockScreenActivity", "apis": [36], "sdk": [34, 10000]},
+      {"name": "alarmPendingIntentsAreImmutableAndKeepDistinctPhaseIdentities", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroAlarmContentTest.kt", "inherited_from": null, "constructor": "class PomodoroAlarmContentTest", "runner": "JUnit4", "methods": [
+      {"name": "largestTextShowsEveryTransitionAndExactlyTwoLargeLabelledActions", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "clockTicksLocallyAcrossTheDeadlineAndExposesOvertimeOnDemand", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "bothPermissionDenialsCoexistAndGrantRemovesOnlyTheFullscreenNotice", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "unavailableSystemSettingsHasReadableFallbackInstructions", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroDefaultsServerTest.kt", "inherited_from": null, "constructor": "class PomodoroDefaultsServerTest", "runner": "JUnit4", "methods": [
+      {"name": "settingsEditsReadAndWriteReleasedPreferencesAndPopulateTheNextSessionForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theValuesComeFromTheServerAndAChangePostsOnlyTheFourKeys", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anOfflineChangeStaysOnThePhoneUntilTheNextRefreshSendsIt", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStoreTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroDefaultsStoreTest.kt", "inherited_from": null, "constructor": "class PomodoroDefaultsStoreTest", "runner": "JUnit4", "methods": [
+      {"name": "storedValuesAndTheUnsentFlagSurviveReloadAndClear", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyStoreWriteClampsAllFourValues", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aPhoneOnlySettingPersistsItsChangeWithoutGettingAClient", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroFullScreenPageTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroFullScreenPageTest.kt", "inherited_from": null, "constructor": "class PomodoroFullScreenPageTest", "runner": "JUnit4", "methods": [
+      {"name": "deniedNoticeOpensAppSettingsAndDisappearsOnResumeAfterGrant", "apis": [36], "sdk": [34, 10000]},
+      {"name": "olderAndroidShowsThePageWithoutAnUnsupportedFullScreenSettingsButton", "apis": [31], "sdk": [31, 33]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPageFontScaleTest.kt", "inherited_from": null, "constructor": "class PomodoroPageFontScaleTest", "runner": "JUnit4", "methods": [
+      {"name": "allFourLabelledLengthInputsAndEntryControlsAreReachableWithTheKeyboard", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "runningOvertimeHasASpokenClockAndBothActionsFitAtTheLargestFontScale", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "alarmDenialTooShortAndPreciseSaveFailureAreReadableAndDoNotHideStart", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPageServerTest.kt", "inherited_from": null, "constructor": "class PomodoroPageServerTest", "runner": "JUnit4", "methods": [
+      {"name": "editedLengthsSkipOvertimeCurrentFieldsAndEndSaveImmutableEntriesToTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "rangeErrorsDisableStartAndTooShortEndShowsTheExistingResult", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theRealServerRefusalAndUnsentCountRemainVisibleAfterEndAndReopening", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "notificationNextRefreshesTheResumedPageAndCapturedButtonsCannotAdvanceItAgain", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "capturedControlsCannotChangeAReplacementAndExternalSignOutClearsTheResumedPage", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "roomChangesRefreshContextAndExternalEndResetsDefaultsWithoutResumeOrStoreCallbacks", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pageDisposalAndLifecycleStopReleaseTheirCollectorAndResumeUsesDurableState", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPermissionPersistenceTest.kt", "inherited_from": null, "constructor": "class PomodoroPermissionPersistenceTest", "runner": "JUnit4", "methods": [
+      {"name": "diskRecordSurvivesFreshStoreAndCoordinatorInstances", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signOutKeepsTheDevicePermissionHistoryForTheNextAccount", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "platformSnapshotAndExactAlarmLinkFollowActualAndroidApis", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPermissionPromptTest.kt", "inherited_from": null, "constructor": "class PomodoroPermissionPromptTest", "runner": "JUnit4", "methods": [
+      {"name": "firstStartIsImmediateAndOutstandingRequestsCannotCauseDuplicateAutomaticDialogs", "apis": [36], "sdk": [33, 10000]},
+      {"name": "explicitRetryBeforeAnyStartRequestsAndGrantRemovesThePersistentNotice", "apis": [36], "sdk": [33, 10000]},
+      {"name": "exactAndFullScreenSettingsNeverDisableStartAndNoticesRemainUntilGrant", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "android12StartsWithoutPostNotificationRequestAndRetryOpensSettings", "apis": [31], "sdk": [31, 32]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmRearmTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPhaseAlarmRearmTest.kt", "inherited_from": null, "constructor": "class PomodoroPhaseAlarmRearmTest", "runner": "JUnit4", "methods": [
+      {"name": "bootBroadcastSchedulesThePhaseAlarmAgain", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroRingingServiceTest.kt", "inherited_from": null, "constructor": "class PomodoroRingingServiceTest", "runner": "JUnit4", "methods": [
+      {"name": "phaseAlarmStartsForegroundPlaybackWithScreenOffAndLeavesThePhaseAwaitingAction", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "silentModeKeepsTheAlarmPlayerLoopingAndVibrationRequested", "apis": [36], "sdk": [36, 10000]},
+      {"name": "alarmsAllowedDndKeepsTheAlarmPlayerLoopingAndVibrationRequested", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyTransitionUsesItsBundledWavWithAlarmAttributesAndRepeatingVibration", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "notificationHasOnlyNextAndEndAndBothStopAudioAndVibrationOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "swipedNotificationRepostsWithoutRestartingOrStoppingTheSound", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "duplicateDeliveryAndStaleServiceIntentsCannotReplaceTheCurrentRing", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "staleButtonsCannotAdvanceOrEndThePhaseThatReplacedThem", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "physicalSwipeRepostsTheNotificationAndKeepsTheSamePlayer", "apis": [36], "sdk": [34, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationQueueTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSessionNotificationQueueTest.kt", "inherited_from": null, "constructor": "class PomodoroSessionNotificationQueueTest", "runner": "JUnit4", "methods": [
+      {"name": "offlineNextAndEndKeepOrdinaryQueueOrderAcrossReopenAndSendEachFrozenEntryOnce", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "observerForgetErasesDisplayIdentityWithoutClearingQueuedSavesBeforeAccountCleanup", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSessionNotificationRestartTest.kt", "inherited_from": null, "constructor": "class PomodoroSessionNotificationRestartTest", "runner": "JUnit4", "methods": [
+      {"name": "step1PostsAnOfflineSessionAndLeavesItsImmutableTapForTheNextProcess", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2ThePersistedTapOpensPomodoroInTheNewProcessAndSignOutErasesTheSession", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSessionNotificationServerTest.kt", "inherited_from": null, "constructor": "class PomodoroSessionNotificationServerTest", "runner": "JUnit4", "methods": [
+      {"name": "aColdNotificationLaunchOpensPomodoroAndRotationPreservesItsDestination", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aPostedWarmTapUsesOnNewIntentAndIsNotReplayedAfterOpeningAnotherPage", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aSessionTapLeavesTheFocusedTimerRouteWhileRegularTimerTapsKeepTheirLauncherBehavior", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "nextAndEndWorkWithNoActivityOfflineAndEndKeepsThePagePendingCountUntilTheUsualSenderSends", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theRingingNotificationReplacesTheActiveOneAndNextRestoresOnlyOneActiveNotification", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signOutRemovesDisplayStateAndOldButtonsAndTapCannotAffectTheLaterAccount", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSessionNotifierTest.kt", "inherited_from": null, "constructor": "class PomodoroSessionNotifierTest", "runner": "JUnit4", "methods": [
+      {"name": "nativeClockHasOneFixedPlannedEndAndShowsThePhaseNumberAndDescription", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "postedIntentsKeepDistinctActionPhaseAndAccountIdentities", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tapCarriesTheGuardedPhaseAndIsConsumedOnlyOnceWithoutAffectingLauncherIntents", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "shownIdentitySurvivesReopenAndForgetErasesAllPersistedDisplayData", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aDeniedNotificationPermissionDoesNotPostOrThrow", "apis": [36], "sdk": [33, 10000]},
+      {"name": "restPhaseLabelsAndBlankDescriptionUseResources", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroSignOutServerTest.kt", "inherited_from": null, "constructor": "class PomodoroSignOutServerTest", "runner": "JUnit4", "methods": [
+      {"name": "warningCountsQueuedCompletedManualAndCurrentWorkAndCancelKeepsThemThenConfirmClearsOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signingOutDuringEitherRestRemovesTheWorkAlarmAndAllAccountStateOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aNonRingingSharedNotificationIsRemovedEvenWithoutACurrentSession", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "ringingSignOutRejectsLateButtonsServiceStartsAndRetriesUnderTheNextAccount", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/projects/ProjectsServerTest.kt", "inherited_from": null, "constructor": "class ProjectsServerTest", "runner": "JUnit4", "methods": [
+      {"name": "createEditArchiveAndRestoreAProjectAndTheCacheFollowsEachChange", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRefusedChangeShowsTheServersReasonAndKeepsTheForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aProjectWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anEmptyNameIsAMistakeUnderTheField", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theServerOutOfReachListsThePhonesProjectsWithEveryActionOff", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "createEditAndDeleteATaskAndTheCacheFollowsEachChange", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTaskWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineEveryTaskActionIsOffAndTheListSaysTheyNeedTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyControlHasALabel", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.projects.ProjectsTaskDeleteRepeatTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/projects/ProjectsTaskDeleteRepeatTest.kt", "inherited_from": null, "constructor": "class ProjectsTaskDeleteRepeatTest", "runner": "AndroidJUnit4", "methods": [
+      {"name": "repeat01", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat02", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat03", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat04", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat05", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat06", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat07", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat08", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat09", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat10", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat11", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat12", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat13", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat14", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat15", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat16", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat17", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat18", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat19", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat20", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reminder.ReminderServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reminder/ReminderServerTest.kt", "inherited_from": null, "constructor": "class ReminderServerTest", "runner": "JUnit4", "methods": [
+      {"name": "oneWakeupAndKeepRunningConfirmsUntilStartCorrection", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "stopBeforeDelayCancelsAndDisableEnableKeepsOnlyOneRequest", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "reminderStopQueuesOfflineAndSendsAfterReconnect", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "preferenceRoundtripAndOfflineRetryPreserveOtherKeys", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "preferenceStoreRoundtripClampsAndClearsAccountData", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/AppSummaryPresentationTest.kt", "inherited_from": null, "constructor": "class AppSummaryPresentationTest", "runner": "JUnit4", "methods": [
+      {"name": "explicitZeroIsVisibleAndMissingGroupMoneyIsAbsent", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "unknownScalarListObjectAndRateDataShowUnderTheirOwnersWithoutInventedUnits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "ordinaryNewCurrenciesKeepMoneyFormattingAndMixedGroupsAreNotMislabelled", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "omittedAdditionsHaveAnExplicitDisplayLimitNotice", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.DetailedReportServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/DetailedReportServerTest.kt", "inherited_from": null, "constructor": "class DetailedReportServerTest", "runner": "JUnit4", "methods": [
+      {"name": "rowsMatchTheWebAppAndTheEndLoadsTheNextPage", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineShowsTheSummarysMessageAndNoRows", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "rowsFitAtTheLargestFontScale", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.ReportCsvServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportCsvServerTest.kt", "inherited_from": null, "constructor": "class ReportCsvServerTest", "runner": "JUnit4", "methods": [
+      {"name": "summarySharesTheFilteredServerBytesAndSignOutRevokesThePublishedFile", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "detailedSharesTheFilteredServerBytesAndSignOutRevokesThePublishedFile", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.ReportFiltersFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportFiltersFitTest.kt", "inherited_from": null, "constructor": "class ReportFiltersFitTest", "runner": "JUnit4", "methods": [
+      {"name": "theActiveFiltersFitOnTheReportsScreen", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theFilterSheetFits", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportFiltersTest.kt", "inherited_from": null, "constructor": "class ReportFiltersTest", "runner": "JUnit4", "methods": [
+      {"name": "eachFilterNarrowsEveryReportAsTheWebAppDoes", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "isNotDropsWhatTheWebAppDrops", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theSheetOffersNoIsNotWhereTheServerCannotNegate", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theSearchNarrowsTheChoicesAndAsksNothing", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theSheetOffersTheCachedChoicesAndAsksNothing", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.ReportsForegroundTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportsForegroundTest.kt", "inherited_from": null, "constructor": "class ReportsForegroundTest", "runner": "JUnit4", "methods": [
+      {"name": "offlineAfterTheBackgroundShowsTheMessageAndNoNumbers", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theForegroundAsksOnceAndARotationAsksNothing", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.ReportsScreenTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/ReportsScreenTest.kt", "inherited_from": null, "constructor": "class ReportsScreenTest", "runner": "JUnit4", "methods": [
+      {"name": "theSummaryMatchesTheWebAppsReportInTheAccountsTime", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "summaryUsesCurrentServerRoundingEvenWithAnAlreadyReadWorkspace", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "seededPerEntryCentsAndAnAdditionalCurrencyReachTheUi", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theChartTellsTalkBackEveryDaysTime", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineTheScreenSaysSoAndShowsNoNumbers", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theScreenItsRangeDialogsAndTheFilterSheetFitAtTheLargestFontScale", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.SharePercentOnDeviceTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/SharePercentOnDeviceTest.kt", "inherited_from": null, "constructor": "class SharePercentOnDeviceTest", "runner": "JUnit4", "methods": [
+      {"name": "sharesMatchTheWebAppInNode", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "shortestDecimalsMatchJavaScript", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.reports.WeeklyReportServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/reports/WeeklyReportServerTest.kt", "inherited_from": null, "constructor": "class WeeklyReportServerTest", "runner": "JUnit4", "methods": [
+      {"name": "theGridMatchesTheWebAppInTheAccountsWeek", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aLongerRangeShowsTodaysWeekAndOnlyWeekPresets", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineShowsTheSummarysMessageAndNoNumbers", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theGridFitsAndScrollsSidewaysAtTheLargestFontScale", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.session.AccountSettingsRestartTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/session/AccountSettingsRestartTest.kt", "inherited_from": null, "constructor": "class AccountSettingsRestartTest", "runner": "JUnit4", "methods": [
+      {"name": "step1StoresSettingsWithATimeResolution", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2KeepsThemAndStoresSettingsWithout", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step3KeepsTheSettingsWithoutATimeResolution", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.session.AccountSettingsServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/session/AccountSettingsServerTest.kt", "inherited_from": null, "constructor": "class AccountSettingsServerTest", "runner": "JUnit4", "methods": [
+      {"name": "refreshReadsTheSettingsFromTheServerAndKeepsThem", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.session.DefaultWorkspaceRestartTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/session/DefaultWorkspaceRestartTest.kt", "inherited_from": null, "constructor": "class DefaultWorkspaceRestartTest", "runner": "JUnit4", "methods": [
+      {"name": "step1OneRefreshStoresTheDefaultWorkspace", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2OfflineAfterARestartATimerStartsInTheStoredWorkspace", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step3TheSentTimerRunsInTheDefaultWorkspace", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/session/ForegroundRefreshServerTest.kt", "inherited_from": null, "constructor": "class ForegroundRefreshServerTest", "runner": "JUnit4", "methods": [
+      {"name": "theAppReadsTheServerOnOpenForegroundAndReconnectOnly", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/PomodoroDefaultsUiTest.kt", "inherited_from": null, "constructor": "class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisplay: Boolean, private val dark: Boolean)", "runner": "parameterized-four-named-configurations", "methods": [
+      {"name": "eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=1, display=false, dark=false]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=1, display=false, dark=true]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=2, display=true, dark=false]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=2, display=true, dark=true]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=1, display=false, dark=false]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=1, display=false, dark=true]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=2, display=true, dark=false]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=2, display=true, dark=true]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=1, display=false, dark=false]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=1, display=false, dark=true]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=2, display=true, dark=false]", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=2, display=true, dark=true]", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SettingsScreenTest.kt", "inherited_from": null, "constructor": "class SettingsScreenTest", "runner": "JUnit4", "methods": [
+      {"name": "followsTheSystemWithTokklsPaletteByDefault", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "eachThemeModeAppliesAtOnce", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "wallpaperColoursReplaceTokklsPaletteUntilTurnedOff", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyControlHasATalkBackLabelAndRole", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signOutWithAnEmptyQueueGoesStraightToSignIn", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "licencesRowOpensLicencesAndBackReturnsToSettings", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyTextComesFromStringResources", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "reminderSwitchAndHoursValidateAndApply", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tappingTheReminderOpensTimerFromSettings", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SignOutFitTest.kt", "inherited_from": "SignOutFitTest", "constructor": "class UsualFontSignOutFitTest : SignOutFitTest(fontScale = 1f)", "runner": "JUnit4", "methods": [
+      {"name": "theWarningAboutUnsentChanges", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aFailedSignOut", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SignOutFitTest.kt", "inherited_from": "SignOutFitTest", "constructor": "class LargestFontSignOutFitTest : SignOutFitTest(fontScale = SystemFontScale.LARGEST)", "runner": "JUnit4", "methods": [
+      {"name": "theWarningAboutUnsentChanges", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aFailedSignOut", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.settings.SignOutServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SignOutServerTest.kt", "inherited_from": null, "constructor": "class SignOutServerTest", "runner": "JUnit4", "methods": [
+      {"name": "withUnsentChangesItWarnsAndCancelKeepsEverythingThenConfirmingClearsEveryStore", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/ThemeSettingsRestartTest.kt", "inherited_from": null, "constructor": "class ThemeSettingsRestartTest", "runner": "JUnit4", "methods": [
+      {"name": "step1ChoosesLight", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step2KeepsLightAndChoosesDark", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step3KeepsDarkAndChoosesTheSystem", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "step4KeepsFollowingTheSystem", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/shortcuts/FavoriteShortcutsServerTest.kt", "inherited_from": null, "constructor": "class FavoriteShortcutsServerTest", "runner": "JUnit4", "methods": [
+      {"name": "theFavoritesBecomeShortcutsInOrderAndFollowEveryChange", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theLauncherPublishesFavoritesUpToItsLimit", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "losingTheFavoritesCapabilityRemovesShortcutsAndRefusesAnOldTap", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theShortcutUpdatesTheNativeWidgetWithinOneSecondOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signingOutRemovesTheShortcuts", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTapStartsTheFavoriteOfflineAndShowsAToastInsteadOfTheApp", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aShortcutWhoseFavoriteIsGoneStartsNothing", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aLongPressOnTheAppIconListsTheFavoritesAndATapStartsOne", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/CertificateHostMismatchTest.kt", "inherited_from": null, "constructor": "class CertificateHostMismatchTest", "runner": "JUnit4", "methods": [
+      {"name": "anUnpinnedCertificateIsNeverOffered", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aPinnedCertificateStillFailsTheHostNameCheck", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.signin.CertificatePromptTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/CertificatePromptTest.kt", "inherited_from": null, "constructor": "class CertificatePromptTest", "runner": "JUnit4", "methods": [
+      {"name": "untrustedCertificateShowsItsFingerprintAndSignsInOnceTrusted", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "changedCertificatePromptsAgainAndCancelKeepsTheOldPin", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "neitherATapOutsideNorBackClosesThePrompt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pinnedCertificateSignsInWithoutAPrompt", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.signin.SignInCooldownStoreTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInCooldownStoreTest.kt", "inherited_from": null, "constructor": "class SignInCooldownStoreTest", "runner": "JUnit4", "methods": [
+      {"name": "keepsOneDeadlinePerOriginUntilCleared", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.signin.SignInRateLimitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInRateLimitTest.kt", "inherited_from": null, "constructor": "class SignInRateLimitTest", "runner": "JUnit4", "methods": [
+      {"name": "tokklsRetryAfterDrivesACountdownThatOutlivesTheActivity", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.signin.SignInScreenTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInScreenTest.kt", "inherited_from": null, "constructor": "class SignInScreenTest", "runner": "JUnit4", "methods": [
+      {"name": "theBrandIsOneTalkBackNode", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "emailAndPasswordSignInKeepsTheTokenFromMeAndNeverThePassword", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "wrongApiTokenShowsTheBadCredentialsMessageAndStoresNothing", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "httpServerWarnsAndSendsNothingUntilTheUserConfirmsTwice", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "confirmedUrlSignsInWithoutTheWarning", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "emailErrorLeavesTheFieldsBelowInPlace", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "fieldErrorsLeaveTheFormInPlace", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theServerUrlErrorFitsInTheHintsLines", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyFieldAndButtonHasATalkBackLabel", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyControlOfTheHttpWarningHasATalkBackLabel", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.signin.SignInUnderPathPrefixTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/signin/SignInUnderPathPrefixTest.kt", "inherited_from": null, "constructor": "class SignInUnderPathPrefixTest", "runner": "JUnit4", "methods": [
+      {"name": "apiTokenSignInReadsMeThroughThePrefix", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aQueryAndAFragmentAfterThePrefixAreDropped", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "emailAndPasswordSignInReadsMeThroughThePrefix", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.sync.SyncStatusFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/sync/SyncStatusFitTest.kt", "inherited_from": null, "constructor": "class SyncStatusFitTest", "runner": "JUnit4", "methods": [
+      {"name": "theStatusFitsAboveTheBarAndOpensTheNeedsAttentionList", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.sync.SyncStatusServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/sync/SyncStatusServerTest.kt", "inherited_from": null, "constructor": "class SyncStatusServerTest", "runner": "JUnit4", "methods": [
+      {"name": "theStatusCountsOfflineChangesAndGoesOnceTheAppHasSentThem", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theNeedsAttentionLinkOpensTheReasonAndItsEditResendAndDiscardActions", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aDeletedEntryShowsADiscardNoticeUntilItIsDismissed", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "openingTheAppWithAnExpiredTokenAndSavedChangesAsksForSignIn", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aResetTokenPromptsForSignInAndTheNewTokenSendsTheWaitingChanges", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.tags.TagsServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/tags/TagsServerTest.kt", "inherited_from": null, "constructor": "class TagsServerTest", "runner": "JUnit4", "methods": [
+      {"name": "createRenameAndDeleteATagAndTheCacheAndHistoryFollow", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTagWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRefusedCreateShowsTheServersReason", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancellingTheDeleteQuestionKeepsTheTag", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRefusedRenameShowsTheServersReasonInTheForm", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theServerOutOfReachListsThePhonesTags", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyControlHasALabel", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/tile/RunningTileServerTest.kt", "inherited_from": null, "constructor": "class RunningTileServerTest", "runner": "JUnit4", "methods": [
+      {"name": "openingTheShadeFindsATimerStartedOnTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "openingTheShadeTwiceWithinAMinuteFetchesOnlyOnce", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTapDuringAHeldRefreshContinuesTheDisplayedEntryAtOnce", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "openingTheShadeOfflineAttemptsNoRequest", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTapStopsTheRunningTimerWithTheNetworkDown", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aTapContinuesTheLastEntryWithTheNetworkDown", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "longPressOpensCompactControlsThatPauseResumeAndStopOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "stopAndContinueDoNotWaitForANetworkThatNeverAnswers", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theTileFollowsStartsAndStopsFromOtherSurfaces", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "runningAndNotDifferInLabelAndIconNotOnlyInColour", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.timer.DescriptionSuggestionsRepeatTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/DescriptionSuggestionsRepeatTest.kt", "inherited_from": null, "constructor": "class DescriptionSuggestionsRepeatTest", "runner": "AndroidJUnit4", "methods": [
+      {"name": "repeat01", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat02", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat03", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat04", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat05", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat06", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat07", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat08", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat09", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat10", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/DescriptionSuggestionsServerTest.kt", "inherited_from": null, "constructor": "class DescriptionSuggestionsServerTest", "runner": "JUnit4", "methods": [
+      {"name": "suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/FullscreenTimerServerTest.kt", "inherited_from": "FullscreenTimerAcceptanceTest", "constructor": "class FullscreenTimerServerTest : FullscreenTimerAcceptanceTest(1f)", "runner": "JUnit4", "methods": [
+      {"name": "enterBackAndExitKeepBothViewPositionsAndIdentity", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineActionsAndSharedEditorsKeepCumulativeTimeAndFinalStopExits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "actualRotationAndLargeTextKeepFocusedRunningAndPausedActionsReachable", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "focusedLocalTicksAndFrozenPauseAddNoRequests", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "externalStopAlsoClosesTheFocusedRunningEditor", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/FullscreenTimerServerTest.kt", "inherited_from": "FullscreenTimerAcceptanceTest", "constructor": "class FullscreenTimerLargeTextTest : FullscreenTimerAcceptanceTest(SystemFontScale.LARGEST)", "runner": "JUnit4", "methods": [
+      {"name": "enterBackAndExitKeepBothViewPositionsAndIdentity", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineActionsAndSharedEditorsKeepCumulativeTimeAndFinalStopExits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "actualRotationAndLargeTextKeepFocusedRunningAndPausedActionsReachable", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "focusedLocalTicksAndFrozenPauseAddNoRequests", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "externalStopAlsoClosesTheFocusedRunningEditor", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.timer.TimerServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerServerTest.kt", "inherited_from": null, "constructor": "class TimerServerTest", "runner": "JUnit4", "methods": [
+      {"name": "startEditsAndStopShowAtOnceWhileTheNetworkHangsAndReachTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "startEditsAndStopWorkInAirplaneModeAndReachTheServerAfterwards", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theClockTicksWithoutAnyRequest", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "startingWhileAnotherEntryRunsLeavesOneRunning", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.timer.TimerTotalsLargeTextTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerTotalsLargeTextTest.kt", "inherited_from": null, "constructor": "class TimerTotalsLargeTextTest", "runner": "JUnit4", "methods": [
+      {"name": "listTotalsFitAndScrollAwayWithTheTimer", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.timer.TimerTotalsServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerTotalsServerTest.kt", "inherited_from": null, "constructor": "class TimerTotalsServerTest", "runner": "JUnit4", "methods": [
+      {"name": "listAndOlderCalendarKeepTheSameAccountTotalsAboveTheSwitch", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineStartStopEditDeleteUndoAndPauseSegmentsRemapExactlyOnceWithoutReportsOrPaging", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "localTicksSundayWeekStartMidnightLoadingUnknownZoneAndZeroUseOneCacheSubscription", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.timer.TimerViewServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/TimerViewServerTest.kt", "inherited_from": null, "constructor": "class TimerViewServerTest", "runner": "JUnit4", "methods": [
+      {"name": "aColdStartOpensTheServersCalendar", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aMissingViewOpensListAndTapsReachTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aViewMissingOnTheServerOpensListOverTheStoredOne", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anOfflineTapGoesWithTheNextRefresh", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trash.LazyCatalogAccessibilityTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trash/LazyCatalogAccessibilityTest.kt", "inherited_from": null, "constructor": "class LazyCatalogAccessibilityTest", "runner": "JUnit4", "methods": [
+      {"name": "trashKeepsItsVisibleEntryAndReadingOrderAfterRemovingAnEarlierEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "tagsKeepTheirVisibleTagAndReadingOrderAfterRemovingAnEarlierTag", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trash.LongCatalogListTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trash/LongCatalogListTest.kt", "inherited_from": null, "constructor": "class LongCatalogListTest", "runner": "JUnit4", "methods": [
+      {"name": "oneThousandTrashEntries", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "fiveHundredTags", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trash.TrashFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trash/TrashFitTest.kt", "inherited_from": null, "constructor": "class TrashFitTest", "runner": "JUnit4", "methods": [
+      {"name": "theListFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theEmptyQuestionFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theOfflineNoticeFits", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trash.TrashServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trash/TrashServerTest.kt", "inherited_from": null, "constructor": "class TrashServerTest", "runner": "JUnit4", "methods": [
+      {"name": "restorePurgeAndEmptyChangeTheTrashOnTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "everyRowAndControlHasATalkBackLabel", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "offlineThePageSaysItNeedsTheServer", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "withoutTheCapabilityThePageAndItsEntryPointHide", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trust.CertificateHostMismatchWhileSignedInTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/CertificateHostMismatchWhileSignedInTest.kt", "inherited_from": null, "constructor": "class CertificateHostMismatchWhileSignedInTest", "runner": "JUnit4", "methods": [
+      {"name": "theNoticeNamesTheHostAndTheFixAndNothingIsPinned", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trust.ChangedCertificateWhileSignedInTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/ChangedCertificateWhileSignedInTest.kt", "inherited_from": null, "constructor": "class ChangedCertificateWhileSignedInTest", "runner": "JUnit4", "methods": [
+      {"name": "changedCertificateShowsThePromptOnTheHomeScreenAndConnectsOnlyOnceTrusted", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancellingKeepsRequestsRefusedAndTheNoticeReopensThePrompt", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trust.NewKeyWhileSignedInTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/NewKeyWhileSignedInTest.kt", "inherited_from": null, "constructor": "class NewKeyWhileSignedInTest", "runner": "JUnit4", "methods": [
+      {"name": "aNewKeyShowsTheChangedPromptWithItsFingerprintAndConnectsOnceTrusted", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trust.UnconfirmedHttpWhileSignedInTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/UnconfirmedHttpWhileSignedInTest.kt", "inherited_from": null, "constructor": "class UnconfirmedHttpWhileSignedInTest", "runner": "JUnit4", "methods": [
+      {"name": "unconfirmedHttpSessionShowsTheWarningAndSendsNothingUntilConfirmed", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cancellingKeepsRequestsRefusedAndTheNoticeReopensTheWarning", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.trust.UserCaCertificateTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/trust/UserCaCertificateTest.kt", "inherited_from": null, "constructor": "class UserCaCertificateTest", "runner": "JUnit4", "methods": [
+      {"name": "aCertificateAUserCaSignedSignsInWithoutAPromptOrAPin", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.BrandTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/BrandTest.kt", "inherited_from": null, "constructor": "class BrandTest", "runner": "JUnit4", "methods": [
+      {"name": "inDarkModeAHaloInTheWordmarkHaloColourTracesTheWordmark", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aRowWideEnoughKeepsTheWordmarkAtItsWidth", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aNarrowRowShrinksTheWordmarkToItsWidthWithoutCuttingIt", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theBrandDrawsTheWordmarkAndNoOtherImage", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.StickerCardTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/StickerCardTest.kt", "inherited_from": null, "constructor": "class StickerCardTest", "runner": "JUnit4", "methods": [
+      {"name": "lightCardHasAnInkFrameAndHardOffsetShadow", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "darkCardHasALavenderFrameAndHardOffsetShadow", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.TopBarTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/TopBarTest.kt", "inherited_from": null, "constructor": "class TopBarTest", "runner": "JUnit4", "methods": [
+      {"name": "theBarIs64dpTallWithItsTitleAsAHeading", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aPageWithoutBackHasNoBackButton", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theBackButtonIs48dpSaysBackAndGoesBack", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inLightTheSpectrumStripIsAGradientUnderTheControls", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "inDarkTheSpectrumStripIsAGradientUnderTheControls", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ScreenshotTest.kt", "inherited_from": "ScreenshotTest", "constructor": "class LightScreenshotTest : ScreenshotTest(dark = false, fontScale = 1f)", "runner": "JUnit4", "methods": [
+      {"name": "signInWithApiToken", "apis": [36], "sdk": [36, 36]},
+      {"name": "signInWithEmailAndPassword", "apis": [36], "sdk": [36, 36]},
+      {"name": "timer", "apis": [36], "sdk": [36, 36]},
+      {"name": "calendar", "apis": [36], "sdk": [36, 36]},
+      {"name": "timerBesideTheRail", "apis": [36], "sdk": [36, 36]},
+      {"name": "entryBesideTheHistory", "apis": [36], "sdk": [36, 36]},
+      {"name": "timerTotals", "apis": [36], "sdk": [36, 36]},
+      {"name": "calendarTotals", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroIdle", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroIdleActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroOvertime", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroOvertimeActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroAlarm", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroAlarmActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "settings", "apis": [36], "sdk": [36, 36]},
+      {"name": "licences", "apis": [36], "sdk": [36, 36]},
+      {"name": "reports", "apis": [36], "sdk": [36, 36]},
+      {"name": "detailedReport", "apis": [36], "sdk": [36, 36]},
+      {"name": "weeklyReport", "apis": [36], "sdk": [36, 36]},
+      {"name": "projects", "apis": [36], "sdk": [36, 36]},
+      {"name": "clients", "apis": [36], "sdk": [36, 36]},
+      {"name": "tags", "apis": [36], "sdk": [36, 36]},
+      {"name": "moreSheet", "apis": [36], "sdk": [36, 36]},
+      {"name": "httpWarning", "apis": [36], "sdk": [36, 36]},
+      {"name": "certificatePrompt", "apis": [36], "sdk": [36, 36]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ScreenshotTest.kt", "inherited_from": "ScreenshotTest", "constructor": "class DarkScreenshotTest : ScreenshotTest(dark = true, fontScale = 1f)", "runner": "JUnit4", "methods": [
+      {"name": "signInWithApiToken", "apis": [36], "sdk": [36, 36]},
+      {"name": "signInWithEmailAndPassword", "apis": [36], "sdk": [36, 36]},
+      {"name": "timer", "apis": [36], "sdk": [36, 36]},
+      {"name": "calendar", "apis": [36], "sdk": [36, 36]},
+      {"name": "timerBesideTheRail", "apis": [36], "sdk": [36, 36]},
+      {"name": "entryBesideTheHistory", "apis": [36], "sdk": [36, 36]},
+      {"name": "timerTotals", "apis": [36], "sdk": [36, 36]},
+      {"name": "calendarTotals", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroIdle", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroIdleActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroOvertime", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroOvertimeActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroAlarm", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroAlarmActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "settings", "apis": [36], "sdk": [36, 36]},
+      {"name": "licences", "apis": [36], "sdk": [36, 36]},
+      {"name": "reports", "apis": [36], "sdk": [36, 36]},
+      {"name": "detailedReport", "apis": [36], "sdk": [36, 36]},
+      {"name": "weeklyReport", "apis": [36], "sdk": [36, 36]},
+      {"name": "projects", "apis": [36], "sdk": [36, 36]},
+      {"name": "clients", "apis": [36], "sdk": [36, 36]},
+      {"name": "tags", "apis": [36], "sdk": [36, 36]},
+      {"name": "moreSheet", "apis": [36], "sdk": [36, 36]},
+      {"name": "httpWarning", "apis": [36], "sdk": [36, 36]},
+      {"name": "certificatePrompt", "apis": [36], "sdk": [36, 36]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ScreenshotTest.kt", "inherited_from": "ScreenshotTest", "constructor": "class LightLargestFontScreenshotTest : ScreenshotTest(dark = false, fontScale = SystemFontScale.LARGEST)", "runner": "JUnit4", "methods": [
+      {"name": "signInWithApiToken", "apis": [36], "sdk": [36, 36]},
+      {"name": "signInWithEmailAndPassword", "apis": [36], "sdk": [36, 36]},
+      {"name": "timer", "apis": [36], "sdk": [36, 36]},
+      {"name": "calendar", "apis": [36], "sdk": [36, 36]},
+      {"name": "timerBesideTheRail", "apis": [36], "sdk": [36, 36]},
+      {"name": "entryBesideTheHistory", "apis": [36], "sdk": [36, 36]},
+      {"name": "timerTotals", "apis": [36], "sdk": [36, 36]},
+      {"name": "calendarTotals", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroIdle", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroIdleActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroOvertime", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroOvertimeActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroAlarm", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroAlarmActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "settings", "apis": [36], "sdk": [36, 36]},
+      {"name": "licences", "apis": [36], "sdk": [36, 36]},
+      {"name": "reports", "apis": [36], "sdk": [36, 36]},
+      {"name": "detailedReport", "apis": [36], "sdk": [36, 36]},
+      {"name": "weeklyReport", "apis": [36], "sdk": [36, 36]},
+      {"name": "projects", "apis": [36], "sdk": [36, 36]},
+      {"name": "clients", "apis": [36], "sdk": [36, 36]},
+      {"name": "tags", "apis": [36], "sdk": [36, 36]},
+      {"name": "moreSheet", "apis": [36], "sdk": [36, 36]},
+      {"name": "httpWarning", "apis": [36], "sdk": [36, 36]},
+      {"name": "certificatePrompt", "apis": [36], "sdk": [36, 36]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ScreenshotTest.kt", "inherited_from": "ScreenshotTest", "constructor": "class DarkLargestFontScreenshotTest : ScreenshotTest(dark = true, fontScale = SystemFontScale.LARGEST)", "runner": "JUnit4", "methods": [
+      {"name": "signInWithApiToken", "apis": [36], "sdk": [36, 36]},
+      {"name": "signInWithEmailAndPassword", "apis": [36], "sdk": [36, 36]},
+      {"name": "timer", "apis": [36], "sdk": [36, 36]},
+      {"name": "calendar", "apis": [36], "sdk": [36, 36]},
+      {"name": "timerBesideTheRail", "apis": [36], "sdk": [36, 36]},
+      {"name": "entryBesideTheHistory", "apis": [36], "sdk": [36, 36]},
+      {"name": "timerTotals", "apis": [36], "sdk": [36, 36]},
+      {"name": "calendarTotals", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroIdle", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroIdleActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroOvertime", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroOvertimeActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroAlarm", "apis": [36], "sdk": [36, 36]},
+      {"name": "pomodoroAlarmActions", "apis": [36], "sdk": [36, 36]},
+      {"name": "settings", "apis": [36], "sdk": [36, 36]},
+      {"name": "licences", "apis": [36], "sdk": [36, 36]},
+      {"name": "reports", "apis": [36], "sdk": [36, 36]},
+      {"name": "detailedReport", "apis": [36], "sdk": [36, 36]},
+      {"name": "weeklyReport", "apis": [36], "sdk": [36, 36]},
+      {"name": "projects", "apis": [36], "sdk": [36, 36]},
+      {"name": "clients", "apis": [36], "sdk": [36, 36]},
+      {"name": "tags", "apis": [36], "sdk": [36, 36]},
+      {"name": "moreSheet", "apis": [36], "sdk": [36, 36]},
+      {"name": "httpWarning", "apis": [36], "sdk": [36, 36]},
+      {"name": "certificatePrompt", "apis": [36], "sdk": [36, 36]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.theme.ClockAndTotalStylesFitTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ClockAndTotalStylesFitTest.kt", "inherited_from": null, "constructor": "class ClockAndTotalStylesFitTest", "runner": "JUnit4", "methods": [
+      {"name": "clockAndTotalFitInANarrowColumn", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.theme.ConfigurationRestorationTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ConfigurationRestorationTest.kt", "inherited_from": null, "constructor": "class ConfigurationRestorationTest", "runner": "JUnit4", "methods": [
+      {"name": "successRestoresAfterTheBody", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "partialSetupIsRestoredAndTheBodyIsNotRun", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cleanupFailureIsSuppressedOnTheOriginalTestFailure", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "cleanupFailureAfterSuccessFailsTheTest", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/LargestFontScaleTest.kt", "inherited_from": null, "constructor": "class LargestFontScaleTest", "runner": "JUnit4", "methods": [
+      {"name": "timerPageFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pastEntryFormFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "settingsFit", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "allFourPomodoroDefaultDialogsFitAtLargestFont", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "reminderDialogFitsAtLargestFont", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "licencesHeadingsFit", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signInWithApiTokenFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signInWithEmailAndPasswordFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "emailErrorFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "certificateHostMessageFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "focusedSignInFieldStaysAboveTheKeyboard", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signInFieldErrorsLeaveTheFormInPlace", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "signInServerUrlErrorFitsInTheHintsLines", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "httpWarningFromSignInFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "certificatePromptFromSignInFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "httpWarningOverTheHomeScreenFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "noticeAfterCancellingTheHttpWarningFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "certificatePromptOverTheHomeScreenFits", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "noticeAfterCancellingTheCertificatePromptFits", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.theme.ScreenContentTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ScreenContentTest.kt", "inherited_from": null, "constructor": "class ScreenContentTest", "runner": "JUnit4", "methods": [
+      {"name": "aPhoneKeepsTheCompactMargin", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aMediumWindowKeepsTheWiderMargin", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aWideWindowCapsSettingsAt600dpAndCentresThem", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "aWideWindowCentresTheLicences", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.theme.ShapesTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/ShapesTest.kt", "inherited_from": null, "constructor": "class ShapesTest", "runner": "JUnit4", "methods": [
+      {"name": "materialThemeAndItsComponentsGetTokklCorners", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.theme.TypeScaleTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/TypeScaleTest.kt", "inherited_from": null, "constructor": "class TypeScaleTest", "runner": "JUnit4", "methods": [
+      {"name": "namedRolesFollowTheScale", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "anybodyRolesDrawAtTheirWeightAndWidth85", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.ui.theme.WindowBackgroundTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/WindowBackgroundTest.kt", "inherited_from": null, "constructor": "class WindowBackgroundTest", "runner": "JUnit4", "methods": [
+      {"name": "lightLaunchShowsTheLightSchemeBackground", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "darkLaunchShowsTheDarkSchemeBackground", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "followingTheSystemLaunchShowsTheSystemsSchemeBackground", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.widget.WidgetClockRepeatTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetClockRepeatTest.kt", "inherited_from": null, "constructor": "class WidgetClockRepeatTest", "runner": "AndroidJUnit4", "methods": [
+      {"name": "repeat01", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat02", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat03", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat04", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat05", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat06", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat07", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat08", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat09", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "repeat10", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.widget.WidgetLargeTextTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetLargeTextTest.kt", "inherited_from": null, "constructor": "class WidgetLargeTextTest", "runner": "JUnit4", "methods": [
+      {"name": "theRunningClockControlsAndFavoriteTextFitAtTheLargestFont", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize", "apis": [31, 36], "sdk": [31, 10000]}
+    ]},
+    {"class": "com.github.e0ipso.tokkl.widget.WidgetServerTest", "source": "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetServerTest.kt", "inherited_from": null, "constructor": "class WidgetServerTest", "runner": "JUnit4", "methods": [
+      {"name": "startAndStopWorkOfflineThroughTheNativeControls", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "pauseAndResumeWorkOfflineThroughTheNativeControls", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "favoritesResizeAndEachNativeTapQueuesAllItsFieldsOffline", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "nativeClockTicksWithoutWidgetUpdatesAndProviderHasNoPeriod", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "theWidgetFollowsTheAppNotificationAndTileWithinASecond", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "widgetStartReachesTheRealServerAndStopSendsAnExistingLongEntry", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "remoteStopClearsTheNativeWidgetAndNotificationAtThePeriodicCheck", "apis": [31, 36], "sdk": [31, 10000]},
+      {"name": "widgetActionsDoNotWaitForANetworkThatNeverAnswers", "apis": [31, 36], "sdk": [31, 10000]}
+    ]}
+  ]
+}
