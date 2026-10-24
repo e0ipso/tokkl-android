@@ -164,6 +164,11 @@ class LargestFontScaleTest {
                 "light choice" to choice(R.string.settings_theme_light),
                 "dark choice" to choice(R.string.settings_theme_dark),
                 "wallpaper colours switch" to switch(R.string.settings_dynamic_colour),
+                "Pomodoro heading" to composeRule.onNode(hasText(string(R.string.settings_pomodoro)) and isHeading()),
+                "work default" to button(R.string.pomodoro_work_minutes),
+                "short rest default" to button(R.string.pomodoro_short_rest_minutes),
+                "long rest default" to button(R.string.pomodoro_long_rest_minutes),
+                "long rest frequency" to button(R.string.pomodoro_long_rest_every),
                 "reminder heading" to composeRule.onNode(hasText(string(R.string.reminder_settings)) and isHeading()),
                 "reminder switch" to switch(R.string.reminder_enabled),
                 "reminder hours" to composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)) and hasClickAction()),
@@ -181,8 +186,43 @@ class LargestFontScaleTest {
                 inside(R.string.settings_dynamic_colour, isToggleable()),
                 inside(R.string.settings_dynamic_colour_summary, isToggleable()),
                 inside(R.string.reminder_enabled, isToggleable()),
+                inside(R.string.pomodoro_work_minutes, hasClickAction()),
+                inside(R.string.pomodoro_short_rest_minutes, hasClickAction()),
+                inside(R.string.pomodoro_long_rest_minutes, hasClickAction()),
+                inside(R.string.pomodoro_long_rest_every, hasClickAction()),
             ),
         )
+    }
+
+    @Test
+    fun allFourPomodoroDefaultDialogsFitAtLargestFont() {
+        composeRule.awaitText(string(R.string.settings))
+        composeRule.onNodeWithText(string(R.string.settings)).performClick()
+        for ((label, maximum) in listOf(
+            R.string.pomodoro_work_minutes to 180, R.string.pomodoro_short_rest_minutes to 60,
+            R.string.pomodoro_long_rest_minutes to 60, R.string.pomodoro_long_rest_every to 12,
+        )) {
+            button(label).performScrollTo().performClick()
+            assertDialogFits(
+                blocks = listOf(
+                    "title" to composeRule.onNode(hasText(string(R.string.settings_pomodoro_edit)) and isHeading()),
+                    "default field" to composeRule.onNode(hasSetTextAction()),
+                    "cancel" to button(R.string.settings_pomodoro_cancel),
+                    "save" to button(R.string.settings_pomodoro_save),
+                ),
+                texts = listOf(
+                    fieldLabel(label),
+                    "range" to composeRule.onNodeWithText(string(R.string.pomodoro_length_range, 1, maximum)),
+                    inside(R.string.settings_pomodoro_cancel, hasClickAction()),
+                    inside(R.string.settings_pomodoro_save, hasClickAction()),
+                ),
+            )
+            assertTouchTargets(
+                "cancel" to button(R.string.settings_pomodoro_cancel),
+                "save" to button(R.string.settings_pomodoro_save),
+            )
+            button(R.string.settings_pomodoro_cancel).performClick()
+        }
     }
 
     @Test

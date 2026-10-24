@@ -32,6 +32,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.reminder.ReminderPreferences
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
@@ -43,7 +45,8 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The app's settings: the theme, the account with its sign-out ([signOut]), then About, which opens
+ * The app's settings: theme, Pomodoro defaults, reminders, the account's sign-out ([signOut]),
+ * then About, which opens
  * the licences through [onOpenLicences]. Every theme change applies at once. It is a page of the
  * bottom bar, so it has no back button; system Back goes to Timer.
  */
@@ -54,8 +57,11 @@ fun SettingsScreen(
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
     reminder: ReminderSetting? = null,
+    pomodoro: PomodoroDefaultsSetting? = null,
+    pomodoroSharedWithWeb: Boolean = false,
 ) {
     val reminderPreferences = reminder?.state?.collectAsState()?.value ?: ReminderPreferences()
+    val pomodoroDefaults = pomodoro?.defaults?.collectAsState()?.value ?: PomodoroDefaults.DEFAULT
     val settings by model.state.collectAsState()
     val signOutState by signOut.state.collectAsState()
     SettingsContent(
@@ -70,6 +76,9 @@ fun SettingsScreen(
         modifier = modifier,
         reminder = reminderPreferences,
         onReminderChange = { reminder?.change(it) },
+        pomodoro = pomodoroDefaults,
+        pomodoroSharedWithWeb = pomodoroSharedWithWeb,
+        onPomodoroChange = { pomodoro?.change(it) },
     )
 }
 
@@ -87,6 +96,9 @@ internal fun SettingsContent(
     modifier: Modifier = Modifier,
     reminder: ReminderPreferences = ReminderPreferences(),
     onReminderChange: (ReminderPreferences) -> Unit = {},
+    pomodoro: PomodoroDefaults = PomodoroDefaults.DEFAULT,
+    pomodoroSharedWithWeb: Boolean = false,
+    onPomodoroChange: (PomodoroDefaults) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -104,6 +116,8 @@ internal fun SettingsContent(
                 .padding(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
         ) {
             ThemeSection(settings, onModeChange, onDynamicColorChange)
+            Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+            PomodoroDefaultsSection(pomodoro, pomodoroSharedWithWeb, onPomodoroChange)
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
             ReminderSection(reminder, onReminderChange)
             Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))

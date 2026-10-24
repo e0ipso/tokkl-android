@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_pomodoro">Pomodoro defaults</string>
+    <string name="settings_pomodoro_shared">These defaults start your next session and are shared with the Tokkl web app.</string>
+    <string name="settings_pomodoro_local">These defaults start your next session and are kept on this phone.</string>
+    <string name="settings_pomodoro_edit">Edit Pomodoro default</string>
+    <string name="settings_pomodoro_save">Save default</string>
+    <string name="settings_pomodoro_cancel">Cancel</string>
+    <plurals name="settings_pomodoro_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="settings_pomodoro_phases">
+        <item quantity="one">Every %d work phase</item>
+        <item quantity="other">Every %d work phases</item>
+    </plurals>
+</resources>

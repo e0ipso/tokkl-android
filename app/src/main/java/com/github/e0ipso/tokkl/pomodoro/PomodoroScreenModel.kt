@@ -77,7 +77,7 @@ data class PomodoroPageState(
  */
 class PomodoroScreenModel(
     private val store: PomodoroSessionStore,
-    defaults: StateFlow<PomodoroDefaults>,
+    private val defaults: StateFlow<PomodoroDefaults>,
     settings: StateFlow<AccountSettings?>,
     unsent: Flow<Int>,
     refused: Flow<List<PendingChange>>,
@@ -107,9 +107,12 @@ class PomodoroScreenModel(
             try {
                 val revision = fieldsRevision
                 val current = store.current()
+                val ended = state.value.session != null && current == null
+                if (ended) lengthsEdited = false
                 mutableState.update {
                     it.copy(
                         loading = false, session = current,
+                        lengths = if (ended) PomodoroLengths.from(defaults.value) else it.lengths,
                         fields = if (revision == fieldsRevision && fieldsRevision == storedFieldsRevision) current?.fields ?: it.fields else it.fields,
                         alarmDenied = store.exactAlarmPermissionDenied(),
                         problem = it.problem?.takeUnless { problem -> problem.action == PomodoroAction.LOAD },
@@ -185,7 +188,13 @@ class PomodoroScreenModel(
                 is PomodoroStep.TooShort -> PomodoroNotice.TOO_SHORT
                 else -> null
             }
-            mutableState.update { it.copy(session = current, fields = current?.fields ?: it.fields, notice = notice) }
+            if (current == null) lengthsEdited = false
+            mutableState.update {
+                it.copy(
+                    session = current, fields = current?.fields ?: it.fields, notice = notice,
+                    lengths = if (current == null) PomodoroLengths.from(defaults.value) else it.lengths,
+                )
+            }
         }
     }
 
@@ -203,7 +212,11 @@ class PomodoroScreenModel(
                     // instead of restoring stale state or replaying the just-finished phase.
                     try {
                         val current = store.current()
-                        mutableState.update { it.copy(session = current) }
+                        val ended = state.value.session != null && current == null
+                        if (ended) lengthsEdited = false
+                        mutableState.update {
+                            it.copy(session = current, lengths = if (ended) PomodoroLengths.from(defaults.value) else it.lengths)
+                        }
                     } catch (read: CancellationException) {
                         throw read
                     } catch (_: Exception) {

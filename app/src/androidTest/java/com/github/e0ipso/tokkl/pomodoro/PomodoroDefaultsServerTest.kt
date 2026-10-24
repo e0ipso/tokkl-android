@@ -1,5 +1,24 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.AnnotatedString
+import androidx.test.core.app.ActivityScenario
+import com.github.e0ipso.tokkl.MainActivity
+import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.openBarPage
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
+
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.SessionRule
@@ -34,8 +53,11 @@ import org.junit.Test
  */
 class PomodoroDefaultsServerTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
     val session = SessionRule()
+
+    @get:Rule(order = 1)
+    val compose = createEmptyComposeRule()
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
@@ -58,6 +80,50 @@ class PomodoroDefaultsServerTest {
             } finally {
                 SessionRule.signOut()
             }
+        }
+    }
+
+    /** scripts/instrumented-tests.sh pins Tokkl 1.8.1 for this Settings-to-server round trip. */
+    @Test
+    fun settingsEditsReadAndWriteReleasedPreferencesAndPopulateTheNextSessionForm() {
+        setOnTheServer(buildJsonObject {
+            put(WORK, 50); put(SHORT_REST, 10); put(LONG_REST, 30); put(LONG_REST_EVERY, 3)
+            put("timerView", "list")
+        })
+        signIn(TokklTestServer.url)
+        refresh()
+        assertEquals(PomodoroDefaults(50, 10, 30, 3), app.pomodoroDefaults.defaults.value)
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            compose.awaitTimerPage(TIMEOUT_MS)
+            compose.openBarPage(R.string.settings, TIMEOUT_MS)
+            compose.onNode(hasText(context.getString(R.string.settings_pomodoro_shared))).performScrollTo().assertIsDisplayed()
+            val inputs = listOf(
+                R.string.pomodoro_work_minutes to "40", R.string.pomodoro_short_rest_minutes to "8",
+                R.string.pomodoro_long_rest_minutes to "20", R.string.pomodoro_long_rest_every to "5",
+            )
+            val original = listOf("50", "10", "30", "3")
+            for ((index, pair) in inputs.withIndex()) {
+                val (label, value) = pair
+                compose.onNode(hasText(context.getString(label)) and hasClickAction()).performScrollTo().performClick()
+                val input = compose.onNode(hasText(context.getString(label)) and hasSetTextAction())
+                input.assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(original[index])))
+                input.performTextReplacement(value)
+                compose.onNode(hasText(context.getString(R.string.settings_pomodoro_save)) and hasClickAction()).performClick()
+            }
+            val expected = PomodoroDefaults(40, 8, 20, 5)
+            compose.waitUntil("Tokkl accepts the four Settings defaults", TIMEOUT_MS) {
+                PomodoroDefaultsStore(context).load() == StoredPomodoroDefaults(expected, unsent = false)
+            }
+            val saved = preferences()
+            assertEquals(expected, saved.pomodoroDefaults())
+            assertEquals(JsonPrimitive("list"), saved["timerView"])
+            scenario.recreate()
+            compose.openBarPage(R.string.pomodoro_title, TIMEOUT_MS)
+            for ((label, value) in inputs) {
+                compose.onNode(hasText(context.getString(label)) and hasSetTextAction()).performScrollTo()
+                    .assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(value)))
+            }
+            compose.checkAccessibility()
         }
     }
 

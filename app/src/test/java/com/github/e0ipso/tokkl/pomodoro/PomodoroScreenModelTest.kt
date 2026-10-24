@@ -62,6 +62,36 @@ class PomodoroScreenModelTest {
     fun stopCollectors() { scope.cancel() }
 
     @Test
+    fun settingsChangesAffectTheNextSessionWithoutChangingTheRunningSession() = runBlocking {
+        val page = model()
+        val custom = PomodoroLengths("1", "2", "3", "2")
+        page.editLengths(custom)
+        page.start()!!.join()
+        defaults.value = PomodoroDefaults(50, 10, 30, 4)
+        assertEquals(custom, page.state.value.lengths)
+        assertEquals(PomodoroSessionConfig(1.0, 2.0, 3.0, 2.0), store.current()!!.screenLengths())
+        page.end()!!.join()
+        assertNull(store.current())
+        assertEquals(PomodoroLengths("50", "10", "30", "4"), page.state.value.lengths)
+        page.start()!!.join()
+        assertEquals(PomodoroSessionConfig(50.0, 10.0, 30.0, 4.0), store.current()!!.screenLengths())
+    }
+
+    @Test
+    fun aSessionEndedElsewhereResetsTheNextFormToCurrentDefaultsOnReload() = runBlocking {
+        val page = model()
+        page.editLengths(PomodoroLengths("1", "2", "3", "2"))
+        page.start()!!.join()
+        defaults.value = PomodoroDefaults(60, 12, 25, 5)
+        store.end()
+        page.reload().join()
+        assertNull(page.state.value.session)
+        assertEquals(PomodoroLengths("60", "12", "25", "5"), page.state.value.lengths)
+        defaults.value = PomodoroDefaults(45, 9, 20, 3)
+        assertEquals(PomodoroLengths("45", "9", "20", "3"), page.state.value.lengths)
+    }
+
+    @Test
     fun storedDefaultsRefreshUntilEditedAndEditedLengthsStartOnlyThisSession() = runBlocking {
         val page = model()
         assertEquals(PomodoroLengths("40", "8", "20", "3"), page.state.value.lengths)
@@ -193,12 +223,15 @@ class PomodoroScreenModelTest {
     @Test
     fun aPostCommitCallbackFailureReloadsTheRowWithoutRepeatingTheFinishedEntry() = runBlocking {
         val page = model()
+        page.editLengths(PomodoroLengths("1", "2", "3", "2"))
         page.start()!!.join()
+        defaults.value = PomodoroDefaults(50, 10, 30, 4)
         now = now.plusSeconds(60)
         callbackFailure = true
         page.end()!!.join()
         assertNull(page.state.value.session)
         assertEquals("background sender unavailable", page.state.value.problem!!.reason)
+        assertEquals(PomodoroLengths("50", "10", "30", "4"), page.state.value.lengths)
         assertEquals(1, database.creates.size)
         assertNull(page.end())
         assertEquals(1, database.creates.size)

@@ -66,6 +66,7 @@ import com.github.e0ipso.tokkl.navigation.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroScreen
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsModel
@@ -291,6 +292,8 @@ fun TokklNavHost(
                 backStack = backStack,
                 themeSettings = themeSettings,
                 reminderSettings = reminderSettings,
+                pomodoroDefaults = (appContext as TokklApplication).pomodoroDefaults,
+                pomodoroSharedWithWeb = capabilityFlags.favorites,
                 signOut = signOut,
                 reports = reports,
                 history = history,
@@ -474,6 +477,8 @@ private fun Screen(
     backStack: SnapshotStateList<Destination>,
     themeSettings: ThemeSettingsModel,
     reminderSettings: ReminderSetting?,
+    pomodoroDefaults: PomodoroDefaultsSetting,
+    pomodoroSharedWithWeb: Boolean,
     signOut: SignOutModel,
     reports: ReportsModel,
     history: HistoryModel,
@@ -559,6 +564,8 @@ private fun Screen(
         Destination.SETTINGS -> SettingsScreen(
             model = themeSettings,
             reminder = reminderSettings,
+            pomodoro = pomodoroDefaults,
+            pomodoroSharedWithWeb = pomodoroSharedWithWeb,
             signOut = signOut,
             onOpenLicences = { backStack.add(Destination.LICENCES) },
         )
