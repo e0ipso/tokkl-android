@@ -1148,12 +1148,30 @@ install_user_ca() {
     fi
 }
 
+# Emits build properties from this run's owned emulator, immediately before
+# instrumentation. Attached devices never produce this owned-device record.
+emit_owned_build() {
+    local properties
+    properties=$(adb -s "$emulator_serial" shell 'getprop ro.product.brand; getprop ro.product.device; getprop ro.build.fingerprint; getprop ro.build.id; getprop ro.product.model; getprop ro.build.type; getprop ro.build.version.sdk; getprop ro.build.version.codename' | tr -d '\r')
+    python3 - "$emulator_serial" "$AVD" "$properties" <<'PY'
+import json, sys, time
+values = sys.argv[3].splitlines()
+if len(sys.argv[3].encode()) > 8192 or len(values) != 8 or any(not v.strip() for v in values) or not values[6].isascii() or not values[6].isdigit():
+    raise SystemExit('owned emulator did not report complete build properties')
+build = dict(zip(('brand', 'device', 'fingerprint', 'id', 'model', 'type'), values[:6]))
+build['version'] = {'sdk': int(values[6]), 'codename': values[7]}
+print('TOKKL_DEVICE_BUILD '+json.dumps(dict(serial=sys.argv[1], avd=sys.argv[2],
+      observed_at_ns=time.time_ns(), build=build), sort_keys=True, separators=(',', ':')))
+PY
+}
+
 # Runs the tests once on every test device. Fails when Gradle fails, when a
 # test device went away during the run, and when Gradle passed without running
 # the tests on every device.
 run_tests() {
     local status=0 device xml tests
     local -a gone=() results=()
+    if [ -n "$emulator_serial" ]; then emit_owned_build; fi
     # A run that stops before its tests must not count the last run's results.
     rm -rf "$RESULTS"
     ./gradlew --no-daemon connectedDebugAndroidTest \

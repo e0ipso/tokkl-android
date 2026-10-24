@@ -10,6 +10,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
@@ -155,6 +156,25 @@ class FinalFixture(WorkloadFixture):
         api = self.job[0]
         if api == 31:
             text = text.replace('tokkl-api36 on API 36', 'tokkl-api31 on API 31')
+        if self.recipe['profile'] in (fg.SCREENSHOT, fg.NATIVE, fg.WIDGET) and self.scenario != 'metadata-missing':
+            row = dict(serial='emulator-5554', avd='tokkl-api'+str(api),
+                       observed_at_ns=time.time_ns(), build=copy.deepcopy(self.recipe['device_build']))
+            if self.scenario == 'metadata-stale':
+                row['observed_at_ns'] = 1
+            if self.scenario == 'metadata-future':
+                row['observed_at_ns'] += 10**12
+            if self.scenario == 'metadata-serial':
+                row['serial'] = 'emulator-5556'
+            if self.scenario == 'metadata-avd':
+                row['avd'] = 'foreign-avd'
+            if self.scenario == 'metadata-api':
+                row['build']['version']['sdk'] = 31 if api == 36 else 36
+            if self.scenario == 'metadata-build':
+                row['build']['fingerprint'] = 'WRONG-HOST-MODEL'
+            line = 'TOKKL_DEVICE_BUILD '+json.dumps(row, sort_keys=True)+'\n'
+            text += line
+            if self.scenario == 'metadata-duplicate':
+                text += line
         if self.recipe['profile'] == fg.NATIVE and self.scenario != 'missing-reset':
             text += 'Reset notification permission before instrumentation on emulator-5554\n'
             if self.scenario == 'duplicate-reset':
@@ -213,22 +233,25 @@ class FinalGateProfilesTests(unittest.TestCase):
         self.assertFalse(result['passed'])
         self.assertEqual(len(result['captures']['files']), 32)
         self.assertEqual(len(result['failures']), 32)
-        self.assertIn('device build fingerprint', result['reason'])
+        self.assertIn('failed app-only payload', result['reason'])
+        self.assertEqual(result['actual_device']['build'], f.recipe['device_build'])
         self.assertEqual(len(json.loads((f.session.path/'completed.json').read_text())['observations']), 2)
         for row in result['captures']['files']:
             self.assertEqual(hashlib.sha256(Path(row['path']).read_bytes()).hexdigest(), row['sha256'])
 
-    def test_compare_requires_exact_100_names_and_reports_missing_build_metadata(self):
+    def test_compare_requires_exact_100_names_and_matching_actual_build_metadata(self):
         f = self.fixture(phase='compare')
         self.assertEqual(len(f.recipe['references']), 100)
         self.assertEqual(f.recipe['pending'], [])
-        self.assertEqual(f.run(), (False, False))
+        self.assertEqual(f.run(), (True, True))
         result = self.contract(f)
         self.assertTrue(result['capture_complete'], result)
         self.assertEqual(result['app_counts']['tests'], 100)
         self.assertEqual(result['captures']['files'], [])
-        self.assertFalse(result['passed'])
-        self.assertIn('unresolved_metadata', result)
+        self.assertTrue(result['passed'])
+        self.assertEqual(result['comparison'], 'passed')
+        self.assertEqual(result['actual_device']['build'], f.recipe['device_build'])
+        self.assertFalse(result['full_app_gate'])
 
     def test_reference_phase_membership_and_source_change_refuse(self):
         f = self.fixture()
@@ -276,11 +299,12 @@ class FinalGateProfilesTests(unittest.TestCase):
                 f = self.fixture(profile=fg.NATIVE, method='#'.join(case))
                 self.assertEqual(len(f.checked['plan']), 1)
                 self.assertEqual(fg.reset_flag(f.checked, f.job[1]), '1')
-                self.assertEqual(f.run(), (False, False))
+                self.assertEqual(f.run(), (True, True))
                 result = self.contract(f)
                 self.assertEqual(result['app_counts'], dict(tests=1, failures=0, errors=0, skipped=0))
                 self.assertEqual(result['app_cases'], [list(case)])
-                self.assertIn('device build fingerprint', result['reason'])
+                self.assertEqual(result['actual_device']['build'], f.recipe['device_build'])
+                self.assertTrue(result['passed'])
                 self.assertEqual(len(json.loads((f.session.path/'completed.json').read_text())['retired_scopes']), 2)
 
     def test_native_reset_missing_duplicate_foreign_or_method_list_refuses(self):
@@ -308,8 +332,60 @@ class FinalGateProfilesTests(unittest.TestCase):
         f = self.fixture(profile=fg.WIDGET)
         self.assertEqual(f.recipe['cases'], [list(fg.WIDGET_CASE)])
         self.assertEqual(f.checked['stage'], 'compatibility')
+        self.assertEqual(f.run(), (True, True))
+        self.assertEqual(self.contract(f)['actual_device']['build'], f.recipe['device_build'])
+        self.assertEqual(self.contract(f)['actual_device']['avd'], 'tokkl-api31')
+
+    def test_app_only_routes_refuse_missing_stale_duplicate_or_mismatched_actual_metadata(self):
+        scenarios = {'missing': 'missing/duplicate', 'duplicate': 'missing/duplicate',
+                     'stale': 'stale/future', 'future': 'stale/future',
+                     'serial': 'serial/AVD', 'avd': 'serial/AVD',
+                     'api': 'complete reviewed API', 'build': 'differs from reviewed'}
+        for profile in (fg.SCREENSHOT, fg.NATIVE, fg.WIDGET):
+            for scenario, reason in scenarios.items():
+                with self.subTest(profile=profile, scenario=scenario):
+                    f = self.fixture(profile=profile, phase='compare', method='#'.join(fg.NATIVE_CASES[0]),
+                                     scenario='metadata-'+scenario)
+                    self.assertEqual(f.run(), (False, False))
+                    result = self.contract(f)
+                    self.assertFalse(result['passed'])
+                    self.assertIn(reason, result['reason'])
+                    self.assertEqual(result['app_counts']['failures'], 0)
+                    self.assertEqual(result['app_counts']['tests'], 100 if profile == fg.SCREENSHOT else 1)
+
+    def test_actual_metadata_parser_rejects_malformed_unbounded_and_incomplete_records(self):
+        row = dict(serial='emulator-5554', avd='tokkl-api36', observed_at_ns=2*10**9,
+                   build=copy.deepcopy(DEVICE_BUILD))
+        valid = json.dumps(row)
+        for payload in ['{', valid.replace('"serial":', '"serial":"duplicate","serial":'),
+                        valid.replace('"observed_at_ns": 2000000000', '"observed_at_ns": true'),
+                        json.dumps(dict(row, extra='unknown')), json.dumps(dict(row, build={})),
+                        valid+' '*16384]:
+            with self.subTest(payload=payload[:100]), self.assertRaises(ValueError):
+                fg.app_device_build('TOKKL_DEVICE_BUILD '+payload, row['serial'], 36, DEVICE_BUILD, 1, 3*10**9)
+        self.assertEqual(fg.app_device_build('TOKKL_DEVICE_BUILD '+valid, row['serial'], 36,
+                                            DEVICE_BUILD, 1, 3*10**9), row)
+
+    def test_clean_app_counts_cannot_override_nonzero_payload(self):
+        for profile in (fg.SCREENSHOT, fg.NATIVE, fg.WIDGET):
+            with self.subTest(profile=profile):
+                f = self.fixture(profile=profile, phase='compare', method='#'.join(fg.NATIVE_CASES[0]))
+                f.rc = 7
+                self.assertEqual(f.run(), (False, False))
+                result = self.contract(f)
+                self.assertEqual(result['app_counts']['failures'], 0)
+                self.assertEqual(f.ns['state']['tests'][0]['exit'], 7)
+                self.assertIn('failed app-only payload', result['reason'])
+
+    def test_capture_missing_metadata_retains_original_failures_and_files(self):
+        f = self.fixture(scenario='metadata-missing')
         self.assertEqual(f.run(), (False, False))
-        self.assertIn('device build fingerprint', self.contract(f)['reason'])
+        result = self.contract(f)
+        self.assertTrue(result['capture_complete'])
+        self.assertEqual(result['app_counts'], dict(tests=100, failures=32, errors=0, skipped=0))
+        self.assertEqual(len(result['captures']['files']), 32)
+        self.assertEqual(len(result['failures']), 32)
+        self.assertIn('missing/duplicate', result['reason'])
 
     def test_compatibility_only_admits_exact_profiles_and_development_stays_api36(self):
         f = self.fixture(profile=fg.WIDGET)

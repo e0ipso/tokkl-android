@@ -1082,14 +1082,22 @@ other job and clears an inherited flag during execution setup. It checks exactly
 one reset line for the actual owned emulator and exactly one finalized selected
 case; source inclusion, SDK guards and native-dialog assertions remain bound.
 
-Unresolved metadata: the maintained launcher/parser logs owned AVD and SDK but
-emits no app-only actual build fingerprint. Screenshot, native and widget
-profiles therefore retain their counts/captures and report this precise missing
-metadata with passed=false. This change does not invent a build receipt or
-extend the launcher. Benchmark/API and full profiles check actual build context
-through their benchmark JSON. Matching synthetic fixtures are source checks
-only, never device evidence. Root must resolve the app-only metadata dependency
-before adopting a passing comparison/native/widget route.
+Immediately before instrumentation, the maintained launcher emits one
+`TOKKL_DEVICE_BUILD` JSON line for the emulator it booted. A single owned-serial
+getprop request supplies brand, device, fingerprint, build ID, model, build type,
+SDK and codename. The line also names that serial and AVD and records the host
+observation time in nanoseconds. Attached devices emit no owned build record.
+For screenshot, native and widget routes the assessor requires exactly one
+bounded, duplicate-key-free record, an observation within this job's fresh log,
+the actual owned serial/API/AVD and an exact match with the reviewed recipe's
+device_build. Missing, stale, future, duplicate, malformed or mismatched metadata
+refuses. Clean comparison/native/widget results may pass only with all other
+required evidence and a zero payload exit. Capture counts, original failures
+and retained images survive metadata refusal; capture assertion failures and
+nonzero payloads remain failed. Benchmark/API and full profiles keep their
+existing actual build context checks through benchmark JSON. Matching synthetic
+fixtures prove source behavior only. This emitter has not been run on a device;
+fresh actual applicability and coordinator review/adoption remain required.
 
 audit_plan.py now checks exact reference phase/name sets and records SDK/AVD
 metadata for APIs present in the plan. A host reference audit may describe the

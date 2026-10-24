@@ -11,6 +11,7 @@ import os
 import re
 import stat
 import struct
+import time
 import xml.etree.ElementTree as ET
 import zlib
 import zipfile
@@ -527,6 +528,26 @@ def _captures(config, record, started, cases, recipe):
     return receipt
 
 
+def app_device_build(text, serial, api, expected, started, assessed_at_ns):
+    """Bind one fresh launcher observation to the reviewed owned device build."""
+    lines = [line for line in text.splitlines() if line.startswith('TOKKL_DEVICE_BUILD')]
+    require(len(lines) == 1 and lines[0].startswith('TOKKL_DEVICE_BUILD '),
+            'missing/duplicate actual owned device build metadata')
+    line = lines[0]
+    require(len(line.encode()) <= 16384, 'oversized actual device build metadata')
+    row = sr.strict_json(line[len('TOKKL_DEVICE_BUILD '):])
+    require(isinstance(row, dict) and set(row) == {'serial', 'avd', 'observed_at_ns', 'build'},
+            'invalid actual device build metadata fields')
+    require(type(row['observed_at_ns']) is int
+            and int(started*1e9) <= row['observed_at_ns'] <= assessed_at_ns,
+            'stale/future actual device build metadata')
+    require(row['serial'] == serial and row['avd'] == 'tokkl-api'+str(api),
+            'actual device build owned serial/AVD mismatch')
+    require(reviewed_build(row['build'], api) == expected,
+            'actual device build differs from reviewed configuration')
+    return row
+
+
 def assess(config, api, label, args, seconds, record, started, exit_code, stop_reason):
     result = {'passed': False, 'capture_complete': False, 'comparison': 'not performed', 'reason': None}
     try:
@@ -601,10 +622,13 @@ def assess(config, api, label, args, seconds, record, started, exit_code, stop_r
                         'unrequested fresh benchmark execution')
             if recipe['profile'] == SCREENSHOT and recipe['phase'] == 'capture':
                 require(exit_code != 0 and counts['failures'] > 0, 'capture failures must remain failed payload/controller')
-            # The unchanged launcher emits AVD/SDK, not a build fingerprint.
-            # Never invent that receipt or promote synthetic fixtures to live proof.
-            result['unresolved_metadata'] = ['actual app-only device build fingerprint is not emitted by the maintained launcher/parser']
-            raise ValueError(result['unresolved_metadata'][0])
+            result['actual_device'] = app_device_build(text, serial, api, recipe['device_build'],
+                                                       started, time.time_ns())
+            require(exit_code == 0 and not counts['failures'], 'failed app-only payload')
+            result['passed'] = True
+            result['full_app_gate'] = False
+            if recipe['profile'] == SCREENSHOT:
+                result['comparison'] = 'passed'
     except (OSError, ValueError, KeyError, TypeError, AttributeError, OverflowError, ET.ParseError,
             struct.error, zlib.error, zipfile.BadZipFile, RuntimeError) as error:
         result['reason'] = str(error)
@@ -615,7 +639,7 @@ NATIVE_SOURCES = [{'source': 'app/src/notificationPermissionTest/java/com/github
 
 CATALOG_SOURCES = [{'source': 'macrobenchmark/src/main/java/com/github/e0ipso/tokkl/benchmark/CatalogFrameBenchmark.kt', 'sha256': 'a15038b3b2c63c87b9dda70dbe7abd7ca8d2e7da560d156cac83480a0861cdfa'}, {'source': 'macrobenchmark/src/main/java/com/github/e0ipso/tokkl/benchmark/CatalogProbe.kt', 'sha256': 'ce6c4ca31e0c3c4420249ee780eb64af9b1da0327f5ea35f3a1bde85461ecb5f'}]
 
-COMMON_SOURCES = [{'source': 'scripts/instrumented-tests.sh', 'sha256': '176c21969af9df0e8bf65975c376c46fddd9a79096eea688f8f8824d49151bbd'}, {'source': 'scripts/sift_telemetry.py', 'sha256': '62ca64cee8734b2563603a525931950cd2fe034f1500494e6d91b5dae70f620f'}, {'source': 'app/build.gradle.kts', 'sha256': '4d15b4a51356d7906cd6a29bdd5c651204c467d3bb70ad94d6d97d80a89e1719'}, {'source': 'macrobenchmark/build.gradle.kts', 'sha256': 'd68c49b4d16656e1d34adc7b411d981338f7d9a6c2f304c1ee9d0b797374a5a4'}]
+COMMON_SOURCES = [{'source': 'scripts/instrumented-tests.sh', 'sha256': '2c21329e59d372bc6130b138b85c8a04abd70343119ec92ed301e86ecb6240d7'}, {'source': 'scripts/sift_telemetry.py', 'sha256': '62ca64cee8734b2563603a525931950cd2fe034f1500494e6d91b5dae70f620f'}, {'source': 'app/build.gradle.kts', 'sha256': '4d15b4a51356d7906cd6a29bdd5c651204c467d3bb70ad94d6d97d80a89e1719'}, {'source': 'macrobenchmark/build.gradle.kts', 'sha256': 'd68c49b4d16656e1d34adc7b411d981338f7d9a6c2f304c1ee9d0b797374a5a4'}]
 
 COMMON_SOURCES.append({'source': 'gradle/libs.versions.toml', 'sha256': '5c802bab8713c5ce1a0c48965b0a20ad669b9efc32b709198f45e75979dd8f35'})
 
