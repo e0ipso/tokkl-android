@@ -19,6 +19,7 @@
     <string name="entry_picker_done">Done</string>
 
     <!-- The screen that edits an entry from the history (docs/PRD.md H2) and adds a past entry by hand (M1). -->
+    <string name="entry_form_edit_running">Edit running entry</string>
     <string name="entry_form_edit">Edit entry</string>
     <string name="entry_form_new">New entry</string>
     <!-- The description field's hint, as in the web app's manual mode. -->
@@ -45,7 +46,7 @@
     <string name="entry_mistake_duration">Check the duration</string>
     <string name="entry_mistake_end_before_start">The entry must end after it starts</string>
     <string name="entry_mistake_too_long">Entries can\'t be longer than 999 hours</string>
-    <string name="entry_form_missing">This entry isn\'t on the phone any more, or it\'s running. The timer edits a running entry.</string>
+    <string name="entry_form_missing">This entry is no longer available for this edit. It may have stopped or changed. Reopen it from the Timer page.</string>
     <string name="entry_form_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t read times.</string>
     <!-- What TalkBack says a tap on a history row or a calendar block does. -->
     <string name="entry_edit_action">Edit entry</string>

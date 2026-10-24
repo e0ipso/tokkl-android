@@ -4,13 +4,16 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,7 +36,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -71,7 +76,8 @@ typealias WorkspacePicker =
  * The timer at the top of the Timer page (docs/PRD.md T1), from [model], with the cached
  * projects, tasks and tags of [cache] in its picker. While an entry runs, the clock counts from
  * its start on the phone, a tick at each whole second while the screen shows, and asks the server
- * nothing (principle 3). Its button for a past entry calls [onAddEntry] (M1). Its timer-templates
+ * nothing (principle 3). Its clock opens [onEditRunning]. Its button for a past entry calls [onAddEntry]
+ * (M1). Its timer-templates
  * icon, when [favorites] is set, opens a popup of cached templates (T5). Choosing one starts it
  * through the timer. Save as template stores what the timer shows, and Manage templates calls
  * [onManageTemplates].
@@ -85,6 +91,7 @@ fun TimerBar(
     favorites: FavoritesModel? = null,
     onManageTemplates: () -> Unit = {},
     clock: Clock = Clock.systemUTC(),
+    onEditRunning: () -> Unit = {},
 ) {
     val state by model.state.collectAsState()
     // The next frame starts once the frame that composed a new state has drawn it. That ends the
@@ -103,7 +110,7 @@ fun TimerBar(
         TimerState.Loading -> null
     }
     Column(modifier) {
-        TimerBarCore(model, cache, state, elapsed, onAddEntry) {
+        TimerBarCore(model, cache, state, elapsed, onAddEntry, onEditRunning) {
             val templates = favorites
             if (templates != null) {
                 TemplatePopup(templates, timerFields, onManageTemplates) { fields ->
@@ -151,6 +158,7 @@ private fun TimerBarCore(
     state: TimerState,
     elapsed: Long,
     onAddEntry: () -> Unit,
+    onEditRunning: () -> Unit,
     templates: @Composable () -> Unit,
 ) {
     val entries by cache.timeEntries.collectAsState(initial = emptyList())
@@ -168,6 +176,7 @@ private fun TimerBarCore(
         onStart = model::start,
         onStop = model::stop,
         onAddEntry = onAddEntry,
+        onEditRunning = onEditRunning,
         picker = { workspaceId, original, picked, onPickedChange, pickerModifier ->
             EntityPicker(cache, workspaceId, original, picked, onPickedChange, pickerModifier)
         },
@@ -207,6 +216,7 @@ fun TimerBarContent(
     onPause: () -> Unit = {},
     onResume: () -> Unit = {},
     templates: @Composable () -> Unit = {},
+    onEditRunning: () -> Unit = {},
 ) {
     val running = state as? TimerState.Running
     val paused = state as? TimerState.Paused
@@ -245,7 +255,10 @@ fun TimerBarContent(
             when {
                 running != null -> {
                     RunningLabel(unsent = running.unsent)
-                    RunningClock(elapsedSeconds)
+                    RunningClock(elapsedSeconds) {
+                        focusManager.clearFocus()
+                        onEditRunning()
+                    }
                     TimerButton(R.drawable.ic_pause, R.string.timer_pause, R.string.timer_pause_spoken, TimerButtonLook.Neutral, enabled = true) {
                         onPause()
                         focusManager.clearFocus()
@@ -301,13 +314,18 @@ private fun RunningLabel(unsent: Boolean) {
 
 /** The running time, which TalkBack reads in words: "1 hour, 5 minutes elapsed". */
 @Composable
-private fun RunningClock(elapsedSeconds: Long) {
+private fun RunningClock(elapsedSeconds: Long, onEdit: () -> Unit) {
     val spoken = stringResource(R.string.timer_elapsed_spoken, spokenDuration(LocalResources.current, elapsedSeconds))
-    Text(
-        text = formatDuration(elapsedSeconds),
-        style = TokklTheme.clockTextStyle,
-        modifier = Modifier.semantics { contentDescription = spoken },
-    )
+    val editLabel = stringResource(R.string.timer_edit_running)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+            .clickable(role = Role.Button, onClickLabel = editLabel, onClick = onEdit)
+            .semantics { contentDescription = "$spoken. $editLabel" },
+    ) {
+        Text(text = formatDuration(elapsedSeconds), style = TokklTheme.clockTextStyle)
+    }
 }
 
 /** The clock at zero while no timer runs, which TalkBack skips, since Start says what it does. */

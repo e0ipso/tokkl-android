@@ -23,6 +23,14 @@ data class EntryFields(
 )
 
 /**
+ * A running segment's durable identity, captured before opening its editor. Starts always get a
+ * new entry id, even at the same instant. Keep the local id: EntryIdMapping survives process
+ * restarts and resolves it after the server answers. The original start also rejects a competing
+ * time edit. Pause ends this segment and Resume gives it a new identity.
+ */
+data class RunningEntryIdentity(val entryId: Long, val workspaceId: Long, val start: Instant)
+
+/**
  * The changes screens make to time entries, as [ChangeQueue] makes them: on the phone at once,
  * then queued for the server. A screen's model takes this, so a JVM test can stand in for the
  * database. See [ChangeQueue] for what each call does.
@@ -44,6 +52,12 @@ interface EntryChanges {
     suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) {
         update(entryId, fields, start, stop)
     }
+
+    /** Reads this exact active segment, resolving a phone-made id after its create was sent. */
+    suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? = null
+
+    /** Checks the identity and running state in the same transaction as the unsnapped update. */
+    suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean = false
 
     suspend fun delete(entryId: Long): Boolean
 
@@ -317,6 +331,27 @@ class ChangeQueue(
             if (endsChain) dao.deletePauseChain()
             true
         }
+    }
+
+    override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? = withContext(io) {
+        database.runInTransaction<CachedTimeEntry?> { activeEntry(identity) }
+    }
+
+    override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean = queue {
+        val current = activeEntry(identity) ?: return@queue false
+        enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop = null))
+        true
+    }
+
+    private fun activeEntry(identity: RunningEntryIdentity): CachedTimeEntry? {
+        val id = resolve(identity.entryId)
+        // Match the cache's current-entry ordering, including a same-instant replacement.
+        val current = dao.runningEntries().maxWithOrNull(compareBy<CachedTimeEntry> { it.start }.thenBy { it.id }) ?: return null
+        if (current.id != id || current.workspaceId != identity.workspaceId) return null
+        // Only a remapped local create may have lost fractional seconds in the server echo.
+        val sameStart = current.start == identity.start ||
+            (id != identity.entryId && current.start == identity.start.truncatedTo(java.time.temporal.ChronoUnit.SECONDS))
+        return current.takeIf { sameStart }
     }
 
     /**

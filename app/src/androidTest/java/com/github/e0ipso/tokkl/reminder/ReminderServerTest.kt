@@ -12,6 +12,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.stopAction
@@ -123,7 +124,16 @@ class ReminderServerTest {
         assertTrue("confirmed timer adds no wakeup", work.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished })
         val old = runBlocking { app.cache.running.first() }!!.entry
         signIn(NO_ROUTE)
-        runBlocking { app.changes.update(id, com.github.e0ipso.tokkl.cache.EntryFields(description = "Corrected"), old.start.minusSeconds(3600), null) }
+        assertTrue(runBlocking {
+            app.changes.updateRunning(
+                RunningEntryIdentity(id, old.workspaceId, old.start),
+                com.github.e0ipso.tokkl.cache.EntryFields(description = "Corrected"), old.start.minusSeconds(3600),
+            )
+        })
+        val cached = runBlocking { app.cache.running.first() }!!.entry
+        assertEquals(id, cached.id)
+        assertEquals(old.start.minusSeconds(3600), cached.start)
+        assertNull(cached.stop)
         val corrected = fire()
         assertNotNull(corrected)
         send(first.stopAction().actionIntent)

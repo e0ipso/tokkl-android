@@ -316,6 +316,15 @@ fun TokklNavHost(
                         entryForm.new()
                         openEntry()
                     },
+                    onEditRunning = {
+                        scope.launch {
+                            val identity = timer.runningForEdit() ?: return@launch
+                            if (backStack.lastOrNull() == Destination.TIMER || backStack.lastOrNull() == Destination.ENTRY) {
+                                entryForm.editRunning(identity)
+                                openEntry()
+                            }
+                        }
+                    },
                 )
             }
         }

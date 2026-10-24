@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.BackgroundSend
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.orFail
@@ -130,6 +131,40 @@ class RunningNotificationServerTest {
         Thread.sleep(RunningNotifications.STAYS_GONE_MS)
         assertEquals("posted once", shown.postTime, RunningNotifications.shown()!!.postTime)
         assertEquals(emptyList<String>(), RunningNotifications.foregroundServices())
+    }
+
+    @Test
+    fun anOfflineStartCorrectionMovesTheNotificationsChronometerToTheCachedStart() {
+        AirplaneMode.set(true, web)
+        val fields = EntryFields(description = "Corrected offline", projectId = project)
+        val id = runBlocking { app.changes.start(workspace, fields) }
+        val original = runBlocking { app.cache.running.first() }!!.entry
+        val before = RunningNotifications.awaitShown("the original offline start") {
+            it.notification.`when` == original.start.toEpochMilli()
+        }
+        val corrected = original.start.minusSeconds(3607)
+        assertEquals("only the offline Start is queued", 1, unsentCount())
+
+        assertTrue(runBlocking {
+            app.changes.updateRunning(
+                RunningEntryIdentity(id, workspace, original.start), fields, corrected,
+            )
+        })
+
+        val cached = runBlocking { app.cache.running.first() }!!.entry
+        assertEquals("correction keeps the running identity", id, cached.id)
+        assertEquals(workspace, cached.workspaceId)
+        assertEquals("cached start is unsnapped", corrected, cached.start)
+        assertNull("correction does not stop the entry", cached.stop)
+        assertEquals("Start and corrected UPDATE wait offline", 2, unsentCount())
+        val shown = RunningNotifications.awaitShown("the corrected offline chronometer") {
+            it.notification.`when` == corrected.toEpochMilli()
+        }
+        assertEquals(original.start.toEpochMilli(), before.notification.`when`)
+        assertEquals("posted clock follows the corrected cache", cached.start.toEpochMilli(), shown.notification.`when`)
+        assertTrue("the system still ticks the corrected clock", shown.notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertTrue("the corrected notification stays ongoing", shown.notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
+        assertEquals(context.getString(R.string.notification_stop), shown.notification.stopAction().title.toString())
     }
 
     @Test

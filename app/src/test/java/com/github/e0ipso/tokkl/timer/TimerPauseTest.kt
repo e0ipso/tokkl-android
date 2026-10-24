@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.cache.seconds
@@ -19,6 +20,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
@@ -29,10 +32,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 
@@ -210,6 +216,39 @@ class TimerPauseTest {
         }
     }
 
+    @Test
+    fun openingTheEditorDuringResumeWaitsForTheNewSegment() {
+        controls.value = PAUSED
+        awaitState("the paused timer shows") { it is TimerState.Paused }
+        changes.gate = CompletableDeferred()
+        val opening = runBlocking(mainDispatcher) {
+            model.resume()
+            scope.async(start = CoroutineStart.UNDISPATCHED) { model.runningForEdit() }
+        }
+        assertFalse(opening.isCompleted)
+        changes.gate.complete(Unit)
+        val identity = runBlocking { withTimeout(TIMEOUT_MS) { opening.await() } }
+        assertNotNull(identity)
+        assertEquals(RunningEntryIdentity(CLONE_ID, WORKSPACE, TAP), identity)
+        val shown = awaitState("the resumed segment shows") { it is TimerState.Running && it.entryId == CLONE_ID } as TimerState.Running
+        assertEquals(PAUSED.seconds, shown.accumulatedSeconds)
+        assertEquals(listOf("resume $PAUSED_TARGET null"), changes.calls)
+    }
+
+    @Test
+    fun aRefusedResumeOpensNoRunningEditor() {
+        controls.value = PAUSED
+        awaitState("the paused timer shows") { it is TimerState.Paused }
+        changes.gate = CompletableDeferred()
+        val opening = runBlocking(mainDispatcher) {
+            model.resume()
+            scope.async(start = CoroutineStart.UNDISPATCHED) { model.runningForEdit() }
+        }
+        controls.value = TimerControls.Idle
+        changes.gate.complete(Unit)
+        assertNull(runBlocking { withTimeout(TIMEOUT_MS) { opening.await() } })
+    }
+
     private fun awaitIdle(): TimerState.Idle = awaitState("the idle timer shows") { it is TimerState.Idle } as TimerState.Idle
 
     private fun awaitState(what: String, condition: (TimerState) -> Boolean): TimerState {
@@ -327,6 +366,11 @@ class TimerPauseTest {
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean =
             throw AssertionError("these timers stop by their target")
+
+        override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? =
+            (controls.value as? TimerControls.Running)?.entry?.takeIf {
+                it.id == identity.entryId && it.workspaceId == identity.workspaceId && it.start == identity.start
+            }
 
         override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
             throw AssertionError("these timers edit no running entry")

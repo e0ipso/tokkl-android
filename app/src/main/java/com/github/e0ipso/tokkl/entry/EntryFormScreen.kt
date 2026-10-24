@@ -81,8 +81,8 @@ typealias EntryFormPicker =
 
 /**
  * The entry form from [model], over the cached projects, tasks and tags of [cache] in its picker:
- * an entry from the history to edit, or a past entry to add. [onClose] leaves it, after Save has
- * queued the change, on Back, on Cancel, and at once when the form is not open, as after the
+ * a running segment or an entry from the history to edit, or a past entry to add. [onClose] leaves
+ * it after Save has queued the change, on Back, on Cancel, and when the form is not open, as after the
  * process was restarted.
  */
 @Composable
@@ -166,7 +166,12 @@ internal fun EntryFormContent(state: EntryFormState, actions: EntryFormActions, 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            TokklTopBar(stringResource(if (editing) R.string.entry_form_edit else R.string.entry_form_new), onBack = actions.onClose)
+            val title = when {
+                (state as? EntryFormState.Open)?.running == true -> R.string.entry_form_edit_running
+                editing -> R.string.entry_form_edit
+                else -> R.string.entry_form_new
+            }
+            TokklTopBar(stringResource(title), onBack = actions.onClose)
         },
         contentWindowInsets = ScrollingScreenInsets,
     ) { innerPadding ->
@@ -236,31 +241,33 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
                 hint = R.string.entry_start_hint,
                 mistake = state.mistakes[TimeField.START],
                 enabled = !state.saving,
-                imeAction = ImeAction.Next,
+                imeAction = if (state.running) ImeAction.Done else ImeAction.Next,
                 modifier = fieldModifier,
             )
-            TimeTextField(
-                value = state.end,
-                onValueChange = actions.onEndChange,
-                onDone = actions.onTimesDone,
-                label = R.string.entry_end,
-                hint = R.string.entry_end_hint,
-                mistake = state.mistakes[TimeField.END],
-                enabled = !state.saving,
-                imeAction = ImeAction.Next,
-                modifier = fieldModifier,
-            )
-            TimeTextField(
-                value = state.duration,
-                onValueChange = actions.onDurationChange,
-                onDone = actions.onDurationDone,
-                label = R.string.entry_duration,
-                hint = R.string.entry_duration_hint,
-                mistake = state.mistakes[TimeField.DURATION],
-                enabled = !state.saving,
-                imeAction = ImeAction.Done,
-                modifier = fieldModifier,
-            )
+            if (!state.running) {
+                TimeTextField(
+                    value = state.end,
+                    onValueChange = actions.onEndChange,
+                    onDone = actions.onTimesDone,
+                    label = R.string.entry_end,
+                    hint = R.string.entry_end_hint,
+                    mistake = state.mistakes[TimeField.END],
+                    enabled = !state.saving,
+                    imeAction = ImeAction.Next,
+                    modifier = fieldModifier,
+                )
+                TimeTextField(
+                    value = state.duration,
+                    onValueChange = actions.onDurationChange,
+                    onDone = actions.onDurationDone,
+                    label = R.string.entry_duration,
+                    hint = R.string.entry_duration_hint,
+                    mistake = state.mistakes[TimeField.DURATION],
+                    enabled = !state.saving,
+                    imeAction = ImeAction.Done,
+                    modifier = fieldModifier,
+                )
+            }
         }
         state.endsOn?.let { day ->
             Text(
@@ -282,7 +289,7 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
             verticalArrangement = Arrangement.spacedBy(spacing.space2),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            if (state.editing) {
+            if (state.editing && !state.running) {
                 TokklGhostButton(onClick = actions.onDelete, enabled = !state.saving) {
                     Text(stringResource(R.string.history_delete), color = MaterialTheme.colorScheme.error)
                 }

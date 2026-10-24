@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.timer
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
@@ -617,6 +618,9 @@ class TimerModelTest {
             )
             return true
         }
+
+        override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean =
+            update(identity.entryId, fields, start, stop = null)
 
         override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
             throw AssertionError("the timer creates no stopped entry")

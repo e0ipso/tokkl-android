@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -62,7 +63,7 @@ sealed interface EntryFormState {
     /** The form waits for the cache and the account settings. */
     data object Loading : EntryFormState
 
-    /** The entry to edit is not on the phone any more, or runs, which the timer edits instead. */
+    /** The entry is unavailable, or the running segment stopped or changed while editing. */
     data object Missing : EntryFormState
 
     /** The phone cannot resolve the account's timezone, [timeZone], so the form takes no times. */
@@ -102,12 +103,13 @@ sealed interface EntryFormState {
         val saving: Boolean,
         val confirmDelete: Boolean = false,
         val deleteFailed: Boolean = false,
+        val running: Boolean = false,
     ) : EntryFormState
 }
 
 /**
- * The form that edits every field of a stopped entry (docs/PRD.md H2) or adds a past entry by
- * hand (M1), as the web app's EntryEditor.tsx and the manual mode of its TimerBar.tsx do: the
+ * The form that edits a running segment, every field of a stopped entry (docs/PRD.md H2), or adds
+ * a past entry by hand (M1), as the web app's EntryEditor.tsx and the manual mode of its TimerBar.tsx do: the
  * description, the project, task and tags, billable, the date, the start, and the end or the
  * duration. Times are read with the ports of Tokkl's parsers in the account's timezone (S7), and
  * an end earlier than the start falls on the next day.
@@ -163,6 +165,9 @@ class EntryFormModel(
      */
     fun edit(entryId: Long, older: CachedTimeEntry? = null) = open(Opening.Edit(entryId, older?.takeIf { it.id == entryId }))
 
+    /** Opens only the captured running segment; it can never fall back to an older-entry PUT. */
+    fun editRunning(identity: RunningEntryIdentity) = open(Opening.Running(identity))
+
     /** Opens the form for a manual entry on [date], or on today's date in the account's timezone. */
     fun new(date: LocalDate? = null) = open(Opening.New(date))
 
@@ -187,6 +192,7 @@ class EntryFormModel(
 
     /** The start or the end lost focus: the duration follows them when both can be read and one changed. */
     fun timesDone() = changeWithTime { form, settings, time ->
+        if (form.target is Target.Running) return@changeWithTime form
         val range = resolveRange(form.date, form.start, form.end, time, settings.twelveHour, nowMinutes(time))
         if (range == null || !(form.startChanged() || form.endChanged())) return@changeWithTime form
         val text = formatDuration(snappedSeconds(range.start, range.stop, time))
@@ -195,7 +201,7 @@ class EntryFormModel(
 
     /** The duration lost focus: once it differs from what the form derived, the end follows it. */
     fun durationDone() = changeWithTime { form, settings, time ->
-        if (!form.durationChanged()) return@changeWithTime form
+        if (form.target is Target.Running || !form.durationChanged()) return@changeWithTime form
         val seconds = form.durationSeconds ?: parseDuration(form.duration) ?: return@changeWithTime form
         val start = form.startInstant(settings, time) ?: return@changeWithTime form
         val stop = start.plusSecondsOrNull(seconds) ?: return@changeWithTime form
@@ -213,21 +219,22 @@ class EntryFormModel(
                 phase.value = Phase.Open(form.copy(mistakes = checked.mistakes))
                 return
             }
-            is Checked.Valid -> checked.span
+            is Checked.Valid -> checked
         }
         val saving = form.copy(mistakes = emptyMap(), saving = true)
         phase.value = Phase.Open(saving)
         scope.launch {
             val saved = when (val target = form.target) {
                 Target.New -> {
-                    changes.create(workspaceId, form.fields, span.start, span.stop)
+                    changes.create(workspaceId, form.fields, span.start, requireNotNull(span.stop))
                     true
                 }
+                is Target.Running -> changes.updateRunning(target.identity, form.fields, span.start)
                 is Target.Edit -> when {
                     target.onPhone && changes.update(target.entryId, form.fields, span.start, span.stop) -> true
                     // An older entry goes whole, also one whose copy the refresh after its send dropped.
                     !target.onPhone || target.start < HistoryWindow.endingToday(time).start -> {
-                        changes.updateOlder(target.entryId, target.workspaceId, form.fields, span.start, span.stop)
+                        changes.updateOlder(target.entryId, target.workspaceId, form.fields, span.start, requireNotNull(span.stop))
                         true
                     }
                     else -> false
@@ -288,6 +295,10 @@ class EntryFormModel(
                 null -> Phase.NoAccountTime
                 else -> when (opening) {
                     is Opening.New -> Phase.Open(newForm(time, opening.date))
+                    is Opening.Running -> {
+                        val entry = changes.runningEntry(opening.identity)
+                        entry?.let { Phase.Open(runningForm(it, opening.identity, settings, time)) } ?: Phase.Missing
+                    }
                     is Opening.Edit -> {
                         val cached = entries.first().firstOrNull { it.entry.id == opening.entryId }
                         val form = when {
@@ -305,6 +316,15 @@ class EntryFormModel(
 
     private fun newForm(time: AccountTime, date: LocalDate?): Form =
         Form(target = Target.New, fields = EntryFields(), date = date ?: time.today(), start = "", end = "", duration = "", syncedDuration = "")
+
+    private fun runningForm(entry: CachedTimeEntry, identity: RunningEntryIdentity, settings: AccountSettings, time: AccountTime): Form {
+        val date = time.local(entry.start).toLocalDate()
+        val start = settings.formatTime(entry.start, time.zone)
+        val fields = entry.fields()
+        // Keep the resolved cache's seconds, including the server's normalization of a local start.
+        val target = Target.Running(identity.copy(start = entry.start), entry.start, date, start, fields.picked)
+        return Form(target, fields, date, start, end = "", duration = "", syncedDuration = "")
+    }
 
     /**
      * The form on [cached], or null while it runs. An entry with a change the server lacks shows
@@ -334,6 +354,7 @@ class EntryFormModel(
     private fun check(form: Form, settings: AccountSettings, time: AccountTime): Checked {
         val unreadable = if (form.target == Target.New) TimeMistake.MANUAL_TIMES else TimeMistake.TIMES
         val start = form.startInstant(settings, time) ?: return Checked.Invalid(TimeField.START, unreadable)
+        if (form.target is Target.Running) return Checked.Valid(start, stop = null)
         val durationChanged = form.durationChanged()
         val stop = when {
             durationChanged -> (form.durationSeconds ?: parseDuration(form.duration))?.let { start.plusSecondsOrNull(it) }
@@ -351,13 +372,17 @@ class EntryFormModel(
         if (predicted == null && !unchanged) return Checked.Invalid(spanField, TimeMistake.TOO_SHORT)
         val seconds = predicted?.let { it.stop.epochSecond - it.start.epochSecond } ?: (stop.epochSecond - start.epochSecond)
         return if (seconds > MAX_ENTRY_SECONDS) Checked.Invalid(spanField, TimeMistake.TOO_LONG)
-        else Checked.Valid(TimeRange(start, stop))
+        else Checked.Valid(start, stop)
     }
 
     /** The start [Form.start] means: the entry's own while the date and the start are as they opened. */
     private fun Form.startInstant(settings: AccountSettings, time: AccountTime): Instant? {
         val minutes = parseTimeOfDay(start, twelveHour = settings.twelveHour, reference = nowMinutes(time)) ?: return null
-        return if (target is Target.Edit && !startChanged()) target.start else time.instantAt(date, minutes)
+        return when {
+            target is Target.Edit && !startChanged() -> target.start
+            target is Target.Running && !startChanged() -> target.start
+            else -> time.instantAt(date, minutes)
+        }
     }
 
     private fun nowMinutes(time: AccountTime): Int = time.minutesOfDay(clock.instant())
@@ -389,14 +414,19 @@ class EntryFormModel(
     }
 
     private fun Form.shown(names: Catalog, settings: AccountSettings, time: AccountTime): EntryFormState.Open {
-        val stop = (check(this, settings, time) as? Checked.Valid)?.span?.stop
+        val stop = (check(this, settings, time) as? Checked.Valid)?.stop
         val endsOn = stop?.let { time.local(it).toLocalDate() }?.takeIf { it != date }
         return EntryFormState.Open(
-            editing = target is Target.Edit,
+            editing = target != Target.New,
+            running = target is Target.Running,
             workspaceId = workspaceId(settings),
             fields = fields,
             labels = entryLabels(fields, names.projects, names.tasks),
-            original = (target as? Target.Edit)?.original ?: Picked(),
+            original = when (target) {
+                Target.New -> Picked()
+                is Target.Edit -> target.original
+                is Target.Running -> target.original
+            },
             date = date,
             start = start,
             end = end,
@@ -412,6 +442,7 @@ class EntryFormModel(
     private fun Form.workspaceId(settings: AccountSettings): Long? = when (target) {
         Target.New -> settings.defaultWorkspaceId
         is Target.Edit -> target.workspaceId
+        is Target.Running -> target.identity.workspaceId
     }
 
     private fun Instant.plusSecondsOrNull(seconds: Long): Instant? =
@@ -440,7 +471,11 @@ class EntryFormModel(
         val confirmDelete: Boolean = false,
         val deleteFailed: Boolean = false,
     ) {
-        fun startChanged(): Boolean = target !is Target.Edit || date != target.date || start != target.startText
+        fun startChanged(): Boolean = when (target) {
+            Target.New -> true
+            is Target.Edit -> date != target.date || start != target.startText
+            is Target.Running -> date != target.date || start != target.startText
+        }
 
         fun endChanged(): Boolean = target !is Target.Edit || date != target.date || end != target.endText
 
@@ -448,6 +483,15 @@ class EntryFormModel(
     }
 
     private sealed interface Target {
+        /** The active segment only. A later Start or Resume must have a different identity. */
+        data class Running(
+            val identity: RunningEntryIdentity,
+            val start: Instant,
+            val date: LocalDate,
+            val startText: String,
+            val original: Picked,
+        ) : Target
+
         /** A manual entry, in the account's default workspace. */
         data object New : Target
 
@@ -472,6 +516,8 @@ class EntryFormModel(
     }
 
     private sealed interface Opening {
+        data class Running(val identity: RunningEntryIdentity) : Opening
+
         data class New(val date: LocalDate?) : Opening
 
         data class Edit(val entryId: Long, val older: CachedTimeEntry?) : Opening
@@ -493,7 +539,7 @@ class EntryFormModel(
     }
 
     private sealed interface Checked {
-        data class Valid(val span: TimeRange) : Checked
+        data class Valid(val start: Instant, val stop: Instant?) : Checked
 
         data class Invalid(val mistakes: Map<TimeField, TimeMistake>) : Checked {
             constructor(field: TimeField, mistake: TimeMistake) : this(mapOf(field to mistake))

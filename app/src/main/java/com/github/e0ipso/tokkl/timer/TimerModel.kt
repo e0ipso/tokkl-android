@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.seconds
 import com.github.e0ipso.tokkl.entry.EntryLabels
@@ -16,6 +17,8 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.Clock
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.BufferOverflow
@@ -31,6 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -125,14 +129,20 @@ class TimerModel(
     /** The trace section of the last Start or Stop tap, until the screen shows what it did. */
     private var openTap: OpenTap? = null
 
+    private val fieldWrites = mutableSetOf<Job>()
+    private var openingRunning = false
+
+    private val local = MutableStateFlow(Local())
+
     private val cached: StateFlow<CachedControls> = controls
-        .map<TimerControls, CachedControls> { CachedControls.Read(it) }
+        .map<TimerControls, CachedControls> { entry ->
+            val editId = local.value.edit?.entryId
+            CachedControls.Read(entry, editId, editId?.let { changes.currentId(it) })
+        }
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CachedControls.Unread)
 
     private val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
-
-    private val local = MutableStateFlow(Local())
 
     private val queuedStarts = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -211,8 +221,8 @@ class TimerModel(
 
     /** The description still being typed for the running entry [shown], not queued yet. */
     private fun typedFor(shown: TimerState.Running): Typed? =
-        local.value.edit?.takeIf { it.start == shown.start && !it.sent }?.let { edit ->
-            shown.entryId?.let { Typed(it, edit) }
+        editFor(shown)?.takeIf { !it.sent }?.let { edit ->
+            shown.entryId?.let { Typed(RunningEntryIdentity(it, shown.workspaceId, shown.start), edit) }
         }
 
     /**
@@ -228,12 +238,13 @@ class TimerModel(
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             var queued = false
             try {
-                if (typed != null) changes.update(typed.entryId, typed.edit.fields, typed.edit.start, stop = null)
-                changes.start(workspaceId, starting.fields)
+                if (typed != null) changes.updateRunning(typed.identity, typed.edit.fields, typed.identity.start)
+                starting.entryId.complete(changes.start(workspaceId, starting.fields))
                 queued = true
                 queuedStarts.tryEmit(Unit)
                 settle { it.runningEntry()?.start?.isBefore(starting.at) == false }
             } finally {
+                starting.entryId.complete(null)
                 local.update { taps ->
                     when {
                         taps.pending != starting -> taps
@@ -261,7 +272,7 @@ class TimerModel(
 
     private fun stopRunning(shown: TimerState.Running) {
         val entryId = shown.entryId ?: return
-        val edited = local.value.edit?.takeIf { it.start == shown.start }?.fields
+        val edited = editFor(shown)?.fields
         beginTap(TapTrace.STOP) { it is TimerState.Idle }
         val stopping = Pending.Stopping(shown.start)
         local.update { it.copy(pending = stopping, edit = null) }
@@ -297,7 +308,7 @@ class TimerModel(
         val shown = snapshot() as? TimerState.Running ?: return
         val running = cachedControls() as? TimerControls.Running ?: return
         if (shown.entryId != running.entry.id) return
-        val edited = local.value.edit?.takeIf { it.start == shown.start }?.fields
+        val edited = editFor(shown)?.fields
         val pausing = Pending.Pausing(shown.start, shown.workspaceId, running.seconds(clock.instant()), shown.fields, shown.original)
         local.update { it.copy(pending = pausing, edit = null) }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -322,11 +333,14 @@ class TimerModel(
         local.update { it.copy(pending = starting, pausedEdit = null) }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                if (changes.resume(paused.target, edited) != null) {
+                val id = changes.resume(paused.target, edited)
+                starting.entryId.complete(id)
+                if (id != null) {
                     queuedStarts.tryEmit(Unit)
                     settle { it.runningEntry()?.start?.isBefore(starting.at) == false }
                 }
             } finally {
+                starting.entryId.complete(null)
                 local.update { if (it.pending == starting) it.copy(pending = null) else it }
             }
         }
@@ -340,7 +354,7 @@ class TimerModel(
         if (local.value.pending != null) return
         when (val shown = snapshot()) {
             is TimerState.Running -> {
-                val edit = local.value.edit?.takeIf { it.start == shown.start && !it.sent } ?: return
+                val edit = editFor(shown)?.takeIf { !it.sent } ?: return
                 if (edit.fields == cachedRunning()?.fields()) {
                     local.update { if (it.edit == edit) it.copy(edit = null) else it }
                 } else {
@@ -357,6 +371,35 @@ class TimerModel(
                 }
             }
             else -> Unit
+        }
+    }
+
+    /**
+     * Settles the description and initial Start before opening the shared editor. The caller
+     * clears field focus first, so the text field has handed over its latest value. Waiting is
+     * for local writes only. Keep the captured id through remapping and never select a replacement
+     * just because it has the same start time. Cancellation, including a disposed navigation host,
+     * opens nothing.
+     */
+    suspend fun runningForEdit(): RunningEntryIdentity? {
+        if (openingRunning) return null
+        val shown = snapshot() as? TimerState.Running ?: return null
+        val pending = local.value.pending
+        if (pending is Pending.Stopping) return null
+        openingRunning = true
+        try {
+            val id = if (pending is Pending.Starting) {
+                val startedId = pending.entryId.await() ?: return null
+                local.first { it.pending != pending }
+                startedId
+            } else shown.entryId ?: return null
+            descriptionDone()
+            while (fieldWrites.isNotEmpty()) fieldWrites.toList().joinAll()
+            val settled = snapshot() as? TimerState.Running ?: return null
+            val identity = RunningEntryIdentity(id, shown.workspaceId, if (pending is Pending.Starting) settled.start else shown.start)
+            return identity.takeIf { changes.runningEntry(it) != null }
+        } finally {
+            openingRunning = false
         }
     }
 
@@ -387,7 +430,7 @@ class TimerModel(
                 when {
                     fields == shown.fields -> Unit
                     send -> send(shown, fields)
-                    else -> local.update { it.copy(edit = Edit(shown.start, fields, sent = false)) }
+                    else -> local.update { it.copy(edit = Edit(shown.entryId, shown.workspaceId, shown.start, fields, sent = false)) }
                 }
             }
             is TimerState.Paused -> {
@@ -425,11 +468,11 @@ class TimerModel(
     private fun send(shown: TimerState.Running, fields: EntryFields) {
         val entryId = shown.entryId ?: return
         val before = cachedRunning()?.fields()
-        val edit = Edit(shown.start, fields, sent = true)
+        val edit = Edit(entryId, shown.workspaceId, shown.start, fields, sent = true)
         local.update { it.copy(edit = edit) }
-        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+        val write = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                if (changes.update(entryId, fields, shown.start, stop = null)) {
+                if (changes.updateRunning(RunningEntryIdentity(entryId, shown.workspaceId, shown.start), fields, shown.start)) {
                     settle { controls ->
                         val entry = controls.runningEntry()
                         entry == null || entry.start != shown.start || entry.fields().let { it == fields || it != before }
@@ -439,6 +482,8 @@ class TimerModel(
                 local.update { if (it.edit == edit) it.copy(edit = null) else it }
             }
         }
+        fieldWrites += write
+        write.invokeOnCompletion { fieldWrites -= write }
     }
 
     /** Waits until the queue's controls pass [done], or gives up after [SETTLE_MS]. */
@@ -453,6 +498,18 @@ class TimerModel(
     private fun cachedRunning(): CachedTimeEntry? = cachedControls()?.runningEntry()
 
     private fun TimerControls.runningEntry(): CachedTimeEntry? = (this as? TimerControls.Running)?.entry
+
+    private fun editFor(shown: TimerState.Running): Edit? {
+        val read = cached.value as? CachedControls.Read ?: return null
+        val entry = read.controls.runningEntry()?.takeIf { it.id == shown.entryId } ?: return null
+        return local.value.edit?.takeIf { it.matches(entry, read) }
+    }
+
+    private fun Edit.matches(entry: CachedTimeEntry, read: CachedControls.Read): Boolean {
+        val remapped = entryId != entry.id && read.editId == entryId && read.resolvedEditId == entry.id
+        return (entryId == entry.id || remapped) && workspaceId == entry.workspaceId &&
+            (start == entry.start || (remapped && start.truncatedTo(ChronoUnit.SECONDS) == entry.start))
+    }
 
     /** The state as of now, without labels, which the tap handlers act on. */
     private fun snapshot(): TimerState = timerState(cached.value, accountSettings.value?.defaultWorkspaceId, local.value)
@@ -496,7 +553,7 @@ class TimerModel(
                     entryId = entry.id,
                     workspaceId = entry.workspaceId,
                     start = entry.start,
-                    fields = taps.edit?.takeIf { it.start == entry.start }?.fields ?: cachedFields,
+                    fields = taps.edit?.takeIf { it.matches(entry, cached) }?.fields ?: cachedFields,
                     labels = EntryLabels(),
                     original = Picked(cachedFields.projectId, cachedFields.taskId, cachedFields.tags),
                     unsent = controls.unsent,
@@ -517,7 +574,7 @@ class TimerModel(
     private sealed interface CachedControls {
         data object Unread : CachedControls
 
-        data class Read(val controls: TimerControls) : CachedControls
+        data class Read(val controls: TimerControls, val editId: Long?, val resolvedEditId: Long?) : CachedControls
     }
 
     private data class Catalog(val projects: List<CachedProject> = emptyList(), val tasks: List<CachedTask> = emptyList())
@@ -532,7 +589,7 @@ class TimerModel(
     )
 
     /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
-    private data class Edit(val start: Instant, val fields: EntryFields, val sent: Boolean)
+    private data class Edit(val entryId: Long, val workspaceId: Long, val start: Instant, val fields: EntryFields, val sent: Boolean)
 
     /** [fields] for the Resume of the paused chain [chainId], shown until the chain has them. [sent] once kept. */
     private data class PausedEdit(val chainId: Long, val fields: EntryFields, val sent: Boolean)
@@ -540,8 +597,8 @@ class TimerModel(
     /** A tap's open trace section, which [end] closes once the screen shows a state that is [done]. */
     private class OpenTap(val end: () -> Unit, val done: (TimerState) -> Boolean)
 
-    /** An [edit] not queued yet for the running entry [entryId], which a Continue or a favorite stops. */
-    private data class Typed(val entryId: Long, val edit: Edit)
+    /** An [edit] not queued yet for the active [identity], which a Continue or a favorite stops. */
+    private data class Typed(val identity: RunningEntryIdentity, val edit: Edit)
 
     /** A tap that the cache may not show yet. */
     private sealed interface Pending {
@@ -549,7 +606,9 @@ class TimerModel(
          * Start or Resume was tapped at [at], in whole milliseconds as the cache keeps times.
          * [accumulatedSeconds] is the paused total a Resume goes on from.
          */
-        data class Starting(val at: Instant, val fields: EntryFields, val workspaceId: Long, val accumulatedSeconds: Long = 0) : Pending
+        data class Starting(val at: Instant, val fields: EntryFields, val workspaceId: Long, val accumulatedSeconds: Long = 0) : Pending {
+            val entryId = CompletableDeferred<Long?>()
+        }
 
         /** Stop was tapped for the entry that started at [start]. */
         data class Stopping(val start: Instant) : Pending
