@@ -94,11 +94,25 @@ test('still refuses other comma-separated runner arguments', () => {
   checkPreflight([runnerArg('annotation', 'example.First,example.Second')], /holds a comma/);
 });
 
-for (const args of [[], [runnerArg('package', `${prefix}.notification`)], [runnerArg('class', `${prefix}.notification.NativeNotificationPermissionTest`)]]) {
+const permissionTest = `${prefix}.notification.NativeNotificationPermissionTest`;
+const pomodoroPermissionTest = `${prefix}.pomodoro.NativePomodoroPermissionTest`;
+const allow = `${permissionTest}#allowingTheNativeDialogPostsTheAlreadyRunningTimer`;
+const deny = `${permissionTest}#denyingTheNativeDialogKeepsTheTimerAndOpensItsSettings`;
+const pomodoroAllow = `${pomodoroPermissionTest}#grantingTheFirstSessionDialogKeepsTheSameStartedSession`;
+const pomodoroDeny = `${pomodoroPermissionTest}#denyingThenRecreatingKeepsPromptsAndLaterStartsAskOnlyOnExplicitRetry`;
+const freshPermission = { TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '1' };
+// Both timer and Pomodoro probes now share this refusal diagnostic.
+const isolatedPermissionRequired = /requires exactly one supported native notification-permission method/;
+
+for (const args of [
+  [],
+  [runnerArg('package', `${prefix}.notification`)],
+  [runnerArg('package', `${prefix}.pomodoro`)],
+  [runnerArg('class', permissionTest)],
+  [runnerArg('class', pomodoroPermissionTest)],
+]) {
   test(`fresh notification permission refuses a non-isolated selection: ${JSON.stringify(args)}`, () => {
-    checkPreflight(args, /requires exactly one NativeNotificationPermissionTest method/, {
-      TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '1',
-    });
+    checkPreflight(args, isolatedPermissionRequired, freshPermission);
   });
 }
 
@@ -106,12 +120,7 @@ test('fresh notification permission refuses an invalid switch before startup', (
   checkPreflight([], /must be 0 or 1/, { TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '2' });
 });
 
-const permissionTest = `${prefix}.notification.NativeNotificationPermissionTest`;
-const allow = `${permissionTest}#allowingTheNativeDialogPostsTheAlreadyRunningTimer`;
-const deny = `${permissionTest}#denyingTheNativeDialogKeepsTheTimerAndOpensItsSettings`;
-const freshPermission = { TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION: '1' };
-
-for (const method of [allow, deny]) {
+for (const method of [allow, deny, pomodoroAllow, pomodoroDeny]) {
   test(`fresh notification permission admits the isolated native probe: ${method}`, () => {
     // Stop at the fake id command, before creating locks or reaching a device.
     checkPreflight([runnerArg('class', method)], null, freshPermission, true);
@@ -120,10 +129,15 @@ for (const method of [allow, deny]) {
 
 for (const [selection, args] of [
   ['both native responses in one process', [runnerArg('class', `${allow},${deny}`)]],
+  ['both Pomodoro responses in one process', [runnerArg('class', `${pomodoroAllow},${pomodoroDeny}`)]],
+  ['timer and Pomodoro responses in one process', [runnerArg('class', `${allow},${pomodoroAllow}`)]],
   ['an unknown native method', [runnerArg('class', `${permissionTest}#anotherResponse`)]],
+  ['an unknown Pomodoro method', [runnerArg('class', `${pomodoroPermissionTest}#anotherResponse`)]],
   ['an extra argument beside a valid probe', [runnerArg('class', allow), '--stacktrace']],
+  ['an extra argument beside the Pomodoro allow probe', [runnerArg('class', pomodoroAllow), '--stacktrace']],
+  ['an extra argument beside the Pomodoro deny probe', [runnerArg('class', pomodoroDeny), '--stacktrace']],
 ]) {
   test(`fresh notification permission refuses ${selection} before startup`, () => {
-    checkPreflight(args, /requires exactly one NativeNotificationPermissionTest method/, freshPermission);
+    checkPreflight(args, isolatedPermissionRequired, freshPermission);
   });
 }
