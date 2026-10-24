@@ -377,7 +377,7 @@ class RunningEntryEditorServerTest {
             val settledId = runBlocking { app.changes.currentId(running.id) }
 
             writes.holdUpdate = true
-            timerDescription().performScrollTo().performTextClearance()
+            timerDescription().performTextClearance()
             timerDescription().performTextInput("Latest focused typing")
             // Do not press IME Done: tapping the actual clock must settle this focused text.
             clock().performTouchInput { click() }
@@ -555,7 +555,7 @@ class RunningEntryEditorServerTest {
 
     private fun selectCalendar() {
         val calendar = hasText(string(R.string.timer_view_calendar)) and isSelectable()
-        composeRule.onNode(calendar).performScrollTo().performTouchInput { click() }
+        composeRule.onNode(calendar).assertIsDisplayed().performTouchInput { click() }
         awaitUi("Calendar is selected") { composeRule.onAllNodes(calendar and isSelected()).fetchSemanticsNodes().size == 1 }
     }
 

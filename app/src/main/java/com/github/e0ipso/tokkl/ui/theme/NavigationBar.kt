@@ -129,9 +129,10 @@ object TokklNavigationBarDefaults {
  * shown, on one line, so the icon alone never names a destination.
  *
  * [barLabels] are the labels of every item in the bar, this one's included. Where the font scale
- * makes one of them wider than its item, as "Settings" is at 200% on a phone, all of them shrink
- * to the size at which the widest fits, so the labels stay one size. They never shrink below
- * their size at the default font scale.
+ * or the largest display size makes one of them wider than its item, as "Pomodoro" is, all of
+ * them shrink to the size at which the widest fits, so the labels stay one size. The preferred
+ * floor is their size at the default font scale. A label that is still wider goes smaller, so
+ * it stays whole on one line.
  */
 @Composable
 fun RowScope.TokklNavigationBarItem(
@@ -255,17 +256,24 @@ private class SharedLabelSize(
             fits(measurer.measure(label, style.copy(fontSize = size), maxLines = 1, constraints = constraints, density = this))
         }
         if (allFit(fontSize)) return fontSize
-        // Smaller sizes in steps of STEP, from the smallest (step 0) up. Fitting only gets easier
-        // as the size goes down, so a binary search finds the largest step that fits.
-        val smallest = fontSize.value / fontScale.coerceAtLeast(1f)
-        fun size(step: Int) = (smallest + step * STEP).sp
+        // Prefer the size at the default font scale. Fitting only gets easier as the size goes
+        // down, so a binary search finds the largest step that fits. A label that still overflows
+        // that floor, such as Pomodoro in a bar item on the largest display size, goes smaller.
+        val floor = fontSize.value / fontScale.coerceAtLeast(1f)
+        return largestThatFits(floor, fontSize.value, ::allFit)
+            ?: largestThatFits(STEP, floor, ::allFit)
+            ?: STEP.sp
+    }
+
+    private fun largestThatFits(min: Float, max: Float, fitsAt: (TextUnit) -> Boolean): TextUnit? {
+        if (max < min || !fitsAt(min.sp)) return null
         var low = 0
-        var high = ((fontSize.value - smallest) / STEP).toInt() - 1
+        var high = ((max - min) / STEP).toInt()
         while (low < high) {
             val middle = (low + high + 1) / 2
-            if (allFit(size(middle))) low = middle else high = middle - 1
+            if (fitsAt((min + middle * STEP).sp)) low = middle else high = middle - 1
         }
-        return size(low)
+        return (min + low * STEP).sp
     }
 
     private fun fits(layout: TextLayoutResult): Boolean = !layout.didOverflowWidth && !layout.didOverflowHeight
