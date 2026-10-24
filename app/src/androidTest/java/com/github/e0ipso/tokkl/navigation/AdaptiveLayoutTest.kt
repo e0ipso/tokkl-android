@@ -24,7 +24,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.then
@@ -36,6 +35,8 @@ import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SignedInFrame
 import com.github.e0ipso.tokkl.SignedInPanes
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarContent
@@ -60,6 +61,7 @@ import com.github.e0ipso.tokkl.reports.ReportFilters
 import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsContent
 import com.github.e0ipso.tokkl.reports.ReportsState
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.settings.SettingsContent
 import com.github.e0ipso.tokkl.settings.SignOutModel
 import com.github.e0ipso.tokkl.settings.ThemeSettings
@@ -68,7 +70,6 @@ import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
-import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.timer.TimerBarContent
@@ -84,6 +85,8 @@ import com.github.e0ipso.tokkl.ui.screenshot.ScreenshotTest
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.windowWidth
+import java.time.LocalDate
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -93,8 +96,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.time.LocalDate
-import kotlin.math.abs
 
 /**
  * Every screen at one window size, [window], of the width class [width] (docs/PRD.md, Devices):
@@ -116,7 +117,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
     @After
     fun cancelTheScope() {
-        scope.cancel()
+        try { composeRule.checkAccessibility() } finally { scope.cancel() }
     }
 
     @Test

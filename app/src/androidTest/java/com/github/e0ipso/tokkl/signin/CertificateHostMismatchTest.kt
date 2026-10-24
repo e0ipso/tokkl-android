@@ -7,7 +7,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -15,6 +14,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -71,8 +72,10 @@ class CertificateHostMismatchTest {
 
     @After
     fun forgetTheServer() {
-        scope.cancel()
-        SessionRule.signOut()
+        try { composeRule.checkAccessibility() } finally {
+            scope.cancel()
+            SessionRule.signOut()
+        }
     }
 
     /** The certificate is not trusted yet, so the trust manager sees the mismatch before any prompt. */

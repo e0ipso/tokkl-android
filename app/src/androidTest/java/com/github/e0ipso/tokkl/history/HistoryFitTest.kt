@@ -25,12 +25,11 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isRoot
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
@@ -40,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.entry.SplitHalves
 import com.github.e0ipso.tokkl.entry.SplitProblem
@@ -68,11 +69,16 @@ import org.junit.rules.RuleChain
  * leaves the screen, no two parts overlap, and every button keeps a 48dp touch target. EntryActionsUiTest and HistoryGroupUiTest check what TalkBack reads.
  */
 class HistoryFitTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -309,10 +315,13 @@ class HistoryFitTest {
     /**
      * Each button takes taps on at least 48dp by 48dp, the smallest touch target Android's
      * accessibility guidance allows. Compose widens a smaller button's touch area to that size, so
-     * this reads the touch bounds, not the drawn ones: an icon button draws 40dp.
+     * this reads the touch bounds, not the drawn ones: an icon button draws 40dp. Scroll each
+     * control into view after the fit audit has visited the other rows, then verify visibility.
      */
     private fun assertTouchTargets(buttons: List<Pair<String, SemanticsNodeInteraction>>) {
         for ((name, node) in buttons) {
+            if (scrolls(node)) node.performScrollTo()
+            node.assertIsDisplayed()
             val touch = node.fetchSemanticsNode().touchBoundsInRoot
             val (width, height) = with(composeRule.density) { touch.width.toDp() to touch.height.toDp() }
             assertTrue("$name takes taps on $width by $height", width >= MIN_TOUCH_TARGET - SLACK && height >= MIN_TOUCH_TARGET - SLACK)

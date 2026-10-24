@@ -10,7 +10,6 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -22,6 +21,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.settings.openSettings
 import org.junit.Assert.assertEquals
@@ -31,6 +32,11 @@ import org.junit.Test
 
 /** The Licences screen, reached from Settings, About, in the real activity. */
 class LicencesScreenTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     @get:Rule(order = 0)
     val session = SessionRule()
 

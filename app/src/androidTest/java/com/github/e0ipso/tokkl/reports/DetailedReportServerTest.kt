@@ -10,7 +10,6 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.text.TextLayoutResult
@@ -24,6 +23,8 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -211,6 +212,7 @@ class DetailedReportServerTest {
     }
 
     private fun assertTextsFit() {
+        composeRule.checkAccessibility()
         composeRule.waitForIdle()
         val width = context.resources.displayMetrics.widthPixels
         for (node in composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true).fetchSemanticsNodes()) {

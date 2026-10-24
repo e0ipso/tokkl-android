@@ -17,7 +17,6 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -30,6 +29,8 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitText
@@ -65,6 +66,11 @@ import org.junit.Test
  */
 @SignedOut
 class SignInScreenTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
 
     @get:Rule(order = 0)
     val session = SessionRule()

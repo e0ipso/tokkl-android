@@ -17,6 +17,7 @@ import android.widget.RemoteViews
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.accessibility.AccessibilityChecks
 import androidx.test.platform.app.InstrumentationRegistry
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -60,6 +61,11 @@ class NativeWidget : AutoCloseable {
             activity.setContentView(FrameLayout(activity).apply { addView(view) })
         }
         resize(360, 320)
+    }
+
+    /** Explicit ATF check for the RemoteViews host; performClick alone does not invoke Espresso. */
+    fun checkAccessibility() {
+        onMain { AccessibilityChecks.enable().setRunChecksFromRootView(true).checkAndReturnResults(view) }
     }
 
     fun resize(width: Int, height: Int) {

@@ -18,7 +18,6 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
@@ -27,6 +26,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.cache.CacheContents
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.CachedClient
@@ -46,12 +47,17 @@ import org.junit.rules.RuleChain
  * from the cache alone, as offline.
  */
 class EntityPickerFontScaleTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
 
     private val composeRule = createComposeRule()
 
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(SessionRule())
-        .around(SystemFontScale(SystemFontScale.LARGEST))
+        .around(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true))
         .around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext

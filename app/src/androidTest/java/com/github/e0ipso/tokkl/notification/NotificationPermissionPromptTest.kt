@@ -12,7 +12,6 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -21,12 +20,16 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createComposeRule
+import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 
 /**
  * The notification permission's question at the first timer start in the app (docs/PRD.md N5).
@@ -36,9 +39,12 @@ import org.junit.Test
  * own and with the permission not allowed yet, whatever the device holds.
  */
 class NotificationPermissionPromptTest {
+    private val compose = createComposeRule()
 
     @get:Rule
-    val compose = createComposeRule()
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(compose)
 
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
     private val starts = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -107,6 +113,7 @@ class NotificationPermissionPromptTest {
 
         answer(allowed = false)
         compose.onNodeWithText(refused).assertIsDisplayed()
+        compose.checkAccessibility()
         compose.onNodeWithText(context.getString(R.string.notification_permission_settings)).performClick()
         compose.waitUntil(TIMEOUT_MS) { settingsOpened.size == 1 }
         compose.waitUntil(TIMEOUT_MS) { compose.onAllNodesWithText(refused).fetchSemanticsNodes().isEmpty() }
@@ -115,6 +122,7 @@ class NotificationPermissionPromptTest {
         Thread.sleep(SETTLE_MS)
         compose.waitForIdle()
         assertEquals("a later start does not ask again", 1, requests.size)
+        compose.checkAccessibility()
     }
 
     @Test
@@ -130,6 +138,7 @@ class NotificationPermissionPromptTest {
 
         assertEquals(0, compose.onAllNodesWithText(refused).fetchSemanticsNodes().size)
         assertEquals("a grant makes the running notification visible", 1, allows.size)
+        compose.checkAccessibility()
     }
 
     @Test
@@ -142,6 +151,7 @@ class NotificationPermissionPromptTest {
         compose.waitForIdle()
 
         assertEquals(emptyList<Intent>(), requests)
+        compose.checkAccessibility()
     }
 
     /**

@@ -8,7 +8,6 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
@@ -17,21 +16,23 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SignedInFrame
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.ZoneOffset
 
 /**
  * The status element above the bottom bar at Android's largest font scale, 200%, with its longest
@@ -41,11 +42,16 @@ import java.time.ZoneOffset
  * element says against the server.
  */
 class SyncStatusFitTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 

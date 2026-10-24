@@ -18,7 +18,6 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
-import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
@@ -32,6 +31,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedInFrame
 import com.github.e0ipso.tokkl.SignedOut
+import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entry.EntryLabels
@@ -75,7 +75,7 @@ abstract class LandscapeCalendarTest(
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(SessionRule())
-        .around(SystemFontScale(fontScale))
+        .around(SystemFontScale(fontScale, largestDisplaySize = fontScale == SystemFontScale.LARGEST))
         .around(composeRule)
 
     /** A phone held sideways shows the week, and one held upright the chosen day, today. */

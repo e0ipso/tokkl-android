@@ -9,7 +9,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -20,6 +19,8 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -41,6 +42,11 @@ import org.junit.Test
  */
 @SignedOut
 class CertificatePromptTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
 
     @get:Rule(order = 0)
     val session = SessionRule()

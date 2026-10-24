@@ -119,5 +119,5 @@ internal annotation class AtLargestFontScale
 /** Sets the largest font scale around a test marked [AtLargestFontScale]. Order it before the compose rule. */
 internal class LargestFontScaleWhenMarked : TestRule {
     override fun apply(base: Statement, description: Description): Statement =
-        if (description.getAnnotation(AtLargestFontScale::class.java) == null) base else SystemFontScale(SystemFontScale.LARGEST).apply(base, description)
+        if (description.getAnnotation(AtLargestFontScale::class.java) == null) base else SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true).apply(base, description)
 }

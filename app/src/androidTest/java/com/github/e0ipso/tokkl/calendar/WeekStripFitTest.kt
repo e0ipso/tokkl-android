@@ -24,13 +24,14 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -58,11 +59,16 @@ import org.junit.rules.RuleChain
  * usual size.
  */
 class WeekStripFitTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 

@@ -24,7 +24,6 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isHeading
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
@@ -35,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
@@ -60,6 +61,11 @@ import org.junit.Test
  * LandscapeCalendarTest holds the phone sideways, where the week shows too.
  */
 class DayCalendarTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     @get:Rule
     val composeRule = createComposeRule()
 

@@ -15,12 +15,13 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals
@@ -35,10 +36,15 @@ import org.junit.rules.RuleChain
  * label.
  */
 abstract class SignOutFitTest(private val fontScale: Float) {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(fontScale)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(fontScale, largestDisplaySize = fontScale == SystemFontScale.LARGEST)).around(composeRule)
 
     @Test
     fun theWarningAboutUnsentChanges() {

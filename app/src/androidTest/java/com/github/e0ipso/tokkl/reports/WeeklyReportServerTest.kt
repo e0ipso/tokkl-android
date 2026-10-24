@@ -10,7 +10,6 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
@@ -24,6 +23,8 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -261,6 +262,7 @@ class WeeklyReportServerTest {
 
     /** No text is cut off in height. The grid may run off the side, where it scrolls. */
     private fun assertTextsFitHeight() {
+        composeRule.checkAccessibility()
         composeRule.waitForIdle()
         for (node in composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true).fetchSemanticsNodes()) {
             val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString() ?: continue

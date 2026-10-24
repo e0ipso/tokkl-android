@@ -21,7 +21,6 @@ import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -43,6 +42,8 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
@@ -76,6 +77,11 @@ import org.junit.runners.model.Statement
  * ClockAndTotalStylesFitTest covers the clock and totals styles in wrapping text.
  */
 class LargestFontScaleTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     private val composeRule = createAndroidComposeRule<MainActivity>()
 
     /**
@@ -86,7 +92,7 @@ class LargestFontScaleTest {
     @get:Rule
     val rules: RuleChain = RuleChain.outerRule(SessionRule())
         .around(RefusedSessionRule())
-        .around(SystemFontScale(SystemFontScale.LARGEST))
+        .around(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true))
         .around(composeRule)
 
     @Test
@@ -210,6 +216,13 @@ class LargestFontScaleTest {
             heading(R.string.licence_anybody_title),
             text(R.string.licence_anybody_licence),
         )
+        heading(R.string.licence_pomodoro_sounds_title).second.performScrollTo().assertIsDisplayed()
+        composeRule.checkAccessibility()
+        composeRule.onNodeWithText(string(R.string.licence_pomodoro_sounds_licence))
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNode(hasText("Copyright (c) 2026 Tokkl contributors", substring = true))
+            .performScrollTo().assertIsDisplayed()
+        composeRule.checkAccessibility()
     }
 
     @SignedOut

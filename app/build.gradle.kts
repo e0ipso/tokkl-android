@@ -104,7 +104,7 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.github.e0ipso.tokkl.accessibility.AccessibilityTestRunner"
     }
 
     signingConfigs {
@@ -195,6 +195,8 @@ dependencies {
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)
+    androidTestImplementation(libs.androidx.test.espresso.accessibility)
     androidTestImplementation(libs.androidx.test.runner)
     // Exercises the actual launcher menu and shortcut tap.
     androidTestImplementation(libs.androidx.test.uiautomator)

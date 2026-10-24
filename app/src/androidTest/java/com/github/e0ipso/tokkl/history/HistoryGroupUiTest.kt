@@ -9,11 +9,12 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -36,10 +37,15 @@ import org.junit.rules.RuleChain
  * cut off.
  */
 class HistoryGroupUiTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     private val composeRule = createComposeRule()
 
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val edits = CopyOnWriteArrayList<Long>()

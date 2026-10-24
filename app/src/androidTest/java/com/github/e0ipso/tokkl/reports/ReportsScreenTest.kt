@@ -11,7 +11,6 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -26,6 +25,8 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -264,6 +265,7 @@ class ReportsScreenTest {
      * past the edge, since a scroll brings it in.
      */
     private fun assertTextsFit() {
+        compose.checkAccessibility()
         compose.waitForIdle()
         val screenWidth = context.resources.displayMetrics.widthPixels
         val texts = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true).fetchSemanticsNodes()

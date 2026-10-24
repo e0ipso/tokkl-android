@@ -10,12 +10,13 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.tags.Tag
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
@@ -31,10 +32,15 @@ import org.junit.rules.RuleChain
 
 /** Stable row identity and reading order deep in both lists at Android's largest font scale. */
 class LazyCatalogAccessibilityTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        compose.checkAccessibility()
+    }
+
     private val compose = createAndroidComposeRule<ComponentActivity>()
 
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST)).around(compose)
+    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(compose)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 

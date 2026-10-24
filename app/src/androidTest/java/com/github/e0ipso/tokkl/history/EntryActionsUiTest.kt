@@ -19,11 +19,12 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
@@ -64,7 +65,9 @@ class EntryActionsUiTest {
     private val scope = MainScope()
 
     @After
-    fun tearDown() = scope.cancel()
+    fun tearDown() {
+        try { composeRule.checkAccessibility() } finally { scope.cancel() }
+    }
 
     @Test
     fun theMenuAndDeleteHaveTalkBackLabelsAndTalkBackAnnouncesUndo() {

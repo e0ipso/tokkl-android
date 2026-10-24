@@ -21,7 +21,6 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -31,6 +30,8 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -55,11 +56,16 @@ import org.junit.rules.RuleChain
  * target. ReportFiltersTest checks what the filters do against the server.
  */
 class ReportFiltersFitTest {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 

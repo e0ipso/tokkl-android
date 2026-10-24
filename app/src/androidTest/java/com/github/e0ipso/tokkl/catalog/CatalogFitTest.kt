@@ -10,13 +10,14 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.CACHED_CLIENTS
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.CLIENTS
@@ -51,11 +52,16 @@ import org.junit.rules.RuleChain
  * ellipsis on purpose. The screenshot tests compare the lists' look.
  */
 abstract class CatalogFitTest(private val fontScale: Float) {
+    @org.junit.After
+    fun auditFinalAccessibilityState() {
+        composeRule.checkAccessibility()
+    }
+
     private val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(fontScale)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(fontScale, largestDisplaySize = fontScale == SystemFontScale.LARGEST)).around(composeRule)
 
     @Test
     fun projectsList() {
