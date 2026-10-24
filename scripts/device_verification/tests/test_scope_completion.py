@@ -1,5 +1,6 @@
 import copy,json,math,os,shutil,subprocess,sys,tempfile,time,unittest
 from pathlib import Path
+from unittest.mock import patch
 import scope_completion as sc
 from event_monitor_0274 import KEYS,Monitor
 
@@ -23,7 +24,9 @@ class CompletionTests(unittest.TestCase):
         if result is not None and result['state']!='Z':
             for scope in self.app.iterdir():
                 marker=scope/'member.pid'
-                if marker.exists() and marker.read_text()==str(pid):result['cgroup']=str(scope);break
+                try:member=marker.read_text()
+                except FileNotFoundError:continue
+                if member==str(pid):result['cgroup']=str(scope);break
         return result
     def members(self,scope):
         marker=scope/'member.pid';result={int(marker.read_text())}
@@ -54,6 +57,41 @@ class CompletionTests(unittest.TestCase):
     def complete(self,code=0):
         self.release();self.assertEqual(self.procs[-1].wait(timeout=2),code)
         return self.session.finalize(code,self.monitor,lambda:10*1024**3)
+    def test_identity_marker_disappears_during_read_preserves_real_process_identity(self):
+        scope=self.app/MAIN;scope.mkdir();marker=scope/'member.pid';pid=os.getpid();marker.write_text(str(pid))
+        original=Path.read_text;reads=[]
+        def disappear(path,*args,**kwargs):
+            if path==marker:
+                self.assertTrue(marker.exists());marker.unlink();reads.append(path)
+            return original(path,*args,**kwargs)
+        expected=sc.process_identity(pid)
+        self.assertIsNotNone(expected);self.assertNotEqual(expected['state'],'Z')
+        with patch.object(Path,'read_text',disappear):
+            actual=self.identity(pid)
+        self.assertEqual(reads,[marker]);self.assertFalse(marker.exists())
+        self.assertEqual(actual,expected);self.assertNotEqual(actual['cgroup'],str(scope))
+    def test_missing_marker_keeps_unknown_identity_and_other_read_errors_visible(self):
+        scope=self.app/MAIN;scope.mkdir();marker=scope/'member.pid'
+        with patch.object(sc,'process_identity',return_value=None):
+            self.assertIsNone(self.identity(999999999))
+        marker.write_text(str(os.getpid()));original=Path.read_text
+        def denied(path,*args,**kwargs):
+            if path==marker:raise PermissionError('modeled unreadable membership')
+            return original(path,*args,**kwargs)
+        with patch.object(Path,'read_text',denied),self.assertRaisesRegex(PermissionError,'unreadable membership'):
+            self.identity(os.getpid())
+    def test_live_holder_without_membership_cannot_acknowledge_or_certify_closure(self):
+        p=self.spawn();ready=self.ready();(self.app/MAIN/'member.pid').unlink()
+        identity=self.identity(ready['pid'])
+        self.assertIsNotNone(identity);self.assertNotEqual(identity['state'],'Z')
+        self.assertNotEqual(identity['cgroup'],str(self.app/MAIN));self.assertIsNone(p.poll())
+        tree,result=self.inspect()
+        with self.assertRaisesRegex(sc.EvidenceError,'final holder process is not live in its scope'):
+            self.session.accept(tree,result)
+        self.assertEqual(self.session.certified,{});self.assertEqual(self.session.retired,{})
+        self.assertFalse((self.session.path/'scopes'/MAIN/'ack.json').exists())
+        self.assertFalse((self.session.path/'completed.json').exists())
+        self.assertIsNone(p.poll())
     def test_success_captures_final_events_before_verified_closure(self):
         self.spawn();self.ready();self.assertEqual(self.complete(),0)
         self.assertTrue((self.session.path/'completed.json').exists())
