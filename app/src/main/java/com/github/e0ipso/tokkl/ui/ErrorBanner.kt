@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.Hyphens
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -34,14 +36,16 @@ fun ErrorBanner(message: String, modifier: Modifier = Modifier) {
         border = BorderStroke(FrameWidth, MaterialTheme.colorScheme.error),
     ) {
         Row(
-            modifier = Modifier.padding(TokklTheme.spacing.space4),
+            modifier = Modifier.fillMaxWidth().padding(TokklTheme.spacing.space4),
             horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
         ) {
             Icon(painter = painterResource(R.drawable.ic_warning), contentDescription = null)
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                style = MaterialTheme.typography.bodyLarge.copy(hyphens = Hyphens.Auto),
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
     }

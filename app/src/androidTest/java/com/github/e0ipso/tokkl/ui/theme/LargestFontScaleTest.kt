@@ -855,7 +855,12 @@ class LargestFontScaleTest {
         val window = composeRule.onNode(isRoot() and hasAnyDescendant(isDialog())).getBoundsInRoot()
         val dialog = composeRule.onNode(isDialog()).getUnclippedBoundsInRoot()
         assertTrue("the dialog leaves its window", dialog.inside(window))
-        val scrollingArea = composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog())).getBoundsInRoot()
+        // A single-line field scrolls sideways on its own. The dialog body is the vertical scroller.
+        val scrollingArea = composeRule.onNode(
+            hasScrollAction() and
+                SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange) and
+                hasAnyAncestor(isDialog()),
+        ).getBoundsInRoot()
         val fixed = mutableListOf("scrolling area" to scrollingArea)
         val scrolled = mutableListOf<Pair<String, SemanticsNodeInteraction>>()
         for ((name, node) in texts) {

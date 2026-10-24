@@ -52,7 +52,7 @@
     <string name="sign_in_error_wrong_password">Wrong email or password. Check them and try again.</string>
     <string name="sign_in_error_rate_limited">Too many failed attempts. Wait for the countdown before you try again.</string>
     <string name="sign_in_error_unreachable">Can\'t reach the server. Check the URL and your connection.</string>
-    <string name="sign_in_error_certificate_host">The server\'s certificate doesn\'t cover %1$s, so the app sent nothing. Add %1$s to the certificate\'s subjectAltName, as a DNS name or an IP address, and reissue it. Or enter a URL with a host the certificate names.</string>
+    <string name="sign_in_error_certificate_host">The certificate doesn\'t cover %1$s, so nothing was sent. Add %1$s to subjectAltName as a DNS name or IP address and reissue it, or use a host the certificate names.</string>
     <string name="sign_in_error_unexpected_status">The server answered with HTTP %d. Check the URL.</string>
     <string name="sign_in_error_not_tokkl">That URL doesn\'t answer like a Tokkl server. Check it.</string>
     <string name="sign_in_error_no_api_token">The server didn\'t send an API token. Sign in with your API token instead.</string>

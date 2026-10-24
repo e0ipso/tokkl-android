@@ -8,8 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -420,26 +418,27 @@ internal fun TimerTotals(
     TimerTotalsRow(text.today, text.week, totals.todaySeconds, totals.weekSeconds)
 }
 
-/** Wrap whole totals at large text sizes; the summary belongs to the scroll-away header. */
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * Today and this week share one row. Each total wraps inside its half, so a large font does not
+ * stack them and push the view switch off the phone. The summary belongs to the scroll-away header.
+ */
 @Composable
 private fun TimerTotalsRow(today: String, week: String, todaySeconds: Long, weekSeconds: Long) {
-    FlowRow(
+    Row(
         Modifier.fillMaxWidth().padding(top = TokklTheme.spacing.space3),
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space4),
-        verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2),
     ) {
-        TimerTotal(R.string.timer_total_today, today, todaySeconds, "timer_totals_today")
-        TimerTotal(R.string.timer_total_this_week, week, weekSeconds, "timer_totals_week")
+        TimerTotal(R.string.timer_total_today, today, todaySeconds, "timer_totals_today", Modifier.weight(1f))
+        TimerTotal(R.string.timer_total_this_week, week, weekSeconds, "timer_totals_week", Modifier.weight(1f))
     }
 }
 
 /** TalkBack gets the account-period label and the elapsed duration in words. */
 @Composable
-private fun TimerTotal(@StringRes labelId: Int, value: String, seconds: Long, tag: String) {
+private fun TimerTotal(@StringRes labelId: Int, value: String, seconds: Long, tag: String, modifier: Modifier = Modifier) {
     val label = stringResource(labelId)
     val spoken = stringResource(R.string.timer_total_spoken, label, spokenDuration(LocalResources.current, seconds))
-    Column(Modifier.testTag(tag).semantics(mergeDescendants = true) { contentDescription = spoken }) {
+    Column(modifier.testTag(tag).semantics(mergeDescendants = true) { contentDescription = spoken }) {
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.titleMedium)
     }

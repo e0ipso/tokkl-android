@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,6 +43,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
@@ -203,38 +206,45 @@ private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (
                         Text(stringResource(R.string.reports_apply))
                     }
                 }
-                DateRangePicker(
-                    state = state,
-                    title = null,
-                    headline = {
-                        Column(
-                            modifier = Modifier.padding(
-                                start = TokklTheme.spacing.space6,
-                                end = TokklTheme.spacing.space3,
-                                bottom = TokklTheme.spacing.space3,
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
-                        ) {
-                            Text(
-                                text = when {
-                                    start == null -> stringResource(R.string.reports_custom_range_pick_start)
-                                    picked == null -> stringResource(R.string.reports_custom_range_pick_end, words.shortWithYear(start))
-                                    else -> words.range(picked, today)
-                                },
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                            )
-                            if (tooLong) {
-                                Text(
-                                    text = pluralStringResource(R.plurals.reports_custom_range_too_long, MAX_RANGE_DAYS, MAX_RANGE_DAYS),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                )
+                // Seven 48dp day cells are wider than a 320dp window, so the last column
+                // draws past the screen. The picker's own date container is 40dp, which fits.
+                BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                    val day = if (maxWidth < 48.dp * 7) 40.dp else LocalMinimumInteractiveComponentSize.current
+                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides day) {
+                        DateRangePicker(
+                            state = state,
+                            title = null,
+                            headline = {
+                                Column(
+                                    modifier = Modifier.padding(
+                                        start = TokklTheme.spacing.space6,
+                                        end = TokklTheme.spacing.space3,
+                                        bottom = TokklTheme.spacing.space3,
+                                    ),
+                                    verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
+                                ) {
+                                    Text(
+                                        text = when {
+                                            start == null -> stringResource(R.string.reports_custom_range_pick_start)
+                                            picked == null -> stringResource(R.string.reports_custom_range_pick_end, words.shortWithYear(start))
+                                            else -> words.range(picked, today)
+                                        },
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                                    )
+                                    if (tooLong) {
+                                        Text(
+                                            text = pluralStringResource(R.plurals.reports_custom_range_too_long, MAX_RANGE_DAYS, MAX_RANGE_DAYS),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
             }
         }
     }

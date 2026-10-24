@@ -218,10 +218,15 @@ class DetailedReportServerTest {
         for (node in composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true).fetchSemanticsNodes()) {
             val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString() ?: continue
             layout(node)?.let { assertFalse("cut off: $text", it.didOverflowHeight) }
+            // The report tabs scroll sideways once a label no longer fits its share, as on the summary.
+            if (scrollsSideways(node)) continue
             val left = node.positionOnScreen.x
             assertTrue("leaves the screen's width: $text", left >= -1 && left + node.size.width <= width + 1)
         }
     }
+
+    private fun scrollsSideways(node: SemanticsNode): Boolean =
+        generateSequence(node.parent) { it.parent }.any { SemanticsProperties.HorizontalScrollAxisRange in it.config }
 
     private fun layout(node: SemanticsNode): TextLayoutResult? {
         val layouts = mutableListOf<TextLayoutResult>()

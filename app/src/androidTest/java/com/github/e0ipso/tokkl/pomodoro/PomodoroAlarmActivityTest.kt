@@ -5,6 +5,7 @@ import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.content.Intent
 import android.os.Build
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.test.filters.SdkSuppress
@@ -38,6 +39,10 @@ import org.junit.Test
 /** Real notification/Activity/player acceptance source for API 31 and 36; not executed here. */
 @SignedOut
 class PomodoroAlarmActivityTest {
+    private companion object {
+        const val LOCK_PIN = "1111"
+    }
+
     @get:Rule val session = SessionRule()
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
@@ -48,6 +53,7 @@ class PomodoroAlarmActivityTest {
     private var originalFullScreenMode: String? = null
     private var screenWasOn = true
     private var restoreLockscreenDisabled = false
+    private var restorePin = false
 
     @Before fun prepareDisposableSessionAndGrantFullScreenAccess() {
         screenWasOn = device.isScreenOn
@@ -87,6 +93,11 @@ class PomodoroAlarmActivityTest {
         } finally {
             try {
                 originalFullScreenMode?.let(::setFullScreenMode)
+                if (restorePin) {
+                    if (!device.isScreenOn) device.wakeUp()
+                    DeviceShell.run("locksettings clear --old $LOCK_PIN")
+                    restorePin = false
+                }
                 if (restoreLockscreenDisabled) {
                     DeviceShell.run("locksettings set-disabled true")
                     restoreLockscreenDisabled = false
@@ -99,15 +110,27 @@ class PomodoroAlarmActivityTest {
     }
 
     @Test fun lockedScreenPhaseEndLaunchesAlarmTurnsScreenOnAndKeepsItAwake() {
-        // The API 31 emulator boots with the lock screen disabled, so sleep never locks it.
+        // The API 31 emulator boots with the lock screen disabled and no credential, so sleep
+        // never locks it. A pin makes the lock screen secure, which sleep then locks.
         if (DeviceShell.run("settings get secure lockscreen.disabled").trim() == "1") {
             restoreLockscreenDisabled = true
             DeviceShell.run("locksettings set-disabled false")
         }
+        DeviceShell.run("locksettings set-pin $LOCK_PIN")
+        restorePin = true
         device.pressHome()
         device.sleep()
+        device.wakeUp()
+        device.sleep()
         assertFalse(device.isScreenOn)
-        assertTrue(context.getSystemService(KeyguardManager::class.java).isKeyguardLocked)
+        val deadline = SystemClock.elapsedRealtime() + 5_000
+        var locked = false
+        while (SystemClock.elapsedRealtime() < deadline) {
+            locked = context.getSystemService(KeyguardManager::class.java).isKeyguardLocked
+            if (locked) break
+            SystemClock.sleep(200)
+        }
+        assertTrue(locked)
         val due = seedDuePhase()
         deliverAlarm()
         assertTrue(device.wait(Until.hasObject(By.text("Work done: start short rest")), 10_000))

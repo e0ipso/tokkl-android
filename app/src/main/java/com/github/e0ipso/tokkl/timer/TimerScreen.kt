@@ -101,11 +101,12 @@ fun TimerScreen(
             top = {
                 if (scrollAway) TokklTopBar(title, windowInsets = WindowInsets(0))
                 Column(Modifier.screenContent(columnWidth)) {
-                    Spacer(Modifier.height(TokklTheme.spacing.underTopBar))
+                    val gap = if (compactHeightWindow()) TokklTheme.spacing.inGroup else TokklTheme.spacing.betweenGroups
+                    Spacer(Modifier.height(if (compactHeightWindow()) gap else TokklTheme.spacing.underTopBar))
                     timer()
-                    Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+                    Spacer(Modifier.height(gap))
                     ViewSwitch(view, onViewChange)
-                    Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+                    Spacer(Modifier.height(gap))
                 }
             },
         ) {

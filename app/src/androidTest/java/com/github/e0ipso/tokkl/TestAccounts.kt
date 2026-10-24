@@ -15,14 +15,17 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
 /**
  * Extra accounts on the Tokkl test server, for a test that fills an account with data. The
  * account scripts/instrumented-tests.sh creates stays empty for the other tests. Its admin invites
- * each account, and the invite is accepted as the web app does. Needs the stored server to be the
- * test server, as [SessionRule] leaves it, because the app's client sends nowhere else.
+ * each account, and the invite is accepted as the web app does. Admin calls use a harness client,
+ * so creating and deleting an account still reach the test server after a test signs out. Entry
+ * calls use the app's client and need the stored server to be the test server, as [SessionRule]
+ * leaves it, because that client sends nowhere else.
  */
 object TestAccounts {
 
@@ -65,7 +68,9 @@ object TestAccounts {
         override fun toString(): String = "Account($id)"
     }
 
-    private val admin get() = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+    private val admin by lazy {
+        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+    }
 
     fun create(timezone: String): Account {
         val invite = admin
