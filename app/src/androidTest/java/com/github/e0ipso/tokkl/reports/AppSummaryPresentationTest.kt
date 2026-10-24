@@ -42,7 +42,7 @@ class AppSummaryPresentationTest {
     @Test
     fun unknownScalarListObjectAndRateDataShowUnderTheirOwnersWithoutInventedUnits() {
         val report = decode(BODY
-            .replace("\"seconds\":777", "\"futureRate\":[{\"unit\":\"tokens\",\"value\":12.5}],\"seconds\":777")
+            .replace("\"totals\":{\"seconds\":777", "\"totals\":{\"futureRate\":[{\"unit\":\"tokens\",\"value\":12.5}],\"seconds\":777")
             .replace("\"title\":\"Zero first\"", "\"title\":\"Zero first\",\"new_flag\":false")
             .replace("\"start\":\"2026-10-21\"", "\"start\":\"2026-10-21\",\"new_label\":\"<b>literal</b>\"")
             .replace("\"resolution\":\"day\"", "\"resolution\":\"day\",\"newScalar\":0"))

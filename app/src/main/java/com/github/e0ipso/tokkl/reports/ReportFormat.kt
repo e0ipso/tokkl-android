@@ -27,11 +27,15 @@ internal fun sharePercent(part: Long, whole: Long): String {
 /**
  * [cents] of [currency] in [locale]'s currency format with the currency's own decimals, as
  * formatMoney does with Intl.NumberFormat. A code the phone does not know gives `12.50 XYZ`.
+ *
+ * Desktop Java and current Android reject a code that is not ISO 4217. Android 12's ICU
+ * accepts every three-letter code and returns numeric code 0 when the code is absent from
+ * the ISO table. Both mean the code is unknown.
  */
 internal fun formatMoney(cents: Long, currency: String, locale: Locale): String {
     val amount = BigDecimal.valueOf(cents, 2)
     val known = try {
-        Currency.getInstance(currency)
+        Currency.getInstance(currency).takeIf { it.numericCode > 0 }
     } catch (e: IllegalArgumentException) {
         null
     }

@@ -42,6 +42,7 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
@@ -131,8 +132,9 @@ class SettingsScreenTest {
             ).joinToString(" ")
         }
         assertTrue("a control without a label among $labels", labels.none { it.isBlank() })
-        // Theme modes, wallpaper and reminder switches, reminder hours, Sign out, Licences and the bar.
-        assertEquals(labels.toString(), 3 + 2 + 1 + 1 + 1 + 5, controls.size)
+        // Theme modes, wallpaper and reminder switches, reminder hours, four Pomodoro
+        // defaults, Sign out, Licences and the bar.
+        assertEquals(labels.toString(), 3 + 2 + 1 + 4 + 1 + 1 + 5, controls.size)
         assertEquals(3, composeRule.onAllNodes(hasRole(Role.RadioButton)).fetchSemanticsNodes().size)
         assertEquals(2, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
         val signOut = signOutRow().fetchSemanticsNode().config
@@ -191,7 +193,7 @@ class SettingsScreenTest {
         }
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         settingsHeading().assertIsDisplayed()
-        licencesRow().assertIsDisplayed()
+        licencesRow().performScrollTo().assertIsDisplayed()
     }
 
     /** All the text on the screen, read or shown, is one of the app's English string resources. */
@@ -200,7 +202,8 @@ class SettingsScreenTest {
         composeRule.openSettings()
 
         val resources = R.string::class.java.fields.map { string(it.getInt(null)) }.toSet() +
-            composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)
+            composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8) +
+            pomodoroDefaultLabels()
         val shown = composeRule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true)
             .fetchSemanticsNodes()
             .flatMap { node ->
@@ -261,6 +264,18 @@ class SettingsScreenTest {
 
     private fun signOutRow(): SemanticsNodeInteraction =
         composeRule.onNode(hasText(string(R.string.settings_sign_out)) and hasClickAction())
+
+    /** The four default rows format plurals, which are not fields of [R.string]. */
+    private fun pomodoroDefaultLabels(): Set<String> {
+        val defaults = PomodoroDefaults.DEFAULT
+        val resources = composeRule.activity.resources
+        return setOf(
+            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.workMinutes, defaults.workMinutes),
+            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.shortRestMinutes, defaults.shortRestMinutes),
+            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.longRestMinutes, defaults.longRestMinutes),
+            resources.getQuantityString(R.plurals.settings_pomodoro_phases, defaults.longRestEvery, defaults.longRestEvery),
+        )
+    }
 
     private fun hasRole(role: Role) = SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
 
