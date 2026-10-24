@@ -316,7 +316,11 @@ private fun Body(state: ReportsState, settings: AccountSettings?, filtered: Bool
         is ReportsState.Loaded -> when (val report = state.report) {
             is SummaryReport -> when {
                 settings == null -> Loading()
-                report.totals.entryCount == 0 -> Empty(filtered)
+                report.totals.entryCount == 0 && report.totals.seconds == 0L &&
+                    report.totals.amounts.isEmpty() && report.projects.isEmpty() -> Column {
+                    Empty(filtered)
+                    AdditionalReportData(report)
+                }
                 else -> SummaryContent(report, settings)
             }
             // A detailed report with entries shows as a list, once the settings and the zone are known.

@@ -228,4 +228,11 @@
     <string name="reports_export_preparing">Preparing CSV…</string>
     <string name="reports_export_no_targets">No app can receive a CSV file. Install a compatible app and try again.</string>
     <string name="reports_export_failed">The CSV could not be prepared or shared. Try again.</string>
+    <string name="reports_additional_data">Additional report data</string>
+    <string name="reports_extra_report">Report</string>
+    <string name="reports_extra_totals">Totals</string>
+    <string name="reports_extra_currency">Currency: %1$s</string>
+    <string name="reports_extra_project">Project: %1$s</string>
+    <string name="reports_extra_bucket">Bucket starting %1$s</string>
+    <string name="reports_extra_truncated">Some additional data was shortened for display.</string>
 </resources>

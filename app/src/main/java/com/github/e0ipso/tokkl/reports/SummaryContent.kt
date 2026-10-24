@@ -52,6 +52,7 @@ internal fun SummaryContent(report: SummaryReport, settings: AccountSettings) {
         Totals(report.totals, settings)
         SeriesChart(report, settings)
         ProjectBreakdown(report, settings)
+        AdditionalReportData(report)
     }
 }
 
@@ -249,7 +250,7 @@ private fun DrawScope.stripes(line: Color, wash: Color) {
 }
 
 /**
- * The time per project, most first: the project, its time, its share of the total and, when
+ * The time per project, in the returned order: the project, its time, its share of the total and, when
  * the report has one currency, its amount. Each row is one TalkBack item.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -293,7 +294,7 @@ private fun ProjectBreakdown(report: SummaryReport, settings: AccountSettings) {
                         style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
                         color = muted,
                     )
-                    if (currency != null && project.amountCents != 0L) {
+                    if (currency != null && project.amountCents != null) {
                         Text(
                             text = formatMoney(project.amountCents, currency, locale),
                             style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),

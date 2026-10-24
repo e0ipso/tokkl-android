@@ -149,6 +149,50 @@ class ReportsScreenTest {
     }
 
     @Test
+    fun summaryUsesCurrentServerRoundingEvenWithAnAlreadyReadWorkspace() {
+        val server = ReportsServer(account.client)
+        val old = server.workspace().orFail("read workspace before changing rounding")
+        assertTrue(old.appSummaryCandidate)
+        assertEquals(15, old.roundingMinutes)
+        seed.setRoundingMinutes(60)
+        val range = ReportRange(seed.weekStart, seed.weekStart.plusDays(6))
+        val filters = ReportFilters(projects = listOf(seed.website), billable = BillableFilter.BILLABLE)
+        val report = server.summary(old, range, seed.zone, DayOfWeek.WEDNESDAY, filters).orFail("app summary with current rounding")
+        // One 20-minute Website entry this week, rounded up to an hour at EUR 40/hour.
+        // The other Website entry lies before the range and must not count.
+        assertEquals(ReportTotals(3600, 3600, 1, listOf(Amount("EUR", 4000))), report.totals)
+        assertEquals(listOf(seed.website), report.projects.map { it.id })
+        assertEquals(4000L, report.projects.single().amountCents)
+        val current = server.workspace().orFail("read updated workspace")
+        val fallback = server.summary(current.copy(appSummaryCandidate = false), range, seed.zone, DayOfWeek.WEDNESDAY, filters)
+            .orFail("compatibility summary with current rounding")
+        assertEquals(3600L, fallback.totals.seconds)
+        assertEquals(listOf(Amount("EUR", 4000)), fallback.totals.amounts)
+        assertEquals(report.totals, fallback.totals)
+    }
+
+    @Test
+    fun seededPerEntryCentsAndAnAdditionalCurrencyReachTheUi() {
+        val project = seed.addFractionalRateEntries()
+        val report = openReports()
+        // Two 15-minute entries at GBP 1.01/hour each round to 25 cents, total 50,
+        // whereas multiplying the combined half hour by the rate would round to 51.
+        assertEquals(6, report.totals.entryCount)
+        assertEquals(10800L, report.totals.seconds)
+        assertEquals(8100L, report.totals.billableSeconds)
+        assertEquals(50L, report.totals.amounts.single { it.currency == "GBP" }.cents)
+        assertEquals(setOf("EUR", "USD", "GBP"), report.totals.amounts.map { it.currency }.toSet())
+        assertEquals(50L, report.projects.single { it.id == project }.amountCents)
+        val money = formatMoney(50, "GBP", context.resources.configuration.locales[0])
+        compose.onNode(hasText(money)).performScrollTo().assertExists()
+        val server = ReportsServer(account.client)
+        val workspace = server.workspace().orFail("read workspace")
+        val filtered = server.summary(workspace, report.range, seed.zone, DayOfWeek.WEDNESDAY,
+            ReportFilters(projects = listOf(project))).orFail("filtered fractional-rate summary")
+        assertEquals(ReportTotals(1800, 1800, 2, listOf(Amount("GBP", 50))), filtered.totals)
+    }
+
+    @Test
     fun theChartTellsTalkBackEveryDaysTime() {
         val report = openReports()
 
@@ -356,6 +400,7 @@ class ReportsScreenTest {
         val zone: ZoneId = ZoneId.of(ZONE)
         val today: LocalDate = LocalDate.now(zone)
         val weekStart: LocalDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.WEDNESDAY))
+        val website: Long
         private val workspace = api.get(api.server.api("me"), MeIds.serializer()).orFail("GET /api/v9/me").defaultWorkspaceId
 
         init {
@@ -369,7 +414,7 @@ class ReportsScreenTest {
             api.send("PUT", api.server.api("workspaces", workspace.toString()), rounding, JsonObject.serializer()).orFail("PUT the workspace")
             api.send("POST", api.server.api("me", "preferences"), buildJsonObject { put("duration_format", "classic") }, JsonObject.serializer())
                 .orFail("POST /me/preferences")
-            val website = project(buildJsonObject { put("name", "Website"); put("color", "#06aaf5"); put("billable", true) })
+            website = project(buildJsonObject { put("name", "Website"); put("color", "#06aaf5"); put("billable", true) })
             val consulting = project(
                 buildJsonObject { put("name", "Consulting"); put("color", "#c7af14"); put("billable", true); put("rate", 100); put("currency", "USD") },
             )
@@ -381,6 +426,22 @@ class ReportsScreenTest {
             entry(today.atTime(0, 10), 600, null, billable = false)
             entry(if (day(2) == today) today.atTime(0, 30) else day(2).atTime(23, 50), 1200, internal, billable = false)
             entry(weekStart.minusDays(1).atTime(12, 0), 3600, website, billable = true)
+        }
+
+        fun setRoundingMinutes(minutes: Int) {
+            api.send("PUT", api.server.api("workspaces", workspace.toString()),
+                buildJsonObject { put("rounding", 1); put("rounding_minutes", minutes) }, JsonObject.serializer())
+                .orFail("set report rounding")
+        }
+
+        fun addFractionalRateEntries(): Long {
+            val id = project(buildJsonObject {
+                put("name", "Fractional cents"); put("color", "#123456"); put("billable", true)
+                put("rate", 1.01); put("currency", "GBP")
+            })
+            entry(weekStart.atTime(1, 0), 900, id, billable = true)
+            entry(weekStart.atTime(2, 0), 900, id, billable = true)
+            return id
         }
 
         /** The week's [index]th day, or today when that day is still to come. */

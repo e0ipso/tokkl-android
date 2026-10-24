@@ -3,11 +3,9 @@ package com.github.e0ipso.tokkl.reports
 import java.time.DayOfWeek
 import java.time.LocalDate
 
-// The summary the web app shows, built from the entries of a Reports API v3 detailed search. The
-// sums port totalsOf, timeSeries and groupEntries in ../tokkl/packages/api/src/services/reports.ts,
-// which build the web app's POST /api/app/report answer from the same entries. Tokkl's v3 totals
-// and summary answers carry no billable time per group, no amounts per currency and no amounts
-// per group, so only the entries give every number the web app shows.
+// App Summary values are mapped directly by AppSummaryResponse. The compatibility path below
+// ports totalsOf, timeSeries and groupEntries from Tokkl's services/reports.ts for servers that
+// do not offer the app report. It uses rounded detailed entries, never aggregate hourly rates.
 
 /**
  * One time entry of a report, after the server rounded it. [date] is the day it starts on in the
@@ -25,13 +23,24 @@ data class ReportEntry(
 )
 
 /** The money billed in one [currency], in cents. */
-data class Amount(val currency: String, val cents: Long)
+data class Amount(val currency: String, val cents: Long, val additionalData: List<ReportExtraField> = emptyList())
 
 /** [amounts] has one row per currency, in the order the entries first use them. */
-data class ReportTotals(val seconds: Long, val billableSeconds: Long, val entryCount: Int, val amounts: List<Amount>)
+data class ReportTotals(
+    val seconds: Long,
+    val billableSeconds: Long,
+    val entryCount: Int,
+    val amounts: List<Amount>,
+    val additionalData: List<ReportExtraField> = emptyList(),
+)
 
 /** One bar of the chart: the bucket that starts on [start]. */
-data class SeriesPoint(val start: LocalDate, val seconds: Long, val billableSeconds: Long)
+data class SeriesPoint(
+    val start: LocalDate,
+    val seconds: Long,
+    val billableSeconds: Long,
+    val additionalData: List<ReportExtraField> = emptyList(),
+)
 
 /**
  * One project's share of the range. [id] is null for the entries without a project, and
@@ -44,16 +53,19 @@ data class ProjectShare(
     val color: String?,
     val seconds: Long,
     val billableSeconds: Long,
-    val amountCents: Long,
+    val amountCents: Long?,
+    val additionalData: List<ReportExtraField> = emptyList(),
 )
 
-/** What the summary tab shows for [range]. [projects] has the most time first. */
+/** What the summary tab shows for [range]. Server group, currency and bucket order is preserved. */
 data class SummaryReport(
     val range: ReportRange,
     val resolution: Resolution,
     val totals: ReportTotals,
     val series: List<SeriesPoint>,
     val projects: List<ProjectShare>,
+    val additionalData: List<ReportExtraField> = emptyList(),
+    val additionalDataTruncated: Boolean = false,
 ) : Report {
 
     /** The one currency of the amounts, or null with none or several. Port of reportCurrency. */
@@ -121,7 +133,7 @@ data class SummaryReport(
                         color = first.projectColor,
                         seconds = totals.seconds,
                         billableSeconds = totals.billableSeconds,
-                        amountCents = totals.amounts.sumOf { it.cents },
+                        amountCents = totals.amounts.takeIf { it.isNotEmpty() }?.sumOf { it.cents },
                     )
                 }
                 .sortedByDescending { it.seconds }

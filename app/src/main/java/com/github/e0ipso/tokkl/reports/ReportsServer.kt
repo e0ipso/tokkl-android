@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.WithHeaders
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -19,7 +20,13 @@ import kotlinx.serialization.json.put
  * rounding setting. [rounding] is -1 down, 0 to the nearest and 1 up, each entry to
  * [roundingMinutes], with 0 minutes for no rounding.
  */
-data class ReportWorkspace(val id: Long, val rounding: Int, val roundingMinutes: Int)
+data class ReportWorkspace(
+    val id: Long,
+    val rounding: Int,
+    val roundingMinutes: Int,
+    /** A Tokkl role makes the app report worth trying; only its POST establishes support. */
+    val appSummaryCandidate: Boolean = false,
+)
 
 /**
  * The Reports API v3 calls behind the reports, on the configured server. Every call blocks, so
@@ -35,7 +42,42 @@ class ReportsServer(private val api: TogglApiClient) {
         }
         val id = user.defaultWorkspaceId
         return when (val answer = api.get(api.server.api("workspaces", id.toString()), WorkspaceRounding.serializer())) {
-            is ApiResult.Success -> ApiResult.Success(ReportWorkspace(id, answer.value.rounding, answer.value.roundingMinutes))
+            is ApiResult.Success -> ApiResult.Success(ReportWorkspace(id, answer.value.rounding, answer.value.roundingMinutes, user.role != null))
+            is ApiResult.Failure -> answer
+        }
+    }
+
+    /**
+     * Prefer the configured server's app Summary. Only a definitive endpoint absence permits
+     * compatibility aggregation. Do not mask auth, quota, transport or malformed-success errors.
+     * The app endpoint selects the current default workspace, timezone and rounding itself;
+     * sending cached rounding here would override a newer setting on the server.
+     */
+    fun summary(
+        workspace: ReportWorkspace,
+        range: ReportRange,
+        zone: ZoneId,
+        firstDayOfWeek: DayOfWeek,
+        filters: ReportFilters = ReportFilters(),
+    ): ApiResult<SummaryReport> {
+        if (workspace.appSummaryCandidate) {
+            val body = buildJsonObject {
+                put("start_date", range.from.toString())
+                put("end_date", range.to.toString())
+                put("grouping", "projects")
+                put("sub_grouping", "projects")
+                filters.writeTo(this)
+            }
+            when (val answer = api.send("POST", api.server.app("report"), body, kotlinx.serialization.json.JsonObject.serializer())) {
+                is ApiResult.Success -> return decodeAppSummary(answer.value)
+                is ApiResult.Failure -> {
+                    val error = answer.error
+                    if (error !is ApiError.UnexpectedStatus || error.status !in setOf(404, 410)) return answer
+                }
+            }
+        }
+        return when (val answer = entries(workspace, range, zone, filters)) {
+            is ApiResult.Success -> ApiResult.Success(SummaryReport.of(answer.value, range, firstDayOfWeek))
             is ApiResult.Failure -> answer
         }
     }
@@ -183,7 +225,7 @@ class ReportsServer(private val api: TogglApiClient) {
 }
 
 @Serializable
-private class ReportUser(@SerialName("default_workspace_id") val defaultWorkspaceId: Long)
+private class ReportUser(@SerialName("default_workspace_id") val defaultWorkspaceId: Long, val role: String? = null)
 
 /** Toggl and Tokkl send a workspace's rounding as whole numbers. */
 @Serializable

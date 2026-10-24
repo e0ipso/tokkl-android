@@ -152,7 +152,7 @@ The first release is feature complete: it ships every requirement below, so they
 
 | ID | Requirement |
 |---|---|
-| R1 | Summary report: totals, billable share, amounts, a daily chart and a project breakdown, for any date range. |
+| R1 | Summary mirrors the configured server's `POST /api/app/report`: totals, billable share, per-currency cents, chart resolution/dates and project labels/colours/order. Tokkl's role makes it a candidate; a successful POST establishes support. Only a POST 404/410, or a non-Tokkl account, uses detailed-search aggregation. Other failures stay visible. The app endpoint uses the current default workspace, account timezone and server rounding. Missing money stays absent and explicit zero stays zero. Additive fields appear as bounded label/value/list data associated with the report, totals, currency, group or bucket, without inferred units or rate calculations. Incompatible changes to recognized fields remain errors; this is not universal schema compatibility. |
 | R2 | Detailed report: every matching entry, paged by the server. |
 | R3 | Weekly report: the project-by-week grid. |
 | R4 | Filters by project, client, tag and billable, as in the web app. |

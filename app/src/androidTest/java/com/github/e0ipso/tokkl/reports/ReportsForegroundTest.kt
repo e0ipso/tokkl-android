@@ -246,7 +246,7 @@ class ReportsForegroundTest {
         const val SETTLE_MS = 2_000L
 
 
-        /** The request line of a report search, `POST .../search/time_entries`. No other request holds it. */
-        const val SEARCH = "/search/time_entries HTTP/1.1"
+        /** Summary now reads the app report. Keep the once-per-foreground assertion on that request. */
+        const val SEARCH = "/api/app/report HTTP/1.1"
     }
 }

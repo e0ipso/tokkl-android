@@ -296,8 +296,8 @@ class ReportsModel(
             is ApiResult.Failure -> return ReportsState.Failed(selection, failureOf(answer.error)) to null
         }
         val shown = when (tab) {
-            ReportTab.SUMMARY -> when (val answer = server.entries(workspace, selection.range, time.zone, filters)) {
-                is ApiResult.Success -> ReportsState.Loaded(selection, SummaryReport.of(answer.value, selection.range, time.firstDayOfWeek))
+            ReportTab.SUMMARY -> when (val answer = server.summary(workspace, selection.range, time.zone, time.firstDayOfWeek, filters)) {
+                is ApiResult.Success -> ReportsState.Loaded(selection, answer.value)
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
             ReportTab.DETAILED -> when (val answer = server.detailedPage(workspace, selection.range, time.zone, firstRow = 1, filters)) {

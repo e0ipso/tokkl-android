@@ -32,7 +32,7 @@ class SummaryReportTest {
             listOf(
                 ProjectShare(1, "Web", COLOUR, 7200, 7200, 5000),
                 ProjectShare(2, "Consult", COLOUR, 3600, 900, 2500),
-                ProjectShare(null, "", null, 1800, 0, 0),
+                ProjectShare(null, "", null, 1800, 0, null),
             ),
             report.projects,
         )
@@ -48,6 +48,17 @@ class SummaryReportTest {
 
         assertEquals(listOf(5L, 4L), report.projects.map { it.id })
         assertEquals(emptyList<Amount>(), report.totals.amounts)
+        assertEquals(listOf(null, null), report.projects.map { it.amountCents })
+    }
+
+    @Test
+    fun fallbackDistinguishesAMissingGroupAmountFromAnExplicitZero() {
+        val report = SummaryReport.of(listOf(
+            entry(60, billable = false, cents = null, currency = "EUR", project = 1, name = "Missing", date = "2026-10-12"),
+            entry(60, billable = true, cents = 0, currency = "EUR", project = 2, name = "Zero", date = "2026-10-12"),
+        ), ReportRange(date("2026-10-12"), date("2026-10-12")), DayOfWeek.MONDAY)
+        assertEquals(listOf(Amount("EUR", 0)), report.totals.amounts)
+        assertEquals(listOf(null, 0L), report.projects.map { it.amountCents })
     }
 
     @Test
