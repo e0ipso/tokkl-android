@@ -20,8 +20,12 @@ import com.github.e0ipso.tokkl.notification.RunningNotificationStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.notification.runningNotificationContent
+import com.github.e0ipso.tokkl.pomodoro.AlarmClockPomodoroScheduler
+import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
+import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseEndStore
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
 import com.github.e0ipso.tokkl.reminder.ReminderInput
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
@@ -173,6 +177,32 @@ class TokklApplication : Application() {
             keepsPreferences = { capabilities.state.value.favorites },
             scope = MainScope(),
             io = Dispatchers.IO,
+        )
+    }
+
+    /**
+     * The exact alarm at a running Pomodoro phase's planned end.
+     * [PomodoroAlarmScheduler.permissionDenied] is what the Pomodoro page reads when that alarm
+     * cannot be set. Loaded on first use, which reads the permission from the platform.
+     */
+    val pomodoroAlarms: PomodoroAlarmScheduler by lazy { AlarmClockPomodoroScheduler(this) }
+
+    /**
+     * The running Pomodoro. Loaded on first use, from the phase alarm or from the page. A queued
+     * pomodoro asks for the same send as any other create.
+     */
+    val pomodoroSessions: PomodoroSessionStore by lazy {
+        PomodoroSessionStore.open(
+            database = cacheDatabase,
+            queue = changes,
+            io = Dispatchers.IO,
+            accountTime = { accountSettings.state.value?.time() },
+            onQueued = {
+                BackgroundSend.schedule(this)
+                sender.send()
+            },
+            alarms = pomodoroAlarms,
+            phaseEnds = PomodoroPhaseEndStore(this),
         )
     }
 

@@ -13,7 +13,9 @@
         WorkManager's manifest adds these two, and the background send (O4) needs both:
         WAKE_LOCK keeps the phone awake while the worker sends the queue, and
         RECEIVE_BOOT_COMPLETED lets WorkManager schedule the waiting send again after a
-        reboot, so queued changes still go out. Declared here only to say why they stay.
+        reboot, so queued changes still go out. The same boot broadcast arms a running
+        Pomodoro phase's exact alarm again (docs/PRD.md W7). Declared here only to say
+        why they stay.
     -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -32,6 +34,20 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Android 16 Live Updates (N2). This permission needs no runtime request. -->
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <!--
+        A Pomodoro phase end is a user-facing alarm (docs/PRD.md W7), set with
+        AlarmManager.setAlarmClock. API 31 and 32 grant SCHEDULE_EXACT_ALARM at install and the
+        user can revoke it. API 33 and later grant USE_EXACT_ALARM at install, and the user
+        cannot revoke it. Play's limit on that permission does not apply to an app shipped on
+        F-Droid. SCHEDULE_EXACT_ALARM stops at API 32 so a later device is not asked for the
+        revocable permission as well.
+    -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.USE_EXACT_ALARM"
+        android:minSdkVersion="33" />
 
     <!-- Inspect only CSV receivers, to report when no app can handle explicit sharing. -->
     <queries>
@@ -94,6 +110,31 @@
         <receiver
             android:name=".notification.StopTimerReceiver"
             android:exported="false" />
+        <!--
+            The Pomodoro phase's exact alarm. Not exported: only its own PendingIntent reaches it.
+            It records that the phase reached its planned end and does not start the next phase.
+        -->
+        <receiver
+            android:name=".pomodoro.PomodoroPhaseAlarmReceiver"
+            android:exported="false" />
+        <!--
+            Arms that alarm again from the stored session after boot, an update, or a clock or
+            timezone change, and when the exact-alarm permission is granted. Disabled until a
+            session is running, so a reboot with no session does not start the app. The system
+            sends these protected broadcasts, so the receiver is exported.
+        -->
+        <receiver
+            android:name=".pomodoro.PomodoroAlarmRearmReceiver"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
         <!--
             The Quick Settings tile (docs/PRD.md N4). Only the system, which holds
             BIND_QUICK_SETTINGS_TILE, can bind it. No ACTIVE_TILE meta-data: the system binds it
