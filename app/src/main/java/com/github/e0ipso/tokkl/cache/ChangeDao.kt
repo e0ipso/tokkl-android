@@ -81,6 +81,10 @@ abstract class ChangeDao {
     @Query("SELECT EXISTS(SELECT 1 FROM entry_ids WHERE serverId = :serverId)")
     abstract fun isMapped(serverId: Long): Boolean
 
+    /** A running create whose server answer may still be in flight or have been lost. */
+    @Query("SELECT * FROM pending_changes WHERE kind = 'CREATE' AND stop IS NULL AND maybeSent")
+    abstract fun possiblySentStarts(): List<PendingChange>
+
     /** Returns how many changes it marked: none when the change has left the queue. */
     @Query("UPDATE pending_changes SET maybeSent = :maybeSent WHERE sequence = :sequence")
     abstract fun setMaybeSent(sequence: Long, maybeSent: Boolean): Int

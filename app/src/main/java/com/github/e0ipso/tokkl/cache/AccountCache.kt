@@ -1,12 +1,18 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
+import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
+import com.github.e0ipso.tokkl.pomodoro.PomodoroStep
 import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.session.MePreferences
 import java.time.Clock
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.runBlocking
 
 /**
  * What the app last loaded from the server, readable offline (docs/PRD.md O2): projects, clients,
@@ -16,7 +22,11 @@ import kotlinx.coroutines.flow.Flow
  * The account settings are not cached here. AccountSettingsSource keeps them and stays their one
  * source of truth.
  */
-class AccountCache(private val database: CacheDatabase, private val clock: Clock = Clock.systemUTC()) {
+class AccountCache(
+    private val database: CacheDatabase,
+    private val clock: Clock = Clock.systemUTC(),
+    private val pomodoro: () -> PomodoroSessionStore? = { null },
+) {
 
     private val dao = database.cache()
 
@@ -57,14 +67,18 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
             null
         }
         val snapshot = readServerSnapshot(api, me, preferences, clock, favorites = capabilities.favorites)
-        try {
-            database.runInTransaction {
+        val sessions = pomodoro()
+        val handoff = try {
+            database.runInTransaction<PomodoroStep> {
                 dao.refresh { current, pending -> current.refreshedWith(snapshot, pending) }
                 if (snapshot.timeEntries != null) changes.reconcilePauseChain(mark)
+                endForForeignTimer(sessions, snapshot.timeEntries.orEmpty())
             }
         } catch (e: SQLiteException) {
-            // Keeps the cache until the next refresh.
+            // Keeps both the cache and session until the next refresh.
+            return
         }
+        finishHandoff(sessions, handoff)
     }
 
     /**
@@ -94,8 +108,9 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
      */
     fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?) {
         val changes = database.changes()
-        try {
-            database.runInTransaction {
+        val sessions = pomodoro()
+        val handoff = try {
+            database.runInTransaction<PomodoroStep> {
                 val writes = runningCheckWrites(
                     before = before.running,
                     now = changes.runningEntries(),
@@ -106,10 +121,36 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
                 writes.delete.forEach(changes::deleteEntry)
                 writes.upsert?.let(changes::upsertEntry)
                 changes.reconcilePauseChain(before.chain)
+                endForForeignTimer(sessions, listOfNotNull(writes.upsert))
             }
         } catch (e: SQLiteException) {
-            // Keeps the cache until the next check.
+            // Keeps both the cache and session until the next check.
+            return
         }
+        finishHandoff(sessions, handoff)
+    }
+
+    /** All identity checks and the partial save use the refresh's existing transaction. */
+    private fun endForForeignTimer(sessions: PomodoroSessionStore?, entries: List<CachedTimeEntry>): PomodoroStep {
+        if (sessions == null) return PomodoroStep.Idle
+        val session = database.pomodoroSessions().current() ?: return PomodoroStep.Idle
+        val changes = database.changes()
+        val uncertainStarts = changes.possiblySentStarts()
+        val foreign = foreignPomodoroStart(
+            session.pomodoroStartedAt,
+            entries,
+            cached = changes::entry,
+            locallyStarted = { entry ->
+                changes.isMapped(entry.id) || changes.countFor(entry.id) > 0 ||
+                    uncertainStarts.any { it.mayBeLocalRunning(entry) }
+            },
+        ) ?: return PomodoroStep.Idle
+        return sessions.endForTimerInTransaction(foreign.start)
+    }
+
+    /** This public cache API already blocks on IO. Never block while holding Room's transaction. */
+    private fun finishHandoff(sessions: PomodoroSessionStore?, step: PomodoroStep) {
+        if (step != PomodoroStep.Idle) runBlocking { sessions?.timerHandoffCommitted(step) }
     }
 
     /**
@@ -126,3 +167,31 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
 
 /** What a running entry check read before its request: the [running] entries and the [chain]. */
 class RunningCheckStart(val running: List<CachedTimeEntry>, val chain: ChainMark?)
+
+/** Keep stale, locally overlaid, phone-created and already observed starts out of the handoff. */
+internal fun foreignPomodoroStart(
+    pomodoroStartedAt: Instant,
+    refreshed: List<CachedTimeEntry>,
+    cached: (Long) -> CachedTimeEntry?,
+    locallyStarted: (CachedTimeEntry) -> Boolean,
+): CachedTimeEntry? = refreshed.asSequence().filter { row ->
+    row.id > 0 && row.stop == null && row.start.isAfter(pomodoroStartedAt) &&
+        cached(row.id)?.let { it.stop == null && it.start == row.start } == true && !locallyStarted(row)
+}.minByOrNull { it.start }
+
+/** Unanswered running POSTs keep their start, with only server timestamp precision removed. */
+internal fun PendingChange.mayBeLocalRunning(entry: CachedTimeEntry): Boolean =
+    entry.id !in existingIds && couldHaveMade(
+        ServerTimeEntry(
+            id = entry.id,
+            workspaceId = entry.workspaceId,
+            projectId = entry.projectId,
+            taskId = entry.taskId,
+            description = entry.description,
+            start = entry.start.toString(),
+            stop = null,
+            billable = entry.billable,
+            tags = entry.tags,
+        ),
+        setOf(start, start.truncatedTo(ChronoUnit.SECONDS)),
+    )

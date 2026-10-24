@@ -246,7 +246,7 @@ class TokklApplication : Application() {
     private val cacheDatabase: CacheDatabase by lazy { CacheDatabase.open(this) }
 
     /** The offline cache. */
-    val cache: AccountCache by lazy { AccountCache(cacheDatabase) }
+    val cache: AccountCache by lazy { AccountCache(cacheDatabase, pomodoro = { pomodoroSessions }) }
 
     /**
      * Start, stop, create, edit and delete entries on the phone. The [sender] sends each change at
@@ -265,6 +265,7 @@ class TokklApplication : Application() {
             stopSpan = { start, at, oneStep ->
                 accountSettings.state.value?.time()?.snapStop(start, at, oneStep) ?: SnappedSpan(start, maxOf(at, start))
             },
+            pomodoro = { pomodoroSessions },
             capturedStopSpan = { start, at ->
                 val time = accountSettings.state.value?.time()
                 if (time == null) SnappedSpan(start, maxOf(at, start)) else time.snapCapturedStop(start, at)

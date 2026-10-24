@@ -98,15 +98,18 @@ class PomodoroSessionStore internal constructor(
         val phase = startSession(at)
         plannedEnd(phase, lengths)
         val session = phase.stored(workspaceId, lengths, fields.distinctTags(), pomodoroStartedAt = phase.startedAt)
-        return locked {
-            val saved = database.transaction {
+        val (saved, stoppedTimers) = locked {
+            val result = database.transaction {
                 if (database.current() != null) throw IllegalStateException("A pomodoro session is already running.")
+                val stopped = database.stopTimers(session.phaseStartedAt)
                 database.save(session)
-                session
+                session to stopped
             }
-            follow(saved)
-            saved
+            follow(database.current())
+            result
         }
+        if (stoppedTimers) onQueued()
+        return saved
     }
 
     /**
@@ -120,13 +123,9 @@ class PomodoroSessionStore internal constructor(
         val at = Instant.ofEpochMilli(clock.instant().toEpochMilli())
         val time = accountTime()
         val result = locked {
-            val session = database.current()
-            if (session == null) {
-                releaseAlarm()
-                return@locked PomodoroStep.Idle
-            }
-            if (expected != null && session.phaseKey() != expected) return@locked PomodoroStep.Idle
             val step = database.transaction {
+                val session = database.current() ?: return@transaction PomodoroStep.Idle
+                if (expected != null && session.phaseKey() != expected) return@transaction PomodoroStep.Idle
                 val change = advancePhase(session.phase(), at, session.config())
                 val closes = change.transition == "shortRestToWork" || change.transition == "longRestToWork"
                 if (!closes) {
@@ -136,7 +135,7 @@ class PomodoroSessionStore internal constructor(
                 }
                 close(session, change.next.startedAt, time, change.next)
             }
-            follow(step.keptSession())
+            if (step != PomodoroStep.Idle || database.current() == null) follow(database.current())
             step
         }
         if (result is PomodoroStep.Saved) onQueued()
@@ -150,20 +149,45 @@ class PomodoroSessionStore internal constructor(
         val at = Instant.ofEpochMilli(clock.instant().toEpochMilli())
         val time = accountTime()
         val result = locked {
-            val session = database.current()
-            if (session == null) {
-                releaseAlarm()
-                return@locked PomodoroStep.Idle
-            }
-            if (expected != null && session.phaseKey() != expected) return@locked PomodoroStep.Idle
             val step = database.transaction {
+                val session = database.current() ?: return@transaction PomodoroStep.Idle
+                if (expected != null && session.phaseKey() != expected) return@transaction PomodoroStep.Idle
+                require(!at.isBefore(session.phaseStartedAt)) { "Confirm must not be before the phase start" }
                 close(session, at, time, next = null)
             }
-            follow(step.keptSession())
+            if (step != PomodoroStep.Idle || database.current() == null) follow(database.current())
             step
         }
         if (result is PomodoroStep.Saved) onQueued()
         return result
+    }
+
+    /**
+     * Called only inside the queue/cache's existing Room transaction. The fresh row is the
+     * authority: two starts, a refresh and Next cannot save the same pomodoro twice. Remote
+     * starts can precede the current rest phase, so compare against the open pomodoro's start.
+     * No callback, alarm operation or nested transaction may run here.
+     */
+    internal fun endForTimerInTransaction(at: Instant): PomodoroStep {
+        val session = database.current() ?: return PomodoroStep.Idle
+        return close(session, at, accountTime(), next = null)
+    }
+
+    /**
+     * Reconcile only after the outer transaction committed. Take the phase lock without
+     * dispatching: AccountCache's blocking IO caller can also use this through runBlocking
+     * without dispatching back onto its own executor. A new session keeps its own alarms.
+     * Queue callbacks run after releasing the lock, including callbacks that refresh the cache.
+     */
+    internal suspend fun timerHandoffCommitted(step: PomodoroStep, notifyQueue: Boolean = true) {
+        if (step == PomodoroStep.Idle) return
+        try {
+            phaseLock.withLock {
+                if (database.current() == null) releaseAlarm()
+            }
+        } finally {
+            if (notifyQueue && step is PomodoroStep.Saved) onQueued()
+        }
     }
 
     /**
@@ -248,7 +272,7 @@ class PomodoroSessionStore internal constructor(
      * continues, or null when the session ends.
      */
     private fun close(session: PomodoroSession, at: Instant, time: AccountTime?, next: SessionPhase?): PomodoroStep {
-        require(!at.isBefore(session.phaseStartedAt)) { "Confirm must not be before the phase start" }
+        require(!at.isBefore(session.pomodoroStartedAt)) { "A timer cannot start before the open pomodoro" }
         val span = snappedPomodoro(session.pomodoroStartedAt, at, time)
         val following = next?.stored(session, next.startedAt)
         if (span == null) {
@@ -339,13 +363,6 @@ class PomodoroSessionStore internal constructor(
     }
 }
 
-private fun PomodoroStep.keptSession(): PomodoroSession? = when (this) {
-    PomodoroStep.Idle -> null
-    is PomodoroStep.Running -> session
-    is PomodoroStep.Saved -> session
-    is PomodoroStep.TooShort -> session
-}
-
 /**
  * The span a finished pomodoro stores. [AccountTime.snapUnsent] snaps each end to the nearest
  * grid point, taking the later point on a tie, and returns null when the snapped ends meet or
@@ -371,6 +388,9 @@ internal interface PomodoroSessionDatabase {
     /** Queues a stopped create on this thread. The caller is inside [transaction]. */
     fun createStopped(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long
 
+    /** Switch-stop every timer in this transaction. Already paused chains stay paused. */
+    fun stopTimers(at: Instant): Boolean = false
+
     fun <T> transaction(block: () -> T): T
 }
 
@@ -393,6 +413,8 @@ internal class RoomPomodoroSessionDatabase(
 
     override fun createStopped(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
         queue.queueStoppedCreate(workspaceId, fields, start, stop)
+
+    override fun stopTimers(at: Instant): Boolean = queue.stopTimersForPomodoro(at)
 
     override fun <T> transaction(block: () -> T): T = database.runInTransaction { block() }
 }

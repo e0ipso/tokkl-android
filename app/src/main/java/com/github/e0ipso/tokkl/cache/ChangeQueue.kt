@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
+import com.github.e0ipso.tokkl.pomodoro.PomodoroStep
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Clock
 import java.time.Duration
@@ -137,6 +139,7 @@ class ChangeQueue(
     private val capturedStopSpan: (start: Instant, at: Instant) -> SnappedSpan? = { start, at ->
         SnappedSpan(start, maxOf(at, start))
     },
+    private val pomodoro: () -> PomodoroSessionStore? = { null },
 ) : EntryChanges {
 
     private val dao = database.changes()
@@ -175,12 +178,15 @@ class ChangeQueue(
     /**
      * Starts a timer in [workspaceId] with [fields], at the tap time. A cached running entry
      * stops at that time first, as the server does when a timer starts, so the two are stored
-     * back to back, and a pause chain ends. Returns the new entry's local id. Pass the account's
+     * back to back, and a pause chain ends. An open pomodoro ends at the same captured instant,
+     * with its immutable partial create queued before this start in the same transaction.
+     * Returns the new entry's local id. Pass the account's
      * `AccountSettings.defaultWorkspaceId`, which the phone keeps, so it is there offline too.
      */
     override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
         val at = clock.instant()
-        return queue {
+        return starting(at) { endSession ->
+            endSession()
             dao.runningEntries().forEach { running -> stopAt(running, at) }
             dao.deletePauseChain()
             queueCreate(workspaceId, fields, at, stop = null)
@@ -256,9 +262,10 @@ class ChangeQueue(
      */
     override suspend fun resume(target: TimerTarget, fields: EntryFields?): Long? {
         val at = clock.instant()
-        return queue {
-            val chain = pausedChain(target) ?: return@queue null
-            if (dao.runningEntries().isNotEmpty()) return@queue null
+        return starting(at) { endSession ->
+            val chain = pausedChain(target) ?: return@starting null
+            if (dao.runningEntries().isNotEmpty()) return@starting null
+            endSession()
             val clone = queueCreate(chain.workspaceId, fields ?: chain.fields, at, stop = null)
             dao.upsertPauseSegment(
                 PauseSegmentCheckpoint(
@@ -336,6 +343,16 @@ class ChangeQueue(
         return queueCreate(workspaceId, fields, start, stop)
     }
 
+    /** Caller owns the session-start transaction. Preserve short Stop/Undo and held changes. */
+    internal fun stopTimersForPomodoro(at: Instant): Boolean {
+        val running = dao.runningEntries()
+        running.forEach {
+            stopAt(it, at)
+            endChainOf(it.id)
+        }
+        return running.isNotEmpty()
+    }
+
     /**
      * Sets every field of the cached entry [entryId]. A null [stop] makes it run. Returns false
      * when the entry is not cached. A stop given to the running clone, or a stopped entry made
@@ -343,8 +360,12 @@ class ChangeQueue(
      */
     override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
         require(stop == null || !stop.isBefore(start)) { "The stop comes before the start." }
-        return queue {
-            val current = dao.entry(resolve(entryId)) ?: return@queue false
+        return starting(start) { endSession ->
+            val current = dao.entry(resolve(entryId)) ?: return@starting false
+            if (current.stop != null && stop == null) {
+                endSession()
+                dao.runningEntries().forEach { stopAt(it, start) }
+            }
             enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop))
             val clone = dao.pauseChain()?.runningId == current.id
             val endsChain = if (clone) stop != null else current.stop != null && stop == null
@@ -463,12 +484,25 @@ class ChangeQueue(
      * a change that can go out. A call that queued nothing, such as a stop of an entry that does
      * not run, leaves an empty queue alone.
      */
-    private suspend fun <T> queue(change: () -> T): T {
+    private suspend fun <T> queue(afterCommit: suspend () -> Unit = {}, change: () -> T): T {
         val (result, holdsChanges) = withContext(io) {
             database.runInTransaction<Pair<T, Boolean>> { change() to (dao.first() != null) }
         }
-        if (holdsChanges) onQueued()
+        try {
+            withContext(io) { afterCommit() }
+        } finally {
+            if (holdsChanges) onQueued()
+        }
         return result
+    }
+
+    /** The supplier is lazy; never resolve it while constructing the application's queue. */
+    private suspend fun <T> starting(at: Instant, change: (endSession: () -> Unit) -> T): T {
+        val sessions = pomodoro()
+        var step: PomodoroStep = PomodoroStep.Idle
+        return queue(afterCommit = { sessions?.timerHandoffCommitted(step, notifyQueue = false) }) {
+            change { step = sessions?.endForTimerInTransaction(at) ?: PomodoroStep.Idle }
+        }
     }
 
     /** Stops the running entry [entryId] at [at] with [fields], as [stop] describes. */
