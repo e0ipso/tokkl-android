@@ -16,6 +16,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
@@ -30,6 +31,9 @@ import com.github.e0ipso.tokkl.clients.ClientsViewModel
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
+import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap
+import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
@@ -72,6 +76,7 @@ class MainActivity : ComponentActivity() {
     private val notificationPermission by lazy { NotificationPermissionAsk.forApp(this) }
     private var notificationsAllowed = false
     private var openReminderTimer by mutableIntStateOf(0)
+    private var openPomodoro by mutableStateOf<PomodoroNotificationTap?>(null)
 
     /** The default network, watched while the activity is started. */
     private val network by lazy { NetworkWatch(this, ::networkChanged) }
@@ -82,6 +87,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         drawEdgeToEdge()
+        @Suppress("DEPRECATION")
+        val pendingPomodoro = savedInstanceState?.getParcelable<Intent>("pending-pomodoro-notification")
+        openPomodoro = pendingPomodoro?.takePomodoroNotificationTap() ?: intent?.takePomodoroNotificationTap()
         if (intent?.getBooleanExtra(ReminderNotifier.OPEN_TIMER, false) == true) {
             openReminderTimer++
             intent.removeExtra(ReminderNotifier.OPEN_TIMER)
@@ -106,6 +114,8 @@ class MainActivity : ComponentActivity() {
                         themeSettings = themeSettings,
                         reminderSettings = (application as TokklApplication).reminderSettings,
                         openReminderTimer = openReminderTimer,
+                        openPomodoro = openPomodoro,
+                        onPomodoroOpened = { handled -> if (openPomodoro == handled) openPomodoro = null },
                         signOut = (application as TokklApplication).signOutModel,
                         sessionTrust = (application as TokklApplication).sessionTrust,
                         reports = reportsViewModel.model,
@@ -137,9 +147,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        openPomodoro?.let { pending ->
+            outState.putParcelable("pending-pomodoro-notification", pomodoroSessionOpenIntent(this, pending.account, pending.phase))
+        }
+        super.onSaveInstanceState(outState)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        intent.takePomodoroNotificationTap()?.let { openPomodoro = it }
         if (intent.getBooleanExtra(ReminderNotifier.OPEN_TIMER, false)) {
             openReminderTimer++
             intent.removeExtra(ReminderNotifier.OPEN_TIMER)
@@ -159,6 +177,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             signOuts.collect { finished ->
                 dropViewModelsBefore(finished)
+                if (shownSignOuts.value != finished) openPomodoro = null
                 shownSignOuts.value = finished
             }
         }
@@ -217,6 +236,7 @@ class MainActivity : ComponentActivity() {
         notificationsAllowed = true
         lifecycleScope.launch(Dispatchers.IO) {
             (application as TokklApplication).runningNotification.repost()
+            (application as TokklApplication).pomodoroSessionNotification.refresh(force = true)
         }
     }
 

@@ -27,6 +27,9 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseEndStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotification
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationStore
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.reminder.ReminderInput
@@ -198,6 +201,26 @@ class TokklApplication : Application() {
 
     private val pomodoroSessionLock = Any()
     private var pomodoroSessionsForAccount = newPomodoroSessions()
+    private var pomodoroNotificationForAccount = newPomodoroNotification()
+
+    internal val pomodoroSessionNotification: PomodoroSessionNotificationSync
+        get() = synchronized(pomodoroSessionLock) { pomodoroNotificationForAccount.value }
+
+    private fun newPomodoroNotification(restore: Boolean = true): Lazy<PomodoroSessionNotificationSync> = lazy {
+        val sessions = pomodoroSessions
+        val store = PomodoroSessionNotificationStore(this)
+        val notifier = PomodoroSessionNotifier(this)
+        PomodoroSessionNotificationSync(
+            sessions = sessions,
+            changes = combine(
+                cacheDatabase.pomodoroSessions().running(), sessions.notificationChanges, pomodoroRinging.state,
+            ) { _, _, _ -> Unit },
+            signedIn = { Session(this).isSignedIn() },
+            serviceRunning = { pomodoroRinging.state.value.serviceRunning },
+            load = { if (restore) store.load() else null }, save = store::save, post = notifier::post, remove = notifier::remove,
+            scope = MainScope(), io = Dispatchers.IO,
+        )
+    }
 
     // Retained models keep their forgotten store. Install a fresh, lazy store only after
     // clearing the old account's cache, so late callbacks cannot find its session or queue.
@@ -253,7 +276,7 @@ class TokklApplication : Application() {
     }
 
     /** The file of the [cache] and the queue. It opens on the first query, which Room keeps off the main thread. */
-    private val cacheDatabase: CacheDatabase by lazy { CacheDatabase.open(this) }
+    internal val cacheDatabase: CacheDatabase by lazy { CacheDatabase.open(this) }
 
     /** The offline cache. */
     val cache: AccountCache by lazy { AccountCache(cacheDatabase, pomodoro = { pomodoroSessions }) }
@@ -364,6 +387,7 @@ class TokklApplication : Application() {
     fun storeSignIn(server: ServerUrl, token: String, settings: AccountSettings) {
         accountSettings.store(settings)
         Session(this).save(server, token)
+        pomodoroSessionNotification.start()
         if (sender.signInNeeded.value) sender.resume()
     }
 
@@ -464,6 +488,7 @@ class TokklApplication : Application() {
         SignOut(
             steps = listOf(
                 { Session(this).clear() },
+                { pomodoroSessionNotification.forget() },
                 { pomodoroSessions.forget() },
                 // ID 3 is shared with the session notification, including a non-ringing form.
                 // Keep this independent of service cleanup so a failed stop still removes it.
@@ -475,7 +500,10 @@ class TokklApplication : Application() {
                 { sender.stop() },
                 {
                     cache.clear()
-                    synchronized(pomodoroSessionLock) { pomodoroSessionsForAccount = newPomodoroSessions() }
+                    synchronized(pomodoroSessionLock) {
+                        pomodoroSessionsForAccount = newPomodoroSessions()
+                        pomodoroNotificationForAccount = newPomodoroNotification(restore = false)
+                    }
                 },
                 { reminder.forget() },
                 {
@@ -523,6 +551,7 @@ class TokklApplication : Application() {
         // Reads the cache off the main thread, and posts or removes nothing for the entry the
         // notification already followed, so opening the app never brings back a dismissed one.
         runningNotification.start()
+        pomodoroSessionNotification.start()
         reminder.follow(
             combine(cache.running, flow { emitAll(reminderSettings.state) }) { running, preferences -> running to preferences },
             MainScope(), Dispatchers.IO,

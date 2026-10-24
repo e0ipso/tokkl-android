@@ -17,6 +17,8 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * What finishing a phase did to the session and the queue. [TooShort] is the result a screen
@@ -75,6 +77,20 @@ class PomodoroSessionStore internal constructor(
 ) {
     private val phaseLock = Mutex()
     private val callbacks = Any()
+    private val notificationRevision = MutableStateFlow(0L)
+    internal val notificationChanges = notificationRevision.asStateFlow()
+
+    /** Read and publish under the phase lock, so a late collector cannot replace a ring. */
+    internal suspend fun withNotificationState(use: suspend (PomodoroSession?, Boolean) -> Unit) = withContext(io) {
+        phaseLock.withLock {
+            val session = if (isForgotten) null else database.current()
+            val reached = session != null &&
+                phaseEnds.read() == ReachedPhaseEnd(session.phaseKind, session.phaseStartedAt)
+            use(session, reached)
+        }
+    }
+
+    private fun notificationChanged() { notificationRevision.value += 1 }
 
     /** A forgotten store is never reused by a later account, including by retained page models. */
     @Volatile internal var isForgotten: Boolean = false
@@ -231,6 +247,7 @@ class PomodoroSessionStore internal constructor(
             val session = database.current() ?: return@transaction null
             val updated = session.copy(fields = fields.distinctTags())
             database.save(updated)
+            notificationChanged()
             updated
         }
     }
@@ -259,6 +276,7 @@ class PomodoroSessionStore internal constructor(
      */
     internal suspend fun rearm(deferRingingToAlarm: Boolean = false) {
         locked {
+            notificationChanged()
             if (isForgotten) return@locked
             val session = database.current()
             if (session == null) {
@@ -344,6 +362,7 @@ class PomodoroSessionStore internal constructor(
      */
     private suspend fun ring(session: PomodoroSession) {
         phaseEnds.write(ReachedPhaseEnd(session.phaseKind, session.phaseStartedAt))
+        notificationChanged()
         ringing.start(session.ring())
     }
 
@@ -372,6 +391,7 @@ class PomodoroSessionStore internal constructor(
     }
 
     private suspend fun follow(session: PomodoroSession?) {
+        notificationChanged()
         if (isForgotten) return
         if (session == null) {
             releaseAlarm()
@@ -385,6 +405,7 @@ class PomodoroSessionStore internal constructor(
     }
 
     private suspend fun releaseAlarm() {
+        notificationChanged()
         try {
             ringing.stop()
         } finally {

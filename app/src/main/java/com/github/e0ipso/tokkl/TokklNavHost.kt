@@ -67,6 +67,7 @@ import com.github.e0ipso.tokkl.navigation.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
+import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroScreen
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
@@ -181,6 +182,8 @@ fun TokklNavHost(
     onNotificationsAllowed: () -> Unit = {},
     reminderSettings: ReminderSetting? = null,
     openReminderTimer: Int = 0,
+    openPomodoro: PomodoroNotificationTap? = null,
+    onPomodoroOpened: (PomodoroNotificationTap) -> Unit = {},
 ) {
     LaunchedEffect(entryActions, calendar, history) {
         entryActions.reconciliation.collect { overrides ->
@@ -214,6 +217,17 @@ fun TokklNavHost(
             backStack.add(if (signedIn) Destination.TIMER else Destination.SIGN_IN)
         }
         return
+    }
+    LaunchedEffect(openPomodoro) {
+        val request = openPomodoro ?: return@LaunchedEffect
+        val accepted = withContext(Dispatchers.IO) {
+            (appContext as TokklApplication).pomodoroSessionNotification.acceptsTap(request.account, request.phase)
+        }
+        if (accepted) {
+            entryForm.close()
+            backStack.open(TopLevelPage.POMODORO)
+        }
+        onPomodoroOpened(request)
     }
     BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
     val destination = backStack.last()
@@ -259,6 +273,11 @@ fun TokklNavHost(
     val timerState by timer.state.collectAsState()
     LaunchedEffect(focused, timerState) {
         if (focused && (timerState as? TimerState.Idle)?.authoritative == true) {
+            // A notification may have opened Pomodoro before this old focused effect runs.
+            val top = backStack.lastOrNull()
+            if (top != Destination.FULLSCREEN_TIMER &&
+                !(top == Destination.ENTRY && backStack.getOrNull(backStack.lastIndex - 1) == Destination.FULLSCREEN_TIMER)
+            ) return@LaunchedEffect
             if (backStack.lastOrNull() == Destination.ENTRY) entryForm.close()
             while (backStack.size > 1 && backStack.lastOrNull() != Destination.TIMER) backStack.removeAt(backStack.lastIndex)
         }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pomodoro_session_channel">Pomodoro sessions</string>
+    <string name="pomodoro_session_channel_description">The active phase, its clock and session controls</string>
+    <string name="pomodoro_session_title">%1$s · Pomodoro %2$d</string>
+    <string name="pomodoro_session_work">Work</string>
+    <string name="pomodoro_session_short_rest">Short rest</string>
+    <string name="pomodoro_session_long_rest">Long rest</string>
+    <string name="pomodoro_session_no_description">No description</string>
+    <string name="pomodoro_session_next">Next phase</string>
+    <string name="pomodoro_session_end">End session</string>
+</resources>
