@@ -11,9 +11,10 @@ const repository = 'https://github.com/e0ipso/tokkl-android';
 const logger = { log() {} };
 
 // Read this draft's simple scalars, not arbitrary YAML. fdroid lint owns schema
-// validation. A duplicate field must not hide a conflicting recipe value.
-function value(key) {
-  const matches = [...recipe.matchAll(new RegExp(`^ *${key}: (.+)$`, 'gm'))];
+// validation. Build-list entries can start with '- key: value'. A duplicate
+// field must not hide a conflicting recipe value.
+function value(key, source = recipe) {
+  const matches = [...source.matchAll(new RegExp(`^ *(?:- +)?${key}: (.+)$`, 'gm'))];
   assert.equal(matches.length, 1, `one ${key} field`);
   return matches[0][1];
 }
@@ -35,6 +36,28 @@ function versionAtTag(files) {
 function binaryFor(version) {
   return value('Binaries').replaceAll('%v', version.name).replaceAll('%c', String(version.code));
 }
+
+test('draft scalar reader handles build-list keys and rejects missing or duplicate fields', () => {
+  for (const fields of [
+    '  - versionName: 0.2.0\n    versionCode: 2000',
+    '  - versionCode: 2000\n    versionName: 0.2.0',
+  ]) {
+    const source = `License: MIT\nBuilds:\n${fields}\n`;
+    assert.equal(value('License', source), 'MIT');
+    assert.equal(value('versionName', source), '0.2.0');
+    assert.equal(value('versionCode', source), '2000');
+    assert.throws(() => value('commit', source), {
+      code: 'ERR_ASSERTION', message: /^one commit field\b/, actual: 0, expected: 1,
+    });
+    for (const duplicate of [
+      'versionName: 9.9.9', '    versionName: 9.9.9', '  - versionName: 9.9.9',
+    ]) {
+      assert.throws(() => value('versionName', `${source}${duplicate}\n`), {
+        code: 'ERR_ASSERTION', message: /^one versionName field\b/, actual: 2, expected: 1,
+      });
+    }
+  }
+});
 
 test('F-Droid draft identifies the MIT source and the proven release only', () => {
   assert.equal(value('License'), 'MIT');
