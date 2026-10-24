@@ -216,24 +216,34 @@ class ChangeQueue(
             val (stopped, span) = stopWith(running, fields, at)
             val seconds = span?.let { Duration.between(it.start, it.stop).seconds } ?: 0
             val kept = EntryFields(stopped.description, stopped.projectId, stopped.taskId, stopped.tags, stopped.billable)
-            dao.upsertPauseChain(
-                chain?.copy(
-                    revision = chain.revision + 1,
-                    epoch = chain.epoch + 1,
-                    stoppedSeconds = chain.stoppedSeconds + seconds,
-                    runningId = null,
-                    workspaceId = stopped.workspaceId,
-                    fields = kept,
-                ) ?: PauseChain(
-                    chainId = newTimerId(),
-                    revision = 1,
-                    epoch = 1,
-                    stoppedSeconds = seconds,
-                    runningId = null,
-                    workspaceId = stopped.workspaceId,
-                    fields = kept,
-                ),
+            if (chain == null) dao.deletePauseChain()
+            val next = chain?.copy(
+                revision = chain.revision + 1,
+                epoch = chain.epoch + 1,
+                stoppedSeconds = chain.stoppedSeconds + seconds,
+                runningId = null,
+                workspaceId = stopped.workspaceId,
+                fields = kept,
+            ) ?: PauseChain(
+                chainId = newTimerId(),
+                revision = 1,
+                epoch = 1,
+                stoppedSeconds = seconds,
+                runningId = null,
+                workspaceId = stopped.workspaceId,
+                fields = kept,
             )
+            val checkpoint = dao.pauseSegments(next.chainId).singleOrNull { it.entryId == running.id }
+                ?: PauseSegmentCheckpoint(
+                    slot = Math.addExact(dao.lastPauseSegmentSlot(), 1),
+                    chainId = next.chainId,
+                    order = chain?.revision ?: 0,
+                    entryId = running.id,
+                    workspaceId = chain?.workspaceId ?: running.workspaceId,
+                    fields = chain?.fields ?: snapshotOf(running),
+                )
+            dao.upsertPauseSegment(checkpoint.copy(seconds = seconds, paused = true))
+            dao.upsertPauseChain(next)
             true
         }
     }
@@ -250,6 +260,16 @@ class ChangeQueue(
             val chain = pausedChain(target) ?: return@queue null
             if (dao.runningEntries().isNotEmpty()) return@queue null
             val clone = queueCreate(chain.workspaceId, fields ?: chain.fields, at, stop = null)
+            dao.upsertPauseSegment(
+                PauseSegmentCheckpoint(
+                    slot = Math.addExact(dao.lastPauseSegmentSlot(), 1),
+                    chainId = chain.chainId,
+                    order = chain.revision + 1,
+                    entryId = clone,
+                    workspaceId = chain.workspaceId,
+                    fields = chain.fields,
+                ),
+            )
             dao.upsertPauseChain(chain.copy(revision = chain.revision + 1, epoch = chain.epoch + 1, runningId = clone))
             clone
         }
@@ -415,16 +435,24 @@ class ChangeQueue(
      * Drops the held change [sequence] and the later changes to its entry that wait behind it,
      * since each of them builds on it. An entry the phone created goes from the cache with them;
      * any other keeps its row until the next refresh brings the server's. A discarded Resume
-     * leaves its chain paused again. Returns false when the change is not held.
+     * leaves its chain paused again, at the stored time from before that start. Returns false
+     * when the change is not held.
      */
     suspend fun discard(sequence: Long): Boolean =
         queue {
             val held = dao.change(sequence)?.takeIf { it.held } ?: return@queue false
+            val chain = if (held.kind == ChangeKind.CREATE) dao.pauseChain() else null
+            val discarded = chain?.let {
+                pauseChainAfterDiscardedCreate(it, held.entryId, dao.pauseSegments(it.chainId))
+            }
             dao.deleteFrom(held.entryId, held.sequence)
             if (held.kind == ChangeKind.CREATE) {
                 dao.deleteEntry(held.entryId)
-                dao.pauseChain()?.takeIf { it.runningId == held.entryId }?.let { chain ->
-                    dao.upsertPauseChain(chain.copy(revision = chain.revision + 1, epoch = chain.epoch + 1, runningId = null))
+                dao.deleteShortStop(held.entryId)
+                if (discarded != null) {
+                    discarded.removedSlot?.let(dao::deletePauseSegment)
+                    discarded.rebased?.let(dao::upsertPauseSegment)
+                    if (discarded.chain != chain) dao.upsertPauseChain(discarded.chain)
                 }
             }
             true
@@ -582,3 +610,68 @@ class ChangeQueue(
     private fun resolve(entryId: Long): Long =
         if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
 }
+
+/**
+ * A segment's durable pre-start snapshot and exact credited seconds. [ChangeDao] stores these
+ * in positive pause_chain slots; slot 0 remains the visible chain. The entry id, not matching
+ * fields or times, establishes membership. Server answers remap it along with the running id.
+ */
+data class PauseSegmentCheckpoint(
+    val slot: Int,
+    val chainId: Long,
+    val order: Long,
+    val entryId: Long,
+    val seconds: Long = 0,
+    val paused: Boolean = false,
+    val workspaceId: Long,
+    val fields: EntryFields,
+)
+
+internal data class PauseChainDiscard(
+    val chain: PauseChain,
+    val removedSlot: Int? = null,
+    val rebased: PauseSegmentCheckpoint? = null,
+)
+
+/**
+ * Removes only this chain member's credited seconds, including while a later segment runs.
+ * A discarded last pause restores the pre-start snapshot, including workspace and all fields.
+ * Later kept pauses retain their snapshot. Rebase the next segment's checkpoint so discarding
+ * it later cannot bring back the removed segment's fields. Edits to the refused segment's
+ * paused snapshot go with it; explicit fields on a later kept segment stay with that segment.
+ */
+internal fun pauseChainAfterDiscardedCreate(
+    chain: PauseChain,
+    entryId: Long,
+    segments: List<PauseSegmentCheckpoint>,
+): PauseChainDiscard {
+    val members = segments.filter { it.chainId == chain.chainId }.sortedBy { it.order }
+    val removed = members.singleOrNull { it.entryId == entryId }
+    if (removed == null) {
+        // A running chain from before checkpoints were introduced still has an exact identity.
+        return PauseChainDiscard(
+            if (chain.runningId == entryId) {
+                chain.copy(revision = chain.revision + 1, epoch = chain.epoch + 1, runningId = null)
+            } else {
+                chain
+            },
+        )
+    }
+    val later = members.filter { it.order > removed.order }
+    val restoreSnapshot = removed.paused && later.none { it.paused }
+    return PauseChainDiscard(
+        chain = chain.copy(
+            revision = chain.revision + 1,
+            epoch = chain.epoch + 1,
+            stoppedSeconds = (chain.stoppedSeconds - removed.seconds).coerceAtLeast(0),
+            runningId = chain.runningId.takeUnless { it == entryId },
+            workspaceId = if (restoreSnapshot) removed.workspaceId else chain.workspaceId,
+            fields = if (restoreSnapshot) removed.fields else chain.fields,
+        ),
+        removedSlot = removed.slot,
+        rebased = later.firstOrNull()?.copy(workspaceId = removed.workspaceId, fields = removed.fields),
+    )
+}
+
+private fun snapshotOf(entry: CachedTimeEntry) =
+    EntryFields(entry.description, entry.projectId, entry.taskId, entry.tags, entry.billable)

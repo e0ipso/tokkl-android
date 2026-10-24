@@ -133,15 +133,57 @@ abstract class ChangeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract fun upsertPauseChain(chain: PauseChain)
 
-    /** Ends the pause chain. Returns how many it ended: none when there was none. */
+    /**
+     * Slot 0 is the visible chain. Positive slots are segment checkpoints for that chain,
+     * using the same Room 8 columns without adding an entity or changing the schema.
+     * Their revision stores segment order, epoch is 0 before Pause and 1 after it, and
+     * stoppedSeconds is only that segment's contribution. Fields are the pre-start snapshot.
+     * Keep answered segments too: a later discard must distinguish them from unrelated entries.
+     */
+    @Query("SELECT * FROM pause_chain WHERE slot > 0 AND chainId = :chainId ORDER BY revision")
+    abstract fun pauseSegmentRows(chainId: Long): List<PauseChain>
+
+    fun pauseSegments(chainId: Long): List<PauseSegmentCheckpoint> = pauseSegmentRows(chainId).map { row ->
+        PauseSegmentCheckpoint(
+            slot = row.slot,
+            chainId = row.chainId,
+            order = row.revision,
+            entryId = requireNotNull(row.runningId),
+            seconds = row.stoppedSeconds,
+            paused = row.epoch != 0L,
+            workspaceId = row.workspaceId,
+            fields = row.fields,
+        )
+    }
+
+    @Query("SELECT COALESCE(MAX(slot), 0) FROM pause_chain")
+    abstract fun lastPauseSegmentSlot(): Int
+
+    fun upsertPauseSegment(segment: PauseSegmentCheckpoint) = upsertPauseChain(
+        PauseChain(
+            slot = segment.slot,
+            chainId = segment.chainId,
+            revision = segment.order,
+            epoch = if (segment.paused) 1 else 0,
+            stoppedSeconds = segment.seconds,
+            runningId = segment.entryId,
+            workspaceId = segment.workspaceId,
+            fields = segment.fields,
+        ),
+    )
+
+    @Query("DELETE FROM pause_chain WHERE slot = :slot AND slot > 0")
+    abstract fun deletePauseSegment(slot: Int)
+
+    /** Ends the chain and deletes all of its segment checkpoints. Returns the number of rows. */
     @Query("DELETE FROM pause_chain")
     abstract fun deletePauseChain(): Int
 
     /** Marks a queue answer, so a refresh whose server read began earlier leaves the chain alone. */
-    @Query("UPDATE pause_chain SET epoch = epoch + 1")
+    @Query("UPDATE pause_chain SET epoch = epoch + 1 WHERE slot = 0")
     abstract fun touchPauseChain()
 
-    /** Gives the chain's running clone [localId] the server's id. */
+    /** Gives the running clone and its checkpoint [localId] the server's id. */
     @Query("UPDATE pause_chain SET runningId = :serverId WHERE runningId = :localId")
     abstract fun remapPauseChain(localId: Long, serverId: Long)
 
