@@ -13,6 +13,9 @@ interface PomodoroAlarmScheduler {
     /** Arms [triggerAt], replacing the alarm already armed. Returns false when [permissionDenied]. */
     fun schedule(triggerAt: Instant): Boolean
 
+    /** Phase identity travels with delivery so a delayed alarm cannot ring a newer phase. */
+    fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean = schedule(triggerAt)
+
     /** Drops the armed alarm. Does nothing when none is armed. */
     fun cancel()
 

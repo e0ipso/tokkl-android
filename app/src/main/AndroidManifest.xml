@@ -20,13 +20,16 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!--
-        WorkManager's manifest also adds FOREGROUND_SERVICE and its SystemForegroundService,
-        which serve only workers that call setForeground. The queue's worker never does, and
-        the running timer's notification runs no foreground service (N1), so both go.
+        Only the Pomodoro phase-end alarm runs a foreground service: mediaPlayback keeps its
+        bundled transition sound looping until Next phase or End session. API 34+ also requires
+        the type-specific permission. VIBRATE is for its repeating alarm vibration. No runtime
+        grant is needed for these permissions. WorkManager's SystemForegroundService stays
+        removed below; the queue never calls setForeground. The running timer (N1) has no service.
+        https://developer.android.com/develop/background-work/services/fgs/service-types#media
     -->
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE"
-        tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!--
         The running timer's notification (docs/PRD.md N1). Android 13 and later show it only once
         the user allows it; asking is TKA-0058's.
@@ -100,7 +103,16 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-        <!-- See FOREGROUND_SERVICE above: no worker runs in the foreground. -->
+        <!-- One mediaPlayback service for the Pomodoro alarm, never a WorkManager worker. -->
+        <service
+            android:name=".pomodoro.PomodoroRingingService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="mediaPlayback" />
+        <receiver
+            android:name=".pomodoro.PomodoroRingingActionReceiver"
+            android:exported="false" />
+        <!-- No worker runs in the foreground. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />

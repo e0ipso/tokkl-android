@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pomodoro_alarm_channel">Pomodoro alarms</string>
+    <string name="pomodoro_alarm_channel_description">Rings at a phase end until you choose the next phase or end the session.</string>
+    <string name="pomodoro_alarm_title">Pomodoro phase ended</string>
+    <string name="pomodoro_alarm_waiting">Choose the next phase or end the session.</string>
+    <string name="pomodoro_alarm_next">Next phase</string>
+    <string name="pomodoro_alarm_end">End session</string>
+</resources>

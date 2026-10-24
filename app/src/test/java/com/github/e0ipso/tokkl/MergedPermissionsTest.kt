@@ -7,7 +7,8 @@ import org.junit.Test
 /**
  * The permissions every store page lists stay the ones the app uses. WorkManager's manifest adds
  * FOREGROUND_SERVICE and SystemForegroundService for workers that call setForeground, which the
- * queue's worker never does, so the app's manifest removes both. WAKE_LOCK and
+ * queue's worker never does. Only the Pomodoro ringing service uses mediaPlayback; the worker
+ * service stays removed. Its type permission and VIBRATE are the only additions. WAKE_LOCK and
  * RECEIVE_BOOT_COMPLETED stay for the background send. A Pomodoro phase end adds the exact-alarm
  * permission each API allows: SCHEDULE_EXACT_ALARM through API 32, and USE_EXACT_ALARM from API 33.
  */
@@ -25,12 +26,15 @@ class MergedPermissionsTest {
         assertEquals(
             listOf(
                 "android.permission.ACCESS_NETWORK_STATE",
+                "android.permission.FOREGROUND_SERVICE",
+                "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
                 "android.permission.INTERNET",
                 "android.permission.POST_NOTIFICATIONS",
                 "android.permission.POST_PROMOTED_NOTIFICATIONS",
                 "android.permission.RECEIVE_BOOT_COMPLETED",
                 "android.permission.SCHEDULE_EXACT_ALARM",
                 "android.permission.USE_EXACT_ALARM",
+                "android.permission.VIBRATE",
                 "android.permission.WAKE_LOCK",
             ),
             permissions,
@@ -75,12 +79,35 @@ class MergedPermissionsTest {
     }
 
     @Test
-    fun noForegroundServiceIsDeclared() {
+    fun onlyThePomodoroRingingServiceMayRunInTheForeground() {
         val services = MergedManifest.application().childElements()
             .filter { it.tagName == "service" }
             .map { it.androidAttribute("name") }
 
         assertFalse(services.toString(), "androidx.work.impl.foreground.SystemForegroundService" in services)
-        assertFalse(services.toString(), services.any { it.contains("Foreground") })
+        val foreground = MergedManifest.application().childElements().filter {
+            it.tagName == "service" && it.getAttributeNS("http://schemas.android.com/apk/res/android", "foregroundServiceType").isNotEmpty()
+        }
+        assertEquals(listOf("com.github.e0ipso.tokkl.pomodoro.PomodoroRingingService"), foreground.map { it.androidAttribute("name") })
+        val ringing = foreground.single()
+        assertEquals("mediaPlayback", ringing.androidAttribute("foregroundServiceType"))
+        assertEquals("false", ringing.androidAttribute("exported"))
+        assertEquals("false", ringing.androidAttribute("stopWithTask"))
+        // Catch an accidental additional service even if it forgot to declare a foreground type.
+        assertEquals(
+            listOf(
+                "androidx.core.widget.RemoteViewsCompatService",
+                "androidx.glance.appwidget.GlanceRemoteViewsService",
+                "androidx.room.MultiInstanceInvalidationService",
+                "androidx.work.impl.background.systemjob.SystemJobService",
+                "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingService",
+                "com.github.e0ipso.tokkl.tile.RunningTileService",
+            ),
+            services.sorted(),
+        )
+        val action = MergedManifest.application().childElements().single {
+            it.tagName == "receiver" && it.androidAttribute("name").endsWith(".PomodoroRingingActionReceiver")
+        }
+        assertEquals("false", action.androidAttribute("exported"))
     }
 }

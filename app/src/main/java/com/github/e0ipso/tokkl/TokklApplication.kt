@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseEndStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
+import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.reminder.ReminderInput
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
@@ -191,6 +192,8 @@ class TokklApplication : Application() {
      * The running Pomodoro. Loaded on first use, from the phase alarm or from the page. A queued
      * pomodoro asks for the same send as any other create.
      */
+    internal val pomodoroRinging by lazy { ServicePomodoroRinging(this) }
+
     val pomodoroSessions: PomodoroSessionStore by lazy {
         PomodoroSessionStore.open(
             database = cacheDatabase,
@@ -203,6 +206,7 @@ class TokklApplication : Application() {
             },
             alarms = pomodoroAlarms,
             phaseEnds = PomodoroPhaseEndStore(this),
+            ringing = pomodoroRinging,
         )
     }
 

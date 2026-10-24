@@ -36,9 +36,13 @@ class AlarmClockPomodoroScheduler(private val context: Context) : PomodoroAlarmS
     override val permissionDenied: Boolean
         get() = !manager.canScheduleExactAlarms()
 
-    override fun schedule(triggerAt: Instant): Boolean {
+    override fun schedule(triggerAt: Instant): Boolean = scheduleAlarm(triggerAt, null)
+
+    override fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean = scheduleAlarm(triggerAt, phase)
+
+    private fun scheduleAlarm(triggerAt: Instant, phase: PomodoroPhaseKey?): Boolean {
         if (permissionDenied) return false
-        val pending = operation(create = true) ?: return false
+        val pending = operation(create = true, phase) ?: return false
         return try {
             manager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAt.toEpochMilli(), showPhase()), pending)
             true
@@ -67,11 +71,12 @@ class AlarmClockPomodoroScheduler(private val context: Context) : PomodoroAlarmS
     }
 
     /** The broadcast the alarm delivers. [create] false returns null when the intent is not armed. */
-    internal fun operation(create: Boolean): PendingIntent? {
+    internal fun operation(create: Boolean, phase: PomodoroPhaseKey? = null): PendingIntent? {
         val flags = PendingIntent.FLAG_IMMUTABLE or
             if (create) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_NO_CREATE
         val intent = Intent(context, PomodoroPhaseAlarmReceiver::class.java)
             .setAction(PomodoroPhaseAlarmReceiver.ACTION_PHASE_END)
+        if (phase != null) intent.putPhase(phase)
         return PendingIntent.getBroadcast(context, OPERATION_REQUEST, intent, flags)
     }
 
@@ -97,16 +102,16 @@ class AlarmClockPomodoroScheduler(private val context: Context) : PomodoroAlarmS
 
 /**
  * The phase alarm. Not exported: only its own [PendingIntent] reaches it. It records that the
- * phase reached its planned end. It does not start the next phase. TKA-0250 starts the ringing
- * service from that record.
+ * phase reached its planned end and starts its ringing service. It does not start the next phase.
  */
 class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_PHASE_END) return
+        val phase = intent.phaseKey() ?: return
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                (context.applicationContext as TokklApplication).pomodoroSessions.onPhaseAlarm()
+                (context.applicationContext as TokklApplication).pomodoroSessions.onPhaseAlarm(phase)
             } catch (e: SQLiteException) {
                 // The disk refused the read. The phase stays where it is.
             } catch (e: IOException) {
@@ -137,7 +142,7 @@ class PomodoroAlarmRearmReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                (context.applicationContext as TokklApplication).pomodoroSessions.rearm()
+                (context.applicationContext as TokklApplication).pomodoroSessions.rearm(deferRingingToAlarm = true)
             } catch (e: SQLiteException) {
                 // The disk refused the session. A later boot, update or clock change tries again.
             } catch (e: IOException) {
