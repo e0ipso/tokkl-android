@@ -110,7 +110,8 @@ sealed interface TimerState {
  * [TimerState.Running.start] on the phone and never asks the server (principle 3).
  *
  * @param controls the running entry or paused chain, as ChangeQueue.timerControls gives them.
- * @param accountSettings for the default workspace, where Start starts.
+ * @param accountSettings for the default workspace, where Start starts, and for the Today and
+ *   This week totals.
  * @param clock the time a Start tap shows until the cache has the queue's own tap time.
  * @param trace marks each Start and Stop tap until the screen reports with [shown] that it drew
  *   what the tap did.
@@ -119,7 +120,7 @@ class TimerModel(
     controls: Flow<TimerControls>,
     projects: Flow<List<CachedProject>>,
     tasks: Flow<List<CachedTask>>,
-    private val accountSettings: StateFlow<AccountSettings?>,
+    val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
     private val scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),

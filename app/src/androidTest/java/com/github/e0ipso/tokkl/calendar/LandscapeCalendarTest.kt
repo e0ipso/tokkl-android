@@ -18,6 +18,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
@@ -37,6 +38,9 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timer.TimerTotals
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.Clock
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
@@ -167,7 +171,8 @@ abstract class LandscapeCalendarTest(
             string(label) to composeRule.onNode(hasContentDescription(string(label)) and hasClickAction())
         }
         val current = string(thisWeek).let { it to composeRule.onNode(hasText(it) and hasClickAction()) }
-        return segments + arrows + current
+        val totals = listOf("timer_totals_today", "timer_totals_week").map { tag -> tag to composeRule.onNodeWithTag(tag) }
+        return segments + arrows + current + totals
     }
 
     /** Whether nothing clips [node]: its bounds in the window are its whole size. */
@@ -239,6 +244,11 @@ private fun CalendarPage() {
                         onAddEntry = {},
                         picker = { _, _, _, _, _ -> },
                     )
+                    TimerTotals(
+                        entries = TOTAL_ROWS,
+                        settings = TOTAL_SETTINGS,
+                        clock = Clock.fixed(NOON, ZoneOffset.UTC),
+                    )
                 }
             },
             listContent = {},
@@ -272,4 +282,10 @@ private fun entry(id: Long, description: String, start: String, stop: String) = 
     start = Instant.parse(start),
     stop = Instant.parse(stop),
     unsent = false,
+)
+
+// Keep the real totals in every usual/large-font calendar positioning regression.
+private val TOTAL_ROWS = MutableStateFlow(emptyList<com.github.e0ipso.tokkl.cache.CachedTimeEntry>())
+private val TOTAL_SETTINGS = MutableStateFlow<AccountSettings?>(
+    AccountSettings("UTC", DayOfWeek.MONDAY, null),
 )

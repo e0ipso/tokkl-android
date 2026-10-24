@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +34,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -44,6 +47,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entry.DescriptionSuggestion
 import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
@@ -54,6 +58,7 @@ import com.github.e0ipso.tokkl.favorites.TemplatesPopup
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.reports.spokenDuration
+import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
@@ -65,6 +70,8 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * The project, task and tag picker for an entry in [workspaceId], as [EntityPicker] takes it.
@@ -119,6 +126,7 @@ fun TimerBar(
                 }
             }
         }
+        TimerTotals(cache.timeEntries, model.accountSettings, clock)
     }
 }
 
@@ -380,6 +388,75 @@ private fun TimerButton(
         TimerButtonLook.Neutral -> TokklGhostButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
         TimerButtonLook.Danger -> TokklDangerButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
     }
+}
+
+/** Effective Room rows include queued changes and remaps; the pause-chain clock is not added. */
+@Composable
+internal fun TimerTotals(
+    entries: Flow<List<CachedTimeEntry>>,
+    settings: StateFlow<AccountSettings?>,
+    clock: Clock = Clock.systemUTC(),
+) {
+    val current by settings.collectAsState()
+    val cached: List<CachedTimeEntry>? by entries.collectAsState(initial = null)
+    val now = rememberTotalsNow(clock, current, cached?.any { it.stop == null } == true)
+    val account = current ?: return
+    val rows = cached ?: return
+    val totals = timerPeriodTotals(rows, account, now)
+    if (totals == null) {
+        Text(stringResource(R.string.history_unknown_time_zone, account.timeZone), style = MaterialTheme.typography.bodyLarge)
+        return
+    }
+    val text = totals.formatted(account)
+    TimerTotalsRow(text.today, text.week, totals.todaySeconds, totals.weekSeconds)
+}
+
+/** Wrap whole totals at large text sizes; the summary belongs to the scroll-away header. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TimerTotalsRow(today: String, week: String, todaySeconds: Long, weekSeconds: Long) {
+    FlowRow(
+        Modifier.fillMaxWidth().padding(top = TokklTheme.spacing.space3),
+        horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space4),
+        verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2),
+    ) {
+        TimerTotal(R.string.timer_total_today, today, todaySeconds, "timer_totals_today")
+        TimerTotal(R.string.timer_total_this_week, week, weekSeconds, "timer_totals_week")
+    }
+}
+
+/** TalkBack gets the account-period label and the elapsed duration in words. */
+@Composable
+private fun TimerTotal(@StringRes labelId: Int, value: String, seconds: Long, tag: String) {
+    val label = stringResource(labelId)
+    val spoken = stringResource(R.string.timer_total_spoken, label, spokenDuration(LocalResources.current, seconds))
+    Column(Modifier.testTag(tag).semantics(mergeDescendants = true) { contentDescription = spoken }) {
+        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+/**
+ * The instant the totals use. While an entry runs it moves each whole second. Otherwise it
+ * waits until account midnight, so an idle page still rolls the day and the week. With no
+ * [settings] zone there is nothing to roll.
+ */
+@Composable
+private fun rememberTotalsNow(clock: Clock, settings: AccountSettings?, hasRunning: Boolean): Instant {
+    var now by remember(clock) { mutableStateOf(clock.instant()) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val time = settings?.time()
+    LaunchedEffect(clock, lifecycle, time?.zone, time?.firstDayOfWeek, hasRunning) {
+        val accountTime = time ?: return@LaunchedEffect
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                val current = clock.instant()
+                now = current
+                delay(nextTotalsDelay(current, accountTime, hasRunning))
+            }
+        }
+    }
+    return now
 }
 
 /**

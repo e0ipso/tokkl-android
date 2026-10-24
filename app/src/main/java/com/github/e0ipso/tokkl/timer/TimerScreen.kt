@@ -45,24 +45,27 @@ enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
 
 /**
  * The Timer page, the first page after sign-in (docs/PRD.md B2), as the web app's TimerPage.tsx
- * lays it out: the [timer], then the List and Calendar switch, then the entries in the chosen
- * [view], under the top bar with the page's title, as on the other top-level pages. The bar never
- * carries the wordmark, which stays out of page headers (docs/PRD.md, Wordmark).
+ * lays it out: the [timer], then Today and This week, then the List and Calendar switch, then
+ * the entries in the chosen [view], under the top bar with the page's title, as on the other
+ * top-level pages. The bar never carries the wordmark, which stays out of page headers
+ * (docs/PRD.md, Wordmark). Today and This week are part of the timer slot, beneath its controls.
  *
  * [listContent], the history, and [calendarContent], the calendar, fill the rest of the page
  * under the switch, with a bounded height, so each scrolls on its own. On a window of compact
  * height, such as a phone held sideways or upright at the largest font scale, the bar, the timer
- * and the switch scroll away as the entries scroll on, so the entries get the page's whole
- * height ([ScrollAwayColumn]). A bar pinned there would leave the week grid too little room.
- * The Calendar view does the same at every height: on a phone held upright the timer and the
- * switch scroll away, and the grid has the page's height under the calendar's toolbar.
+ * with Today and This week, and the switch scroll away as the entries scroll on, so the entries
+ * get the page's whole height ([ScrollAwayColumn]). A bar pinned there would leave the week grid too
+ * little room. The Calendar view does the same at every height: on a phone held upright the
+ * timer, the totals and the switch scroll away, and the grid has the page's height under the
+ * calendar's toolbar.
  * On a phone held sideways the page opens in the Calendar view with all of that, the calendar's
  * toolbar too, already scrolled away, so the week shows at least four hour rows at once. A drag
  * on the day heads, or the grid back at midnight, brings them back, and TalkBack scrolls to them.
  *
  * On an expanded window the Calendar view takes the extra width, up to
- * [TokklSpacing.wideContentMaxWidth], so the week's columns get the room, and the timer and the
- * switch line up with it. The List view keeps a phone's column, so its lines stay short.
+ * [TokklSpacing.wideContentMaxWidth], so the week's columns get the room, and the timer,
+ * its totals and the switch line up with it. The List view keeps a phone's column, so its
+ * lines stay short.
  */
 @Composable
 fun TimerScreen(

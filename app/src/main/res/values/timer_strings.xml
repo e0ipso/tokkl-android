@@ -23,4 +23,9 @@
     </plurals>
     <!-- A suggestion from an entry with a project and no description, as the web app shows it. -->
     <string name="timer_suggestion_no_description">(no description)</string>
+    <!-- Beneath the timer, as the web app's Timer page sums the cached entries. -->
+    <string name="timer_total_today">Today</string>
+    <string name="timer_total_this_week">This week</string>
+    <!-- TalkBack reads the period and the duration in words, so 1:05:00 is not a time of day. -->
+    <string name="timer_total_spoken">%1$s, %2$s</string>
 </resources>
