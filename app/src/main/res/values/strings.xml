@@ -19,8 +19,8 @@
     <string name="settings_signing_out">Signing out…</string>
     <string name="settings_sign_out_title">Sign out and lose unsent changes?</string>
     <plurals name="settings_sign_out_unsent">
-        <item quantity="one">%d change hasn\'t reached the server yet. Signing out deletes it from this phone, along with everything else of this account.</item>
-        <item quantity="other">%d changes haven\'t reached the server yet. Signing out deletes them from this phone, along with everything else of this account.</item>
+        <item quantity="one">%d change hasn\'t reached the server yet. The count includes any unsaved Pomodoro work. Signing out deletes it from this phone, along with everything else of this account.</item>
+        <item quantity="other">%d changes haven\'t reached the server yet. The count includes any unsaved Pomodoro work. Signing out deletes them from this phone, along with everything else of this account.</item>
     </plurals>
     <string name="settings_sign_out_failed">Sign-out didn\'t finish, so some of this account\'s data may still be on the phone. Try again.</string>
 

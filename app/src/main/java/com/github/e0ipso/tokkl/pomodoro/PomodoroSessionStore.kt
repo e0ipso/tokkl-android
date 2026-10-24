@@ -74,13 +74,40 @@ class PomodoroSessionStore internal constructor(
     private val ringing: PomodoroRinging = NoPomodoroRinging,
 ) {
     private val phaseLock = Mutex()
+    private val callbacks = Any()
+
+    /** A forgotten store is never reused by a later account, including by retained page models. */
+    @Volatile internal var isForgotten: Boolean = false
+        private set
+
+    private fun notifyQueued() = synchronized(callbacks) {
+        if (!isForgotten) onQueued()
+    }
 
     private suspend fun <T> locked(block: suspend () -> T): T = withContext(io) {
         phaseLock.withLock { block() }
     }
 
     /** The running session, or null when none is. */
-    suspend fun current(): PomodoroSession? = withContext(io) { database.current() }
+    suspend fun current(): PomodoroSession? = locked { if (isForgotten) null else database.current() }
+
+    /**
+     * One snapshot of queued changes and the open work span. A rest still owns its preceding
+     * unsaved work, but elapsed rest alone never makes too-short work count as another change.
+     * A completed span is already in the ordinary queue and is counted there exactly once.
+     */
+    suspend fun unsavedChangeCount(): Int = locked {
+        if (isForgotten) return@locked 0
+        val at = now()
+        val time = accountTime()
+        database.transaction {
+            val session = database.current()
+            val end = session?.let { if (it.phaseKind == "work") at else it.phaseStartedAt }
+            val work = session != null && end != null && end.isAfter(session.pomodoroStartedAt) &&
+                snappedPomodoro(session.pomodoroStartedAt, end, time) != null
+            database.queuedCount() + if (work) 1 else 0
+        }
+    }
 
     /** True when the exact-alarm permission is denied. The Pomodoro page reads this. */
     fun exactAlarmPermissionDenied(): Boolean = alarms.permissionDenied
@@ -99,6 +126,7 @@ class PomodoroSessionStore internal constructor(
         plannedEnd(phase, lengths)
         val session = phase.stored(workspaceId, lengths, fields.distinctTags(), pomodoroStartedAt = phase.startedAt)
         val (saved, stoppedTimers) = locked {
+            check(!isForgotten) { "This account has signed out." }
             val result = database.transaction {
                 if (database.current() != null) throw IllegalStateException("A pomodoro session is already running.")
                 val stopped = database.stopTimers(session.phaseStartedAt)
@@ -108,7 +136,7 @@ class PomodoroSessionStore internal constructor(
             follow(database.current())
             result
         }
-        if (stoppedTimers) onQueued()
+        if (stoppedTimers) notifyQueued()
         return saved
     }
 
@@ -123,6 +151,7 @@ class PomodoroSessionStore internal constructor(
         val at = Instant.ofEpochMilli(clock.instant().toEpochMilli())
         val time = accountTime()
         val result = locked {
+            if (isForgotten) return@locked PomodoroStep.Idle
             val step = database.transaction {
                 val session = database.current() ?: return@transaction PomodoroStep.Idle
                 if (expected != null && session.phaseKey() != expected) return@transaction PomodoroStep.Idle
@@ -138,7 +167,7 @@ class PomodoroSessionStore internal constructor(
             if (step != PomodoroStep.Idle || database.current() == null) follow(database.current())
             step
         }
-        if (result is PomodoroStep.Saved) onQueued()
+        if (result is PomodoroStep.Saved) notifyQueued()
         return result
     }
 
@@ -149,6 +178,7 @@ class PomodoroSessionStore internal constructor(
         val at = Instant.ofEpochMilli(clock.instant().toEpochMilli())
         val time = accountTime()
         val result = locked {
+            if (isForgotten) return@locked PomodoroStep.Idle
             val step = database.transaction {
                 val session = database.current() ?: return@transaction PomodoroStep.Idle
                 if (expected != null && session.phaseKey() != expected) return@transaction PomodoroStep.Idle
@@ -158,7 +188,7 @@ class PomodoroSessionStore internal constructor(
             if (step != PomodoroStep.Idle || database.current() == null) follow(database.current())
             step
         }
-        if (result is PomodoroStep.Saved) onQueued()
+        if (result is PomodoroStep.Saved) notifyQueued()
         return result
     }
 
@@ -169,6 +199,7 @@ class PomodoroSessionStore internal constructor(
      * No callback, alarm operation or nested transaction may run here.
      */
     internal fun endForTimerInTransaction(at: Instant): PomodoroStep {
+        if (isForgotten) return PomodoroStep.Idle
         val session = database.current() ?: return PomodoroStep.Idle
         return close(session, at, accountTime(), next = null)
     }
@@ -183,10 +214,10 @@ class PomodoroSessionStore internal constructor(
         if (step == PomodoroStep.Idle) return
         try {
             phaseLock.withLock {
-                if (database.current() == null) releaseAlarm()
+                if (!isForgotten && database.current() == null) releaseAlarm()
             }
         } finally {
-            if (notifyQueue && step is PomodoroStep.Saved) onQueued()
+            if (notifyQueue && step is PomodoroStep.Saved) notifyQueued()
         }
     }
 
@@ -195,6 +226,7 @@ class PomodoroSessionStore internal constructor(
      * keeps the fields it was queued with.
      */
     suspend fun updateFields(fields: EntryFields): PomodoroSession? = locked {
+        if (isForgotten) return@locked null
         database.transaction {
             val session = database.current() ?: return@transaction null
             val updated = session.copy(fields = fields.distinctTags())
@@ -209,6 +241,7 @@ class PomodoroSessionStore internal constructor(
      */
     internal suspend fun onPhaseAlarm(expected: PomodoroPhaseKey? = null) {
         locked {
+            if (isForgotten) return@locked
             val session = database.current() ?: return@locked
             if (expected != null && session.phaseKey() != expected) return@locked
             val end = plannedEnd(session.phase(), session.config())
@@ -226,6 +259,7 @@ class PomodoroSessionStore internal constructor(
      */
     internal suspend fun rearm(deferRingingToAlarm: Boolean = false) {
         locked {
+            if (isForgotten) return@locked
             val session = database.current()
             if (session == null) {
                 releaseAlarm()
@@ -256,11 +290,28 @@ class PomodoroSessionStore internal constructor(
      * boot and clock changes. The session row is unchanged. Sign-out (TKA-0253) clears that row
      * with the cache and calls this so the alarm does not outlive the account.
      */
-    suspend fun disarm() = locked { releaseAlarm() }
+    suspend fun disarm() = locked { if (!isForgotten) releaseAlarm() }
+
+    /**
+     * Fence account-bound commands before waiting for any in-flight phase/output operation.
+     * Delete without saving work, then attempt every local cleanup even if one effect fails.
+     * The queue's existing sign-out steps cancel retries, await its sender and clear its rows.
+     */
+    suspend fun forget() {
+        synchronized(callbacks) { isForgotten = true }
+        locked {
+            try {
+                database.transaction { database.delete() }
+            } finally {
+                releaseAlarm()
+            }
+        }
+    }
 
     /** Removes the session row and the alarm without queueing an entry. The boot test uses it. */
     internal suspend fun discardRunningSession() {
         locked {
+            if (isForgotten) return@locked
             database.transaction { database.delete() }
             releaseAlarm()
         }
@@ -313,6 +364,7 @@ class PomodoroSessionStore internal constructor(
     }
 
     private fun currentRinging(expected: PomodoroPhaseKey?): PomodoroSession? {
+        if (isForgotten) return null
         val session = database.current() ?: return null
         if (expected != null && session.phaseKey() != expected) return null
         if (phaseEnds.read() != ReachedPhaseEnd(session.phaseKind, session.phaseStartedAt)) return null
@@ -320,6 +372,7 @@ class PomodoroSessionStore internal constructor(
     }
 
     private suspend fun follow(session: PomodoroSession?) {
+        if (isForgotten) return
         if (session == null) {
             releaseAlarm()
             return
@@ -332,10 +385,19 @@ class PomodoroSessionStore internal constructor(
     }
 
     private suspend fun releaseAlarm() {
-        ringing.stop()
-        alarms.watchSession(false)
-        alarms.cancel()
-        phaseEnds.clear()
+        try {
+            ringing.stop()
+        } finally {
+            try {
+                alarms.watchSession(false)
+            } finally {
+                try {
+                    alarms.cancel()
+                } finally {
+                    phaseEnds.clear()
+                }
+            }
+        }
     }
 
     companion object {
@@ -385,6 +447,9 @@ internal interface PomodoroSessionDatabase {
 
     fun delete()
 
+    /** The ordinary queue, including held or possibly-sent creates. Read inside [transaction]. */
+    fun queuedCount(): Int = 0
+
     /** Queues a stopped create on this thread. The caller is inside [transaction]. */
     fun createStopped(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long
 
@@ -410,6 +475,12 @@ internal class RoomPomodoroSessionDatabase(
     override fun delete() {
         dao.delete()
     }
+
+    override fun queuedCount(): Int =
+        database.openHelper.readableDatabase.query("SELECT COUNT(*) FROM pending_changes").use {
+            check(it.moveToFirst())
+            it.getInt(0)
+        }
 
     override fun createStopped(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
         queue.queueStoppedCreate(workspaceId, fields, start, stop)
