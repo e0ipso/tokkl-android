@@ -13,11 +13,15 @@ import java.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -83,8 +87,12 @@ class PomodoroScreenModel(
     settings: StateFlow<AccountSettings?>,
     unsent: Flow<Int>,
     refused: Flow<List<PendingChange>>,
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
+    private val sessionChanges: Flow<*> = store.notificationChanges,
 ) {
+    private val lifetime = SupervisorJob(scope.coroutineContext[Job])
+    private val modelScope = CoroutineScope(scope.coroutineContext + lifetime)
+    private var retired = false
     private val mutableState = MutableStateFlow(
         PomodoroPageState(lengths = PomodoroLengths.from(defaults.value), account = settings.value),
     )
@@ -96,21 +104,23 @@ class PomodoroScreenModel(
     private var exactAlarmAllowed: Boolean? = null
 
     init {
-        scope.launch { defaults.collect { value ->
+        modelScope.launch { defaults.collect { value ->
             if (!lengthsEdited) mutableState.update { it.copy(lengths = PomodoroLengths.from(value)) }
         } }
-        scope.launch { settings.collect { account -> mutableState.update { it.copy(account = account) } } }
-        scope.launch { unsent.collect { count -> mutableState.update { it.copy(unsentCount = count) } } }
-        scope.launch { refused.collect { changes -> mutableState.update { it.copy(refused = changes) } } }
+        modelScope.launch { settings.collect { account -> mutableState.update { it.copy(account = account) } } }
+        modelScope.launch { unsent.collect { count -> mutableState.update { it.copy(unsentCount = count) } } }
+        modelScope.launch { refused.collect { changes -> mutableState.update { it.copy(refused = changes) } } }
     }
 
     /** Refreshed on resume after returning from full-screen special app access settings. */
     fun fullScreenPermissionChanged(allowed: Boolean) {
+        if (retireIfForgotten()) return
         mutableState.update { it.copy(fullScreenDenied = !allowed) }
     }
 
     /** Permission changes update notices only; a late grant never restarts a session. */
     internal fun permissionsChanged(grants: PomodoroPermissions) {
+        if (retireIfForgotten()) return
         exactAlarmAllowed = grants.exactAlarm
         mutableState.update {
             it.copy(notificationsDenied = !grants.notifications, alarmDenied = !grants.exactAlarm, fullScreenDenied = !grants.fullScreen)
@@ -119,66 +129,112 @@ class PomodoroScreenModel(
 
     private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: store.exactAlarmPermissionDenied()
 
-    /** Called on opening and resuming the page; never polls or sends a request. */
-    fun reload(): Job = scope.launch {
-        commands.withLock {
-            try {
-                val revision = fieldsRevision
-                val current = store.current()
-                val ended = state.value.session != null && current == null
-                if (ended) lengthsEdited = false
-                mutableState.update {
-                    it.copy(
-                        loading = false, session = current,
-                        lengths = if (ended) PomodoroLengths.from(defaults.value) else it.lengths,
-                        fields = if (revision == fieldsRevision && fieldsRevision == storedFieldsRevision) current?.fields ?: it.fields else it.fields,
-                        alarmDenied = alarmDenied(),
-                        problem = it.problem?.takeUnless { problem -> problem.action == PomodoroAction.LOAD },
-                    )
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                mutableState.update { it.copy(loading = true, problem = PomodoroSaveProblem(PomodoroAction.LOAD, e.message)) }
+    /** Collected by the resumed page. Cancellation owns the read as well as the subscription. */
+    suspend fun observeSession() = coroutineScope {
+        // The page's lifecycle owns this coroutine, but clearing its ViewModel must stop it
+        // too, even before Compose disposes the old page. Remove the hook on every stop.
+        val observer = coroutineContext.job
+        val completion = lifetime.invokeOnCompletion { observer.cancel() }
+        try {
+            sessionChanges.takeWhile { !retired && !store.isForgotten }.collect {
+                commands.withLock { refreshLocked() }
             }
+            if (store.isForgotten) retire()
+        } finally {
+            completion.dispose()
         }
     }
 
+    /** Called on opening and resuming the page; never polls or sends a request. */
+    fun reload(): Job = modelScope.launch { commands.withLock { refreshLocked() } }
+
+    private suspend fun refreshLocked() {
+        if (retireIfForgotten()) return
+        try {
+            val revision = fieldsRevision
+            val current = store.current()
+            if (retireIfForgotten()) return
+            val ended = state.value.session != null && current == null
+            if (ended) lengthsEdited = false
+            mutableState.update {
+                it.copy(
+                    loading = false, session = current,
+                    lengths = if (ended) PomodoroLengths.from(defaults.value) else it.lengths,
+                    fields = if (revision == fieldsRevision && fieldsRevision == storedFieldsRevision) current?.fields ?: it.fields else it.fields,
+                    alarmDenied = alarmDenied(),
+                    problem = it.problem?.takeUnless { problem -> problem.action == PomodoroAction.LOAD },
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            mutableState.update { it.copy(loading = true, problem = PomodoroSaveProblem(PomodoroAction.LOAD, e.message)) }
+        }
+    }
+
+    private fun retireIfForgotten(): Boolean {
+        if (store.isForgotten) retire()
+        return retired
+    }
+
+    private fun retire() {
+        if (retired) return
+        retired = true
+        lifetime.cancel()
+        lengthsEdited = false
+        fieldsRevision = 0L
+        storedFieldsRevision = 0L
+        mutableState.value = PomodoroPageState(
+            loading = false, lengths = PomodoroLengths.from(PomodoroDefaults.DEFAULT),
+        )
+    }
+
     fun editLengths(lengths: PomodoroLengths) {
-        if (state.value.loading || state.value.busy || state.value.session != null) return
+        if (retireIfForgotten() || state.value.loading || state.value.busy || state.value.session != null) return
         lengthsEdited = true
         mutableState.update { it.copy(lengths = lengths) }
     }
 
     /** Writes fields only. It never finishes a phase or revisits a queued entry. */
-    fun editFields(fields: EntryFields): Job? {
-        if (state.value.loading || state.value.busy || state.value.workspaceId == null) return null
+    fun editFields(fields: EntryFields, expected: PomodoroPhaseKey? = state.value.session?.phaseKey()): Job? {
+        if (retireIfForgotten() || state.value.loading || state.value.busy || state.value.workspaceId == null) return null
+        // A focus-loss callback can be captured by the same old composition as Next or End.
+        if (expected != state.value.session?.phaseKey()) return reload()
         fieldsRevision++
         mutableState.update { it.copy(fields = fields) }
-        if (state.value.session == null) return null
-        return scope.launch {
+        if (expected == null) return null
+        return modelScope.launch {
             commands.withLock {
                 try {
                     val revision = fieldsRevision
-                    val current = store.updateFields(state.value.fields)
+                    val current = store.updateFieldsIfCurrent(state.value.fields, expected)
+                    if (retireIfForgotten()) return@withLock
+                    if (current == null) {
+                        refreshLocked()
+                        return@withLock
+                    }
                     storedFieldsRevision = revision
                     mutableState.update { it.copy(session = current, problem = null) }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    mutableState.update { it.copy(problem = PomodoroSaveProblem(PomodoroAction.FIELDS, e.message)) }
+                    if (!retireIfForgotten()) {
+                        mutableState.update { it.copy(problem = PomodoroSaveProblem(PomodoroAction.FIELDS, e.message)) }
+                    }
                 }
             }
         }
     }
 
     fun start(onStarted: () -> Unit = {}): Job? {
+        if (retireIfForgotten()) return null
         val before = state.value
         if (!before.canStart || before.session != null) return null
         val lengths = before.lengths.config() ?: return null
         val workspace = before.workspaceId ?: return null
         return command(PomodoroAction.START) {
             val current = store.start(lengths, before.fields, workspace)
+            if (retireIfForgotten()) return@command
             storedFieldsRevision = fieldsRevision
             mutableState.update { it.copy(session = current, fields = current.fields) }
             // The session is committed before requesting anything; no grant is awaited.
@@ -186,42 +242,47 @@ class PomodoroScreenModel(
         }
     }
 
-    fun next(): Job? = finish(PomodoroAction.NEXT, store::nextPhase)
+    fun next(expected: PomodoroPhaseKey? = state.value.session?.phaseKey()): Job? =
+        finish(PomodoroAction.NEXT, expected, store::nextPhaseIfCurrent)
 
-    fun end(): Job? = finish(PomodoroAction.END, store::end)
+    fun end(expected: PomodoroPhaseKey? = state.value.session?.phaseKey()): Job? =
+        finish(PomodoroAction.END, expected, store::endIfCurrent)
 
-    private fun finish(action: PomodoroAction, step: suspend () -> PomodoroStep): Job? {
-        if (state.value.session == null || state.value.loading || state.value.busy) return null
+    private fun finish(
+        action: PomodoroAction,
+        expected: PomodoroPhaseKey?,
+        step: suspend (PomodoroPhaseKey) -> PomodoroStep,
+    ): Job? {
+        if (retireIfForgotten() || expected == null || state.value.loading || state.value.busy) return null
         return command(action) {
-            // Also retries a failed field write before freezing the entry. A failure stops here.
-            store.updateFields(state.value.fields)
-            storedFieldsRevision = fieldsRevision
-            val result = step()
-            val current = when (result) {
-                PomodoroStep.Idle -> null
-                is PomodoroStep.Running -> result.session
-                is PomodoroStep.Saved -> result.session
-                is PomodoroStep.TooShort -> result.session
+            // Retry dirty fields only for the displayed phase. The transition checks again
+            // under its transaction lock, including a competing action during this write.
+            val revision = fieldsRevision
+            val written = store.updateFieldsIfCurrent(state.value.fields, expected)
+            if (retireIfForgotten()) return@command
+            if (written == null) {
+                refreshLocked()
+                return@command
             }
+            storedFieldsRevision = revision
+            val result = step(expected)
+            if (retireIfForgotten()) return@command
+            // Idle also means a stale identity. Read the actual row instead of showing idle
+            // or publishing the result's snapshot after another action has already advanced it.
+            refreshLocked()
             val notice = when (result) {
                 is PomodoroStep.Saved -> PomodoroNotice.SAVED_ON_PHONE
                 is PomodoroStep.TooShort -> PomodoroNotice.TOO_SHORT
                 else -> null
             }
-            if (current == null) lengthsEdited = false
-            mutableState.update {
-                it.copy(
-                    session = current, fields = current?.fields ?: it.fields, notice = notice,
-                    lengths = if (current == null) PomodoroLengths.from(defaults.value) else it.lengths,
-                )
-            }
+            mutableState.update { it.copy(notice = notice) }
         }
     }
 
     private fun command(action: PomodoroAction, block: suspend () -> Unit): Job {
         // Synchronous guard prevents a second tap while the first is waiting for disk.
         mutableState.update { it.copy(busy = true, problem = null, notice = null) }
-        return scope.launch {
+        return modelScope.launch {
             commands.withLock {
                 try {
                     block()
@@ -244,7 +305,9 @@ class PomodoroScreenModel(
                     }
                     mutableState.update { it.copy(problem = PomodoroSaveProblem(action, e.message)) }
                 } finally {
-                    mutableState.update { it.copy(busy = false, alarmDenied = alarmDenied()) }
+                    if (!retireIfForgotten()) {
+                        mutableState.update { it.copy(busy = false, alarmDenied = alarmDenied()) }
+                    }
                 }
             }
         }

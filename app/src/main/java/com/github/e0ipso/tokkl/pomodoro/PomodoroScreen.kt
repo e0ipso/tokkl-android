@@ -75,22 +75,26 @@ fun PomodoroScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 model.permissionsChanged(pomodoroPermissions(context))
-                model.reload()
             }
         }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
+    LaunchedEffect(model, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { model.observeSession() }
+    }
+    // Capture the identity drawn by this composition, before any later state emission or tap.
+    val displayedPhase = state.session?.phaseKey()
     PomodoroContent(
         state = state,
         onLengths = model::editLengths,
-        onFields = { model.editFields(it) },
+        onFields = { model.editFields(it, displayedPhase) },
         onStart = {
             model.permissionsChanged(pomodoroPermissions(context))
             model.start(onNotificationStart)
         },
-        onNext = { model.next() },
-        onEnd = { model.end() },
+        onNext = { model.next(displayedPhase) },
+        onEnd = { model.end(displayedPhase) },
         onReload = { model.reload() },
         projects = projects,
         tasks = tasks,

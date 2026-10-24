@@ -241,10 +241,14 @@ class PomodoroSessionStore internal constructor(
      * Keeps [fields] for the pomodoro in progress and for later ones. A pomodoro already queued
      * keeps the fields it was queued with.
      */
-    suspend fun updateFields(fields: EntryFields): PomodoroSession? = locked {
+    suspend fun updateFields(fields: EntryFields): PomodoroSession? = updateFieldsIfCurrent(fields, null)
+
+    /** Page drafts must not overwrite fields belonging to a phase the page never displayed. */
+    internal suspend fun updateFieldsIfCurrent(fields: EntryFields, expected: PomodoroPhaseKey?): PomodoroSession? = locked {
         if (isForgotten) return@locked null
         database.transaction {
             val session = database.current() ?: return@transaction null
+            if (expected != null && session.phaseKey() != expected) return@transaction null
             val updated = session.copy(fields = fields.distinctTags())
             database.save(updated)
             notificationChanged()

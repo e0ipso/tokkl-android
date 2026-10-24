@@ -4,6 +4,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.Destination
@@ -39,12 +41,17 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonObject
@@ -83,6 +90,7 @@ class PomodoroPageServerTest {
     private lateinit var model: PomodoroScreenModel
     private lateinit var sender: ChangeSender
     private val shown = MutableStateFlow<PomodoroScreenModel?>(null)
+    private val pageObservers = AtomicInteger()
 
     @Before
     fun prepareDisposableAccountAndDatabase() {
@@ -232,8 +240,150 @@ class PomodoroPageServerTest {
             .performScrollTo().assertIsDisplayed()
     }
 
+    @Test
+    fun notificationNextRefreshesTheResumedPageAndCapturedButtonsCannotAdvanceItAgain() {
+        show()
+        type(R.string.entry_description, "Notification work")
+        tap(R.string.pomodoro_start)
+        await { model.state.value.session != null && !model.state.value.busy }
+        assertResumed()
+        val work = model.state.value.session!!
+        val staleNext = button(R.string.pomodoro_start_short_rest).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
+        val staleEnd = button(R.string.pomodoro_end).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
+        instant.set(Instant.parse("2026-10-24T09:45:00Z"))
+        runBlocking { notificationActions().act("page-test", work.phaseKey(), end = false) }
+        await { model.state.value.session?.phaseKind == "shortRest" }
+        compose.onNodeWithText(context.getString(R.string.pomodoro_short_rest)).performScrollTo().assertIsDisplayed()
+        assertResumed()
+        val rest = runBlocking { store.current() }
+        compose.runOnIdle { assertTrue(staleNext()) }
+        await { !model.state.value.busy }
+        assertEquals(rest, runBlocking { store.current() })
+        compose.runOnIdle { assertTrue(staleEnd()) }
+        await { !model.state.value.busy }
+        assertEquals(rest, runBlocking { store.current() })
+        assertEquals(0, runBlocking { queue.unsentCount.first() })
+        assertNull(model.state.value.notice)
+        // Controls drawn for the new phase retain their ordinary save and End behavior.
+        instant.set(Instant.parse("2026-10-24T10:00:00Z"))
+        tap(R.string.pomodoro_start_work)
+        await { model.state.value.session?.phaseKind == "work" && !model.state.value.busy }
+        assertEquals(1, runBlocking { queue.unsentCount.first() })
+        instant.set(Instant.parse("2026-10-24T10:15:00Z"))
+        tap(R.string.pomodoro_end)
+        await { model.state.value.session == null && !model.state.value.busy }
+        assertEquals(2, runBlocking { queue.unsentCount.first() })
+        runBlocking { sender.sendAndWait() }
+        val entries = runBlocking { AccountCache(database).timeEntries.first() }
+        assertEquals(2, entries.size)
+        entries.forEach { entry ->
+            assertEquals("Notification work", account.entry(entry.id).getValue("description").jsonPrimitive.content)
+        }
+    }
+
+    @Test
+    fun capturedControlsCannotChangeAReplacementAndExternalSignOutClearsTheResumedPage() {
+        show()
+        type(R.string.entry_description, "First session")
+        tap(R.string.pomodoro_start)
+        await { model.state.value.session != null && !model.state.value.busy }
+        val first = model.state.value.session!!
+        val staleNext = button(R.string.pomodoro_start_short_rest).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
+        val staleEnd = button(R.string.pomodoro_end).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
+        instant.set(Instant.parse("2026-10-24T09:15:00Z"))
+        val actions = notificationActions()
+        runBlocking { actions.act("page-test", first.phaseKey(), end = true) }
+        instant.set(Instant.parse("2026-10-24T09:16:00Z"))
+        val replacement = runBlocking {
+            store.start(first.screenLengths(), first.fields.copy(description = "Replacement session"), first.workspaceId)
+        }
+        await { model.state.value.session == replacement }
+        field(R.string.entry_description).assert(hasText("Replacement session"))
+        compose.runOnIdle { assertTrue(staleEnd()) }
+        await { !model.state.value.busy }
+        compose.runOnIdle { assertTrue(staleNext()) }
+        await { !model.state.value.busy }
+        assertEquals(replacement, runBlocking { store.current() })
+        assertEquals(1, runBlocking { queue.unsentCount.first() })
+        runBlocking { store.forget() }
+        await { model.state.value.session == null && model.state.value.account == null && pageObservers.get() == 0 }
+        field(R.string.entry_description).assert(hasText(""))
+        button(R.string.pomodoro_start).performScrollTo().assertIsNotEnabled()
+        assertEquals(1, runBlocking { queue.unsentCount.first() })
+        assertResumed()
+    }
+
+    @Test
+    fun roomChangesRefreshContextAndExternalEndResetsDefaultsWithoutResumeOrStoreCallbacks() {
+        show()
+        type(R.string.pomodoro_work_minutes, "1")
+        tap(R.string.pomodoro_start)
+        await { model.state.value.session != null && !model.state.value.busy }
+        val first = model.state.value.session!!
+        val rest = first.copy(
+            phaseKind = "shortRest", phaseStartedAt = first.phaseStartedAt.plusSeconds(60), completed = 1.0,
+            fields = first.fields.copy(description = "Durable external edit"),
+        )
+        // Room invalidation also covers changes made by cache/timer handoff transactions.
+        runBlocking(Dispatchers.IO) {
+            database.runInTransaction { database.pomodoroSessions().upsert(rest) }
+        }
+        await { model.state.value.session == rest }
+        compose.onNodeWithText(context.getString(R.string.pomodoro_short_rest)).performScrollTo().assertIsDisplayed()
+        field(R.string.entry_description).performScrollTo().assert(hasText("Durable external edit"))
+        runBlocking(Dispatchers.IO) {
+            database.runInTransaction { database.pomodoroSessions().delete() }
+        }
+        await { model.state.value.session == null }
+        assertEquals(PomodoroLengths.from(app.pomodoroDefaults.defaults.value), model.state.value.lengths)
+        field(R.string.pomodoro_work_minutes).performScrollTo().assert(hasText("40"))
+        assertEquals(0, runBlocking { queue.unsentCount.first() })
+        assertResumed()
+    }
+
+    @Test
+    fun pageDisposalAndLifecycleStopReleaseTheirCollectorAndResumeUsesDurableState() {
+        show()
+        type(R.string.entry_description, "Keep my form")
+        await { pageObservers.get() == 1 }
+        shown.value = null
+        await { pageObservers.get() == 0 }
+        assertEquals("Keep my form", model.state.value.fields.description)
+        shown.value = model
+        await { pageObservers.get() == 1 }
+        field(R.string.entry_description).assert(hasText("Keep my form"))
+        tap(R.string.pomodoro_start)
+        await { model.state.value.session != null && !model.state.value.busy }
+        val first = model.state.value.session!!
+        compose.activityRule.scenario.moveToState(Lifecycle.State.STARTED)
+        await { pageObservers.get() == 0 }
+        instant.set(Instant.parse("2026-10-24T09:15:00Z"))
+        runBlocking { store.nextPhaseIfCurrent(first.phaseKey()) }
+        assertEquals(first, model.state.value.session)
+        compose.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        await { pageObservers.get() == 1 && model.state.value.session?.phaseKind == "shortRest" }
+        assertEquals(runBlocking { store.current() }, model.state.value.session)
+        assertEquals(0, runBlocking { queue.unsentCount.first() })
+    }
+
+    private fun assertResumed() = compose.runOnIdle {
+        assertEquals(Lifecycle.State.RESUMED, compose.activity.lifecycle.currentState)
+    }
+
+    private fun notificationActions() = PomodoroSessionNotificationSync(
+        sessions = store, changes = MutableStateFlow(Unit), signedIn = { true }, serviceRunning = { false },
+        load = { PomodoroNotificationDisplay("page-test") }, save = {}, post = { _, _ -> true },
+        remove = {}, scope = scope, io = Dispatchers.IO,
+    )
+
     private fun newModel() = PomodoroScreenModel(
         store, app.pomodoroDefaults.defaults, app.accountSettings.state, queue.unsentCount, queue.held, scope,
+        sessionChanges = flow {
+            pageObservers.incrementAndGet()
+            try {
+                emitAll(merge(database.pomodoroSessions().running().map { Unit }, store.notificationChanges.map { Unit }))
+            } finally { pageObservers.decrementAndGet() }
+        },
     )
 
     private fun show() {
