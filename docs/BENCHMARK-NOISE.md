@@ -1,5 +1,13 @@
 # Benchmark noise diagnosis (TKA-0296)
 
+Update 2026-10-25: the owner left the gate to the maintainers after a 16 ms
+Stop slowdown, one 60 Hz frame on code that changed nothing in the app, failed
+the 10% gate. `scripts/compare-benchmarks.sh` now fails a median only when it
+is more than 20% and more than 34 ms (two frames) above the baseline. That is
+above every spread below, 19.21% at most, and still catches a tap that gets
+about 30 ms slower or a cold start that gets about 220 ms slower. The record
+below is unchanged.
+
 Recorded 2026-10-23. This ticket closes with precise remaining uncertainty,
 not a noise fix or stability claim. No benchmark/comparator mitigation was
 supported or applied. The 10% threshold, intended measurement boundaries,

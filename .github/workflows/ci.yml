@@ -172,8 +172,8 @@ jobs:
   # cold start, and the time from a Start or Stop tap on the Timer page until
   # the screen shows what it did. The 1.5 s and 200 ms goals are for a
   # mid-range phone, which the emulator is not, so they gate nothing. Instead
-  # the job fails when a median is more than 10% above the one of the last
-  # green run on main (scripts/compare-benchmarks.sh). Each run on main that
+  # the job fails when a median is more than 20% and 34 ms above the one of the
+  # last green run on main (scripts/compare-benchmarks.sh). Each run on main that
   # passes the comparison stores its results as an artifact, and a later run
   # takes them from the newest run on main whose every job passed. Without
   # such a run, or once its artifact has expired, the job only reports the
