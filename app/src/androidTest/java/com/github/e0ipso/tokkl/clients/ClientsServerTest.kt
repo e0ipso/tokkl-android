@@ -25,9 +25,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
@@ -324,48 +322,43 @@ class ClientsServerTest {
         composeRule.setContent { TokklTheme { ClientsScreen(model) } }
     }
 
-    /** Types [text] into the field, as a user does, and waits until the keyboard it opens takes up room. */
+    /** Types [text] into the field, as a user does. */
     private fun SemanticsNodeInteraction.type(text: String) {
         performScrollTo().performTextInput(text)
-        awaitKeyboard()
     }
 
-    /** Clears the field, as a user does, and waits until the keyboard it opens takes up room. */
+    /** Clears the field, as a user does. */
     private fun SemanticsNodeInteraction.clear() {
         performScrollTo().performTextClearance()
-        awaitKeyboard()
     }
 
     /**
      * Taps the control, scrolled into view unless [scroll] is false, once it has kept still for
      * [STILL_MS]. While the keyboard slides in or out, the page shrinks or grows above it frame
      * by frame, and a tap aimed at where a control near the bottom was lands beside it.
+     * If the keyboard covers the control after the scroll, scroll again: a clipped control can
+     * keep still too, but a tap on it reaches the keyboard.
      */
     private fun SemanticsNodeInteraction.tap(scroll: Boolean = true) {
         if (scroll) performScrollTo()
         var bounds: Rect? = null
         var since = SystemClock.uptimeMillis()
         composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
-            val now = fetchSemanticsNode().boundsInRoot
-            if (now != bounds) {
+            val node = fetchSemanticsNode()
+            val now = node.boundsInRoot
+            val fullyVisible = now.width > 0 && now.height > 0 &&
+                now.width >= node.size.width && now.height >= node.size.height
+            if (!fullyVisible) {
+                if (scroll) performScrollTo()
+                bounds = null
+                since = SystemClock.uptimeMillis()
+            } else if (now != bounds) {
                 bounds = now
                 since = SystemClock.uptimeMillis()
             }
-            SystemClock.uptimeMillis() - since >= STILL_MS
+            fullyVisible && SystemClock.uptimeMillis() - since >= STILL_MS
         }
         performClick()
-    }
-
-    /** Waits until the keyboard takes up room at the bottom of the window. */
-    private fun awaitKeyboard() {
-        val decor = composeRule.activity.window.decorView
-        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
-            var height = 0
-            InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                height = ViewCompat.getRootWindowInsets(decor)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
-            }
-            height > 0
-        }
     }
 
     /**

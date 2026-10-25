@@ -28,9 +28,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
@@ -438,16 +436,14 @@ class ProjectsServerTest {
         composeRule.setContent { TokklTheme { ProjectsScreen(model) } }
     }
 
-    /** Types [text] into the field, as a user does, and waits until the keyboard it opens takes up room. */
+    /** Types [text] into the field, as a user does. */
     private fun SemanticsNodeInteraction.type(text: String) {
         performScrollTo().performTextInput(text)
-        awaitKeyboard()
     }
 
-    /** Clears the field, as a user does, and waits until the keyboard it opens takes up room. */
+    /** Clears the field, as a user does. */
     private fun SemanticsNodeInteraction.clear() {
         performScrollTo().performTextClearance()
-        awaitKeyboard()
     }
 
     /**
@@ -479,18 +475,6 @@ class ProjectsServerTest {
             fullyVisible && SystemClock.uptimeMillis() - since >= STILL_MS
         }
         performClick()
-    }
-
-    /** Waits until the keyboard takes up room at the bottom of the window. */
-    private fun awaitKeyboard() {
-        val decor = composeRule.activity.window.decorView
-        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
-            var height = 0
-            InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                height = ViewCompat.getRootWindowInsets(decor)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
-            }
-            height > 0
-        }
     }
 
     /**
