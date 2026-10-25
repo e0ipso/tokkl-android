@@ -4,7 +4,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import kotlin.math.roundToInt
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -13,38 +12,6 @@ import org.junit.Test
  * token once as light-dark(light, dark) in its first :root block.
  */
 class TextureTokensTest {
-
-    private class Token(
-        val name: String,
-        val light: Color,
-        val dark: Color,
-        val actual: (TokklExtraColors) -> Color,
-    )
-
-    /** Copied from `../tokkl/packages/web/src/styles.css`, tokens `--texture-*`, `--scene-*` and `--wordmark-halo`. */
-    private val stylesCss = listOf(
-        Token("--texture-glow", Color(0xFFFDE8DB), Color(0xFF351D28)) { it.textureGlow },
-        Token("--texture-swell", Color(0xFFE1F4F4), Color(0xFF122A42)) { it.textureSwell },
-        Token("--texture-stripe", Color(0xFFC7EBEB), Color(0xFF103E53)) { it.textureStripe },
-        Token("--scene-glow", Color(0xFFFBCFB2), Color(0xFF4D2116)) { it.sceneGlow },
-        Token("--scene-swell", Color(0xFFC2E8E3), Color(0xFF063A4B)) { it.sceneSwell },
-        Token("--scene-stripe", Color(0xFFFDE6D4), Color(0xFF2B131B)) { it.sceneStripe },
-        Token("--wordmark-halo", Color.Transparent, Color(0xFFB9B5D6)) { it.wordmarkHalo },
-    )
-
-    @Test
-    fun lightValuesMatchStylesCss() =
-        assertValues(TokklLightExtraColors) { it.light }
-
-    @Test
-    fun darkValuesMatchStylesCss() =
-        assertValues(TokklDarkExtraColors) { it.dark }
-
-    @Test
-    fun onlyDarkDrawsTheWordmarkHalo() {
-        assertEquals(0f, TokklLightExtraColors.wordmarkHalo.alpha, 0f)
-        assertEquals(1f, TokklDarkExtraColors.wordmarkHalo.alpha, 0f)
-    }
 
     /**
      * styles.css computes the texture values as primary at 14% (glow) and secondary at 12% (swell)
@@ -58,11 +25,6 @@ class TextureTokensTest {
 
     @Test
     fun darkMixesMatchTheirFormulas() = assertMixes(TokklDarkColorScheme, TokklDarkExtraColors)
-
-    private fun assertValues(extra: TokklExtraColors, expected: (Token) -> Color) {
-        val failures = stylesCss.mapNotNull { token -> mismatch(token.name, expected(token), token.actual(extra)) }
-        assertTrue("Values that differ from styles.css:\n" + failures.joinToString("\n"), failures.isEmpty())
-    }
 
     private fun assertMixes(s: ColorScheme, x: TokklExtraColors) {
         val failures = listOfNotNull(

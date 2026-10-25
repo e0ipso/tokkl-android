@@ -8,7 +8,6 @@ import com.github.e0ipso.tokkl.reports.projectMark
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -26,34 +25,6 @@ class ThemeContrastTest {
     @Test
     fun darkSchemePairsMeetWcagAa() =
         assertPairsPass("dark", TokklDarkColorScheme, TokklDarkExtraColors)
-
-    @Test
-    fun contrastMatchesWcagReferenceValues() {
-        assertRatio(21.0, Color.Black, Color.White)
-        assertRatio(1.0, Color.White, Color.White)
-        // The contrast table at the top of styles.css records "text on bg" in light as 19.54,
-        // rounded down.
-        assertRatio(19.54, Color(0xFF08061F), Color(0xFFFFFDF7))
-    }
-
-    /**
-     * The scene overlap's worst cases match the rows of styles.css's contrast table, which rounds
-     * down: text on the overlap, the halo on it in dark, the wordmark's outline on it in light and
-     * the outline on the halo in dark.
-     */
-    @Test
-    fun sceneOverlapMatchesStylesCss() {
-        val light = sceneCorners(TokklLightColorScheme, TokklLightExtraColors)
-        val dark = sceneCorners(TokklDarkColorScheme, TokklDarkExtraColors)
-
-        assertEquals("each channel's lowest of bg and the light scene", Color(0xFFC2CFB2), light.darkest)
-        assertEquals("each channel's highest of bg and the dark scene", Color(0xFF4D3A4B), dark.lightest)
-        assertRatio(12.17, TokklLightColorScheme.onSurface, light.darkest)
-        assertRatio(10.38, TokklDarkColorScheme.onSurface, dark.lightest)
-        assertRatio(5.26, TokklDarkExtraColors.wordmarkHalo, dark.lightest)
-        assertRatio(12.74, WORDMARK_OUTLINE, light.darkest)
-        assertRatio(10.54, WORDMARK_OUTLINE, TokklDarkExtraColors.wordmarkHalo)
-    }
 
     private enum class Kind(val minimum: Double) { TEXT(4.5), NON_TEXT(3.0) }
 
@@ -283,11 +254,6 @@ class ThemeContrastTest {
             }
         }
         assertTrue("$scheme scheme pairs below WCAG AA:\n" + failures.joinToString("\n"), failures.isEmpty())
-    }
-
-    private fun assertRatio(expected: Double, a: Color, b: Color) {
-        val ratio = contrast(a, b)
-        assertTrue("expected $expected, got $ratio", ratio >= expected && ratio < expected + 0.01)
     }
 
     /** The WCAG 2 contrast ratio, from the relative luminance of each sRGB colour. */

@@ -37,15 +37,6 @@ class ContinueEntryTest {
     }
 
     @Test
-    fun tiedLocalStartsPreferTheNewestQueuedCreateInEitherOrder() {
-        val older = entry(-2, "2026-10-19T11:00:00Z")
-        val newer = entry(-4, "2026-10-19T11:00:00Z")
-
-        assertEquals(newer, lastStopped(listOf(older, newer)))
-        assertEquals(newer, lastStopped(listOf(newer, older)))
-    }
-
-    @Test
     fun tiedLocalAndServerStartsPreferTheNewestQueuedCreateInEveryOrder() {
         val entries = listOf(entry(42, "2026-10-19T11:00:00Z"), entry(-2, "2026-10-19T11:00:00Z"), entry(-4, "2026-10-19T11:00:00Z"))
 

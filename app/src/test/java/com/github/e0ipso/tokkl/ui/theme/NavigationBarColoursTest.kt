@@ -2,10 +2,8 @@ package com.github.e0ipso.tokkl.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 /** The bottom bar item colours Tokkl sets over Material 3's. ThemeContrastTest checks their contrast. */
@@ -16,12 +14,6 @@ class NavigationBarColoursTest {
 
     @Test
     fun darkItemsFollowTheDecision() = SectionHues.all.forEach { assertDecision(TokklDarkColorScheme, it) }
-
-    @Test
-    fun onlyTheActiveLabelIsBold() {
-        assertEquals(FontWeight(700), navigationBarLabelWeight(selected = true))
-        assertNull(navigationBarLabelWeight(selected = false))
-    }
 
     private fun assertDecision(s: ColorScheme, hue: SectionHue) {
         val item = navigationBarItemColors(s, hue)

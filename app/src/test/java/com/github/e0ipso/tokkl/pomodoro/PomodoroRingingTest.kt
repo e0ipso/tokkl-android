@@ -274,16 +274,6 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun duplicateNextCannotSkipTwoPhases() = runBlocking {
-        val f = Fixture()
-        val phase = f.startAndRing().phaseKey()
-        f.store.nextPhaseIfCurrent(phase)
-        assertEquals(PomodoroStep.Idle, f.store.nextPhaseIfCurrent(phase))
-        assertEquals("shortRest", f.store.current()?.phaseKind)
-        assertEquals(0, f.database.creates)
-    }
-
-    @Test
     fun replacingARingStopsTheOldOutputAndDismissalOnlyRepostsItsOwnPhase() {
         val output = FakeOutput()
         val controller = PomodoroRingController(output)

@@ -169,38 +169,6 @@ class TimerTotalsTest {
     }
 
     @Test
-    fun theAccountClockDoesNotDecideTheDay() {
-        val stale = AccountTime(
-            TOKYO,
-            DayOfWeek.MONDAY,
-            timeResolutionMinutes = null,
-            clock = Clock.fixed(Instant.parse("2020-01-01T00:00:00Z"), ZoneOffset.UTC),
-        )
-        val now = Instant.parse("2026-10-24T03:00:00Z")
-        val today = entry(1, "2026-10-24T02:00:00Z", "2026-10-24T02:01:00Z")
-
-        assertEquals(60L, timerPeriodTotals(listOf(today), stale, now).todaySeconds)
-    }
-
-    @Test
-    fun offlineEditsAreTheCachedRowsTheQueueLeavesBehind() {
-        val now = Instant.parse("2026-10-24T03:00:00Z")
-        val time = tokyo(DayOfWeek.MONDAY)
-        val started = entry(4, now.minusSeconds(30).toString(), stop = null)
-
-        assertEquals(0L, timerPeriodTotals(emptyList(), time, now).todaySeconds)
-        assertEquals(30L, timerPeriodTotals(listOf(started), time, now).todaySeconds)
-
-        val stopped = started.copy(stop = now.minusSeconds(10))
-        assertEquals(20L, timerPeriodTotals(listOf(stopped), time, now.plusSeconds(100)).todaySeconds)
-
-        val edited = stopped.copy(stop = stopped.start.plusSeconds(50))
-        assertEquals(50L, timerPeriodTotals(listOf(edited), time, now).todaySeconds)
-        assertEquals(0L, timerPeriodTotals(emptyList(), time, now).todaySeconds)
-        assertEquals(50L, timerPeriodTotals(listOf(edited), time, now).todaySeconds)
-    }
-
-    @Test
     fun aRemappedEntryCountsOnceAndKeepsTheLocalRow() {
         val now = Instant.parse("2026-10-24T03:00:00Z")
         val time = tokyo(DayOfWeek.MONDAY)

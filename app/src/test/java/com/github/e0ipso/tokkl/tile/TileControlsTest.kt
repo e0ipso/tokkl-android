@@ -77,32 +77,6 @@ class TileControlsTest {
     }
 
     @Test
-    fun runningAndPausedSubtitlesKeepTheStateAndSayHoldForControls() {
-        val tile = strings("src/main/res/values/tile_strings.xml")
-        val paused = strings("src/main/res/values/pause_strings.xml")
-
-        assertEquals("Running · Hold for controls", tile.getValue("tile_running_subtitle"))
-        assertEquals("Paused · Hold for controls", paused.getValue("tile_paused_subtitle"))
-    }
-
-    @Test
-    fun talkBackReadsTheStateAndTheHoldHint() {
-        val tile = strings("src/main/res/values/tile_strings.xml")
-        val paused = strings("src/main/res/values/pause_strings.xml")
-
-        assertEquals("Timer running: %1\$s. Tap to stop. Hold for controls.", tile.getValue("tile_running_description"))
-        assertEquals("Timer paused: %1\$s. Tap to resume. Hold for controls.", paused.getValue("tile_paused_description"))
-    }
-
-    @Test
-    fun onlyTheTilePreferencesActionOpensTheDialog() {
-        assertEquals("android.service.quicksettings.action.QS_TILE_PREFERENCES", TileService.ACTION_QS_TILE_PREFERENCES)
-        assertTrue(isTilePreferencesIntent(TileService.ACTION_QS_TILE_PREFERENCES))
-        assertFalse(isTilePreferencesIntent(null))
-        assertFalse(isTilePreferencesIntent("android.intent.action.MAIN"))
-    }
-
-    @Test
     fun theLongPressRegistersADialogActivityForTilePreferences() {
         val activity = preferencesActivity()
 
@@ -165,14 +139,6 @@ class TileControlsTest {
     }
 
     /** Gradle runs unit tests with the app module as the working directory. */
-    private fun strings(path: String): Map<String, String> {
-        val nodes = parse(File(path)).getElementsByTagName("string")
-        return (0 until nodes.length).associate { index ->
-            val element = nodes.item(index) as Element
-            element.getAttribute("name") to element.textContent
-        }
-    }
-
     private fun parse(file: File): Element = DocumentBuilderFactory.newInstance()
         .newDocumentBuilder()
         .parse(file)

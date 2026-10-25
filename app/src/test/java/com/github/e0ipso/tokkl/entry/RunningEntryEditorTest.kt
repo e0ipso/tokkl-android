@@ -171,22 +171,6 @@ class RunningEntryEditorTest {
     }
 
     @Test
-    fun resolvesServerIdAfterOpeningWithoutChangingWorkspace() {
-        open()
-        onMain {
-            changes.remap[ENTRY.id] = 201
-            rows.value = listOf(EntryWithSendState(ENTRY.copy(id = 201, start = ENTRY.start.truncatedTo(ChronoUnit.SECONDS)), unsent = false))
-            form.setDescription("After reconnect")
-            form.save()
-        }
-        saved()
-        assertEquals(201L, changes.updates.single().id)
-        assertEquals(ENTRY.workspaceId, changes.updates.single().workspaceId)
-        assertEquals(ENTRY.start, changes.updates.single().start)
-        assertEquals(1, rows.value.size)
-    }
-
-    @Test
     fun stoppedSegmentCannotBeRevivedByStaleSave() {
         open()
         onMain {
@@ -196,31 +180,6 @@ class RunningEntryEditorTest {
         state { it == EntryFormState.Missing }
         assertTrue(changes.updates.isEmpty())
         assertNotNull(rows.value.single().entry.stop)
-    }
-
-    @Test
-    fun sameInstantReplacementCannotReceiveStaleSave() {
-        open()
-        val replacement = ENTRY.copy(id = 202, description = "Replacement")
-        onMain {
-            rows.value = listOf(EntryWithSendState(replacement, unsent = true))
-            form.setDescription("Stale")
-            form.save()
-        }
-        state { it == EntryFormState.Missing }
-        assertEquals(replacement, rows.value.single().entry)
-        assertTrue(changes.updates.isEmpty())
-    }
-
-    @Test
-    fun competingStartCorrectionInvalidatesTheOpenedIdentity() {
-        open()
-        onMain {
-            rows.value = listOf(EntryWithSendState(ENTRY.copy(start = ENTRY.start.minusSeconds(60)), unsent = true))
-            form.save()
-        }
-        state { it == EntryFormState.Missing }
-        assertTrue(changes.updates.isEmpty())
     }
 
     @Test

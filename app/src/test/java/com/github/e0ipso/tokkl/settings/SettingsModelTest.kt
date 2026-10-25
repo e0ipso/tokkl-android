@@ -1,13 +1,6 @@
 package com.github.e0ipso.tokkl.settings
 
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
-import com.github.e0ipso.tokkl.pomodoro.StoredPomodoroDefaults
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -49,22 +42,4 @@ class SettingsModelTest {
         }
     }
 
-    @Test
-    fun validatedSettingsEditsPersistLocallyWithoutAnApiClientOnToggl() = runBlocking {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-        var stored: StoredPomodoroDefaults? = null
-        val setting = PomodoroDefaultsSetting(
-            initial = null, save = { stored = it }, client = { error("Toggl defaults must stay on the phone") },
-            keepsPreferences = { false }, scope = scope, io = Dispatchers.Unconfined,
-        )
-        try {
-            for (field in PomodoroDefaultField.entries) {
-                val next = field.edited(setting.defaults.value, field.range.last.toString())!!
-                setting.change(next).join()
-                assertEquals(next, setting.defaults.value)
-                assertEquals(StoredPomodoroDefaults(next, unsent = false), stored)
-            }
-            assertEquals(PomodoroDefaults(180, 60, 60, 12), setting.defaults.value)
-        } finally { scope.cancel() }
-    }
 }

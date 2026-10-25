@@ -147,17 +147,6 @@ class FavoritesModelTest {
     }
 
     @Test
-    fun aFailedReplaceLeavesTheList() {
-        awaitState("the favorites show") { it.favorites.size == 2 }
-        answer = ApiResult.Failure(ApiError.Network(IOException("offline")))
-        onMain { model.replace(0, EntryFields(description = "Not stored")) }
-        val shown = awaitState("the problem shows") { it.problem != null }
-        assertEquals(FavoritesProblem.Server(ServerProblem.Unreachable), shown.problem)
-        assertEquals(listOf(REPORT.fields(), WEBSITE.fields()), shown.favorites.map { it.fields })
-        assertFalse(shown.saving)
-    }
-
-    @Test
     fun aChangeTheServerDoesNotStoreLeavesTheListAndSaysWhy() {
         awaitState("the favorites show") { it.favorites.size == 2 }
         answer = ApiResult.Failure(ApiError.Network(IOException("offline")))

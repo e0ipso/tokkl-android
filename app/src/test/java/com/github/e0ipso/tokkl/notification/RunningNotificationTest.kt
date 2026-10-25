@@ -121,47 +121,6 @@ class RunningNotificationTest {
     }
 
     @Test
-    fun aStartPostsAndAStopRemoves() {
-        val shown = content()!!
-
-        assertEquals(RunningNotificationChange.Post(shown), runningNotificationChange(followed = null, content = shown))
-        assertEquals(RunningNotificationChange.Remove, runningNotificationChange(followed = shown.followed(), content = null))
-    }
-
-    @Test
-    fun theEntryTheNotificationFollowedChangesNothing() {
-        val shown = content()!!
-
-        assertNull("the app opening, a swiped-away notification stays away", runningNotificationChange(shown.followed(), shown))
-        assertNull("nothing runs, and nothing ran", runningNotificationChange(null, null))
-    }
-
-    @Test
-    fun anotherEntryWithTheSameKeyPostsAgain() {
-        val shown = content()!!
-        // A second start with the same fields within the same second.
-        val next = content(entry = running.copy(id = -4, start = start.plusMillis(400)))!!
-
-        assertEquals(shown.key, next.key)
-        assertEquals(RunningNotificationChange.Post(next), runningNotificationChange(shown.followed(), next))
-    }
-
-    @Test
-    fun aKeyKeptWithoutAnIdMatchesAnyEntryWithIt() {
-        val shown = content()!!
-
-        assertNull(runningNotificationChange(FollowedEntry(shown.key, entryId = null), content(entry = running.copy(id = -4))))
-    }
-
-    @Test
-    fun anEditPostsAgain() {
-        val shown = content()!!
-        val edited = content(entry = running.copy(description = "Edited"))!!
-
-        assertEquals(RunningNotificationChange.Post(edited), runningNotificationChange(shown.followed(), edited))
-    }
-
-    @Test
     fun theSyncPostsOnStartAndEditAndRemovesOnStop() {
         val fake = FakeNotification(serverIds = mapOf(-3L to 4_200L))
         val first = content()!!

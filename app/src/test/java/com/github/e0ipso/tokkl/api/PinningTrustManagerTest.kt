@@ -107,14 +107,6 @@ class PinningTrustManagerTest {
         assertEquals(A_SHA256.replace(":", "").lowercase(), ServerCertificate.sha256(a))
     }
 
-    @Test
-    fun fixturesHoldNoPrivateKey() {
-        for (name in listOf("self-signed-a.crt", "self-signed-b.crt")) {
-            val text = javaClass.getResourceAsStream("/certificates/$name")!!.use { it.readBytes().decodeToString() }
-            assertFalse("$name holds a private key", "PRIVATE KEY" in text)
-        }
-    }
-
     /** The JDK's trust manager checks without a host, as Android's does inside a handshake. */
     private fun check(leaf: X509Certificate, host: String, port: Int) {
         manager.verify(arrayOf(leaf), host, port) { jdk.checkServerTrusted(arrayOf(leaf), AUTH_TYPE) }

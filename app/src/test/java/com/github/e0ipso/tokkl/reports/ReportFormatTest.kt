@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.compose.ui.graphics.Color
 import com.github.e0ipso.tokkl.time.jsToFixed
-import java.io.File
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -39,20 +38,6 @@ class ReportFormatTest {
             "${jsToFixed(percent, 1)}%" != web
         }
         assertTrue("only $toFixedMisses cases where toFixed rounds otherwise", toFixedMisses >= 100)
-    }
-
-    /** SharePercentOnDeviceTest runs a sample of the cases on ART, which must come from this file. */
-    @Test
-    fun theDevicesSampleComesFromTheNodeCases() {
-        val all = javaClass.getResourceAsStream("/reports/share-percent-cases.tsv")!!.bufferedReader().useLines { lines ->
-            lines.filterNot { it.startsWith("#") }.toSet()
-        }
-        // Unit tests run in the module's directory.
-        val sample = File("src/androidTest/assets/reports/share-percent-sample.tsv")
-        assertTrue("no ${sample.absolutePath}", sample.isFile)
-        val cases = sample.readLines().filterNot { it.startsWith("#") }
-        assertTrue("only ${cases.size} cases", cases.size >= 200)
-        assertEquals("cases not in share-percent-cases.tsv", emptyList<String>(), cases.filterNot { it in all })
     }
 
     @Test

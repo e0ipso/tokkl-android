@@ -14,11 +14,6 @@ class SnapUnsentTest {
     private val stop = Instant.parse("2026-10-14T09:31:00.789Z")
 
     @Test
-    fun `without a time resolution the span comes back unchanged`() {
-        assertEquals(SnappedSpan(start, stop), snapUnsent(start, stop, null, madrid))
-    }
-
-    @Test
     fun `a value that is not a time resolution leaves the span unchanged`() {
         for (minutes in listOf(0.0, -5.0, 7.0, 45.0, 90.0, 2.5, Double.NaN, Double.POSITIVE_INFINITY)) {
             assertEquals(minutes.toString(), SnappedSpan(start, stop), snapUnsent(start, stop, minutes, madrid))

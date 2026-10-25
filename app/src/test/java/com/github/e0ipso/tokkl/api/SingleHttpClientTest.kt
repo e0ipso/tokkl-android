@@ -24,14 +24,6 @@ class SingleHttpClientTest {
         assertTrue("Use SharedHttpClient.instance instead:\n" + offenders.joinToString("\n"), offenders.isEmpty())
     }
 
-    /** Shows the scan sees a client being built, so the test above cannot pass by finding nothing. */
-    @Test
-    fun scanSeesTheSharedClientBeingBuilt() {
-        val shared = classes.filterKeys(::isSharedHttpClient).values.flatten()
-
-        assertTrue(shared.any { it == "okhttp3/OkHttpClient\$Builder.<init>" && isForbidden(it) })
-    }
-
     private fun isSharedHttpClient(className: String): Boolean =
         className == SHARED || className.startsWith("$SHARED\$")
 

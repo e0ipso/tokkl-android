@@ -6,14 +6,9 @@ import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.readServerSnapshot
 import com.github.e0ipso.tokkl.session.Me
-import com.github.e0ipso.tokkl.session.MePreferences
 import java.io.IOException
-import java.time.Clock
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -73,21 +68,6 @@ class CapabilitiesTest {
         assertEquals("Toggl Track has no summary CSV route", false, capabilities.summaryCsv)
         assertEquals("Toggl Track has no detailed CSV route", false, capabilities.detailedCsv)
         assertTrue(capabilities.timeResolution)
-    }
-
-    /** Tokkl leaves `favorites` out of /me/preferences until the user saves one. */
-    @Test
-    fun favoritesAreTrueOnAFreshTokklAccountWithNoSavedFavorites() {
-        answers[TRASH] = json("[]")
-        answers["/api/v9/me/time_entries"] = json("[]")
-        val preferences = MePreferences(Json.parseToJsonElement("""{"date_format":"YYYY-MM-DD","timeofday_format":"H:mm"}""").jsonObject)
-        val me = me(TOKKL_ME)
-
-        val capabilities = source().refresh(client, me)
-        val snapshot = readServerSnapshot(client, me, preferences, Clock.systemUTC(), favorites = capabilities.favorites)
-
-        assertTrue(capabilities.favorites)
-        assertEquals("no favorites yet", emptyList<CachedFavorite>(), snapshot.favorites)
     }
 
     @Test

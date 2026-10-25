@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.reports
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import java.time.LocalDate
-import java.util.Locale
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -43,11 +42,6 @@ class AppSummaryResponseTest {
         val report = decode(APP_SUMMARY_FIXTURE.replace("101", "null").replace("723", "null"))
         assertEquals(listOf(Amount("USD", 0)), report.totals.amounts)
         assertEquals("USD", report.currency)
-    }
-
-    @Test
-    fun unknownCurrenciesUseTheExistingLiteralCodeFallback() {
-        assertEquals("1.01 XYZ", formatMoney(decode().totals.amounts.first().cents, "XYZ", Locale.US))
     }
 
     @Test

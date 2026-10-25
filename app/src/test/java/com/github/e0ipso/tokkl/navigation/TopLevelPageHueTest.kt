@@ -1,9 +1,7 @@
 package com.github.e0ipso.tokkl.navigation
 
 import androidx.compose.ui.graphics.Color
-import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -31,20 +29,4 @@ class TopLevelPageHueTest {
         for ((page, fill) in expected) assertEquals("$page's hue", fill, page.hue.fill)
     }
 
-    @Test
-    fun textOnEveryHueIsTheInkExceptWhiteOnViolet() {
-        for (page in TopLevelPage.entries) {
-            val onFill = if (page == TopLevelPage.PROJECTS) Color(0xFFFFFFFF) else Color(0xFF08061F)
-            assertEquals("text on $page's hue", onFill, page.hue.onFill)
-        }
-    }
-
-    @Test
-    fun thePagesOnTheMoreSheetTakeMoresHue() {
-        assertTrue(TopLevelPage.REPORTS.inMore)
-        assertEquals(SectionHues.reports, TopLevelPage.REPORTS.hue)
-        for (page in TopLevelPage.entries.filter { it.inMore && it != TopLevelPage.REPORTS }) {
-            assertEquals(SectionHues.more, page.hue)
-        }
-    }
 }

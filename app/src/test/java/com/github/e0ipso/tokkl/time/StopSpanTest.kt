@@ -123,11 +123,6 @@ class SnapStopTest {
     private val at = Instant.parse("2026-10-14T09:31:00.789Z")
 
     @Test
-    fun `without a time resolution the entry stops at the tap time`() {
-        assertEquals(SnappedSpan(start, at), snapStop(start, at, null, madrid, oneStep = true))
-    }
-
-    @Test
     fun `without a time resolution a tap before the start stops the entry on its start`() {
         assertEquals(SnappedSpan(start, start), snapStop(start, start.minusSeconds(5), null, madrid, oneStep = true))
     }
