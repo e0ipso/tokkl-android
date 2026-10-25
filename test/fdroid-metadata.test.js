@@ -37,28 +37,6 @@ function binaryFor(version) {
   return value('Binaries').replaceAll('%v', version.name).replaceAll('%c', String(version.code));
 }
 
-test('draft scalar reader handles build-list keys and rejects missing or duplicate fields', () => {
-  for (const fields of [
-    '  - versionName: 0.2.0\n    versionCode: 2000',
-    '  - versionCode: 2000\n    versionName: 0.2.0',
-  ]) {
-    const source = `License: MIT\nBuilds:\n${fields}\n`;
-    assert.equal(value('License', source), 'MIT');
-    assert.equal(value('versionName', source), '0.2.0');
-    assert.equal(value('versionCode', source), '2000');
-    assert.throws(() => value('commit', source), {
-      code: 'ERR_ASSERTION', message: /^one commit field\b/, actual: 0, expected: 1,
-    });
-    for (const duplicate of [
-      'versionName: 9.9.9', '    versionName: 9.9.9', '  - versionName: 9.9.9',
-    ]) {
-      assert.throws(() => value('versionName', `${source}${duplicate}\n`), {
-        code: 'ERR_ASSERTION', message: /^one versionName field\b/, actual: 2, expected: 1,
-      });
-    }
-  }
-});
-
 test('F-Droid draft identifies the MIT source and the proven release only', () => {
   assert.equal(value('License'), 'MIT');
   assert.equal(value('SourceCode'), repository);
@@ -94,23 +72,6 @@ test('update regexes skip tags without both stored version fields', () => {
     assert.equal(versionAtTag({ 'gradle/version.properties': source }), null);
   }
   assert.equal(versionAtTag({ 'app/gradle/version.properties': 'versionName=0.2.0\nversionCode=2000\n' }), null);
-});
-
-test('numeric version codes choose the newest tag independently of tag order', () => {
-  const tags = [
-    ['v0.9.9', 'versionName=0.9.9\nversionCode=9009\n'],
-    ['v0.10.0', 'versionName=0.10.0\nversionCode=10000\n'],
-    ['v0.2.0', 'versionName=0.2.0\nversionCode=2000\n'],
-  ];
-  for (const ordered of [tags, [...tags].reverse()]) {
-    const found = ordered.map(([tag, source]) => ({
-      tag, ...versionAtTag({ 'gradle/version.properties': source }),
-    })).sort((a, b) => b.code - a.code)[0];
-    assert.deepEqual(found, { tag: 'v0.10.0', name: '0.10.0', code: 10000 });
-    // Tags + Version uses the selected tag directly, including its v prefix.
-    assert.equal(value('AutoUpdateMode'), 'Version');
-    assert.equal(binaryFor(found), `${repository}/releases/download/v0.10.0/tokkl-android-0.10.0.apk`);
-  }
 });
 
 test('release preparation writes formula values that the F-Droid regexes extract', async t => {

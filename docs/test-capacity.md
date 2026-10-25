@@ -74,9 +74,7 @@ throughout device verification.
 
 ## Host checks
 
-`node --test test/memory-capacity.test.js` exercises the real probe and wrapper
-using controlled proc/cgroup fixture files, without allocating memory or starting
-a device. `npm test` runs the complete host suite. Use `bash -n` and ShellCheck on
+`npm test` runs the host suite. Use `bash -n` and ShellCheck on
 the shell scripts. The Gradle CI authority is `./gradlew --no-daemon assembleDebug
 check --stacktrace`, which includes Android lint, JVM tests and dependency policy.
 Capacity rejection leaves those checks and the API 31/36 suites explicitly pending.

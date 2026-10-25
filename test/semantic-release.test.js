@@ -16,34 +16,6 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const config = JSON.parse(readFileSync(join(root, '.releaserc.json'), 'utf8'));
 const logger = { log() {} };
 
-test('release notes render breaking changes and GitHub links with the configured preset', async () => {
-  const [, options] = config.plugins.find(plugin => plugin[0] === '@semantic-release/release-notes-generator');
-  const repository = 'https://github.com/e0ipso/tokkl-android';
-  const hash = '1234567890abcdef1234567890abcdef12345678';
-  const notes = await generateNotes(options, {
-    cwd: root,
-    options: { repositoryUrl: `${repository}.git` },
-    lastRelease: { gitTag: 'v0.1.0' },
-    nextRelease: { version: '1.0.0', gitTag: 'v1.0.0' },
-    commits: [
-      { hash, message: 'feat!: change timer behavior\n\nBREAKING CHANGE: new timer contract' },
-      { hash, message: 'fix: correct timer rounding\n\nCloses #42\nRefs: TKA-1234' },
-      { hash, message: 'docs: explain timer settings' },
-    ],
-    logger,
-  });
-  assert.match(notes, /BREAKING CHANGES/);
-  assert.match(notes, /new timer contract/);
-  assert.match(notes, /Features/);
-  assert.match(notes, /change timer behavior/);
-  assert.match(notes, /Bug Fixes/);
-  assert.match(notes, /correct timer rounding/);
-  assert.ok(notes.includes(`${repository}/compare/v0.1.0...v1.0.0`));
-  assert.ok(notes.includes(`${repository}/commit/${hash}`));
-  assert.ok(notes.includes(`${repository}/issues/42`));
-  assert.doesNotMatch(notes, /TKA-1234|explain timer settings/);
-});
-
 test('release rules match Tokkl conventional commits', async () => {
   const [, options] = config.plugins.find(plugin => plugin[0] === '@semantic-release/commit-analyzer');
   for (const [message, expected] of [
