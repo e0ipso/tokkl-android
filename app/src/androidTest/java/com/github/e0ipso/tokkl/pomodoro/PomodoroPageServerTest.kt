@@ -4,6 +4,9 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
@@ -307,7 +310,10 @@ class PomodoroPageServerTest {
         assertEquals(1, runBlocking { queue.unsentCount.first() })
         runBlocking { store.forget() }
         await { model.state.value.session == null && model.state.value.account == null && pageObservers.get() == 0 }
-        field(R.string.entry_description).assert(hasText(""))
+        // Signed out, the field is disabled, and a disabled field offers no SetText action.
+        compose.onNode(hasText(context.getString(R.string.entry_description)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.EditableText))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")))
+            .assertIsNotEnabled()
         button(R.string.pomodoro_start).performScrollTo().assertIsNotEnabled()
         assertEquals(1, runBlocking { queue.unsentCount.first() })
         assertResumed()
