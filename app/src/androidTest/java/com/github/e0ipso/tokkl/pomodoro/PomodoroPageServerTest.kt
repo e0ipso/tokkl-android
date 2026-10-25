@@ -1,9 +1,11 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.text.AnnotatedString
@@ -414,5 +416,36 @@ class PomodoroPageServerTest {
     private fun field(label: Int) = compose.onNode(hasText(context.getString(label)) and hasSetTextAction())
     private fun button(label: Int) = compose.onNode(hasText(context.getString(label)) and hasClickAction())
     private fun type(label: Int, value: String) { field(label).performScrollTo().performTextReplacement(value) }
-    private fun tap(label: Int) { button(label).performScrollTo().performClick() }
+
+    /**
+     * Taps the button once it has kept still, fully visible, for [STILL_MS]. Typing opens the
+     * keyboard, and while it slides in the page shrinks above it frame by frame, so a tap aimed at
+     * where the button was lands beside it. If the keyboard covers the button after the scroll,
+     * scroll again: a clipped button can keep still too, but a tap on it reaches the keyboard.
+     */
+    private fun tap(label: Int) {
+        val node = button(label).performScrollTo()
+        var bounds: Rect? = null
+        var since = SystemClock.uptimeMillis()
+        compose.waitUntil(10_000) {
+            val semantics = node.fetchSemanticsNode()
+            val now = semantics.boundsInRoot
+            val fullyVisible = now.width > 0 && now.height > 0 &&
+                now.width >= semantics.size.width && now.height >= semantics.size.height
+            if (!fullyVisible) {
+                node.performScrollTo()
+                bounds = null
+                since = SystemClock.uptimeMillis()
+            } else if (now != bounds) {
+                bounds = now
+                since = SystemClock.uptimeMillis()
+            }
+            fullyVisible && SystemClock.uptimeMillis() - since >= STILL_MS
+        }
+        node.performClick()
+    }
+
+    private companion object {
+        const val STILL_MS = 500L
+    }
 }
