@@ -154,9 +154,13 @@ class MainActivity : ComponentActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    /**
+     * Takes a tap's route from [intent] and leaves the activity's own intent as it was started.
+     * Nothing reads the intent after onCreate, and a pending route outlives rotation in the saved
+     * state.
+     */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        setIntent(intent)
         intent.takePomodoroNotificationTap()?.let { openPomodoro = it }
         if (intent.getBooleanExtra(ReminderNotifier.OPEN_TIMER, false)) {
             openReminderTimer++

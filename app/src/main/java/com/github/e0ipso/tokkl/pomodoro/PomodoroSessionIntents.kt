@@ -21,13 +21,15 @@ internal fun pomodoroSessionOpenIntent(context: Context, account: String, phase:
 
 data class PomodoroNotificationTap(val account: String, val phase: PomodoroPhaseKey)
 
-/** Consuming the intent prevents rotation or later sign-in from replaying an old route. */
+/**
+ * Consuming the intent prevents rotation or later sign-in from replaying an old route. Only the
+ * extras go, as with the reminder's tap: the action and data stay, so the activity keeps the
+ * identity it was started with.
+ */
 internal fun Intent.takePomodoroNotificationTap(): PomodoroNotificationTap? {
     if (action != SHOW_POMODORO) return null
     val account = getStringExtra(POMODORO_NOTIFICATION_ACCOUNT)
     val phase = phaseKey()
-    action = null
-    removeExtra(POMODORO_NOTIFICATION_ACCOUNT)
-    data = null
+    for (extra in listOf(POMODORO_NOTIFICATION_ACCOUNT, "workspace", "kind", "started", "pomodoro", "completed")) removeExtra(extra)
     return if (account != null && phase != null) PomodoroNotificationTap(account, phase) else null
 }
