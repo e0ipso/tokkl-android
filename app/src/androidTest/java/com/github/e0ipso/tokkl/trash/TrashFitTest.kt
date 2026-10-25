@@ -11,8 +11,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
 import androidx.test.platform.app.InstrumentationRegistry
@@ -58,8 +59,11 @@ class TrashFitTest {
             val name = entry.description ?: context.getString(R.string.trash_no_description)
             val restore = control(R.string.trash_restore_named, name)
             val purge = control(R.string.trash_purge_named, name)
-            restore.performScrollTo()
-            purge.performScrollTo()
+            // The list is lazy: an entry below the fold is not laid out yet, and performScrollTo
+            // cannot bring it in. The list scrolls by index until the control shows.
+            val list = composeRule.onNode(hasScrollToIndexAction())
+            list.performScrollToNode(controlMatcher(R.string.trash_restore_named, name))
+            list.performScrollToNode(controlMatcher(R.string.trash_purge_named, name))
             val screen = composeRule.onRoot().getBoundsInRoot()
             val boxes = listOf(restore, purge).map { it.assertIsDisplayed().getBoundsInRoot() }
             for (box in boxes) assertTrue("a control of $name leaves the screen", box.inside(screen))
@@ -89,8 +93,10 @@ class TrashFitTest {
         TrashContent(state = state, offline = offline, settings = SETTINGS, actions = TrashActions())
     }
 
-    private fun control(@StringRes label: Int, name: String) =
-        composeRule.onNode(hasContentDescription(context.getString(label, name)) and hasClickAction())
+    private fun control(@StringRes label: Int, name: String) = composeRule.onNode(controlMatcher(label, name))
+
+    private fun controlMatcher(@StringRes label: Int, name: String) =
+        hasContentDescription(context.getString(label, name)) and hasClickAction()
 
     /** No text shown, in the page or in a dialog over it, is cut off in height. */
     private fun assertNoTextCutOff(where: String) {
