@@ -37,7 +37,16 @@ class NativeWidget : AutoCloseable {
                     super.updateAppWidget(views)
                 }
             }
+
+        // Android 12 calls this when the provider's package changes. The view goes back to
+        // the provider's initial layout until Glance draws it again.
+        override fun onProviderChanged(appWidgetId: Int, appWidget: AppWidgetProviderInfo) {
+            resets.incrementAndGet()
+            super.onProviderChanged(appWidgetId, appWidget)
+        }
     }
+    /** Provider resets the host has applied, on the main thread like [updates]. */
+    val resets = AtomicInteger()
     val updates = AtomicInteger()
     val provider: AppWidgetProviderInfo
     private val id: Int
@@ -128,36 +137,67 @@ class NativeWidget : AutoCloseable {
         true
     }
 
-    /** Observe native Chronometer ticks, with no widget updates in between. */
+    /**
+     * Observe two native Chronometer ticks, with no widget updates in between. Android resets
+     * every bound view of a provider whenever a component of its package is enabled or
+     * disabled, which replaces the clock. A test's fresh WorkManager does that to its
+     * RescheduleReceiver about a second after Glance's first enqueue. A window such a reset
+     * cut short starts again on the redrawn clock; a clock that stops without one fails.
+     */
     fun assertClockTicksWithoutUpdates() {
-        val ticks = CountDownLatch(1)
-        var remaining = 2
+        var window = observeClock()
+        var restarts = 0
+        while (!window.ticked && window.resets > 0 && restarts++ < MAX_RESET_RESTARTS) {
+            android.util.Log.i("NativeWidget", "a provider reset ended the clock window, observing again: $window")
+            await("the clock is redrawn after a provider reset") { descendants().any { it is Chronometer } }
+            awaitUpdatesSettled()
+            window = observeClock()
+        }
+        assertTrue("the launcher ticks the clock: $window", window.ticked)
+        assertTrue("elapsed time changed", window.first != window.last)
+        org.junit.Assert.assertEquals("no RemoteViews update was needed to tick", window.before, window.after)
+    }
+
+    private data class ClockWindow(
+        val ticked: Boolean,
+        val ticks: Int,
+        val first: String?,
+        val last: String?,
+        val before: Int,
+        val after: Int,
+        val resets: Int,
+        val attached: Boolean,
+    )
+
+    private fun observeClock(): ClockWindow {
+        val done = CountDownLatch(1)
+        var ticks = 0
         var first: String? = null
         var last: String? = null
         var before = -1
         var after = -1
+        var resetsBefore = -1
         val clock = onMain {
             val observed = descendants().filterIsInstance<Chronometer>().single()
             // Counter reads and ticks share the main thread. An update before the listener
             // is installed, or after its last tick, is outside the interval under test.
             before = updates.get()
+            resetsBefore = resets.get()
             first = observed.text.toString()
             observed.setOnChronometerTickListener { ticking ->
-                if (--remaining == 0) {
+                if (++ticks == 2) {
                     last = ticking.text.toString()
                     after = updates.get()
                     ticking.onChronometerTickListener = null
-                    ticks.countDown()
+                    done.countDown()
                 }
             }
             observed
         }
-        try {
-            assertTrue("the launcher ticks the clock", ticks.await(4, TimeUnit.SECONDS))
-            assertTrue("elapsed time changed", first != last)
-            org.junit.Assert.assertEquals("no RemoteViews update was needed to tick", before, after)
-        } finally {
-            onMain { clock.onChronometerTickListener = null }
+        val ticked = done.await(4, TimeUnit.SECONDS)
+        return onMain {
+            clock.onChronometerTickListener = null
+            ClockWindow(ticked, ticks, first, last, before, if (ticked) after else updates.get(), resets.get() - resetsBefore, clock.isAttachedToWindow)
         }
     }
 
@@ -213,5 +253,10 @@ class NativeWidget : AutoCloseable {
         putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, height)
         putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN)
         putParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, arrayListOf(SizeF(width.toFloat(), height.toFloat())))
+    }
+
+    private companion object {
+        /** A test's fresh WorkManager flips its receiver once; a second reset leaves margin. */
+        const val MAX_RESET_RESTARTS = 2
     }
 }
