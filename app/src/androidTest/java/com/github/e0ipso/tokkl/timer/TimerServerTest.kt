@@ -1,9 +1,14 @@
 package com.github.e0ipso.tokkl.timer
 
+import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.StringRes
+import androidx.compose.ui.platform.ViewRootForTest
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasClickAction
@@ -12,7 +17,6 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
@@ -24,6 +28,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
@@ -148,10 +154,8 @@ class TimerServerTest {
                 started = TapToVisibleDeadline("app Start")
                 click()
             }
-            started.await("Stop shows") { stopButton().isDisplayed() }
-            started.await("the running state shows in words") {
-                composeRule.onNode(hasText(string(R.string.timer_running))).isDisplayed()
-            }
+            started.await("Stop shows") { displayedAfterNextFrame(stopMatcher()) }
+            started.await("the running state shows in words") { displayedAfterNextFrame(hasText(string(R.string.timer_running))) }
             assertEquals("Start stays queued unsent", 1, runBlocking { app.changes.unsentCount.first() })
             assertTrue("the clock starts at zero: ${clockText()}", clockText().startsWith("0:00:0"))
             composeRule.waitUntil("Start reaches the hanging connection", NETWORK_TIMEOUT.toMillis()) { relay.hungConnections > 0 }
@@ -190,7 +194,7 @@ class TimerServerTest {
                     click()
                 }
                 BlackholeDiagnostics.record("click.return action=Stop actual_touch_receipt=UNKNOWN")
-                stopped.await("Start shows") { startButton().isDisplayed() }
+                stopped.await("Start shows") { displayedAfterNextFrame(startMatcher()) }
                 stopped.await("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
                 lateinit var stoppedQueue: TimerQueueSnapshot
                 stopped.await("Stop has its own captured queued operation") {
@@ -375,11 +379,53 @@ class TimerServerTest {
     private fun descriptionText(): String =
         description().fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty()
 
-    private fun startButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction())
+    private fun startMatcher(): SemanticsMatcher = hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()
 
-    private fun stopButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction())
+    private fun stopMatcher(): SemanticsMatcher = hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction()
+
+    private fun startButton(): SemanticsNodeInteraction = composeRule.onNode(startMatcher())
+
+    private fun stopButton(): SemanticsNodeInteraction = composeRule.onNode(stopMatcher())
+
+    /**
+     * Whether a node matching [matcher] is on screen after the next frame. Under the test rule the
+     * page recomposes only when the test moves its clock. isDisplayed moves it until the whole
+     * page is idle, so after the frame that drew what a tap did it also runs every recomposition
+     * that follows, such as the unsent badge's and the queue count's, and on a slow emulator that
+     * alone outlasts a tap-to-visible deadline the screen has met. This moves the clock one frame,
+     * as the display's vsync does, and reads the semantics isDisplayed reads.
+     */
+    private fun displayedAfterNextFrame(matcher: SemanticsMatcher): Boolean {
+        composeRule.mainClock.advanceTimeByFrame()
+        return displayedNow(matcher)
+    }
+
+    /** Whether a node matching [matcher] is on screen, as isDisplayed decides it, in the last frame laid out. */
+    private fun displayedNow(matcher: SemanticsMatcher): Boolean {
+        var displayed = false
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                .singleOrNull() ?: return@runOnMainSync
+            val root = composeRoot(activity.window.decorView) ?: return@runOnMainSync
+            val visible = android.graphics.Rect()
+            if (root.hasPendingMeasureOrLayout || !root.view.isShown || !root.view.getGlobalVisibleRect(visible)) {
+                return@runOnMainSync
+            }
+            displayed = root.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true).any { node ->
+                val bounds = node.boundsInWindow
+                matcher.matches(node) && node.layoutInfo.isPlaced && bounds.width > 0f && bounds.height > 0f &&
+                    bounds.left < visible.right && bounds.right > visible.left &&
+                    bounds.top < visible.bottom && bounds.bottom > visible.top
+            }
+        }
+        return displayed
+    }
+
+    private fun composeRoot(view: View): ViewRootForTest? = when (view) {
+        is ViewRootForTest -> view
+        is ViewGroup -> (0 until view.childCount).firstNotNullOfOrNull { composeRoot(view.getChildAt(it)) }
+        else -> null
+    }
 
     private fun start(): SemanticsNodeInteraction = startButton()
 
