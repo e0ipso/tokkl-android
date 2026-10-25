@@ -25,6 +25,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
@@ -142,13 +143,21 @@ class WeekStripFitTest {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
     }
 
-    /** Each day is inside the screen and at least 48dp tall, and no two days overlap. */
+    /**
+     * Each day is at least 48dp wide and tall, inside the screen once scrolled into view, and no
+     * two days overlap. Where seven such days do not fit, the strip scrolls sideways.
+     */
     private fun assertDaysFit(days: List<SemanticsNode>, format: DurationFormat) {
         val screen = composeRule.onRoot().getBoundsInRoot()
+        // Unclipped bounds share one scroll position, so they compare even off screen.
         val bounds = days.map { day -> day.spoken() to byId(day.id).getUnclippedBoundsInRoot() }
         for ((name, box) in bounds) {
-            assertTrue("$name at $box leaves the screen $screen, $format", box.inside(screen))
             assertTrue("$name is ${box.bottom - box.top} tall, $format", box.bottom - box.top >= MIN_TOUCH_TARGET - SLACK)
+            assertTrue("$name is ${box.right - box.left} wide, $format", box.right - box.left >= MIN_TOUCH_TARGET - SLACK)
+        }
+        for (day in days) {
+            val box = byId(day.id).performScrollTo().getUnclippedBoundsInRoot()
+            assertTrue("${day.spoken()} at $box leaves the screen $screen, $format", box.inside(screen))
         }
         for ((i, first) in bounds.withIndex()) {
             for (second in bounds.drop(i + 1)) {
@@ -184,7 +193,7 @@ class WeekStripFitTest {
 
     /** Whether [day] draws Tokkl's frame along its start side, as DayCalendarTest checks it. */
     private fun framed(day: SemanticsNodeInteraction): Boolean {
-        val pixels = day.captureToImage().toPixelMap()
+        val pixels = day.performScrollTo().captureToImage().toPixelMap()
         val edge = pixels[FRAME_PIXEL, pixels.height / 2]
         return close(edge, TokklLightColorScheme.outline)
     }

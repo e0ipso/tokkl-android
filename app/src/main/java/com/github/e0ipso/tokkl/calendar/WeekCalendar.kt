@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -105,6 +107,7 @@ import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.takeOrElse
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -407,6 +410,9 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
  * it. The chosen day sits in Tokkl's frame and today's date in a filled circle, so neither is
  * told by colour alone. TalkBack reads each day as a tab, with its date and total, and with
  * [editing] offers an action that adds an entry on the day.
+ *
+ * Each day is at least a touch target wide. Where seven of them do not fit, as at the largest
+ * display size on a phone, the strip scrolls sideways and keeps the chosen day in sight.
  */
 @Composable
 private fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant, onSelect: (LocalDate) -> Unit, editing: CalendarEditing?) {
@@ -414,26 +420,52 @@ private fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant
     val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
     val totals = state.weekDays.map { day -> if (state.week.shows) dayTotalSeconds(state.entries, day, state.zone, now) else null }
     val widestTotal = rememberWidestStripTotal(totals.mapNotNull { it?.let(state.settings::formatDuration) }, stripTotalStyle())
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(TokklTheme.spacing.space1 / 2)
-            .selectableGroup(),
-    ) {
-        for ((day, total) in state.weekDays.zip(totals)) {
-            StripDay(
-                day = day,
-                selected = day == state.selected,
-                isToday = day == today,
-                totalSeconds = total,
-                widestTotal = widestTotal,
-                settings = state.settings,
-                onSelect = { onSelect(day) },
-                addAction = addEntryAction(day, editing),
-                modifier = Modifier.weight(1f),
-            )
+    val inset = TokklTheme.spacing.space1 / 2
+    val minDay = LocalMinimumInteractiveComponentSize.current.takeOrElse { 48.dp }
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val fits = (maxWidth - inset * 2) / state.weekDays.size >= minDay
+        val scroll = rememberScrollState()
+        if (!fits) KeepChosenDayInSight(scroll, state.weekDays.indexOf(state.selected), minDay, inset)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .then(if (fits) Modifier else Modifier.horizontalScroll(scroll))
+                .padding(inset)
+                .selectableGroup(),
+        ) {
+            for ((day, total) in state.weekDays.zip(totals)) {
+                StripDay(
+                    day = day,
+                    selected = day == state.selected,
+                    isToday = day == today,
+                    totalSeconds = total,
+                    widestTotal = widestTotal,
+                    settings = state.settings,
+                    onSelect = { onSelect(day) },
+                    addAction = addEntryAction(day, editing),
+                    modifier = if (fits) Modifier.weight(1f) else Modifier.width(minDay),
+                )
+            }
+        }
+    }
+}
+
+/** Scrolls a sideways strip of days [dayWidth] wide, after [inset], so the day at [index] shows whole. */
+@Composable
+private fun KeepChosenDayInSight(scroll: ScrollState, index: Int, dayWidth: Dp, inset: Dp) {
+    val density = LocalDensity.current
+    LaunchedEffect(index, scroll.viewportSize) {
+        if (index < 0 || scroll.viewportSize == 0) return@LaunchedEffect
+        val margin = with(density) { inset.roundToPx() }
+        val day = with(density) { dayWidth.roundToPx() }
+        // The day's edges in the strip's content, its inset included on either side.
+        val from = day * index
+        val to = from + day + 2 * margin
+        when {
+            from < scroll.value -> scroll.scrollTo(from)
+            to > scroll.value + scroll.viewportSize -> scroll.scrollTo(to - scroll.viewportSize)
         }
     }
 }
