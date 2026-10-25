@@ -274,6 +274,9 @@ class RunningTileServerTest {
             val button = checkNotNull(device.wait(
                 Until.findObject(By.pkg(context.packageName).desc(context.getString(label))), TIMEOUT_MS,
             )) { "Compact controls did not show ${context.getString(label)}" }
+            // The control is in the accessibility tree before its window has drawn, and a touch
+            // sent then is dropped. Wait until the window has settled.
+            device.waitForIdle()
             button.click()
         }
         press(R.string.timer_pause_spoken)
