@@ -66,6 +66,8 @@ internal class TimerAcceptanceFixture {
     fun drain() {
         runBlocking { app.sender.sendAndWait() }
         assertEquals("all local mutations sent", 0, runBlocking { app.changes.unsentCount.first() })
-        refresh()
+        // A send ends with a refresh of its own that nobody waits for. Join that one, so a later
+        // request count does not catch it.
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
     }
 }
