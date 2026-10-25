@@ -325,6 +325,7 @@ fun TokklNavHost(
             }
         },
         width = width,
+        notice = { SessionTrustPrompts(sessionTrust) },
     ) {
         if (destination == Destination.FULLSCREEN_TIMER) {
             FullscreenTimerScreen(
@@ -414,7 +415,6 @@ fun TokklNavHost(
         }
         if (discarded > 0) DiscardNotice(discarded, onDismiss = onDismissDiscarded, modifier = Modifier.align(Alignment.BottomCenter))
         if (destination == Destination.TIMER) SnackbarHost(shortHost, Modifier.align(Alignment.BottomCenter))
-        SessionTrustPrompts(sessionTrust, modifier = Modifier.align(Alignment.BottomCenter))
         if (notificationPermission != null) {
             NotificationPermissionPrompt(
                 permissionStarts,
@@ -487,7 +487,8 @@ internal fun SignedInPanes(
  * and opens pages with [onOpen], leaves out the pages in [hidden], and puts a dot on Timer while
  * [timerRunning]. Right above the bar, or at the bottom of the screen beside the rail, shows
  * [syncStatus] when it is not null, its "needs attention" button calls [onOpenNeedsAttention]
- * and its sign-in button [onSignInAgain]. The bar's height, status and system navigation bar included, is padding
+ * and its sign-in button [onSignInAgain]. Above both shows [notice], when there is one, and the
+ * screens end at its top, so it covers none of them. The bar's height, status and system navigation bar included, is padding
  * the screens consume, so their own navigation bar padding adds nothing above the bar. Beside the
  * rail, which keeps clear of the system bars at its side, the screens consume that side's insets.
  */
@@ -504,6 +505,7 @@ internal fun SignedInFrame(
     syncStatusClock: Clock = Clock.systemUTC(),
     width: WindowWidth = windowWidth(),
     showNavigation: Boolean = true,
+    notice: @Composable () -> Unit = {},
     content: @Composable BoxScope.() -> Unit,
 ) {
     val rail = showNavigation && width != WindowWidth.COMPACT
@@ -517,6 +519,10 @@ internal fun SignedInFrame(
                 .then(if (rail) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start)) else Modifier),
             bottomBar = {
                 Column {
+                    // The bar, or the band's spacer, keeps clear of the system navigation bar for
+                    // the notice too.
+                    val clearsSystemBar = (showNavigation && !rail) || syncStatus != null
+                    Box(if (clearsSystemBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars) else Modifier) { notice() }
                     if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, onSignInAgain = onSignInAgain, clock = syncStatusClock)
                     if (showNavigation && !rail) {
                         AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
@@ -691,15 +697,15 @@ private fun SnapshotStateList<Destination>.open(page: TopLevelPage) {
 private fun List<Destination>.currentPage(): TopLevelPage =
     asReversed().firstNotNullOfOrNull(TopLevelPage::of) ?: TopLevelPage.TIMER
 
-/** The prompt for a refused request, or after a cancel the notice that reopens it. [modifier] places the notice. */
+/** The prompt for a refused request, or after a cancel the notice that reopens it. */
 @Composable
-private fun SessionTrustPrompts(sessionTrust: SessionTrustModel, modifier: Modifier = Modifier) {
+private fun SessionTrustPrompts(sessionTrust: SessionTrustModel) {
     val state by sessionTrust.state.collectAsState()
     val refusal = state.refusal ?: return
     if (state.promptOpen && refusal is ApiError.TrustQuestion) {
         TrustPrompt(refusal, onAccept = sessionTrust::accept, onCancel = sessionTrust::cancel)
     } else {
-        TrustRefusedNotice(refusal, onReview = sessionTrust::reopen, modifier = modifier)
+        TrustRefusedNotice(refusal, onReview = sessionTrust::reopen)
     }
 }
 

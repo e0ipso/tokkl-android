@@ -105,7 +105,7 @@ class LargestFontScaleTest {
             composeRule.onAllNodes(hasContentDescription(string(R.string.favorites_open)) and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
         }
 
-        assertFitWithoutOverlap(*(timerPageParts() + templateParts()).toTypedArray(), text(R.string.history_empty_title))
+        assertTimerPageFits(timerPageParts() + templateParts() + text(R.string.history_empty_title))
         assertLabelsWhole()
     }
 
@@ -768,11 +768,7 @@ class LargestFontScaleTest {
         val app = composeRule.activity.application as TokklApplication
         assertEquals("refused session has no loaded capabilities", Capabilities.NONE, app.capabilities.state.value)
         assertNull("refused session has no loaded account settings", app.accountSettings.state.value)
-        assertFitWithoutOverlap(
-            *timerPageParts().toTypedArray(),
-            text(message),
-            "review button" to button(R.string.trust_refused_review),
-        )
+        assertTimerPageFits(timerPageParts(), over = listOf(text(message), "review button" to button(R.string.trust_refused_review)))
         val label = inside(R.string.trust_refused_review, hasClickAction())
         label.second.textLayout()?.let { assertFalse("text is cut off: ${label.first}", it.didOverflowHeight) }
     }
@@ -782,8 +778,8 @@ class LargestFontScaleTest {
 
     /**
      * The Timer page's parts that stack above its history, the idle timer's controls among them,
-     * and the bottom bar's items, which must not overlap. The List and Calendar segments share
-     * their border, so the switch counts as one part.
+     * which must not overlap. The List and Calendar segments share their border, so the switch
+     * counts as one part.
      */
     private fun timerPageParts(): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
@@ -800,7 +796,61 @@ class LargestFontScaleTest {
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup) and
                     hasAnyDescendant(hasText(string(R.string.timer_view_list))),
             ),
-        ) + BAR_LABELS.map { label -> "${string(label)} item" to button(label) }
+        )
+
+    /** The navigation bar's items, under the Timer page. */
+    private fun barParts(): List<Pair<String, SemanticsNodeInteraction>> =
+        BAR_LABELS.map { label -> "${string(label)} item" to button(label) }
+
+    /**
+     * The Timer page's [parts], the bar, and what shows [over] the page. Where the page fits, all
+     * of them show at once without overlapping. At the largest display size the page scrolls, its
+     * title and timer scrolling away, so each part has to fit once scrolled to, clear of the bar
+     * and of what shows over the page.
+     */
+    private fun assertTimerPageFits(
+        parts: List<Pair<String, SemanticsNodeInteraction>>,
+        over: List<Pair<String, SemanticsNodeInteraction>> = emptyList(),
+    ) {
+        val pageMatcher = hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable())
+        if (composeRule.onAllNodes(pageMatcher).fetchSemanticsNodes().isEmpty()) {
+            assertFitWithoutOverlap(*(parts + barParts() + over).toTypedArray())
+            return
+        }
+        val page = composeRule.onNode(pageMatcher)
+        val pinned = barParts() + over
+        assertFitWithoutOverlap(*pinned.toTypedArray())
+        val pinnedBoxes = pinned.map { (name, node) -> name to node.getBoundsInRoot() }
+        val screen = composeRule.onRoot().getBoundsInRoot()
+        // What shows over the page, and the bar, sit at its bottom; a part has to fit above them.
+        val top = page.getBoundsInRoot().top
+        val bottom = minOf(page.getBoundsInRoot().bottom, pinnedBoxes.minOf { it.second.top })
+        for ((name, node) in parts) {
+            node.performScrollTo()
+            val box = node.getUnclippedBoundsInRoot()
+            val by = when {
+                box.bottom > bottom -> box.bottom - bottom
+                box.top < top -> box.top - top
+                else -> 0.dp
+            }
+            if (by != 0.dp) {
+                val pixels = with(composeRule.density) { by.toPx() }
+                page.performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, pixels) }
+            }
+            node.assertIsDisplayed()
+            node.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
+            val shown = node.getUnclippedBoundsInRoot()
+            assertTrue("does not fit on the screen: $name", shown.inside(screen))
+            for ((pinnedName, pinnedBox) in pinnedBoxes) assertFalse("$name is under $pinnedName", shown.overlaps(pinnedBox))
+        }
+        // Unclipped bounds share one scroll position, so they compare even off screen.
+        val bounds = parts.map { (name, node) -> name to node.getUnclippedBoundsInRoot() }
+        for ((i, first) in bounds.withIndex()) {
+            for (second in bounds.drop(i + 1)) {
+                assertFalse("${first.first} overlaps ${second.first}", first.second.overlaps(second.second))
+            }
+        }
+    }
 
     /**
      * The timer panel's timer-templates icon, shown once the server says it keeps them. The test
