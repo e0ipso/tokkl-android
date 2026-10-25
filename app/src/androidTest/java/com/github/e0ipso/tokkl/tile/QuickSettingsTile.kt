@@ -48,11 +48,21 @@ object QuickSettingsTile {
         DeviceShell.run("cmd statusbar click-tile $component")
     }
 
-    /** Waits until the panel shows [text] as a whole text, such as the tile's label or its second line. */
+    /**
+     * Waits until the panel shows [text] as a whole text, such as the tile's label or its second
+     * line. SystemUI sometimes drops an expansion sent soon after a collapse, and then never binds
+     * the tile, so ask for the expanded panel again every few seconds. On an open panel that
+     * changes nothing.
+     */
     fun awaitText(what: String, text: String) {
         val deadline = System.nanoTime() + TIMEOUT_NANOS
+        var nextExpand = System.nanoTime() + REEXPAND_NANOS
         while (!shows(text)) {
             if (System.nanoTime() > deadline) throw AssertionError("$what: the panel does not show \"$text\"")
+            if (System.nanoTime() > nextExpand) {
+                expand()
+                nextExpand = System.nanoTime() + REEXPAND_NANOS
+            }
             Thread.sleep(POLL_MS)
         }
     }
@@ -76,4 +86,5 @@ object QuickSettingsTile {
 
     private const val TIMEOUT_NANOS = 15_000_000_000L
     private const val POLL_MS = 200L
+    private const val REEXPAND_NANOS = 4_000_000_000L
 }
