@@ -7,6 +7,7 @@ import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.os.Build
+import android.os.SystemClock
 import android.os.VibrationAttributes
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
@@ -294,7 +295,8 @@ class PomodoroRingingServiceTest {
         awaitActions(1) {
             assertTrue(device.swipe(device.displayWidth / 4, bounds.centerY(), device.displayWidth - 1, bounds.centerY(), 20))
         }
-        assertEquals(1, notifications.activeNotifications.count { it.id == PomodoroSessionNotification.ID })
+        // The receiver hands the repost to the ringing service, which posts it after the receiver ends.
+        awaitSessionNotifications(1)
         onMain {
             val service = checkNotNull(app.pomodoroRinging.service)
             assertTrue(service.output.playing)
@@ -337,6 +339,16 @@ class PomodoroRingingServiceTest {
 
     private fun awaitStopped() = runBlocking {
         withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing && !it.vibrationRequested } }
+    }
+
+    private fun awaitSessionNotifications(count: Int) {
+        val deadline = SystemClock.uptimeMillis() + 10_000
+        while (notifications.activeNotifications.count { it.id == PomodoroSessionNotification.ID } != count) {
+            if (SystemClock.uptimeMillis() > deadline) {
+                assertEquals(count, notifications.activeNotifications.count { it.id == PomodoroSessionNotification.ID })
+            }
+            Thread.sleep(50)
+        }
     }
 
     private fun ringingNotification(): Notification = notifications.activeNotifications.single { it.id == PomodoroSessionNotification.ID }.notification
