@@ -14,6 +14,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,7 +33,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -167,7 +170,9 @@ private fun PresetDialog(presets: List<RangePreset>, active: RangePreset?, onPre
 
 /**
  * Material's date range picker, full screen as Material lays it out, since a dialog leaves its
- * month grid no room at large font scales. The headline names the range in the screen's words.
+ * month grid no room at large font scales. Where seven 48dp days do not fit across the window,
+ * as at the largest display size, it opens on the picker's date fields; its mode switch still
+ * offers the grid. The headline names the range in the screen's words.
  * Dates go in and out as UTC midnights, the picker's own convention, so no zone of the phone
  * touches them. Apply is off until the range has both ends and spans at most [MAX_RANGE_DAYS]
  * days.
@@ -175,9 +180,11 @@ private fun PresetDialog(presets: List<RangePreset>, active: RangePreset?, onPre
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (ReportRange) -> Unit, onDismiss: () -> Unit) {
+    val windowWidth = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
     val state = rememberDateRangePickerState(
         initialSelectedStartDateMillis = initial.from.utcMillis(),
         initialSelectedEndDateMillis = initial.to.utcMillis(),
+        initialDisplayMode = if (windowWidth < 48.dp * 7) DisplayMode.Input else DisplayMode.Picker,
     )
     val start = state.selectedStartDateMillis?.let(::utcDate)
     val end = state.selectedEndDateMillis?.let(::utcDate)
