@@ -159,7 +159,12 @@ class PomodoroSignOutServerTest {
         val notifier = PomodoroRingingNotifier(context)
         notifier.createChannel()
         notifications.notify(PomodoroSessionNotification.ID, notifier.build(null))
-        assertTrue(notifications.activeNotifications.any { it.id == PomodoroSessionNotification.ID })
+        // notify() returns before the system lists the notification.
+        val posted = System.nanoTime() + 10_000_000_000L
+        while (notifications.activeNotifications.none { it.id == PomodoroSessionNotification.ID }) {
+            assertTrue("the notification is posted", System.nanoTime() < posted)
+            Thread.sleep(50)
+        }
         assertTrue(runBlocking { app.signOut.run() })
         assertCleared()
     }
@@ -271,7 +276,12 @@ class PomodoroSignOutServerTest {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
             context.packageManager.getComponentEnabledSetting(ComponentName(context, PomodoroAlarmRearmReceiver::class.java)),
         )
-        assertFalse(notifications.activeNotifications.any { it.id == PomodoroSessionNotification.ID })
+        // cancel() also returns before the system drops the notification from its list.
+        val removed = System.nanoTime() + 10_000_000_000L
+        while (notifications.activeNotifications.any { it.id == PomodoroSessionNotification.ID }) {
+            assertTrue("the session notification is removed", System.nanoTime() < removed)
+            Thread.sleep(50)
+        }
         assertEquals(0, queueCount())
         assertEquals(0, runBlocking { app.changes.heldCount.first() })
         assertTrue(WorkManager.getInstance(context).getWorkInfosForUniqueWork(BackgroundSend.WORK_NAME).get()
