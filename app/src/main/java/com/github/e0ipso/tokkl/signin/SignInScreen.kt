@@ -102,8 +102,10 @@ fun SignInScreen(model: SignInModel, onSignedIn: () -> Unit, modifier: Modifier 
     )
     val keyboard = LocalSoftwareKeyboardController.current
     val failure = state.failure
-    if (failure is SignInResult.CleartextNotConfirmed || failure is SignInResult.UntrustedCertificate) {
-        // The keyboard would leave the dialog little room.
+    if (failure is SignInResult.CleartextNotConfirmed || failure is SignInResult.UntrustedCertificate ||
+        (failure != null && failureMessage(failure, state.method) != null)
+    ) {
+        // The keyboard would leave the dialog, or the banner's message, little room.
         LaunchedEffect(failure) { keyboard?.hide() }
     }
     when (failure) {
