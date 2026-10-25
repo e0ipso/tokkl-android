@@ -106,8 +106,13 @@ import org.junit.Test
  * down when the window is larger than the phone's, so the tests compare positions, not sizes.
  */
 abstract class AdaptiveLayoutTest(private val window: DpSize, private val width: WindowWidth) {
+    /** A window larger than the phone's is drawn at a smaller density; see [createComposeRule]. */
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createComposeRule(
+        scaledSizes = InstrumentationRegistry.getInstrumentation().targetContext.resources.configuration.let {
+            window.width.value > it.screenWidthDp || window.height.value > it.screenHeightDp
+        },
+    )
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -115,9 +120,12 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     /** Pixels per dp in the forced window. */
     private var density = 1f
 
+    /** Whether the test drew a window; one that does not apply to [width] draws none. */
+    private var shown = false
+
     @After
     fun cancelTheScope() {
-        try { composeRule.checkAccessibility() } finally { scope.cancel() }
+        try { if (shown) composeRule.checkAccessibility() } finally { scope.cancel() }
     }
 
     @Test
@@ -271,6 +279,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             fontScale?.let { DeviceConfigurationOverride.FontScale(it) then sized } ?: sized
         }
         val screenScope = ScreenScope()
+        shown = true
         composeRule.setContent {
             DeviceConfigurationOverride(override) {
                 density = LocalDensity.current.density

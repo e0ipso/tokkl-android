@@ -102,7 +102,14 @@ class PomodoroAlarmActivityTest {
                     DeviceShell.run("locksettings set-disabled true")
                     restoreLockscreenDisabled = false
                 }
-                if (screenWasOn) device.wakeUp() else device.sleep()
+                // Clearing the pin leaves the lock screen showing, and every later test would
+                // launch its activity behind it.
+                if (screenWasOn) {
+                    device.wakeUp()
+                    dismissKeyguard()
+                } else {
+                    device.sleep()
+                }
             } finally {
                 if (::database.isInitialized) database.close()
             }
@@ -308,6 +315,15 @@ class PomodoroAlarmActivityTest {
     }
     private fun awaitStopped() = runBlocking {
         withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing && !it.vibrationRequested } }
+    }
+    private fun dismissKeyguard() {
+        val keyguard = context.getSystemService(KeyguardManager::class.java)
+        val deadline = SystemClock.elapsedRealtime() + 5_000
+        while (keyguard.isKeyguardLocked && SystemClock.elapsedRealtime() < deadline) {
+            DeviceShell.run("wm dismiss-keyguard")
+            SystemClock.sleep(200)
+        }
+        assertFalse("the lock screen is still showing", keyguard.isKeyguardLocked)
     }
     private fun ringingNotification() = notifications.activeNotifications.single { it.id == PomodoroSessionNotification.ID }.notification
     private fun setFullScreenMode(mode: String) { DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT $mode") }

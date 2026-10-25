@@ -128,6 +128,8 @@ class PomodoroSessionNotificationQueueTest {
         assertNull(store.current())
         assertEquals(3, queue.unsentCount.first())
         val model = PomodoroScreenModel(store, app.pomodoroDefaults.defaults, app.accountSettings.state, queue.unsentCount, queue.held, scope)
+        // The page loads its model when it opens.
+        withContext(Dispatchers.Main) { model.reload() }
         val pending = kotlinx.coroutines.withTimeout(10_000) { model.state.first { !it.loading && it.unsentCount == 3 } }
         assertNull(pending.session)
         val sender = ChangeSender(RoomChangeStore(db), { account.client }, scope, Dispatchers.IO, clock = clock)

@@ -206,6 +206,11 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.runOnIdle { model.stopShown(old.target) }
             assertNull(runBlocking { model.runningForEditShown(old.target) })
             compose.onNodeWithText(context.getString(R.string.entry_save)).performScrollTo().performClick()
+            // The save waits its turn in the queue, and the form ignores Back while it saves, so
+            // Back goes only once the old editor has refused it.
+            compose.waitUntil("the old editor refuses the save", 10_000) {
+                compose.onAllNodesWithText(context.getString(R.string.entry_form_missing)).fetchSemanticsNodes().isNotEmpty()
+            }
             assertEquals(replacementId, (fixture.controls() as TimerControls.Running).entry.id)
             assertEquals("Remote replacement", (fixture.controls() as TimerControls.Running).entry.description)
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
@@ -273,11 +278,17 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 clock.at = clock.at.plusSeconds(2)
                 compose.waitUntil("local focused tick", 5_000) { elapsedText() != beforeText }
                 assertEquals(beforeRequests, requests.count)
+                // Each start of the activity reads the server once (docs/PRD.md O2). Count what
+                // one such refresh sends, so the trip below may add that and nothing for the clock.
+                fixture.refresh()
+                val refreshRequests = requests.count - beforeRequests
+                val tripRequests = requests.count + refreshRequests
                 scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
                 clock.at = clock.at.plusSeconds(10)
                 scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
                 compose.waitUntil("foreground catches up locally", 5_000) { parseDuration(elapsedText())!! >= parseDuration(beforeText)!! + 10 }
-                assertEquals("lifecycle clock refresh adds no requests", beforeRequests, requests.count)
+                compose.waitUntil("the foreground refresh is sent", 5_000) { requests.count >= tripRequests }
+                assertEquals("the clock's catch-up adds no requests to the foreground refresh", tripRequests, requests.count)
                 focusedButton(R.string.timer_pause).performScrollTo().performClick()
                 val paused = awaitPaused()
                 compose.waitUntil("paused display matches durable total", 5_000) { parseDuration(elapsedText()) == paused.seconds }

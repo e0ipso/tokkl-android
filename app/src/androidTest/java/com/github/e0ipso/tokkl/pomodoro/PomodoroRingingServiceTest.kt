@@ -130,7 +130,9 @@ class PomodoroRingingServiceTest {
         }
         val notification = ringingNotification()
         assertEquals(Notification.CATEGORY_ALARM, notification.category)
-        assertEquals(0L, notification.timeoutAfter)
+        // The app sets no timeout. Android 16 gives every posted notification without one a
+        // three-day lifetime, so check the notification as the app builds it.
+        assertEquals(0L, PomodoroRingingNotifier(context).build(original.phaseKey()).timeoutAfter)
         // The phase alarm now requests the lock-screen Activity. A denied system grant may
         // suppress launch, but never removes sound, vibration or the notification actions.
         assertNotNull(PomodoroRingingNotifier(context).build(original.phaseKey()).fullScreenIntent)

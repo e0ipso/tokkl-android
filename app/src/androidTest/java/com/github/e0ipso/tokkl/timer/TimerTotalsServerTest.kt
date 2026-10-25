@@ -56,14 +56,20 @@ class TimerTotalsServerTest {
             }
             assertStoppedTotals()
             assertEquals(before, compose.onNodeWithTag("timer_totals_week").fetchSemanticsNode().config[SemanticsProperties.Text])
-            compose.onRoot().performTouchInput { swipeUp() }
+            // A thumb on the page, as CalendarServerTest drags it: a swipe from the root's bottom
+            // edge starts on the navigation bar, which does not scroll.
+            compose.onNode(hasScrollAction() and hasAnyDescendant(hasText(context.getString(R.string.timer_view_list)) and isSelectable()))
+                .performTouchInput { swipeUp(startY = bottom - 1f, endY = top) }
             compose.onNodeWithTag("timer_totals_today").assertIsNotDisplayed()
         }
     }
 
     @Test
     fun offlineStartStopEditDeleteUndoAndPauseSegmentsRemapExactlyOnceWithoutReportsOrPaging() {
-        RequestCounter(TokklTestServer.url, "/reports/").use { reports ->
+        // Every hop uses loopback, as in RunningTileServerTest, so a request the app attempts
+        // offline reaches both counters: the outer relay hangs instead of failing to connect.
+        HangingRelay(TokklTestServer.url).use { relay ->
+        RequestCounter(relay.url, "/reports/").use { reports ->
         RequestCounter(reports.url, "GET /api/v9/me/time_entries?").use { history ->
             ServerTrustStore(context).confirmCleartext(history.url)
             Session(context).save(history.url, fixture.account.apiToken)
@@ -74,6 +80,7 @@ class TimerTotalsServerTest {
                 scenario.onActivity { it.setContent { TokklTheme { TimerTotals(app.cache.timeEntries, app.accountSettings.state) } } }
                 val reportCount = reports.count
                 val historyCount = history.count
+                relay.hang()
                 AirplaneMode.set(true, fixture.account.client)
                 fixture.start()
                 fixture.ageRunning()
@@ -99,12 +106,14 @@ class TimerTotalsServerTest {
                 assertEquals("offline summary does not page history", historyCount, history.count)
                 val localIds = fixture.rows().map { it.id }
                 AirplaneMode.set(false, fixture.account.client)
+                relay.release()
                 fixture.drain()
                 assertStoppedTotals()
                 assertEquals(2, fixture.rows().size)
                 assertEquals(2, fixture.rows().map { it.id }.distinct().size)
                 assertTrue(localIds.any { it < 0 })
                 assertTrue(fixture.rows().all { it.id > 0 })
+                relay.hang()
                 AirplaneMode.set(true, fixture.account.client)
                 fixture.start("Offline start and final stop")
                 fixture.ageRunning()
@@ -121,6 +130,7 @@ class TimerTotalsServerTest {
                 assertTrue(history.failures.isEmpty())
             }
             Session(context).save(TokklTestServer.url, fixture.account.apiToken)
+        }
         }
         }
     }

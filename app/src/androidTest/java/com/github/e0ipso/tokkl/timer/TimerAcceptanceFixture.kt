@@ -17,6 +17,9 @@ internal class TimerAcceptanceFixture {
     fun prepare() {
         account = TestAccounts.create(timezone = "Asia/Tokyo")
         Session(context).save(TokklTestServer.url, account.apiToken)
+        // Read while the stored server is the test server: the account's client sends nowhere
+        // else, and a test may store a relay before it starts a timer.
+        account.workspaceId
         refresh()
     }
     fun cleanup() {

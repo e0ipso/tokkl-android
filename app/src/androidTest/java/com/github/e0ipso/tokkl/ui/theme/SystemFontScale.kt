@@ -38,8 +38,11 @@ class SystemFontScale(
                             if (previous == NOT_SET) DeviceShell.run("settings delete system font_scale")
                             else DeviceShell.run("settings put system font_scale $previous")
                         }
-                        check(DeviceShell.run("settings get system font_scale").trim() == previous) {
-                            "the font-scale setting was not restored"
+                        // Unset means the default. Android 12 writes the default back once the
+                        // configuration changes, so an unset setting may read 1.0 after the delete.
+                        val restored = DeviceShell.run("settings get system font_scale").trim()
+                        check(restored == previous || (previous == NOT_SET && restored.toFloatOrNull() == DEFAULT)) {
+                            "the font-scale setting was not restored: $restored, was $previous"
                         }
                         Log.i("TokklAccessibility", "font scale restored to $previous")
                     },
@@ -53,5 +56,6 @@ class SystemFontScale(
         /** The largest step of Android's font size setting since Android 14. */
         const val LARGEST = 2f
         private const val NOT_SET = "null"
+        private const val DEFAULT = 1f
     }
 }

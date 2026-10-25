@@ -4,7 +4,6 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
@@ -248,18 +247,19 @@ class PomodoroPageServerTest {
         await { model.state.value.session != null && !model.state.value.busy }
         assertResumed()
         val work = model.state.value.session!!
-        val staleNext = button(R.string.pomodoro_start_short_rest).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
-        val staleEnd = button(R.string.pomodoro_end).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
+        button(R.string.pomodoro_start_short_rest).assertIsEnabled()
         instant.set(Instant.parse("2026-10-24T09:45:00Z"))
         runBlocking { notificationActions().act("page-test", work.phaseKey(), end = false) }
         await { model.state.value.session?.phaseKind == "shortRest" }
         compose.onNodeWithText(context.getString(R.string.pomodoro_short_rest)).performScrollTo().assertIsDisplayed()
         assertResumed()
         val rest = runBlocking { store.current() }
-        compose.runOnIdle { assertTrue(staleNext()) }
+        // A tap delivered to the work phase's buttons carries that phase. A button's semantics
+        // action would run whatever the button does now, so call what the old lambdas called.
+        compose.runOnIdle { model.next(work.phaseKey()) }
         await { !model.state.value.busy }
         assertEquals(rest, runBlocking { store.current() })
-        compose.runOnIdle { assertTrue(staleEnd()) }
+        compose.runOnIdle { model.end(work.phaseKey()) }
         await { !model.state.value.busy }
         assertEquals(rest, runBlocking { store.current() })
         assertEquals(0, runBlocking { queue.unsentCount.first() })
@@ -288,8 +288,7 @@ class PomodoroPageServerTest {
         tap(R.string.pomodoro_start)
         await { model.state.value.session != null && !model.state.value.busy }
         val first = model.state.value.session!!
-        val staleNext = button(R.string.pomodoro_start_short_rest).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
-        val staleEnd = button(R.string.pomodoro_end).fetchSemanticsNode().config[SemanticsActions.OnClick].action!!
+        button(R.string.pomodoro_start_short_rest).assertIsEnabled()
         instant.set(Instant.parse("2026-10-24T09:15:00Z"))
         val actions = notificationActions()
         runBlocking { actions.act("page-test", first.phaseKey(), end = true) }
@@ -299,9 +298,10 @@ class PomodoroPageServerTest {
         }
         await { model.state.value.session == replacement }
         field(R.string.entry_description).assert(hasText("Replacement session"))
-        compose.runOnIdle { assertTrue(staleEnd()) }
+        // The first session's buttons carry its phase; see the test above.
+        compose.runOnIdle { model.end(first.phaseKey()) }
         await { !model.state.value.busy }
-        compose.runOnIdle { assertTrue(staleNext()) }
+        compose.runOnIdle { model.next(first.phaseKey()) }
         await { !model.state.value.busy }
         assertEquals(replacement, runBlocking { store.current() })
         assertEquals(1, runBlocking { queue.unsentCount.first() })

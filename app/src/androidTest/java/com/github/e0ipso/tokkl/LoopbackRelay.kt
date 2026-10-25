@@ -112,8 +112,25 @@ class LoopbackRelay(
         relayed += app
         relayed += server
         val watcher = watchConnections()
-        thread(isDaemon = true) { pipe(app.getInputStream(), server.getOutputStream(), watcher?.let { it::sent }, app, server) }
-        thread(isDaemon = true) { pipe(server.getInputStream(), app.getOutputStream(), watcher?.let { it::answering }, app, server) }
+        // Both directions' streams first: a pipe that ends closes both sockets, and a stream asked
+        // for after that throws on a thread of its own, which ends the test process.
+        val fromApp: InputStream
+        val toServer: OutputStream
+        val fromServer: InputStream
+        val toApp: OutputStream
+        try {
+            fromApp = app.getInputStream()
+            toServer = server.getOutputStream()
+            fromServer = server.getInputStream()
+            toApp = app.getOutputStream()
+        } catch (e: IOException) {
+            failures += "streams: $e"
+            app.close()
+            server.close()
+            return
+        }
+        thread(isDaemon = true) { pipe(fromApp, toServer, watcher?.let { it::sent }, app, server) }
+        thread(isDaemon = true) { pipe(fromServer, toApp, watcher?.let { it::answering }, app, server) }
     }
 
     /** Copies [input] to [output] until either side closes, showing each chunk to [beforeWrite] first. */
