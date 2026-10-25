@@ -130,11 +130,12 @@ class SyncStatusServerTest {
             awaitText(reason)
             composeRule.onNode(hasText(context.getString(R.string.needs_attention_send_again)) and hasClickAction())
                 .performScrollTo().performClick()
+            // The entry is held before the resend too, so wait for the refusal's actions to show again.
+            val edit = hasText(context.getString(R.string.needs_attention_edit)) and hasClickAction()
             composeRule.waitUntil("the same server refusal returns", NETWORK_TIMEOUT_MS) {
-                runBlocking { app.changes.heldCount.first() } == 1
+                runBlocking { app.changes.heldCount.first() } == 1 && shows(edit)
             }
-            composeRule.onNode(hasText(context.getString(R.string.needs_attention_edit)) and hasClickAction())
-                .performScrollTo().performClick()
+            composeRule.onNode(edit).performScrollTo().performClick()
             composeRule.waitUntil("Edit entry opened the form", NETWORK_TIMEOUT_MS) {
                 shows(hasText(context.getString(R.string.entry_description)) and hasSetTextAction())
             }
