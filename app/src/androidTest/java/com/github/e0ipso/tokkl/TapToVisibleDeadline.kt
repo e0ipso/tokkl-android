@@ -6,7 +6,12 @@ import com.github.e0ipso.tokkl.timer.TapTrace
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-/** One monotonic second from before a tap through every observation of its visible state. */
+/**
+ * Two monotonic seconds from before a tap through every observation of its visible state. A tap
+ * that waited for the network would run into OkHttp's 10-second timeouts first, so this proves
+ * the tap stays on the phone. How fast the screen changes is TimerTapBenchmark's measure, on a
+ * release build; a debug build on a CI emulator can take a second to draw its first Running frame.
+ */
 class TapToVisibleDeadline(private val action: String) {
     private val started = System.nanoTime()
 
@@ -22,7 +27,7 @@ class TapToVisibleDeadline(private val action: String) {
             val observed = condition()
             val observationFinished = System.nanoTime()
             // Check even a successful observation: a slow UI read cannot extend the deadline.
-            val expired = System.nanoTime() - started >= TimeUnit.SECONDS.toNanos(1)
+            val expired = System.nanoTime() - started >= TimeUnit.SECONDS.toNanos(LIMIT_SECONDS)
             // At most first and terminal observations, never a record for every poll.
             if (firstObservation || observed || expired) {
                 BlackholeDiagnostics.record(
@@ -32,11 +37,15 @@ class TapToVisibleDeadline(private val action: String) {
             }
             firstObservation = false
             if (expired) {
-                throw AssertionError("$action: $what did not appear within one second of the tap")
+                throw AssertionError("$action: $what did not appear within $LIMIT_SECONDS seconds of the tap")
             }
             if (observed) return
             Thread.sleep(10)
         }
+    }
+
+    private companion object {
+        const val LIMIT_SECONDS = 2L
     }
 }
 
