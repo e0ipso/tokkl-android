@@ -174,17 +174,20 @@ class RunningTileServerTest {
             HangingRelay(TokklTestServer.url).use { relay ->
                 // Both relay hops use loopback, so an attempted request is observable even offline.
                 RequestCounter(relay.url, CURRENT_REQUEST).use { requests ->
-                    BlackholeDiagnostics.mark("tile.session.save.enter")
-                    signIn(requests.url, account.apiToken)
-                    BlackholeDiagnostics.mark("tile.session.save.return")
                     BlackholeDiagnostics.mark("tile.hang.enter")
                     relay.hang()
                     BlackholeDiagnostics.mark("tile.hang.return")
+                    // The system can bind the tile while airplane mode is still taking the network
+                    // down, and an online refresh then is allowed. Only sign in to the counted
+                    // server once the phone is offline, so every counted request is an offline one.
                     BlackholeDiagnostics.mark("tile.airplane.enter")
                     tileNetworkSnapshot()
                     AirplaneMode.set(true, web)
                     BlackholeDiagnostics.mark("tile.airplane.return.web_network_failure")
                     tileNetworkSnapshot()
+                    BlackholeDiagnostics.mark("tile.session.save.enter")
+                    signIn(requests.url, account.apiToken)
+                    BlackholeDiagnostics.mark("tile.session.save.return")
                     QuickSettingsTile.expand()
                     QuickSettingsTile.awaitText("the offline cache", context.getString(R.string.tile_nothing_subtitle))
                     QuickSettingsTile.collapse()
