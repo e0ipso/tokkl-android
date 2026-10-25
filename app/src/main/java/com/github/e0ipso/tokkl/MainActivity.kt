@@ -26,6 +26,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
@@ -226,6 +227,10 @@ class MainActivity : ComponentActivity() {
      * offline. The projects, clients and tags pages watch the network themselves.
      */
     private fun networkChanged(online: Boolean) {
+        // A kept connection went with the network. A request on it would fail only after it was
+        // written, so the queue could not tell whether a delete reached the server, and Undo
+        // would need the server. Without one, the request fails before it leaves the phone.
+        if (!online) SharedHttpClient.instance.connectionPool.evictAll()
         if (!(application as TokklApplication).foregroundRefresh.networkChanged(online)) return
         historyViewModel.model.reconnected()
         calendarViewModel.model.reconnected()
