@@ -17,7 +17,8 @@ android {
     defaultConfig {
         minSdk = 31
         targetSdk = 36
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Takes the benchmarks of a scoped run from tokklBenchmarkTestFile; see the runner.
+        testInstrumentationRunner = "com.github.e0ipso.tokkl.benchmark.BenchmarkTestRunner"
         // The benchmarks run on the test emulator. Macrobenchmark refuses an emulator unless
         // told that its numbers are only compared with other runs on the same emulator.
         testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"

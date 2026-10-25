@@ -264,6 +264,15 @@ scripts/instrumented-tests.sh :macrobenchmark:connectedBenchmarkAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.package=com.github.e0ipso.tokkl.benchmark,com.github.e0ipso.tokkl.api
 ```
 
+To run one benchmark, name it in a `class=` list beside one app test:
+
+```sh
+scripts/instrumented-tests.sh :macrobenchmark:connectedBenchmarkAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.benchmark.TimerTapBenchmark#startAndStop,com.github.e0ipso.tokkl.api.ServerSmokeTest#apiTokenAuthenticatesWithGetMe
+```
+
+Every runner argument reaches both test APKs, and an APK named a class it does not hold fails the run. So the script gives the entries in `com.github.e0ipso.tokkl.benchmark` to the benchmarks' runner, `BenchmarkTestRunner`, in a file of their own, and the rest to the app's runner. It refuses a `class=` list that names benchmarks without an app test or without the benchmark task, and one that names no benchmark when the benchmark task runs. A run with the benchmark task also fails when no benchmark ran, as after a mistyped method name.
+
 The results land as `*-benchmarkData.json` under `macrobenchmark/build/outputs/connected_android_test_additional_output/benchmark/connected/<device>/`. `scripts/compare-benchmarks.sh BASELINE_DIR CURRENT_DIR` compares the medians of two runs and fails when one is more than 10% above the baseline's, or missing. The `benchmarks` job in `.github/workflows/ci.yml` compares each run with the last green run on `main`, and stores the results of each run on `main` that passes. The goals of 1.5 s for a cold start and 200 ms from tap to new state are for a mid-range phone, so they guide design and gate nothing. An emulator's medians compare only with other runs on the same emulator.
 
 ## Release builds
