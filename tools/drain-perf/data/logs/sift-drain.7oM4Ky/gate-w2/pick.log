@@ -1,4 +1,0 @@
-[main df48dfb] test: cover the commitlint rules and the commit-msg hook
- Date: Sun Oct 18 01:01:25 2026 +0200
- 4 files changed, 232 insertions(+), 2 deletions(-)
- create mode 100644 test/commitlint.test.js

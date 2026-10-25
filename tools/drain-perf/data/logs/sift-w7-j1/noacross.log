@@ -1,8 +1,0 @@
-jdk toString 4.9E-324 js 5e-324
-jdk toString -4.9E-324 js -5e-324
-jdk toString 9.9E-324 js 1e-323
-jdk toString 9.9E-324 js 1e-323
-noAcross differs 7.120236347223045e-307 got 7.1202363472230444E-307
-noAcross differs -7.120236347223045e-307 got -7.1202363472230444E-307
-noAcross differs 7.291122019556398e-304 got 7.2911220195563975E-304
-withoutAcrossMismatches=92

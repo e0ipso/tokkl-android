@@ -1,9 +1,0 @@
-Wave 8 plan (base 51e21d5, review base 51e21d5). Two sittings at a time; lanes avoid shared files.
-R1: F1 TKA-0191, 0192, 0176, 0190 (minSdk 31, tokkl-api31, drop batching, CI [36,31], fail runs with no tests, Settings 48dp row) || L1 TKA-0182, 0187, 0188 (Timer title, contrast test enum, More sheet nav strip)
-R2: T1 TKA-0039 (timer) || O1 TKA-0072, 0156 (sender semantics)
-R3: T2 TKA-0041, 0040 (editor, manual entry) || O2 TKA-0037 (WorkManager)
-R4: T3 TKA-0042, 0044, 0043 (delete undo, duplicate, grouping) || L2 TKA-0123, 0173, 0183 (top bar, landscape rows, splash)
-R5: T4 TKA-0071 (day calendar) || P1 TKA-0046, 0172 (tasks, catalog reload) ; R1b TKA-0036 (report filters)
-R6: S1 TKA-0038, 0159, 0189 (sign-out, URL message, PRD docs) || X1 TKA-0137, 0138, 0171 (TLS device tests, relay helper)
-Process change (coordinator, from owner's speed concern): sittings run only the device test classes their change affects, plus unit tests and lint; the full suite runs once at the gate close, and not again when the code tree is unchanged since a full green run.
-R1 dispatched 19:07: F1 (0191,0192,0176,0190) ../tokkl-android--w8-f1, L1 (0182,0187,0188) ../tokkl-android--w8-l1, base 51e21d5. Note: one combined drain-log dispatch row for both (attribution issue).

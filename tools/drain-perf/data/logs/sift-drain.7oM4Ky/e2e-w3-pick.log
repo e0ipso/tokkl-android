@@ -1,8 +1,0 @@
-[main 8454bca] test: cover the Licences screen, theme, icon and API writes on the emulator
- Date: Sun Oct 18 10:06:18 2026 +0200
- 6 files changed, 469 insertions(+), 7 deletions(-)
- create mode 100644 app/src/androidTest/java/com/github/e0ipso/tokkl/DeviceShell.kt
- create mode 100644 app/src/androidTest/java/com/github/e0ipso/tokkl/LauncherIconTest.kt
- create mode 100644 app/src/androidTest/java/com/github/e0ipso/tokkl/licences/LicencesScreenTest.kt
- create mode 100644 app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/LargestFontScaleTest.kt
- create mode 100644 app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/WindowBackgroundTest.kt

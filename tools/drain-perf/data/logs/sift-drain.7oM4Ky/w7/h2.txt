@@ -1,4 +1,0 @@
-TKA-0134|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/foundation/dx/TKA-0134--multi-class-filter.md|dx|p3|s|Find why a comma-separated class filter runs only its first class, then fix or document it
-TKA-0153|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/ci-and-release/hardening/TKA-0153--ci-emulator-draws-with-vulkan.md|hardening|p3|s|Make CI's emulator draw with Vulkan, as the script does on the emulator it boots
-TKA-0135|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/foundation/test/TKA-0135--path-prefix-proxy.md|test|p3|m|Serve Tokkl under a path prefix in the harness proxy and sign in to it from the device
-TKA-0136|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/foundation/test/TKA-0136--real-server-429-cooldown.md|test|p3|s|Test the 429 sign-in cooldown on the device against real Tokkl with an invited throwaway account

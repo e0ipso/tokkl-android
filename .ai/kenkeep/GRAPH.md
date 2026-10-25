@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:71d9f2b95d1a174ba83b78184d7486e1f804a736d7c38a93e54c0e7445bfb5b8'
-node_count: 88
+nodes_hash: 'sha256:906066678e1db855499066fac5c68fb6a49ea12b48af5bddab3f9890e45add53'
+node_count: 87
 ---
 # kenkeep Graph
 
-Total nodes: 88
+Total nodes: 87
 
 ## map-account-cache-and-capabilities
 
@@ -98,15 +98,6 @@ Total nodes: 88
 - **path:** design/map-design-foundation-spacing-shapes-type-brand.md
 - **tags:** ui, theme, accessibility, android
 - **relates_to:** map-tokkl-colour-tokens-and-font, practice-tokkl-palette-wcag-english-strings
-
-## map-device-verification-runtime-maintained-code-and-explicit-adoption
-
-- **kind:** map
-- **title:** Device verification runtime: maintained code and explicit adoption
-- **path:** testing/map-device-verification-runtime-maintained-code-and-explicit-adoption.md
-- **tags:** testing, agents, tooling
-- **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-reuse-drain-checks-by-content-and-test-configuration, practice-drain-sittings-gate-on-memory-not-a-sitting-cap
-- **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:7
 
 ## map-entry-form-and-account-time-validation
 

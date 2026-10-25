@@ -1,2 +1,0 @@
-app/src/main/java/com/github/e0ipso/tokkl/ui/theme/NavigationBar.kt:57:fun RowScope.TokklNavigationBarItem(
-33:enum class Destination { SIGN_IN, HOME, SETTINGS, LICENCES, REPORTS }

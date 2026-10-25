@@ -1,8 +1,0 @@
-TKA-0152|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/look-and-feel/dx/TKA-0152--brand-image-lint-warnings.md|dx|p4|s|Clear the ten lint warnings the brand images added
-TKA-0118|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/look-and-feel/bug/TKA-0118--page-title-style.md|bug|p2|s|Use one page-title style on every screen
-TKA-0119|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/look-and-feel/bug/TKA-0119--section-heading-role.md|bug|p3|s|Set section headings in one Anybody role that ranks above the rows beneath them
-TKA-0120|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/look-and-feel/bug/TKA-0120--filled-button-style.md|bug|p3|s|Give filled buttons a 48dp pill and a weight-700 label
-TKA-0122|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/look-and-feel/feature/TKA-0122--error-banner.md|feature|p3|s|Show sign-in failures in an error banner with an icon
-TKA-0149|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/look-and-feel/bug/TKA-0149--email-error-height-at-large-font.md|bug|p3|s|Keep the email field's supporting line the same height when its two-line hint becomes a one-line error
-TKA-0027|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/offline/feature/TKA-0027--change-queue.md|feature|p1|l|Queue start, stop, create, edit and delete offline and send them in order with real start times
-TKA-0028|/home/e0ipso/workspace/apps/tokkl-android/.ai/sift/open/tracking/feature/TKA-0028--entity-picker.md|feature|p2|m|Add the project, task and tag picker, including archived items an old entry uses

@@ -1,7 +1,0 @@
-Booting tokkl-api30 as emulator-5554 in tokkl-emulator-5554-24dd0373.scope
-tokkl-api30 runs Android 11 or earlier, so apps on it draw with OpenGL
-Starting ghcr.io/e0ipso/tokkl:1.3.1@sha256:12591e2b04d17cc6a12a7ff6bd0dffc718079797f73750d00695ef9ad916f9f9 as tokkl-android-tests-5dbbddfd
-docker: Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint tokkl-android-tests-5dbbddfd (602a6fc7cfe654ba86bdc46c7a907e7422a6303429d0c8b3c5fbd1c7e904ed7a): error while calling RootlessKit PortManager.AddPort(): listen tcp4 127.0.0.1:33432: bind: address already in use
-
-Run 'docker run --help' for more information
-exit=125

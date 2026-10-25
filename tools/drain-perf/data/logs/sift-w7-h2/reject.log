@@ -1,1 +1,0 @@
-scripts/instrumented-tests.sh: android.testInstrumentationRunnerArguments.class=a.B,a.C holds a comma. AGP splits the runner's arguments at every comma, so only a class= or package= list given as one -Pandroid.testInstrumentationRunnerArguments.<name>=<list> argument can hold one.

@@ -25,8 +25,8 @@ _None yet._
 ## By topic
 
 ### #agents
-- Open [**Device verification runtime: maintained code and explicit adoption**](testing/map-device-verification-runtime-maintained-code-and-explicit-adoption.md) — scripts/device_verification maintains the controller; execution requires a frozen matching configuration, adoption and lease.
 - Open [**Reuse drain checks by content and test configuration**](testing/practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
+- Open [**Gate drain sittings on free memory, not on a sitting count**](build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
 - Open [**T3 restarts daily and ends running agent sessions**](build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
 ### #ci
 - Open [**Test against a real Tokkl server and catch speed regressions in CI**](testing/practice-test-real-tokkl-server-speed-regressions.md) — Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. Macrobenchmark fails a build slower than the previous one.

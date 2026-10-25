@@ -17,7 +17,7 @@
 - Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents
 
 ## Components (what exists)
-- Open [**Device verification runtime: maintained code and explicit adoption**](map-device-verification-runtime-maintained-code-and-explicit-adoption.md) to learn about: scripts/device_verification maintains the controller; execution requires a frozen matching configuration, adoption and lease. #testing #agents #tooling
+_None yet._
 
 ## By topic
 
@@ -26,8 +26,8 @@
 - Open [**Account for emulator recording and screenshot quirks**](emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
 - Open [**Choose plain AOSP images and compatible renderers**](emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
 ### #agents
-- Open [**Device verification runtime: maintained code and explicit adoption**](map-device-verification-runtime-maintained-code-and-explicit-adoption.md) — scripts/device_verification maintains the controller; execution requires a frozen matching configuration, adoption and lease.
 - Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
+- Open [**Gate drain sittings on free memory, not on a sitting count**](../build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
 - Open [**T3 restarts daily and ends running agent sessions**](../build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
 ### #android
 - Open [**Let the runner own emulator boot and settings**](emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
@@ -46,10 +46,6 @@
 ### #sift
 - Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
 - Open [**Gate drain sittings on free memory, not on a sitting count**](../build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
-### #tooling
-- Open [**JDK and Android SDK on this machine, and how agent shells reach them**](../build-and-tooling/map-jdk-android-sdk-and-agent-shells.md) — Temurin 21 in ~/.local/share/jdk/21, SDK in ~/Android/Sdk. Agents reach java, adb and the SDK tools through wrappers in ~/.local/bin.
-- Open [**T3 restarts daily and ends running agent sessions**](../build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
-- Open [**Device verification runtime: maintained code and explicit adoption**](map-device-verification-runtime-maintained-code-and-explicit-adoption.md) — scripts/device_verification maintains the controller; execution requires a frozen matching configuration, adoption and lease.
 ### #ui
 - Open [**Timer page layout and scroll-away header**](../screens/timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
 - Open [**Timer List and Calendar preference sync**](../screens/timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.

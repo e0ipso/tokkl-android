@@ -1,9 +1,0 @@
-• Lint /home/e0ipso/workspace/apps/tokkl-android--perf
-okf-conformance: 0
-dangling-edge: 0
-slug-id-mismatch: 0
-tag-near-duplicate: 0
-tag-whitespace: 0
-empty-summary: 0
-orphan: 0
-stale-rendered-link: 0

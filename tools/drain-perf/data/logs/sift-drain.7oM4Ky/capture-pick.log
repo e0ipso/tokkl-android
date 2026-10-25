@@ -1,7 +1,0 @@
-[main d3cf48c] docs: record toolchain, commit hook and parser facts in kenkeep
- Date: Sun Oct 18 00:23:37 2026 +0200
- 9 files changed, 183 insertions(+), 20 deletions(-)
- create mode 100644 .ai/kenkeep/nodes/map-jdk-android-sdk-and-agent-shells.md
- create mode 100644 .ai/kenkeep/nodes/practice-emulator-plain-aosp-image-headless.md
- create mode 100644 .ai/kenkeep/nodes/practice-opt-sdk-tools-out-of-usage-metrics.md
- create mode 100644 .ai/kenkeep/nodes/practice-run-npm-install-in-every-clone-and-worktree.md

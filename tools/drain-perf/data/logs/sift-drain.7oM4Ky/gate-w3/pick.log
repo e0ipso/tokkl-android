@@ -1,4 +1,0 @@
-[main 8465116] test: pin the JavaScript behaviours the duration parser ports
- Date: Sun Oct 18 10:14:24 2026 +0200
- 1 file changed, 126 insertions(+)
- create mode 100644 app/src/test/java/com/github/e0ipso/tokkl/time/DurationJsSemanticsTest.kt
