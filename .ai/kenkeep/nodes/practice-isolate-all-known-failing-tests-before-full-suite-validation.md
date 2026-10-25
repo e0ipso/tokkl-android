@@ -28,6 +28,10 @@ Once the focused run is green, run the affected surrounding tests and required b
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-run-instrumented-tests-only-through-the-script](testing/practice-run-instrumented-tests-only-through-the-script.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-keep-instrumented-credentials-out-of-process-arguments](testing/instrumented-runner/practice-keep-instrumented-credentials-out-of-process-arguments.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-pass-class-and-package-lists-through-runner-filter-files](testing/instrumented-runner/practice-pass-class-and-package-lists-through-runner-filter-files.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-instrumented-runner-and-its-device-selection](testing/instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-pinned-test-server-and-tls-proxies](testing/instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-verify-device-test-results-and-process-isolation-receipts](testing/instrumented-runner/practice-verify-device-test-results-and-process-isolation-receipts.md)
 - Related: [practice-reuse-drain-checks-by-content-and-test-configuration](testing/practice-reuse-drain-checks-by-content-and-test-configuration.md)
 <!-- kk:related:end -->

@@ -34,5 +34,9 @@ T3 writes checkpoint refs under `refs/t3/orchestration-v2/checkpoints/` in the m
 
 - Related: [practice-reuse-drain-checks-by-content-and-test-configuration](../testing/practice-reuse-drain-checks-by-content-and-test-configuration.md)
 - Related: [map-oom-kill-ends-agent-session](map-oom-kill-ends-agent-session.md)
-- Related: [practice-emulator-plain-aosp-image-headless](../testing/practice-emulator-plain-aosp-image-headless.md)
+- Related: [practice-emulator-plain-aosp-image-headless → practice-account-for-emulator-recording-and-screenshot-quirks](../testing/emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md)
+- Related: [practice-emulator-plain-aosp-image-headless → practice-choose-plain-aosp-images-and-compatible-renderers](../testing/emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md)
+- Related: [practice-emulator-plain-aosp-image-headless → practice-clean-up-only-owned-emulator-resources](../testing/emulator-runtime/practice-clean-up-only-owned-emulator-resources.md)
+- Related: [practice-emulator-plain-aosp-image-headless → practice-let-the-runner-own-emulator-boot-and-settings](../testing/emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md)
+- Related: [practice-emulator-plain-aosp-image-headless → practice-respect-emulator-slots-and-resource-ownership](../testing/emulator-runtime/practice-respect-emulator-slots-and-resource-ownership.md)
 <!-- kk:related:end -->

@@ -7,15 +7,14 @@
 > This index only orients you; leaves hold the durable guidance. Open at least one relevant leaf before acting.
 
 ## Subfolders
-_None._
+- Load [`emulator-runtime/`](emulator-runtime/index.md) for more information on AOSP emulator images, ownership, rendering and capture; read before preparing a device run or investigating emulator resource use.
+- Load [`instrumented-runner/`](instrumented-runner/index.md) for more information on instrumented server setup, credentials, selectors and run receipts; read before invoking or modifying the device test script.
+- Load [`instrumented-test-authoring/`](instrumented-test-authoring/index.md) for more information on portable device tests, shared helpers and UI assertions; read before adding or changing Android regression and acceptance tests.
 
 ## Conventions (how we build)
-- Open [**Run instrumented tests only through scripts/instrumented-tests.sh**](practice-run-instrumented-tests-only-through-the-script.md) to learn about: The script pins Tokkl 1.8.1, seeds accounts, configures TLS and test filters, and rejects empty device runs. #testing #android #emulator #docker
-- Open [**Test on plain AOSP emulators, headless, and stop them afterwards**](practice-emulator-plain-aosp-image-headless.md) to learn about: tokkl-api36 and tokkl-api31 use plain AOSP images, since ATD drops SystemUI. Only the script boots them, headless and capped. #testing #android #emulator #energy #memory
-- Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents
-- Open [**Test against a real Tokkl server and catch speed regressions in CI**](practice-test-real-tokkl-server-speed-regressions.md) to learn about: Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. Macrobenchmark fails a build slower than the previous one. #testing #ci #performance
 - Open [**Record screenshot references on tokkl-api36, in the commit that changes the look**](practice-screenshot-references-on-tokkl-api36.md) to learn about: Four classes compare every screen with PNGs in androidTest/assets/screenshots. Only tokkl-api36 renders them, and captures carry no ripple. #testing #android #emulator #ui
-- Open [**Write instrumented tests that hold on API 31 and 36, with the shared helpers**](practice-instrumented-tests-on-every-api-level.md) to learn about: Skip with @SdkSuppress, never an assumption. Rules set device state. Reuse LoopbackRelay, openBarPage, SessionRule, TestAccounts. #testing #android #emulator
+- Open [**Test against a real Tokkl server and catch speed regressions in CI**](practice-test-real-tokkl-server-speed-regressions.md) to learn about: Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. Macrobenchmark fails a build slower than the previous one. #testing #ci #performance
+- Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents
 
 ## Components (what exists)
 - Open [**Device verification runtime: maintained code and explicit adoption**](map-device-verification-runtime-maintained-code-and-explicit-adoption.md) to learn about: scripts/device_verification maintains the controller; execution requires a frozen matching configuration, adoption and lease. #testing #agents #tooling
@@ -23,33 +22,25 @@ _None._
 ## By topic
 
 ### #testing
-- Open [**Write instrumented tests that hold on API 31 and 36, with the shared helpers**](practice-instrumented-tests-on-every-api-level.md) — Skip with @SdkSuppress, never an assumption. Rules set device state. Reuse LoopbackRelay, openBarPage, SessionRule, TestAccounts.
-- Open [**Run instrumented tests only through scripts/instrumented-tests.sh**](practice-run-instrumented-tests-only-through-the-script.md) — The script pins Tokkl 1.8.1, seeds accounts, configures TLS and test filters, and rejects empty device runs.
-- Open [**Record screenshot references on tokkl-api36, in the commit that changes the look**](practice-screenshot-references-on-tokkl-api36.md) — Four classes compare every screen with PNGs in androidTest/assets/screenshots. Only tokkl-api36 renders them, and captures carry no ripple.
-### #android
-- Open [**Write instrumented tests that hold on API 31 and 36, with the shared helpers**](practice-instrumented-tests-on-every-api-level.md) — Skip with @SdkSuppress, never an assumption. Rules set device state. Reuse LoopbackRelay, openBarPage, SessionRule, TestAccounts.
-- Open [**Record screenshot references on tokkl-api36, in the commit that changes the look**](practice-screenshot-references-on-tokkl-api36.md) — Four classes compare every screen with PNGs in androidTest/assets/screenshots. Only tokkl-api36 renders them, and captures carry no ripple.
-- Open [**Android stack: shipped UI, cache and native timer surfaces**](../build-and-tooling/map-planned-android-stack.md) — Compose, Room, WorkManager, OkHttp, Glance, the Quick Settings tile and favorite shortcuts are built.
-### #emulator
-- Open [**Write instrumented tests that hold on API 31 and 36, with the shared helpers**](practice-instrumented-tests-on-every-api-level.md) — Skip with @SdkSuppress, never an assumption. Rules set device state. Reuse LoopbackRelay, openBarPage, SessionRule, TestAccounts.
-- Open [**Run instrumented tests only through scripts/instrumented-tests.sh**](practice-run-instrumented-tests-only-through-the-script.md) — The script pins Tokkl 1.8.1, seeds accounts, configures TLS and test filters, and rejects empty device runs.
-- Open [**Record screenshot references on tokkl-api36, in the commit that changes the look**](practice-screenshot-references-on-tokkl-api36.md) — Four classes compare every screen with PNGs in androidTest/assets/screenshots. Only tokkl-api36 renders them, and captures carry no ripple.
+- Open [**Let the runner own emulator boot and settings**](emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
+- Open [**Account for emulator recording and screenshot quirks**](emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
+- Open [**Choose plain AOSP images and compatible renderers**](emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
 ### #agents
 - Open [**Device verification runtime: maintained code and explicit adoption**](map-device-verification-runtime-maintained-code-and-explicit-adoption.md) — scripts/device_verification maintains the controller; execution requires a frozen matching configuration, adoption and lease.
 - Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
 - Open [**T3 restarts daily and ends running agent sessions**](../build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
+### #android
+- Open [**Let the runner own emulator boot and settings**](emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
+- Open [**Account for emulator recording and screenshot quirks**](emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
+- Open [**Choose plain AOSP images and compatible renderers**](emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
 ### #ci
 - Open [**Test against a real Tokkl server and catch speed regressions in CI**](practice-test-real-tokkl-server-speed-regressions.md) — Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. Macrobenchmark fails a build slower than the previous one.
 - Open [**Isolate all known failing tests before full-suite validation**](../practice-isolate-all-known-failing-tests-before-full-suite-validation.md) — Inventory every failure, reproduce it in a focused run, and iterate there before validating the full suite.
 - Open [**Keep release builds reproducible and signed with the project key**](../release/practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
-### #docker
-- Open [**Run instrumented tests only through scripts/instrumented-tests.sh**](practice-run-instrumented-tests-only-through-the-script.md) — The script pins Tokkl 1.8.1, seeds accounts, configures TLS and test filters, and rejects empty device runs.
-### #energy
-- Open [**Test on plain AOSP emulators, headless, and stop them afterwards**](practice-emulator-plain-aosp-image-headless.md) — tokkl-api36 and tokkl-api31 use plain AOSP images, since ATD drops SystemUI. Only the script boots them, headless and capped.
-### #memory
-- Open [**An OOM kill inside an agent session's scope ends the whole session**](../build-and-tooling/map-oom-kill-ends-agent-session.md) — Agent sessions run in t3code-claude-*.scope with OOMPolicy=stop. Run Gradle and the test script in a scope of their own with choom 1000.
-- Open [**Gate drain sittings on free memory, not on a sitting count**](../build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start through the memory gate; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
-- Open [**Test on plain AOSP emulators, headless, and stop them afterwards**](practice-emulator-plain-aosp-image-headless.md) — tokkl-api36 and tokkl-api31 use plain AOSP images, since ATD drops SystemUI. Only the script boots them, headless and capped.
+### #emulator
+- Open [**Let the runner own emulator boot and settings**](emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
+- Open [**Account for emulator recording and screenshot quirks**](emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
+- Open [**Choose plain AOSP images and compatible renderers**](emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
 ### #performance
 - Open [**Test against a real Tokkl server and catch speed regressions in CI**](practice-test-real-tokkl-server-speed-regressions.md) — Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. Macrobenchmark fails a build slower than the previous one.
 ### #sift
@@ -60,6 +51,6 @@ _None._
 - Open [**T3 restarts daily and ends running agent sessions**](../build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
 - Open [**Device verification runtime: maintained code and explicit adoption**](map-device-verification-runtime-maintained-code-and-explicit-adoption.md) — scripts/device_verification maintains the controller; execution requires a frozen matching configuration, adoption and lease.
 ### #ui
-- Open [**Design foundation: spacing, shapes, type roles, option rows, brand and insets**](../design/map-design-foundation-spacing-shapes-type-brand.md) — ui/theme and ui/ hold Tokkl's spacing, screen margin, corners, type roles, option rows and Brand, plus the edge-to-edge and keyboard setup.
-- Open [**UI components: TopBar, ErrorBanner, Scene, ScrollAwayColumn, and Compose layout gotchas**](../design/map-ui-components-and-compose-layout-gotchas.md) — Shared ui/ pieces beyond the theme, plus fixes for a field under the keyboard, a dialog that never settles and the More sheet's navigation bar.
-- Open [**Match Tokkl web app behavior in the account timezone**](../data-and-offline/practice-match-web-app-behavior-account-timezone.md) — Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me.
+- Open [**Timer page layout and scroll-away header**](../screens/timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
+- Open [**Timer List and Calendar preference sync**](../screens/timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
+- Open [**Tokkl favorites storage and capability**](../screens/timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.

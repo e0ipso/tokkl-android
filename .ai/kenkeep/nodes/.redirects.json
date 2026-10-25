@@ -1,0 +1,62 @@
+{
+  "map-change-queue-sends-entry-changes-in-order": [
+    "map-offline-entry-mutations-and-local-id-mapping",
+    "map-ordered-entry-sending-and-refusals",
+    "map-background-queue-work-and-empty-queue-cancellation",
+    "map-remote-running-conflicts-and-lost-create-responses",
+    "map-queued-delete-and-short-stop-undo",
+    "map-room-queue-migration-continuity",
+    "map-cached-entity-picker-and-offline-creation"
+  ],
+  "map-signin-session-settings-and-navigation-host": [
+    "map-sign-in-request-and-credential-admission",
+    "map-session-stores-and-pre-frame-preferences",
+    "map-sign-out-ordering-and-account-cleanup",
+    "map-saveable-navigation-stack-and-session-guard",
+    "map-signed-in-navigation-chrome-and-adaptive-windows",
+    "map-trash-capability-and-server-operations"
+  ],
+  "map-timer-entry-form-and-entry-menu": [
+    "map-timer-controls-and-cached-start-suggestions",
+    "map-tokkl-favorites-storage-and-capability",
+    "map-shared-timer-and-entry-fields",
+    "map-entry-form-and-account-time-validation",
+    "map-history-entry-menu-operations"
+  ],
+  "map-timer-page-history-calendar-and-timer-view": [
+    "map-timer-page-layout-and-scroll-away-header",
+    "map-timer-today-and-this-week-totals",
+    "map-timer-list-and-calendar-preference-sync",
+    "map-cached-history-days-and-grouping",
+    "map-week-calendar-layout-and-queued-dragging"
+  ],
+  "practice-emulator-plain-aosp-image-headless": [
+    "practice-choose-plain-aosp-images-and-compatible-renderers",
+    "practice-respect-emulator-slots-and-resource-ownership",
+    "practice-let-the-runner-own-emulator-boot-and-settings",
+    "practice-clean-up-only-owned-emulator-resources",
+    "practice-account-for-emulator-recording-and-screenshot-quirks"
+  ],
+  "practice-instrumented-tests-on-every-api-level": [
+    "practice-use-runner-annotations-and-owned-settings-across-apis",
+    "practice-reuse-relays-and-throwaway-server-accounts",
+    "practice-match-production-windows-and-real-touch-hit-testing",
+    "practice-isolate-session-and-background-state-with-shared-rules",
+    "practice-split-process-restart-acceptance-into-orchestrated-steps",
+    "practice-assert-text-height-and-dialog-bounds-at-large-fonts"
+  ],
+  "practice-port-tokkl-typescript-with-javascript-semantics": [
+    "practice-preserve-javascript-parsing-and-numeric-boundaries",
+    "practice-keep-upstream-golden-cases-with-source-pinned-ports",
+    "practice-match-javascript-decimal-and-percentage-formatting",
+    "practice-honor-account-clock-formatting-in-time-ports",
+    "practice-preserve-tokkl-timezone-conversion-and-database-limits"
+  ],
+  "practice-run-instrumented-tests-only-through-the-script": [
+    "practice-use-the-instrumented-runner-and-its-device-selection",
+    "practice-use-the-pinned-test-server-and-tls-proxies",
+    "practice-keep-instrumented-credentials-out-of-process-arguments",
+    "practice-pass-class-and-package-lists-through-runner-filter-files",
+    "practice-verify-device-test-results-and-process-isolation-receipts"
+  ]
+}

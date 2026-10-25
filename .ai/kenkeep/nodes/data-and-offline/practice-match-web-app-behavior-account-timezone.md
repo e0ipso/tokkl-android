@@ -32,7 +32,11 @@ Write durations in the account's `duration_format` and clock times in its `timeo
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics](practice-port-tokkl-typescript-with-javascript-semantics.md)
+- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-honor-account-clock-formatting-in-time-ports](typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md)
+- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-keep-upstream-golden-cases-with-source-pinned-ports](typescript-time-ports/practice-keep-upstream-golden-cases-with-source-pinned-ports.md)
+- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-match-javascript-decimal-and-percentage-formatting](typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md)
+- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-preserve-javascript-parsing-and-numeric-boundaries](typescript-time-ports/practice-preserve-javascript-parsing-and-numeric-boundaries.md)
+- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-preserve-tokkl-timezone-conversion-and-database-limits](typescript-time-ports/practice-preserve-tokkl-timezone-conversion-and-database-limits.md)
 - Related: [map-account-settings-source-and-account-time](map-account-settings-source-and-account-time.md)
 <!-- kk:related:end -->
 

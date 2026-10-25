@@ -40,5 +40,9 @@ CI on GitHub copies Tokkl's setup. One `ci.yml` workflow runs on pull requests a
 
 - Related: [map-fdroid-metadata-release-artifacts](map-fdroid-metadata-release-artifacts.md)
 - Related: [practice-own-version-from-v0-1-0-tag](practice-own-version-from-v0-1-0-tag.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script](../testing/practice-run-instrumented-tests-only-through-the-script.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-keep-instrumented-credentials-out-of-process-arguments](../testing/instrumented-runner/practice-keep-instrumented-credentials-out-of-process-arguments.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-pass-class-and-package-lists-through-runner-filter-files](../testing/instrumented-runner/practice-pass-class-and-package-lists-through-runner-filter-files.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-instrumented-runner-and-its-device-selection](../testing/instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-pinned-test-server-and-tls-proxies](../testing/instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
+- Related: [practice-run-instrumented-tests-only-through-the-script → practice-verify-device-test-results-and-process-isolation-receipts](../testing/instrumented-runner/practice-verify-device-test-results-and-process-isolation-receipts.md)
 <!-- kk:related:end -->

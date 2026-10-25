@@ -35,6 +35,11 @@ The test harness's TLS proxy certificate names only IP addresses, so a host mism
 
 - Related: [practice-pin-self-signed-certs-warn-on-http](practice-pin-self-signed-certs-warn-on-http.md)
 - Related: [map-api-client-shared-okhttp-serverurl-and-errors](map-api-client-shared-okhttp-serverurl-and-errors.md)
-- Related: [map-signin-session-settings-and-navigation-host](../screens/map-signin-session-settings-and-navigation-host.md)
+- Related: [map-signin-session-settings-and-navigation-host → map-saveable-navigation-stack-and-session-guard](../screens/session-and-navigation/map-saveable-navigation-stack-and-session-guard.md)
+- Related: [map-signin-session-settings-and-navigation-host → map-session-stores-and-pre-frame-preferences](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md)
+- Related: [map-signin-session-settings-and-navigation-host → map-sign-in-request-and-credential-admission](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md)
+- Related: [map-signin-session-settings-and-navigation-host → map-sign-out-ordering-and-account-cleanup](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md)
+- Related: [map-signin-session-settings-and-navigation-host → map-signed-in-navigation-chrome-and-adaptive-windows](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md)
+- Related: [map-signin-session-settings-and-navigation-host → map-trash-capability-and-server-operations](../screens/session-and-navigation/map-trash-capability-and-server-operations.md)
 - Related: [map-account-settings-source-and-account-time](../data-and-offline/map-account-settings-source-and-account-time.md)
 <!-- kk:related:end -->

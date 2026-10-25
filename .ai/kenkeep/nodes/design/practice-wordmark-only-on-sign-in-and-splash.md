@@ -36,6 +36,10 @@ The launch splash comes from the window theme, not from a screen. `Theme.Tokkl` 
 
 - Related: [map-design-foundation-spacing-shapes-type-brand](map-design-foundation-spacing-shapes-type-brand.md)
 - Related: [map-tokkl-colour-tokens-and-font](map-tokkl-colour-tokens-and-font.md)
-- Related: [map-timer-page-history-calendar-and-timer-view](../screens/map-timer-page-history-calendar-and-timer-view.md)
+- Related: [map-timer-page-history-calendar-and-timer-view → map-cached-history-days-and-grouping](../screens/timer-history-calendar/map-cached-history-days-and-grouping.md)
+- Related: [map-timer-page-history-calendar-and-timer-view → map-timer-list-and-calendar-preference-sync](../screens/timer-history-calendar/map-timer-list-and-calendar-preference-sync.md)
+- Related: [map-timer-page-history-calendar-and-timer-view → map-timer-page-layout-and-scroll-away-header](../screens/timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md)
+- Related: [map-timer-page-history-calendar-and-timer-view → map-timer-today-and-this-week-totals](../screens/timer-history-calendar/map-timer-today-and-this-week-totals.md)
+- Related: [map-timer-page-history-calendar-and-timer-view → map-week-calendar-layout-and-queued-dragging](../screens/timer-history-calendar/map-week-calendar-layout-and-queued-dragging.md)
 - Related: [map-ui-components-and-compose-layout-gotchas](map-ui-components-and-compose-layout-gotchas.md)
 <!-- kk:related:end -->
