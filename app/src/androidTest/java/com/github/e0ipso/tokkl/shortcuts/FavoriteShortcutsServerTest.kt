@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
@@ -157,23 +158,18 @@ class FavoriteShortcutsServerTest {
     }
 
     @Test
-    fun theShortcutUpdatesTheNativeWidgetWithinOneSecondOffline() {
+    fun theShortcutUpdatesTheNativeWidgetOffline() {
         saveFavorites(favorite("Shortcut to widget", project))
         awaitShortcuts("the favorite", listOf("Shortcut to widget"))
         NativeWidget().use { widget ->
             widget.awaitDescription(context.getString(R.string.widget_start_description))
             AirplaneMode.set(true, web)
             val shortcut = published().single()
-            val startedAt = System.nanoTime()
+            val started = TapToVisibleDeadline("shortcut Start")
             context.startActivity(Intent(shortcut.intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            val remaining = 1_000 - (System.nanoTime() - startedAt) / 1_000_000
-            assertTrue("dispatch fits in the one-second budget", remaining > 0)
-            widget.await("shortcut start reaches the native widget", remaining) {
+            started.await("shortcut start reaches the native widget") {
                 widget.hasText("Shortcut to widget") && widget.hasDescription(context.getString(R.string.widget_stop_description))
             }
-            val elapsed = (System.nanoTime() - startedAt) / 1_000_000
-            assertTrue("shortcut-to-widget took ${elapsed}ms", elapsed <= 1_000)
-            println("Shortcut-to-widget update: ${elapsed}ms")
             assertEquals("Shortcut to widget", runBlocking { app.cache.running.first() }?.entry?.description)
             assertEquals("the offline start is queued", 1, runBlocking { app.changes.unsentCount.first() })
         }
