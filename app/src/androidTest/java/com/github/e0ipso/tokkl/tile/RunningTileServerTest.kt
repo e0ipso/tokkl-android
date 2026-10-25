@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.orFail
@@ -435,7 +436,14 @@ class RunningTileServerTest {
         BlackholeDiagnostics.record("connectivity.snapshot internet=${connectivity.reachesInternet()}")
     }
 
+    /**
+     * Signs in to [server]. The app changes account only through a sign-out, which ends the
+     * account's running checks and with them the tile's once-a-minute refresh throttle, so take
+     * that step first: a refresh the tile made for the previous session must not hold back the
+     * first one for this session.
+     */
     private fun signIn(server: ServerUrl, token: String) {
+        RunningCheck.cancelAndWait(context)
         ServerTrustStore(context).confirmCleartext(server)
         Session(context).save(server, token)
     }
