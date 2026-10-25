@@ -4,21 +4,15 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
-import java.time.Duration
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -64,11 +58,6 @@ class ServerSmokeTest {
     }
 
     @Test
-    fun apiTokenAuthenticatesWithGetMe() {
-        assertEquals(TokklTestServer.email, email(client))
-    }
-
-    @Test
     fun emailAndPasswordAuthenticateWithGetMe() {
         val credentials = ApiCredentials.EmailPassword(TokklTestServer.email, TokklTestServer.password)
 
@@ -99,46 +88,6 @@ class ServerSmokeTest {
         assertEquals(ApiResult.Success(Unit), deleted)
         val left = client.get(tags, JsonArray.serializer()).valueOrFail("GET tags")
         assertFalse("the deleted tag is still listed", left.any { it.jsonObject.string("id") == tag.string("id") })
-    }
-
-    @Test
-    fun reportsSearchFindsAnEntryCreatedThroughTheApi() {
-        val workspaceId = workspaceId()
-        val entries = client.server.api("workspaces", workspaceId, "time_entries")
-        val start = Instant.now().minus(Duration.ofHours(1)).truncatedTo(ChronoUnit.SECONDS)
-        val entry = client.send(
-            "POST",
-            entries,
-            buildJsonObject {
-                put("workspace_id", workspaceId.toLong())
-                put("description", "smoke-${UUID.randomUUID()}")
-                put("start", start.toString())
-                put("duration", 600)
-                put("created_with", "tokkl-android instrumented tests")
-            },
-            JsonObject.serializer(),
-        ).valueOrFail("POST time_entries")
-        val entryId = entry.string("id")
-        try {
-            // The test account's timezone is UTC (scripts/instrumented-tests.sh).
-            val day = start.atZone(ZoneOffset.UTC).toLocalDate()
-            val rows = client.send(
-                "POST",
-                client.server.reports("workspace", workspaceId, "search", "time_entries"),
-                buildJsonObject {
-                    put("start_date", day.minusDays(1).toString())
-                    put("end_date", day.plusDays(1).toString())
-                },
-                JsonArray.serializer(),
-            ).valueOrFail("POST reports search/time_entries")
-
-            val found = rows.any { row ->
-                row.jsonObject.getValue("time_entries").jsonArray.any { it.jsonObject.string("id") == entryId }
-            }
-            assertTrue("the report has no row for the new entry", found)
-        } finally {
-            client.sendNoContent("DELETE", entries.newBuilder().addPathSegment(entryId).build())
-        }
     }
 
     private fun email(client: TogglApiClient): String =

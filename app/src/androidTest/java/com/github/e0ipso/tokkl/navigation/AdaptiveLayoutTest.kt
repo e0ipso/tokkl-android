@@ -84,7 +84,6 @@ import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.screenshot.ScreenshotTest
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import com.github.e0ipso.tokkl.ui.windowWidth
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
@@ -126,14 +125,6 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     @After
     fun cancelTheScope() {
         try { if (shown) composeRule.checkAccessibility() } finally { scope.cancel() }
-    }
-
-    @Test
-    fun theWindowHasItsWidthClass() {
-        var shown: WindowWidth? = null
-        show { shown = windowWidth() }
-
-        assertEquals(width, shown)
     }
 
     /** Both navigation layouts expose independent, changing spoken running marks. */

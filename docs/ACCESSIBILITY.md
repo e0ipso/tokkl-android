@@ -26,13 +26,6 @@ Espresso checks and the original layout, label and action assertions; its result
 called a Compose ATF pass. Timing tests keep their original factories so ATF does not enter
 their measured actions. The 68 screenshot references and their tolerances are unchanged.
 
-The two tests in `AccessibilityChecksTest` deliberately render an unlabelled control and
-require ATF to reject it, both before an action and on an explicit static check. A passing
-semantics assertion cannot substitute for this pin. These pins are not yet run.
-`ViewAccessibilityChecksTest` separately requires a real Espresso action on an unlabelled
-native ImageButton to fail because of ATF before invoking its listener. It relies on the
-runner's enablement and applies on API 31 too. It has not run.
-
 Selected largest-font tests now request `SystemFontScale(2f, largestDisplaySize = true)`.
 `SystemDisplaySize` uses the default display's effective pixel size, physical density and
 AOSP Settings' `display_density_max_scale` / `display_density_min_scale_interval` fractions.
@@ -41,7 +34,7 @@ that 150% is offered on every device. Unsupported Settings resources fail setup 
 Configuration callbacks and readbacks check application of both settings. Cleanup restores
 the exact font setting and density override, including their original absence, on setup
 failure and test failure. A cleanup failure fails verification and is attached to the primary
-failure when there is one. `ConfigurationRestorationTest` pins these failure paths.
+failure when there is one.
 
 The source formula follows [AOSP DisplayDensityUtils](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/android16-release/packages/SettingsLib/src/com/android/settingslib/display/DisplayDensityUtils.java).
 The integration follows the [Compose accessibility testing guide](https://developer.android.com/develop/ui/compose/accessibility/testing),

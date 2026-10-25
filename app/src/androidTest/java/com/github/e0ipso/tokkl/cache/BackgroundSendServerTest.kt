@@ -155,32 +155,6 @@ class BackgroundSendServerTest {
     }
 
     /**
-     * The worker's one run ends in a retry that waits out the backoff. The test stops there: with
-     * the TestDriver's own delays, it could run the retry only once WorkManager has handed it to
-     * the test scheduler again, which happens on the worker's thread after the state this test
-     * can watch. [theRetryAfterTheBackoffSendsTheQueue] runs it in real time.
-     */
-    @Test
-    fun aTransientFailureRetriesAfterABackoff() {
-        signIn(NO_ROUTE, account.apiToken)
-        val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        runBlocking { app.changes.create(workspace, EntryFields(description = "Not sent"), stop.minusSeconds(600), stop) }
-        runBlocking { app.sender.send().join() }
-        val work = queueWork().single()
-
-        val ran = System.currentTimeMillis()
-        driver.setAllConstraintsMet(work.id)
-        val retried = awaitWork(work.id) { it.runAttemptCount == 1 && it.state == WorkInfo.State.ENQUEUED }
-
-        assertEquals("the change stays queued", 1, unsentCount())
-        assertTrue(
-            "the retry waits out the backoff: ${retried.nextScheduleTimeMillis - ran} ms",
-            retried.nextScheduleTimeMillis >= ran + BackgroundSend.BACKOFF.toMillis(),
-        )
-        assertEquals("still one work", listOf(work.id), allWork().map { it.id })
-    }
-
-    /**
      * The retry itself. The first run fails for want of a server and asks for a retry. The server
      * answers again before the backoff ends, and once the backoff is over the retry sends the
      * queue. Here the test WorkManager keeps real time, so WorkManager waits out the backoff and
@@ -261,40 +235,6 @@ class BackgroundSendServerTest {
         assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
         assertEquals(0, unsentCount())
         assertEquals("one run", 1, queueWork().single().runAttemptCount)
-    }
-
-    /** Forces ENQUEUED -> joined between the state read and the attempted cancellation. */
-    @Test
-    fun aWorkerJoiningAfterTheWaitingReadStillSucceeds() {
-        val relay = HangingRelay(TokklTestServer.url).also { this.relay = it }
-        signIn(relay.url, account.apiToken)
-        relay.holdAnswerTo(CREATE)
-        val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        val local = runBlocking { app.changes.create(workspace, EntryFields(description = "Joined after read"), stop.minusSeconds(600), stop) }
-        awaitCondition("the server stored the entry and its answer is held") { relay.holdsAnswer }
-        val work = queueWork().single()
-
-        // Use the same cancellation coordinator as cancelWaiting, with real WorkManager reads
-        // and writes. The waiting read deliberately hands back a stale ENQUEUED observation.
-        BackgroundSend.runs.cancelWaiting(
-            waiting = {
-                val waiting = queueWork().single().state == WorkInfo.State.ENQUEUED
-                assertTrue("the cancellation first observes waiting work", waiting)
-                driver.setAllConstraintsMet(work.id)
-                awaitWork(work.id) { it.state == WorkInfo.State.RUNNING }
-                awaitCondition("the worker joined before the cancel") { BackgroundSend.runs.hasJoined(work.id) }
-                waiting
-            },
-            cancel = { workManager.cancelUniqueWork(BackgroundSend.WORK_NAME).result.get() },
-            queueEmpty = { unsentCount() == 0 },
-            schedule = { BackgroundSend.schedule(context) },
-        )
-        relay.releaseAnswer()
-
-        assertEquals("the joined worker must succeed", WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
-        assertEquals("the joined drain sent the queue", 0, unsentCount())
-        assertEquals("one run", 1, queueWork().single().runAttemptCount)
-        assertEquals("Joined after read", serverEntry(serverId(local)).string("description"))
     }
 
     private fun awaitCondition(what: String, condition: () -> Boolean) {

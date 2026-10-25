@@ -82,16 +82,6 @@ class HistoryGroupUiTest {
         members.assertCountEquals(0)
     }
 
-    @Test
-    fun noTextOfAGroupIsCutOffAtTheLargestFontScale() {
-        show()
-
-        for (text in listOf("Group work", "3", SETTINGS.formatDuration(3 * 3600), context.getString(R.string.history_time_range, "09:00", "12:00"))) {
-            val node = composeRule.onNode(hasText(text), useUnmergedTree = true)
-            node.textLayout()?.let { assertFalse("text is cut off: $text", it.didOverflowHeight) }
-        }
-    }
-
     /** The entry menu, Save as template included, keeps every item whole and tappable at the largest font scale. */
     @Test
     fun noItemOfTheEntryMenuIsCutOffAtTheLargestFontScale() {

@@ -1,3 +1,0 @@
-com.github.e0ipso.tokkl.entry.EntryFormServerTest#aLegacyZeroLengthEntryKeepsItsTimesOnADescriptionEdit
-com.github.e0ipso.tokkl.reminder.ReminderServerTest#oneWakeupAndKeepRunningConfirmsUntilStartCorrection
-com.github.e0ipso.tokkl.widget.WidgetServerTest#nativeClockTicksWithoutWidgetUpdatesAndProviderHasNoPeriod

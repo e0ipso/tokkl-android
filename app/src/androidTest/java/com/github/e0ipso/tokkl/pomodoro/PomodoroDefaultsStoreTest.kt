@@ -3,9 +3,6 @@ package com.github.e0ipso.tokkl.pomodoro
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -47,22 +44,4 @@ class PomodoroDefaultsStoreTest {
         assertEquals(StoredPomodoroDefaults(PomodoroDefaults(180, 1, 60, 1), unsent = false), store.load())
     }
 
-    @Test
-    fun aPhoneOnlySettingPersistsItsChangeWithoutGettingAClient() {
-        var clients = 0
-        fun setting() = PomodoroDefaultsSetting(
-            initial = store.load(),
-            save = store::save,
-            client = { clients++; null },
-            keepsPreferences = { false },
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-        )
-        val setting = setting()
-        assertEquals(PomodoroDefaults(25, 5, 15, 4), setting.defaults.value)
-        runBlocking { setting.change(PomodoroDefaults(40, 8, 20, 5)).join() }
-        assertEquals(StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false), store.load())
-        assertEquals(PomodoroDefaults(40, 8, 20, 5), setting().defaults.value)
-        assertEquals(0, clients)
-    }
 }

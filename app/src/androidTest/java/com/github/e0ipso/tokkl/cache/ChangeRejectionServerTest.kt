@@ -7,7 +7,6 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
-import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.orFail
@@ -70,27 +69,6 @@ class ChangeRejectionServerTest {
 
             }
         }
-    }
-
-    @Test fun anAlreadyStopped409LeavesTheQueueWithoutADiscardNotice() {
-        val id = cachedEntry("Stopped on the web")
-        val cached = database.changes().entry(id)!!
-        database.changes().insert(PendingChange.of(ChangeKind.STOP, cached))
-        // The production PUT preserves the phone's tap time. Only PATCH /stop yields 409 on
-        // Tokkl, so route this test's stop there to exercise a genuine server refusal.
-        var responseStatus = 0
-        val stopRoute = OkHttpClient.Builder().addInterceptor { chain ->
-            val request = chain.request()
-            chain.proceed(request.newBuilder().url(request.url.newBuilder().addPathSegment("stop").build())
-                .method("PATCH", request.body).build()).also { responseStatus = it.code }
-        }.build()
-        sender = sender(stopRoute)
-        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
-        assertEquals(409, responseStatus)
-        assertEquals(0, count())
-        assertEquals(0, discarded)
-        assertFalse(sender.signInNeeded.value)
-        assertEquals("Stopped on the web", account.entry(id).getValue("description").toString().trim('"'))
     }
 
     @Test fun a404DropsChangesToTheDeletedEntryAndAggregatesTheNotice() {

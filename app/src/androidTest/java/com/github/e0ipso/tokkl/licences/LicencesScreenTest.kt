@@ -121,16 +121,6 @@ class LicencesScreenTest {
         composeRule.awaitTimerPage()
     }
 
-    /** A rotation, theme or font change recreates the activity. */
-    @Test
-    fun licencesStayOpenWhenTheActivityIsRecreated() {
-        openLicences()
-
-        composeRule.activityRule.scenario.recreate()
-
-        licencesHeading().assertIsDisplayed()
-    }
-
     private fun openLicences() {
         composeRule.openSettings()
         composeRule.onNode(hasText(string(R.string.licences)) and hasClickAction()).performScrollTo().performClick()

@@ -97,11 +97,8 @@ jobs:
   # screenshot tests do not run there, since their references come from API 36.
   #
   # One emulator running every test was about 74 minutes of device time and
-  # the whole CI critical path. The three SustainedRepeat classes, about 9
-  # minutes of that, repeat a scenario the suite already runs, so an
-  # unfiltered run leaves them out. AndroidJUnitRunner's numShards splits the
-  # rest across six emulators per API level. Every other test still runs
-  # once. A name hash puts at most about 16 minutes of tests on one shard,
+  # the whole CI critical path. AndroidJUnitRunner's numShards splits it
+  # across six emulators per API level, and every test runs once. A name hash puts at most about 16 minutes of tests on one shard,
   # and booting the emulator plus starting the server adds about 15, so a
   # shard finishes near 35 minutes.
   instrumented-tests:

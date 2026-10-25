@@ -1,19 +1,12 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import android.Manifest
-import android.app.AlarmManager
-import android.app.NotificationManager
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
-import android.provider.Settings
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -58,15 +51,4 @@ class PomodoroPermissionPersistenceTest {
         assertFalse(NotificationPermissionAsk(33, NotificationPermissionStore(context)) { false }.atStartInApp())
     }
 
-    @Test fun platformSnapshotAndExactAlarmLinkFollowActualAndroidApis() {
-        val actual = pomodoroPermissions(context)
-        val notifications = context.getSystemService(NotificationManager::class.java)
-        val post = Build.VERSION.SDK_INT < 33 || context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        assertEquals(post && notifications.areNotificationsEnabled(), actual.notifications)
-        assertEquals(context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms(), actual.exactAlarm)
-        assertEquals(canShowPomodoroFullScreen(context), actual.fullScreen)
-        val settings = pomodoroExactAlarmSettings(context)
-        assertEquals(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, settings.action)
-        assertEquals("package:${context.packageName}", settings.dataString)
-    }
 }

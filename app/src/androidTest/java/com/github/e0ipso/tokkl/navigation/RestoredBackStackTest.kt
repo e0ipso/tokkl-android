@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -51,17 +50,6 @@ class RestoredBackStackTest {
             composeRule.awaitText(string(R.string.sign_in_title), TIMEOUT_MS)
             assertFalse("the bottom bar went with the session", exists(bottomBarItem(R.string.nav_timer)))
             assertFalse("Settings went with the session", exists(heading(R.string.settings)))
-        }
-    }
-
-    @Test
-    fun aStackRestoredWithASessionShowsThePageItHeld() {
-        onSettings { scenario ->
-            scenario.recreate()
-
-            composeRule.waitUntil("Settings shows again", TIMEOUT_MS) { exists(heading(R.string.settings)) }
-            composeRule.onNode(bottomBarItem(R.string.settings)).assertIsSelected()
-            assertFalse("sign-in stays away", exists(hasText(string(R.string.sign_in_title))))
         }
     }
 

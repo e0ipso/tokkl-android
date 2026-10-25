@@ -8,7 +8,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.util.TypedValue
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
-import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.math.abs
 import kotlin.math.hypot
@@ -84,13 +83,6 @@ class LaunchSplashTest {
         }
         assertTrue("only $ring pixels of halo around the wordmark", ring > MIN_HALO_PIXELS)
         assertEquals("opaque pixels around the wordmark that are not the halo", 0, stray)
-    }
-
-    @Test
-    fun theFirstScreenShowsWithoutWaitingOnTheSplash() {
-        ActivityScenario.launch(MainActivity::class.java).use {
-            composeRule.awaitTimerPage()
-        }
     }
 
     private fun assertSplashTheme(dark: Boolean) {

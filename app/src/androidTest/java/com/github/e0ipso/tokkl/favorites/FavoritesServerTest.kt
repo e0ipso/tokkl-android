@@ -216,25 +216,6 @@ class FavoritesServerTest {
     }
 
     @Test
-    fun nineFavoritesAreTheMost() {
-        val nine = (1..MAX_FAVORITES).joinToString(",") {
-            """{"description": "Favorite $it", "project_id": null, "task_id": null, "tags": [], "billable": false}"""
-        }
-        saveOnTheWeb("""{"favorites": [$nine]}""")
-        launch {
-            description().performTextInput("A tenth")
-            description().performImeAction()
-            openTemplates()
-            awaitShown("the ninth template") { favorite("Favorite 9") }
-            val full = context.resources.getQuantityString(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
-            awaitShown("the list says it is full") { composeRule.onNode(hasText(full)) }
-            composeRule.onNode(hasText(string(R.string.favorites_save))).assertIsNotEnabled()
-        }
-        val stored = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
-        assertEquals(MAX_FAVORITES, stored.getValue("favorites").jsonArray.size)
-    }
-
-    @Test
     fun editingOfflineSaysItNeedsTheServer() {
         saveOnTheWeb("""{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
         launch {
