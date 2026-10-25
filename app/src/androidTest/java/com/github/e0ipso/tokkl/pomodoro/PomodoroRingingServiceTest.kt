@@ -13,11 +13,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
 import androidx.test.uiautomator.UiDevice
+import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PomodoroSession
@@ -103,7 +105,8 @@ class PomodoroRingingServiceTest {
                 DeviceShell.run("cmd media_session volume --stream 4 --set $alarmVolume")
                 val mode = when (zen) { "1" -> "priority"; "2" -> "none"; "3" -> "alarms"; else -> "off" }
                 DeviceShell.run("cmd notification set_dnd $mode")
-                DeviceShell.run("cmd connectivity airplane-mode ${if (airplane) "enable" else "disable"}")
+                // Wait for the network to come back, or the next test's first request fails.
+                AirplaneMode.set(airplane, TokklTestServer.url)
                 if (screenWasOn) device.wakeUp() else device.sleep()
             } finally {
                 if (::database.isInitialized) database.close()

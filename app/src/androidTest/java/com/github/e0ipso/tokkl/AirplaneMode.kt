@@ -20,10 +20,13 @@ import okhttp3.Request
  */
 object AirplaneMode {
 
-    fun set(on: Boolean, client: TogglApiClient) {
+    fun set(on: Boolean, client: TogglApiClient) = set(on, client.server)
+
+    /** As [set] for a client, waiting on requests to [server]. */
+    fun set(on: Boolean, server: ServerUrl) {
         DeviceShell.run("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}")
         val deadline = System.nanoTime() + TIMEOUT_NANOS
-        while (serverAnswers(client.server) == on) {
+        while (serverAnswers(server) == on) {
             if (System.nanoTime() > deadline) throw AssertionError("the network did not ${if (on) "go" else "come back"}")
             Thread.sleep(POLL_MS)
         }
