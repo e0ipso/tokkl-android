@@ -101,6 +101,10 @@ class PomodoroAlarmActivityTest {
                 if (restoreLockscreenDisabled) {
                     DeviceShell.run("locksettings set-disabled true")
                     restoreLockscreenDisabled = false
+                    // Android 12 keeps a lock screen that already shows until the screen goes off
+                    // and on again; only then can it be dismissed.
+                    device.sleep()
+                    device.wakeUp()
                 }
                 // Clearing the pin leaves the lock screen showing, and every later test would
                 // launch its activity behind it.
@@ -319,9 +323,12 @@ class PomodoroAlarmActivityTest {
     private fun dismissKeyguard() {
         val keyguard = context.getSystemService(KeyguardManager::class.java)
         val deadline = SystemClock.elapsedRealtime() + 5_000
+        // Android 12 lets the menu key dismiss a lock screen that wm dismiss-keyguard leaves.
+        val ways = listOf("wm dismiss-keyguard", "input keyevent KEYCODE_MENU")
+        var attempt = 0
         while (keyguard.isKeyguardLocked && SystemClock.elapsedRealtime() < deadline) {
-            DeviceShell.run("wm dismiss-keyguard")
-            SystemClock.sleep(200)
+            DeviceShell.run(ways[attempt++ % ways.size])
+            SystemClock.sleep(300)
         }
         assertFalse("the lock screen is still showing", keyguard.isKeyguardLocked)
     }
