@@ -29,6 +29,9 @@ import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
@@ -521,7 +524,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             }
         }) {
             composeRule.awaitTimerPage()
-            composeRule.onNodeWithTag("timer_totals_week").performScrollTo().assertIsDisplayed()
+            // The header scrolls in the Calendar view and at large text; otherwise it stays put.
+            val scrolls = composeRule.onAllNodes(hasTestTag("timer_totals_week") and hasAnyAncestor(hasScrollAction()))
+                .fetchSemanticsNodes().isNotEmpty()
+            val week = composeRule.onNodeWithTag("timer_totals_week")
+            if (scrolls) week.performScrollTo()
+            week.assertIsDisplayed()
             composeRule.onNodeWithTag("timer_totals_today").assertIsDisplayed()
             assertScreen(name)
         }
