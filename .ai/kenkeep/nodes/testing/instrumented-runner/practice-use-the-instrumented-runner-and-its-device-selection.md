@@ -16,7 +16,7 @@ kk_derived_from:
   - '9c8de91d-411b-498c-b4ed-241fabaa877e:practice:4'
 kk_relates_to:
   - practice-let-the-runner-own-emulator-boot-and-settings
-  - practice-test-real-tokkl-server-speed-regressions
+  - practice-test-against-a-real-tokkl-server
   - practice-gradle-no-daemon-in-parallel-worktrees
 kk_depends_on: []
 kk_confidence: high
@@ -29,7 +29,7 @@ The tests run on the attached device or on `ANDROID_SERIAL`. With neither, apart
 # Related
 
 - Related: [practice-let-the-runner-own-emulator-boot-and-settings](../emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md)
-- Related: [practice-test-real-tokkl-server-speed-regressions](../practice-test-real-tokkl-server-speed-regressions.md)
+- Related: [practice-test-against-a-real-tokkl-server](../practice-test-against-a-real-tokkl-server.md)
 - Related: [practice-gradle-no-daemon-in-parallel-worktrees](../../build-and-tooling/practice-gradle-no-daemon-in-parallel-worktrees.md)
 <!-- kk:related:end -->
 

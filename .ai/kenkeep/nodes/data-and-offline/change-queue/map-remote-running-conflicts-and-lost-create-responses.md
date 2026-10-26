@@ -15,7 +15,7 @@ kk_derived_from:
 kk_relates_to:
   - map-tokkl-toggl-api
   - map-api-client-shared-okhttp-serverurl-and-errors
-  - practice-test-real-tokkl-server-speed-regressions
+  - practice-test-against-a-real-tokkl-server
 kk_depends_on: []
 kk_confidence: high
 ---
@@ -28,7 +28,7 @@ A create reaches the server once, though neither Tokkl nor Toggl takes an idempo
 
 - Related: [map-tokkl-toggl-api](../../api-and-security/map-tokkl-toggl-api.md)
 - Related: [map-api-client-shared-okhttp-serverurl-and-errors](../../api-and-security/map-api-client-shared-okhttp-serverurl-and-errors.md)
-- Related: [practice-test-real-tokkl-server-speed-regressions](../../testing/practice-test-real-tokkl-server-speed-regressions.md)
+- Related: [practice-test-against-a-real-tokkl-server](../../testing/practice-test-against-a-real-tokkl-server.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

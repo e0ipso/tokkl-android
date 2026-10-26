@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-    <!-- Test APK only: keep Perfetto localhost access and allow the disposable fixture server. -->
-    <application
-        android:networkSecurityConfig="@xml/catalog_profile_network_security"
-        tools:replace="android:networkSecurityConfig" />
-</manifest>

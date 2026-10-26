@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Two monotonic seconds from before a tap through every observation of its visible state. A tap
  * that waited for the network would run into OkHttp's 10-second timeouts first, so this proves
- * the tap stays on the phone. How fast the screen changes is TimerTapBenchmark's measure, on a
- * release build; a debug build on a CI emulator can take a second to draw its first Running frame.
+ * the tap stays on the phone. A debug build on a CI emulator can take a second to draw its first
+ * Running frame.
  */
 class TapToVisibleDeadline(private val action: String) {
     private val started = System.nanoTime()

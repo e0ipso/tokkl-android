@@ -10,8 +10,6 @@ A native Android client for a self-hosted Tokkl server. It does the daily work o
 
 Tokkl's web app works on a phone and installs as a PWA. On Android a PWA cannot keep the running timer in a notification, sit on the home screen as a widget, add a Quick Settings tile, or start a timer while the server is out of reach. Tokkl's own PRD lists that last gap as risk 3, and its offline outbox (C4) is still planned. People also prefer native apps.
 
-Tokkl set itself a bar: if starting a timer is slower than in Toggl, the owner drifts back to Toggl. The same bar applies here, with the PWA as the thing to beat. The app has done its job when the owner no longer opens the PWA on the phone.
-
 ### Goals
 
 1. Start and stop the timer from the notification, the widget, the Quick Settings tile or the app.
@@ -258,7 +256,7 @@ Since Android 9 an app cannot use cleartext HTTP unless it opts in, and since An
 
 | Area | Requirement |
 |---|---|
-| Speed | A tap on Start or Stop in the app, notification, widget or tile changes the state on the phone without waiting for the server. Tests prove it with a network that never answers. Jetpack Macrobenchmark runs cold start (`StartupTimingMetric`) and tap-to-state (`TraceSectionMetric`) on the CI emulator and fails a build that is slower than the previous one. The goals are 200 ms from tap to new state and 1.5 s cold start on a mid-range phone; no real phone checks them, so they guide design but do not gate releases. |
+| Speed | A tap on Start or Stop in the app, notification, widget or tile changes the state on the phone without waiting for the server. Tests prove it with a network that never answers. |
 | Compatibility | Android 12 (API 31) and later. Phones first; tablets and foldables get adaptive layouts. |
 | Privacy | No app network traffic to any host but the configured server. Explicit Share CSV grants the chosen receiving app temporary access to that report only, as in R6 to R9. |
 | Battery | No wakeups while no timer runs and the queue is empty. No short-interval polling. While a timer runs, one check every 15 minutes (section 6.3), plus at most one delayed inexact wakeup for its long-running reminder (N7), cancelled when it stops or changes. The reminder adds no periodic job or idle wakeup. While a Pomodoro session runs, one exact wakeup per planned phase end (W7). |
@@ -285,7 +283,7 @@ The repo is public at `github.com/e0ipso/tokkl-android` and copies Tokkl's setup
 
 - One `ci.yml` workflow on pull requests and pushes to `main`, with every action pinned to a commit SHA and its version in a comment. Dependabot updates the actions, the Gradle dependencies and the npm tooling weekly.
 - commitlint with Tokkl's rules: Conventional Commits, no AI or co-author trailers, no ticket IDs in the subject. A husky hook runs it locally, and a CI job lints the commits of each pull request and push.
-- CI jobs for the Gradle build with lint and the unit tests (`assembleDebug check`), for a release build made twice from clean and compared byte for byte (`scripts/reproducible-release.sh`), for the instrumented tests on emulators at API 36 and 31, and for the macrobenchmarks on an API 36 emulator, which fails a median more than 10% slower than the last green run on `main`. GitHub's Ubuntu runners need a udev rule before the emulator can use KVM ([android-emulator-runner](https://github.com/ReactiveCircus/android-emulator-runner)).
+- CI jobs for the Gradle build with lint and the unit tests (`assembleDebug check`), for a release build made twice from clean and compared byte for byte (`scripts/reproducible-release.sh`), and for the instrumented tests on emulators at API 36 and 31. GitHub's Ubuntu runners need a udev rule before the emulator can use KVM ([android-emulator-runner](https://github.com/ReactiveCircus/android-emulator-runner)).
 
 Releases run in the same workflow after every CI check passes:
 

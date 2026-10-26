@@ -31,7 +31,7 @@ _None yet._
 ### #ci
 - Open [**Keep release builds reproducible and signed with the project key**](release/practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
 - Open [**Release signing key, Actions secrets and signature checks**](release/map-release-signing-key-actions-secrets-and-signature-checks.md) — The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks.
-- Open [**Test against a real Tokkl server and catch speed regressions in CI**](testing/practice-test-real-tokkl-server-speed-regressions.md) — Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. Macrobenchmark fails a build slower than the previous one.
+- Open [**Test against a real Tokkl server**](testing/practice-test-against-a-real-tokkl-server.md) — Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake.
 ### #testing
 - Open [**Let the runner own emulator boot and settings**](testing/emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
 - Open [**Account for emulator recording and screenshot quirks**](testing/emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.

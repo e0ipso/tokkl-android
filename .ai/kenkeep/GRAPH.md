@@ -240,7 +240,7 @@ Total nodes: 89
 - **title:** Remote running conflicts and lost create responses
 - **path:** data-and-offline/change-queue/map-remote-running-conflicts-and-lost-create-responses.md
 - **tags:** offline, api, queue
-- **relates_to:** map-tokkl-toggl-api, map-api-client-shared-okhttp-serverurl-and-errors, practice-test-real-tokkl-server-speed-regressions
+- **relates_to:** map-tokkl-toggl-api, map-api-client-shared-okhttp-serverurl-and-errors, practice-test-against-a-real-tokkl-server
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:1
 
 ## map-reports-summary-from-detailed-search
@@ -643,7 +643,7 @@ Total nodes: 89
 - **title:** Respect emulator slots and resource ownership
 - **path:** testing/emulator-runtime/practice-respect-emulator-slots-and-resource-ownership.md
 - **tags:** testing, emulator, memory
-- **relates_to:** map-oom-kill-ends-agent-session, practice-test-real-tokkl-server-speed-regressions, practice-use-the-instrumented-runner-and-its-device-selection
+- **relates_to:** map-oom-kill-ends-agent-session, practice-test-against-a-real-tokkl-server, practice-use-the-instrumented-runner-and-its-device-selection
 - **derived_from:** scripts/instrumented-tests.sh
 
 ## practice-reuse-drain-checks-by-content-and-test-configuration
@@ -704,12 +704,12 @@ Total nodes: 89
 - **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors
 - **derived_from:** docs/PRD.md
 
-## practice-test-real-tokkl-server-speed-regressions
+## practice-test-against-a-real-tokkl-server
 
 - **kind:** practice
-- **title:** Test against a real Tokkl server and catch speed regressions in CI
-- **path:** testing/practice-test-real-tokkl-server-speed-regressions.md
-- **tags:** testing, ci, performance
+- **title:** Test against a real Tokkl server
+- **path:** testing/practice-test-against-a-real-tokkl-server.md
+- **tags:** testing, ci
 - **relates_to:** practice-run-instrumented-tests-only-through-the-script, map-change-queue-sends-entry-changes-in-order
 - **derived_from:** docs/PRD.md
 
@@ -737,7 +737,7 @@ Total nodes: 89
 - **title:** Use the instrumented runner and its device selection
 - **path:** testing/instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md
 - **tags:** testing, android, emulator, docker
-- **relates_to:** practice-let-the-runner-own-emulator-boot-and-settings, practice-test-real-tokkl-server-speed-regressions, practice-gradle-no-daemon-in-parallel-worktrees
+- **relates_to:** practice-let-the-runner-own-emulator-boot-and-settings, practice-test-against-a-real-tokkl-server, practice-gradle-no-daemon-in-parallel-worktrees
 - **derived_from:** scripts/instrumented-tests.sh, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:4
 
 ## practice-use-the-pinned-test-server-and-tls-proxies
@@ -746,7 +746,7 @@ Total nodes: 89
 - **title:** Use the pinned test server and TLS proxies
 - **path:** testing/instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md
 - **tags:** testing, android, docker, api
-- **relates_to:** practice-let-the-runner-own-emulator-boot-and-settings, practice-test-real-tokkl-server-speed-regressions
+- **relates_to:** practice-let-the-runner-own-emulator-boot-and-settings, practice-test-against-a-real-tokkl-server
 - **derived_from:** scripts/instrumented-tests.sh, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:4
 
 ## practice-verify-device-test-results-and-process-isolation-receipts

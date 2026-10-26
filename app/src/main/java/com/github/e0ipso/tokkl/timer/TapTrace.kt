@@ -5,8 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Marks the time from a Start or Stop tap until the screen has drawn what the tap did, as an async
- * section of the system trace. The macrobenchmark module measures the sections with
- * TraceSectionMetric against the 200 ms goal (docs/PRD.md, Speed).
+ * section of the system trace.
  */
 fun interface TapTrace {
 
@@ -28,8 +27,8 @@ fun interface TapTrace {
         val None = TapTrace { {} }
 
         /**
-         * The system trace, which Perfetto records while a benchmark runs. A section costs a check
-         * of a flag when nothing traces.
+         * The system trace, which Perfetto records on request. A section costs a check of a flag
+         * when nothing traces.
          */
         val System = TapTrace { section ->
             diagnostic?.invoke("timer.model.accept trace=$section actual_touch_receipt=UNKNOWN")

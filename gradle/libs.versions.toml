@@ -13,7 +13,6 @@ junit = "4.13.2"
 androidxTestRunner = "1.7.0"
 espresso = "3.7.0"
 androidxTestOrchestrator = "1.6.1"
-benchmark = "1.5.0"
 uiautomator = "2.4.0"
 
 [libraries]
@@ -41,11 +40,9 @@ androidx-test-runner = { module = "androidx.test:runner", version.ref = "android
 androidx-test-espresso-accessibility = { module = "androidx.test.espresso:espresso-accessibility", version.ref = "espresso" }
 androidx-test-orchestrator = { module = "androidx.test:orchestrator", version.ref = "androidxTestOrchestrator" }
 androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
-androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-android-test = { id = "com.android.test", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

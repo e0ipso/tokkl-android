@@ -141,17 +141,6 @@
 # testFile instead. It refuses a comma in any other runner argument, and a
 # testFile argument of your own beside a list.
 #
-# Every runner argument reaches both test APKs, the app's and the benchmarks'.
-# A test APK given a class it does not hold fails the run with an
-# initializationError, so a class= list that names a benchmark in
-# com.github.e0ipso.tokkl.benchmark gives the benchmark runner a file of its
-# own, as tokklBenchmarkTestFile, and the app's runner the other entries. Such
-# a list must also name an app test, since a run in which the app's tests did
-# not run fails, and must run :macrobenchmark:connectedBenchmarkAndroidTest.
-# With that task, a class= list must name a benchmark. A package= list goes to
-# both test APKs, since a package an APK does not hold selects nothing there.
-# A run with that task fails when no benchmark ran, as it does for the app.
-#
 # Use either class= or package= in a run, never both, including single values.
 # AndroidJUnitRunner 1.7.0 discovers tests in packages only when no explicit
 # classes are given. Mixing them in testFile also runs just the named classes.
@@ -177,11 +166,6 @@ readonly CREDENTIALS_PREFIX='tokkl-test-credentials-'
 # Where a run puts the class= or package= list it passes as testFile, beside
 # the credentials file.
 readonly FILTER_PREFIX='tokkl-test-filter-'
-# The benchmark module's package, and the runner argument that hands the
-# benchmark runner its own class= list (see the header and
-# macrobenchmark/.../BenchmarkTestRunner.kt).
-readonly BENCHMARK_PACKAGE='com.github.e0ipso.tokkl.benchmark'
-readonly BENCHMARK_FILTER_ARG='tokklBenchmarkTestFile'
 # A run takes minutes, so a credentials file this many hours old belongs to a
 # run that ended without its cleanup, never to one still reading it.
 readonly STALE_CREDENTIALS_HOURS=6
@@ -191,8 +175,6 @@ readonly EMULATOR_MEMORY_MAX=6G
 # Where Gradle puts the JUnit XML results of a run, one file for each test
 # device.
 readonly RESULTS='app/build/outputs/androidTest-results/connected/debug'
-# Where Gradle puts them for :macrobenchmark:connectedBenchmarkAndroidTest.
-readonly BENCHMARK_RESULTS='macrobenchmark/build/outputs/androidTest-results/connected/benchmark'
 # Where Android keeps the CAs that user 0 installed (see the header).
 readonly USER_CA_DIR='/data/misc/user/0/cacerts-added'
 # The annotation of the tests that need this run's CA as a user CA.
@@ -254,45 +236,15 @@ if [ -n "$class_requested" ] && [ -n "$package_requested" ]; then
     echo "$0: cannot combine class= and package= filters. AndroidJUnitRunner can omit package tests when explicit classes are given, also in testFile. Use separate runs or list every concrete class in class=. No test device has been allocated." >&2
     exit 2
 fi
-benchmark_task=''
-for arg in "${gradle_args[@]}"; do
-    case $arg in
-        *connectedBenchmarkAndroidTest) benchmark_task=1 ;;
-    esac
-done
 if [ "${#test_filter[@]}" -gt 0 ]; then
     for arg in "${gradle_args[@]}"; do
         case $arg in
-            *"$RUNNER_ARGS.testFile="* | *"$RUNNER_ARGS.$BENCHMARK_FILTER_ARG="*)
+            *"$RUNNER_ARGS.testFile="*)
                 echo "$0: $arg cannot go with a class= or package= list, which the script passes as testFile." >&2
                 exit 2
                 ;;
         esac
     done
-fi
-# A class= list's benchmarks go to the benchmark runner alone (see the header).
-benchmark_filter=()
-if [ -n "$class_requested" ] && [ "${#test_filter[@]}" -gt 0 ]; then
-    app_filter=()
-    for entry in "${test_filter[@]}"; do
-        case $entry in
-            "$BENCHMARK_PACKAGE".*) benchmark_filter+=("$entry") ;;
-            *) app_filter+=("$entry") ;;
-        esac
-    done
-    if [ "${#benchmark_filter[@]}" -gt 0 ] && [ -z "$benchmark_task" ]; then
-        echo "$0: the class= list names benchmarks, but the run has no :macrobenchmark:connectedBenchmarkAndroidTest to run them. No test device has been allocated." >&2
-        exit 2
-    fi
-    if [ -n "$benchmark_task" ] && [ "${#benchmark_filter[@]}" -eq 0 ]; then
-        echo "$0: the class= list names no benchmark in $BENCHMARK_PACKAGE, but the run has :macrobenchmark:connectedBenchmarkAndroidTest, whose APK cannot load the app's tests. No test device has been allocated." >&2
-        exit 2
-    fi
-    if [ "${#benchmark_filter[@]}" -gt 0 ] && [ "${#app_filter[@]}" -eq 0 ]; then
-        echo "$0: the class= list names only benchmarks. Add an app test, such as com.github.e0ipso.tokkl.api.ServerSmokeTest#apiTokenAuthenticatesWithGetMe, since a run in which the app's tests did not run fails. No test device has been allocated." >&2
-        exit 2
-    fi
-    test_filter=("${app_filter[@]}")
 fi
 # A native permission probe runs alone, with permission reset before its test process starts.
 # Keep this validation before device allocation, like the selector checks above.
@@ -445,7 +397,6 @@ emulator_serial=''
 emulator_unit=''
 credentials_on_device=''
 filter_on_device=''
-benchmark_filter_on_device=''
 user_ca_on_device=''
 devices_with_credentials=()
 # The devices this run installed its CA on as a user CA.
@@ -497,8 +448,8 @@ report_emulator_log() {
 # booted is killed. Without it, the file was back on the next boot.
 remove_device_files() {
     for device in "${devices_with_credentials[@]}"; do
-        adb -s "$device" shell "rm -f $credentials_on_device $filter_on_device $benchmark_filter_on_device && sync" >/dev/null 2>&1 ||
-            echo "$0: could not remove $credentials_on_device${filter_on_device:+ or $filter_on_device}${benchmark_filter_on_device:+ or $benchmark_filter_on_device} from $device" >&2
+        adb -s "$device" shell "rm -f $credentials_on_device $filter_on_device && sync" >/dev/null 2>&1 ||
+            echo "$0: could not remove $credentials_on_device${filter_on_device:+ or $filter_on_device} from $device" >&2
     done
     devices_with_credentials=()
 }
@@ -1157,11 +1108,9 @@ else
     mapfile -t devices < <(attached_devices)
 fi
 filter="$work_dir/test-filter.txt"
-benchmark_filter_file="$work_dir/benchmark-test-filter.txt"
 
 # Copies the credentials file to each test device, and the test list in
-# $filter too once filter_on_device names its place there, and the benchmarks'
-# list once benchmark_filter_on_device does.
+# $filter too once filter_on_device names its place there.
 push_to_devices() {
     for device in "${devices[@]}"; do
         remove_stale_credentials "$device"
@@ -1175,10 +1124,6 @@ push_to_devices() {
         if [ -n "$filter_on_device" ]; then
             adb -s "$device" push "$filter" "$filter_on_device" >/dev/null
             adb -s "$device" shell "chmod 644 $filter_on_device"
-        fi
-        if [ -n "$benchmark_filter_on_device" ]; then
-            adb -s "$device" push "$benchmark_filter_file" "$benchmark_filter_on_device" >/dev/null
-            adb -s "$device" shell "chmod 644 $benchmark_filter_on_device"
         fi
     done
 }
@@ -1222,15 +1167,13 @@ PY
 
 # Runs the tests once on every test device. Fails when Gradle fails, when a
 # test device went away during the run, and when Gradle passed without running
-# the tests on every device, the benchmarks too when the run has their task.
+# the tests on every device.
 run_tests() {
-    local status=0 device xml tests dir
-    local -a gone=() results=() result_dirs=()
+    local status=0 device xml tests
+    local -a gone=() results=()
     if [ -n "$emulator_serial" ]; then emit_owned_build; fi
     # A run that stops before its tests must not count the last run's results.
-    result_dirs=("$RESULTS")
-    if [ -n "$benchmark_task" ]; then result_dirs+=("$BENCHMARK_RESULTS"); fi
-    rm -rf "${result_dirs[@]}"
+    rm -rf "$RESULTS"
     ./gradlew --no-daemon connectedDebugAndroidTest \
         "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
         "-P$RUNNER_ARGS.tokklTlsBaseUrl=https://10.0.2.2:$tls_port" \
@@ -1263,21 +1206,19 @@ run_tests() {
         echo "$0: Gradle passed, but the test runner failed on a device (\"AndroidTestRunner failed\" above), so this run fails." >&2
         return 1
     fi
-    # A class= list entry that names no test, such as a mistyped benchmark
-    # method, runs nothing in its APK and Gradle passes.
-    for dir in "${result_dirs[@]}"; do
-        mapfile -t results < <(find "$dir" -maxdepth 1 -name 'TEST-*.xml' 2>/dev/null)
-        if [ "${#results[@]}" -lt "${#devices[@]}" ]; then
-            echo "$0: Gradle passed, but $dir holds results for ${#results[@]} of the ${#devices[@]} test devices, so this run fails." >&2
+    # A class= list entry that names no test, such as a mistyped method, runs
+    # nothing and Gradle passes.
+    mapfile -t results < <(find "$RESULTS" -maxdepth 1 -name 'TEST-*.xml' 2>/dev/null)
+    if [ "${#results[@]}" -lt "${#devices[@]}" ]; then
+        echo "$0: Gradle passed, but $RESULTS holds results for ${#results[@]} of the ${#devices[@]} test devices, so this run fails." >&2
+        return 1
+    fi
+    for xml in "${results[@]}"; do
+        tests=$(sed -n 's/^<testsuites [^>]*\btests="\([0-9]*\)".*/\1/p;T;q' "$xml")
+        if [ "${tests:-0}" -eq 0 ]; then
+            echo "$0: Gradle passed, but $xml reports no test run, so this run fails." >&2
             return 1
         fi
-        for xml in "${results[@]}"; do
-            tests=$(sed -n 's/^<testsuites [^>]*\btests="\([0-9]*\)".*/\1/p;T;q' "$xml")
-            if [ "${tests:-0}" -eq 0 ]; then
-                echo "$0: Gradle passed, but $xml reports no test run, so this run fails." >&2
-                return 1
-            fi
-        done
     done
 }
 
@@ -1290,11 +1231,6 @@ if [ "${#test_filter[@]}" -gt 0 ]; then
     printf '%s\n' "${test_filter[@]}" >"$filter"
     filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
     gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
-fi
-if [ "${#benchmark_filter[@]}" -gt 0 ]; then
-    printf '%s\n' "${benchmark_filter[@]}" >"$benchmark_filter_file"
-    benchmark_filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
-    gradle_args+=("-P$RUNNER_ARGS.$BENCHMARK_FILTER_ARG=$benchmark_filter_on_device")
 fi
 if [ "${#user_ca_devices[@]}" -gt 0 ]; then
     for device in "${user_ca_devices[@]}"; do
