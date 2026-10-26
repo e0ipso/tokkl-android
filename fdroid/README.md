@@ -4,13 +4,13 @@
 owner to submit. Nothing has been submitted. The package ID comes from the
 filename. Store text and images remain in `fastlane/metadata/android/`.
 
-The only build listed is the signed `v0.2.0` release, version code 2000,
-at source commit `11d324c572f15c02a9564ec2e1f23cdf58f8cfda`. Its public APK is
-[tokkl-android-0.2.0.apk](https://github.com/e0ipso/tokkl-android/releases/download/v0.2.0/tokkl-android-0.2.0.apk).
-The retained release receipt records APK SHA-256
-`2fe746eba50742d56c331a13ccaccbc0c014a9a89de4502065e866ce275c841b`.
+The only build listed is the signed `v0.3.0` release, version code 3000,
+at source commit `1cdf6298978cc8c47b82f98ab4e2b7cf9854d647`. Its public APK is
+[tokkl-android-0.3.0.apk](https://github.com/e0ipso/tokkl-android/releases/download/v0.3.0/tokkl-android-0.3.0.apk),
+SHA-256 `8130cee2e04f263a4c93f78e89f5ba4877051b671bd752d10801f682585937cf`.
 `AllowedAPKSigningKeys` contains the signing **certificate** SHA-256, distinct
-from the APK hash and the public key hash. No private signing material is needed.
+from the APK hash and the public key hash. `apksigner verify --print-certs`
+on that APK prints the same certificate. No private signing material is needed.
 There is no proven `v0.1.0` APK to use in a recipe.
 
 Build from the unchanged tag with JDK 21, Gradle 9.8.1, AGP 9.4.1,
@@ -35,7 +35,7 @@ Validation is deferred until backlog implementation is complete. At that gate,
 run `node --test test/fdroid-metadata.test.js`, then copy the recipe to an
 isolated fdroiddata checkout and run `fdroid lint com.github.e0ipso.tokkl` and
 `fdroid checkupdates com.github.e0ipso.tokkl`. Confirm that a check restricted to
-the `v0.2.0` source reports 0.2.0 / 2000; an unrestricted future check may find a
+the `v0.3.0` source reports 0.3.0 / 3000; an unrestricted future check may find a
 newer release. Check reproducibility against the public APK in the matching
 F-Droid build environment before owner submission. None of those checks has
 been run for this draft.

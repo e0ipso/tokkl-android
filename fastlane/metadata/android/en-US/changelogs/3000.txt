@@ -1,0 +1,5 @@
+- New Pomodoro page with work and rest phases, alarms at each phase end and a session notification.
+- Pause and resume the timer, open a fullscreen timer, or control it from a Quick Settings tile.
+- Timer templates, today and week totals, and editing the running entry's start time.
+- Share a report as CSV.
+- Layout fixes at the largest font sizes.

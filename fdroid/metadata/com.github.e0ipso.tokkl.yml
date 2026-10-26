@@ -12,9 +12,9 @@ Repo: https://github.com/e0ipso/tokkl-android.git
 Binaries: https://github.com/e0ipso/tokkl-android/releases/download/v%v/tokkl-android-%v.apk
 
 Builds:
-  - versionName: 0.2.0
-    versionCode: 2000
-    commit: v0.2.0
+  - versionName: 0.3.0
+    versionCode: 3000
+    commit: v0.3.0
     subdir: app
     sudo:
       - apt-get update
@@ -31,5 +31,5 @@ AllowedAPKSigningKeys:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: gradle/version.properties|versionCode=(\d+)|.|versionName=(\S+)
-CurrentVersion: 0.2.0
-CurrentVersionCode: 2000
+CurrentVersion: 0.3.0
+CurrentVersionCode: 3000
