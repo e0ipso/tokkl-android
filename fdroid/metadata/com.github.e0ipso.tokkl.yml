@@ -1,5 +1,5 @@
 Categories:
-  - Time
+  - Time Tracker
 License: MIT
 SourceCode: https://github.com/e0ipso/tokkl-android
 IssueTracker: https://github.com/e0ipso/tokkl-android/issues
@@ -9,7 +9,8 @@ AutoName: Tokkl
 
 RepoType: git
 Repo: https://github.com/e0ipso/tokkl-android.git
-Binaries: https://github.com/e0ipso/tokkl-android/releases/download/v%v/tokkl-android-%v.apk
+Binaries: 
+  https://github.com/e0ipso/tokkl-android/releases/download/v%v/tokkl-android-%v.apk
 
 Builds:
   - versionName: 0.3.0
@@ -22,11 +23,9 @@ Builds:
       - update-java-alternatives --set java-1.21.0-openjdk-amd64
     gradle:
       - yes
-    prebuild:
-      - sdkmanager 'platforms;android-37' 'build-tools;36.0.0'
+    prebuild: sdkmanager 'platforms;android-37' 'build-tools;36.0.0'
 
-AllowedAPKSigningKeys:
-  - a136818136320223ea0dcccf4735e62a63badaf69be6b14e2b154f484f4c6196
+AllowedAPKSigningKeys: a136818136320223ea0dcccf4735e62a63badaf69be6b14e2b154f484f4c6196
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags

@@ -11,10 +11,11 @@ const repository = 'https://github.com/e0ipso/tokkl-android';
 const logger = { log() {} };
 
 // Read this draft's simple scalars, not arbitrary YAML. fdroid lint owns schema
-// validation. Build-list entries can start with '- key: value'. A duplicate
+// validation. Build-list entries can start with '- key: value', and fdroid
+// rewritemeta moves a long value to an indented line of its own. A duplicate
 // field must not hide a conflicting recipe value.
 function value(key, source = recipe) {
-  const matches = [...source.matchAll(new RegExp(`^ *(?:- +)?${key}: (.+)$`, 'gm'))];
+  const matches = [...source.matchAll(new RegExp(`^ *(?:- +)?${key}: *(?:\\n +)?(\\S.*)$`, 'gm'))];
   assert.equal(matches.length, 1, `one ${key} field`);
   return matches[0][1];
 }
@@ -94,9 +95,7 @@ test('release preparation writes formula values that the F-Droid regexes extract
 test('binary mapping and allowed certificate match the public v0.3.0 evidence', () => {
   const version = { name: value('versionName'), code: Number(value('versionCode')) };
   assert.equal(binaryFor(version), `${repository}/releases/download/v0.3.0/tokkl-android-0.3.0.apk`);
-  const keys = /^AllowedAPKSigningKeys:\n((?:  - [^\n]+\n)+)/m.exec(recipe);
-  assert.ok(keys, 'public signing certificate list');
-  assert.equal(keys[1].trim(), '- a136818136320223ea0dcccf4735e62a63badaf69be6b14e2b154f484f4c6196');
+  assert.equal(value('AllowedAPKSigningKeys'), 'a136818136320223ea0dcccf4735e62a63badaf69be6b14e2b154f484f4c6196');
 });
 
 test('recipe selects the released build toolchain without rewriting dependencies', () => {
