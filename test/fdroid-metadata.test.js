@@ -102,6 +102,6 @@ test('recipe selects the released build toolchain without rewriting dependencies
   assert.match(recipe, /apt-get install -y openjdk-21-jdk-headless/);
   assert.match(recipe, /update-java-alternatives --set java-1\.21\.0-openjdk-amd64/);
   assert.match(recipe, /^    gradle:\n      - yes$/m);
-  assert.match(recipe, /sdkmanager 'platforms;android-37' 'build-tools;36\.0\.0'/);
+  assert.match(recipe, /sdkmanager 'platforms;android-37\.0' 'build-tools;36\.0\.0'/);
   assert.doesNotMatch(recipe, /forceversion:|forcevercode:|scanignore:|scandelete:|sed /);
 });

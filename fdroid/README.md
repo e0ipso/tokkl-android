@@ -15,9 +15,9 @@ There is no proven `v0.1.0` APK to use in a recipe.
 
 Build from the unchanged tag with JDK 21, Gradle 9.8.1, AGP 9.4.1,
 compile SDK 37 and Build-Tools 36.0.0. The tag pins Gradle and AGP; the draft
-selects JDK 21 and installs the matching SDK packages. F-Droid's builder must
-provide Gradle 9.8.1 and an apt source with `openjdk-21-jdk-headless` before
-this draft can be accepted. `subdir: app` and `gradle: [yes]` select the
+selects JDK 21 and installs the matching SDK packages. F-Droid's sdkmanager
+names the platform `platforms;android-37.0`; `platforms;android-37` does not
+exist there. `subdir: app` and `gradle: [yes]` select the
 unflavoured release build. Leave the release signing environment unset to
 produce the unsigned APK for comparison with the public binary. Keep the tag's
 dependency versions and build settings, including disabled `dependenciesInfo`.
@@ -31,11 +31,14 @@ by numeric version code. `AutoUpdateMode: Version` takes the selected tag
 directly, so it needs no extra pattern. `Binaries` expands `%v` in both the
 release tag and asset filename.
 
-Validation is deferred until backlog implementation is complete. At that gate,
-run `node --test test/fdroid-metadata.test.js`, then copy the recipe to an
-isolated fdroiddata checkout and run `fdroid lint com.github.e0ipso.tokkl` and
-`fdroid checkupdates com.github.e0ipso.tokkl`. Confirm that a check restricted to
-the `v0.3.0` source reports 0.3.0 / 3000; an unrestricted future check may find a
-newer release. Check reproducibility against the public APK in the matching
-F-Droid build environment before owner submission. None of those checks has
-been run for this draft.
+Checked on 2026-10-26 with fdroidserver 2d1e622, the way fdroiddata's CI
+checks a merge request. `fdroid lint` passed, and `fdroid rewritemeta` left
+the recipe unchanged. fdroiddata's CI fails a recipe that rewritemeta would
+change, so run it after every edit. `fdroid checkupdates` read 0.3.0 / 3000
+from the `v0.3.0` tag and reported the recipe up to date. `fdroid build --test
+--on-server com.github.e0ipso.tokkl:3000` in the
+`registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie` image found
+nothing in the source scan, built the APK with `gradlew-fdroid` and Gradle
+9.8.1, copied the signature from the GitHub APK onto it, and reported "compared
+built binary to supplied reference binary successfully" for the allowed
+signer. Repeat these checks for every build added to the recipe.
