@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:3d73ca401fd96b7c6e306ab78877bffc37009667897762802185132d6ba1f5ce'
-node_count: 87
+nodes_hash: 'sha256:b3941af53dd98f4d81d1fa4ae799e60a1eee0362922c45720f102b154895b991'
+node_count: 89
 ---
 # kenkeep Graph
 
-Total nodes: 87
+Total nodes: 89
 
 ## map-account-cache-and-capabilities
 
@@ -225,6 +225,14 @@ Total nodes: 87
 - **relates_to:** map-change-queue-sends-entry-changes-in-order, practice-never-wait-for-server-on-start-stop
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:3
 
+## map-release-signing-key-actions-secrets-and-signature-checks
+
+- **kind:** map
+- **title:** Release signing key, Actions secrets and signature checks
+- **path:** release/map-release-signing-key-actions-secrets-and-signature-checks.md
+- **tags:** release, fdroid, security, ci
+- **relates_to:** practice-reproducible-builds-project-key, practice-own-version-from-v0-1-0-tag, map-fdroid-metadata-release-artifacts
+
 ## map-remote-running-conflicts-and-lost-create-responses
 
 - **kind:** map
@@ -416,7 +424,7 @@ Total nodes: 87
 - **path:** testing/emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md
 - **tags:** testing, android, emulator
 - **relates_to:** practice-screenshot-references-on-tokkl-api36
-- **derived_from:** scripts/instrumented-tests.sh, README.md
+- **derived_from:** scripts/instrumented-tests.sh
 
 ## practice-assert-text-height-and-dialog-bounds-at-large-fonts
 
@@ -443,7 +451,7 @@ Total nodes: 87
 - **path:** testing/emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md
 - **tags:** testing, android, emulator
 - **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection, map-jdk-android-sdk-and-agent-shells
-- **derived_from:** scripts/instrumented-tests.sh, README.md
+- **derived_from:** scripts/instrumented-tests.sh
 
 ## practice-clean-up-only-owned-emulator-resources
 
@@ -452,7 +460,7 @@ Total nodes: 87
 - **path:** testing/emulator-runtime/practice-clean-up-only-owned-emulator-resources.md
 - **tags:** testing, emulator, energy
 - **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection, map-oom-kill-ends-agent-session
-- **derived_from:** scripts/instrumented-tests.sh, README.md
+- **derived_from:** scripts/instrumented-tests.sh
 
 ## practice-drain-sittings-gate-on-memory-not-a-sitting-cap
 
@@ -521,7 +529,7 @@ Total nodes: 87
 - **path:** testing/emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md
 - **tags:** testing, android, emulator
 - **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection
-- **derived_from:** scripts/instrumented-tests.sh, README.md
+- **derived_from:** scripts/instrumented-tests.sh
 
 ## practice-match-javascript-decimal-and-percentage-formatting
 
@@ -635,7 +643,7 @@ Total nodes: 87
 - **path:** testing/emulator-runtime/practice-respect-emulator-slots-and-resource-ownership.md
 - **tags:** testing, emulator, memory
 - **relates_to:** map-oom-kill-ends-agent-session, practice-test-real-tokkl-server-speed-regressions, practice-use-the-instrumented-runner-and-its-device-selection
-- **derived_from:** scripts/instrumented-tests.sh, README.md
+- **derived_from:** scripts/instrumented-tests.sh
 
 ## practice-reuse-drain-checks-by-content-and-test-configuration
 
@@ -653,6 +661,14 @@ Total nodes: 87
 - **tags:** testing, android, api
 - **relates_to:** practice-use-the-pinned-test-server-and-tls-proxies
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:3
+
+## practice-run-native-permission-probes-alone-with-a-fresh-permission
+
+- **kind:** practice
+- **title:** Run native permission probes alone with a fresh notification permission
+- **path:** testing/instrumented-runner/practice-run-native-permission-probes-alone-with-a-fresh-permission.md
+- **tags:** testing, android, emulator, notification
+- **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection, practice-pass-class-and-package-lists-through-runner-filter-files
 
 ## practice-run-npm-install-in-every-clone-and-worktree
 

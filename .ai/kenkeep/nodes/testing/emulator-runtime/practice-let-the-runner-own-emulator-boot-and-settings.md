@@ -10,7 +10,6 @@ kk_schema_version: 3
 kk_id: practice-let-the-runner-own-emulator-boot-and-settings
 kk_derived_from:
   - scripts/instrumented-tests.sh
-  - README.md
 kk_relates_to:
   - practice-use-the-instrumented-runner-and-its-device-selection
 kk_depends_on: []
@@ -30,5 +29,4 @@ A fresh headless boot often leaves a "System UI isn't responding" dialog that ho
 # Citations
 
 [1] [scripts/instrumented-tests.sh](../../../../../scripts/instrumented-tests.sh)
-[2] [README.md](../../../../../README.md)
 <!-- kk:citations:end -->

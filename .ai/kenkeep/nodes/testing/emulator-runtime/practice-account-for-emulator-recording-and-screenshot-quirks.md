@@ -12,7 +12,6 @@ kk_schema_version: 3
 kk_id: practice-account-for-emulator-recording-and-screenshot-quirks
 kk_derived_from:
   - scripts/instrumented-tests.sh
-  - README.md
 kk_relates_to:
   - practice-screenshot-references-on-tokkl-api36
 kk_depends_on: []
@@ -32,5 +31,4 @@ For a still capture of the whole screen, use `adb exec-out screencap -p`. `UiAut
 # Citations
 
 [1] [scripts/instrumented-tests.sh](../../../../../scripts/instrumented-tests.sh)
-[2] [README.md](../../../../../README.md)
 <!-- kk:citations:end -->

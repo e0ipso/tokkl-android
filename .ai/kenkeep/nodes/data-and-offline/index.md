@@ -65,6 +65,7 @@
 - Open [**API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError**](../api-and-security/map-api-client-shared-okhttp-serverurl-and-errors.md) — The api package holds the app's only OkHttpClient, base URL handling, JSON calls, sendNoContent for empty bodies and typed errors.
 ### #notification
 - Open [**Running timer notification follows the cache's running entry**](map-running-timer-notification-follows-the-cache.md) — notification/RunningNotificationSync posts, replaces and removes the ongoing notification from the cache, with no foreground service.
+- Open [**Run native permission probes alone with a fresh notification permission**](../testing/instrumented-runner/practice-run-native-permission-probes-alone-with-a-fresh-permission.md) — TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 resets POST_NOTIFICATIONS before one probe method starts, on an API 33+ emulator the script boots.
 ### #room
 - Open [**Offline entry mutations and local ID mapping**](change-queue/map-offline-entry-mutations-and-local-id-mapping.md) — Atomic local entry changes, full pending snapshots and negative-ID remapping.
 - Open [**Room queue migration continuity**](change-queue/map-room-queue-migration-continuity.md) — Exported schemas and consecutive migrations preserve pending requests and Undo state.

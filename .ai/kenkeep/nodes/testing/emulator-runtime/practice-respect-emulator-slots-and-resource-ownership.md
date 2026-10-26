@@ -12,7 +12,6 @@ kk_schema_version: 3
 kk_id: practice-respect-emulator-slots-and-resource-ownership
 kk_derived_from:
   - scripts/instrumented-tests.sh
-  - README.md
 kk_relates_to:
   - map-oom-kill-ends-agent-session
   - practice-test-real-tokkl-server-speed-regressions
@@ -38,5 +37,4 @@ A run that tests on a device it did not boot, an attached phone or CI's emulator
 # Citations
 
 [1] [scripts/instrumented-tests.sh](../../../../../scripts/instrumented-tests.sh)
-[2] [README.md](../../../../../README.md)
 <!-- kk:citations:end -->
