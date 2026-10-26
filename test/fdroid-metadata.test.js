@@ -45,7 +45,7 @@ test('F-Droid draft identifies the MIT source and the proven release only', () =
   assert.equal(value('RepoType'), 'git');
   assert.equal(value('versionName'), '0.4.0');
   assert.equal(value('versionCode'), '4000');
-  assert.equal(value('commit'), 'v0.4.0');
+  assert.equal(value('commit'), '58308bdf297462b7ffa1b63bf9fcdd2e695d582b');
   assert.equal(value('CurrentVersion'), value('versionName'));
   assert.equal(value('CurrentVersionCode'), value('versionCode'));
   assert.equal(value('subdir'), 'app');

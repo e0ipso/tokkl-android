@@ -1,6 +1,7 @@
 Categories:
   - Time Tracker
 License: MIT
+AuthorName: e0ipso
 SourceCode: https://github.com/e0ipso/tokkl-android
 IssueTracker: https://github.com/e0ipso/tokkl-android/issues
 Changelog: https://github.com/e0ipso/tokkl-android/blob/main/CHANGELOG.md
@@ -15,7 +16,7 @@ Binaries:
 Builds:
   - versionName: 0.4.0
     versionCode: 4000
-    commit: v0.4.0
+    commit: 58308bdf297462b7ffa1b63bf9fcdd2e695d582b
     subdir: app
     sudo:
       - apt-get update
