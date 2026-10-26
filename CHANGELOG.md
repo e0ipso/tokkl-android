@@ -1,3 +1,9 @@
+## [0.4.0](https://github.com/e0ipso/tokkl-android/compare/v0.3.0...v0.4.0) (2026-10-26)
+
+### Features
+
+* publish the app as com.canpicasoft.tokkl ([b58fa73](https://github.com/e0ipso/tokkl-android/commit/b58fa739d13a9dc0a240c03fdd229af65f37580f))
+
 ## [0.3.0](https://github.com/e0ipso/tokkl-android/compare/v0.2.0...v0.3.0) (2026-10-26)
 
 ### Features
