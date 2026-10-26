@@ -41,6 +41,13 @@ abstract class CacheDao {
     @Query("SELECT * FROM favorites ORDER BY position")
     abstract fun favorites(): Flow<List<CachedFavorite>>
 
+    /** Capture entries and pending IDs together, before a refresh's server request. */
+    @Transaction
+    open fun entryRefreshStart(): EntryRefreshStart = EntryRefreshStart(
+        entries = allTimeEntries(),
+        pendingIds = allPendingChanges().mapTo(HashSet()) { it.entryId },
+    )
+
     /**
      * Replaces every row with what [change] makes of the current rows and the queue's pending
      * changes, oldest first, in one transaction, so a reader sees the cache before or after the
