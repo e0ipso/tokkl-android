@@ -1,3 +1,10 @@
+## [0.5.0](https://github.com/e0ipso/tokkl-android/compare/v0.4.0...v0.5.0) (2026-10-26)
+
+### Features
+
+* add the logo before page titles ([1da4c98](https://github.com/e0ipso/tokkl-android/commit/1da4c981c51c29827ec51ea3f9c1deeae90bf2f0)), references [#15](https://github.com/e0ipso/tokkl-android/issues/15)
+* **brand:** use the new icon pack for the launcher and store icons ([17f918b](https://github.com/e0ipso/tokkl-android/commit/17f918b3bfff1f11fdb2a205155bf3d21796a96c)), closes [#10](https://github.com/e0ipso/tokkl-android/issues/10)
+
 ## [0.4.0](https://github.com/e0ipso/tokkl-android/compare/v0.3.0...v0.4.0) (2026-10-26)
 
 ### Features
