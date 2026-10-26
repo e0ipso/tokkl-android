@@ -99,7 +99,23 @@ class SyncStatusFitTest {
     }
 
     private fun assertNoOverlap(parts: List<Pair<String, SemanticsNodeInteraction>>) {
-        val bounds = parts.map { (name, node) -> name to node.getUnclippedBoundsInRoot() }
+        val nodes = parts.map { (name, interaction) -> name to interaction.fetchSemanticsNode() }
+        val bounds = composeRule.runOnIdle {
+            // Semantics interactions synchronize, so resolve them before runOnIdle. Read every
+            // live coordinate in one main-thread task so every pair comes from one layout frame.
+            nodes.map { (name, node) ->
+                val position = node.positionInRoot
+                val size = node.size
+                name to with(node.layoutInfo.density) {
+                    DpRect(
+                        left = position.x.toDp(),
+                        top = position.y.toDp(),
+                        right = (position.x + size.width).toDp(),
+                        bottom = (position.y + size.height).toDp(),
+                    )
+                }
+            }
+        }
         for ((i, first) in bounds.withIndex()) {
             for (second in bounds.drop(i + 1)) {
                 assertFalse("${first.first} ${first.second} overlaps ${second.first} ${second.second}", first.second.overlaps(second.second))

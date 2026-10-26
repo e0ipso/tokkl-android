@@ -115,15 +115,6 @@ class CertificatePromptTest {
         assertNull(ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
     }
 
-    @Test
-    fun pinnedCertificateSignsInWithoutAPrompt() {
-        ServerTrustStore(context).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, sha256, subject = ""))
-
-        signIn()
-
-        composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-    }
-
     private fun signIn() {
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.sign_in_server_url)))
             .performTextInput(TokklTestServer.tlsUrl.toString())

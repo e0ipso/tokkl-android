@@ -557,7 +557,7 @@ class TimerServerTest {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
             runBlocking { app.sender.send().join() }
         }
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
     }
 
     private fun serverEntries(): List<JsonObject> =
