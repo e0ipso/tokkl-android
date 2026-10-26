@@ -6,7 +6,7 @@ at df6711b), the raster master, PNG only:
   2067x761 RGBA, SHA-256
   0d4164b01e9452f10387694cc192e192e57fe0d486e51cb66f3e186e44f858ca
 The clock in place of the "o" is a letter of the wordmark, not the logo. The logo is
-only the launcher icon.
+the launcher icon and the decorative artwork before page titles.
 
 Crop: the rule of Tokkl's WORDMARK_CROP in ../tokkl/scripts/icons.ts, the letters
 and paint spots inside the source's transparent margin, plus 4 px. Here that is
@@ -43,3 +43,7 @@ match them.
 
 This note lives in res/raw because the build accepts only drawable files in
 res/drawable-*.
+
+The page-header logo, res/drawable-nodpi/tokkl_logo.png, is a byte-for-byte copy
+of ../tokkl/docs/brand/icon-pack/logo/color-256.png. TokklTopBar draws it at
+48dp, followed by an 8dp gap and the page title.

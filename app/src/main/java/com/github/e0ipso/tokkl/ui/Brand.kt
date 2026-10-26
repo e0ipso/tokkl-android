@@ -39,8 +39,9 @@ enum class BrandSize(
 
 /**
  * Tokkl's brand, the owner's graffiti wordmark alone, as Tokkl's Brand.tsx draws it (docs/PRD.md,
- * Visual direction, Wordmark). Its "o" is a clock, a letter of the wordmark. The logo is only the
- * launcher icon and never sits beside the wordmark. TalkBack reads the brand once, as "Tokkl",
+ * Visual direction, Wordmark). Its "o" is a clock, a letter of the wordmark. The logo appears as
+ * the launcher icon and before page titles, and never sits beside the wordmark.
+ * TalkBack reads the brand once, as "Tokkl",
  * the wordmark's description. The brand is one semantics node, so a [modifier] that makes it a
  * heading names it too.
  *
