@@ -3,9 +3,9 @@
     The launcher icon: the clock O logo on plum. minSdk is 31, so this one adaptive icon covers
     every supported release and the app needs no legacy PNG mipmaps.
 
-    Source: Tokkl's icon pack, ../tokkl/docs/brand/icon-pack (github.com/e0ipso/tokkl at
-    1771f08). The foreground and monochrome layers in mipmap-mdpi to mipmap-xxxhdpi, 108 to
-    432 px for the 108 dp layer, are byte-for-byte copies of the pack's android/res files.
+    Source: Tokkl's icon pack. The foreground and monochrome layers in mipmap-mdpi to
+    mipmap-xxxhdpi, 108 to 432 px for the 108 dp layer, are byte-for-byte copies of the
+    pack's android/res files.
     They already carry the adaptive icon padding: copy them as they are, with no inset, resize
     or icon generator step. The pack's README and checks.json describe how they are built.
 
