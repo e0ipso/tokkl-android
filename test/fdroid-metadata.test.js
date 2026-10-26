@@ -43,9 +43,9 @@ test('F-Droid draft identifies the MIT source and the proven release only', () =
   assert.equal(value('SourceCode'), repository);
   assert.equal(value('Repo'), `${repository}.git`);
   assert.equal(value('RepoType'), 'git');
-  assert.equal(value('versionName'), '0.3.0');
-  assert.equal(value('versionCode'), '3000');
-  assert.equal(value('commit'), 'v0.3.0');
+  assert.equal(value('versionName'), '0.4.0');
+  assert.equal(value('versionCode'), '4000');
+  assert.equal(value('commit'), 'v0.4.0');
   assert.equal(value('CurrentVersion'), value('versionName'));
   assert.equal(value('CurrentVersionCode'), value('versionCode'));
   assert.equal(value('subdir'), 'app');
@@ -92,9 +92,9 @@ test('release preparation writes formula values that the F-Droid regexes extract
   }
 });
 
-test('binary mapping and allowed certificate match the public v0.3.0 evidence', () => {
+test('binary mapping and allowed certificate match the public v0.4.0 evidence', () => {
   const version = { name: value('versionName'), code: Number(value('versionCode')) };
-  assert.equal(binaryFor(version), `${repository}/releases/download/v0.3.0/tokkl-android-0.3.0.apk`);
+  assert.equal(binaryFor(version), `${repository}/releases/download/v0.4.0/tokkl-android-0.4.0.apk`);
   assert.equal(value('AllowedAPKSigningKeys'), 'a136818136320223ea0dcccf4735e62a63badaf69be6b14e2b154f484f4c6196');
 });
 
