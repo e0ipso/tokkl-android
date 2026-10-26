@@ -3,7 +3,6 @@
 // version, so declaring it here raises Kotlin to the catalog's version.
 plugins {
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.android.test) apply false
     alias(libs.plugins.kotlin.compose) apply false
     // KSP extends the Kotlin Gradle plugin, so it loads beside it.
     alias(libs.plugins.ksp) apply false

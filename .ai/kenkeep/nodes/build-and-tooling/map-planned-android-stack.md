@@ -28,7 +28,6 @@ Section 6 of `docs/PRD.md` opens with what is built and what is not. Nothing in 
 - `tile/RunningTileService` implements the Quick Settings tile. `shortcuts/` publishes cached favorites as launcher shortcuts. Both use the offline change queue.
 - The running timer's notification (N1) is built, without its Live Update, and runs no foreground service. `cache/RunningCheck` schedules the connected 15-minute current-entry check only while a cached timer runs.
 - The Compose Material 3 adaptive library (`androidx.compose.material3.adaptive`) for the window size classes behind the navigation rail and the wide layouts. Built.
-- A `:macrobenchmark` module on `androidx.benchmark` 1.5.0 for startup and timer timings. Built; see the testing branch.
 
 Every dependency must be free software.
 
