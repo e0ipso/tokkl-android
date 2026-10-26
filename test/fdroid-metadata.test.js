@@ -6,7 +6,7 @@ import { test } from 'node:test';
 
 import { prepare } from '../scripts/semantic-release.js';
 
-const recipe = readFileSync(new URL('../fdroid/metadata/com.github.e0ipso.tokkl.yml', import.meta.url), 'utf8');
+const recipe = readFileSync(new URL('../fdroid/metadata/com.canpicasoft.tokkl.yml', import.meta.url), 'utf8');
 const repository = 'https://github.com/e0ipso/tokkl-android';
 const logger = { log() {} };
 

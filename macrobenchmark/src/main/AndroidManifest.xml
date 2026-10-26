@@ -3,7 +3,7 @@
 
     <!-- Lets the benchmarks find the app's launcher activity. -->
     <queries>
-        <package android:name="com.github.e0ipso.tokkl" />
+        <package android:name="com.canpicasoft.tokkl" />
     </queries>
 
 </manifest>

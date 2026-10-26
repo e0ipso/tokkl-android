@@ -12,7 +12,7 @@ import java.util.Properties
 import java.util.regex.Pattern
 
 /** The app the benchmarks start and measure. */
-const val TARGET_PACKAGE = "com.github.e0ipso.tokkl"
+const val TARGET_PACKAGE = "com.canpicasoft.tokkl"
 
 // A BySelector is a builder that each call changes, so each use gets a new one.
 

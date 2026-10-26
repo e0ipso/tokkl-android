@@ -2,7 +2,7 @@
 type: map
 title: 'Application ID, license and supported Android versions'
 description: >-
-  Application ID com.github.e0ipso.tokkl, MIT license, Android 12 (API 31) and
+  Application ID com.canpicasoft.tokkl, MIT license, Android 12 (API 31) and
   later, one server and one account at a time.
 tags:
   - release
@@ -18,7 +18,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-The application ID is `com.github.e0ipso.tokkl`, the same ID as Tokkl's macOS and KDE companions. The license is MIT, like Tokkl. The repo is `github.com/e0ipso/tokkl-android`, which is public, as section 8.2 of `docs/PRD.md` says.
+The application ID is `com.canpicasoft.tokkl`, chosen on 2026-10-26 before the F-Droid submission; v0.1.0 to v0.3.0 shipped as `com.github.e0ipso.tokkl`, so those installs do not upgrade to it. The code and its namespace keep the `com.github.e0ipso.tokkl` package, which is also the ID of Tokkl's macOS and KDE companions. The license is MIT, like Tokkl. The repo is `github.com/e0ipso/tokkl-android`, which is public, as section 8.2 of `docs/PRD.md` says.
 
 The app supports Android 12 (API 31) and later. The owner raised `minSdk` from 26 to 31 on 2026-10-19, and the PRD's Compatibility row says the same. Code may use any API from Android 12 on without a version check, and the tests run on API 36 and API 31 only. Phones come first. Layouts adapt to tablets and foldables, with no separate design and no Wear OS app.
 

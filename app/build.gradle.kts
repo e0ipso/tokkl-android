@@ -96,7 +96,9 @@ android {
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "com.github.e0ipso.tokkl"
+        // The ID F-Droid lists the app under. The code keeps the namespace's
+        // package, so only installed-app lookups use this one.
+        applicationId = "com.canpicasoft.tokkl"
         // Android 12 (docs/PRD.md, Compatibility).
         minSdk = 31
         // The API level of the test emulator.

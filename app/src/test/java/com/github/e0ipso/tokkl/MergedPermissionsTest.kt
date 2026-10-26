@@ -53,7 +53,7 @@ class MergedPermissionsTest {
         assertEquals("true", alarm.androidAttribute("turnScreenOn"))
         assertEquals("true", alarm.androidAttribute("excludeFromRecents"))
         assertEquals("singleTask", alarm.androidAttribute("launchMode"))
-        assertEquals("com.github.e0ipso.tokkl.pomodoroAlarm", alarm.androidAttribute("taskAffinity"))
+        assertEquals("com.canpicasoft.tokkl.pomodoroAlarm", alarm.androidAttribute("taskAffinity"))
         assertEquals("@style/Theme.Tokkl", alarm.androidAttribute("theme"))
         assertFalse(alarm.childElements().any { it.tagName == "intent-filter" })
     }

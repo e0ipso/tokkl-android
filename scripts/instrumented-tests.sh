@@ -1321,8 +1321,8 @@ if [ "$fresh_notification_permission" = 1 ]; then
         exit 2
     fi
     ./gradlew --no-daemon installDebug -PtokklFreshNotificationPermission=true
-    adb -s "$emulator_serial" shell pm revoke com.github.e0ipso.tokkl android.permission.POST_NOTIFICATIONS
-    adb -s "$emulator_serial" shell pm clear-permission-flags com.github.e0ipso.tokkl android.permission.POST_NOTIFICATIONS user-set user-fixed
+    adb -s "$emulator_serial" shell pm revoke com.canpicasoft.tokkl android.permission.POST_NOTIFICATIONS
+    adb -s "$emulator_serial" shell pm clear-permission-flags com.canpicasoft.tokkl android.permission.POST_NOTIFICATIONS user-set user-fixed
     echo "Reset notification permission before instrumentation on $emulator_serial"
 fi
 run_tests

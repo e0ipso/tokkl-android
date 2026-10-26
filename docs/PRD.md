@@ -277,7 +277,7 @@ From F-Droid's docs, read 2026-10-17:
 - With `UpdateCheckMode: Tags`, F-Droid checks every git tag for the highest version code, reading it from the Gradle build by default ([build metadata](https://f-droid.org/docs/Build_Metadata_Reference/)).
 - If the build is reproducible, F-Droid can publish the APK signed with the project's own key. `Binaries` points at a versioned APK URL, such as a GitHub release asset, and `AllowedAPKSigningKeys` holds the SHA-256 fingerprint of the signing certificate. F-Droid publishes only when its build matches ([reproducible builds](https://f-droid.org/docs/Reproducible_Builds/)). The docs ask for pinned build-tools and no embedded timestamps.
 
-Decisions: the license is MIT, like Tokkl. The application ID is `com.github.e0ipso.tokkl`, the same ID as the macOS and KDE companions.
+Decisions: the license is MIT, like Tokkl. The application ID is `com.canpicasoft.tokkl`. The code keeps the `com.github.e0ipso.tokkl` package, which is also the ID of the macOS and KDE companions.
 
 ### 8.2 GitHub and CI
 
