@@ -18,7 +18,7 @@ function versionCode(version) {
 
 export function verifyRelease(pluginConfig, { lastRelease, nextRelease }) {
   if (!lastRelease.version) {
-    throw new Error('Create and push the initial v0.1.0 tag before enabling releases. See README.md, "Automatic releases".');
+    throw new Error('Create and push the initial v0.1.0 tag before enabling releases. See the kenkeep node practice-own-version-from-v0-1-0-tag in .ai/kenkeep.');
   }
   versionCode(nextRelease.version);
 }

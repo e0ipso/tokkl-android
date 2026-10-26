@@ -290,7 +290,7 @@ The repo is public at `github.com/e0ipso/tokkl-android` and copies Tokkl's setup
 Releases run in the same workflow after every CI check passes:
 
 - semantic-release on pushes to `main` with Tokkl's release rules and `v${version}` tags. It writes `CHANGELOG.md` and the version into the Gradle build, derives `versionCode` from the version, and attaches the signed release APK to the GitHub release, where F-Droid's `Binaries` can find it.
-- The signing key lives in GitHub Actions secrets, never in the repo. After the release commit and tag exist, `android-release` builds and verifies the signed APK from a clean checkout of that tag, and `android-publish` attaches it to the release. README "Automatic releases" describes the one-time starting tag and signing secrets.
+- The signing key lives in GitHub Actions secrets, never in the repo. After the release commit and tag exist, `android-release` builds and verifies the signed APK from a clean checkout of that tag, and `android-publish` attaches it to the release. The kenkeep nodes practice-own-version-from-v0-1-0-tag and map-release-signing-key-actions-secrets-and-signature-checks describe the one-time starting tag and signing secrets.
 
 ### 8.3 Versions and stores
 

@@ -324,7 +324,7 @@ jobs:
         run: |
           for name in TOKKL_RELEASE_KEYSTORE_BASE64 TOKKL_RELEASE_KEYSTORE_PASSWORD TOKKL_RELEASE_KEY_ALIAS TOKKL_RELEASE_KEY_PASSWORD; do
             if [ -z "${!name}" ]; then
-              echo "::error::Missing Actions secret $name. See README.md, Sign the release APK."
+              echo "::error::Missing Actions secret $name. See the kenkeep node map-release-signing-key-actions-secrets-and-signature-checks in .ai/kenkeep."
               exit 1
             fi
           done

@@ -4,7 +4,7 @@
 // signed with the debug key and profileable.
 //
 // The benchmarks sign in to the Tokkl server that scripts/instrumented-tests.sh starts, so run
-// them through it; README.md, "Benchmarks", has the command.
+// them through it; the kenkeep node practice-test-real-tokkl-server-speed-regressions has the command.
 plugins {
     alias(libs.plugins.android.test)
 }

@@ -62,8 +62,9 @@ appVersion.getProperty("versionCode").let { stored ->
 
 // Release signing reads the keystore path, the passwords and the key alias
 // from these environment variables and from nowhere else, so no tracked file
-// holds any of them. CI fills them from Actions secrets; README.md, "Release
-// builds", names the secrets. With none of them set, assembleRelease builds
+// holds any of them. CI fills them from Actions secrets; the kenkeep node
+// map-release-signing-key-actions-secrets-and-signature-checks names the secrets.
+// With none of them set, assembleRelease builds
 // the unsigned APK. Setting only some of them fails the build.
 val releaseSigningVariables = listOf(
     "TOKKL_RELEASE_KEYSTORE",

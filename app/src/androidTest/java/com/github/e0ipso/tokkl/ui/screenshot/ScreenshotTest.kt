@@ -154,7 +154,7 @@ import org.junit.rules.RuleChain
  *    app/src/androidTest/assets/screenshots, keeping their names.
  * 4. Run step 1 again. It has to pass.
  *
- * README.md, "Screenshot tests", has the commands.
+ * The kenkeep node practice-screenshot-references-on-tokkl-api36 has the commands.
  */
 abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: Float) {
     private val composeRule = createEmptyComposeRule()
