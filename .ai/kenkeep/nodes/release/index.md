@@ -14,7 +14,7 @@ _None._
 - Open [**Keep release builds reproducible and signed with the project key**](practice-reproducible-builds-project-key.md) to learn about: Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA. #release #fdroid #security #ci
 
 ## Components (what exists)
-- Open [**F-Droid metadata layout and release artifacts**](map-fdroid-metadata-release-artifacts.md) to learn about: Store text and images live under fastlane/metadata/android/en-US/. F-Droid finds versions by git tag and the signed APK via Binaries. #fdroid #release
+- Open [**F-Droid metadata layout and release artifacts**](map-fdroid-metadata-release-artifacts.md) to learn about: Store text lives in fastlane/metadata/android/en-US/, the fdroiddata recipe in fdroid/metadata/com.canpicasoft.tokkl.yml. Check it in Docker before every new build. #fdroid #release
 - Open [**Application ID, license and supported Android versions**](map-app-id-license-android-versions.md) to learn about: Application ID com.canpicasoft.tokkl, MIT license, Android 12 (API 31) and later, one server and one account at a time. #release #fdroid #android
 - Open [**Release signing key, Actions secrets and signature checks**](map-release-signing-key-actions-secrets-and-signature-checks.md) to learn about: The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks. #release #fdroid #security #ci
 
@@ -23,11 +23,11 @@ _None._
 ### #release
 - Open [**Keep release builds reproducible and signed with the project key**](practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
 - Open [**Release signing key, Actions secrets and signature checks**](map-release-signing-key-actions-secrets-and-signature-checks.md) — The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks.
-- Open [**F-Droid metadata layout and release artifacts**](map-fdroid-metadata-release-artifacts.md) — Store text and images live under fastlane/metadata/android/en-US/. F-Droid finds versions by git tag and the signed APK via Binaries.
+- Open [**F-Droid metadata layout and release artifacts**](map-fdroid-metadata-release-artifacts.md) — Store text lives in fastlane/metadata/android/en-US/, the fdroiddata recipe in fdroid/metadata/com.canpicasoft.tokkl.yml. Check it in Docker before every new build.
 ### #fdroid
 - Open [**Keep release builds reproducible and signed with the project key**](practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
 - Open [**Release signing key, Actions secrets and signature checks**](map-release-signing-key-actions-secrets-and-signature-checks.md) — The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks.
-- Open [**F-Droid metadata layout and release artifacts**](map-fdroid-metadata-release-artifacts.md) — Store text and images live under fastlane/metadata/android/en-US/. F-Droid finds versions by git tag and the signed APK via Binaries.
+- Open [**F-Droid metadata layout and release artifacts**](map-fdroid-metadata-release-artifacts.md) — Store text lives in fastlane/metadata/android/en-US/, the fdroiddata recipe in fdroid/metadata/com.canpicasoft.tokkl.yml. Check it in Docker before every new build.
 ### #ci
 - Open [**Keep release builds reproducible and signed with the project key**](practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
 - Open [**Release signing key, Actions secrets and signature checks**](map-release-signing-key-actions-secrets-and-signature-checks.md) — The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks.
