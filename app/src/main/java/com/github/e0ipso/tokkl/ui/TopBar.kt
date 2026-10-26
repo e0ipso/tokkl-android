@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,8 +41,9 @@ val TopBarHeight: Dp = 64.dp
 private val TopBarBorder: Dp = 1.dp
 
 /**
- * The bar at the top of every signed-in page: the page's [title] in the page-title role, which
- * TalkBack reads as a heading, on surface, [TopBarHeight] tall or taller at large font scales.
+ * The bar at the top of every signed-in page: the logo followed by [title] in the page-title role.
+ * TalkBack reads the title as a heading and skips the decorative logo. The bar is on surface,
+ * [TopBarHeight] tall or taller at large font scales.
  * Along its bottom runs a strip in the wordmark's full gradient, [TokklSpectrum], under the
  * controls and never behind them, then a 1dp border. The web app draws the same strip under its
  * page titles and at the foot of its phone header (tokkl d012228). A page opened from another,
@@ -88,6 +90,12 @@ fun TokklTopBar(
                 }
                 Spacer(Modifier.width(TokklTheme.spacing.space1))
             }
+            Image(
+                painter = painterResource(R.drawable.tokkl_logo),
+                contentDescription = null,
+                modifier = Modifier.size(TokklTheme.spacing.space8),
+            )
+            Spacer(Modifier.width(TokklTheme.spacing.space2))
             PageTitle(title, Modifier.weight(1f))
         }
         // As the web app's phone header: the 4dp spectrum strip, left to right as `to right` in styles.css.
