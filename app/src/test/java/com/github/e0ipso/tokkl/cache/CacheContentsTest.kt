@@ -211,6 +211,65 @@ class CacheContentsTest {
         assertEquals(listOf(9L), refreshed.projects.map { it.id })
     }
 
+    @Test
+    fun aRefreshReadBeforeStartWasSentKeepsTheRemappedEntryUntilTheNextRefresh() {
+        // Start is already visible offline when the refresh reads an empty server history.
+        val local = entry(-1, description = "Started offline").copy(stop = null)
+        val before = EntryRefreshStart(listOf(local), setOf(local.id))
+        val stale = ServerSnapshot(history = WINDOW, timeEntries = emptyList())
+        // The create answer removes the pending change and replaces the negative ID.
+        val sent = local.copy(id = 101)
+        val afterSend = CacheContents(timeEntries = listOf(sent))
+
+        val refreshed = afterSend.refreshedWith(stale, before = before)
+
+        assertEquals(listOf(sent), refreshed.timeEntries)
+        assertEquals(emptyList<CachedTimeEntry>(), refreshed.refreshedWith(
+            stale, before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
+        ).timeEntries)
+    }
+
+    @Test
+    fun aRefreshReadBeforeStopWasSentCannotRestartTheTimer() {
+        val running = entry(1).copy(stop = null)
+        val stopped = running.copy(stop = running.start.plusSeconds(90))
+        val stale = ServerSnapshot(history = WINDOW, timeEntries = listOf(running))
+        // Cover Stop both during the read and queued before it. Sending can leave the same row.
+        for (before in listOf(
+            EntryRefreshStart(listOf(running), emptySet()),
+            EntryRefreshStart(listOf(stopped), setOf(stopped.id)),
+        )) {
+            val afterSend = CacheContents(timeEntries = listOf(stopped))
+            val refreshed = afterSend.refreshedWith(stale, before = before)
+
+            assertEquals(listOf(stopped), refreshed.timeEntries)
+            val remoteEdit = stopped.copy(description = "Edited elsewhere")
+            assertEquals(listOf(remoteEdit), refreshed.refreshedWith(
+                ServerSnapshot(history = WINDOW, timeEntries = listOf(remoteEdit)),
+                before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
+            ).timeEntries)
+        }
+    }
+
+    @Test
+    fun aRefreshReadBeforeRemovalWasSentCannotRestoreTheEntry() {
+        val removed = entry(1)
+        val stale = ServerSnapshot(history = WINDOW, timeEntries = listOf(removed))
+        // Deletes and short Stops remove the cached row immediately, before their send.
+        for (before in listOf(
+            EntryRefreshStart(listOf(removed), emptySet()),
+            EntryRefreshStart(emptyList(), setOf(removed.id)),
+        )) {
+            val afterSend = CacheContents()
+            val refreshed = afterSend.refreshedWith(stale, before = before)
+
+            assertEquals(emptyList<CachedTimeEntry>(), refreshed.timeEntries)
+            assertEquals(listOf(removed), refreshed.refreshedWith(
+                stale, before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
+            ).timeEntries)
+        }
+    }
+
     private fun time(zone: String, now: Instant) =
         AccountSettings(zone, DayOfWeek.MONDAY, timeResolutionMinutes = null).time(Clock.fixed(now, ZoneOffset.UTC))!!
 

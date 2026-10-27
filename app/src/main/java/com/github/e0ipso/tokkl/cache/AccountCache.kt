@@ -51,7 +51,8 @@ class AccountCache(
 
     /**
      * Reads the server with [api] and replaces the cached rows, as [refreshedWith] describes, with
-     * the queued changes applied on top.
+     * the queued changes applied on top. Entries changed during the read, or pending when it
+     * began, keep their current cached state even if their changes have since left the queue.
      * [me] is the refresh's `GET /api/v9/me` with related data, [preferences] its
      * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
      * A server without favorites gets none cached. A failed request keeps its rows, and a failed
@@ -61,16 +62,23 @@ class AccountCache(
      */
     fun refresh(api: TogglApiClient, me: Me, preferences: MePreferences?, capabilities: Capabilities) {
         val changes = database.changes()
-        val mark = try {
-            changes.chainMark()
+        val (before, mark) = try {
+            database.runInTransaction<Pair<EntryRefreshStart, ChainMark?>> {
+                dao.entryRefreshStart() to changes.chainMark()
+            }
         } catch (e: SQLiteException) {
-            null
+            // Without the before-read state, a stale answer could overwrite a completed send.
+            return
         }
         val snapshot = readServerSnapshot(api, me, preferences, clock, favorites = capabilities.favorites)
         val sessions = pomodoro()
         val handoff = try {
             database.runInTransaction<PomodoroStep> {
-                dao.refresh { current, pending -> current.refreshedWith(snapshot, pending) }
+                // A pending local entry may have been created and then removed during the read.
+                // Protect its server ID too, even when no cached row remains to compare.
+                val mappedIds = before.pendingIds.filter { it < 0 }.mapNotNull(changes::serverId)
+                val protectedBefore = before.copy(pendingIds = before.pendingIds + mappedIds)
+                dao.refresh { current, pending -> current.refreshedWith(snapshot, pending, protectedBefore) }
                 if (snapshot.timeEntries != null) changes.reconcilePauseChain(mark)
                 endForForeignTimer(sessions, snapshot.timeEntries.orEmpty())
             }

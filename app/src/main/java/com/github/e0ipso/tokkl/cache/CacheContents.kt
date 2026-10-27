@@ -13,6 +13,9 @@ data class CacheContents(
     val favorites: List<CachedFavorite> = emptyList(),
 )
 
+/** Entry rows and queued entry IDs captured atomically before a refresh reads the server. */
+data class EntryRefreshStart(val entries: List<CachedTimeEntry>, val pendingIds: Set<Long>)
+
 /**
  * What one refresh read from the server. A null list was not read, because its request failed or
  * the server does not offer it, and the cache keeps those rows as they are.
@@ -61,14 +64,28 @@ data class HistoryWindow(val start: Instant, val end: Instant) {
  * - A project, task or tag the server no longer sends stays, with the values it had, while a
  *   cached entry or favorite uses it.
  * - A list the refresh did not read stays as it was.
+ * - An entry changed since [before], including additions, removals and ID remaps, keeps its
+ *   current cached state. IDs pending at [before] stay protected even when sending left their
+ *   already-overlaid row unchanged or absent. A later uncontended refresh takes server state.
  * - Each of the [pending] changes the server has not received applies on top, in order, also to
  *   an entry from before the history window, so the user keeps seeing it until it is sent. The
  *   projects, tasks and tags it uses stay as for any cached entry.
  */
-fun CacheContents.refreshedWith(server: ServerSnapshot, pending: List<PendingChange> = emptyList()): CacheContents {
+fun CacheContents.refreshedWith(
+    server: ServerSnapshot,
+    pending: List<PendingChange> = emptyList(),
+    before: EntryRefreshStart? = null,
+): CacheContents {
     val historyStart = server.history?.start
-    val entries = (server.timeEntries ?: timeEntries)
+    val protectedIds = if (before == null) emptySet() else {
+        val previous = before.entries.associateBy { it.id }
+        val current = timeEntries.associateBy { it.id }
+        before.pendingIds + (previous.keys + current.keys).filter { previous[it] != current[it] }
+    }
+    val refreshedEntries = (server.timeEntries ?: timeEntries)
         .filter { historyStart == null || it.start >= historyStart }
+        .filterNot { it.id in protectedIds }
+    val entries = (refreshedEntries + timeEntries.filter { it.id in protectedIds })
         .distinctBy { it.id }
         .withPending(pending)
     val favorites = (server.favorites ?: favorites).distinctBy { it.position }
