@@ -1,3 +1,9 @@
+## [0.5.1](https://github.com/e0ipso/tokkl-android/compare/v0.5.0...v0.5.1) (2026-10-27)
+
+### Bug Fixes
+
+* preserve sent entries during refresh ([#17](https://github.com/e0ipso/tokkl-android/issues/17)) ([9d5ccb4](https://github.com/e0ipso/tokkl-android/commit/9d5ccb4d6018c73b84c2a9f69a2af867b18a1aaf)), references [#14](https://github.com/e0ipso/tokkl-android/issues/14)
+
 ## [0.5.0](https://github.com/e0ipso/tokkl-android/compare/v0.4.0...v0.5.0) (2026-10-26)
 
 ### Features
