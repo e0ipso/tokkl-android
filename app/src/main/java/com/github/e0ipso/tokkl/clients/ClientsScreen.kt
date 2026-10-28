@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,7 +35,7 @@ import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
-import com.github.e0ipso.tokkl.ui.TokklGhostButton
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
@@ -228,7 +227,7 @@ private fun ClientListRow(row: ClientRow, canChange: Boolean, actions: ClientsAc
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
     ) {
         Column(
             modifier = Modifier
@@ -261,13 +260,12 @@ private fun ClientListRow(row: ClientRow, canChange: Boolean, actions: ClientsAc
             )
         }
         val label = stringResource(if (client.archived) R.string.clients_restore_named else R.string.clients_archive_named, client.name)
-        TokklGhostButton(
+        TokklIconButton(
+            icon = if (client.archived) R.drawable.ic_restore else R.drawable.ic_archive,
+            description = label,
             onClick = { if (client.archived) actions.onRestore(client) else actions.onAskToArchive(client) },
             enabled = enabled,
-            modifier = Modifier.semantics { contentDescription = label },
-        ) {
-            Text(stringResource(if (client.archived) R.string.clients_restore else R.string.clients_archive))
-        }
+        )
     }
 }
 

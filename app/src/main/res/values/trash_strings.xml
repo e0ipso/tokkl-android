@@ -16,10 +16,8 @@
     <string name="trash_started">Started %1$s %2$s</string>
     <!-- When the entry went to the trash: the date, then the clock time. -->
     <string name="trash_deleted_at">Deleted %1$s %2$s</string>
-    <string name="trash_restore">Restore</string>
     <!-- What TalkBack says for an entry's Restore button, with the entry's description. -->
     <string name="trash_restore_named">Restore %1$s</string>
-    <string name="trash_purge">Delete forever</string>
     <!-- What TalkBack says for an entry's Delete forever button, with the entry's description. -->
     <string name="trash_purge_named">Delete %1$s forever</string>
     <string name="trash_empty_trash">Empty trash</string>

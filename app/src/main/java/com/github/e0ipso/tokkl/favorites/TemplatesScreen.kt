@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,10 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedProject
@@ -39,6 +33,7 @@ import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 
 /**
  * More > Timer templates (docs/PRD.md T5). Ordered rows, and New or Edit forms for the
@@ -189,18 +184,17 @@ private fun TemplateRow(
         if (details != null) {
             Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
             RowButton(R.drawable.ic_chevron_up, stringResource(R.string.favorites_move_up, name), canMoveUp, onMoveUp)
             RowButton(R.drawable.ic_chevron_down, stringResource(R.string.favorites_move_down, name), canMoveDown, onMoveDown)
-            val editSpoken = stringResource(R.string.favorites_edit_spoken, name)
-            TextButton(
-                onClick = onEdit,
+            RowButton(R.drawable.ic_edit, stringResource(R.string.favorites_edit_spoken, name), canChange, onEdit)
+            TokklIconButton(
+                icon = R.drawable.ic_nav_trash,
+                description = stringResource(R.string.favorites_delete, name),
+                onClick = onDelete,
                 enabled = canChange,
-                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = editSpoken },
-            ) {
-                Text(stringResource(R.string.favorites_edit))
-            }
-            RowButton(R.drawable.ic_close, stringResource(R.string.favorites_delete, name), canChange, onDelete)
+                danger = true,
+            )
         }
     }
 }
@@ -239,7 +233,5 @@ private fun TemplateForm(
 
 @Composable
 private fun RowButton(@DrawableRes icon: Int, description: String, enabled: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick, enabled = enabled) {
-        Icon(painterResource(icon), contentDescription = description)
-    }
+    TokklIconButton(icon = icon, description = description, onClick = onClick, enabled = enabled)
 }

@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -127,11 +128,12 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
             val reason = context.getString(R.string.needs_attention_reason, checkNotNull(change.refusal))
             compose.onNodeWithText(reason).performScrollTo().assertIsDisplayed()
             assertVisibleTextFits()
+            val edit = compose.onNode(hasContentDescription(context.getString(R.string.needs_attention_edit_named, change.description)) and hasClickAction())
             if (kind != ChangeKind.DELETE) {
-                action(R.string.needs_attention_edit)
+                edit.performScrollTo().assertIsDisplayed().performTouchInput { click() }
                 assertEquals(42L, edited)
             } else {
-                compose.onNodeWithText(context.getString(R.string.needs_attention_edit)).assertDoesNotExist()
+                edit.assertDoesNotExist()
             }
             resent = null
             action(R.string.needs_attention_send_again)

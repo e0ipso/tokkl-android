@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
+import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
@@ -35,7 +36,7 @@ import org.junit.rules.RuleChain
 /**
  * The trash page, its question and its offline state at Android's largest font scale, 200%: no
  * text is cut off, and each row's Restore and Delete forever stay on the screen without
- * overlapping, wrapping onto lines of their own when they must.
+ * overlapping, with full 48dp icon targets.
  */
 class TrashFitTest {
     @org.junit.After
@@ -66,7 +67,10 @@ class TrashFitTest {
             list.performScrollToNode(controlMatcher(R.string.trash_purge_named, name))
             val screen = composeRule.onRoot().getBoundsInRoot()
             val boxes = listOf(restore, purge).map { it.assertIsDisplayed().getBoundsInRoot() }
-            for (box in boxes) assertTrue("a control of $name leaves the screen", box.inside(screen))
+            for (box in boxes) {
+                assertTrue("a control of $name leaves the screen", box.inside(screen))
+                assertTrue("an icon target of $name is too small", box.right - box.left >= 48.dp && box.bottom - box.top >= 48.dp)
+            }
             assertFalse("Restore overlaps Delete forever for $name", boxes[0].overlaps(boxes[1]))
         }
     }

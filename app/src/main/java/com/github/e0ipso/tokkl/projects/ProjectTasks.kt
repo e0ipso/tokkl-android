@@ -32,7 +32,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -50,6 +49,7 @@ import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 
 /** What the task list's controls do. */
 internal class TaskActions(
@@ -191,7 +191,7 @@ private fun TaskRow(task: ProjectTask, canChange: Boolean, actions: TaskActions)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
     ) {
         Column(
             modifier = Modifier
@@ -210,13 +210,13 @@ private fun TaskRow(task: ProjectTask, canChange: Boolean, actions: TaskActions)
             if (!task.active) DetailLine(listOf(stringResource(R.string.project_task_done)))
         }
         val label = stringResource(R.string.project_task_delete_named, task.name)
-        TokklGhostButton(
+        TokklIconButton(
+            icon = R.drawable.ic_nav_trash,
+            description = label,
             onClick = { actions.onAskToDelete(task) },
             enabled = canChange,
-            modifier = Modifier.semantics { contentDescription = label },
-        ) {
-            Text(stringResource(R.string.project_task_delete))
-        }
+            danger = true,
+        )
     }
 }
 

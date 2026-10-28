@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -120,7 +121,11 @@ private fun HeldChange(
         )
         FlowRow {
             if (change.kind != ChangeKind.DELETE) {
-                TextButton(onClick = onEdit) { Text(stringResource(R.string.needs_attention_edit)) }
+                TokklIconButton(
+                    icon = R.drawable.ic_edit,
+                    description = stringResource(R.string.needs_attention_edit_named, change.description.ifBlank { stringResource(R.string.needs_attention_no_description) }),
+                    onClick = onEdit,
+                )
             }
             TextButton(onClick = onSendAgain) { Text(stringResource(R.string.needs_attention_send_again)) }
             TextButton(onClick = onDiscard) { Text(stringResource(R.string.needs_attention_discard)) }

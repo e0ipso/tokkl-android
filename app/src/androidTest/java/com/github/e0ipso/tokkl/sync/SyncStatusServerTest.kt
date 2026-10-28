@@ -131,7 +131,7 @@ class SyncStatusServerTest {
             composeRule.onNode(hasText(context.getString(R.string.needs_attention_send_again)) and hasClickAction())
                 .performScrollTo().performClick()
             // The entry is held before the resend too, so wait for the refusal's actions to show again.
-            val edit = hasText(context.getString(R.string.needs_attention_edit)) and hasClickAction()
+            val edit = hasContentDescription(context.getString(R.string.needs_attention_edit_named, "Invalid draft")) and hasClickAction()
             composeRule.waitUntil("the same server refusal returns", NETWORK_TIMEOUT_MS) {
                 runBlocking { app.changes.heldCount.first() } == 1 && shows(edit)
             }

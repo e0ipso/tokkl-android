@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
@@ -38,6 +37,7 @@ import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.time.formatTime
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
@@ -197,7 +197,7 @@ private fun changeText(change: TrashChange): String = when (change) {
  * One deleted entry: its description, then its project, when it started, how long it lasted and
  * when it was deleted, in words, which TalkBack reads as one item. Without [time], the account's
  * timezone, the dates and times stay out. Under them Restore and Delete forever, which name the
- * entry to TalkBack and wrap onto two lines when the font is large.
+ * entry to TalkBack and on long press.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -242,21 +242,20 @@ private fun TrashRow(
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
         ) {
             val restoreLabel = stringResource(R.string.trash_restore_named, name)
-            TokklGhostButton(
+            TokklIconButton(
+                icon = R.drawable.ic_restore,
+                description = restoreLabel,
                 onClick = { actions.onRestore(entry.id) },
                 enabled = canChange,
-                modifier = Modifier.semantics { contentDescription = restoreLabel },
-            ) {
-                Text(stringResource(R.string.trash_restore))
-            }
+            )
             val purgeLabel = stringResource(R.string.trash_purge_named, name)
-            TokklGhostButton(
+            TokklIconButton(
+                icon = R.drawable.ic_nav_trash,
+                description = purgeLabel,
                 onClick = { actions.onPurge(entry.id) },
                 enabled = canChange,
-                modifier = Modifier.semantics { contentDescription = purgeLabel },
-            ) {
-                Text(stringResource(R.string.trash_purge))
-            }
+                danger = true,
+            )
         }
     }
 }

@@ -44,7 +44,7 @@
     <string name="needs_attention_running">%1$s, from %2$s</string>
     <string name="needs_attention_reason">The server said: %1$s</string>
     <string name="needs_attention_no_reason">The server gave no reason.</string>
-    <string name="needs_attention_edit">Edit entry</string>
     <string name="needs_attention_send_again">Send again</string>
     <string name="needs_attention_discard">Discard</string>
+    <string name="needs_attention_edit_named">Edit %1$s</string>
 </resources>

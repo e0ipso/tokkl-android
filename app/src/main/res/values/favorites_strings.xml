@@ -13,7 +13,6 @@
     <string name="favorites_save">Save as template</string>
     <string name="favorites_manage">Manage templates</string>
     <string name="favorites_new">New template</string>
-    <string name="favorites_edit">Edit</string>
     <!-- What TalkBack reads for Edit on a row: Edit Write the report -->
     <string name="favorites_edit_spoken">Edit %1$s</string>
     <string name="favorites_save_action">Save</string>

@@ -359,7 +359,10 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
     private fun awaitFocused() {
         compose.waitUntil("fullscreen route", 5_000) { compose.onAllNodesWithTag("fullscreen_timer").fetchSemanticsNodes().size == 1 }
     }
-    private fun focusedButton(label: Int) = compose.onNode(hasText(context.getString(label)) and hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")))
+    private fun focusedButton(label: Int) = compose.onNode(
+        (if (label == R.string.timer_focused_edit) hasContentDescription(context.getString(label)) else hasText(context.getString(label))) and
+            hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")),
+    )
     private fun assertActions(running: Boolean) {
         compose.waitUntil("shared focused controls settle", 5_000) {
             compose.onAllNodes(hasText(context.getString(if (running) R.string.timer_pause else R.string.timer_resume)) and hasClickAction()).fetchSemanticsNodes().size == 1

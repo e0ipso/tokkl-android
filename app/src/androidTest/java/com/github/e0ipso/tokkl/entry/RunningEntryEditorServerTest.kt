@@ -543,7 +543,7 @@ class RunningEntryEditorServerTest {
         field(R.string.entry_start).assertIsDisplayed()
         field(R.string.entry_end).assertDoesNotExist()
         field(R.string.entry_duration).assertDoesNotExist()
-        composeRule.onNode(hasText(string(R.string.history_delete)) and hasClickAction() and inForm()).assertDoesNotExist()
+        composeRule.onNode(hasContentDescription(string(R.string.history_delete)) and hasClickAction() and inForm()).assertDoesNotExist()
         assertTrue("running description exists", exists(field(R.string.entry_description)))
         assertTrue("running date exists", exists(dateButton()))
         assertEquals("List shares a pane only at expanded width; Calendar uses its screen", beside,

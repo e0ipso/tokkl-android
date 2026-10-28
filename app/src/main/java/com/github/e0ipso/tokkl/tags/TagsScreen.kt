@@ -34,7 +34,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -54,6 +53,7 @@ import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 
 /**
  * The tags page (docs/PRD.md P4): the workspace's tags from the server, with a field to add one,
@@ -237,7 +237,7 @@ private fun TagListRow(row: TagRow, canChange: Boolean, actions: TagsActions) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
     ) {
         Text(
             text = tag.name,
@@ -254,13 +254,13 @@ private fun TagListRow(row: TagRow, canChange: Boolean, actions: TagsActions) {
                 .padding(vertical = TokklTheme.spacing.space3),
         )
         val label = stringResource(R.string.tags_delete_named, tag.name)
-        TokklGhostButton(
+        TokklIconButton(
+            icon = R.drawable.ic_nav_trash,
+            description = label,
             onClick = { actions.onAskToDelete(tag) },
             enabled = enabled,
-            modifier = Modifier.semantics { contentDescription = label },
-        ) {
-            Text(stringResource(R.string.tags_delete))
-        }
+            danger = true,
+        )
     }
 }
 

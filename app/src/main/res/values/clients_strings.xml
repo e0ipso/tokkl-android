@@ -18,7 +18,6 @@
     <string name="clients_archive">Archive</string>
     <!-- Archive Acme -->
     <string name="clients_archive_named">Archive %1$s</string>
-    <string name="clients_restore">Restore</string>
     <!-- Restore Acme -->
     <string name="clients_restore_named">Restore %1$s</string>
     <string name="clients_archived_done">Archived %1$s and its projects</string>

@@ -69,6 +69,7 @@ import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -290,9 +291,13 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
             modifier = Modifier.fillMaxWidth(),
         ) {
             if (state.editing && !state.running) {
-                TokklGhostButton(onClick = actions.onDelete, enabled = !state.saving) {
-                    Text(stringResource(R.string.history_delete), color = MaterialTheme.colorScheme.error)
-                }
+                TokklIconButton(
+                    icon = R.drawable.ic_nav_trash,
+                    description = stringResource(R.string.history_delete),
+                    onClick = actions.onDelete,
+                    enabled = !state.saving,
+                    danger = true,
+                )
             }
             TokklGhostButton(onClick = actions.onClose, enabled = !state.saving) { Text(stringResource(R.string.entry_cancel)) }
             TokklButton(onClick = actions.onSave, enabled = canChange) { Text(stringResource(R.string.entry_save)) }

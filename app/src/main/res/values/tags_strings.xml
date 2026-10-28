@@ -17,7 +17,6 @@
     <string name="tags_rename_field">New name</string>
     <string name="tags_rename_note">Renaming updates every entry that uses it.</string>
     <string name="tags_rename_save">Save</string>
-    <string name="tags_delete">Delete</string>
     <!-- Delete focus -->
     <string name="tags_delete_named">Delete %1$s</string>
     <!-- Delete focus? -->

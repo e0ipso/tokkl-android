@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
@@ -39,7 +38,7 @@ import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
-import com.github.e0ipso.tokkl.ui.TokklGhostButton
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
@@ -247,7 +246,7 @@ private fun ProjectListRow(row: ProjectRow, canChange: Boolean, actions: Project
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -275,13 +274,12 @@ private fun ProjectListRow(row: ProjectRow, canChange: Boolean, actions: Project
             }
         }
         val label = stringResource(if (row.active) R.string.projects_archive_named else R.string.projects_restore_named, row.name)
-        TokklGhostButton(
+        TokklIconButton(
+            icon = if (row.active) R.drawable.ic_archive else R.drawable.ic_restore,
+            description = label,
             onClick = { if (project != null) actions.onSetActive(project, !row.active) },
             enabled = enabled,
-            modifier = Modifier.semantics { contentDescription = label },
-        ) {
-            Text(stringResource(if (row.active) R.string.projects_archive else R.string.projects_restore))
-        }
+        )
     }
 }
 

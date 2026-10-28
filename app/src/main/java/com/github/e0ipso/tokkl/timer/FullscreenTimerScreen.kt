@@ -43,6 +43,7 @@ import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 import java.time.Clock
 
 /** A presentation of the shared owner. It creates no timer, queue or cumulative clock state. */
@@ -109,12 +110,16 @@ fun FullscreenTimerScreen(
                         model.stopShown(token)
                         focus.clearFocus()
                     }) { Text(stringResource(R.string.timer_stop)) }
-                    TokklGhostButton(onClick = {
-                        if (model.isShown(token)) {
-                            focus.clearFocus()
-                            if (paused != null) editingFields = true else onEditRunning(token)
-                        }
-                    }) { Text(stringResource(R.string.timer_focused_edit)) }
+                    TokklIconButton(
+                        icon = R.drawable.ic_edit,
+                        description = stringResource(R.string.timer_focused_edit),
+                        onClick = {
+                            if (model.isShown(token)) {
+                                focus.clearFocus()
+                                if (paused != null) editingFields = true else onEditRunning(token)
+                            }
+                        },
+                    )
                 }
                 if (paused != null && editingFields) {
                     // Field writes already use the paused snapshot revision fence. There is no new

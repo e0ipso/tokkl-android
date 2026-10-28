@@ -13,10 +13,8 @@
     <string name="projects_no_client">No client</string>
     <!-- What TalkBack says a tap on a project's row does. -->
     <string name="projects_edit">Edit</string>
-    <string name="projects_archive">Archive</string>
     <!-- Archive Website -->
     <string name="projects_archive_named">Archive %1$s</string>
-    <string name="projects_restore">Restore</string>
     <!-- Restore Website -->
     <string name="projects_restore_named">Restore %1$s</string>
 
@@ -78,7 +76,6 @@
     <string name="project_task_name">Task name</string>
     <string name="project_task_name_missing">Enter a task name</string>
     <string name="project_task_save">Save</string>
-    <string name="project_task_delete">Delete</string>
     <!-- Delete task Design -->
     <string name="project_task_delete_named">Delete task %1$s</string>
     <!-- Delete task Design? -->
