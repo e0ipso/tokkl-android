@@ -425,11 +425,11 @@ graph TD
 - ✔️ Task 008 (completed): [Drive alarms and session notifications from server phases](tasks/08--drive-alarms-and-session-notifications-from-server-phases.md), depends on 005 and 007.
 - ✔️ Task 009 (completed): [Move native timer actions to server pause state](tasks/09--move-native-timer-actions-to-server-pause-state.md), depends on 005 and 006.
 
-### Phase 6: Retire the local session implementation
+### ✅ Phase 6: Retire the local session implementation
 
 **Parallel Tasks:**
 
-- Task 010: [Remove local session paths and migrate Room](tasks/10--remove-local-session-paths-and-migrate-room.md), depends on 008 and 009.
+- ✔️ Task 010 (completed): [Remove local session paths and migrate Room](tasks/10--remove-local-session-paths-and-migrate-room.md), depends on 008 and 009.
 
 ### Phase 7: Verify the shared timer contract
 
