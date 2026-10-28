@@ -6,6 +6,7 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlinx.serialization.json.Json
+import okhttp3.ConnectionPool
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -56,6 +57,7 @@ object SharedHttpClient {
         }
         val tls = SSLContext.getInstance("TLS").apply { init(null, arrayOf(trustManager), null) }
         return OkHttpClient.Builder()
+            .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_CONNECTION_SECONDS, TimeUnit.SECONDS))
             // The guard follows same-origin redirects itself.
             .followRedirects(false)
             .followSslRedirects(false)
@@ -64,6 +66,18 @@ object SharedHttpClient {
             .addInterceptor(ConfiguredServerGuard(configured = { ConfiguredServer.current }, trust = { ConfiguredTrust.current }))
             .build()
     }
+
+    /** OkHttp's default. */
+    private const val MAX_IDLE_CONNECTIONS = 5
+
+    /**
+     * How long an idle connection stays in the pool. Tokkl runs on Node, which closes a keep-alive
+     * connection after 5 idle seconds, and OkHttp reuses one idle for less than 10 seconds without
+     * checking it. A request [sendingOnce] sent on such a connection failed, so a timer action a few
+     * seconds after the last request said there was no connection. Under 5 seconds the pool drops
+     * the connection first, and the request opens a new one.
+     */
+    private const val IDLE_CONNECTION_SECONDS = 4L
 
     /** Lifts the read timeout, and only that, for a request tagged [StreamingRead]. */
     private object StreamingReads : Interceptor {

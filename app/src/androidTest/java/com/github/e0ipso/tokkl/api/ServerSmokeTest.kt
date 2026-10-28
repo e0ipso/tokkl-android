@@ -1,9 +1,11 @@
 package com.github.e0ipso.tokkl.api
 
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.util.UUID
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -72,6 +74,27 @@ class ServerSmokeTest {
 
         // Compares the error alone, so a success body never lands in the message.
         assertEquals(ApiError.AuthFailed, (result as? ApiResult.Failure)?.error)
+    }
+
+    /**
+     * Tokkl's Node server closes a keep-alive connection after 5 idle seconds, and OkHttp reuses a
+     * pooled connection idle for less than 10 seconds without probing it. A request sent once, as
+     * every timer action is, still gets its answer when it follows the last one by such a pause.
+     */
+    @Test
+    fun aRequestSentOnceAfterTheServerClosedItsIdleConnectionGetsItsAnswer() {
+        val account = TestAccounts.create(timezone = "Europe/Madrid")
+        try {
+            val client = account.client
+            // Nothing runs, so the server refuses each Pause with its state and changes nothing.
+            val pause = { client.sendRefusable("POST", client.server.app("timer", "pause"), JsonObject(emptyMap()), TimerState.serializer()) }
+            pause().valueOrFail("POST /api/app/timer/pause")
+            // The pause under test, past the server's 5 seconds and short of OkHttp's 10.
+            Thread.sleep(7_000)
+            pause().valueOrFail("POST /api/app/timer/pause after 7 idle seconds")
+        } finally {
+            TestAccounts.delete(account)
+        }
     }
 
     /** Tokkl answers a tag DELETE with 200 and an empty body. */
