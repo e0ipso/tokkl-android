@@ -1,37 +1,64 @@
 package com.github.e0ipso.tokkl.tile
 
+import com.github.e0ipso.tokkl.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.timer.SurfaceTap
+import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
+import com.github.e0ipso.tokkl.timerstate.PauseChainActions
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** What the Quick Settings tile shows for the cache, and what a tap on it queues. */
+/**
+ * What the Quick Settings tile shows for the cache and the server's timer state, and what a tap
+ * on it queues or sends.
+ */
 class RunningTileContentTest {
 
+    private val start = Instant.parse("2026-10-19T12:00:00Z")
     private val calls = mutableListOf<String>()
+
+    /** What the phone shows when the tap lands. */
+    private var now: TimerControls = TimerControls.Idle
 
     @Test
     fun aRunningEntryMakesTheTileStopIt() {
         val running = running(4)
-        val content = runningTileContent(running, listOf(stopped(1, "2026-10-19T08:00:00Z"), running))
+        now = ServerTimerStates.controls(running)
+        val content = runningTileContent(now, listOf(stopped(1, "2026-10-19T08:00:00Z"), running))
 
-        assertEquals(RunningTileContent.Running(running), content)
-        runBlocking { RecordingChanges().tapTile(content) }
+        assertEquals(RunningTileContent.Running(running, TimerTarget.server(entryId = 4, account = ServerTimerStates.ACCOUNT)), content)
+        assertEquals("queued, nothing goes to the server", SurfaceTap.Queued, tap(content))
         assertEquals(listOf("stop 4"), calls)
+    }
+
+    @Test
+    fun aResumedCloneStopsThroughTheQueue() {
+        val clone = running(55)
+        now = ServerTimerStates.controls(clone, ServerTimerStates.held(9, start, ServerTimerStates.resumed(600, entryId = 55)))
+
+        val content = runningTileContent(now, listOf(clone))
+
+        assertEquals(RunningTileContent.Running(clone, TimerTarget.server(entryId = 55, account = ServerTimerStates.ACCOUNT)), content)
+        tap(content)
+        assertEquals("a v9 Stop, which ends the chain on the server", listOf("stop 55"), calls)
     }
 
     @Test
     fun withNoneRunningTheTileContinuesTheStoppedEntryThatStartedLast() {
         val last = stopped(2, "2026-10-19T11:00:00Z")
-        val content = runningTileContent(null, listOf(stopped(1, "2026-10-19T08:00:00Z"), last, stopped(3, "2026-10-18T15:00:00Z")))
+        val content = runningTileContent(TimerControls.Idle, listOf(stopped(1, "2026-10-19T08:00:00Z"), last, stopped(3, "2026-10-18T15:00:00Z")))
 
         assertEquals(RunningTileContent.Continue(last), content)
-        runBlocking { RecordingChanges().tapTile(content) }
+        tap(content)
         assertEquals(listOf("start 20 ${EntryFields(last.description, last.projectId, last.taskId, last.tags, last.billable)}"), calls)
     }
 
@@ -49,11 +76,11 @@ class RunningTileContentTest {
             billable = false,
         )
         // Room's id DESC puts server entries and older negative local IDs first.
-        val content = runningTileContent(null, listOf(server, earlier, last))
+        val content = runningTileContent(TimerControls.Idle, listOf(server, earlier, last))
 
         assertEquals(RunningTileContent.Continue(last), content)
-        assertEquals(content, runningTileContent(null, listOf(last, earlier, server)))
-        runBlocking { RecordingChanges().tapTile(content) }
+        assertEquals(content, runningTileContent(TimerControls.Idle, listOf(last, earlier, server)))
+        tap(content)
         assertEquals(listOf("start 50 ${EntryFields(last.description, last.projectId, last.taskId, last.tags, last.billable)}"), calls)
     }
 
@@ -62,15 +89,15 @@ class RunningTileContentTest {
         val earlier = stopped(41, "2026-10-19T11:00:00Z")
         val last = stopped(42, "2026-10-19T11:00:00Z")
 
-        assertEquals(RunningTileContent.Continue(last), runningTileContent(null, listOf(earlier, last)))
+        assertEquals(RunningTileContent.Continue(last), runningTileContent(TimerControls.Idle, listOf(earlier, last)))
     }
 
     @Test
     fun withNothingToContinueTheTileDoesNothing() {
-        val content = runningTileContent(null, emptyList())
+        val content = runningTileContent(TimerControls.Idle, emptyList())
 
         assertEquals(RunningTileContent.Nothing, content)
-        runBlocking { RecordingChanges().tapTile(content) }
+        tap(content)
         assertEquals(emptyList<String>(), calls)
     }
 
@@ -79,35 +106,39 @@ class RunningTileContentTest {
         // The tile showed the entry to continue; the cache has since got a running entry from
         // elsewhere. The tap still continues what the tile showed.
         val last = stopped(1, "2026-10-19T08:00:00Z")
-        val shown = runningTileContent(null, listOf(last))
-        val cacheByNow = runningTileContent(running(4), listOf(last, running(4)))
+        val shown = runningTileContent(TimerControls.Idle, listOf(last))
+        now = ServerTimerStates.controls(running(4))
 
-        runBlocking { RecordingChanges().tapTile(shown) }
+        tap(shown)
 
-        assertEquals(RunningTileContent.Running(running(4)), cacheByNow)
         assertEquals(listOf("start 10 ${EntryFields(last.description, last.projectId, last.taskId, last.tags, last.billable)}"), calls)
     }
 
     @Test
-    fun aPausedTimerMakesTheTileResumeTheChainItShowed() {
-        val target = TimerTarget(session = 11, chainId = 22, revision = 3)
-        val paused = TimerControls.Paused(seconds = 600, workspaceId = 10, fields = EntryFields("Paused work"), target = target)
-        val content = runningTileContent(paused, listOf(stopped(1, "2026-10-19T08:00:00Z")))
+    fun aPausedTimerMakesTheTileResumeTheChainOnTheServerAtTheShownRevision() {
+        now = ServerTimerStates.controls(null, ServerTimerStates.held(3, start, ServerTimerStates.paused(600, EntryFields("Paused work"))))
+        val content = runningTileContent(now, listOf(stopped(1, "2026-10-19T08:00:00Z")))
 
-        assertEquals(RunningTileContent.Paused("Paused work", target), content)
-        runBlocking { RecordingChanges().tapTile(content) }
-        assertEquals(listOf("resume $target"), calls)
+        assertEquals(RunningTileContent.Paused("Paused work", TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT)), content)
+        val request = tap(content) as SurfaceTap.Request
+        assertTrue("nothing queued", calls.isEmpty())
+        assertEquals(TimerActionResult.Offline, runBlocking { request.send() })
+        assertEquals(listOf("resume 3"), calls)
     }
 
     @Test
-    fun theControlsShowTheRunningEntryOrWhatToContinue() {
-        val running = running(4)
-        val last = stopped(1, "2026-10-19T08:00:00Z")
-        val controls = TimerControls.Running(running, unsent = false, accumulatedSeconds = 600, target = TimerTarget(session = 11, entryId = 4))
+    fun aPausedTileTappedAfterTheChainResumedElsewhereSendsNothing() {
+        now = ServerTimerStates.controls(null, ServerTimerStates.held(3, start, ServerTimerStates.paused(600, EntryFields("Paused work"))))
+        val shown = runningTileContent(now, emptyList())
+        now = ServerTimerStates.controls(running(55), ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = 55)))
 
-        assertEquals(RunningTileContent.Running(running), runningTileContent(controls, listOf(last, running)))
-        assertEquals(RunningTileContent.Continue(last), runningTileContent(TimerControls.Idle, listOf(last)))
-        assertEquals(RunningTileContent.Nothing, runningTileContent(TimerControls.Idle, emptyList()))
+        assertNull(tap(shown))
+        assertTrue(calls.isEmpty())
+    }
+
+    private fun tap(content: RunningTileContent): SurfaceTap? = runBlocking {
+        val changes = RecordingChanges()
+        tapTile(content, TimerSurfaceActions({ now }, { ServerTimerStates.ACCOUNT }, changes, RecordingServer(), sendQueued = {}), changes)
     }
 
     private fun stopped(id: Long, start: String) = CachedTimeEntry(
@@ -125,6 +156,13 @@ class RunningTileContentTest {
 
     private fun running(id: Long) = stopped(id, "2026-10-19T12:00:00Z").copy(stop = null)
 
+    /** The server answers no action: the phone is offline. */
+    private inner class RecordingServer : PauseChainActions {
+        override suspend fun pause(): TimerActionResult = TimerActionResult.Offline.also { calls += "pause" }
+        override suspend fun resume(revision: Long): TimerActionResult = TimerActionResult.Offline.also { calls += "resume $revision" }
+        override suspend fun discard(revision: Long): TimerActionResult = TimerActionResult.Offline.also { calls += "discard $revision" }
+    }
+
     private inner class RecordingChanges : EntryChanges {
         override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
             calls += "start $workspaceId $fields"
@@ -134,11 +172,6 @@ class RunningTileContentTest {
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
             calls += "stop $entryId"
             return true
-        }
-
-        override suspend fun resume(target: TimerTarget, fields: EntryFields?): Long? {
-            calls += "resume $target"
-            return -9L
         }
 
         override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =

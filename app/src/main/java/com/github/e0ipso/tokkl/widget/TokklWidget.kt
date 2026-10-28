@@ -61,10 +61,11 @@ import kotlinx.coroutines.flow.first
 
 /**
  * The home screen widget (docs/PRD.md N3): the running entry's description, project and elapsed
- * time with Pause and Stop buttons, the paused timer's total with Resume and Stop (T1), or Start
- * when no timer runs, and below them as many timer templates as fit. It reads only the phone, through
- * [TokklApplication.widgetState], and its taps change the phone and queue the change, so all of
- * it works offline.
+ * time with a Stop button, and Pause where the server's timer offers it, the paused timer's total
+ * with Resume and Stop (T1), or Start when no timer runs, and below them as many timer templates
+ * as fit. It reads only the phone, through [TokklApplication.widgetState]. Start, the templates
+ * and Stop of a running entry change the phone and queue the change, so they work offline. Pause,
+ * Resume and Stop while paused go to the server, and say in a toast when they cannot.
  *
  * Nothing updates it on a timer: the provider info sets no update period, and the elapsed time is a
  * Chronometer that the launcher ticks. [WidgetSync] updates it when the phone's state changes,
@@ -132,9 +133,9 @@ private fun SignIn(context: Context) {
 }
 
 /**
- * The running entry with Pause and Stop, the paused timer with Resume and Stop, or "No timer
- * running" with Start: text says the state, not colour. Pause, Resume and Stop are icon buttons,
- * with what TalkBack reads, so two of them leave the description room at the minimum size.
+ * The running entry with Pause, where offered, and Stop, the paused timer with Resume and Stop, or
+ * "No timer running" with Start: text says the state, not colour. Pause, Resume and Stop are icon
+ * buttons, with what TalkBack reads, so two of them leave the description room at the minimum size.
  */
 @Composable
 private fun TimerRow(context: Context, running: WidgetRunning?, paused: WidgetPaused?) {
@@ -154,8 +155,10 @@ private fun TimerRow(context: Context, running: WidgetRunning?, paused: WidgetPa
             val colors = GlanceTheme.colors
             when {
                 running != null -> {
-                    IconButton(context.getString(R.string.widget_pause_description), R.drawable.ic_pause, pauseTimer(running.target), colors.surfaceVariant, colors.onSurface)
-                    Spacer(GlanceModifier.width(8.dp))
+                    if (running.pausable) {
+                        IconButton(context.getString(R.string.widget_pause_description), R.drawable.ic_pause, pauseTimer(running.target), colors.surfaceVariant, colors.onSurface)
+                        Spacer(GlanceModifier.width(8.dp))
+                    }
                     IconButton(context.getString(R.string.widget_stop_description), R.drawable.ic_stop, stopTimer(running.target), colors.error, colors.onError)
                 }
                 paused != null -> {
@@ -219,7 +222,7 @@ private fun IconButton(description: String, icon: Int, onClick: Action, backgrou
 }
 
 /**
- * The elapsed time as a Chronometer the launcher ticks from the entry's start, after the
+ * The elapsed time as a Chronometer the launcher ticks from [start], after the
  * [accumulatedSeconds] a pause chain stored before it, so the widget needs no update to count.
  * Glance has no chronometer of its own, so it comes in as RemoteViews.
  */

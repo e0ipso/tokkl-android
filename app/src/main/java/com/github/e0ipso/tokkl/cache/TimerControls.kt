@@ -9,31 +9,35 @@ import java.time.Instant
  * action goes ahead only while the phone still shows that state, so a second tap, a tap on an old
  * notification or a widget drawn before sign-out does nothing.
  *
- * Two kinds exist while the phone moves to the server's pause chain. A target drawn from the
- * server's timer state, made with [server], has no session and no chain: a paused one carries the
- * server [revision] it was shown at, which Resume and Discard send, and a running one the entry
- * it showed. The queue's own pause chain fences accept none of these. The notification, the
- * widget and the tile still draw targets of the phone's own chain, with its session, chain id and
- * revision.
+ * Every surface draws its targets from the server's timer state, made with [server]: a paused one
+ * carries the server [revision] it was shown at, which Resume and Discard send, and a running one
+ * the entry it showed. Each also names the [account] it was drawn for, so a control kept in a
+ * notification, a widget or a PendingIntent past a sign-out acts on nothing in the next account.
+ * The [session] and [chainId] of the phone's own pause chain are left at 0; the queue's chain
+ * fences accept none of these targets.
  *
- * @property session the [TimerSession] the control was shown in, or 0 for a server target.
+ * @property session the [TimerSession] of the phone's own chain, or 0 for a server target.
  * @property chainId the phone's chain it was shown for, or 0 outside one.
  * @property revision the phone chain's revision then, or the server revision a paused server
  *   target was shown at, or 0.
  * @property entryId the running entry it showed, or 0 while paused.
+ * @property account the account the control was drawn for, as the timer state's store names it,
+ *   or blank where no account names it.
  */
 data class TimerTarget(
     val session: Long,
     val chainId: Long = 0,
     val revision: Long = 0,
     val entryId: Long = 0,
+    val account: String = "",
 ) {
     companion object {
         /**
-         * A control drawn from the server's timer state: the running entry [entryId], or a paused
-         * chain shown at the server's [revision].
+         * A control drawn from the server's timer state for [account]: the running entry
+         * [entryId], or a paused chain shown at the server's [revision].
          */
-        fun server(revision: Long = 0, entryId: Long = 0) = TimerTarget(session = 0, revision = revision, entryId = entryId)
+        fun server(revision: Long = 0, entryId: Long = 0, account: String = "") =
+            TimerTarget(session = 0, revision = revision, entryId = entryId, account = account)
     }
 }
 
@@ -88,9 +92,9 @@ val TimerControls.target: TimerTarget?
 
 /**
  * The controls for the cache's [running] entry, the phone's own pause [chain] and the [session],
- * which the notification, the widget, the tile and the reminder still show. A running entry always
- * shows, as the server's running timer wins over a chain. The chain adds its time only while that
- * entry is its clone, and shows as paused only while nothing runs.
+ * which only [ChangeQueue.timerControls] still reads; no surface shows them. A running entry
+ * always shows, as the server's running timer wins over a chain. The chain adds its time only
+ * while that entry is its clone, and shows as paused only while nothing runs.
  */
 fun timerControls(running: EntryWithSendState?, chain: PauseChain?, session: Long): TimerControls {
     if (running != null) {
@@ -115,9 +119,11 @@ fun timerControls(running: EntryWithSendState?, chain: PauseChain?, session: Lon
 }
 
 /**
- * The controls for the cache's [running] entry and the server's timer state [held], as the Timer
- * page and the full-screen timer show them. [timerApi] is whether the server offers the timer
- * API: without it the held state counts for nothing, so no chain shows and Pause is not offered.
+ * The controls for the cache's [running] entry and the server's timer state [held], as every
+ * timer surface shows them: the Timer page, the full-screen timer, the running notification, the
+ * widget, the Quick Settings tile and the reminder. [timerApi] is whether the server offers the
+ * timer API: without it the held state counts for nothing, so no chain shows and Pause is not
+ * offered. Every target names [account].
  *
  * The cache's running entry always shows, as it carries the queued Starts and Stops the server
  * may not have yet. It adds the chain's stored seconds only while it is the chain's clone, and
@@ -126,7 +132,7 @@ fun timerControls(running: EntryWithSendState?, chain: PauseChain?, session: Lon
  * runs in the cache, as after a queued Stop, shows nothing. Pause is offered outside a Pomodoro
  * session, which the server refuses it in.
  */
-fun serverTimerControls(running: EntryWithSendState?, held: HeldTimerState?, timerApi: Boolean): TimerControls {
+fun serverTimerControls(running: EntryWithSendState?, held: HeldTimerState?, timerApi: Boolean, account: String = ""): TimerControls {
     val state = held?.takeIf { timerApi }?.state
     val pause = state?.pause
     if (running != null) {
@@ -136,7 +142,7 @@ fun serverTimerControls(running: EntryWithSendState?, held: HeldTimerState?, tim
             entry = entry,
             unsent = running.unsent,
             accumulatedSeconds = clone?.seconds ?: 0,
-            target = TimerTarget.server(entryId = entry.id),
+            target = TimerTarget.server(entryId = entry.id, account = account),
             clockOffset = clone?.let { held?.clockOffset } ?: Duration.ZERO,
             pausable = timerApi && state?.pomodoro == null,
         )
@@ -146,7 +152,7 @@ fun serverTimerControls(running: EntryWithSendState?, held: HeldTimerState?, tim
             seconds = pause.seconds,
             workspaceId = pause.workspaceId,
             fields = EntryFields(pause.description, pause.projectId, pause.taskId, pause.tags, pause.billable),
-            target = TimerTarget.server(revision = state?.revision ?: 0),
+            target = TimerTarget.server(revision = state?.revision ?: 0, account = account),
         )
     }
     return TimerControls.Idle
@@ -158,3 +164,15 @@ fun serverTimerControls(running: EntryWithSendState?, held: HeldTimerState?, tim
  */
 fun TimerControls.Running.seconds(now: Instant): Long =
     accumulatedSeconds + Duration.between(entry.start, now.plus(clockOffset)).seconds.coerceAtLeast(0)
+
+/**
+ * The instant on the phone's clock that a system chronometer counts this entry from, after
+ * [TimerControls.Running.accumulatedSeconds]: the entry's start, moved by the server's clock
+ * offset for a clone. The offset is rounded to whole seconds, so the few milliseconds it moves
+ * with each new state do not redraw a notification or a widget whose clock the system ticks.
+ */
+val TimerControls.Running.countsFrom: Instant
+    get() = entry.start.minusSeconds(Math.floorDiv(clockOffset.toMillis() + HALF_SECOND_MS, SECOND_MS))
+
+private const val SECOND_MS = 1_000L
+private const val HALF_SECOND_MS = 500L

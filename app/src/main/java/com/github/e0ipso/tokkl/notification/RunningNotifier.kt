@@ -22,9 +22,10 @@ import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
  * Posts and removes the running timer's notification (docs/PRD.md N1). It is ongoing and shows
  * the description, the project and a chronometer that the system ticks from the entry's start,
  * after a pause chain's stored time (T1), so no foreground service runs and the app sets no alarm
- * to update it. Tapping it opens the app, and its Pause and Stop actions reach
- * [StopTimerReceiver] without opening the app. While paused it is quiet, can be swiped away and
- * asks for no promotion: it shows the paused total, which stands still, with Resume and Stop.
+ * to update it. Tapping it opens the app, and its Stop action, and Pause where the server's timer
+ * offers it, reach [StopTimerReceiver] without opening the app. While paused it is quiet, can be
+ * swiped away and asks for no promotion: it shows the paused total, which stands still, with
+ * Resume and Stop.
  *
  * On Android 13 and later it shows only once the user has allowed notifications (TKA-0058 asks).
  * Without that, [post] does nothing.
@@ -73,8 +74,8 @@ class RunningNotifier(context: Context) {
             .setUsesChronometer(true)
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_STOPWATCH)
-            .addAction(action(R.drawable.ic_pause, R.string.notification_pause, StopTimerReceiver.ACTION_PAUSE, content))
-            .addAction(action(R.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content))
+        if (content.pausable) builder.addAction(action(R.drawable.ic_pause, R.string.notification_pause, StopTimerReceiver.ACTION_PAUSE, content))
+        builder.addAction(action(R.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content))
         // Standard style, ongoing, a title and a non-minimal channel meet the promotion rules.
         // Keep the same notification when the user or the device declines promotion.
         // https://developer.android.com/develop/ui/views/notifications/live-update

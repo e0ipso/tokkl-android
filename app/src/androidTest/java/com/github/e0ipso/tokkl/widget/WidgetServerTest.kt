@@ -9,6 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
@@ -16,6 +17,10 @@ import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
+import com.github.e0ipso.tokkl.TimerActionToasts
+import com.github.e0ipso.tokkl.awaitControls
+import com.github.e0ipso.tokkl.followNoTimerEvents
+import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
@@ -31,6 +36,7 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.tile.QuickSettingsTile
+import com.github.e0ipso.tokkl.time.formatDuration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.filterNotNull
@@ -132,21 +138,58 @@ class WidgetServerTest {
     }
 
     @Test
-    fun pauseAndResumeWorkOfflineThroughTheNativeControls() {
-        signIn(NO_ROUTE, account.apiToken)
-        val first = runBlocking { app.changes.start(workspace, EntryFields("Paused on the widget")) }
-        native.awaitDescription(context.getString(R.string.widget_pause_description))
+    fun pauseResumeAndStopWhilePausedGoToTheServerFromTheNativeControls() {
+        val first = account.createEntry("Paused on the widget", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
+        runBlocking { app.accountSettings.refresh().join() }
+        native.awaitText("Paused on the widget")
 
-        native.click(context.getString(R.string.widget_pause_description))
-        runBlocking { withTimeout(1_000) { app.changes.timerControls.first { it is TimerControls.Paused } } }
-        native.awaitDescription(context.getString(R.string.widget_resume_description), 1_000)
+        native.click(pauseLabel)
+        val paused = app.awaitControls<TimerControls.Paused>("the widget's Pause reached the server")
+        native.awaitDescription(context.getString(R.string.widget_resume_description))
+        native.awaitText(context.getString(R.string.widget_paused, formatDuration(paused.seconds)))
+        val chain = checkNotNull(web.timerState().pause)
+        assertTrue("the server holds the chain paused", chain.paused)
+        assertEquals("the widget shows the server's frozen total", chain.seconds, paused.seconds)
         assertNull("nothing runs while paused", runBlocking { app.cache.running.first() })
 
         native.click(context.getString(R.string.widget_resume_description))
-        val resumed = runBlocking { withTimeout(1_000) { app.changes.timerControls.first { it is TimerControls.Running } } } as TimerControls.Running
-        native.awaitDescription(context.getString(R.string.widget_pause_description), 1_000)
+        val resumed = app.awaitControls<TimerControls.Running>("the widget's Resume started the clone") { it.accumulatedSeconds == paused.seconds }
+        native.awaitDescription(pauseLabel)
         assertNotEquals("Resume starts a new entry", first, resumed.entry.id)
+        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
         assertEquals("Paused on the widget", resumed.entry.description)
+
+        native.click(pauseLabel)
+        app.awaitControls<TimerControls.Paused>("the widget's second Pause")
+        // A Stop drawn for the running clone acts on nothing once it is paused, so wait for the redraw.
+        native.awaitDescription(context.getString(R.string.widget_resume_description))
+        native.click(context.getString(R.string.widget_stop_description))
+        app.awaitControls<TimerControls.Idle>("the widget's Stop while paused")
+        native.awaitDescription(context.getString(R.string.widget_start_description))
+        assertNull("Stop while paused ended the chain on the server", web.timerState().pause)
+        assertEquals("nothing went through the queue", 0, unsentCount())
+    }
+
+    @Test
+    fun anOfflinePauseSaysWhyAndKeepsTheTimerWhileStopStillQueues() {
+        val id = account.createEntry("Paused offline", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
+        runBlocking { app.accountSettings.refresh().join() }
+        native.awaitDescription(pauseLabel)
+        AirplaneMode.set(true, web)
+        try {
+            TimerActionToasts.await(TimerActionToasts.offline) { native.click(pauseLabel) }
+            val shown = runBlocking { app.timerControls.first() } as TimerControls.Running
+            assertEquals("the timer runs on", id, shown.entry.id)
+            native.awaitDescription(pauseLabel)
+            assertEquals("Pause queues nothing", 0, unsentCount())
+
+            native.click(context.getString(R.string.widget_stop_description))
+            runBlocking { withTimeout(1_000) { app.cache.running.first { it == null } } }
+            native.awaitDescription(context.getString(R.string.widget_start_description))
+            assertEquals("Stop of the running entry queues offline", 1, unsentCount())
+        } finally {
+            AirplaneMode.set(false, web)
+        }
     }
 
     @Test
@@ -181,8 +224,10 @@ class WidgetServerTest {
             assertTrue(running.billable)
             assertTrue("the favorite uses the offline queue", unsentCount() > queued)
         }
+        native.awaitDescription(pauseLabel)
         app.capabilities.forget()
         native.await("a server without favorites hides every favorite") { (1..3).none { native.hasDescription("Start Favorite $it, Widget project · Widget task") } }
+        native.await("a server without the timer API hides Pause") { !native.hasDescription(pauseLabel) }
         native.awaitDescription(context.getString(R.string.widget_stop_description))
         assertTrue("the cache still holds favorites, only the capability hid them", runBlocking { app.cache.favorites.first() }.isNotEmpty())
         assertTrue(runBlocking { app.signOut.run() })
@@ -278,6 +323,8 @@ class WidgetServerTest {
     fun remoteStopClearsTheNativeWidgetAndNotificationAtThePeriodicCheck() {
         val id = account.createEntry("Stopped remotely", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
         runBlocking { app.accountSettings.refresh().join() }
+        // Without the timer event stream, as on Toggl Track, only the periodic check learns of it.
+        app.followNoTimerEvents()
         native.awaitText("Stopped remotely")
         native.awaitDescription(context.getString(R.string.widget_stop_description))
         RunningNotifications.awaitShown("the seeded running entry")
@@ -334,6 +381,10 @@ class WidgetServerTest {
             assertTrue("the sender still waits on the network", relay.hungConnections > 0)
         }
     }
+
+    private val pauseLabel get() = context.getString(R.string.widget_pause_description)
+
+
 
     private fun drain() {
         runBlocking { app.sender.sendAndWait(); app.accountSettings.refresh().join() }

@@ -36,6 +36,7 @@ class RunningLiveUpdateTest {
         task = "Notifications",
         start = Instant.now().minusSeconds(65),
         key = "live-update-test",
+        pausable = true,
     )
 
     @Before
@@ -138,6 +139,16 @@ class RunningLiveUpdateTest {
         val notification = notifier.build(resumed, requestPromotion = false)
 
         assertEquals(resumed.start.toEpochMilli() - 600_000, notification.`when`)
+        assertTrue(notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertTrue(notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
+    }
+
+    @Test
+    fun aTimerWithoutPauseOffersStopAlone() {
+        // Without the server's timer API, or during a Pomodoro session.
+        val notification = notifier.build(content.copy(pausable = false, key = "no-pause-test"), requestPromotion = false)
+
+        assertEquals(listOf(context.getString(R.string.notification_stop)), notification.actions.map { it.title.toString() })
         assertTrue(notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
         assertTrue(notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
     }

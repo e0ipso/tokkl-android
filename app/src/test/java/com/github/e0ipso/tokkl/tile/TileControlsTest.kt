@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.tile
 
 import android.service.quicksettings.TileService
 import com.github.e0ipso.tokkl.MergedManifest
+import com.github.e0ipso.tokkl.ServerTimerStates
 import com.github.e0ipso.tokkl.androidAttribute
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
@@ -9,6 +10,11 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.childElements
+import com.github.e0ipso.tokkl.timer.SurfaceTap
+import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
+import com.github.e0ipso.tokkl.timerstate.PauseChainActions
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.io.File
 import java.time.Instant
 import javax.xml.parsers.DocumentBuilderFactory
@@ -22,41 +28,54 @@ import org.w3c.dom.Element
 
 /**
  * The compact controls a long press on the Quick Settings tile opens, and the subtitle that
- * points at them. The activity draws [tileControlsPanel] and sends each button through
- * [useTileControl].
+ * points at them. The activity draws [tileControlsPanel] and sends each button's action and
+ * target through [TimerSurfaceActions.tap].
  */
 class TileControlsTest {
 
+    private val start = Instant.parse("2026-10-19T12:00:00Z")
     private val calls = mutableListOf<String>()
+
+    /** What the phone shows when a button is pressed. */
+    private var now: TimerControls = TimerControls.Idle
 
     @Test
     fun aRunningTimerOffersPauseAndStopForTheTargetItShows() {
-        val target = TimerTarget(session = 11, chainId = 22, revision = 3, entryId = 4)
-        val panel = tileControlsPanel(running(target))
+        now = ServerTimerStates.controls(entry(4))
+        val panel = tileControlsPanel(now)!!
 
-        assertEquals("Design review", panel!!.description)
+        assertEquals("Design review", panel.description)
         assertFalse(panel.paused)
-        assertEquals(listOf(TileControlAction.Pause, TileControlAction.Stop), panel.buttons.map { it.action })
-        assertTrue(panel.buttons.all { it.target == target })
-        val changes = RecordingChanges()
-        runBlocking { panel.buttons.forEach { changes.useTileControl(it) } }
-        assertEquals(listOf("pause $target", "stop $target"), calls)
+        assertEquals(listOf(TimerSurfaceAction.Pause, TimerSurfaceAction.Stop), panel.buttons.map { it.action })
+        assertTrue(panel.buttons.all { it.target == TimerTarget.server(entryId = 4, account = ServerTimerStates.ACCOUNT) })
+
+        val pause = press(panel.buttons[0]) as SurfaceTap.Request
+        assertTrue("Pause waits for the server, and queues nothing", calls.isEmpty())
+        runBlocking { pause.send() }
+        assertEquals(SurfaceTap.Queued, press(panel.buttons[1]))
+        assertEquals(listOf("pause", "stop 4"), calls)
     }
 
     @Test
-    fun aPausedTimerOffersResumeAndStopForTheTargetItShows() {
-        val target = TimerTarget(session = 11, chainId = 22, revision = 3)
-        val panel = tileControlsPanel(
-            TimerControls.Paused(seconds = 600, workspaceId = 10, fields = EntryFields("Paused work"), target = target),
-        )
+    fun pauseIsLeftOutWithoutTheTimerApiAndDuringAPomodoroSession() {
+        val session = ServerTimerStates.held(5, start, pomodoro = ServerTimerStates.session(entryId = 4, at = start))
 
-        assertEquals("Paused work", panel!!.description)
+        for (controls in listOf(ServerTimerStates.controls(entry(4), timerApi = false), ServerTimerStates.controls(entry(4), session))) {
+            assertEquals(listOf(TimerSurfaceAction.Stop), tileControlsPanel(controls)!!.buttons.map { it.action })
+        }
+    }
+
+    @Test
+    fun aPausedTimerOffersResumeAndStopOnTheServerAtTheRevisionItShows() {
+        now = ServerTimerStates.controls(null, ServerTimerStates.held(3, start, ServerTimerStates.paused(600, EntryFields("Paused work"))))
+        val panel = tileControlsPanel(now)!!
+
+        assertEquals("Paused work", panel.description)
         assertTrue(panel.paused)
-        assertEquals(listOf(TileControlAction.Resume, TileControlAction.Stop), panel.buttons.map { it.action })
-        assertTrue(panel.buttons.all { it.target == target })
-        val changes = RecordingChanges()
-        runBlocking { panel.buttons.forEach { changes.useTileControl(it) } }
-        assertEquals(listOf("resume $target", "stop $target"), calls)
+        assertEquals(listOf(TimerSurfaceAction.Resume, TimerSurfaceAction.Stop), panel.buttons.map { it.action })
+        assertTrue(panel.buttons.all { it.target == TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT) })
+        runBlocking { panel.buttons.forEach { (press(it) as SurfaceTap.Request).send() } }
+        assertEquals(listOf("resume 3", "discard 3"), calls)
     }
 
     @Test
@@ -66,14 +85,13 @@ class TileControlsTest {
 
     @Test
     fun aButtonKeepsTheTargetItWasDrawnWithAfterTheTimerMovesOn() {
-        val shown = TimerTarget(session = 11, chainId = 22, revision = 3, entryId = 4)
-        val later = TimerTarget(session = 11, chainId = 22, revision = 4, entryId = 9)
-        val drawn = tileControlsPanel(running(shown))!!
-        val movedOn = tileControlsPanel(running(later, id = 9))!!
+        now = ServerTimerStates.controls(entry(4))
+        val drawn = tileControlsPanel(now)!!
+        now = ServerTimerStates.controls(entry(9))
 
-        assertEquals(later, movedOn.buttons.first().target)
-        runBlocking { RecordingChanges().useTileControl(drawn.buttons.first()) }
-        assertEquals(listOf("pause $shown"), calls)
+        assertEquals(TimerTarget.server(entryId = 9, account = ServerTimerStates.ACCOUNT), tileControlsPanel(now)!!.buttons.first().target)
+        assertNull("the drawn Pause acts on nothing once another entry runs", press(drawn.buttons.first()))
+        assertTrue(calls.isEmpty())
     }
 
     @Test
@@ -100,22 +118,21 @@ class TileControlsTest {
         assertEquals("true", items["android:backgroundDimEnabled"])
     }
 
-    private fun running(target: TimerTarget, id: Long = target.entryId) = TimerControls.Running(
-        entry = CachedTimeEntry(
-            id = id,
-            workspaceId = 10,
-            projectId = null,
-            taskId = null,
-            description = "Design review",
-            start = Instant.parse("2026-10-19T12:00:00Z"),
-            stop = null,
-            billable = false,
-            tags = emptyList(),
-            tagIds = emptyList(),
-        ),
-        unsent = false,
-        accumulatedSeconds = 600,
-        target = target,
+    private fun press(control: TileControl): SurfaceTap? = runBlocking {
+        TimerSurfaceActions({ now }, { ServerTimerStates.ACCOUNT }, RecordingChanges(), RecordingServer(), sendQueued = {}).tap(control.action, control.target)
+    }
+
+    private fun entry(id: Long) = CachedTimeEntry(
+        id = id,
+        workspaceId = 10,
+        projectId = null,
+        taskId = null,
+        description = "Design review",
+        start = start,
+        stop = null,
+        billable = false,
+        tags = emptyList(),
+        tagIds = emptyList(),
     )
 
     private fun preferencesActivity(): Element {
@@ -144,27 +161,18 @@ class TileControlsTest {
         .parse(file)
         .documentElement
 
+    private inner class RecordingServer : PauseChainActions {
+        override suspend fun pause(): TimerActionResult = TimerActionResult.Done.also { calls += "pause" }
+        override suspend fun resume(revision: Long): TimerActionResult = TimerActionResult.Done.also { calls += "resume $revision" }
+        override suspend fun discard(revision: Long): TimerActionResult = TimerActionResult.Done.also { calls += "discard $revision" }
+    }
+
     private inner class RecordingChanges : EntryChanges {
         override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("nothing starts")
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
             calls += "stop $entryId"
             return true
-        }
-
-        override suspend fun stop(target: TimerTarget, fields: EntryFields?): Boolean {
-            calls += "stop $target"
-            return true
-        }
-
-        override suspend fun pause(target: TimerTarget, fields: EntryFields?): Boolean {
-            calls += "pause $target"
-            return true
-        }
-
-        override suspend fun resume(target: TimerTarget, fields: EntryFields?): Long? {
-            calls += "resume $target"
-            return -1
         }
 
         override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =

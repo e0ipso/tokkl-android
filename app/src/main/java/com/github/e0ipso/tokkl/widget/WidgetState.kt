@@ -3,12 +3,10 @@ package com.github.e0ipso.tokkl.widget
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.cache.timerControls
+import com.github.e0ipso.tokkl.cache.countsFrom
 import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.favorites.fields
@@ -17,8 +15,9 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * What the home screen widget shows (docs/PRD.md N3). It comes from the phone alone, never from
- * the server, so the widget shows a Start or Stop at once, also offline.
+ * What the home screen widget shows (docs/PRD.md N3). It comes from the phone alone: the cache's
+ * running entry and the server's timer state the phone last received, so the widget shows a Start
+ * or Stop at once, also offline.
  */
 sealed interface WidgetState {
 
@@ -28,7 +27,7 @@ sealed interface WidgetState {
     /**
      * @param running the running entry, null when no timer runs.
      * @param favorites in the user's order, empty when the server keeps no favorites.
-     * @param paused the paused timer (docs/PRD.md T1), null unless a pause chain is paused.
+     * @param paused the paused timer (docs/PRD.md T1), null unless the server's pause chain is paused.
      */
     data class Ready(val running: WidgetRunning?, val favorites: List<WidgetFavorite>, val paused: WidgetPaused? = null) : WidgetState
 }
@@ -39,9 +38,12 @@ sealed interface WidgetState {
  * @param entryId the id the cache holds the entry under, which Stop stops.
  * @param description as typed; blank when the entry has none.
  * @param project null when the entry has no project or the cache does not know it.
+ * @param start the instant the elapsed time counts from: the entry's start, moved by the server's
+ *   clock offset for a resumed clone, which the server started.
  * @param accumulatedSeconds what a pause chain stored before this entry, which the elapsed time
  *   adds to the time since [start].
  * @param target what Pause and Stop act on.
+ * @param pausable whether Pause shows, which needs the server's timer API and no Pomodoro session.
  */
 data class WidgetRunning(
     val entryId: Long,
@@ -49,8 +51,9 @@ data class WidgetRunning(
     val project: String?,
     val task: String?,
     val start: Instant,
-    val accumulatedSeconds: Long = 0,
-    val target: TimerTarget = TimerTarget(session = 0, entryId = entryId),
+    val accumulatedSeconds: Long,
+    val target: TimerTarget,
+    val pausable: Boolean,
 )
 
 /** The paused timer: what Resume starts, the paused total [seconds], and what Resume and Stop act on. */
@@ -67,22 +70,9 @@ data class WidgetFavorite(val fields: EntryFields, val project: String?, val tas
 
 /**
  * The widget for an account whose default workspace is [workspaceId], null when the phone has no
- * account, with the [running] entry and the cached [favorites]. [favoritesAvailable] is the
- * favorites capability: without it, as on Toggl Track, the widget shows none.
+ * account, with what the timer [controls] show and the cached [favorites]. [favoritesAvailable]
+ * is the favorites capability: without it, as on Toggl Track, the widget shows none.
  */
-fun widgetState(
-    workspaceId: Long?,
-    running: CachedTimeEntry?,
-    favorites: List<CachedFavorite>,
-    favoritesAvailable: Boolean,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
-): WidgetState {
-    val controls = running?.takeIf { it.stop == null }?.let { timerControls(EntryWithSendState(it, unsent = false), chain = null, session = 0) }
-    return widgetState(workspaceId, controls ?: TimerControls.Idle, favorites, favoritesAvailable, projects, tasks)
-}
-
-/** The widget as [widgetState] above, for what the timer [controls] show, a paused timer too. */
 fun widgetState(
     workspaceId: Long?,
     controls: TimerControls,
@@ -95,7 +85,16 @@ fun widgetState(
     val shown = (controls as? TimerControls.Running)?.let { running ->
         val entry = running.entry
         val labels = entryLabels(entry.fields(), projects, tasks)
-        WidgetRunning(entry.id, entry.description, labels.project, labels.task, entry.start, running.accumulatedSeconds, running.target)
+        WidgetRunning(
+            entryId = entry.id,
+            description = entry.description,
+            project = labels.project,
+            task = labels.task,
+            start = running.countsFrom,
+            accumulatedSeconds = running.accumulatedSeconds,
+            target = running.target,
+            pausable = running.pausable,
+        )
     }
     val paused = (controls as? TimerControls.Paused)?.let { chain ->
         val labels = entryLabels(chain.fields, projects, tasks)

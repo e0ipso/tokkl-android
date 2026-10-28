@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.cache.countsFrom
 import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.fields
 import java.security.MessageDigest
@@ -12,22 +13,27 @@ import java.time.Instant
 
 /**
  * What the running timer's notification shows (docs/PRD.md N1): the entry's description, its
- * project and task, and the start the system chronometer counts from. While a pause chain is
- * paused (T1), what Resume starts and the paused total.
+ * project and task, and the start the system chronometer counts from. While the server's pause
+ * chain is paused (T1), what Resume starts and the paused total.
  *
  * @param entryId the id the cache held the entry under, which the Stop action stops, or 0 while
  *   [paused].
  * @param description as typed; blank when the entry has none.
  * @param project null when the entry has no project or the cache does not know it.
+ * @param start the instant the chronometer counts from: the entry's start, moved by the server's
+ *   clock offset for a resumed clone, which the server started.
  * @param key changes with every edit of the running entry, with its start to the second, and with
- *   what the notification shows. It stays when the server answers: an entry made on the phone
- *   gets the server's id, its start whole seconds, its description trimmed and its tags the case
- *   of the account's tags. So two starts with the same fields within one second give the same
- *   key, and [entryId] tells them apart (see [runningNotificationChange]). It is a SHA-256 hash,
- *   so the store that keeps it holds no description or name.
+ *   what the notification shows and its actions act on. It stays when the server answers: an
+ *   entry made on the phone gets the server's id, its start whole seconds, its description
+ *   trimmed and its tags the case of the account's tags. So two starts with the same fields
+ *   within one second give the same key, and [entryId] tells them apart (see
+ *   [runningNotificationChange]). It is a SHA-256 hash, so the store that keeps it holds no
+ *   description or name.
  * @param accumulatedSeconds what the chain's stopped segments store, which the chronometer adds
  *   to the time since [start], or the paused total while [paused].
  * @param target what the actions act on.
+ * @param pausable whether the running entry offers Pause, which needs the server's timer API and
+ *   no Pomodoro session.
  */
 data class RunningNotificationContent(
     val entryId: Long,
@@ -38,10 +44,16 @@ data class RunningNotificationContent(
     val key: String,
     val accumulatedSeconds: Long = 0,
     val paused: Boolean = false,
-    val target: TimerTarget = TimerTarget(session = 0, entryId = entryId),
+    val target: TimerTarget = TimerTarget.server(entryId = entryId),
+    val pausable: Boolean = false,
 )
 
-/** The notification for what the timer [controls] show, or null when no timer runs or is paused. */
+/**
+ * The notification for what the timer [controls] show, or null when no timer runs or is paused.
+ * Its key also says which account the actions act for, whether Pause is offered and, for a
+ * resumed clone, the chain's stored seconds, so a change to any of them posts it again with
+ * actions that match.
+ */
 fun runningNotificationContent(
     controls: TimerControls,
     projects: List<CachedProject>,
@@ -49,12 +61,12 @@ fun runningNotificationContent(
 ): RunningNotificationContent? = when (controls) {
     TimerControls.Idle -> null
     is TimerControls.Running -> runningNotificationContent(controls.entry, projects, tasks)?.let { content ->
-        val chained = controls.target.chainId != 0L
         content.copy(
-            // A resumed entry shows the chain's total, so its key says so too.
-            key = if (chained) hash(content.key, controls.target.chainId.toString(), controls.accumulatedSeconds.toString()) else content.key,
+            start = controls.countsFrom,
+            key = hash(content.key, controls.target.account, controls.accumulatedSeconds.toString(), controls.pausable.toString()),
             accumulatedSeconds = controls.accumulatedSeconds,
             target = controls.target,
+            pausable = controls.pausable,
         )
     }
     is TimerControls.Paused -> {
@@ -66,9 +78,10 @@ fun runningNotificationContent(
             project = labels.project,
             task = labels.task,
             start = Instant.EPOCH,
+            // The revision too, so the actions send the revision the server holds now.
             key = hash(
                 "paused",
-                controls.target.chainId.toString(),
+                controls.target.account,
                 controls.target.revision.toString(),
                 controls.seconds.toString(),
                 fields.description.trim(),

@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.timer.SurfaceTap
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
@@ -101,13 +103,18 @@ class ReminderSyncTest {
         assertEquals(entry.start.plusSeconds(12 * 3600).toEpochMilli(), waiting.single().due)
     }
 
-    @Test fun pauseActsOnTheShownTimerAndResumeRemindsFromTheNewSegmentsStart() = runBlocking {
-        val paused = mutableListOf<Long>()
-        val sync = pausing { paused += it; true }
+    @Test fun pauseGoesToTheServerAfterTheBroadcastEndsAndResumeRemindsFromTheNewSegmentsStart() = runBlocking {
+        val events = mutableListOf<String>()
+        val sync = pausing { id -> SurfaceTap.Request { events += "pause $id"; TimerActionResult.Done } }
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
-        sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true)
-        assertEquals(listOf(1L), paused)
+        val removed = removals
+
+        val result = sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true, beforeRequest = { events += "broadcast ends" })
+
+        assertEquals(TimerActionResult.Done, result)
+        assertEquals(listOf("broadcast ends", "pause 1"), events)
         assertTrue(stopped.isEmpty())
+        assertEquals("the server has it, so the reminder goes", removed + 1, removals)
         input = input.copy(running = null)
         sync.reconcile()
         assertTrue("a paused timer has no reminder", waiting.isEmpty())
@@ -117,21 +124,39 @@ class ReminderSyncTest {
         assertEquals(now.plusSeconds(8 * 3600).toEpochMilli(), waiting.single().due)
     }
 
-    @Test fun aRefusedPauseKeepsTheReminderAndAStalePausePausesNothing() = runBlocking {
-        val paused = mutableListOf<Long>()
-        var refuse = true
-        val sync = pausing { if (refuse) false else { paused += it; true } }
+    @Test fun anOfflineOrRefusedPauseKeepsTheReminderAndSaysWhy() = runBlocking {
+        var answer: TimerActionResult = TimerActionResult.Offline
+        val sync = pausing { SurfaceTap.Request { answer } }
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         val removed = removals
-        sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true)
+
+        assertEquals(TimerActionResult.Offline, sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true))
+        answer = TimerActionResult.Refused
+        assertEquals(TimerActionResult.Refused, sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true))
+
         assertEquals("the reminder stays for another try", removed, removals)
-        refuse = false
-        input = input.copy(running = entry.copy(id = 2))
-        sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true)
-        assertTrue("another timer runs now", paused.isEmpty())
+        assertTrue("Pause never queues a Stop", stopped.isEmpty())
     }
 
-    private fun pausing(pause: suspend (Long) -> Boolean) = ReminderSync(
+    @Test fun aPauseNotOfferedNowOrForAnotherTimerSendsNothing() = runBlocking {
+        val asked = mutableListOf<Long>()
+        // No timer API, or a Pomodoro session: the app offers no Pause request.
+        val sync = pausing { id -> asked += id; null }
+        sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
+        val removed = removals
+        var ended = false
+
+        assertNull(sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true, beforeRequest = { ended = true }))
+        assertEquals(listOf(1L), asked)
+        input = input.copy(running = entry.copy(id = 2))
+        assertNull(sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true))
+
+        assertEquals("another timer runs now, so Pause is not even asked", listOf(1L), asked)
+        assertFalse(ended)
+        assertEquals(removed, removals)
+    }
+
+    private fun pausing(pause: suspend (Long) -> SurfaceTap.Request?) = ReminderSync(
         latest = { input }, currentId = { mappings[it] ?: it }, load = { stored }, save = { stored = it },
         schedule = { waiting += it }, cancel = { waiting.clear() }, post = { posted += it }, remove = { removals++ },
         stop = { stopped += it; true }, pause = pause,

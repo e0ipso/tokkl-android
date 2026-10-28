@@ -12,6 +12,8 @@ import androidx.core.net.toUri
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.notification.finishOnce
+import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,13 +23,14 @@ import kotlinx.coroutines.launch
 class ReminderNotifier(private val context: Context) {
     private val manager = context.getSystemService(NotificationManager::class.java)
 
-    fun post(timer: ReminderTimer) {
+    /** Shows the reminder for [timer], with Pause when [pausable]: the server's timer offers it now. */
+    fun post(timer: ReminderTimer, pausable: Boolean) {
         manager.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.reminder_channel), NotificationManager.IMPORTANCE_DEFAULT))
         if (!manager.areNotificationsEnabled()) return
-        manager.notify(ID, build(timer))
+        manager.notify(ID, build(timer, pausable))
     }
 
-    internal fun build(timer: ReminderTimer): Notification = Notification.Builder(context, CHANNEL)
+    internal fun build(timer: ReminderTimer, pausable: Boolean): Notification = Notification.Builder(context, CHANNEL)
         .setSmallIcon(R.drawable.ic_nav_timer)
         .setContentTitle(context.getString(R.string.reminder_question))
         .setContentText(context.getString(R.string.reminder_summary))
@@ -40,7 +43,7 @@ class ReminderNotifier(private val context: Context) {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
         .addAction(Notification.Action.Builder(null, context.getString(R.string.reminder_keep_running), action(timer, "keep")).build())
-        .addAction(Notification.Action.Builder(null, context.getString(R.string.notification_pause), action(timer, PAUSE)).build())
+        .apply { if (pausable) addAction(Notification.Action.Builder(null, context.getString(R.string.notification_pause), action(timer, PAUSE)).build()) }
         .addAction(Notification.Action.Builder(null, context.getString(R.string.notification_stop), action(timer, STOP)).build())
         .build()
 
@@ -65,24 +68,30 @@ class ReminderNotifier(private val context: Context) {
     }
 }
 
-/** Immutable notification actions work with the app closed and without a network. */
+/**
+ * Immutable notification actions work with the app closed. Keep running and Stop work without a
+ * network. Pause goes to the server after the broadcast has ended; one that fails, offline
+ * included, keeps the reminder and says why in a toast.
+ */
 class ReminderActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val pending = goAsync()
+        val app = context.applicationContext as TokklApplication
+        val finish = goAsync().finishOnce()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                (context.applicationContext as TokklApplication).reminder.act(
+                app.reminder.act(
                     intent.getLongExtra(ReminderWork.ID, 0),
                     intent.getLongExtra(ReminderWork.START, 0),
                     stopTimer = intent.getBooleanExtra(ReminderNotifier.STOP, false),
                     pauseTimer = intent.getBooleanExtra(ReminderNotifier.PAUSE, false),
-                )
+                    beforeRequest = finish,
+                )?.let { showTimerActionFailure(app, it) }
             } catch (e: SQLiteException) {
-                // The disk refused Stop or Pause. Keep the notification so the user can try again.
+                // The disk refused Stop. Keep the notification so the user can try again.
             } catch (e: IOException) {
                 // Keep the notification if confirmation could not be stored.
             } finally {
-                pending.finish()
+                finish()
             }
         }
     }

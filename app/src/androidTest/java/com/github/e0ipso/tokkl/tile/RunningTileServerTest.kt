@@ -7,6 +7,7 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BlackholeDiagnostics
@@ -16,6 +17,10 @@ import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
+import com.github.e0ipso.tokkl.TimerActionToasts
+import com.github.e0ipso.tokkl.awaitControls
+import com.github.e0ipso.tokkl.followNoTimerEvents
+import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
@@ -29,7 +34,9 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.reachesInternet
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -144,6 +151,8 @@ class RunningTileServerTest {
     fun aTapDuringAHeldRefreshContinuesTheDisplayedEntryAtOnce() {
         account.createEntry("Continue while refresh hangs", Instant.now().minusSeconds(7_200), Instant.now().minusSeconds(3_600))
         runBlocking { app.accountSettings.refresh().join() }
+        // Without the timer event stream, as on Toggl Track, only the held refresh would show the laptop's timer.
+        app.followNoTimerEvents()
         account.createEntry("Laptop timer hidden by the held reply", Instant.now().minusSeconds(1_800))
         HangingRelay(TokklTestServer.url).use { relay ->
             RequestCounter(relay.url, CURRENT_REQUEST).use { requests ->
@@ -170,6 +179,8 @@ class RunningTileServerTest {
 
     @Test
     fun openingTheShadeOfflineAttemptsNoRequest() {
+        // The timer event stream reconnects to the relay on its own; this counts only the tile's requests.
+        app.followNoTimerEvents()
         BlackholeDiagnostics.begin("tile-offline")
         try {
             HangingRelay(TokklTestServer.url).use { relay ->
@@ -257,61 +268,73 @@ class RunningTileServerTest {
     }
 
     @Test
-    fun longPressOpensCompactControlsThatPauseResumeAndStopOffline() {
-        AirplaneMode.set(true, web)
+    fun longPressPausesResumesAndStopsWhilePausedOnTheServer() {
         val fields = EntryFields(description = "Long press controls", projectId = project)
-        val first = runBlocking { app.changes.start(workspace, fields) }
-        ageRunning(first, fields)
-        QuickSettingsTile.expand()
-        QuickSettingsTile.awaitText("the entry offered by long press", fields.description)
-        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val tile = checkNotNull(device.wait(Until.findObject(By.text(fields.description)), TIMEOUT_MS)) {
-            "SystemUI did not expose the running tile"
-        }
-        tile.longClick()
+        val first = account.createEntry(fields.description, Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
+        runBlocking { app.accountSettings.refresh().join() }
+        val press = openCompactControls(fields.description)
 
-        fun press(label: Int) {
-            val button = checkNotNull(device.wait(
-                Until.findObject(By.pkg(context.packageName).desc(context.getString(label))), TIMEOUT_MS,
-            )) { "Compact controls did not show ${context.getString(label)}" }
-            // The control is in the accessibility tree before its window has drawn, and a touch
-            // sent then is dropped. Wait until the window has settled.
-            device.waitForIdle()
-            button.click()
-        }
         press(R.string.timer_pause_spoken)
-        runBlocking { withTimeout(TIMEOUT_MS) { app.changes.timerControls.first { it is TimerControls.Paused } } }
-        assertEquals("Pause stops the displayed entry", null, runBlocking { app.cache.running.first() })
-        assertNotNull(runBlocking { app.cache.timeEntries.first() }.single { it.id == first }.stop)
+        val paused = app.awaitControls<TimerControls.Paused>("the long press Pause")
+        assertEquals("the server's frozen total", checkNotNull(web.timerState().pause).seconds, paused.seconds)
+        assertEquals("Pause stopped the entry on the server", null, runBlocking { app.cache.running.first() })
 
         press(R.string.timer_resume_spoken)
-        val resumed = runBlocking {
-            withTimeout(TIMEOUT_MS) { app.changes.timerControls.first { it is TimerControls.Running } }
-        } as TimerControls.Running
+        val resumed = app.awaitControls<TimerControls.Running>("the long press Resume") { it.accumulatedSeconds == paused.seconds }
         assertNotEquals("Resume creates a new segment", first, resumed.entry.id)
+        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
         assertEquals(fields.description, resumed.entry.description)
-        assertEquals(project, resumed.entry.projectId)
-        ageRunning(resumed.entry.id, fields)
-        device.waitForIdle()
+
+        press(R.string.timer_pause_spoken)
+        app.awaitControls<TimerControls.Paused>("the second long press Pause")
+        // A Stop drawn for the running clone acts on nothing once it is paused, so wait for the redraw.
+        awaitControl(R.string.timer_resume_spoken)
         press(R.string.timer_stop_spoken)
-        runBlocking { withTimeout(TIMEOUT_MS) { app.changes.timerControls.first { it == TimerControls.Idle } } }
-        assertTrue("both segments are durably stopped offline",
-            runBlocking { app.cache.timeEntries.first() }.all { it.stop != null })
-        assertTrue("the changes wait for connectivity", unsentCount() > 0)
+        app.awaitControls<TimerControls.Idle>("the long press Stop while paused")
+        assertEquals("Stop while paused ended the chain on the server", null, web.timerState().pause)
+        assertEquals("nothing went through the queue", 0, unsentCount())
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         assertTrue("Stop closes the compact dialog", device.wait(Until.gone(By.pkg(context.packageName)
             .desc(context.getString(R.string.timer_stop_spoken))), TIMEOUT_MS))
+    }
 
+    @Test
+    fun anOfflineLongPressPauseSaysWhyAndStopStillQueues() {
+        AirplaneMode.set(true, web)
+        val fields = EntryFields(description = "Offline long press", projectId = project)
+        val id = runBlocking { app.changes.start(workspace, fields) }
+        ageRunning(id, fields)
+        val press = openCompactControls(fields.description)
+        val queued = unsentCount()
+
+        TimerActionToasts.await(TimerActionToasts.offline) { press(R.string.timer_pause_spoken) }
+        assertEquals("the timer runs on", id, (runBlocking { app.timerControls.first() } as TimerControls.Running).entry.id)
+        assertEquals("Pause queues nothing", queued, unsentCount())
+
+        press(R.string.timer_stop_spoken)
+        runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it == null } } }
+        assertNotNull(runBlocking { app.cache.timeEntries.first() }.single { it.id == id }.stop)
+        assertEquals("Stop of the running entry waits in the queue", queued + 1, unsentCount())
+    }
+
+    @Test
+    fun aTapOnThePausedTileResumesOnTheServerAndOfflineSaysWhy() {
+        account.createEntry("Paused on the laptop", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
+        runBlocking { app.accountSettings.refresh().join() }
+        assertEquals("the server pauses it", TimerActionResult.Done, runBlocking { app.timerActions.pause() })
+        val paused = app.awaitControls<TimerControls.Paused>("the server's Pause")
+        QuickSettingsTile.expand()
+        QuickSettingsTile.awaitText("the paused timer", context.getString(R.string.tile_paused_subtitle))
+
+        AirplaneMode.set(true, web)
+        TimerActionToasts.await(TimerActionToasts.offline) { QuickSettingsTile.click() }
+        assertEquals("the chain stays paused", paused, runBlocking { app.timerControls.first() })
         AirplaneMode.set(false, web)
-        runBlocking { app.sender.send().join() }
-        assertEquals("the normal sender drains the offline controls", 0, unsentCount())
-        val stored = runBlocking { app.cache.timeEntries.first() }
-        assertEquals(2, stored.size)
-        stored.forEach { entry ->
-            assertTrue(entry.id > 0)
-            val remote = account.entry(entry.id)
-            assertEquals(fields.description, remote.getValue("description").jsonPrimitive.content)
-            assertNotNull(remote["stop"])
-        }
+
+        QuickSettingsTile.click()
+        val resumed = app.awaitControls<TimerControls.Running>("the paused tile's Resume") { it.accumulatedSeconds == paused.seconds }
+        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
+        QuickSettingsTile.awaitText("the resumed timer", context.getString(R.string.tile_running_subtitle))
     }
 
     @Test
@@ -392,10 +415,10 @@ class RunningTileServerTest {
             val id = app.changes.start(workspace, EntryFields(description = "Looked at"))
             app.cache.running.first()!!.entry.also { assertEquals(id, it.id) }
         }
-        val running = runningTileLook(RunningTileContent.Running(entry), context)
+        val running = runningTileLook(RunningTileContent.Running(entry, TimerTarget.server(entryId = entry.id)), context)
         val stopped = runningTileLook(RunningTileContent.Continue(entry.copy(stop = entry.start.plusSeconds(60))), context)
         val nothing = runningTileLook(RunningTileContent.Nothing, context)
-        val paused = runningTileLook(RunningTileContent.Paused("Looked at", TimerTarget(session = 1, chainId = 2, revision = 3)), context)
+        val paused = runningTileLook(RunningTileContent.Paused("Looked at", TimerTarget.server(revision = 3)), context)
 
         assertEquals(Tile.STATE_ACTIVE, running.state)
         assertEquals("Looked at", running.label)
@@ -416,11 +439,42 @@ class RunningTileServerTest {
         assertEquals("Timer paused: Looked at. Tap to resume. Hold for controls.", paused.contentDescription)
         assertEquals(
             "No description",
-            runningTileLook(RunningTileContent.Running(entry.copy(description = "")), context).label,
+            runningTileLook(RunningTileContent.Running(entry.copy(description = ""), TimerTarget.server(entryId = entry.id)), context).label,
         )
     }
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
+
+    /**
+     * Opens the shade, long-presses the tile showing [description], and returns what presses one
+     * of the compact controls by its spoken label.
+     */
+    private fun openCompactControls(description: String): (Int) -> Unit {
+        QuickSettingsTile.expand()
+        QuickSettingsTile.awaitText("the entry offered by long press", description)
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val tile = checkNotNull(device.wait(Until.findObject(By.text(description)), TIMEOUT_MS)) {
+            "SystemUI did not expose the running tile"
+        }
+        tile.longClick()
+        return { label ->
+            val button = awaitControl(label)
+            // The control is in the accessibility tree before its window has drawn, and a touch
+            // sent then is dropped. Wait until the window has settled.
+            device.waitForIdle()
+            button.click()
+        }
+    }
+
+    /** The compact control spoken as [label], once the dialog shows it. */
+    private fun awaitControl(label: Int): UiObject2 {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        return checkNotNull(device.wait(Until.findObject(By.pkg(context.packageName).desc(context.getString(label))), TIMEOUT_MS)) {
+            "Compact controls did not show ${context.getString(label)}"
+        }
+    }
+
+
 
     /** A stopped row is required for Continue; a fresh Start can instead enter short Stop Trash. */
     private fun ageRunning(id: Long, fields: EntryFields) {

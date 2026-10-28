@@ -15,7 +15,9 @@ import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.notification.RunningNotifications
+import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
+import com.github.e0ipso.tokkl.timerstate.TimerState
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Instant
@@ -170,6 +172,43 @@ class ReminderServerTest {
         runBlocking { app.sender.sendAndWait() }
         assertEquals(0, runBlocking { app.changes.unsentCount.first() })
         assertNotEquals(JsonNull, account.entry(id)["stop"])
+    }
+
+    @Test fun reminderPauseGoesToTheServerAndOfflineKeepsTheReminder() {
+        // A new, empty timer state for this account, as the sign-in screen stores it.
+        app.storeSignIn(TokklTestServer.url, account.apiToken, checkNotNull(app.accountSettings.state.value))
+        refresh()
+        assertTrue("the test server offers the timer API", app.capabilities.state.value.timerState)
+        val id = seed()
+        val reminder = fire()
+        assertEquals(
+            listOf(R.string.reminder_keep_running, R.string.notification_pause, R.string.notification_stop).map(context::getString),
+            reminder.actions.map { it.title.toString() },
+        )
+
+        signIn(NO_ROUTE)
+        TimerActionToasts.await(TimerActionToasts.offline) { send(reminder.action(R.string.notification_pause).actionIntent) }
+        assertNotNull("the reminder stays for another try", notification())
+        assertEquals("the timer runs on", id, runBlocking { app.cache.running.first() }?.entry?.id)
+        assertEquals("Pause queues nothing", 0, runBlocking { app.changes.unsentCount.first() })
+
+        signIn(TokklTestServer.url)
+        send(reminder.action(R.string.notification_pause).actionIntent)
+        runBlocking { withTimeout(60_000) { app.cache.running.first { it == null } } }
+        awaitNotificationGone()
+        val state = account.client.get(account.client.server.app("timer"), TimerState.serializer()).orFail("GET /api/app/timer")
+        assertEquals("the server paused the reminded timer", true, state.pause?.paused)
+        assertNotEquals(JsonNull, account.entry(id)["stop"])
+    }
+
+    @Test fun withoutTheTimerApiTheReminderOffersNoPause() {
+        seed()
+        app.capabilities.forget()
+        val reminder = fire()
+        assertEquals(
+            listOf(R.string.reminder_keep_running, R.string.notification_stop).map(context::getString),
+            reminder.actions.map { it.title.toString() },
+        )
     }
 
     @Test fun preferenceRoundtripAndOfflineRetryPreserveOtherKeys() {

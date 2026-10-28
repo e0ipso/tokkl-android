@@ -30,6 +30,9 @@ import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.timer.SurfaceTap
+import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -40,11 +43,12 @@ import kotlinx.coroutines.launch
 
 /**
  * The Quick Settings tile's long press (docs/PRD.md N4, T1). SystemUI starts it with
- * [TileService.ACTION_QS_TILE_PREFERENCES]. It reads [com.github.e0ipso.tokkl.cache.ChangeQueue.timerControls]
- * and offers Pause and Stop while a timer runs, or Resume and Stop while one is paused. Each
- * button keeps the [com.github.e0ipso.tokkl.cache.TimerTarget] it was drawn with. The intent's
- * extras are ignored, so the caller cannot name a timer. With nothing running or paused, it
- * closes. The window is translucent and Compose draws the dialog, so the shade stays behind it.
+ * [TileService.ACTION_QS_TILE_PREFERENCES]. It reads [TokklApplication.timerControls] and offers
+ * Stop while a timer runs, with Pause where the server's timer offers it, or Resume and Stop while
+ * one is paused. Each button keeps the [com.github.e0ipso.tokkl.cache.TimerTarget] it was drawn
+ * with. The intent's extras are ignored, so the caller cannot name a timer. With nothing running
+ * or paused, it closes. The window is translucent and Compose draws the dialog, so the shade stays
+ * behind it.
  */
 class TileControlsActivity : ComponentActivity() {
 
@@ -56,7 +60,7 @@ class TileControlsActivity : ComponentActivity() {
         }
         val app = applicationContext as TokklApplication
         setContent {
-            val controls: TimerControls? by app.changes.timerControls.collectAsState(initial = null as TimerControls?)
+            val controls: TimerControls? by app.timerControls.collectAsState(initial = null as TimerControls?)
             TokklTheme {
                 val shown = controls
                 val panel = shown?.let(::tileControlsPanel)
@@ -75,13 +79,17 @@ class TileControlsActivity : ComponentActivity() {
     }
 
     /**
-     * The change goes to the queue in a scope of its own, so dismissing the dialog does not
-     * cancel it. The queue writes it on the phone at once and does not wait for the network.
+     * The control goes through [TokklApplication.timerSurfaceActions] in a scope of its own, so
+     * dismissing the dialog does not cancel it. A Stop of a running entry is written on the phone
+     * at once and does not wait for the network. Pause, Resume and Stop while paused go to the
+     * server, and one that fails, offline included, says why in a toast while the dialog keeps
+     * the timer it drew.
      */
     private fun runControl(app: TokklApplication, control: TileControl) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                app.changes.useTileControl(control)
+                val tap = app.timerSurfaceActions.tap(control.action, control.target)
+                if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
             } catch (e: SQLiteException) {
                 // The disk refused the change. The dialog still shows the timer it drew.
             }
@@ -94,9 +102,9 @@ internal fun isTilePreferencesIntent(action: String?): Boolean =
     action == TileService.ACTION_QS_TILE_PREFERENCES
 
 /**
- * Pause and Stop, or Resume and Stop, for [panel]. The buttons stack at full width, as in
- * [com.github.e0ipso.tokkl.catalog.ConfirmDialog], so they cannot overlap at any font scale.
- * Back and a tap outside dismiss. The words say the action, and so does TalkBack.
+ * Pause, where offered, and Stop, or Resume and Stop, for [panel]. The buttons stack at full
+ * width, as in [com.github.e0ipso.tokkl.catalog.ConfirmDialog], so they cannot overlap at any font
+ * scale. Back and a tap outside dismiss. The words say the action, and so does TalkBack.
  */
 @Composable
 private fun TileControlsDialog(
@@ -124,22 +132,22 @@ private fun TileControlsDialog(
 
 /** One control: its icon and word, and the whole action for TalkBack. */
 @Composable
-private fun TileControlButton(action: TileControlAction, onClick: () -> Unit) {
+private fun TileControlButton(action: TimerSurfaceAction, onClick: () -> Unit) {
     @StringRes val label: Int
     @StringRes val spoken: Int
     @DrawableRes val icon: Int
     when (action) {
-        TileControlAction.Pause -> {
+        TimerSurfaceAction.Pause -> {
             label = R.string.timer_pause
             spoken = R.string.timer_pause_spoken
             icon = R.drawable.ic_pause
         }
-        TileControlAction.Resume -> {
+        TimerSurfaceAction.Resume -> {
             label = R.string.timer_resume
             spoken = R.string.timer_resume_spoken
             icon = R.drawable.ic_play
         }
-        TileControlAction.Stop -> {
+        TimerSurfaceAction.Stop -> {
             label = R.string.timer_stop
             spoken = R.string.timer_stop_spoken
             icon = R.drawable.ic_stop
@@ -156,8 +164,8 @@ private fun TileControlButton(action: TileControlAction, onClick: () -> Unit) {
     }
     val modifier = Modifier.fillMaxWidth().semantics { contentDescription = description }
     when (action) {
-        TileControlAction.Pause -> TokklGhostButton(onClick = onClick, modifier = modifier, content = content)
-        TileControlAction.Resume -> TokklButton(onClick = onClick, modifier = modifier, content = content)
-        TileControlAction.Stop -> TokklDangerButton(onClick = onClick, modifier = modifier, content = content)
+        TimerSurfaceAction.Pause -> TokklGhostButton(onClick = onClick, modifier = modifier, content = content)
+        TimerSurfaceAction.Resume -> TokklButton(onClick = onClick, modifier = modifier, content = content)
+        TimerSurfaceAction.Stop -> TokklDangerButton(onClick = onClick, modifier = modifier, content = content)
     }
 }

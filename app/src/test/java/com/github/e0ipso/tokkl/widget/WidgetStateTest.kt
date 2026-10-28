@@ -1,19 +1,22 @@
 package com.github.e0ipso.tokkl.widget
 
+import com.github.e0ipso.tokkl.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import java.io.IOException
+import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
@@ -39,19 +42,44 @@ class WidgetStateTest {
         CachedFavorite(position = 0, description = "Write", projectId = 7, taskId = 9, tags = listOf("docs"), billable = true),
     )
 
+    /** The widget for the cache's running [entry] and the server's [held] timer state. */
     private fun state(
         workspaceId: Long? = 1,
         entry: CachedTimeEntry? = running,
         favoritesAvailable: Boolean = true,
         projects: List<CachedProject> = listOf(project),
         tasks: List<CachedTask> = listOf(task),
-    ) = widgetState(workspaceId, entry, favorites, favoritesAvailable, projects, tasks)
+        held: HeldTimerState? = null,
+        timerApi: Boolean = true,
+    ) = widgetState(workspaceId, ServerTimerStates.controls(entry, held, timerApi), favorites, favoritesAvailable, projects, tasks)
 
     @Test
-    fun showsTheRunningEntryWithItsProjectAndTask() {
+    fun showsTheRunningEntryWithItsProjectAndTaskAndPause() {
         val shown = state() as WidgetState.Ready
 
-        assertEquals(WidgetRunning(entryId = -3, description = "Widget", project = "Tokkl for Android", task = "Design", start = start), shown.running)
+        assertEquals(
+            WidgetRunning(
+                entryId = -3,
+                description = "Widget",
+                project = "Tokkl for Android",
+                task = "Design",
+                start = start,
+                accumulatedSeconds = 0,
+                target = TimerTarget.server(entryId = -3, account = ServerTimerStates.ACCOUNT),
+                pausable = true,
+            ),
+            shown.running,
+        )
+    }
+
+    @Test
+    fun pauseIsHiddenWithoutTheTimerApiAndDuringAPomodoroSession() {
+        val toggl = state(timerApi = false) as WidgetState.Ready
+        val session = state(held = ServerTimerStates.held(revision = 4, at = start, pomodoro = ServerTimerStates.session(entryId = -3, at = start))) as WidgetState.Ready
+
+        assertFalse("no timer API", toggl.running!!.pausable)
+        assertFalse("the server refuses Pause during a session", session.running!!.pausable)
+        assertEquals("Stop still acts on the entry", -3L, session.running.target.entryId)
     }
 
     @Test
@@ -130,39 +158,58 @@ class WidgetStateTest {
     }
 
     @Test
-    fun aPausedTimerShowsItsFrozenTotalAndWhatResumeStarts() {
-        val target = TimerTarget(session = 11, chainId = 22, revision = 3)
-        val paused = TimerControls.Paused(seconds = 600, workspaceId = 1, fields = EntryFields("Widget", projectId = 7, taskId = 9), target = target)
+    fun aPausedTimerShowsTheServersFrozenTotalAndWhatResumeStarts() {
+        val held = ServerTimerStates.held(revision = 3, at = start, pause = ServerTimerStates.paused(600, EntryFields("Widget", projectId = 7, taskId = 9)))
 
-        val shown = controlsState(paused) as WidgetState.Ready
+        val shown = state(entry = null, held = held) as WidgetState.Ready
 
         assertEquals(null, shown.running)
-        assertEquals(WidgetPaused(description = "Widget", project = "Tokkl for Android", task = "Design", seconds = 600, target = target), shown.paused)
+        assertEquals(
+            WidgetPaused(
+                description = "Widget",
+                project = "Tokkl for Android",
+                task = "Design",
+                seconds = 600,
+                target = TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT),
+            ),
+            shown.paused,
+        )
         assertEquals("favorites stay", 2, shown.favorites.size)
+        assertEquals("no chain shows without the timer API", null, (state(entry = null, held = held, timerApi = false) as WidgetState.Ready).paused)
     }
 
     @Test
-    fun aResumedEntryShowsTheChainsTimeAndActsOnTheChain() {
-        val target = TimerTarget(session = 11, chainId = 22, revision = 4, entryId = -3)
-        val resumed = TimerControls.Running(running, unsent = true, accumulatedSeconds = 600, target = target)
+    fun aResumedCloneCountsOnFromTheChainsSecondsOnTheServersClock() {
+        // The server's clock runs 20.4 s ahead of the phone's, and the server set the clone's start.
+        val held = ServerTimerStates.held(revision = 4, at = start, pause = ServerTimerStates.resumed(600, entryId = -3), offset = Duration.ofMillis(20_400))
 
-        val shown = controlsState(resumed) as WidgetState.Ready
+        val shown = (state(held = held) as WidgetState.Ready).running!!
 
-        assertEquals(WidgetRunning(-3, "Widget", "Tokkl for Android", "Design", start, accumulatedSeconds = 600, target = target), shown.running)
-        assertEquals(null, shown.paused)
+        assertEquals(600L, shown.accumulatedSeconds)
+        assertEquals("the clone's start on the phone's clock, to the second", start.minusSeconds(20), shown.start)
+        assertEquals(TimerTarget.server(entryId = -3, account = ServerTimerStates.ACCOUNT), shown.target)
+        assertEquals(null, (state(held = held) as WidgetState.Ready).paused)
     }
 
     @Test
-    fun theKeyChangesWithEachPauseAndResume() {
-        val target = TimerTarget(session = 11, chainId = 22, revision = 3)
-        val paused = controlsState(TimerControls.Paused(seconds = 600, workspaceId = 1, fields = EntryFields("Widget"), target = target))
+    fun aNewStateWithTheSameClockDoesNotRedrawTheWidget() {
+        // Each state the phone receives gives a slightly different offset. The clock ticks on its own.
+        fun clone(offsetMs: Long) = state(held = ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = -3), offset = Duration.ofMillis(offsetMs)))
 
-        assertNotEquals(state().key(), paused.key())
-        assertNotEquals("a later revision", paused.key(), controlsState(TimerControls.Paused(600, 1, EntryFields("Widget"), target.copy(revision = 5))).key())
-        assertNotEquals("a paused edit", paused.key(), controlsState(TimerControls.Paused(600, 1, EntryFields("Edited"), target)).key())
+        assertEquals(clone(20_100).key(), clone(20_400).key())
+        assertNotEquals("a clock a second off redraws", clone(20_100).key(), clone(21_100).key())
     }
 
-    private fun controlsState(controls: TimerControls) = widgetState(1, controls, favorites, favoritesAvailable = true, projects = listOf(project), tasks = listOf(task))
+    @Test
+    fun theKeyChangesWithEachPauseResumeAndRevision() {
+        fun paused(revision: Long, fields: EntryFields = EntryFields("Widget")) =
+            state(entry = null, held = ServerTimerStates.held(revision, start, ServerTimerStates.paused(600, fields)))
+
+        assertNotEquals(state().key(), paused(3).key())
+        assertNotEquals("a later revision, which Resume sends", paused(3).key(), paused(5).key())
+        assertNotEquals("other fields at Pause", paused(3).key(), paused(3, EntryFields("Edited")).key())
+        assertNotEquals("Pause no longer offered", state().key(), state(timerApi = false).key())
+    }
 
     @Test
     fun theKeyChangesWithWhatTheWidgetShows() {

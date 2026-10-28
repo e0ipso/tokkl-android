@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiJson
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
+import java.util.UUID
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -54,6 +55,24 @@ class TimerStateStore(context: Context) {
         commit { putString(KEY_STATE, encodeStoredTimerState(stored)) }
     }
 
+    /**
+     * The name the timer surfaces give this account in the targets of their controls, a random
+     * UUID made on first use after each [clear] and kept until the next one. Sign-in and sign-out
+     * clear it, so a control drawn for one account names none that follows. A name that cannot
+     * be written lasts for this process only: the controls drawn with it then act on nothing in
+     * a later process, which is safe.
+     */
+    fun account(): String {
+        preferences.getString(KEY_ACCOUNT, null)?.let { return it }
+        val made = UUID.randomUUID().toString()
+        try {
+            commit { putString(KEY_ACCOUNT, made) }
+        } catch (e: IOException) {
+            // Kept in memory: see above.
+        }
+        return made
+    }
+
     @Throws(IOException::class)
     fun clear() {
         commit { clear() }
@@ -66,6 +85,7 @@ class TimerStateStore(context: Context) {
     internal companion object {
         const val FILE_NAME = "timer_state"
         private const val KEY_STATE = "state"
+        private const val KEY_ACCOUNT = "account"
     }
 }
 

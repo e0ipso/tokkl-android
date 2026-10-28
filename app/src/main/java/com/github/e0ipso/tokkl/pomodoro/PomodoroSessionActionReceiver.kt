@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +30,7 @@ class PomodoroSessionActionReceiver : BroadcastReceiver() {
         // its time limit. The timer sync service keeps the process alive while a session runs.
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                sync.act(account, phase, revision, end = intent.action == END)?.let { showPomodoroActionFailure(app, it) }
+                sync.act(account, phase, revision, end = intent.action == END)?.let { showTimerActionFailure(app, it) }
             } finally {
                 done?.countDown()
             }

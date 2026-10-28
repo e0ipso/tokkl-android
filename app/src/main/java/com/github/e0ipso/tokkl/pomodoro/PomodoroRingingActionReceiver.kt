@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +38,7 @@ class PomodoroRingingActionReceiver : BroadcastReceiver() {
                     // hold it past its time limit. The ringing service keeps the process alive.
                     pending.finish()
                     app.pomodoroAlarm.sendPhaseAction(app.timerActions, phase, checkNotNull(revision), end = intent.action == END)
-                        ?.let { showPomodoroActionFailure(app, it) }
+                        ?.let { showTimerActionFailure(app, it) }
                 }
             } finally {
                 done?.countDown()

@@ -244,7 +244,7 @@ class SettingsScreenTest {
     fun tappingTheReminderOpensTimerFromSettings() {
         composeRule.openSettings()
         val original = composeRule.activity
-        val notification = ReminderNotifier(original).build(ReminderTimer(1, 1, 1))
+        val notification = ReminderNotifier(original).build(ReminderTimer(1, 1, 1), pausable = false)
         notification.contentIntent.send()
         composeRule.awaitTimerPage()
         assertSame("the tap reuses the existing activity", original, composeRule.activity)

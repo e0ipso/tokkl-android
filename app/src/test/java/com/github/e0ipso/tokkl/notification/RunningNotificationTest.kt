@@ -1,12 +1,15 @@
 package com.github.e0ipso.tokkl.notification
 
+import com.github.e0ipso.tokkl.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import java.io.IOException
+import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope
@@ -254,7 +257,20 @@ class RunningNotificationTest {
     }
 
     @Test
-    fun aPausedChainShowsItsFrozenTotalAndWhatResumeStarts() {
+    fun aRunningEntryOffersPauseOnlyWhereTheServersTimerDoes() {
+        val offered = controlled()!!
+        val toggl = controlled(timerApi = false)!!
+        val session = controlled(held = ServerTimerStates.held(4, start, pomodoro = ServerTimerStates.session(entryId = -3, at = start)))!!
+
+        assertTrue(offered.pausable)
+        assertFalse("no timer API", toggl.pausable)
+        assertFalse("the server refuses Pause during a session", session.pausable)
+        assertEquals("the actions act on the entry, for this account", TimerTarget.server(entryId = -3, account = ServerTimerStates.ACCOUNT), session.target)
+        assertNotEquals("losing Pause posts it again without the action", offered.key, toggl.key)
+    }
+
+    @Test
+    fun aPausedChainShowsTheServersFrozenTotalAndWhatResumeStarts() {
         val shown = paused()!!
 
         assertTrue(shown.paused)
@@ -263,19 +279,27 @@ class RunningNotificationTest {
         assertEquals("Tokkl for Android", shown.project)
         assertEquals("Design", shown.task)
         assertEquals(600L, shown.accumulatedSeconds)
-        assertEquals(PAUSED_TARGET, shown.target)
+        assertEquals("Resume and Stop send the revision shown", TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT), shown.target)
     }
 
     @Test
-    fun aResumedEntryCountsFromItsOwnStartAfterTheChainsStoredTime() {
-        val target = TimerTarget(session = 11, chainId = 22, revision = 4, entryId = -3)
-        val resumed = runningNotificationContent(TimerControls.Running(running, unsent = true, accumulatedSeconds = 600, target = target), listOf(project), listOf(task))!!
+    fun aResumedCloneCountsFromItsStartOnTheServersClockAfterTheChainsSeconds() {
+        // The server's clock runs 20.4 s ahead of the phone's, and the server set the clone's start.
+        val resumed = controlled(held = ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = -3), offset = Duration.ofMillis(20_400)))!!
 
         assertFalse(resumed.paused)
-        assertEquals("the segment's real start", start, resumed.start)
+        assertEquals("the clone's start on the phone's clock, to the second", start.minusSeconds(20), resumed.start)
         assertEquals(600L, resumed.accumulatedSeconds)
-        assertEquals(target, resumed.target)
-        assertNotEquals("the chain's total changes what it shows", content()!!.key, resumed.key)
+        assertNotEquals("the chain's total changes what it shows", controlled()!!.key, resumed.key)
+    }
+
+    @Test
+    fun aNewStateWithTheSameEntryPostsNothingAgain() {
+        // Each state gives a slightly different clock offset; the system ticks the clock alone.
+        fun clone(offsetMs: Long) = controlled(held = ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = -3), offset = Duration.ofMillis(offsetMs)))
+
+        assertEquals(clone(20_100)!!.key, clone(20_400)!!.key)
+        assertEquals(controlled(held = ServerTimerStates.held(4, start))!!.key, controlled(held = ServerTimerStates.held(9, start))!!.key)
     }
 
     @Test
@@ -286,31 +310,36 @@ class RunningNotificationTest {
     @Test
     fun eachPauseAndResumePostsTheNotificationAgain() {
         val fake = FakeNotification()
+        val clone = running.copy(id = 55, start = start.plusSeconds(900))
         val resumed = runningNotificationContent(
-            TimerControls.Running(running.copy(id = -5, start = start.plusSeconds(900)), unsent = true, accumulatedSeconds = 600, target = TimerTarget(11, 22, 4, -5)),
+            ServerTimerStates.controls(clone, ServerTimerStates.held(5, start, ServerTimerStates.resumed(600, entryId = 55))),
             listOf(project),
             listOf(task),
         )
 
-        runBlocking { fake.sync(flowOf(content(), paused(), resumed)).follow() }
+        runBlocking { fake.sync(flowOf(controlled(), paused(), resumed)).follow() }
 
-        assertEquals(listOf("post Notification -3", "post Notification 0", "post Notification -5"), fake.calls)
+        assertEquals(listOf("post Notification -3", "post Notification 0", "post Notification 55"), fake.calls)
     }
 
     @Test
     fun aPausedNotificationSwipedAwayStaysAwayInANewProcessUntilThePausedTimerChanges() {
         val shown = paused()!!
-        val edited = paused(EntryFields("Edited while paused", projectId = 7, taskId = 9))!!
+        val edited = paused(EntryFields("Paused elsewhere", projectId = 7, taskId = 9))!!
         val fake = FakeNotification(shown = shown.followed())
 
         runBlocking { fake.sync(flowOf(shown, edited)).follow() }
 
-        assertEquals(listOf("post Edited while paused 0"), fake.calls)
-        assertNotEquals("a later revision is another notification", shown.key, paused(target = PAUSED_TARGET.copy(revision = 5))!!.key)
+        assertEquals(listOf("post Paused elsewhere 0"), fake.calls)
+        assertNotEquals("a later revision is another notification, whose actions send it", shown.key, paused(revision = 5)!!.key)
     }
 
-    private fun paused(fields: EntryFields = EntryFields("Notification", projectId = 7, taskId = 9, tags = listOf("android")), target: TimerTarget = PAUSED_TARGET) =
-        runningNotificationContent(TimerControls.Paused(seconds = 600, workspaceId = 1, fields = fields, target = target), listOf(project), listOf(task))
+    /** The notification for the cache's [entry] and the server's [held] state, as the app builds it. */
+    private fun controlled(entry: CachedTimeEntry = running, held: HeldTimerState? = null, timerApi: Boolean = true) =
+        runningNotificationContent(ServerTimerStates.controls(entry, held, timerApi), listOf(project), listOf(task))
+
+    private fun paused(fields: EntryFields = EntryFields("Notification", projectId = 7, taskId = 9, tags = listOf("android")), revision: Long = 3) =
+        runningNotificationContent(ServerTimerStates.controls(null, ServerTimerStates.held(revision, start, ServerTimerStates.paused(600, fields))), listOf(project), listOf(task))
 
     private fun RunningNotificationContent.followed() = FollowedEntry(key, entryId)
 
@@ -333,9 +362,5 @@ class RunningNotificationTest {
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 io = Dispatchers.Unconfined,
             )
-    }
-
-    private companion object {
-        val PAUSED_TARGET = TimerTarget(session = 11, chainId = 22, revision = 3)
     }
 }

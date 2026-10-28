@@ -4,6 +4,8 @@ import android.database.sqlite.SQLiteException
 import android.graphics.drawable.Icon
 import android.service.quicksettings.TileService
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.timer.SurfaceTap
+import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,14 +21,18 @@ import kotlinx.coroutines.launch
  * description and a stop icon, and a tap stops the timer. While the timer is paused (T1) it is
  * inactive, says so under the description, with a play icon, and a tap resumes it. While it
  * runs or is paused, the subtitle keeps that state and says to hold: a long press opens
- * [TileControlsActivity], with Pause and Stop or Resume and Stop, for the timer the tile showed.
- * With neither, the tile is inactive, says it continues the last entry, with a play icon, and a
- * tap continues that entry. The label and the icon carry the state, never the colour alone.
+ * [TileControlsActivity], with Stop and, where offered, Pause, or Resume and Stop, for the timer
+ * the tile showed. With neither, the tile is inactive, says it continues the last entry, with a
+ * play icon, and a tap continues that entry. The label and the icon carry the state, never the
+ * colour alone.
  *
- * It reads the running entry from the phone's cache and taps go through the change queue, so it
- * reacts at once, also offline. The tile is in the default, non-active mode: the system binds it
- * each time the Quick Settings panel shows it and calls [onStartListening], where it reads the
- * cache, and while it listens it follows the cache, so a start or stop from any surface shows.
+ * It reads the running entry from the phone's cache and the pause chain from the server's timer
+ * state the phone last received. Stop and Continue go through the change queue, so it reacts at
+ * once, also offline. Resume goes to the server, and one that fails, offline included, says why
+ * in a toast while the tile keeps showing the paused timer. The tile is in the default,
+ * non-active mode: the system binds it each time the Quick Settings panel shows it and calls
+ * [onStartListening], where it reads the cache, and while it listens it follows the cache, so a
+ * start or stop from any surface shows.
  * `requestListeningState` does nothing for a tile in this mode, and an active tile would not hear
  * of the panel opening. [TileRefresh] reads the current entry on opening, at most once a minute,
  * while the cache continues to drive the display and taps without waiting for that read.
@@ -60,15 +66,17 @@ class RunningTileService : TileService() {
     /**
      * Acts on what this service has shown. Before its first cache emission, a tile retained by
      * SystemUI may show an older state; never guess that tap's action from newer cache contents.
-     * The change goes to the queue in a scope of its own, so the service ending does not cancel it.
+     * The change goes to the queue, or the server, in a scope of its own, so the service ending
+     * does not cancel it.
      */
     override fun onClick() {
         super.onClick()
         val showing = shown ?: return
-        val changes = app.changes
+        val app = app
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                changes.tapTile(showing)
+                val tap = tapTile(showing, app.timerSurfaceActions, app.changes)
+                if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
             } catch (e: SQLiteException) {
                 // The disk refused the change. Nothing changed, and the tile still says so.
             }
@@ -81,7 +89,7 @@ class RunningTileService : TileService() {
     }
 
     private fun content(): Flow<RunningTileContent> =
-        combine(app.changes.timerControls, app.cache.entries) { controls, entries -> runningTileContent(controls, entries.map { it.entry }) }
+        combine(app.timerControls, app.cache.entries) { controls, entries -> runningTileContent(controls, entries.map { it.entry }) }
 
     private fun show(content: RunningTileContent) {
         val tile = qsTile ?: return

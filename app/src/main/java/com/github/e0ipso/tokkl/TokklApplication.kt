@@ -65,6 +65,9 @@ import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.sync.shownSyncStatus
 import com.github.e0ipso.tokkl.time.SnappedSpan
+import com.github.e0ipso.tokkl.timer.SurfaceTap
+import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
@@ -289,10 +292,14 @@ class TokklApplication : Application() {
         reminderSettings.state.value,
     )
 
-    /** One reminder per running id/start, followed independently of any screen. */
+    /**
+     * One reminder per running id/start, followed independently of any screen. Its Pause shows,
+     * and goes to the server, only where [timerControls] offer Pause for that entry.
+     */
     val reminder: ReminderSync by lazy {
         val store = ReminderStore(this)
         val notifier = ReminderNotifier(this)
+        suspend fun runningNow(entryId: Long) = (timerControls.first() as? TimerControls.Running)?.takeIf { it.entry.id == entryId }
         ReminderSync(
             latest = ::reminderInput,
             currentId = changes::currentId,
@@ -300,12 +307,11 @@ class TokklApplication : Application() {
             save = store::saveTimer,
             schedule = { ReminderWork.schedule(this, it) },
             cancel = { ReminderWork.cancel(this) },
-            post = notifier::post,
+            post = { timer -> notifier.post(timer, pausable = runningNow(changes.currentId(timer.id))?.pausable == true) },
             remove = notifier::remove,
             stop = { changes.stop(it) },
             pause = { entryId ->
-                val running = changes.timerControls.first() as? TimerControls.Running
-                running != null && running.entry.id == entryId && changes.pause(running.target)
+                runningNow(entryId)?.let { timerSurfaceActions.tap(TimerSurfaceAction.Pause, it.target) as? SurfaceTap.Request }
             },
         )
     }
@@ -319,6 +325,9 @@ class TokklApplication : Application() {
     private val timerStateLock = Any()
     private var timerStateForAccount = newTimerState(restore = true)
 
+    /** The account's [TimerStateSource], and the name its timer controls carry in their targets. */
+    private class AccountTimerState(val source: TimerStateSource, val account: String)
+
     /** Counts the replacements of [timerState], so flows of its state follow the new account's source. */
     private val timerStateRenewals = MutableStateFlow(0)
 
@@ -329,16 +338,22 @@ class TokklApplication : Application() {
      * answer to the same source: an answer kept for a retired source changes nothing.
      */
     val timerState: TimerStateSource
-        get() = synchronized(timerStateLock) { timerStateForAccount.value }
+        get() = accountTimerState().source
 
-    private fun newTimerState(restore: Boolean): Lazy<TimerStateSource> = lazy {
+    private fun accountTimerState(): AccountTimerState = synchronized(timerStateLock) { timerStateForAccount.value }
+
+    private fun newTimerState(restore: Boolean): Lazy<AccountTimerState> = lazy {
         val store = TimerStateStore(this)
-        TimerStateSource(
-            initial = if (restore) store.load() else null,
-            save = store::save,
-            cache = cache,
-            // The state does not carry a stopped entry's stop; the history read does.
-            onRunningEnded = { accountSettings.refreshAfterChange() },
+        AccountTimerState(
+            TimerStateSource(
+                initial = if (restore) store.load() else null,
+                save = store::save,
+                cache = cache,
+                // The state does not carry a stopped entry's stop; the history read does.
+                onRunningEnded = { accountSettings.refreshAfterChange() },
+            ),
+            // Made anew after each sign-in and sign-out, which clear the store.
+            account = store.account(),
         )
     }
 
@@ -351,12 +366,13 @@ class TokklApplication : Application() {
     }
 
     /**
-     * What the Timer page and the full-screen timer show and act on (docs/PRD.md T1): the cache's
-     * running entry, with its queued Starts, Stops and edits, and the pause chain of the server's
-     * timer state in [timerState], as [serverTimerControls] puts them together, while the server
-     * offers the timer API. Each value reads the cache and the held state under the holder's
-     * lock, so a state never shows apart from the running entry it wrote to the cache. Reads the
-     * disk off the main thread.
+     * What every timer surface shows and acts on (docs/PRD.md T1, N1, N3, N4, N7): the Timer page,
+     * the full-screen timer, the running notification, the widget, the Quick Settings tile and the
+     * reminder. It is the cache's running entry, with its queued Starts, Stops and edits, and the
+     * pause chain of the server's timer state in [timerState], as [serverTimerControls] puts them
+     * together, while the server offers the timer API, with targets that name the account. Each
+     * value reads the cache and the held state under the holder's lock, so a state never shows
+     * apart from the running entry it wrote to the cache. Reads the disk off the main thread.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     val timerControls: Flow<TimerControls> by lazy {
@@ -367,8 +383,25 @@ class TokklApplication : Application() {
             heldStates,
             flow { emitAll(capabilities.state) },
         ) { _, _, flags ->
-            timerState.withState { held -> serverTimerControls(dao.latestRunning(), held, flags.timerState) }
+            val account = accountTimerState()
+            account.source.withState { held -> serverTimerControls(dao.latestRunning(), held, flags.timerState, account.account) }
         }.flowOn(Dispatchers.IO).distinctUntilChanged()
+    }
+
+    /**
+     * The Pause, Resume and Stop of the running notification, the widget, the Quick Settings tile
+     * and its long press, and the reminder's Pause, checked against [timerControls] at each tap.
+     * Stop of a running entry goes to the [changes] queue; the rest go to the server through
+     * [timerActions].
+     */
+    val timerSurfaceActions: TimerSurfaceActions by lazy {
+        TimerSurfaceActions(
+            controls = { timerControls.first() },
+            account = { accountTimerState().account },
+            changes = changes,
+            server = timerActions,
+            sendQueued = { sender.sendAndWait() },
+        )
     }
 
     /**
@@ -582,15 +615,15 @@ class TokklApplication : Application() {
     }
 
     /**
-     * The running timer's notification (docs/PRD.md N1), which follows the cache's running entry
-     * and the pause chain (T1) from process start, so every start, pause, resume, stop and edit
-     * from any surface reaches it.
+     * The running timer's notification (docs/PRD.md N1), which follows [timerControls], the cache's
+     * running entry and the server's pause chain (T1), from process start, so every start, pause,
+     * resume, stop and edit from any surface or device reaches it.
      */
     val runningNotification: RunningNotificationSync by lazy {
         val store = RunningNotificationStore(this)
         val notifier = RunningNotifier(this)
         RunningNotificationSync(
-            running = combine(changes.timerControls, cache.projects, cache.tasks) { controls, projects, tasks ->
+            running = combine(timerControls, cache.projects, cache.tasks) { controls, projects, tasks ->
                 runningNotificationContent(controls, projects, tasks)
             },
             loadShown = store::load,
@@ -605,13 +638,13 @@ class TokklApplication : Application() {
 
     /**
      * What the home screen widget shows (docs/PRD.md N3): the running entry or paused timer (T1)
-     * and the favorites from the cache, the favorites capability and the account's default
-     * workspace, all from the phone. The first use loads the account settings and the
+     * of [timerControls], the favorites from the cache, the favorites capability and the account's
+     * default workspace, all from the phone. The first use loads the account settings and the
      * capabilities from disk.
      */
     val widgetState: Flow<WidgetState> by lazy {
         val catalog = combine(cache.projects, cache.tasks, ::Pair)
-        combine(accountSettings.state, capabilities.state, changes.timerControls, cache.favorites, catalog) { settings, flags, controls, favorites, (projects, tasks) ->
+        combine(accountSettings.state, capabilities.state, timerControls, cache.favorites, catalog) { settings, flags, controls, favorites, (projects, tasks) ->
             widgetState(settings?.defaultWorkspaceId, controls, favorites, flags.favorites, projects, tasks)
         }.distinctUntilChanged()
     }

@@ -9,12 +9,11 @@ import com.github.e0ipso.tokkl.shortcuts.FavoriteNames
 import com.github.e0ipso.tokkl.shortcuts.ShortcutStart
 import com.github.e0ipso.tokkl.shortcuts.favoriteShortcutId
 import com.github.e0ipso.tokkl.shortcuts.startFavoriteShortcut
-import com.github.e0ipso.tokkl.tile.RunningTileContent
-import com.github.e0ipso.tokkl.tile.tapTile
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
 import com.github.e0ipso.tokkl.timer.TimerModel
 import com.github.e0ipso.tokkl.timer.TimerState
+import com.github.e0ipso.tokkl.timer.continueEntry
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -148,7 +147,8 @@ class PomodoroHandoffQueueTest {
     @Test fun tileContinueAndLauncherFavoriteUseTheSharedQueue() = runBlocking {
         sessions.start(LENGTHS, FOCUS, WORKSPACE)
         now.set(T0.plusSeconds(1800))
-        queue.tapTile(RunningTileContent.Continue(row(90, T0.minusSeconds(1800)).copy(stop = T0.minusSeconds(900))))
+        // The tile's Continue is the queue's continueEntry (see tapTile).
+        queue.continueEntry(row(90, T0.minusSeconds(1800)).copy(stop = T0.minusSeconds(900)))
         assertHandoff("tile")
         db.clearAllTables()
         now.set(T0)

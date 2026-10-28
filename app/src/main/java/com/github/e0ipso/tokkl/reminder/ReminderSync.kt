@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.timer.SurfaceTap
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.io.IOException
 import java.time.Duration
 import kotlin.coroutines.CoroutineContext
@@ -18,8 +20,12 @@ data class ReminderInput(val running: CachedTimeEntry?, val preferences: Reminde
  * Follows the shared running state. One delayed request, no periodic work and no network constraint.
  * Re-reads the cache inside the lock: queued flow emissions and old workers cannot revive an old timer.
  * The persisted handled flag survives process death, disable/enable and edits other than the start.
- * Pause (docs/PRD.md T1) stops the entry, which cancels its reminder, and Resume's new entry gets
- * one from its own start.
+ * Pause (docs/PRD.md T1) goes to the server, which stops the entry, and that cancels its reminder.
+ * Resume's new entry gets one from its own start.
+ *
+ * @param post shows the reminder for a timer. It decides then whether the reminder offers Pause.
+ * @param pause the server's Pause of the running entry with this id, ready to send, or null when
+ *   Pause is not offered for it now: without the server's timer API, or during a Pomodoro session.
  */
 class ReminderSync(
     private val latest: suspend () -> ReminderInput,
@@ -28,10 +34,10 @@ class ReminderSync(
     private val save: (ReminderTimer?) -> Unit,
     private val schedule: (ReminderTimer) -> Unit,
     private val cancel: () -> Unit,
-    private val post: (ReminderTimer) -> Unit,
+    private val post: suspend (ReminderTimer) -> Unit,
     private val remove: () -> Unit,
     private val stop: suspend (Long) -> Boolean,
-    private val pause: suspend (Long) -> Boolean = { false },
+    private val pause: suspend (Long) -> SurfaceTap.Request? = { null },
 ) {
     private val lock = Mutex()
 
@@ -75,15 +81,46 @@ class ReminderSync(
         post(timer)
     }
 
-    /** Every action acts on exactly the timer shown, resolving an offline start's server id. */
-    suspend fun act(id: Long, start: Long, stopTimer: Boolean, pauseTimer: Boolean = false): Unit = lock.withLock {
-        val input = latest()
-        val entry = input.running ?: return@withLock
-        if (entry.stop != null || entry.start.epochSecond != start || currentId(id) != entry.id) return@withLock
-        val timer = load() ?: return@withLock
-        if (timer.start != start || currentId(timer.id) != entry.id) return@withLock
-        if (stopTimer && !stop(entry.id)) return@withLock
-        if (pauseTimer && !pause(entry.id)) return@withLock
+    /**
+     * Every action acts on exactly the timer shown, resolving an offline start's server id. Keep
+     * running and Stop are done on the phone, and return null. Pause goes to the server after
+     * [beforeRequest], outside the lock, and returns what it came to: once the server has it, the
+     * reminder goes; otherwise, offline included, the reminder stays for another try. A Pause not
+     * offered for the timer now sends nothing, keeps the reminder and returns null.
+     */
+    suspend fun act(
+        id: Long,
+        start: Long,
+        stopTimer: Boolean,
+        pauseTimer: Boolean = false,
+        beforeRequest: () -> Unit = {},
+    ): TimerActionResult? {
+        val request = lock.withLock {
+            val input = latest()
+            val entry = input.running ?: return null
+            if (entry.stop != null || entry.start.epochSecond != start || currentId(id) != entry.id) return null
+            val timer = load() ?: return null
+            if (timer.start != start || currentId(timer.id) != entry.id) return null
+            if (pauseTimer) {
+                pause(entry.id) ?: return null
+            } else {
+                if (stopTimer && !stop(entry.id)) return null
+                handled(timer)
+                return null
+            }
+        }
+        beforeRequest()
+        val result = request.send()
+        if (result == TimerActionResult.Done) {
+            lock.withLock {
+                // The server's paused state may have ended the reminder already.
+                load()?.takeIf { it.start == start && currentId(it.id) == currentId(id) }?.let(::handled)
+            }
+        }
+        return result
+    }
+
+    private fun handled(timer: ReminderTimer) {
         save(timer.copy(handled = true))
         cancel(); remove()
     }

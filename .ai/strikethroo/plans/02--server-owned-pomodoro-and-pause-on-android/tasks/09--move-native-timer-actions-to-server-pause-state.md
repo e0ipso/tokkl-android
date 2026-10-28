@@ -2,7 +2,7 @@
 id: 9
 group: "timer-surfaces"
 dependencies: [5, 6]
-status: "pending"
+status: "completed"
 created: 2026-10-28
 skills:
   - android-components
@@ -23,13 +23,13 @@ Android native component actions and Kotlin state/intent integration.
 
 ## Acceptance Criteria
 
-- [ ] Running/paused notification, widget and tile read task 6's shared effective timer model, including server carried seconds and frozen paused totals. Their native ticking clocks keep working without a periodic redraw loop.
-- [ ] Pause, Resume and Stop-while-paused use the direct action client. Every revisioned action carries the server revision it displayed, including after process restart, instead of local chain/session/epoch fields.
-- [ ] Without the capability, Pause/Resume are hidden on every native surface and reminder. Pause is hidden during a Pomodoro session. Ordinary Start, Continue, favorite Start and Stop of a running entry remain queued offline actions.
-- [ ] Offline/refused actions preserve state and report the standard message through each surface's existing failure path. Dismissal/restoration behavior for notifications and stale-action protection remain consistent with their displayed state.
-- [ ] The long-running reminder retains its existing WorkManager timing, cancellation and Keep running behavior. Only its Pause routing/gating changes; no new periodic work is added.
-- [ ] Rewrite affected native model checks and run `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.github.e0ipso.tokkl.widget.WidgetStateTest' --tests 'com.github.e0ipso.tokkl.tile.TileControlsTest' --tests 'com.github.e0ipso.tokkl.tile.RunningTileContentTest' --tests 'com.github.e0ipso.tokkl.reminder.ReminderSyncTest'`; expect nonzero tests and zero failures.
-- [ ] Run `TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.widget.WidgetServerTest,com.github.e0ipso.tokkl.tile.RunningTileServerTest,com.github.e0ipso.tokkl.reminder.ReminderServerTest --no-daemon` after adapting moved-behavior cases. Expect nonzero tests, zero failures and successful runner receipts.
+- [x] Running/paused notification, widget and tile read task 6's shared effective timer model, including server carried seconds and frozen paused totals. Their native ticking clocks keep working without a periodic redraw loop.
+- [x] Pause, Resume and Stop-while-paused use the direct action client. Every revisioned action carries the server revision it displayed, including after process restart, instead of local chain/session/epoch fields.
+- [x] Without the capability, Pause/Resume are hidden on every native surface and reminder. Pause is hidden during a Pomodoro session. Ordinary Start, Continue, favorite Start and Stop of a running entry remain queued offline actions.
+- [x] Offline/refused actions preserve state and report the standard message through each surface's existing failure path. Dismissal/restoration behavior for notifications and stale-action protection remain consistent with their displayed state.
+- [x] The long-running reminder retains its existing WorkManager timing, cancellation and Keep running behavior. Only its Pause routing/gating changes; no new periodic work is added.
+- [x] Rewrite affected native model checks and run `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.github.e0ipso.tokkl.widget.WidgetStateTest' --tests 'com.github.e0ipso.tokkl.tile.TileControlsTest' --tests 'com.github.e0ipso.tokkl.tile.RunningTileContentTest' --tests 'com.github.e0ipso.tokkl.reminder.ReminderSyncTest'`; expect nonzero tests and zero failures.
+- [x] Run `TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.widget.WidgetServerTest,com.github.e0ipso.tokkl.tile.RunningTileServerTest,com.github.e0ipso.tokkl.reminder.ReminderServerTest --no-daemon` after adapting moved-behavior cases. Expect nonzero tests, zero failures and successful runner receipts.
 
 Use your internal Todo tool to track these and keep on track.
 

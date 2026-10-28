@@ -418,12 +418,12 @@ graph TD
 - ✔️ Task 006 (completed): [Move timer controls to server pause state](tasks/06--move-timer-controls-to-server-pause-state.md), depends on 003 and 004.
 - ✔️ Task 007 (completed): [Render Pomodoro and navigation from server state](tasks/07--render-pomodoro-and-navigation-from-server-state.md), depends on 003 and 004.
 
-### Phase 5: Connect alarms and native surfaces
+### ✅ Phase 5: Connect alarms and native surfaces
 
 **Parallel Tasks:**
 
-- Task 008: [Drive alarms and session notifications from server phases](tasks/08--drive-alarms-and-session-notifications-from-server-phases.md), depends on 005 and 007.
-- Task 009: [Move native timer actions to server pause state](tasks/09--move-native-timer-actions-to-server-pause-state.md), depends on 005 and 006.
+- ✔️ Task 008 (completed): [Drive alarms and session notifications from server phases](tasks/08--drive-alarms-and-session-notifications-from-server-phases.md), depends on 005 and 007.
+- ✔️ Task 009 (completed): [Move native timer actions to server pause state](tasks/09--move-native-timer-actions-to-server-pause-state.md), depends on 005 and 006.
 
 ### Phase 6: Retire the local session implementation
 
