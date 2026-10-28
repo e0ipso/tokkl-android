@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * The Settings page's sign-out (docs/PRD.md S6). When queued changes or current unsaved
- * Pomodoro work would be lost, [signOut] first asks with their combined count, and [cancel]
- * keeps everything. With no unsaved changes it signs out at once. Call it on the main thread.
+ * The Settings page's sign-out (docs/PRD.md S6). While the queue holds changes the server has not
+ * received, [signOut] first asks, with their count, and [cancel] keeps everything. With an empty
+ * queue it signs out at once. Call it on the main thread.
  *
- * @param unsentCount reads one snapshot of the queue plus current unsaved Pomodoro work.
+ * @param unsentCount reads how many changes the queue holds.
  * @param clear signs out and clears the phone, returning false when a step failed.
  * @param scope outlives every screen, so leaving the app does not stop a sign-out half way.
  */
@@ -32,7 +32,7 @@ class SignOutModel(
     private val mutableState = MutableStateFlow(State())
     val state: StateFlow<State> = mutableState.asStateFlow()
 
-    /** Signs out, or asks first when unsaved work or queued changes would be lost. */
+    /** Signs out, or asks first when the queue holds unsent changes. */
     fun signOut() {
         if (mutableState.value.signingOut || mutableState.value.unsentToConfirm != null) return
         mutableState.value = State(signingOut = true)

@@ -3,9 +3,11 @@ package com.github.e0ipso.tokkl.cache
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteTable
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 
 /**
  * The offline cache and the queue of unsent changes in the private database file [FILE_NAME]. It
@@ -18,9 +20,10 @@ import androidx.room.TypeConverters
  * `pending_changes.maybeSent`, version 4 `pending_changes.existingIds`, and version 5
  * `pending_changes.held` and `pending_changes.refusal`. Version 6 keeps the immutable captured
  * Stop instant and short Stop Undo records without changing older queued requests. Version 7
- * adds `pause_chain` and `timer_session` for Pause and Resume and leaves every earlier row as it
- * is. Version 8 adds `pomodoro_session` for the running Pomodoro and leaves every earlier row
- * as it is.
+ * added `pause_chain` and `timer_session` for the phone's own Pause and Resume, and version 8
+ * `pomodoro_session` for the phone's own Pomodoro. Version 9 drops those three tables, as the
+ * server now keeps the pause chain and the session, and carries nothing from them. It leaves the
+ * queue, the id mappings and the short Stop Undo records as they are.
  */
 @Database(
     entities = [
@@ -33,11 +36,8 @@ import androidx.room.TypeConverters
         PendingChange::class,
         EntryIdMapping::class,
         ShortStopUndo::class,
-        PauseChain::class,
-        TimerSession::class,
-        PomodoroSession::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -47,6 +47,7 @@ import androidx.room.TypeConverters
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8),
+        AutoMigration(from = 8, to = 9, spec = CacheDatabase.DropLocalTimerTables::class),
     ],
 )
 @TypeConverters(CacheConverters::class)
@@ -56,7 +57,13 @@ abstract class CacheDatabase : RoomDatabase() {
 
     abstract fun changes(): ChangeDao
 
-    abstract fun pomodoroSessions(): PomodoroSessionDao
+    /** Version 8 to 9: the phone's own pause chain, timer session and Pomodoro session go. */
+    @DeleteTable.Entries(
+        DeleteTable(tableName = "pomodoro_session"),
+        DeleteTable(tableName = "pause_chain"),
+        DeleteTable(tableName = "timer_session"),
+    )
+    class DropLocalTimerTables : AutoMigrationSpec
 
     companion object {
         const val FILE_NAME = "account_cache.db"

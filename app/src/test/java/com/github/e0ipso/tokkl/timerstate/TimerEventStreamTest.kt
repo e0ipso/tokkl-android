@@ -263,7 +263,7 @@ class TimerEventStreamTest {
     private class RecordingCache : CurrentEntryCache {
         val written = mutableListOf<CachedTimeEntry?>()
 
-        override fun runningCheckStart() = RunningCheckStart(emptyList(), null)
+        override fun runningCheckStart() = RunningCheckStart(emptyList())
 
         override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? {
             written += server

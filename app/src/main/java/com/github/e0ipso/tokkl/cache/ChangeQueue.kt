@@ -1,17 +1,10 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
-import com.github.e0ipso.tokkl.pomodoro.PomodoroStep
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Clock
-import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 /** The fields of a time entry that the user picks, apart from its workspace and times. */
@@ -71,28 +64,6 @@ interface EntryChanges {
      * Returns the exact deleted row, or null when nothing was queued.
      */
     suspend fun delete(entry: CachedTimeEntry): CachedTimeEntry? = if (delete(entry.id)) entry else null
-
-    /**
-     * Pauses the running entry [target] showed (docs/PRD.md T1), setting [fields] as [stop] does.
-     * A stand-in without a pause chain pauses nothing. Returns false when nothing was paused.
-     */
-    suspend fun pause(target: TimerTarget, fields: EntryFields? = null): Boolean = false
-
-    /**
-     * Resumes the paused chain [target] showed as a new running entry with the kept fields, or
-     * [fields] in their place. Returns the entry's local id, or null when nothing was resumed.
-     */
-    suspend fun resume(target: TimerTarget, fields: EntryFields? = null): Long? = null
-
-    /**
-     * Stops what [target] showed: the running entry, as [stop] does, or the paused chain, which
-     * needs no request. Returns false when the phone no longer shows it.
-     */
-    suspend fun stop(target: TimerTarget, fields: EntryFields? = null): Boolean =
-        target.entryId != 0L && stop(target.entryId, fields)
-
-    /** Keeps [fields] for the paused chain [target] showed, so its Resume starts with them. */
-    suspend fun editPaused(target: TimerTarget, fields: EntryFields): Boolean = false
 }
 
 /**
@@ -112,10 +83,9 @@ interface EntryChanges {
  * An entry created on the phone gets a negative local id. The calls take it, before and after the
  * server has answered the create with its own id.
  *
- * Pause stops the running entry and keeps its fields in the [PauseChain], and Resume starts a new
- * entry with them, each in the transaction of its queue change (docs/PRD.md T1). Any other Start,
- * a Stop, and an edit or delete that ends the running clone end the chain in the same way, so no
- * caller has to.
+ * Pause, Resume and Pomodoro sessions belong to the server's timer state and never pass through
+ * the queue (docs/PRD.md T1). A queued Stop of the server's resumed clone or of its open pomodoro
+ * is an ordinary Stop, and the server ends the chain or the session when it gets it.
  *
  * A change the server refused waits for the user in the "needs attention" list ([held],
  * docs/PRD.md O6), and later changes to its entry wait behind it. A change made to that entry
@@ -139,7 +109,6 @@ class ChangeQueue(
     private val capturedStopSpan: (start: Instant, at: Instant) -> SnappedSpan? = { start, at ->
         SnappedSpan(start, maxOf(at, start))
     },
-    private val pomodoro: () -> PomodoroSessionStore? = { null },
 ) : EntryChanges {
 
     private val dao = database.changes()
@@ -157,38 +126,15 @@ class ChangeQueue(
     val shortStopUndo: Flow<ShortStopUndo?> = dao.latestShortStop()
 
     /**
-     * What every timer surface shows (docs/PRD.md T1): the running entry, the paused chain, or
-     * neither. Each value reads the running entry, the chain and the session in one transaction,
-     * again after every change to them, so no surface sees a chain without the queue change that
-     * came with it.
-     */
-    val timerControls: Flow<TimerControls> = flow {
-        withContext(io) { dao.ensureTimerSession(TimerSession(id = newTimerId())) }
-        emitAll(
-            database.invalidationTracker.createFlow("time_entries", "pending_changes", "pause_chain", "timer_session").map {
-                withContext(io) {
-                    database.runInTransaction<TimerControls> {
-                        timerControls(dao.latestRunning(), dao.pauseChain(), dao.timerSession() ?: 0)
-                    }
-                }
-            },
-        )
-    }.distinctUntilChanged()
-
-    /**
      * Starts a timer in [workspaceId] with [fields], at the tap time. A cached running entry
      * stops at that time first, as the server does when a timer starts, so the two are stored
-     * back to back, and a pause chain ends. An open pomodoro ends at the same captured instant,
-     * with its immutable partial create queued before this start in the same transaction.
-     * Returns the new entry's local id. Pass the account's
+     * back to back. Returns the new entry's local id. Pass the account's
      * `AccountSettings.defaultWorkspaceId`, which the phone keeps, so it is there offline too.
      */
     override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
         val at = clock.instant()
-        return starting(at) { endSession ->
-            endSession()
+        return queue {
             dao.runningEntries().forEach { running -> stopAt(running, at) }
-            dao.deletePauseChain()
             queueCreate(workspaceId, fields, at, stop = null)
         }
     }
@@ -197,115 +143,11 @@ class ChangeQueue(
      * Stops the running entry [entryId] at the tap time, or at its start if the tap came earlier,
      * on the grid as Tokkl's captured Stop stores it. A short span enters the trash.
      * With [fields], the stop also sets them, in the same change, such as a description still
-     * being typed when Stop was tapped. The pause chain ends. Returns false when the entry is not
-     * cached or not running.
+     * being typed when Stop was tapped. Returns false when the entry is not cached or not running.
      */
     override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
         val at = clock.instant()
         return queue { stopRunning(entryId, fields, at) }
-    }
-
-    /**
-     * Pauses the running entry [target] showed at the tap time: a captured Stop as [stop] queues
-     * it, so the span snaps and a short one enters the trash with its Undo. The chain keeps the
-     * entry's fields, with [fields] when given, for Resume, and adds the stored span's whole
-     * seconds, none for a short one. The entry's own chain goes on; any other entry starts one.
-     * Returns false when the phone no longer runs what [target] showed.
-     */
-    override suspend fun pause(target: TimerTarget, fields: EntryFields?): Boolean {
-        val at = clock.instant()
-        return queue {
-            if (!inSession(target) || target.entryId == 0L) return@queue false
-            val running = dao.entry(resolve(target.entryId))?.takeIf { it.stop == null } ?: return@queue false
-            val chain = dao.pauseChain()?.takeIf { it.runningId == running.id }
-            if ((chain?.chainId ?: 0L) != target.chainId || (chain?.revision ?: 0L) != target.revision) return@queue false
-            val (stopped, span) = stopWith(running, fields, at)
-            val seconds = span?.let { Duration.between(it.start, it.stop).seconds } ?: 0
-            val kept = EntryFields(stopped.description, stopped.projectId, stopped.taskId, stopped.tags, stopped.billable)
-            if (chain == null) dao.deletePauseChain()
-            val next = chain?.copy(
-                revision = chain.revision + 1,
-                epoch = chain.epoch + 1,
-                stoppedSeconds = chain.stoppedSeconds + seconds,
-                runningId = null,
-                workspaceId = stopped.workspaceId,
-                fields = kept,
-            ) ?: PauseChain(
-                chainId = newTimerId(),
-                revision = 1,
-                epoch = 1,
-                stoppedSeconds = seconds,
-                runningId = null,
-                workspaceId = stopped.workspaceId,
-                fields = kept,
-            )
-            val checkpoint = dao.pauseSegments(next.chainId).singleOrNull { it.entryId == running.id }
-                ?: PauseSegmentCheckpoint(
-                    slot = Math.addExact(dao.lastPauseSegmentSlot(), 1),
-                    chainId = next.chainId,
-                    order = chain?.revision ?: 0,
-                    entryId = running.id,
-                    workspaceId = chain?.workspaceId ?: running.workspaceId,
-                    fields = chain?.fields ?: snapshotOf(running),
-                )
-            dao.upsertPauseSegment(checkpoint.copy(seconds = seconds, paused = true))
-            dao.upsertPauseChain(next)
-            true
-        }
-    }
-
-    /**
-     * Resumes the paused chain [target] showed at the tap time: a new entry, a clone of the kept
-     * fields or of [fields] when given, in the kept workspace. It never reopens a stopped entry.
-     * A timer that started meanwhile wins, and Resume starts nothing. Returns the clone's local
-     * id, or null when nothing was resumed.
-     */
-    override suspend fun resume(target: TimerTarget, fields: EntryFields?): Long? {
-        val at = clock.instant()
-        return starting(at) { endSession ->
-            val chain = pausedChain(target) ?: return@starting null
-            if (dao.runningEntries().isNotEmpty()) return@starting null
-            endSession()
-            val clone = queueCreate(chain.workspaceId, fields ?: chain.fields, at, stop = null)
-            dao.upsertPauseSegment(
-                PauseSegmentCheckpoint(
-                    slot = Math.addExact(dao.lastPauseSegmentSlot(), 1),
-                    chainId = chain.chainId,
-                    order = chain.revision + 1,
-                    entryId = clone,
-                    workspaceId = chain.workspaceId,
-                    fields = chain.fields,
-                ),
-            )
-            dao.upsertPauseChain(chain.copy(revision = chain.revision + 1, epoch = chain.epoch + 1, runningId = clone))
-            clone
-        }
-    }
-
-    /**
-     * Stops what [target] showed: its running entry, as [stop] does, or its paused chain, which
-     * ends on the phone alone, as the server holds nothing for it. Returns false when the phone no
-     * longer shows it.
-     */
-    override suspend fun stop(target: TimerTarget, fields: EntryFields?): Boolean {
-        val at = clock.instant()
-        if (target.entryId != 0L) return queue { inSession(target) && stopRunning(target.entryId, fields, at) }
-        return withContext(io) {
-            database.runInTransaction<Boolean> { pausedChain(target) != null && dao.deletePauseChain() > 0 }
-        }
-    }
-
-    /**
-     * Keeps [fields] for the paused chain [target] showed, so its Resume starts with them. The
-     * stopped entries keep theirs. Returns false when the chain is no longer paused as shown.
-     */
-    override suspend fun editPaused(target: TimerTarget, fields: EntryFields): Boolean = withContext(io) {
-        database.runInTransaction<Boolean> {
-            val chain = pausedChain(target) ?: return@runInTransaction false
-            val kept = fields.copy(tags = fields.tags.distinct())
-            if (kept != chain.fields) dao.upsertPauseChain(chain.copy(fields = kept))
-            true
-        }
     }
 
     /** Queues a restore behind the short Stop and shows its zero-length row immediately offline. */
@@ -332,44 +174,16 @@ class ChangeQueue(
     }
 
     /**
-     * Queues a stopped entry as [create] does, on this thread and in the caller's transaction.
-     * A pomodoro session row changes in that same transaction, so a process death keeps both
-     * writes or neither. This does not ask for the queue to be sent; the caller does that after
-     * the commit. The row is an ordinary [ChangeKind.CREATE], so a post whose answer was lost is
-     * found again by [PendingChange.maybeSent].
-     */
-    internal fun queueStoppedCreate(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
-        require(!stop.isBefore(start)) { "The stop comes before the start." }
-        return queueCreate(workspaceId, fields, start, stop)
-    }
-
-    /** Caller owns the session-start transaction. Preserve short Stop/Undo and held changes. */
-    internal fun stopTimersForPomodoro(at: Instant): Boolean {
-        val running = dao.runningEntries()
-        running.forEach {
-            stopAt(it, at)
-            endChainOf(it.id)
-        }
-        return running.isNotEmpty()
-    }
-
-    /**
-     * Sets every field of the cached entry [entryId]. A null [stop] makes it run. Returns false
-     * when the entry is not cached. A stop given to the running clone, or a stopped entry made
-     * to run, ends the pause chain, as a Stop or a Start would.
+     * Sets every field of the cached entry [entryId]. A null [stop] makes it run, and a stopped
+     * entry made to run stops the running one at its start first, as a Start would. Returns false
+     * when the entry is not cached.
      */
     override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
         require(stop == null || !stop.isBefore(start)) { "The stop comes before the start." }
-        return starting(start) { endSession ->
-            val current = dao.entry(resolve(entryId)) ?: return@starting false
-            if (current.stop != null && stop == null) {
-                endSession()
-                dao.runningEntries().forEach { stopAt(it, start) }
-            }
+        return queue {
+            val current = dao.entry(resolve(entryId)) ?: return@queue false
+            if (current.stop != null && stop == null) dao.runningEntries().forEach { stopAt(it, start) }
             enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop))
-            val clone = dao.pauseChain()?.runningId == current.id
-            val endsChain = if (clone) stop != null else current.stop != null && stop == null
-            if (endsChain) dao.deletePauseChain()
             true
         }
     }
@@ -408,7 +222,6 @@ class ChangeQueue(
         queue {
             val id = resolve(entryId)
             enqueue(ChangeKind.UPDATE, entry(id, dao.entry(id)?.workspaceId ?: workspaceId, fields, start, stop))
-            endChainOf(id)
         }
     }
 
@@ -420,7 +233,7 @@ class ChangeQueue(
 
     /**
      * Deletes the cached entry [entryId]. Returns false when it is missing or a delete is already
-     * queued. Deleting the running clone ends the pause chain.
+     * queued.
      */
     override suspend fun delete(entryId: Long): Boolean =
         queue {
@@ -428,7 +241,6 @@ class ChangeQueue(
             if (dao.queuedDelete(id) != null) return@queue false
             val current = dao.entry(id) ?: return@queue false
             enqueue(ChangeKind.DELETE, current)
-            endChainOf(id)
             true
         }
 
@@ -442,7 +254,6 @@ class ChangeQueue(
         if (dao.queuedDelete(id) != null) return@queue null
         val current = dao.entry(id) ?: entry.copy(id = id).takeIf { id > 0 } ?: return@queue null
         enqueue(ChangeKind.DELETE, current)
-        endChainOf(id)
         current
     }
 
@@ -455,26 +266,16 @@ class ChangeQueue(
     /**
      * Drops the held change [sequence] and the later changes to its entry that wait behind it,
      * since each of them builds on it. An entry the phone created goes from the cache with them;
-     * any other keeps its row until the next refresh brings the server's. A discarded Resume
-     * leaves its chain paused again, at the stored time from before that start. Returns false
-     * when the change is not held.
+     * any other keeps its row until the next refresh brings the server's. Returns false when the
+     * change is not held.
      */
     suspend fun discard(sequence: Long): Boolean =
         queue {
             val held = dao.change(sequence)?.takeIf { it.held } ?: return@queue false
-            val chain = if (held.kind == ChangeKind.CREATE) dao.pauseChain() else null
-            val discarded = chain?.let {
-                pauseChainAfterDiscardedCreate(it, held.entryId, dao.pauseSegments(it.chainId))
-            }
             dao.deleteFrom(held.entryId, held.sequence)
             if (held.kind == ChangeKind.CREATE) {
                 dao.deleteEntry(held.entryId)
                 dao.deleteShortStop(held.entryId)
-                if (discarded != null) {
-                    discarded.removedSlot?.let(dao::deletePauseSegment)
-                    discarded.rebased?.let(dao::upsertPauseSegment)
-                    if (discarded.chain != chain) dao.upsertPauseChain(discarded.chain)
-                }
             }
             true
         }
@@ -484,47 +285,28 @@ class ChangeQueue(
      * a change that can go out. A call that queued nothing, such as a stop of an entry that does
      * not run, leaves an empty queue alone.
      */
-    private suspend fun <T> queue(afterCommit: suspend () -> Unit = {}, change: () -> T): T {
+    private suspend fun <T> queue(change: () -> T): T {
         val (result, holdsChanges) = withContext(io) {
             database.runInTransaction<Pair<T, Boolean>> { change() to (dao.first() != null) }
         }
-        try {
-            withContext(io) { afterCommit() }
-        } finally {
-            if (holdsChanges) onQueued()
-        }
+        if (holdsChanges) onQueued()
         return result
     }
 
-    /** The supplier is lazy; never resolve it while constructing the application's queue. */
-    private suspend fun <T> starting(at: Instant, change: (endSession: () -> Unit) -> T): T {
-        val sessions = pomodoro()
-        var step: PomodoroStep = PomodoroStep.Idle
-        return queue(afterCommit = { sessions?.timerHandoffCommitted(step, notifyQueue = false) }) {
-            change { step = sessions?.endForTimerInTransaction(at) ?: PomodoroStep.Idle }
-        }
-    }
-
-    /** Stops the running entry [entryId] at [at] with [fields], as [stop] describes. */
+    /**
+     * Stops the running entry [entryId] at [at] with [fields], as [stop] describes. With
+     * [fields], they go in a change of their own before the captured Stop.
+     */
     private fun stopRunning(entryId: Long, fields: EntryFields?, at: Instant): Boolean {
         val running = dao.entry(resolve(entryId))?.takeIf { it.stop == null } ?: return false
-        stopWith(running, fields, at)
-        dao.deletePauseChain()
+        val stopped = if (fields == null) running else entry(running.id, running.workspaceId, fields, running.start, stop = null)
+        if (stopped != running) enqueue(ChangeKind.UPDATE, stopped)
+        stopAt(stopped, at)
         return true
     }
 
-    /**
-     * Sets [fields] on [running], in a change of its own, and stops it at [at]. Returns it with
-     * the fields and the span its captured Stop stores, which is null for a span too short to keep.
-     */
-    private fun stopWith(running: CachedTimeEntry, fields: EntryFields?, at: Instant): Pair<CachedTimeEntry, SnappedSpan?> {
-        val stopped = if (fields == null) running else entry(running.id, running.workspaceId, fields, running.start, stop = null)
-        if (stopped != running) enqueue(ChangeKind.UPDATE, stopped)
-        return stopped to stopAt(stopped, at)
-    }
-
-    /** Queues the captured Stop of [running] at [at]. Returns its span, or null for a short Stop. */
-    private fun stopAt(running: CachedTimeEntry, at: Instant): SnappedSpan? {
+    /** Queues the captured Stop of [running] at [at], with an Undo record for a short one. */
+    private fun stopAt(running: CachedTimeEntry, at: Instant) {
         val span = capturedStopSpan(running.start, at)
         val stopped = if (span == null) {
             val point = stopSpan(running.start, running.start, false).start
@@ -534,21 +316,7 @@ class ChangeQueue(
         }
         enqueue(ChangeKind.STOP, stopped, capturedAt = at, shortStop = span == null)
         if (span == null) dao.upsertShortStop(ShortStopUndo(stopped.id, at, stopped))
-        return span
     }
-
-    /** Ends the pause chain when the entry [entryId] is its running clone. */
-    private fun endChainOf(entryId: Long) {
-        if (dao.pauseChain()?.runningId == entryId) dao.deletePauseChain()
-    }
-
-    /** The paused chain [target] showed, or null when the phone no longer has it at that revision. */
-    private fun pausedChain(target: TimerTarget): PauseChain? = dao.pauseChain()?.takeIf {
-        inSession(target) && it.runningId == null && it.chainId == target.chainId && it.revision == target.revision
-    }
-
-    /** True while [target] was shown in the current session, so not before a sign-out. */
-    private fun inSession(target: TimerTarget): Boolean = target.session != 0L && dao.timerSession() == target.session
 
     /**
      * Queues a create, with the server's entries the phone holds around its start, which a lost
@@ -644,68 +412,3 @@ class ChangeQueue(
     private fun resolve(entryId: Long): Long =
         if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
 }
-
-/**
- * A segment's durable pre-start snapshot and exact credited seconds. [ChangeDao] stores these
- * in positive pause_chain slots; slot 0 remains the visible chain. The entry id, not matching
- * fields or times, establishes membership. Server answers remap it along with the running id.
- */
-data class PauseSegmentCheckpoint(
-    val slot: Int,
-    val chainId: Long,
-    val order: Long,
-    val entryId: Long,
-    val seconds: Long = 0,
-    val paused: Boolean = false,
-    val workspaceId: Long,
-    val fields: EntryFields,
-)
-
-internal data class PauseChainDiscard(
-    val chain: PauseChain,
-    val removedSlot: Int? = null,
-    val rebased: PauseSegmentCheckpoint? = null,
-)
-
-/**
- * Removes only this chain member's credited seconds, including while a later segment runs.
- * A discarded last pause restores the pre-start snapshot, including workspace and all fields.
- * Later kept pauses retain their snapshot. Rebase the next segment's checkpoint so discarding
- * it later cannot bring back the removed segment's fields. Edits to the refused segment's
- * paused snapshot go with it; explicit fields on a later kept segment stay with that segment.
- */
-internal fun pauseChainAfterDiscardedCreate(
-    chain: PauseChain,
-    entryId: Long,
-    segments: List<PauseSegmentCheckpoint>,
-): PauseChainDiscard {
-    val members = segments.filter { it.chainId == chain.chainId }.sortedBy { it.order }
-    val removed = members.singleOrNull { it.entryId == entryId }
-    if (removed == null) {
-        // A running chain from before checkpoints were introduced still has an exact identity.
-        return PauseChainDiscard(
-            if (chain.runningId == entryId) {
-                chain.copy(revision = chain.revision + 1, epoch = chain.epoch + 1, runningId = null)
-            } else {
-                chain
-            },
-        )
-    }
-    val later = members.filter { it.order > removed.order }
-    val restoreSnapshot = removed.paused && later.none { it.paused }
-    return PauseChainDiscard(
-        chain = chain.copy(
-            revision = chain.revision + 1,
-            epoch = chain.epoch + 1,
-            stoppedSeconds = (chain.stoppedSeconds - removed.seconds).coerceAtLeast(0),
-            runningId = chain.runningId.takeUnless { it == entryId },
-            workspaceId = if (restoreSnapshot) removed.workspaceId else chain.workspaceId,
-            fields = if (restoreSnapshot) removed.fields else chain.fields,
-        ),
-        removedSlot = removed.slot,
-        rebased = later.firstOrNull()?.copy(workspaceId = removed.workspaceId, fields = removed.fields),
-    )
-}
-
-private fun snapshotOf(entry: CachedTimeEntry) =
-    EntryFields(entry.description, entry.projectId, entry.taskId, entry.tags, entry.billable)

@@ -4,6 +4,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.cache.*
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -37,10 +38,8 @@ internal class TimerAcceptanceFixture {
     }
     fun refresh() = runBlocking { app.accountSettings.refresh().join() }
     fun rows(): List<CachedTimeEntry> = runBlocking { app.cache.timeEntries.first() }
-    /** The phone's own pause chain, which the notification, the widget and the tile still show. */
-    fun controls(): TimerControls = runBlocking { app.changes.timerControls.first() }
 
-    /** What the Timer page and the full-screen timer show: the cache's running entry and the server's pause chain. */
+    /** What every timer surface shows: the cache's running entry and the server's pause chain. */
     fun shown(): TimerControls = runBlocking { app.timerControls.first() }
 
     /**
@@ -55,32 +54,24 @@ internal class TimerAcceptanceFixture {
     }
     fun start(description: String = "Focused work"): TimerControls.Running {
         runBlocking { app.changes.start(account.workspaceId, EntryFields(description)) }
-        return controls() as TimerControls.Running
+        return shown() as TimerControls.Running
     }
     fun ageRunning(seconds: Long = 600): TimerControls.Running {
-        val active = controls() as TimerControls.Running
+        val active = shown() as TimerControls.Running
         val row = active.entry
         assertTrue(runBlocking { app.changes.updateRunning(
             RunningEntryIdentity(row.id, row.workspaceId, row.start),
             EntryFields(row.description, row.projectId, row.taskId, row.tags, row.billable),
             Instant.now().minusSeconds(seconds),
         ) })
-        return controls() as TimerControls.Running
+        return shown() as TimerControls.Running
     }
-    fun pause(): TimerControls.Paused {
-        val active = controls() as TimerControls.Running
-        assertTrue(runBlocking { app.changes.pause(active.target) })
-        return controls() as TimerControls.Paused
-    }
-    fun resume(): TimerControls.Running {
-        val paused = controls() as TimerControls.Paused
-        assertNotNull(runBlocking { app.changes.resume(paused.target) })
-        return controls() as TimerControls.Running
-    }
+
+    /** Stops the running entry through the queue, or ends a paused chain on the server. */
     fun stop() {
-        when (val active = controls()) {
-            is TimerControls.Running -> assertTrue(runBlocking { app.changes.stop(active.target) })
-            is TimerControls.Paused -> assertTrue(runBlocking { app.changes.stop(active.target) })
+        when (val active = shown()) {
+            is TimerControls.Running -> assertTrue(runBlocking { app.changes.stop(active.entry.id) })
+            is TimerControls.Paused -> assertEquals(TimerActionResult.Done, runBlocking { app.timerActions.discard(active.target.revision) })
             TimerControls.Idle -> Unit
         }
     }

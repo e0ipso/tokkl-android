@@ -29,7 +29,7 @@ internal class PomodoroSessionNotifier(private val context: Context) {
             if (!manager.areNotificationsEnabled() || manager.getNotificationChannel(CHANNEL_ID)?.importance == NotificationManager.IMPORTANCE_NONE) {
                 false
             } else {
-                manager.notify(PomodoroSessionNotification.ID, build(content, account))
+                manager.notify(NOTIFICATION_ID, build(content, account))
                 true
             }
         } catch (_: SecurityException) {
@@ -38,7 +38,7 @@ internal class PomodoroSessionNotifier(private val context: Context) {
         }
     }
 
-    fun remove() { manager.cancel(PomodoroSessionNotification.ID) }
+    fun remove() { manager.cancel(NOTIFICATION_ID) }
 
     internal fun build(content: PomodoroSessionNotificationContent, account: String): Notification {
         val label = phaseLabel(content.kind)
@@ -83,5 +83,10 @@ internal class PomodoroSessionNotifier(private val context: Context) {
         PhaseKind.LONG_REST -> R.string.pomodoro_session_long_rest
     }
 
-    companion object { const val CHANNEL_ID = "pomodoro_session" }
+    companion object {
+        const val CHANNEL_ID = "pomodoro_session"
+
+        /** One shared id for the session notification, including its ringing form (TKA-0251). */
+        const val NOTIFICATION_ID = 3
+    }
 }

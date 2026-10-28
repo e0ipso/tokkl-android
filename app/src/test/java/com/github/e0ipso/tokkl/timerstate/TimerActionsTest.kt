@@ -234,7 +234,7 @@ class TimerActionsTest {
     }
 
     @Test
-    fun actionsUseNeitherTheChangeQueueNorTheLocalPhaseRules() {
+    fun actionsNeverGoThroughTheChangeQueue() {
         val classes = ClassReferences.app.filterKeys { name -> OWN.any { name == it || name.startsWith("$it$") } }
         assertTrue("the scan found the actions", "$PACKAGE/timerstate/TimerActions" in classes)
 
@@ -296,7 +296,7 @@ class TimerActionsTest {
     private class RecordingCache : CurrentEntryCache {
         val written = mutableListOf<CachedTimeEntry?>()
 
-        override fun runningCheckStart() = RunningCheckStart(emptyList(), null)
+        override fun runningCheckStart() = RunningCheckStart(emptyList())
 
         override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? {
             written += server
@@ -311,7 +311,7 @@ class TimerActionsTest {
         /** The classes of the actions and their results. */
         val OWN = listOf("$PACKAGE/timerstate/TimerActions", "$PACKAGE/timerstate/TimerActionResult", "$PACKAGE/timerstate/SessionLengths")
 
-        /** The change queue, its store and sender, and the local session with its phase rules. */
+        /** The change queue, its store and its sender. */
         val FORBIDDEN = listOf(
             "cache/ChangeQueue",
             "cache/ChangeStore",
@@ -321,8 +321,6 @@ class TimerActionsTest {
             "cache/PendingChange",
             "cache/BackgroundSend",
             "cache/EntryChanges",
-            "pomodoro/PomodoroSessionStore",
-            "time/Pomodoro",
         )
     }
 }

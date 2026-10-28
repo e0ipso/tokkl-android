@@ -41,8 +41,8 @@ class PomodoroSessionNotifierTest {
         assertEquals(PomodoroSessionNotifier.CHANNEL_ID, built.channelId)
         assertNotEquals(RunningNotifier.CHANNEL_ID, built.channelId)
         assertNotEquals(PomodoroRingingNotifier.CHANNEL_ID, built.channelId)
-        assertEquals(3, PomodoroSessionNotification.ID)
-        assertNotEquals(RunningNotifier.NOTIFICATION_ID, PomodoroSessionNotification.ID)
+        assertEquals(3, PomodoroSessionNotifier.NOTIFICATION_ID)
+        assertNotEquals(RunningNotifier.NOTIFICATION_ID, PomodoroSessionNotifier.NOTIFICATION_ID)
         assertNull(built.fullScreenIntent)
         assertEquals(Notification.CATEGORY_STOPWATCH, built.category)
     }

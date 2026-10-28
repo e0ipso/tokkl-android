@@ -40,7 +40,7 @@ class TimerActions(
     private val client: () -> TogglApiClient?,
     private val source: () -> TimerStateSource,
     private val io: CoroutineContext,
-) : PauseChainActions, SessionActions {
+) : PauseActions, SessionActions {
 
     /** Reads the state with `GET /api/app/timer`. */
     override suspend fun read(): TimerActionResult = call { api ->
@@ -101,7 +101,7 @@ class TimerActions(
  * The pause chain's actions on the server, which the Timer page and the full-screen timer send.
  * [TimerActions] sends them.
  */
-interface PauseChainActions {
+interface PauseActions {
 
     /** Pauses the running entry. The server refuses it during a session and while nothing runs. */
     suspend fun pause(): TimerActionResult

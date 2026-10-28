@@ -3,11 +3,14 @@ package com.github.e0ipso.tokkl.cache
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.TimerPause
+import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -145,54 +148,32 @@ class RunningEntryQueueTest {
     }
 
     @Test
-    fun correctingAResumedSegmentChangesOnlyItsElapsedContribution() {
+    fun correctingTheServersResumedCloneChangesOnlyItsOwnElapsedTime() {
         runBlocking {
-            val fields = EntryFields("Pause chain")
-            val first = queue.start(WORKSPACE, fields)
-            queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = Clock.fixed(START.plusSeconds(600), ZoneOffset.UTC))
-            val running = queue.timerControls.first() as TimerControls.Running
-            assertTrue(queue.pause(running.target))
-            val stopped = database.changes().entry(first)!!
-            val paused = queue.timerControls.first() as TimerControls.Paused
-            assertEquals(600L, paused.seconds)
             val resumedAt = START.plusSeconds(900)
-            queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = Clock.fixed(resumedAt, ZoneOffset.UTC))
-            val clone = queue.resume(paused.target)!!
-            val before = queue.timerControls.first() as TimerControls.Running
-            val chain = database.changes().pauseChain()!!
+            // The server resumed the chain with this clone, and its state keeps 600 s from before.
+            database.changes().upsertEntry(
+                CachedTimeEntry(CLONE, WORKSPACE, null, null, "Pause chain", resumedAt, null, false, emptyList(), emptyList()),
+            )
+            val pause = TimerPause(
+                paused = false, seconds = 600, workspaceId = WORKSPACE, description = "Pause chain", projectId = null,
+                taskId = null, tagIds = emptyList(), tags = emptyList(), billable = false, cloneEntryId = CLONE,
+            )
+            val clone = ServerTimeEntry(id = CLONE, workspaceId = WORKSPACE, description = "Pause chain", start = resumedAt.toString())
+            val held = HeldTimerState(TimerState(4, resumedAt, clone, pause, pomodoro = null, discardedPomodoro = null), receivedAt = resumedAt)
+            fun controls() = serverTimerControls(database.changes().latestRunning(), held, timerApi = true) as TimerControls.Running
+            val before = controls()
             val corrected = resumedAt.minusSeconds(61)
-            assertTrue(queue.updateRunning(RunningEntryIdentity(clone, WORKSPACE, resumedAt), fields, corrected))
+            assertTrue(queue.updateRunning(RunningEntryIdentity(CLONE, WORKSPACE, resumedAt), EntryFields("Pause chain"), corrected))
 
-            val after = queue.timerControls.first() as TimerControls.Running
-            assertEquals("stored segments and chain identity are unchanged", chain, database.changes().pauseChain())
-            assertEquals(stopped, database.changes().entry(first))
-            assertEquals(before.accumulatedSeconds, after.accumulatedSeconds)
+            val after = controls()
+            assertEquals("the server's stored seconds stay", 600L, after.accumulatedSeconds)
             assertEquals(before.seconds(resumedAt.plusSeconds(60)) + 61, after.seconds(resumedAt.plusSeconds(60)))
-            assertEquals(clone, after.entry.id)
+            assertEquals(CLONE, after.entry.id)
             assertEquals(corrected, after.entry.start)
             assertNull(after.entry.stop)
-            assertEquals(listOf(ChangeKind.CREATE, ChangeKind.UPDATE), database.changes().changesFor(clone).map { it.kind })
-        }
-    }
-
-    @Test
-    fun pauseAndResumeCannotMakeAnEarlierEditorsIdentityCurrentAgain() {
-        runBlocking {
-            val first = queue.start(WORKSPACE, EntryFields("Original"))
-            val original = identity(first)
-            val shown = queue.timerControls.first() as TimerControls.Running
-            assertTrue(queue.pause(shown.target))
-            val paused = queue.timerControls.first() as TimerControls.Paused
-            val beforePause = database.changes().changesFor(first)
-            assertFalse(queue.updateRunning(original, EntryFields("Stale while paused"), START))
-            assertEquals(beforePause, database.changes().changesFor(first))
-            assertEquals(paused, queue.timerControls.first())
-            val clone = queue.resume(paused.target)!!
-            val beforeResume = database.changes().changesFor(clone)
-            assertFalse(queue.updateRunning(original, EntryFields("Stale after Resume"), START))
-            assertEquals(beforeResume, database.changes().changesFor(clone))
-            assertEquals(beforePause, database.changes().changesFor(first))
-            assertEquals(listOf(clone), database.changes().runningEntries().map { it.id })
+            assertTrue("the edit waits for the sender", after.unsent)
+            assertEquals(listOf(ChangeKind.UPDATE), database.changes().changesFor(CLONE).map { it.kind })
         }
     }
 
@@ -231,6 +212,7 @@ class RunningEntryQueueTest {
     private companion object {
         const val FILE = "running-entry-editor-test.db"
         const val WORKSPACE = 20L
+        const val CLONE = 9_001L
         val START: Instant = Instant.parse("2026-10-22T22:03:41.123Z")
     }
 }

@@ -29,11 +29,9 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
-import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
-import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.reminder.ReminderInput
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
@@ -242,12 +240,11 @@ class TokklApplication : Application() {
         )
     }
 
-    private val pomodoroSessionLock = Any()
-    private var pomodoroSessionsForAccount = newPomodoroSessions()
+    private val pomodoroNotificationLock = Any()
     private var pomodoroNotificationForAccount = newPomodoroNotification()
 
     internal val pomodoroSessionNotification: PomodoroSessionNotificationSync
-        get() = synchronized(pomodoroSessionLock) { pomodoroNotificationForAccount.value }
+        get() = synchronized(pomodoroNotificationLock) { pomodoroNotificationForAccount.value }
 
     private fun newPomodoroNotification(restore: Boolean = true): Lazy<PomodoroSessionNotificationSync> = lazy {
         val store = PomodoroSessionNotificationStore(this)
@@ -260,24 +257,6 @@ class TokklApplication : Application() {
             serviceRunning = { pomodoroRinging.state.value.serviceRunning },
             load = { if (restore) store.load() else null }, save = store::save, post = notifier::post, remove = notifier::remove,
             scope = MainScope(), io = Dispatchers.IO,
-        )
-    }
-
-    // Retained models keep their forgotten store. Install a fresh, lazy store only after
-    // clearing the old account's cache, so late callbacks cannot find its session or queue.
-    val pomodoroSessions: PomodoroSessionStore
-        get() = synchronized(pomodoroSessionLock) { pomodoroSessionsForAccount.value }
-
-    private fun newPomodoroSessions(): Lazy<PomodoroSessionStore> = lazy {
-        PomodoroSessionStore.open(
-            database = cacheDatabase,
-            queue = changes,
-            io = Dispatchers.IO,
-            accountTime = { accountSettings.state.value?.time() },
-            onQueued = {
-                BackgroundSend.schedule(this)
-                sender.send()
-            },
         )
     }
 
@@ -320,7 +299,7 @@ class TokklApplication : Application() {
     internal val cacheDatabase: CacheDatabase by lazy { CacheDatabase.open(this) }
 
     /** The offline cache. */
-    val cache: AccountCache by lazy { AccountCache(cacheDatabase, pomodoro = { pomodoroSessions }) }
+    val cache: AccountCache by lazy { AccountCache(cacheDatabase) }
 
     private val timerStateLock = Any()
     private var timerStateForAccount = newTimerState(restore = true)
@@ -516,7 +495,6 @@ class TokklApplication : Application() {
             stopSpan = { start, at, oneStep ->
                 accountSettings.state.value?.time()?.snapStop(start, at, oneStep) ?: SnappedSpan(start, maxOf(at, start))
             },
-            pomodoro = { pomodoroSessions },
             capturedStopSpan = { start, at ->
                 val time = accountSettings.state.value?.time()
                 if (time == null) SnappedSpan(start, maxOf(at, start)) else time.snapCapturedStop(start, at)
@@ -703,7 +681,7 @@ class TokklApplication : Application() {
      * or the cache again. It stops the timer event stream, its reconnects and its service. Then it
      * cancels the queue's background work and every call in flight,
      * waits for the refresh and the queue's drain to end, and clears the timer state's store and
-     * the cache with the queue and the Pomodoro session, its alarm and ringing, the running timer's notification, the launcher shortcuts, the account settings,
+     * the cache with the queue, the Pomodoro alarm, its ringing and its notification, the running timer's notification, the launcher shortcuts, the account settings,
      * the capabilities, the Timer page's view, the Pomodoro defaults, the reminder and its settings, the trust decisions, the last answer and the count of
      * discarded changes. MainActivity then drops its view models, and with them
      * the history's older days and what every other screen loaded. The theme and the sign-in
@@ -722,10 +700,9 @@ class TokklApplication : Application() {
                     stopTimerSyncService()
                 },
                 { pomodoroSessionNotification.forget() },
-                { pomodoroSessions.forget() },
                 // ID 3 is shared with the session notification, including a non-ringing form.
                 // Keep this independent of service cleanup so a failed stop still removes it.
-                { getSystemService(NotificationManager::class.java).cancel(PomodoroSessionNotification.ID) },
+                { getSystemService(NotificationManager::class.java).cancel(PomodoroSessionNotifier.NOTIFICATION_ID) },
                 { BackgroundSend.cancel(this) },
                 { RunningCheck.cancelAndWait(this) },
                 { SharedHttpClient.cancelAll() },
@@ -734,8 +711,7 @@ class TokklApplication : Application() {
                 { TimerStateStore(this).clear() },
                 {
                     cache.clear()
-                    synchronized(pomodoroSessionLock) {
-                        pomodoroSessionsForAccount = newPomodoroSessions()
+                    synchronized(pomodoroNotificationLock) {
                         pomodoroNotificationForAccount = newPomodoroNotification(restore = false)
                     }
                 },
@@ -774,7 +750,7 @@ class TokklApplication : Application() {
 
     /** The Settings page's sign-out button and its warning about unsent changes. */
     val signOutModel: SignOutModel by lazy {
-        SignOutModel(unsentCount = { pomodoroSessions.unsavedChangeCount() }, clear = signOut::run, scope = MainScope())
+        SignOutModel(unsentCount = { changes.unsentCount.first() }, clear = signOut::run, scope = MainScope())
     }
 
     override fun onCreate() {

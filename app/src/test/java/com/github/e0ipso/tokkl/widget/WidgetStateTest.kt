@@ -150,7 +150,7 @@ class WidgetStateTest {
     }
 
     @Test
-    fun theChronometerAddsWhatThePauseChainStored() {
+    fun theChronometerAddsWhatTheServersChainStored() {
         val now = start.plusSeconds(90)
 
         assertEquals(1_000_000L - 90_000 - 600_000, chronometerBase(start, now, elapsedRealtime = 1_000_000, accumulatedSeconds = 600))

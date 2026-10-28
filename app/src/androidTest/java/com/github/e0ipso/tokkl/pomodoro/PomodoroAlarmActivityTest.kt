@@ -340,7 +340,7 @@ class PomodoroAlarmActivityTest {
     private fun awaitNoSharedNotification() {
         // cancel() returns before the system drops the notification from its list.
         val deadline = SystemClock.elapsedRealtime() + 10_000
-        while (notifications.activeNotifications.any { it.id == PomodoroSessionNotification.ID }) {
+        while (notifications.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }) {
             assertTrue("the shared notification is removed", SystemClock.elapsedRealtime() < deadline)
             SystemClock.sleep(50)
         }
@@ -357,7 +357,7 @@ class PomodoroAlarmActivityTest {
         }
         assertFalse("the lock screen is still showing", keyguard.isKeyguardLocked)
     }
-    private fun ringingNotification() = notifications.activeNotifications.single { it.id == PomodoroSessionNotification.ID }.notification
+    private fun ringingNotification() = notifications.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
     private fun setFullScreenMode(mode: String) { DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT $mode") }
     private fun onMain(block: () -> Unit) {
         val failure = AtomicReference<Throwable?>()

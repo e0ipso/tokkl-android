@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.childElements
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
-import com.github.e0ipso.tokkl.timerstate.PauseChainActions
+import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.io.File
 import java.time.Instant
@@ -161,7 +161,7 @@ class TileControlsTest {
         .parse(file)
         .documentElement
 
-    private inner class RecordingServer : PauseChainActions {
+    private inner class RecordingServer : PauseActions {
         override suspend fun pause(): TimerActionResult = TimerActionResult.Done.also { calls += "pause" }
         override suspend fun resume(revision: Long): TimerActionResult = TimerActionResult.Done.also { calls += "resume $revision" }
         override suspend fun discard(revision: Long): TimerActionResult = TimerActionResult.Done.also { calls += "discard $revision" }

@@ -65,7 +65,7 @@ class TimerTotalsServerTest {
     }
 
     @Test
-    fun offlineStartStopEditDeleteUndoAndPauseSegmentsRemapExactlyOnceWithoutReportsOrPaging() {
+    fun offlineStartStopEditDeleteAndUndoRemapExactlyOnceWithoutReportsOrPaging() {
         // Every hop uses loopback, as in RunningTileServerTest, so a request the app attempts
         // offline reaches both counters: the outer relay hangs instead of failing to connect.
         HangingRelay(TokklTestServer.url).use { relay ->
@@ -84,7 +84,7 @@ class TimerTotalsServerTest {
                 AirplaneMode.set(true, fixture.account.client)
                 fixture.start()
                 fixture.ageRunning()
-                fixture.pause()
+                fixture.stop()
                 assertStoppedTotals()
                 val stopped = fixture.rows().single()
                 assertTrue(runBlocking { app.changes.update(stopped.id, EntryFields("Edited total"), stopped.start.minusSeconds(600), stopped.stop) })
@@ -95,14 +95,11 @@ class TimerTotalsServerTest {
                 runBlocking { app.sender.undoDelete(stopped.id) }
                 assertEquals(stopped.id, fixture.rows().single().id)
                 assertStoppedTotals()
-                fixture.resume()
+                fixture.start("Second offline timer")
                 fixture.ageRunning()
-                fixture.pause()
-                val paused = fixture.controls() as com.github.e0ipso.tokkl.cache.TimerControls.Paused
-                assertTrue("the chain contains cumulative time", paused.seconds >= 1_200)
-                assertEquals(2, fixture.rows().size)
-                assertStoppedTotals() // Only stored segments, never the cumulative display again.
                 fixture.stop()
+                assertEquals(2, fixture.rows().size)
+                assertStoppedTotals()
                 assertEquals("offline summary does not page history", historyCount, history.count)
                 val localIds = fixture.rows().map { it.id }
                 AirplaneMode.set(false, fixture.account.client)

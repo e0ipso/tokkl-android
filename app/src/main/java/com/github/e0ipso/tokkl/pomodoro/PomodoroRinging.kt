@@ -126,8 +126,3 @@ internal class PomodoroRingController(private val output: PomodoroRingOutput) {
         }
     }
 }
-
-/** One shared id for the session notification, including its ringing form (TKA-0251). */
-object PomodoroSessionNotification {
-    const val ID = 3
-}

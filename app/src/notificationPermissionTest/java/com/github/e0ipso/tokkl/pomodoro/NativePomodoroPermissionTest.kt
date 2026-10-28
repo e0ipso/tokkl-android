@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -65,12 +66,12 @@ class NativePomodoroPermissionTest {
     @Test fun grantingTheFirstSessionDialogKeepsTheSameStartedSession() {
         ActivityScenario.launch(MainActivity::class.java).use {
             startAndWaitForDialog()
-            val started = runBlocking { app.pomodoroSessions.current() }!!
+            val started = checkNotNull(session())
             device.findObject(By.res(CONTROLLER, "permission_allow_button")).click()
             compose.waitUntil(15_000) {
                 context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
             }
-            assertEquals(started, runBlocking { app.pomodoroSessions.current() })
+            assertEquals(started, session())
             compose.awaitText(context.getString(R.string.pomodoro_end), 15_000)
             compose.onNodeWithText(context.getString(R.string.pomodoro_notifications_denied)).assertDoesNotExist()
         }
@@ -81,18 +82,18 @@ class NativePomodoroPermissionTest {
             startAndWaitForDialog()
             device.findObject(By.res(CONTROLLER, "permission_deny_button")).click()
             compose.awaitText(context.getString(R.string.pomodoro_notifications_denied), 15_000)
-            assertNotNull(runBlocking { app.pomodoroSessions.current() })
+            assertNotNull(session())
             scenario.recreate()
             compose.awaitText(context.getString(R.string.pomodoro_end), 15_000)
             tap(R.string.pomodoro_end)
-            compose.waitUntil(15_000) { runBlocking { app.pomodoroSessions.current() } == null }
+            compose.waitUntil(15_000) { session() == null }
             tap(R.string.pomodoro_start)
-            compose.waitUntil(15_000) { runBlocking { app.pomodoroSessions.current() } != null }
+            compose.waitUntil(15_000) { session() != null }
             assertNull(device.findObject(By.res(CONTROLLER, "permission_allow_button")))
             assertTrue(NotificationPermissionStore(context).asked())
             tap(R.string.pomodoro_notifications_settings)
             compose.waitUntil(15_000) { device.currentPackageName == "com.android.settings" }
-            assertNotNull("settings never ends the running session", runBlocking { app.pomodoroSessions.current() })
+            assertNotNull("settings never ends the running session", session())
             device.pressBack()
         }
     }
@@ -103,10 +104,13 @@ class NativePomodoroPermissionTest {
         compose.awaitText(context.getString(R.string.pomodoro_start), 15_000)
         tap(R.string.pomodoro_start)
         compose.waitUntil(15_000) { device.findObject(By.res(CONTROLLER, "permission_allow_button")) != null }
-        // The native dialog is deliberately unanswered at this assertion.
-        assertNotNull(runBlocking { app.pomodoroSessions.current() })
+        // The native dialog is deliberately unanswered while the server's session arrives.
+        compose.waitUntil(15_000) { session() != null }
         compose.waitUntil(15_000) { NotificationPermissionStore(context).asked() }
     }
+
+    /** The server's session as the phone holds it, or null without one. */
+    private fun session(): TimerPomodoro? = app.timerState.state.value?.state?.pomodoro
 
     private fun tap(id: Int) = compose.onNodeWithText(context.getString(id)).performScrollTo().performClick()
     private companion object { const val CONTROLLER = "com.android.permissioncontroller" }

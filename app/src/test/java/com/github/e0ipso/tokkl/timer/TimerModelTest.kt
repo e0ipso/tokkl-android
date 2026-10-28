@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.cache.timerControls
+import com.github.e0ipso.tokkl.cache.serverTimerControls
 import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -72,7 +72,7 @@ class TimerModelTest {
     @Before
     fun showTheTimer() {
         model = TimerModel(
-            controls = running.map { timerControls(it, chain = null, session = 0) },
+            controls = running.map { serverTimerControls(it, held = null, timerApi = true) },
             projects = MutableStateFlow(listOf(APP, CLIENT_WORK)),
             tasks = MutableStateFlow(listOf(DESIGN)),
             accountSettings = settings,

@@ -16,7 +16,7 @@ import com.github.e0ipso.tokkl.entry.withPicked
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
-import com.github.e0ipso.tokkl.timerstate.PauseChainActions
+import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Clock
 import java.time.Duration
@@ -173,7 +173,7 @@ class TimerModel(
     private val scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),
     private val trace: TapTrace = TapTrace.None,
-    private val pauseChain: PauseChainActions? = null,
+    private val pauseChain: PauseActions? = null,
     private val sendQueued: suspend () -> Unit = {},
     discardNotices: Flow<DiscardedPomodoro?> = flowOf(null),
     private val takeDiscardNotice: suspend () -> DiscardedPomodoro? = { null },

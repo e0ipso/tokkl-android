@@ -130,7 +130,7 @@ class PomodoroSessionNotificationTest {
         f.sync.refresh()
         assertEquals(2, f.posts.size)
         assertEquals(PhaseKind.SHORT_REST, f.posts.last().kind)
-        assertEquals(3, PomodoroSessionNotification.ID)
+        assertEquals(3, PomodoroSessionNotifier.NOTIFICATION_ID)
     }
 
     @Test fun aPhasePastItsPlannedEndLeavesTheSharedIdToItsAlarm() = runBlocking {

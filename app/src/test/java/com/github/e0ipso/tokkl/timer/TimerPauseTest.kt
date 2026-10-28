@@ -18,7 +18,7 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PauseChainActions
+import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -505,7 +505,7 @@ class TimerPauseTest {
      * discard ends the chain, each with the next revision, written to the cache and the holder
      * together before it returns, as the holder does. A refusal brings [refusal], when set.
      */
-    private inner class FakeServer : PauseChainActions {
+    private inner class FakeServer : PauseActions {
         @Volatile
         var gate: CompletableDeferred<Unit> = CompletableDeferred(Unit)
 
@@ -587,18 +587,6 @@ class TimerPauseTest {
             return true
         }
 
-        override suspend fun pause(target: TimerTarget, fields: EntryFields?): Boolean =
-            throw AssertionError("the phone's own pause chain is not used")
-
-        override suspend fun resume(target: TimerTarget, fields: EntryFields?): Long? =
-            throw AssertionError("the phone's own pause chain is not used")
-
-        override suspend fun stop(target: TimerTarget, fields: EntryFields?): Boolean =
-            throw AssertionError("the phone's own pause chain is not used")
-
-        override suspend fun editPaused(target: TimerTarget, fields: EntryFields): Boolean =
-            throw AssertionError("a paused chain's fields are read-only")
-
         override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
             throw AssertionError("these timers edit running entries through updateRunning")
 
@@ -610,7 +598,7 @@ class TimerPauseTest {
 
     /** A cache with no running entry, for states that name none. */
     private object NoRunningEntries : CurrentEntryCache {
-        override fun runningCheckStart() = RunningCheckStart(emptyList(), chain = null)
+        override fun runningCheckStart() = RunningCheckStart(emptyList())
 
         override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? = null
     }

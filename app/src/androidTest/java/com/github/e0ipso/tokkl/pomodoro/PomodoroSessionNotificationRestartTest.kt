@@ -53,7 +53,7 @@ class PomodoroSessionNotificationRestartTest {
         // Two hours of a three-hour work phase are left, so nothing rings across the restart.
         val held = HeldPhases.hold(PhaseTransition.WORK_TO_SHORT_REST, overtime = Duration.ofHours(-2), length = Duration.ofHours(3))
         runBlocking { app.pomodoroSessionNotification.refresh(force = true) }
-        val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotification.ID }
+        val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
         val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
         Properties().apply {
             setProperty("process", processIdentity())
@@ -79,7 +79,7 @@ class PomodoroSessionNotificationRestartTest {
             assertTrue(runBlocking { app.pomodoroSessionNotification.acceptsTap(saved.getProperty("account"), phase) })
             // The process follows the persisted shown hash without reposting this notification.
             runBlocking { app.pomodoroSessionNotification.refresh() }
-            val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotification.ID }
+            val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
             assertEquals(saved.getProperty("posted").toLong(), posted.postTime)
             posted.notification.contentIntent.send()
             val device = UiDevice.getInstance(instrumentation)
@@ -93,7 +93,7 @@ class PomodoroSessionNotificationRestartTest {
             assertNull(PomodoroSessionNotificationStore(context).load())
             assertNull(TimerStateStore(context).load())
             assertNull(app.timerState.state.value)
-            assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotification.ID })
+            assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             assertTrue(handover.delete())
             assertFalse(handover.exists())
             SessionRule.signOut()

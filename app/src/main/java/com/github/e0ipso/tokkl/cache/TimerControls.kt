@@ -13,20 +13,13 @@ import java.time.Instant
  * carries the server [revision] it was shown at, which Resume and Discard send, and a running one
  * the entry it showed. Each also names the [account] it was drawn for, so a control kept in a
  * notification, a widget or a PendingIntent past a sign-out acts on nothing in the next account.
- * The [session] and [chainId] of the phone's own pause chain are left at 0; the queue's chain
- * fences accept none of these targets.
  *
- * @property session the [TimerSession] of the phone's own chain, or 0 for a server target.
- * @property chainId the phone's chain it was shown for, or 0 outside one.
- * @property revision the phone chain's revision then, or the server revision a paused server
- *   target was shown at, or 0.
+ * @property revision the server revision a paused target was shown at, or 0.
  * @property entryId the running entry it showed, or 0 while paused.
  * @property account the account the control was drawn for, as the timer state's store names it,
  *   or blank where no account names it.
  */
 data class TimerTarget(
-    val session: Long,
-    val chainId: Long = 0,
     val revision: Long = 0,
     val entryId: Long = 0,
     val account: String = "",
@@ -37,7 +30,7 @@ data class TimerTarget(
          * [entryId], or a paused chain shown at the server's [revision].
          */
         fun server(revision: Long = 0, entryId: Long = 0, account: String = "") =
-            TimerTarget(session = 0, revision = revision, entryId = entryId, account = account)
+            TimerTarget(revision = revision, entryId = entryId, account = account)
     }
 }
 
@@ -89,34 +82,6 @@ val TimerControls.target: TimerTarget?
         is TimerControls.Paused -> target
         TimerControls.Idle -> null
     }
-
-/**
- * The controls for the cache's [running] entry, the phone's own pause [chain] and the [session],
- * which only [ChangeQueue.timerControls] still reads; no surface shows them. A running entry
- * always shows, as the server's running timer wins over a chain. The chain adds its time only
- * while that entry is its clone, and shows as paused only while nothing runs.
- */
-fun timerControls(running: EntryWithSendState?, chain: PauseChain?, session: Long): TimerControls {
-    if (running != null) {
-        val entry = running.entry
-        val segment = chain?.takeIf { it.runningId == entry.id }
-        return TimerControls.Running(
-            entry = entry,
-            unsent = running.unsent,
-            accumulatedSeconds = segment?.stoppedSeconds ?: 0,
-            target = TimerTarget(session, segment?.chainId ?: 0, segment?.revision ?: 0, entry.id),
-        )
-    }
-    if (chain != null && chain.runningId == null) {
-        return TimerControls.Paused(
-            seconds = chain.stoppedSeconds,
-            workspaceId = chain.workspaceId,
-            fields = chain.fields,
-            target = TimerTarget(session, chain.chainId, chain.revision),
-        )
-    }
-    return TimerControls.Idle
-}
 
 /**
  * The controls for the cache's [running] entry and the server's timer state [held], as every

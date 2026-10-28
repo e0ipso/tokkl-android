@@ -3,23 +3,41 @@ package com.github.e0ipso.tokkl.cache
 import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.TogglApiClient
+import java.time.Duration
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 
 /**
  * A cache written by version 1, before the queue, by version 2, before
  * `pending_changes.maybeSent`, or by version 3, before `pending_changes.existingIds`, opens under
  * the current version through Room's migrations, keeps its rows and its queue, and takes queued
- * changes. Version 7, before the pomodoro session, keeps its pause chain and its queue. Room
- * checks the migrated tables against the exported schema when it opens the file, so a migration
- * that left them wrong fails here.
+ * changes. Versions 7 and 8, which held the phone's own pause chain, timer session and Pomodoro
+ * session, open without those tables and keep their queue, which the sender then delivers to the
+ * real Tokkl server. Room checks the migrated tables against the exported schema when it opens
+ * the file, so a migration that left them wrong fails here.
  */
 class CacheDatabaseMigrationTest {
+
+    /** Signed in to the test server, so the test accounts' entry calls reach it. */
+    @get:Rule val session = SessionRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -194,7 +212,7 @@ class CacheDatabaseMigrationTest {
     }
 
     @Test
-    fun version6KeepsARunningTimerAndItsQueueAndPausesItAfterTheUpdate() {
+    fun version6KeepsARunningTimerAndItsQueueAndStopsItAfterTheUpdate() {
         context.deleteDatabase(FILE)
         SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
             VERSION_6.forEach(db::execSQL)
@@ -210,13 +228,12 @@ class CacheDatabaseMigrationTest {
         val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
         try {
             assertEquals("Running before the update", RoomChangeStore(database).first()!!.description)
-            assertEquals(null, database.changes().pauseChain())
-            val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
-            val running = runBlocking { queue.timerControls.first() } as TimerControls.Running
+            val running = checkNotNull(database.changes().latestRunning())
             assertEquals(-1L, running.entry.id)
-            assertTrue(running.target.session != 0L)
-            assertTrue(runBlocking { queue.pause(running.target) })
-            assertEquals("Running before the update", database.changes().pauseChain()!!.fields.description)
+            assertTrue("the queued start shows unsent", running.unsent)
+            val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            assertTrue("the migrated file takes a Stop", runBlocking { queue.stop(-1) })
+            assertEquals(listOf(ChangeKind.CREATE, ChangeKind.STOP), database.changes().changesFor(-1).map { it.kind })
         } finally {
             database.close()
             assertTrue(context.deleteDatabase(FILE))
@@ -224,7 +241,7 @@ class CacheDatabaseMigrationTest {
     }
 
     @Test
-    fun version7KeepsThePauseChainTheQueueAndGainsAnEmptyPomodoroSession() {
+    fun version7KeepsTheQueueAndLeavesNoLocalTimerTables() {
         context.deleteDatabase(FILE)
         SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
             VERSION_7.forEach(db::execSQL)
@@ -243,32 +260,127 @@ class CacheDatabaseMigrationTest {
 
         val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
         try {
-            assertEquals("Queued before the update", RoomChangeStore(database).first()!!.description)
-            assertEquals(false, RoomChangeStore(database).first()!!.maybeSent)
-            val chain = database.changes().pauseChain()!!
-            assertEquals("Paused focus", chain.fields.description)
-            assertEquals(11L, chain.chainId)
-            assertEquals(44L, database.changes().timerSession())
-            assertEquals(null, database.pomodoroSessions().current())
-            val session = PomodoroSession(
-                workspaceId = 7,
-                workMinutes = 25.0,
-                shortRestMinutes = 5.0,
-                longRestMinutes = 15.0,
-                longRestEvery = 4.0,
-                phaseKind = "work",
-                phaseStartedAt = START,
-                pomodoroStartedAt = START,
-                completed = 0.0,
-                fields = EntryFields(description = "Focus"),
-            )
-            database.pomodoroSessions().upsert(session)
-            assertEquals(session, database.pomodoroSessions().current())
+            val queued = checkNotNull(RoomChangeStore(database).first())
+            assertEquals("Queued before the update", queued.description)
+            assertEquals(false, queued.maybeSent)
+            assertEquals("no local timer table is left", emptySet<String>(), tables(database) intersect RETIRED_TABLES)
         } finally {
             database.close()
             assertTrue(context.deleteDatabase(FILE))
         }
     }
+
+    /**
+     * A version 8 file as the last build with the phone's own Pause and Pomodoro left it: a saved
+     * pomodoro and a captured Stop still queued, an edit the server refused, an id mapping, a short
+     * Stop's Undo offer, and rows in all three local timer tables. Version 9 drops those tables and
+     * nothing else, and the existing sender delivers the queue to the real server.
+     */
+    @Test
+    fun version8DropsTheLocalTimerTablesAndItsQueueStillSends() {
+        val account = TestAccounts.create(timezone = "Etc/UTC")
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        try {
+            val workspace = account.workspaceId
+            // Whole hours are on every grid the server snaps to.
+            val base = Instant.now().truncatedTo(ChronoUnit.HOURS).minus(Duration.ofHours(6))
+            val kept = account.createEntry("Kept on the server", base.plus(HOUR.multipliedBy(4)), base.plus(HOUR.multipliedBy(5)))
+            val running = account.createEntry("Running before the update", base.plus(HOUR.multipliedBy(2)))
+            val stoppedAt = base.plus(HOUR.multipliedBy(3))
+            val shortAt = base.plus(HOUR)
+            val undo = ShortStopUndo(
+                77, shortAt.plusSeconds(10),
+                CachedTimeEntry(77, workspace, null, null, "Short before the update", shortAt, shortAt, false, emptyList(), emptyList()),
+            )
+            context.deleteDatabase(FILE)
+            SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+                VERSION_8.forEach(db::execSQL)
+                // A pomodoro the phone's own session saved: an ordinary stopped create.
+                db.execSQL(entryRow(-1, workspace, "Saved pomodoro before the update", base, base.plus(HOUR)))
+                db.execSQL(changeRow(1, "CREATE", -1, workspace, "Saved pomodoro before the update", base, base.plus(HOUR)))
+                // A captured Stop of the timer the server runs.
+                db.execSQL(entryRow(running, workspace, "Running before the update", base.plus(HOUR.multipliedBy(2)), stoppedAt))
+                db.execSQL(
+                    changeRow(2, "STOP", running, workspace, "Running before the update", base.plus(HOUR.multipliedBy(2)), stoppedAt,
+                        capturedStop = stoppedAt),
+                )
+                // An edit the server refused, which waits for the user.
+                db.execSQL(entryRow(kept, workspace, "Refused edit", base.plus(HOUR.multipliedBy(4)), base.plus(HOUR.multipliedBy(5))))
+                db.execSQL(
+                    changeRow(3, "UPDATE", kept, workspace, "Refused edit", base.plus(HOUR.multipliedBy(4)), base.plus(HOUR.multipliedBy(5)),
+                        held = "1, 'Server validation failed'"),
+                )
+                db.execSQL("INSERT INTO entry_ids VALUES (-9, 99)")
+                db.execSQL(
+                    "INSERT INTO short_stop_undo VALUES (77, ${undo.capturedAt.toEpochMilli()}, 77, $workspace, NULL, NULL, " +
+                        "'Short before the update', ${shortAt.toEpochMilli()}, ${shortAt.toEpochMilli()}, 0, '[]', '[]')",
+                )
+                db.execSQL("INSERT INTO pause_chain VALUES (0, 11, 2, 3, 600, NULL, $workspace, 'Paused focus', NULL, NULL, '[]', 0)")
+                db.execSQL("INSERT INTO pause_chain VALUES (1, 11, 0, 1, 600, $running, $workspace, 'Paused focus', NULL, NULL, '[]', 0)")
+                db.execSQL("INSERT INTO timer_session VALUES (0, 44)")
+                db.execSQL(
+                    "INSERT INTO pomodoro_session VALUES (0, $workspace, 25.0, 5.0, 15.0, 4.0, 'work', " +
+                        "${base.toEpochMilli()}, ${base.toEpochMilli()}, 0.0, 'Focus', NULL, NULL, '[]', 0)",
+                )
+                db.version = 8
+            }
+
+            val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+            try {
+                val tables = tables(database)
+                assertEquals("the local timer tables are gone", emptySet<String>(), tables intersect RETIRED_TABLES)
+                assertTrue("every queue table stays: $tables", tables.containsAll(QUEUE_TABLES))
+                val changes = database.changes()
+                assertEquals(3, runBlocking { changes.count().first() })
+                assertEquals(listOf(ChangeKind.CREATE), changes.changesFor(-1).map { it.kind })
+                assertEquals(stoppedAt, changes.changesFor(running).single().capturedStop)
+                val held = runBlocking { changes.held().first() }.single()
+                assertEquals(kept, held.entryId)
+                assertEquals("Server validation failed", held.refusal)
+                assertTrue("the old id mapping stays", changes.isMapped(99))
+                assertEquals("the short Stop's Undo offer stays", undo, runBlocking { changes.latestShortStop().first() })
+
+                val sender = ChangeSender(
+                    RoomChangeStore(database),
+                    client = { TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken)) },
+                    scope = scope, io = Dispatchers.IO,
+                )
+                val outcome = runBlocking { sender.sendAndWait() }
+                assertTrue("the drain ended with only the held edit left: $outcome", outcome is ChangeSender.Outcome.Empty)
+
+                val created = checkNotNull(changes.serverId(-1)) { "the server answered the saved pomodoro" }
+                val saved = account.entry(created)
+                assertEquals("Saved pomodoro before the update", saved.text("description"))
+                assertEquals(base, saved.instant("start"))
+                assertEquals(base.plus(HOUR), saved.instant("stop"))
+                assertEquals("the captured Stop reached the server", stoppedAt, account.entry(running).instant("stop"))
+                assertEquals("the held edit stayed on the phone", "Kept on the server", account.entry(kept).text("description"))
+                assertEquals(listOf(held), runBlocking { changes.held().first() })
+                assertEquals(1, runBlocking { changes.count().first() })
+                assertTrue(changes.isMapped(99))
+                assertEquals(undo, runBlocking { changes.latestShortStop().first() })
+                assertTrue("Undo still queues its restore", runBlocking { ChangeQueue(database, Dispatchers.IO, onQueued = {}).undoShortStop(77) })
+                assertEquals(listOf(ChangeKind.RESTORE), changes.changesFor(77).map { it.kind })
+            } finally {
+                database.close()
+                assertTrue(context.deleteDatabase(FILE))
+            }
+        } finally {
+            scope.cancel()
+            TestAccounts.delete(account)
+        }
+    }
+
+    /** The names of the tables in [database]'s file. */
+    private fun tables(database: CacheDatabase): Set<String> =
+        database.openHelper.readableDatabase.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->
+            buildSet { while (cursor.moveToNext()) add(cursor.getString(0)) }
+        }
+
+    private fun JsonObject.text(key: String): String = getValue(key).jsonPrimitive.content
+
+    // Android 12's Instant.parse rejects Tokkl's +00:00 timestamps; OffsetDateTime accepts them.
+    private fun JsonObject.instant(key: String): Instant = OffsetDateTime.parse(text(key)).toInstant()
 
     private companion object {
         const val FILE = "cache-migration-test.db"
@@ -358,5 +470,46 @@ class CacheDatabaseMigrationTest {
             "CREATE TABLE IF NOT EXISTS `timer_session` (`slot` INTEGER NOT NULL, `id` INTEGER NOT NULL, PRIMARY KEY(`slot`))",
             "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7747807ae7eb20f454ad9d96203e5375')",
         )
+
+        /**
+         * The tables of version 8, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/8.json:
+         * those of version 7, plus the Pomodoro session.
+         */
+        val VERSION_8 = VERSION_7.dropLast(1) + listOf(
+            "CREATE TABLE IF NOT EXISTS `pomodoro_session` (`slot` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
+                "`workMinutes` REAL NOT NULL, `shortRestMinutes` REAL NOT NULL, `longRestMinutes` REAL NOT NULL, " +
+                "`longRestEvery` REAL NOT NULL, `phaseKind` TEXT NOT NULL, `phaseStartedAt` INTEGER NOT NULL, " +
+                "`pomodoroStartedAt` INTEGER NOT NULL, `completed` REAL NOT NULL, `fields_description` TEXT NOT NULL, " +
+                "`fields_projectId` INTEGER, `fields_taskId` INTEGER, `fields_tags` TEXT NOT NULL, " +
+                "`fields_billable` INTEGER NOT NULL, PRIMARY KEY(`slot`))",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a594909fd1789ae86cc781bcdf9451b9')",
+        )
+
+        /** The tables of the phone's own pause chain, timer session and Pomodoro session, which version 9 drops. */
+        val RETIRED_TABLES = setOf("pause_chain", "timer_session", "pomodoro_session")
+
+        /** The queue's tables, which every version since 6 keeps. */
+        val QUEUE_TABLES = setOf("time_entries", "pending_changes", "entry_ids", "short_stop_undo")
+
+        val HOUR: Duration = Duration.ofHours(1)
+
+        /** A `time_entries` row of versions 1 and later. */
+        fun entryRow(id: Long, workspace: Long, description: String, start: Instant, stop: Instant?) =
+            "INSERT INTO time_entries VALUES ($id, $workspace, NULL, NULL, '$description', ${start.toEpochMilli()}, " +
+                "${stop?.toEpochMilli()}, 0, '[]', '[]')"
+
+        /** A `pending_changes` row of versions 6 to 9, not sent, with [held] as its `held, refusal` columns. */
+        fun changeRow(
+            sequence: Long,
+            kind: String,
+            entryId: Long,
+            workspace: Long,
+            description: String,
+            start: Instant,
+            stop: Instant?,
+            capturedStop: Instant? = null,
+            held: String = "0, NULL",
+        ) = "INSERT INTO pending_changes VALUES ($sequence, '$kind', $entryId, $workspace, NULL, NULL, '$description', " +
+            "${start.toEpochMilli()}, ${stop?.toEpochMilli()}, 0, '[]', '[]', 0, '[]', $held, ${capturedStop?.toEpochMilli()}, 0)"
     }
 }

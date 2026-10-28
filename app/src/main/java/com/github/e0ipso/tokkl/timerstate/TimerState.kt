@@ -18,8 +18,7 @@ import kotlinx.serialization.encoding.Encoder
 // declares it. `GET /api/app/timer`, every timer action, every 409 refusal and each `timer` event
 // of `GET /api/app/timer/events` send it. The server applies every Pomodoro and pause rule; the
 // phone reads these values and counts down on a clock corrected by `server_time`. Every field is
-// required, as the server always sends it, so a body that lacks one is not a timer state. These
-// types are separate from time/Pomodoro.kt, the local rules port, on purpose.
+// required, as the server always sends it, so a body that lacks one is not a timer state.
 
 /**
  * A user's timer. It holds at most one of a pause chain and a Pomodoro session.

@@ -344,7 +344,7 @@ class TimerStateSourceTest {
 
         fun running(): List<CachedTimeEntry> = rows.values.filter { it.stop == null }
 
-        override fun runningCheckStart() = RunningCheckStart(running(), chain = null, pendingIds = pending.toSet())
+        override fun runningCheckStart() = RunningCheckStart(running(), pendingIds = pending.toSet())
 
         override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites {
             val mapped = before.pendingIds.filter { it < 0 }.mapNotNull(mappings::get)

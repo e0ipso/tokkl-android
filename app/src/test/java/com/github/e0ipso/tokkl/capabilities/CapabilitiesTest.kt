@@ -297,7 +297,7 @@ class CapabilitiesTest {
 
     /** No running entry in the cache, which is all these timer states carry. */
     private object EmptyCache : CurrentEntryCache {
-        override fun runningCheckStart() = RunningCheckStart(emptyList(), null)
+        override fun runningCheckStart() = RunningCheckStart(emptyList())
 
         override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? = null
     }

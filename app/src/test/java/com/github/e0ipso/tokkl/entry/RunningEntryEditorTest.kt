@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.timerControls
+import com.github.e0ipso.tokkl.cache.serverTimerControls
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timer.TimerModel
@@ -57,7 +57,7 @@ class RunningEntryEditorTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-22T22:10:00Z"), ZoneOffset.UTC)
     private val changes = Changes()
     private val form = EntryFormModel(rows, projects, tasks, settings, changes, scope, clock)
-    private val timer = TimerModel(rows.map { entries -> timerControls(entries.firstOrNull { it.entry.stop == null }, chain = null, session = 0) }, projects, tasks, settings, changes, scope, clock)
+    private val timer = TimerModel(rows.map { entries -> serverTimerControls(entries.firstOrNull { it.entry.stop == null }, held = null, timerApi = true) }, projects, tasks, settings, changes, scope, clock)
 
     @Before
     fun collect() {

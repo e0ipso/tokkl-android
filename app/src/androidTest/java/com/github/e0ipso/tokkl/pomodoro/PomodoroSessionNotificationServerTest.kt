@@ -84,7 +84,7 @@ class PomodoroSessionNotificationServerTest {
                 withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } }
             }
             assertNull(PomodoroSessionNotificationStore(context).load())
-            assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotification.ID })
+            assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             assertNull(app.timerState.state.value)
         } finally {
             try {
@@ -174,7 +174,7 @@ class PomodoroSessionNotificationServerTest {
 
         sendActions(1) { rest.actions[1].actionIntent.send() }
         assertNull(serverTimer().pomodoro)
-        compose.waitUntil(10_000) { manager.activeNotifications.none { it.id == PomodoroSessionNotification.ID } }
+        compose.waitUntil(10_000) { manager.activeNotifications.none { it.id == PomodoroSessionNotifier.NOTIFICATION_ID } }
     }
 
     @Test fun theRingingNotificationReplacesTheActiveOneAndNextRestoresOnlyOneActiveNotification() {
@@ -184,10 +184,10 @@ class PomodoroSessionNotificationServerTest {
         // The server's one-minute work phase ends, and the phone rings from its planned end.
         runBlocking { withTimeout(90_000) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing } } }
         compose.waitUntil(10_000) {
-            manager.activeNotifications.singleOrNull { it.id == PomodoroSessionNotification.ID }
+            manager.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
                 ?.notification?.channelId == PomodoroRingingNotifier.CHANNEL_ID
         }
-        val ring = manager.activeNotifications.single { it.id == PomodoroSessionNotification.ID }.notification
+        val ring = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
         assertEquals(phase, app.pomodoroRinging.state.value.ring?.phase)
         val done = CountDownLatch(1)
         PomodoroRingingActionReceiver.completed = done
@@ -197,7 +197,7 @@ class PomodoroSessionNotificationServerTest {
         } finally { PomodoroRingingActionReceiver.completed = null }
         runBlocking { withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } } }
         awaitSessionNotification(PhaseKind.SHORT_REST)
-        assertEquals(1, manager.activeNotifications.count { it.id == PomodoroSessionNotification.ID })
+        assertEquals(1, manager.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
         assertFalse(app.pomodoroRinging.state.value.playing)
         assertEquals(PhaseKind.SHORT_REST, serverTimer().pomodoro?.phase?.kind)
     }
@@ -209,7 +209,7 @@ class PomodoroSessionNotificationServerTest {
         val settings = checkNotNull(app.accountSettings.state.value)
         runBlocking { app.signOut.run() }
         assertNull(PomodoroSessionNotificationStore(context).load())
-        assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotification.ID })
+        assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
 
         // Sign in again: the server still has the session, and a new notification identity shows it.
         ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
@@ -252,12 +252,12 @@ class PomodoroSessionNotificationServerTest {
     private fun awaitSessionNotification(kind: PhaseKind = PhaseKind.WORK): Notification {
         val label = context.getString(if (kind == PhaseKind.WORK) R.string.pomodoro_session_work else R.string.pomodoro_session_short_rest)
         compose.waitUntil(10_000) {
-            manager.activeNotifications.singleOrNull { it.id == PomodoroSessionNotification.ID }?.notification?.let {
+            manager.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }?.notification?.let {
                 it.channelId == PomodoroSessionNotifier.CHANNEL_ID &&
                     it.extras.getCharSequence(Notification.EXTRA_TITLE).toString().startsWith(label)
             } == true
         }
-        return manager.activeNotifications.single { it.id == PomodoroSessionNotification.ID }.notification
+        return manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
     }
 
     private fun awaitHeading(label: Int) {

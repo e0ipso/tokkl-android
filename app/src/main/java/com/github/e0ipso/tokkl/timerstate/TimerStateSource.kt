@@ -193,5 +193,5 @@ private fun RunningCheckStart.withWrites(writes: List<RunningCheckWrites>): Runn
         write.delete.forEach(rows::remove)
         write.upsert?.let { rows[it.id] = it }
     }
-    return RunningCheckStart(rows.values.toList(), chain, pendingIds)
+    return RunningCheckStart(rows.values.toList(), pendingIds)
 }

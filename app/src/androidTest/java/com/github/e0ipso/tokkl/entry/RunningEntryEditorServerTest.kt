@@ -80,6 +80,7 @@ import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.trash.TrashViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
@@ -419,41 +420,25 @@ class RunningEntryEditorServerTest {
     }
 
     @Test
-    fun aPauseWhileTheEditorIsOpenCannotBeRevivedBySave() {
+    fun aServerPauseWhileTheEditorIsOpenCannotBeRevivedBySave() {
         val id = seedRunning("Paused original")
         routeThroughRelay()
         withMain {
             openClock()
             replace(R.string.entry_description, "Stale paused draft")
+            assertEquals("the server pauses it", TimerActionResult.Done, runBlocking { app.timerActions.pause() })
+            val paused = runBlocking { withTimeout(NETWORK_MS) { app.timerControls.first { it is TimerControls.Paused } } }
+            val stopped = serverEntry(id)
+            assertFalse("Pause stops the captured segment on the server", stopped["stop"] is JsonNull)
             relay!!.hang()
-            val paused = runBlocking {
-                val captured = app.changes.timerControls.first() as TimerControls.Running
-                assertEquals(id, captured.entry.id)
-                assertTrue(app.changes.pause(captured.target))
-                app.changes.timerControls.first { it is TimerControls.Paused }
-            }
-            assertTrue(paused is TimerControls.Paused)
-            assertEquals("only Pause's Stop waits offline", 1, queued())
-            val stopped = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }.entry
-            assertNotNull("Pause durably stops the captured segment", stopped.stop)
 
             tap(R.string.entry_save)
             awaitMissing()
 
-            assertEquals("stale Save adds no UPDATE or Start", 1, queued())
-            assertEquals("stale Save leaves the paused chain intact", paused, runBlocking { app.changes.timerControls.first() })
-            assertEquals(stopped, runBlocking { app.cache.entries.first() }.single { it.entry.id == id }.entry)
+            assertEquals("stale Save adds no UPDATE or Start", 0, queued())
+            assertEquals("stale Save leaves the paused chain as shown", paused, runBlocking { app.timerControls.first() })
             assertEquals("no cached timer was revived", null, runBlocking { app.cache.running.first() })
-            relay!!.release()
-            drain()
-            val sent = serverEntry(id)
-            assertEquals("Paused original", sent.text("description"))
-            assertEquals(stopped.stop, OffsetDateTime.parse(sent.text("stop")).toInstant())
-            assertFalse("Pause remains stopped on the server", sent["stop"] is JsonNull)
-            assertEquals("the paused segment is the only server entry", listOf(id),
-                web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("list paused fixture entries")
-                    .map { it.jsonObject.getValue("id").jsonPrimitive.long })
-            assertTrue(runBlocking { app.changes.timerControls.first() } is TimerControls.Paused)
+            assertEquals(stopped, serverEntry(id))
         }
     }
 
@@ -490,7 +475,7 @@ class RunningEntryEditorServerTest {
                 val history = models[HistoryViewModel::class.java]
                 val timer = models[TimerViewModel::class.java]
                 val shownTimer = changes?.let {
-                    TimerModel(app.changes.timerControls, app.cache.projects, app.cache.tasks, app.accountSettings.state, it, activity.lifecycleScope)
+                    TimerModel(app.timerControls, app.cache.projects, app.cache.tasks, app.accountSettings.state, it, activity.lifecycleScope)
                 } ?: timer.model
                 activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(width.dp, 900.dp))) {

@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.timer
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.timerstate.PauseChainActions
+import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -57,7 +57,7 @@ class TimerSurfaceActions(
     private val controls: suspend () -> TimerControls,
     private val account: () -> String,
     private val changes: EntryChanges,
-    private val server: PauseChainActions,
+    private val server: PauseActions,
     private val sendQueued: suspend () -> Unit,
 ) {
 

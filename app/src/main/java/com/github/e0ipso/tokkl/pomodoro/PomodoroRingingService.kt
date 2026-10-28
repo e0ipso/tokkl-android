@@ -121,7 +121,7 @@ class PomodoroRingingService : Service() {
         if (!promoted) {
             // The session notification shares the id. Android opens a full-screen intent only for
             // a notification it adds, not for one that replaces another, so remove it first.
-            getSystemService(NotificationManager::class.java).cancel(PomodoroSessionNotification.ID)
+            getSystemService(NotificationManager::class.java).cancel(PomodoroSessionNotifier.NOTIFICATION_ID)
         }
         // Meet startForeground's deadline before reading the held state. This provisional
         // notification plays nothing and has no actions; it gets them only after the check below.
@@ -146,7 +146,7 @@ class PomodoroRingingService : Service() {
     }
 
     internal fun promote(notification: Notification) {
-        startForeground(PomodoroSessionNotification.ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+        startForeground(PomodoroSessionNotifier.NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
         promoted = true
     }
 

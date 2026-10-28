@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
 import androidx.room.Update
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -85,10 +84,6 @@ abstract class ChangeDao {
     @Query("SELECT EXISTS(SELECT 1 FROM entry_ids WHERE serverId = :serverId)")
     abstract fun isMapped(serverId: Long): Boolean
 
-    /** A running create whose server answer may still be in flight or have been lost. */
-    @Query("SELECT * FROM pending_changes WHERE kind = 'CREATE' AND stop IS NULL AND maybeSent")
-    abstract fun possiblySentStarts(): List<PendingChange>
-
     /** Returns how many changes it marked: none when the change has left the queue. */
     @Query("UPDATE pending_changes SET maybeSent = :maybeSent WHERE sequence = :sequence")
     abstract fun setMaybeSent(sequence: Long, maybeSent: Boolean): Int
@@ -134,89 +129,4 @@ abstract class ChangeDao {
 
     @Query("SELECT * FROM tags WHERE workspaceId = :workspaceId")
     abstract fun tags(workspaceId: Long): List<CachedTag>
-
-    @Query("SELECT * FROM pause_chain WHERE slot = 0")
-    abstract fun pauseChain(): PauseChain?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract fun upsertPauseChain(chain: PauseChain)
-
-    /**
-     * Slot 0 is the visible chain. Positive slots are segment checkpoints for that chain,
-     * using the same Room 8 columns without adding an entity or changing the schema.
-     * Their revision stores segment order, epoch is 0 before Pause and 1 after it, and
-     * stoppedSeconds is only that segment's contribution. Fields are the pre-start snapshot.
-     * Keep answered segments too: a later discard must distinguish them from unrelated entries.
-     */
-    @Query("SELECT * FROM pause_chain WHERE slot > 0 AND chainId = :chainId ORDER BY revision")
-    abstract fun pauseSegmentRows(chainId: Long): List<PauseChain>
-
-    fun pauseSegments(chainId: Long): List<PauseSegmentCheckpoint> = pauseSegmentRows(chainId).map { row ->
-        PauseSegmentCheckpoint(
-            slot = row.slot,
-            chainId = row.chainId,
-            order = row.revision,
-            entryId = requireNotNull(row.runningId),
-            seconds = row.stoppedSeconds,
-            paused = row.epoch != 0L,
-            workspaceId = row.workspaceId,
-            fields = row.fields,
-        )
-    }
-
-    @Query("SELECT COALESCE(MAX(slot), 0) FROM pause_chain")
-    abstract fun lastPauseSegmentSlot(): Int
-
-    fun upsertPauseSegment(segment: PauseSegmentCheckpoint) = upsertPauseChain(
-        PauseChain(
-            slot = segment.slot,
-            chainId = segment.chainId,
-            revision = segment.order,
-            epoch = if (segment.paused) 1 else 0,
-            stoppedSeconds = segment.seconds,
-            runningId = segment.entryId,
-            workspaceId = segment.workspaceId,
-            fields = segment.fields,
-        ),
-    )
-
-    @Query("DELETE FROM pause_chain WHERE slot = :slot AND slot > 0")
-    abstract fun deletePauseSegment(slot: Int)
-
-    /** Ends the chain and deletes all of its segment checkpoints. Returns the number of rows. */
-    @Query("DELETE FROM pause_chain")
-    abstract fun deletePauseChain(): Int
-
-    /** Marks a queue answer, so a refresh whose server read began earlier leaves the chain alone. */
-    @Query("UPDATE pause_chain SET epoch = epoch + 1 WHERE slot = 0")
-    abstract fun touchPauseChain()
-
-    /** Gives the running clone and its checkpoint [localId] the server's id. */
-    @Query("UPDATE pause_chain SET runningId = :serverId WHERE runningId = :localId")
-    abstract fun remapPauseChain(localId: Long, serverId: Long)
-
-    @Query("SELECT id FROM timer_session WHERE slot = 0")
-    abstract fun timerSession(): Long?
-
-    /** Keeps the current session, or starts [session] when there is none. */
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    abstract fun ensureTimerSession(session: TimerSession)
-
-    /**
-     * Ends the pause chain when a server read that began at [mark] shows that its timer changed
-     * elsewhere: something runs while it is paused, or another entry than its clone runs, or
-     * nothing does. A chain that changed since [mark], or began after it, is newer than the read
-     * and stays. Call it in the transaction that writes the read's rows.
-     */
-    @Transaction
-    open fun reconcilePauseChain(mark: ChainMark?) {
-        val chain = pauseChain() ?: return
-        if (mark != ChainMark(chain.chainId, chain.epoch)) return
-        val running = latestRunning()?.entry
-        val keeps = if (chain.runningId == null) running == null else running?.id == chain.runningId
-        if (!keeps) deletePauseChain()
-    }
 }
-
-/** Where a server read begins for the pause chain, as [ChangeDao.reconcilePauseChain] takes it. */
-fun ChangeDao.chainMark(): ChainMark? = pauseChain()?.let { ChainMark(it.chainId, it.epoch) }

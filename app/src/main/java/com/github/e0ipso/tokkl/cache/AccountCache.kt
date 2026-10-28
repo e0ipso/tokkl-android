@@ -1,18 +1,12 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
-import com.github.e0ipso.tokkl.pomodoro.PomodoroStep
 import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.session.MePreferences
 import java.time.Clock
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.runBlocking
 
 /**
  * What the app last loaded from the server, readable offline (docs/PRD.md O2): projects, clients,
@@ -25,7 +19,6 @@ import kotlinx.coroutines.runBlocking
 class AccountCache(
     private val database: CacheDatabase,
     private val clock: Clock = Clock.systemUTC(),
-    private val pomodoro: () -> PomodoroSessionStore? = { null },
 ) : CurrentEntryCache {
 
     private val dao = database.cache()
@@ -56,37 +49,28 @@ class AccountCache(
      * [me] is the refresh's `GET /api/v9/me` with related data, [preferences] its
      * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
      * A server without favorites gets none cached. A failed request keeps its rows, and a failed
-     * write keeps the whole cache as it was. Read history ends a pause chain whose timer changed
-     * elsewhere, as [ChangeDao.reconcilePauseChain] describes. Blocks, so call it off the main
-     * thread.
+     * write keeps the whole cache as it was. Blocks, so call it off the main thread.
      */
     fun refresh(api: TogglApiClient, me: Me, preferences: MePreferences?, capabilities: Capabilities) {
         val changes = database.changes()
-        val (before, mark) = try {
-            database.runInTransaction<Pair<EntryRefreshStart, ChainMark?>> {
-                dao.entryRefreshStart() to changes.chainMark()
-            }
+        val before = try {
+            database.runInTransaction<EntryRefreshStart> { dao.entryRefreshStart() }
         } catch (e: SQLiteException) {
             // Without the before-read state, a stale answer could overwrite a completed send.
             return
         }
         val snapshot = readServerSnapshot(api, me, preferences, clock, favorites = capabilities.favorites)
-        val sessions = pomodoro()
-        val handoff = try {
-            database.runInTransaction<PomodoroStep> {
+        try {
+            database.runInTransaction {
                 // A pending local entry may have been created and then removed during the read.
                 // Protect its server ID too, even when no cached row remains to compare.
                 val mappedIds = before.pendingIds.filter { it < 0 }.mapNotNull(changes::serverId)
                 val protectedBefore = before.copy(pendingIds = before.pendingIds + mappedIds)
                 dao.refresh { current, pending -> current.refreshedWith(snapshot, pending, protectedBefore) }
-                if (snapshot.timeEntries != null) changes.reconcilePauseChain(mark)
-                endForForeignTimer(sessions, snapshot.timeEntries.orEmpty())
             }
         } catch (e: SQLiteException) {
-            // Keeps both the cache and session until the next refresh.
-            return
+            // Keeps the cache until the next refresh.
         }
-        finishHandoff(sessions, handoff)
     }
 
     /**
@@ -98,13 +82,13 @@ class AccountCache(
     }
 
     /**
-     * The cached running entries, the ids with queued changes and the pause chain, read together,
-     * as a running entry check reads them before its request. Blocks on disk I/O.
+     * The cached running entries and the ids with queued changes, read together, as a running
+     * entry check reads them before its request. Blocks on disk I/O.
      */
     override fun runningCheckStart(): RunningCheckStart {
         val changes = database.changes()
         return database.runInTransaction<RunningCheckStart> {
-            RunningCheckStart(changes.runningEntries(), changes.chainMark(), changes.pendingEntryIds().toSet())
+            RunningCheckStart(changes.runningEntries(), changes.pendingEntryIds().toSet())
         }
     }
 
@@ -113,16 +97,14 @@ class AccountCache(
      * runs, read after the cache held what [before] holds, in one transaction, as
      * [runningCheckWrites] describes: entries with unsent changes, entries with changes queued at
      * [before] that the sender may have sent since, and rows written since [before], stay as they
-     * are. A pending local id that the server has answered since protects its server id too. A
-     * pause chain whose timer changed elsewhere ends, as [ChangeDao.reconcilePauseChain]
-     * describes. Returns what it wrote, or null when the write failed and the cache stays for the
-     * next check. Blocks on disk I/O.
+     * are. A pending local id that the server has answered since protects its server id too.
+     * Returns what it wrote, or null when the write failed and the cache stays for the next check.
+     * Blocks on disk I/O.
      */
     override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? {
         val changes = database.changes()
-        val sessions = pomodoro()
-        val (writes, handoff) = try {
-            database.runInTransaction<Pair<RunningCheckWrites, PomodoroStep>> {
+        return try {
+            database.runInTransaction<RunningCheckWrites> {
                 // A pending local start may have been answered and remapped during the read.
                 val mappedIds = before.pendingIds.filter { it < 0 }.mapNotNull(changes::serverId)
                 val writes = runningCheckWrites(
@@ -135,59 +117,29 @@ class AccountCache(
                 )
                 writes.delete.forEach(changes::deleteEntry)
                 writes.upsert?.let(changes::upsertEntry)
-                changes.reconcilePauseChain(before.chain)
-                writes to endForForeignTimer(sessions, listOfNotNull(writes.upsert))
+                writes
             }
         } catch (e: SQLiteException) {
-            // Keeps both the cache and session until the next check.
-            return null
+            // Keeps the cache until the next check.
+            null
         }
-        finishHandoff(sessions, handoff)
-        return writes
-    }
-
-    /** All identity checks and the partial save use the refresh's existing transaction. */
-    private fun endForForeignTimer(sessions: PomodoroSessionStore?, entries: List<CachedTimeEntry>): PomodoroStep {
-        if (sessions == null) return PomodoroStep.Idle
-        val session = database.pomodoroSessions().current() ?: return PomodoroStep.Idle
-        val changes = database.changes()
-        val uncertainStarts = changes.possiblySentStarts()
-        val foreign = foreignPomodoroStart(
-            session.pomodoroStartedAt,
-            entries,
-            cached = changes::entry,
-            locallyStarted = { entry ->
-                changes.isMapped(entry.id) || changes.countFor(entry.id) > 0 ||
-                    uncertainStarts.any { it.mayBeLocalRunning(entry) }
-            },
-        ) ?: return PomodoroStep.Idle
-        return sessions.endForTimerInTransaction(foreign.start)
-    }
-
-    /** This public cache API already blocks on IO. Never block while holding Room's transaction. */
-    private fun finishHandoff(sessions: PomodoroSessionStore?, step: PomodoroStep) {
-        if (step != PomodoroStep.Idle) runBlocking { sessions?.timerHandoffCommitted(step) }
     }
 
     /**
-     * Deletes every cached row, the queue of unsent changes, the pause chain and the pomodoro
-     * session. Signing out calls this, together with clearing the stored session and settings.
-     * A new timer session starts, so a timer action shown before cannot act after it. Blocks, so
-     * call it off the main thread.
+     * Deletes every cached row and the queue of unsent changes. Signing out calls this, together
+     * with clearing the stored session and settings. Blocks, so call it off the main thread.
      */
     fun clear() {
         database.clearAllTables()
-        database.changes().ensureTimerSession(TimerSession(id = newTimerId()))
     }
 }
 
 /**
- * What a running entry check read before its request: the [running] entries, the [chain] and the
+ * What a running entry check read before its request: the [running] entries and the
  * [pendingIds] of the entries the queue held changes to.
  */
 class RunningCheckStart(
     val running: List<CachedTimeEntry>,
-    val chain: ChainMark?,
     val pendingIds: Set<Long> = emptySet(),
 )
 
@@ -201,31 +153,3 @@ interface CurrentEntryCache {
 
     fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites?
 }
-
-/** Keep stale, locally overlaid, phone-created and already observed starts out of the handoff. */
-internal fun foreignPomodoroStart(
-    pomodoroStartedAt: Instant,
-    refreshed: List<CachedTimeEntry>,
-    cached: (Long) -> CachedTimeEntry?,
-    locallyStarted: (CachedTimeEntry) -> Boolean,
-): CachedTimeEntry? = refreshed.asSequence().filter { row ->
-    row.id > 0 && row.stop == null && row.start.isAfter(pomodoroStartedAt) &&
-        cached(row.id)?.let { it.stop == null && it.start == row.start } == true && !locallyStarted(row)
-}.minByOrNull { it.start }
-
-/** Unanswered running POSTs keep their start, with only server timestamp precision removed. */
-internal fun PendingChange.mayBeLocalRunning(entry: CachedTimeEntry): Boolean =
-    entry.id !in existingIds && couldHaveMade(
-        ServerTimeEntry(
-            id = entry.id,
-            workspaceId = entry.workspaceId,
-            projectId = entry.projectId,
-            taskId = entry.taskId,
-            description = entry.description,
-            start = entry.start.toString(),
-            stop = null,
-            billable = entry.billable,
-            tags = entry.tags,
-        ),
-        setOf(start, start.truncatedTo(ChronoUnit.SECONDS)),
-    )

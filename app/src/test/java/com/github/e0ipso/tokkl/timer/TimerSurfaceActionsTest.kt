@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.timerstate.PauseChainActions
+import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
 import kotlinx.coroutines.CompletableDeferred
@@ -193,7 +193,7 @@ class TimerSurfaceActionsTest {
     private fun paused(revision: Long) =
         TimerControls.Paused(600, 1, EntryFields("Paused"), TimerTarget.server(revision = revision, account = ACCOUNT))
 
-    private inner class Server : PauseChainActions {
+    private inner class Server : PauseActions {
         override suspend fun pause(): TimerActionResult {
             calls += "pause"
             held?.await()

@@ -213,7 +213,7 @@ class PomodoroRingingServiceTest {
         assertEquals(original.audioSessionId, after.audioSessionId)
         assertEquals(phase, after.ring?.phase)
         assertAlarmOutput(after)
-        assertEquals(1, notifications.activeNotifications.count { it.id == PomodoroSessionNotification.ID })
+        assertEquals(1, notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
         onMain { assertTrue(checkNotNull(app.pomodoroRinging.service).output.playing) }
     }
 
@@ -311,15 +311,15 @@ class PomodoroRingingServiceTest {
 
     private fun awaitSessionNotifications(count: Int) {
         val deadline = SystemClock.uptimeMillis() + 10_000
-        while (notifications.activeNotifications.count { it.id == PomodoroSessionNotification.ID } != count) {
+        while (notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID } != count) {
             if (SystemClock.uptimeMillis() > deadline) {
-                assertEquals(count, notifications.activeNotifications.count { it.id == PomodoroSessionNotification.ID })
+                assertEquals(count, notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             }
             Thread.sleep(50)
         }
     }
 
-    private fun ringingNotification(): Notification = notifications.activeNotifications.single { it.id == PomodoroSessionNotification.ID }.notification
+    private fun ringingNotification(): Notification = notifications.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
 
     private fun assertAlarmOutput(state: PomodoroRingingState) {
         assertTrue(state.serviceRunning)
