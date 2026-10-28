@@ -26,6 +26,7 @@ class CapabilitiesStore(context: Context) {
             negatedFilters = preferences.getBoolean(KEY_NEGATED_FILTERS, false),
             summaryCsv = readCsv(KEY_SUMMARY_CSV),
             detailedCsv = readCsv(KEY_DETAILED_CSV),
+            timerState = preferences.getBoolean(KEY_TIMER_STATE, false),
         )
     }
 
@@ -44,6 +45,7 @@ class CapabilitiesStore(context: Context) {
             putBoolean(KEY_NEGATED_FILTERS, capabilities.negatedFilters)
             putCsv(KEY_SUMMARY_CSV, capabilities.summaryCsv)
             putCsv(KEY_DETAILED_CSV, capabilities.detailedCsv)
+            putBoolean(KEY_TIMER_STATE, capabilities.timerState)
         }
     }
 
@@ -69,5 +71,6 @@ class CapabilitiesStore(context: Context) {
         private const val KEY_NEGATED_FILTERS = "negated_filters"
         private const val KEY_SUMMARY_CSV = "summary_csv"
         private const val KEY_DETAILED_CSV = "detailed_csv"
+        private const val KEY_TIMER_STATE = "timer_state"
     }
 }

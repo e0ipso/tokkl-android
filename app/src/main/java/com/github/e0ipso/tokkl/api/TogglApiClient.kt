@@ -17,8 +17,8 @@ import okhttp3.Response
 /**
  * Client for the Toggl Track API v9 and Reports API v3, as served by Tokkl or
  * by Toggl Track. Build endpoint URLs with [server], then call [get], [send],
- * [sendWithHeaders] or [sendNoContent]. Calls block the calling thread, so
- * make them off the main thread.
+ * [sendRefusable], [sendWithHeaders] or [sendNoContent]. Calls block the
+ * calling thread, so make them off the main thread.
  */
 class TogglApiClient(
     val server: ServerUrl,
@@ -54,6 +54,32 @@ class TogglApiClient(
         deserializer: DeserializationStrategy<T>,
         resend: Boolean = true,
     ): ApiResult<T> = execute(method, url, body, resend) { decode(it.body.string(), deserializer) }
+
+    /**
+     * Like [send] with `resend` false, for Tokkl calls that answer a refusal with 409 and a body of
+     * the same type as their 2xx answer, as the timer actions answer with the timer state either
+     * way. A 2xx body is [Refusable] with `refused` false, and a 409 body that decodes with
+     * [deserializer] is one with `refused` true. A 409 whose body is a JSON string is
+     * [ApiError.UnexpectedStatus] with that reason, as any other status is, and one whose body is
+     * neither is [ApiError.InvalidResponse]. Other statuses fail as in [send].
+     */
+    fun <T> sendRefusable(
+        method: String,
+        url: HttpUrl,
+        body: JsonElement,
+        deserializer: DeserializationStrategy<T>,
+    ): ApiResult<Refusable<T>> = execute(
+        method,
+        url,
+        body,
+        resend = false,
+        onConflict = { response -> refusal(response.body.string(), deserializer) },
+    ) { response ->
+        when (val decoded = decode(response.body.string(), deserializer)) {
+            is ApiResult.Success -> ApiResult.Success(Refusable(decoded.value, refused = false))
+            is ApiResult.Failure -> decoded
+        }
+    }
 
     /**
      * Like [send], and keeps the response's headers too, for calls that put
@@ -131,6 +157,7 @@ class TogglApiClient(
         body: JsonElement?,
         resend: Boolean,
         cancellation: ApiCallCancellation? = null,
+        onConflict: ((Response) -> ApiResult<T>)? = null,
         onSuccess: (Response) -> ApiResult<T>,
     ): ApiResult<T> {
         val json = body?.let { ApiJson.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) }
@@ -148,11 +175,13 @@ class TogglApiClient(
             call.execute().use { response ->
                 // The server answered, so it passed the trust checks.
                 trustListener?.answered()
-                if (response.isSuccessful) {
-                    successListener?.succeeded()
-                    onSuccess(response)
-                } else {
-                    ApiResult.Failure(httpError(response))
+                when {
+                    response.isSuccessful -> {
+                        successListener?.succeeded()
+                        onSuccess(response)
+                    }
+                    response.code == CONFLICT && onConflict != null -> onConflict(response)
+                    else -> ApiResult.Failure(httpError(response))
                 }
             }
         } catch (e: HostNotAllowedException) {
@@ -194,6 +223,11 @@ class TogglApiClient(
         } catch (e: IOException) {
             return null
         }
+        return reasonIn(text)
+    }
+
+    /** The reason [text] holds when it is one non-blank JSON string, or null. */
+    private fun reasonIn(text: String): String? {
         val element = try {
             ApiJson.parseToJsonElement(text)
         } catch (e: IllegalArgumentException) {
@@ -202,6 +236,13 @@ class TogglApiClient(
         }
         return (element as? JsonPrimitive)?.takeIf { it.isString }?.content?.trim()?.takeIf { it.isNotEmpty() }
     }
+
+    /** A 409 [text] for [sendRefusable]: the refusal's body, the server's reason, or an invalid response. */
+    private fun <T> refusal(text: String, deserializer: DeserializationStrategy<T>): ApiResult<Refusable<T>> =
+        when (val decoded = decode(text, deserializer)) {
+            is ApiResult.Success -> ApiResult.Success(Refusable(decoded.value, refused = true))
+            is ApiResult.Failure -> reasonIn(text)?.let { ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, it)) } ?: decoded
+        }
 
     private fun <T> decode(text: String, deserializer: DeserializationStrategy<T>): ApiResult<T> =
         try {
@@ -217,6 +258,9 @@ class TogglApiClient(
         /** Tokkl's reasons are one short sentence. */
         const val MAX_REASON_BYTES = 2048L
 
+        /** What [sendRefusable] reads a body for. */
+        const val CONFLICT = 409
+
         /** Tokkl sends whole seconds. An HTTP date or a negative number counts as missing. */
         fun retryAfterSeconds(value: String?): Long? = value?.trim()?.toLongOrNull()?.takeIf { it >= 0 }
     }
@@ -224,6 +268,9 @@ class TogglApiClient(
 
 /** A decoded response body and the headers it came with. */
 class WithHeaders<out T>(val value: T, val headers: Headers)
+
+/** A decoded answer to [TogglApiClient.sendRefusable]. [refused] is true for a 409. */
+data class Refusable<out T>(val value: T, val refused: Boolean)
 
 /**
  * Hears how the signed-in session's requests fare with the trust checks, so

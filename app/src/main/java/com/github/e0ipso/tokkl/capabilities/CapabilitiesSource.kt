@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.capabilities
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.reports.ReportCsvKind
 import com.github.e0ipso.tokkl.session.Me
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,13 +27,21 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
     val state: StateFlow<Capabilities> = mutableState.asStateFlow()
 
     /**
-     * Sets the flags from [me], the refresh's `GET /api/v9/me`, and one `GET /api/app/trash`,
-     * and stores them. A failed write keeps the new flags for this process. Blocks on the network
-     * and the disk, so call it off the main thread. Returns the new flags.
+     * Sets the flags from [me], the refresh's `GET /api/v9/me`, one `GET /api/app/trash` and one
+     * `GET /api/app/timer`, and stores them. A timer state the probe read goes to [timerState], so
+     * the refresh sends no second request for it. A failed write keeps the new flags for this
+     * process. Blocks on the network and the disk, so call it off the main thread. Returns the new
+     * flags.
      */
     @Synchronized
-    fun refresh(api: TogglApiClient, me: Me): Capabilities =
-        update(mutableState.value.updatedWith(me, probeTrash(api)))
+    fun refresh(api: TogglApiClient, me: Me, timerState: TimerStateSource): Capabilities {
+        val trash = probeTrash(api)
+        val read = timerState.begin()
+        val timer = probeTimerState(api)
+        val flags = update(mutableState.value.updatedWith(me, trash, timer))
+        if (timer is TimerStateProbe.Present) timerState.accept(read, timer.state)
+        return flags
+    }
 
     /** A CSV request got definite endpoint absence. It affects only this export kind. */
     @Synchronized

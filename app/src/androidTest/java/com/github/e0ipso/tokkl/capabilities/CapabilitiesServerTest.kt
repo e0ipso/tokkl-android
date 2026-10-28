@@ -78,6 +78,7 @@ class CapabilitiesServerTest {
             negatedFilters = true,
             summaryCsv = true,
             detailedCsv = true,
+            timerState = true,
         )
     }
 }

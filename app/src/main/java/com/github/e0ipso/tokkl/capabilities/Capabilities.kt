@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.reports.ReportCsvKind
 import com.github.e0ipso.tokkl.session.Me
+import com.github.e0ipso.tokkl.timerstate.TimerState
 import kotlinx.serialization.json.JsonArray
 
 /**
@@ -25,6 +26,9 @@ import kotlinx.serialization.json.JsonArray
  * @property summaryCsv Share on Summary. Null until a refresh. True when `/me` has Tokkl's `role`,
  *   until `POST /api/app/report/summary.csv` returns 404 or 410. False on Toggl Track and after that.
  * @property detailedCsv the same for Detailed and `POST /api/app/report/detailed.csv`.
+ * @property timerState the server owns Pomodoro sessions and pause chains, and `GET /api/app/timer`
+ *   answers with a timer state. False on Toggl Track and on a Tokkl without the timer API. Pomodoro,
+ *   Pause and the timer event stream follow this flag.
  */
 data class Capabilities(
     val trash: Boolean,
@@ -34,20 +38,22 @@ data class Capabilities(
     val negatedFilters: Boolean,
     val summaryCsv: Boolean? = null,
     val detailedCsv: Boolean? = null,
+    val timerState: Boolean = false,
 ) {
 
     /**
      * The flags from [me] and the [trash] probe. A probe that got no clear answer keeps the
      * trash and restore flags as they were. CSV routes are POST only, so refresh does not send
      * OPTIONS: that 404 is not absence. Tokkl offers Share until a POST proves one kind is gone,
-     * and a recorded false stays false across later refreshes.
+     * and a recorded false stays false across later refreshes. The same holds for [timerState]
+     * and its probe.
      */
     fun supports(kind: ReportCsvKind): Boolean = when (kind) {
         ReportCsvKind.SUMMARY -> summaryCsv == true
         ReportCsvKind.DETAILED -> detailedCsv == true
     }
 
-    fun updatedWith(me: Me, trash: TrashProbe): Capabilities {
+    fun updatedWith(me: Me, trash: TrashProbe, timer: TimerStateProbe): Capabilities {
         val hasTrash = when (trash) {
             TrashProbe.PRESENT -> true
             TrashProbe.ABSENT -> false
@@ -62,6 +68,11 @@ data class Capabilities(
             negatedFilters = tokkl,
             summaryCsv = csvOffered(tokkl, summaryCsv),
             detailedCsv = csvOffered(tokkl, detailedCsv),
+            timerState = when (timer) {
+                is TimerStateProbe.Present -> true
+                TimerStateProbe.Absent -> false
+                TimerStateProbe.Unknown -> timerState
+            },
         )
     }
 
@@ -101,5 +112,28 @@ fun probeTrash(api: TogglApiClient): TrashProbe =
             is ApiError.UnexpectedStatus -> if (error.status == 404) TrashProbe.ABSENT else TrashProbe.UNKNOWN
             is ApiError.InvalidResponse -> TrashProbe.ABSENT
             else -> TrashProbe.UNKNOWN
+        }
+    }
+
+/** What `GET /api/app/timer` said about the server-owned timer. */
+sealed interface TimerStateProbe {
+    /** It answered with a timer state, which is [state]. */
+    data class Present(val state: TimerState) : TimerStateProbe
+
+    /** 404, or a 2xx that is not a timer state, so the server has no timer API the app can read. */
+    data object Absent : TimerStateProbe
+
+    /** No clear answer: no network, a refused trust check, 403, 429 or another status. */
+    data object Unknown : TimerStateProbe
+}
+
+/** Sends `GET /api/app/timer` once. Blocks, so call it off the main thread. */
+fun probeTimerState(api: TogglApiClient): TimerStateProbe =
+    when (val result = api.get(api.server.app("timer"), TimerState.serializer())) {
+        is ApiResult.Success -> TimerStateProbe.Present(result.value)
+        is ApiResult.Failure -> when (val error = result.error) {
+            is ApiError.UnexpectedStatus -> if (error.status == 404) TimerStateProbe.Absent else TimerStateProbe.Unknown
+            is ApiError.InvalidResponse -> TimerStateProbe.Absent
+            else -> TimerStateProbe.Unknown
         }
     }

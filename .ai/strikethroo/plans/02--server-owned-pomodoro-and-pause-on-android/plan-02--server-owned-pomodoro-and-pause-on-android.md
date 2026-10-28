@@ -403,12 +403,12 @@ graph TD
 
 - ✔️ Task 002 (completed): [Add persisted account timer state](tasks/02--add-persisted-account-timer-state.md), depends on 001.
 
-### Phase 3: Add actions and capability detection
+### ✅ Phase 3: Add actions and capability detection
 
 **Parallel Tasks:**
 
-- Task 003: [Send session and pause actions directly](tasks/03--send-session-and-pause-actions-directly.md), depends on 002.
-- Task 004: [Probe and persist timer state capability](tasks/04--probe-and-persist-timer-state-capability.md), depends on 002.
+- ✔️ Task 003 (completed): [Send session and pause actions directly](tasks/03--send-session-and-pause-actions-directly.md), depends on 002.
+- ✔️ Task 004 (completed): [Probe and persist timer state capability](tasks/04--probe-and-persist-timer-state-capability.md), depends on 002.
 
 ### Phase 4: Connect background sync and app controls
 

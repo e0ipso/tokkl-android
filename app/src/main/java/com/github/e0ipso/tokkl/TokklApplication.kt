@@ -64,6 +64,7 @@ import com.github.e0ipso.tokkl.sync.shownSyncStatus
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
+import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
@@ -119,7 +120,7 @@ class TokklApplication : Application() {
             scope = MainScope(),
             io = Dispatchers.IO,
             onRefresh = { api, me, preferences ->
-                val flags = capabilities.refresh(api, me)
+                val flags = capabilities.refresh(api, me, timerState)
                 cache.refresh(api, me, preferences, flags)
                 timerView.refreshed(preferences, keepsTimerView = flags.favorites)
                 pomodoroDefaults.refreshed(preferences, keepsPreferences = flags.favorites)
@@ -304,6 +305,14 @@ class TokklApplication : Application() {
             // The state does not carry a stopped entry's stop; the history read does.
             onRunningEnded = { accountSettings.refreshAfterChange() },
         )
+    }
+
+    /**
+     * Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
+     * server at once and never queued. Each answer, refusals included, goes to [timerState].
+     */
+    val timerActions: TimerActions by lazy {
+        TimerActions(client = Session(this)::client, source = { timerState }, io = Dispatchers.IO)
     }
 
     /**

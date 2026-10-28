@@ -2,7 +2,7 @@
 id: 4
 group: "timer-state"
 dependencies: [2]
-status: "pending"
+status: "completed"
 created: 2026-10-28
 skills:
   - kotlin
@@ -21,11 +21,11 @@ Kotlin capability probing and persisted state updates.
 
 ## Acceptance Criteria
 
-- [ ] `Capabilities.timerState` defaults to false, persists with the other capability flags and clears at sign-out.
-- [ ] The existing account-refresh path probes `GET /api/app/timer` once. A parsed state means present and seeds the holder; 404 or a successful response that is not a timer state means absent. An inconclusive error preserves the previous flag.
-- [ ] Toggl Track and old Tokkl remain plain timer clients. Probing compares no server version and duplicates no `/me` requests.
-- [ ] Consumers can observe capability changes to start/stop the SSE service and hide Pomodoro/Pause controls in later tasks. This task owns the flag and refresh integration, not those consumers' UI.
-- [ ] Extend the existing capability tests with present, absent, invalid-body, unknown, persistence and sign-out cases. Run `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.github.e0ipso.tokkl.capabilities.CapabilitiesTest'`; expect zero failures and the new cases executed.
+- [x] `Capabilities.timerState` defaults to false, persists with the other capability flags and clears at sign-out.
+- [x] The existing account-refresh path probes `GET /api/app/timer` once. A parsed state means present and seeds the holder; 404 or a successful response that is not a timer state means absent. An inconclusive error preserves the previous flag.
+- [x] Toggl Track and old Tokkl remain plain timer clients. Probing compares no server version and duplicates no `/me` requests.
+- [x] Consumers can observe capability changes to start/stop the SSE service and hide Pomodoro/Pause controls in later tasks. This task owns the flag and refresh integration, not those consumers' UI.
+- [x] Extend the existing capability tests with present, absent, invalid-body, unknown, persistence and sign-out cases. Run `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.github.e0ipso.tokkl.capabilities.CapabilitiesTest'`; expect zero failures and the new cases executed.
 
 Use your internal Todo tool to track these and keep on track.
 
