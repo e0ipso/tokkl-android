@@ -38,7 +38,7 @@ The phone keeps what only a device can do. It counts down on a server-corrected 
 | Current State | Target State | Why? |
 | --- | --- | --- |
 | The session lives in the Room row `pomodoro_session` (`cache/PomodoroSession.kt`, `PomodoroSessionDao.kt`), written in the same transaction as the queued entry. | The session is `pomodoro` in the server's `TimerState`. The phone keeps the last state it received and no session row. | A session started on another device must show on the phone. |
-| Phase changes, the long-rest count, the planned end and the transition come from `time/Pomodoro.kt`, a port of `pomodoroSession.ts` checked against a copied `pomodoroSession.json`. | `phase.planned_end`, `transition`, `upcoming_phase` and `number` come from the server. The phone subtracts the corrected current time and does nothing else. | Plan 3 makes the fixtures a server-side contract. A client that reads the state needs no port. |
+| Phase changes, the long-rest count, the planned end and the transition come from `time/Pomodoro.kt`, a port of `pomodoroSession.ts` checked against a copied `pomodoroSession.json`. | `phase.planned_end`, `transition`, `upcoming_phase` and `number` come from the server. The phone subtracts the corrected current time and does nothing else. | Plan 3 moves the rules onto the server, and Tokkl 1.10.0 deletes the shared `pomodoroSession.json` fixture. A client that reads the state needs no port. |
 | Each pomodoro is snapped on the phone and posted as a stopped entry through `ChangeQueue`. | The open pomodoro is the server's running entry. The server stops and snaps it on rest-to-work, End session or any other stop. | Plan 3 has one write path, and the queue, snap and handoff code leaves every client. |
 | The phone ends its session at a foreign timer's start when it sees one (`AccountCache` handoff, `timerHandoffCommitted`). | Any start of another entry stops the pomodoro entry on the server, which ends the session there. The phone sees the state change. | The rule holds whichever client starts the timer. |
 | The pause chain is the Room row `pause_chain`, plus `TimerSession`, `ChainMark` and chain id, revision and epoch fencing in `TimerControls`, the widget, the tile and the notification. | The chain is `pause` in the state (`paused`, `seconds`, the entry fields, `clone_entry_id`). Pause, Resume and Discard are server actions. | A pause on KDE must show as paused on the phone with the same total. |
@@ -46,7 +46,7 @@ The phone keeps what only a device can do. It counts down on a server-corrected 
 | Pause, Resume and Stop-while-paused work offline from the app, notification, widget, tile and reminder. | They need the server. Offline they fail with "Can't reach the server. Try again when you're back online." and the shown state stays. Plain Start and Stop of a running entry keep the offline queue. | Plan 3 makes these actions online-only to remove the offline session queue. |
 | No push reaches the phone. It refreshes on app open, network return, the tile's shade refresh and a 15 minute check while a timer runs. | A foreground service holds `GET /api/app/timer/events` whenever signed in to a server with the timer API, and reconnects with backoff. | Every signed-in device rings at a phase end, so a session started elsewhere must reach an idle phone before its first phase ends. |
 | Pomodoro and Pause are shown on Tokkl and Toggl Track alike. | Both are hidden unless the new timer state capability is true. | Toggl Track and older Tokkl have no timer API, and the local fallback is deleted. |
-| Instrumented tests run against `ghcr.io/e0ipso/tokkl:1.8.1`, pinned by digest in `scripts/instrumented-tests.sh`. | They run against the first tokkl release that ships plan 3, pinned by digest. | Real-server tests must exercise the timer API. |
+| Instrumented tests run against `ghcr.io/e0ipso/tokkl:1.8.1`, pinned by digest in `scripts/instrumented-tests.sh`. | They run against Tokkl 1.10.0, the first tokkl release that ships plan 3, pinned by tag and digest. | Real-server tests must exercise the timer API. |
 
 ### Background
 
@@ -67,7 +67,7 @@ Facts read in both trees on 2026-10-27:
     - `POST /api/app/pomodoro/next` and `POST /api/app/pomodoro/end` (with `revision`).
   - Every action returns the new state. Every refusal, stale revision or not, is 409 with the current state as the body. A non-integer revision is 400.
   - Pause is refused during a session or when nothing runs. Start session is refused while a session exists, ends any chain and stops the running entry at the session start.
-  - `GET /api/app/timer/events` sends `event: timer` with one line of JSON on connect and on every change, and a `: keep-alive` comment every 25 s. It caps streams at 10 per user and closes the oldest. It closes a stream whose credential stops passing `stillSignedIn`.
+  - `GET /api/app/timer/events` sends `event: timer` with one line of JSON on connect and on every change, and an `event: keep-alive` with an empty `data:` line every 25 s (corrected from "a `: keep-alive` comment" against Tokkl 1.10.0). It caps streams at 10 per user and closes the oldest. It closes a stream whose credential stops passing `stillSignedIn`.
   - Stopping the clone or the pomodoro entry through v9 ends the chain or the session on the server. Editing the open pomodoro's description, project, task, tags or billable is a normal v9 edit of the running entry, and the server copies those fields into the next pomodoro.
   - Plan 3 says old Android builds keep working: they see the pomodoro entry as a foreign timer.
 - **Web behaviour this plan matches (plan 3 tasks 04 to 06).**
@@ -93,16 +93,32 @@ Facts read in both trees on 2026-10-27:
 
 ### Server release status
 
-Task 01 checked this on 2026-10-28. No published Tokkl release contains plan 3, so the release gate stays closed and tasks 02 to 13 must not start.
+Task 01 re-ran on 2026-10-28 against Tokkl 1.10.0, the first release with plan 3. The released contract matches this plan apart from the corrections below. None of them changes an approved product choice.
 
-- `ghcr.io/e0ipso/tokkl:1.9.0` exists, with index digest `sha256:ce7e9f18a6541e5264cb4c4509f35d0dbe4543cccafaf740f2f61b2642f75252` for linux/amd64 and linux/arm64. The `1.9` and `latest` tags point at the same index, and 1.9.0 is the newest version tag in the registry.
-- Tag `v1.9.0` is commit `61e08ad` ("chore(release): 1.9.0"), which is also `main` on GitHub. Its changelog entry lists only tokkl plan 2, the desktop Pomodoro mode from PR #46. The image has no revision label, so the source revision comes from the tag.
-- The `v1.9.0` tree has no `packages/api/src/services/timerState.ts`. `git grep` finds no `/api/app/timer`, `/api/app/pomodoro` or `TimerState` under `packages/` or `docs/`.
-- A container started from that digest, with a fresh account and Basic auth, answers 200 to `GET /api/v9/me` and `GET /api/app/bounds`. It answers 404 `"Not found"` to `GET /api/app/timer`, `GET /api/app/timer/events`, `POST /api/app/timer/pause` and `POST /api/app/pomodoro`.
-- Plan 3 lives on the branch `feature/3--server-owned-timer-state-and-cross-device-sync`, open and unmerged as e0ipso/tokkl#48 at `c6a0902`. Four fixes landed after the archive commit `abbbf1b`. One of them changes the API (`6e2c59d`, "move the timer revision when a name it shows changes"), so the contract can still change before a release. At `c6a0902` git no longer tracks the plan 3 archive. Read it at `abbbf1b`, or in the sibling's working tree.
-- The blueprint's earlier claim that 1.9.0 is the first candidate came from the top entry of the sibling's changelog, and it was wrong.
+**Release.**
 
-Still to do once a release contains plan 3: reconcile this plan with its API table, `TimerState` types, routes and SSE behaviour, move `IMAGE` in `scripts/instrumented-tests.sh` (still Tokkl 1.8.1), check the Stop assertions against that release, and run the focused device check. Re-run task 01 then. Confirm the release tag sits on a commit that contains plan 3 before taking its index digest.
+- Image `ghcr.io/e0ipso/tokkl:1.10.0`, index digest `sha256:207db4f2a6547fea35ad898570fef892f55ef3ab26b6f142bfc3e3e0e680ad2f`, for linux/amd64 and linux/arm64. The `1.10` and `latest` tags point at the same index. `scripts/instrumented-tests.sh` pins it by tag and digest.
+- Tag `v1.10.0` is commit `95aa429` ("chore(release): 1.10.0"). It contains the plan 3 merge `4c7be52` (e0ipso/tokkl#48) and every fix made after the archive commit, `6e2c59d` included. The image has no revision label, so the source revision comes from the tag.
+- Tokkl 1.9.0 (`61e08ad`, index `sha256:ce7e9f18a6541e5264cb4c4509f35d0dbe4543cccafaf740f2f61b2642f75252`) has none of plan 3, and its container answered 404 on every timer route. The blueprint's earlier claim that 1.9.0 was the first candidate was wrong.
+- The contract lives at the tag in `docs/PRD.md` (section 6.2, rows "Timer state" and "Timer events"), `packages/types/index.ts`, `packages/api/src/routes/timer.ts` and `packages/api/src/services/timerState.ts`, `timerStreams.ts` and `models/timerState.ts`. Git stopped tracking the plan 3 archive at `c6a0902`. Read it at `abbbf1b` or in the sibling's working tree.
+
+**What matches.** The `TimerState` fields, nesting and nullability listed under Background. The phase kinds `work`, `shortRest` and `longRest` and the transitions `workToShortRest`, `shortRestToWork`, `workToLongRest` and `longRestToWork`, spelled as `time/Pomodoro.kt` spells them. The seven routes, with a revision on resume, discard, next and end and none on pause or start. A 409 with the current state for every refusal, stale or not, and a 400 for a non-integer revision. Basic auth, 10 streams per user and the 25 s keep-alive interval. A container from the pinned digest showed the same refusals, 400s and stream framing.
+
+**Corrections.**
+
+1. The keep-alive is an event, not a comment. Every 25 s the stream sends `event: keep-alive` with an empty `data:` line. The parser must not read it as a state, and it counts as traffic for the 60 s watchdog. The PRD says web and desktop clients treat a stream that delivers nothing for 60 s as down.
+2. The revision counts changes to a fingerprint. It goes up by one whenever the settled state differs from the last one: the running entry's id, workspace, description, project, task, tags, start or billable flag; the names and flags shown with it (project name, colour, active and billable, client name, task name and active, tag names); the session; the chain and its tag names. Since `6e2c59d`, updating a client, project, task or tag, or archiving, restoring or deleting a client, moves the revision of every user whose timer shows it. So a v9 edit of the running entry, the phone's own included, leaves the held revision stale until the stream delivers the new state. A Next phase, End session, Resume or Discard sent in that window gets 409 and adopts the body, as planned, and shows "Another device changed the timer first." even though the phone made the change.
+3. A user who has never changed the timer has no stored row and gets revision 0.
+4. The server reads bodies as text, so Content-Type does not matter. Start session, next, end, resume and discard need a JSON object. A missing body is 400 `"Invalid JSON input"`, so send at least `{}`. Pause accepts any body or none. A length override outside 1 to 180 (work), 1 to 60 (either rest) or 1 to 12 (long rest every) is 400, for example `"Invalid work_minutes: expected an integer from 1 to 180"`. A null override uses the preference. These ranges match `time/Pomodoro.kt`, which task 10 deletes, so the start form must keep them.
+5. A 409 body is the state. Every other error body is a JSON string, as elsewhere in the API. Basic auth needs no CSRF header.
+6. With a bad credential, `GET /api/app/timer/events` answers 403 `"Incorrect username and/or password"` before any event. When a credential stops passing the sign-in check during a stream (token reset, password change, suspension, account deletion), the server ends the response with no status. The phone sees EOF, reconnects, and gets the 403 that stops the service only then. The stream's headers are `Content-Type: text/event-stream; charset=utf-8`, `Cache-Control: no-store`, `X-Accel-Buffering: no` and `Connection: close`.
+7. `server_time`, `phase.start`, `phase.planned_end`, `pomodoro_start` and the `discarded_pomodoro` times are UTC ISO 8601 with milliseconds and `Z`. `running_entry` keeps the v9 format, such as `2026-10-28T08:13:05+00:00`.
+8. `discarded_pomodoro` stays in every state at the revision that produced it, so reading the state again repeats it. The planned deduplication by `entry_id` is required, not optional.
+9. Tokkl 1.10.0 deleted `packages/common/fixtures/pomodoroSession.json`. Android's copy has no upstream left to track.
+
+**Stop rule.** `stopEntryAt` and `snapToResolution` in `packages/api/src/models/timeEntries.ts`, and `packages/common/snap.ts`, are the same at `v1.10.0` as at `v1.6.1` apart from an added `export`, and as at `v1.8.1`, the previous pin. `packages/api/test/timeEntries.test.ts` has not changed since `v1.8.1`. The Stop assertions in `ChangeQueueServerTest` therefore meet the same server rule as before, and the captured Stop prediction (`AccountTime.snapCapturedStop`) follows it. `stopSpan` in `time/Snap.kt` still keeps the 1.5.0 contract pending TKA-0259 and TKA-0261, and this pin neither closes nor widens that gap. New in 1.10.0, every v9 create, update, stop, delete, restore and purge settles the timer state, so a queued stop of the pomodoro entry or of a clone ends the session or the chain, as plan 3 intends.
+
+**Device check.** On 2026-10-28 the focused run `TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest,com.github.e0ipso.tokkl.cache.ChangeQueueServerTest --no-daemon`, in the OOM-safe scope, started the pinned 1.10.0 digest, booted tokkl-api36 and exited 0. Its JUnit file reports 19 tests with 0 failures, 0 errors and 0 skipped: all 5 `ServerSmokeTest` methods and all 14 `ChangeQueueServerTest` methods, every Stop assertion among them. The runner's checks for a lost device, a failed test runner and an empty JUnit file all passed.
 
 ## Architectural Approach
 
@@ -152,8 +168,8 @@ Start, Stop and editing the running entry stay as they are.
 **Objective**: Get every remote change to the phone within seconds, including when it is idle in the background.
 
 - **Lifecycle.** A foreground service of type `specialUse`, with the `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` property in the manifest, runs while the account is signed in and `timerState` is true. It posts a silent, low-importance notification on its own channel. It starts on app open, after sign-in and from the existing `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED` receiver. It stops at sign-out and when the capability goes false.
-- **Stream.** It holds `GET /api/app/timer/events` on the shared OkHttp client, with the pinning trust manager and the account's `Authorization` header and no read timeout, and parses `event: timer` blocks by hand. Each block's single `data:` line is one JSON state, and comment lines are ignored. Hand parsing avoids a new dependency.
-- **Reconnects.** A watchdog treats about 60 s without data or keep-alive as a dead stream. Reconnects use exponential backoff with a cap. Network-return events reconnect at once.
+- **Stream.** It holds `GET /api/app/timer/events` on the shared OkHttp client, with the pinning trust manager and the account's `Authorization` header and no read timeout, and parses the event blocks by hand. Each `timer` block's single `data:` line is one JSON state. A `keep-alive` block has an empty `data:` line and only feeds the watchdog. Other event names and comment lines are ignored. Hand parsing avoids a new dependency.
+- **Reconnects.** A watchdog treats about 60 s without a `timer` or `keep-alive` event as a dead stream. Reconnects use exponential backoff with a cap. Network-return events reconnect at once.
 - **Auth failures.** A 401 or 403 stops the service and shows the existing re-sign-in path. Retrying cannot fix it.
 - **Offline.** While the stream is down, the holder keeps the last state. The countdown and the scheduled alarm keep working from it, as plan 3 requires.
 
@@ -200,7 +216,7 @@ Start, Stop and editing the running entry stay as they are.
 
 **Objective**: Prove the phone against the real server contract.
 
-- Move `IMAGE` in `scripts/instrumented-tests.sh` to the first tokkl release that ships plan 3, pinned by digest. Check the stop-rule assertions named in the kenkeep node "Test against a real Tokkl server" against that release.
+- Move `IMAGE` in `scripts/instrumented-tests.sh` to the first tokkl release that ships plan 3, pinned by digest. Check the stop-rule assertions named in the kenkeep node "Test against a real Tokkl server" against that release. Task 01 did both for Tokkl 1.10.0; see [Server release status](#server-release-status).
 - Add instrumented tests against that server for:
   - a session started through the API from another credential showing on the phone with the server's phase and number;
   - Next phase from the API silencing a ringing phone;
@@ -309,6 +325,7 @@ The phone moves to the server state in one release, after the tokkl release that
 - The long-running reminder (N7) keeps its WorkManager request. Its Pause action becomes an online action.
 - 2026-10-28: Per the user-source clarification above, assigned issue #14's fifth failure to Task 06, recorded the live-code refresh race and retained assertions, and added exact focused method/class checks on both APIs. This documentation refinement changes no implementation or task status; Plan 01 remains untouched.
 - 2026-10-28: Task 01 failed on its external prerequisite. Tokkl 1.9.0 is published but lacks plan 3, and no later release exists. The script's `IMAGE` pin was not changed. See [Server release status](#server-release-status).
+- 2026-10-28: Task 01 re-ran after Tokkl 1.10.0 shipped plan 3. It recorded the release evidence and nine contract corrections under [Server release status](#server-release-status), corrected the keep-alive framing in Background and in the sync service's stream parser, and pinned `IMAGE` to 1.10.0. No correction needs an owner decision.
 
 ## Execution Blueprint
 
@@ -317,7 +334,7 @@ Generated on 2026-10-28 after switching to `main` and fast-forwarding it to `ori
 **Validation Gates:**
 
 - Reference: `/config/hooks/POST_PHASE.md`, relative to the Strikethroo root. Follow the live hook for phase commits and progress updates.
-- Task 01 is the external release gate. The sibling implements plan 3 on an unmerged branch (e0ipso/tokkl#48). Tokkl 1.9.0 does not contain it, and on 2026-10-28 no published release did (see [Server release status](#server-release-status)). Task 01 must verify the published image, digest and release-tagged contract before implementation proceeds. The historical planning snapshot above is not evidence of image availability.
+- Task 01 is the external release gate. Tokkl 1.10.0 (tag `v1.10.0` at `95aa429`, index `sha256:207db4f2a6547fea35ad898570fef892f55ef3ab26b6f142bfc3e3e0e680ad2f`) is the first release with plan 3, merged from e0ipso/tokkl#48. Tokkl 1.9.0 does not contain it. Task 01 verified the published image, digest and release-tagged contract and recorded them with the contract corrections under [Server release status](#server-release-status). Downstream tasks follow those corrections where they differ from the planning snapshot. The historical planning snapshot above is not evidence of image availability.
 - Every task has concrete verification commands and expected results. Run Gradle and device checks in the host's OOM-safe scope; all instrumented checks use `scripts/instrumented-tests.sh`, with its server, credentials, device selection and result receipts. Do not interpret zero executed tests as a pass.
 - Tests of removed behavior leave with their owning implementation. Meaningful state, action, migration and workflow checks remain. Inventory and resolve focused failures before the final full-suite runs in task 12.
 - Task 06 owns issue #14's fifth failure and must pass its exact inherited method in both concrete focused-timer classes on API 36 and API 31, then both complete classes, before broader suites. See the user-source clarification and Task 06's root-cause/verification sections. Plan 01/issue #14 closure remains pending until three consecutive successful main CI runs cover both APIs. Only run [40466307618](https://github.com/e0ipso/tokkl-android/actions/runs/40466307618) at `9d5ccb4` is currently reported successful; release `v0.5.1` at `f643a81` used `[skip ci]` and adds no run. PR #7 and eventual Plan 02 merges may supply two further runs only if their main CI actually completes successfully on both APIs. Do not count PR-only, skipped, unrun or failed CI as a success.
@@ -374,11 +391,11 @@ graph TD
     T12 --> T13["13: Documentation and knowledge"]
 ```
 
-### Phase 1: Verify the released contract
+### ✅ Phase 1: Verify the released contract
 
 **Parallel Tasks:**
 
-- Task 001: [Verify the shipped timer contract and pin the test server](tasks/01--verify-shipped-timer-contract-and-pin-test-server.md).
+- ✔️ Task 001 (completed): [Verify the shipped timer contract and pin the test server](tasks/01--verify-shipped-timer-contract-and-pin-test-server.md).
 
 ### Phase 2: Establish the account state source
 
@@ -469,20 +486,3 @@ At execution completion, preserve the server image digest, two-API result counts
 - Task status: all pending
 - Complexity scores: 4 to 7, validated by the required helper
 - Execution profiles: 10 complex-architecture, 2 standard-implementation, 1 docs-and-config
-
-## Execution Summary
-
-**Status**: ⛔ Halted in phase 1
-**Completed Date**: Not completed (halted 2026-10-28)
-
-### Results
-Phase 1 failed. Task 01 found that no published Tokkl release contains server plan 3. No application code changed, the `IMAGE` pin in `scripts/instrumented-tests.sh` stays at Tokkl 1.8.1, and tasks 02 to 13 did not start.
-
-### Noteworthy Events
-- Task 01 failed on its external prerequisite. `ghcr.io/e0ipso/tokkl:1.9.0` (index `sha256:ce7e9f18a6541e5264cb4c4509f35d0dbe4543cccafaf740f2f61b2642f75252`, tag `v1.9.0` at `61e08ad`, also `main`) ships tokkl plan 2 only. The coordinator re-checked that `v1.9.0` has no `packages/api/src/services/timerState.ts` and that e0ipso/tokkl#48 (plan 3) is open with `mergedAt: null`. The worker reported that a 1.9.0 container answers 404 on every timer route.
-- The blueprint's statement that 1.9.0 was the first candidate release was wrong and has been corrected under [Server release status](#server-release-status).
-- The code review gate did not run because execution halted before `POST_EXECUTION.md`.
-
-### Necessary follow-ups
-- Merge e0ipso/tokkl#48 and publish a Tokkl release that contains plan 3.
-- Reset task 01 to `pending` and re-run this blueprint. Task 01 then reconciles the plan with the released contract, pins the new image digest and runs the focused device check.

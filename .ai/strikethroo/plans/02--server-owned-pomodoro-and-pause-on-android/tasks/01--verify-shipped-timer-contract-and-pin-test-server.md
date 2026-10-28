@@ -2,7 +2,7 @@
 id: 1
 group: "server-contract"
 dependencies: []
-status: "failed"
+status: "completed"
 created: 2026-10-28
 skills:
   - api-contracts
@@ -22,12 +22,12 @@ API contract inspection and Bash test-runner configuration.
 
 ## Acceptance Criteria
 
-- [ ] Verify that a published `ghcr.io/e0ipso/tokkl` release contains server plan 3. The sibling changelog identifies 1.9.0 as the candidate; registry availability and its source tag must be checked rather than assumed.
-- [ ] Reconcile this plan against the release's API table, `TimerState` types, routes and SSE behavior. Record the version, source revision, image index digest and any contract corrections in the plan before downstream work starts.
-- [ ] `scripts/instrumented-tests.sh` pins that release by tag and index digest. Preserve its server setup, proxies, credential-file handling, device selection and run receipts.
-- [ ] Check the Stop assertions identified by `testing/practice-test-against-a-real-tokkl-server.md` against the release. Preserve ordinary queued Start/Stop behavior and document any unresolved stop-rule mismatch instead of silently changing its semantics.
-- [ ] `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:1.9.0` succeeds, or the verified replacement tag is used, and its digest matches `IMAGE`. `bash -n scripts/instrumented-tests.sh` exits 0.
-- [ ] Run `TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest,com.github.e0ipso.tokkl.cache.ChangeQueueServerTest --no-daemon` in the host's OOM-safe scope. Expect a nonzero executed-test count, zero failures and the runner's successful device receipts. Resolve or explicitly gate a contract mismatch before marking this task complete.
+- [x] Verify that a published `ghcr.io/e0ipso/tokkl` release contains server plan 3. The sibling changelog identifies 1.9.0 as the candidate; registry availability and its source tag must be checked rather than assumed.
+- [x] Reconcile this plan against the release's API table, `TimerState` types, routes and SSE behavior. Record the version, source revision, image index digest and any contract corrections in the plan before downstream work starts.
+- [x] `scripts/instrumented-tests.sh` pins that release by tag and index digest. Preserve its server setup, proxies, credential-file handling, device selection and run receipts.
+- [x] Check the Stop assertions identified by `testing/practice-test-against-a-real-tokkl-server.md` against the release. Preserve ordinary queued Start/Stop behavior and document any unresolved stop-rule mismatch instead of silently changing its semantics.
+- [x] `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:1.9.0` succeeds, or the verified replacement tag is used, and its digest matches `IMAGE`. `bash -n scripts/instrumented-tests.sh` exits 0.
+- [x] Run `TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest,com.github.e0ipso.tokkl.cache.ChangeQueueServerTest --no-daemon` in the host's OOM-safe scope. Expect a nonzero executed-test count, zero failures and the runner's successful device receipts. Resolve or explicitly gate a contract mismatch before marking this task complete.
 
 Use your internal Todo tool to track these and keep on track.
 
@@ -58,4 +58,10 @@ Verified contract and release evidence in this plan, the updated `IMAGE` and com
 
 ## Execution Result
 
-Failed on 2026-10-28 because the external prerequisite is missing. `ghcr.io/e0ipso/tokkl:1.9.0` is published (index `sha256:ce7e9f18a6541e5264cb4c4509f35d0dbe4543cccafaf740f2f61b2642f75252`, tag `v1.9.0` at `61e08ad`), but it ships tokkl plan 2 only. Its tree has no timer state service, and the running image answers 404 to `/api/app/timer`, `/api/app/timer/events`, `/api/app/timer/pause` and `/api/app/pomodoro`. Plan 3 is still the open tokkl PR #48. `IMAGE` stays at Tokkl 1.8.1, and the contract reconciliation, the Stop check and the device run wait for a release. The plan's "Server release status" section has the evidence. Re-run this task after a Tokkl release that contains plan 3 is published.
+Completed on 2026-10-28 against Tokkl 1.10.0. The first run that day failed because 1.9.0 lacks plan 3; it was re-run once 1.10.0 shipped.
+
+- Release. `ghcr.io/e0ipso/tokkl:1.10.0`, index `sha256:207db4f2a6547fea35ad898570fef892f55ef3ab26b6f142bfc3e3e0e680ad2f`, tag `v1.10.0` at `95aa429`, which contains the plan 3 merge `4c7be52` and `6e2c59d`. `v1.10.0:packages/api/src/services/timerState.ts` exists.
+- Contract. The plan's "Server release status" section records nine corrections, with keep-alive framing and the revision fingerprint first. The keep-alive is also corrected in Background and in the sync service's parser. None needs an owner decision.
+- Pin. `IMAGE` in `scripts/instrumented-tests.sh` is `ghcr.io/e0ipso/tokkl:1.10.0@sha256:207db4f2...`, with an updated comment. Nothing else in the script changed, and `bash -n` exits 0.
+- Stop rule. The server's stop and snap code is the same at `v1.10.0` as at `v1.8.1` and `v1.6.1`. `stopSpan` keeps its documented 1.5.0 gap pending TKA-0259 and TKA-0261, unchanged by this pin.
+- Device check. The focused run on tokkl-api36 exited 0 with 19 tests (5 `ServerSmokeTest`, 14 `ChangeQueueServerTest`), 0 failures, 0 errors and 0 skipped.

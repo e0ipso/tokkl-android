@@ -150,9 +150,11 @@
 
 set -euo pipefail
 
-# Tokkl 1.8.1. To upgrade, take the index digest from
-# `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>`.
-readonly IMAGE='ghcr.io/e0ipso/tokkl:1.8.1@sha256:70106ba2a6bc5b23c11f443f33bf2c7fb76d3af75b0335461047c4d27bd52e9b'
+# Tokkl 1.10.0 (tag v1.10.0, tokkl 95aa429), the first release with the
+# server-owned timer state, its actions and its event stream (tokkl plan 3).
+# Its stop rule is the one 1.6.1 brought in. To upgrade, take the index digest
+# from `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>`.
+readonly IMAGE='ghcr.io/e0ipso/tokkl:1.10.0@sha256:207db4f2a6547fea35ad898570fef892f55ef3ab26b6f142bfc3e3e0e680ad2f'
 # HAProxy 3.2.26 on Alpine, the index digest from
 # `docker buildx imagetools inspect haproxy:3.2.26-alpine`.
 readonly PROXY_IMAGE='haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c67f33777c1b6a9dc0d4b28bcba7171460122'
