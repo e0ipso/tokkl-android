@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -85,8 +86,12 @@ class NativePomodoroPermissionTest {
             assertNotNull(session())
             scenario.recreate()
             compose.awaitText(context.getString(R.string.pomodoro_end), 15_000)
+            // The refusal's snackbar comes back after recreation, for Material's long duration.
+            waitOutSnackbar(R.string.notification_permission_refused)
             tap(R.string.pomodoro_end)
             compose.waitUntil(15_000) { session() == null }
+            // Shorter than half the test server's 5-minute resolution, the pomodoro went to the trash.
+            waitOutSnackbar(R.string.timer_pomodoro_too_short)
             tap(R.string.pomodoro_start)
             compose.waitUntil(15_000) { session() != null }
             assertNull(device.findObject(By.res(CONTROLLER, "permission_allow_button")))
@@ -111,6 +116,16 @@ class NativePomodoroPermissionTest {
 
     /** The server's session as the phone holds it, or null without one. */
     private fun session(): TimerPomodoro? = app.timerState.state.value?.state?.pomodoro
+
+    /**
+     * Waits for the snackbar that says [id], then for it to go. It shows at the bottom of the page,
+     * where performScrollTo leaves the page's last button, and would take that button's touch.
+     */
+    private fun waitOutSnackbar(id: Int) {
+        val text = context.getString(id)
+        compose.awaitText(text, 15_000)
+        compose.waitUntil("\"$text\" goes", 15_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
+    }
 
     private fun tap(id: Int) = compose.onNodeWithText(context.getString(id)).performScrollTo().performClick()
     private companion object { const val CONTROLLER = "com.android.permissioncontroller" }
