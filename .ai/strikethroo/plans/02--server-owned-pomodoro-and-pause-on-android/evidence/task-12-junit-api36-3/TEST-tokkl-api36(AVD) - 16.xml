@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="3" failures="2" errors="0" skipped="0" time="0.000" timestamp="2026-10-28T20:48:36" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" tests="2" failures="1" errors="0" skipped="0" time="18.705" timestamp="2026-10-28T20:48:36" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aServerThatLosesTheTimerApiStopsTheStreamTheSessionNotificationAndTheAlarm" classname="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" time="7.321">
+      <failure>java.lang.AssertionError: the sync notification: not within 2000 ms
+	at com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest.await(TimerSyncServiceLifecycleTest.kt:178)
+	at com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest.openTheAppAndReceiveASessionInTheBackground(TimerSyncServiceLifecycleTest.kt:130)
+	at com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest.aServerThatLosesTheTimerApiStopsTheStreamTheSessionNotificationAndTheAlarm(TimerSyncServiceLifecycleTest.kt:110)
+</failure>
+    </testcase>
+    <testcase name="anAppOpenRunsTheSilentStreamAndSignOutStopsItButLeavesTheSessionToOtherDevices" classname="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" time="11.384" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.tile.RunningTileServerTest" tests="1" failures="1" errors="0" skipped="0" time="67.568" timestamp="2026-10-28T20:48:36" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anOfflineLongPressPauseSaysWhyAndStopStillQueues" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="67.568">
+      <failure>java.lang.IllegalStateException: Compact controls did not show Pause timer
+	at com.github.e0ipso.tokkl.tile.RunningTileServerTest.awaitControl(RunningTileServerTest.kt:472)
+	at com.github.e0ipso.tokkl.tile.RunningTileServerTest.openCompactControls$lambda$1(RunningTileServerTest.kt:461)
+	at com.github.e0ipso.tokkl.tile.RunningTileServerTest$$ExternalSyntheticLambda8.invoke(D8$$SyntheticClass:0)
+	at com.github.e0ipso.tokkl.tile.RunningTileServerTest.anOfflineLongPressPauseSaysWhyAndStopStillQueues$lambda$0(RunningTileServerTest.kt:310)
+	at com.github.e0ipso.tokkl.tile.RunningTileServerTest$$ExternalSyntheticLambda0.invoke(D8$$SyntheticClass:0)
+	at com.github.e0ipso.tokkl.TimerActionToasts.await(TimerActionToasts.kt:33)
+	at com.github.e0ipso.tokkl.tile.RunningTileServerTest.anOfflineLongPressPauseSaysWhyAndStopStillQueues(RunningTileServerTest.kt:310)
+</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

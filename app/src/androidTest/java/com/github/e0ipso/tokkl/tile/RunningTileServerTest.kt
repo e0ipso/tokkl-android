@@ -453,7 +453,10 @@ class RunningTileServerTest {
         QuickSettingsTile.expand()
         QuickSettingsTile.awaitText("the entry offered by long press", description)
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val tile = checkNotNull(device.wait(Until.findObject(By.text(description)), TIMEOUT_MS)) {
+        // Where an earlier test allowed notifications, the running notification's title in the shade
+        // reads the same description, and a long press there opens the notification's controls.
+        // So press the tile's own label.
+        val tile = checkNotNull(device.wait(Until.findObject(By.res("com.android.systemui", "tile_label").text(description)), TIMEOUT_MS)) {
             "SystemUI did not expose the running tile"
         }
         tile.longClick()

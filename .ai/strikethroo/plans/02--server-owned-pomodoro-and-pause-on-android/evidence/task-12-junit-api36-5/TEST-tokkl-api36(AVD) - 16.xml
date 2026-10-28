@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="27" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-28T20:59:38" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" tests="2" failures="0" errors="0" skipped="0" time="18.332" timestamp="2026-10-28T20:59:38" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aServerThatLosesTheTimerApiStopsTheStreamTheSessionNotificationAndTheAlarm" classname="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" time="8.334" />
+    <testcase name="anAppOpenRunsTheSilentStreamAndSignOutStopsItButLeavesTheSessionToOtherDevices" classname="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" time="9.998" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.tile.RunningTileServerTest" tests="2" failures="0" errors="0" skipped="0" time="21.991" timestamp="2026-10-28T20:59:38" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="longPressPausesResumesAndStopsWhilePausedOnTheServer" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="10.699" />
+    <testcase name="anOfflineLongPressPauseSaysWhyAndStopStillQueues" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="11.292" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" tests="9" failures="0" errors="0" skipped="0" time="87.323" timestamp="2026-10-28T20:59:38" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="offlineButtonsKeepTheRingAndAConfirmElsewhereStopsBothOutputs" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="7.286" />
+    <testcase name="phaseAlarmStartsForegroundPlaybackWithScreenOffAndLeavesThePhaseAwaitingAction" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="10.117" />
+    <testcase name="everyTransitionUsesItsBundledWavWithAlarmAttributesAndRepeatingVibration" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="22.401" />
+    <testcase name="staleButtonsCannotAdvanceEndOrRepostThePhaseThatReplacedThem" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="7.171" />
+    <testcase name="alarmsAllowedDndKeepsTheAlarmPlayerLoopingAndVibrationRequested" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="7.179" />
+    <testcase name="physicalSwipeRepostsTheNotificationAndKeepsTheSamePlayer" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="11.771" />
+    <testcase name="swipedNotificationRepostsWithoutRestartingOrStoppingTheSound" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="7.160" />
+    <testcase name="silentModeKeepsTheAlarmPlayerLoopingAndVibrationRequested" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="7.133" />
+    <testcase name="duplicateDeliveryAndStaleServiceIntentsCannotReplaceTheCurrentRing" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="7.105" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest" tests="3" failures="0" errors="0" skipped="0" time="9.296" timestamp="2026-10-28T20:59:38" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="firstStartIsImmediateAndOutstandingRequestsCannotCauseDuplicateAutomaticDialogs" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest" time="3.702" />
+    <testcase name="exactAndFullScreenSettingsNeverDisableStartAndNoticesRemainUntilGrant" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest" time="3.225" />
+    <testcase name="explicitRetryBeforeAnyStartRequestsAndGrantRemovesThePersistentNotice" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest" time="2.369" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" tests="8" failures="0" errors="0" skipped="0" time="183.807" timestamp="2026-10-28T20:59:38" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="withoutTheTimerApiTheAlarmStopsAndItsIntentShowsNothing" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="7.028" />
+    <testcase name="lockedScreenPhaseEndLaunchesAlarmTurnsScreenOnAndKeepsItAwake" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="12.544" />
+    <testcase name="deniedAccessKeepsRingingAndNotificationActionsWithoutOpeningTheLockScreenActivity" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="7.004" />
+    <testcase name="alarmPendingIntentsAreImmutableAndKeepDistinctPhaseIdentities" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="0.976" />
+    <testcase name="recreationDuplicateAndStaleIntentsCannotReplaceTheAlarmAndAConfirmElsewhereClosesIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="11.932" />
+    <testcase name="deniedAndGrantedFullScreenPermissionFollowSystemAccessAndUsePerAppSettings" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="0.989" />
+    <testcase name="backAndHomeLeaveTheSameAlarmSoundAndDurablePhaseRunning" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="13.196" />
+    <testcase name="nextAndEndGoToTheServerWithTheShownRevisionAndItsAnswerClosesTheAlarm" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="130.138" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmRearmTest" tests="1" failures="0" errors="0" skipped="0" time="4.268" timestamp="2026-10-28T20:59:38" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="bootBroadcastArmsTheHeldPhaseAgainWithoutTheServer" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmRearmTest" time="4.268" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest" tests="2" failures="0" errors="0" skipped="0" time="4.037" timestamp="2026-10-28T20:59:38" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest" time="1.018" />
+    <testcase name="step2TheStoredStateKeepsTheNotificationAndItsTapOpensPomodoroThenSignOutErasesIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest" time="3.019" />
+  </testsuite>
+</testsuites>

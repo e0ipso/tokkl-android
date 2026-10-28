@@ -437,11 +437,11 @@ graph TD
 
 - ✔️ Task 011 (completed): [Prove cross-device timer workflows](tasks/11--prove-cross-device-timer-workflows.md), depends on 010.
 
-### Phase 8: Complete Android platform acceptance
+### ✅ Phase 8: Complete Android platform acceptance
 
 **Parallel Tasks:**
 
-- Task 012: [Verify service lifecycle, Doze and final test gates](tasks/12--verify-service-lifecycle-doze-and-final-test-gates.md), depends on 011.
+- ✔️ Task 012 (completed): [Verify service lifecycle, Doze and final test gates](tasks/12--verify-service-lifecycle-doze-and-final-test-gates.md), depends on 011.
 
 ### Phase 9: Reconcile product and agent documentation
 

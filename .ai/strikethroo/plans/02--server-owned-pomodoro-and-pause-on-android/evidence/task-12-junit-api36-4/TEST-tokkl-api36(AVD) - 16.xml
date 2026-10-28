@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="3" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-28T20:52:44" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" tests="2" failures="0" errors="0" skipped="0" time="17.883" timestamp="2026-10-28T20:52:44" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aServerThatLosesTheTimerApiStopsTheStreamTheSessionNotificationAndTheAlarm" classname="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" time="7.762" />
+    <testcase name="anAppOpenRunsTheSilentStreamAndSignOutStopsItButLeavesTheSessionToOtherDevices" classname="com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest" time="10.121" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.tile.RunningTileServerTest" tests="1" failures="0" errors="0" skipped="0" time="11.298" timestamp="2026-10-28T20:52:44" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anOfflineLongPressPauseSaysWhyAndStopStillQueues" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="11.298" />
+  </testsuite>
+</testsuites>
