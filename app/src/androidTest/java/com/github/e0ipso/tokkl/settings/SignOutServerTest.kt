@@ -174,8 +174,14 @@ class SignOutServerTest {
     /** Points the session at a dead port, queues a start and its stop, and lets the send fail. */
     private fun queueTwoUnsentChanges() {
         val workspace = checkNotNull(app.accountSettings.state.value?.defaultWorkspaceId) { "no default workspace" }
+        // The phone confirms one http server at a time. Moving the confirmation while the test
+        // server is stored would leave it unconfirmed, and a background request from the refresh
+        // above would open the http warning beside the sign-out dialog. With no server stored, such
+        // a request is refused without a prompt.
+        ServerConfigStore(context).clear()
         ServerTrustStore(context).confirmCleartext(DEAD_SERVER)
         Session(context).save(DEAD_SERVER, account.apiToken)
+        assertEquals("no trust prompt waits", SessionTrustModel.State(), app.sessionTrust.state.value)
         val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Never sent")) }
         assertTrue(runBlocking { app.changes.stop(id) })
         runBlocking { app.sender.send().join() }
