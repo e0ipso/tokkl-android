@@ -431,11 +431,11 @@ graph TD
 
 - ✔️ Task 010 (completed): [Remove local session paths and migrate Room](tasks/10--remove-local-session-paths-and-migrate-room.md), depends on 008 and 009.
 
-### Phase 7: Verify the shared timer contract
+### ✅ Phase 7: Verify the shared timer contract
 
 **Parallel Tasks:**
 
-- Task 011: [Prove cross-device timer workflows](tasks/11--prove-cross-device-timer-workflows.md), depends on 010.
+- ✔️ Task 011 (completed): [Prove cross-device timer workflows](tasks/11--prove-cross-device-timer-workflows.md), depends on 010.
 
 ### Phase 8: Complete Android platform acceptance
 

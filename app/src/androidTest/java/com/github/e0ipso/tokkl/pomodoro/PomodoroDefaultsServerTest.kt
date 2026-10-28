@@ -83,7 +83,7 @@ class PomodoroDefaultsServerTest {
         }
     }
 
-    /** scripts/instrumented-tests.sh pins Tokkl 1.8.1 for this Settings-to-server round trip. */
+    /** The Tokkl release scripts/instrumented-tests.sh pins as IMAGE serves this Settings-to-server round trip. */
     @Test
     fun settingsEditsReadAndWriteReleasedPreferencesAndPopulateTheNextSessionForm() {
         setOnTheServer(buildJsonObject {

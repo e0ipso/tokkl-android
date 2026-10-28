@@ -18,19 +18,32 @@ object TimerActionToasts {
     @get:StringRes
     val offline: Int get() = TimerActionResult.Offline.message
 
-    /** Runs [action] and waits until the platform holds this app's long text toast [text]. */
+    /**
+     * Runs [action] and waits until the platform holds this app's long text toast [text]. A toast
+     * with that text from an earlier action is waited out first, so it cannot stand in for this
+     * action's.
+     */
     fun await(@StringRes text: Int, action: () -> Unit) {
         val expected = context.getString(text)
-        action()
-        val deadline = System.nanoTime() + TIMEOUT_NANOS
-        var seen = emptyList<String>()
-        while (System.nanoTime() < deadline) {
-            seen = DeviceShell.run("dumpsys notification").lineSequence().filter { it.contains("TextToastRecord{") }.toList()
-            if (seen.any { it.contains(":${context.packageName}/") && it.contains(" text=$expected duration=${Toast.LENGTH_LONG}}") }) return
+        val earlier = System.nanoTime() + TIMEOUT_NANOS
+        while (shows(expected)) {
+            if (System.nanoTime() > earlier) throw AssertionError("An earlier toast '$expected' did not go")
             Thread.sleep(POLL_MS)
         }
-        throw AssertionError("Expected the toast '$expected'; platform toasts: $seen")
+        action()
+        val deadline = System.nanoTime() + TIMEOUT_NANOS
+        while (System.nanoTime() < deadline) {
+            if (shows(expected)) return
+            Thread.sleep(POLL_MS)
+        }
+        throw AssertionError("Expected the toast '$expected'; platform toasts: ${toasts()}")
     }
+
+    private fun shows(expected: String): Boolean =
+        toasts().any { it.contains(":${context.packageName}/") && it.contains(" text=$expected duration=${Toast.LENGTH_LONG}}") }
+
+    private fun toasts(): List<String> =
+        DeviceShell.run("dumpsys notification").lineSequence().filter { it.contains("TextToastRecord{") }.toList()
 
     private const val TIMEOUT_NANOS = 15_000_000_000L
     private const val POLL_MS = 20L

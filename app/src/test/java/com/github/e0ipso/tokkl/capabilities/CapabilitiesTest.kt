@@ -74,6 +74,7 @@ class CapabilitiesTest {
         assertFalse("Toggl Track's Reports API v3 has no exclude fields", capabilities.negatedFilters)
         assertEquals("Toggl Track has no summary CSV route", false, capabilities.summaryCsv)
         assertEquals("Toggl Track has no detailed CSV route", false, capabilities.detailedCsv)
+        assertFalse("Toggl Track answers 404 to /api/app/timer", capabilities.timerState)
         assertTrue(capabilities.timeResolution)
     }
 

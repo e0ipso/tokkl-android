@@ -19,18 +19,21 @@
 #    Tokkl over http under the path prefix /tokkl on a port of its own, as a
 #    reverse proxy serves it beside other sites, and answers 404 there to
 #    every path outside the prefix.
-# 4. Copies the password and the API token to each test device, in a file
-#    that only the shell user can read. Before that it deletes the
-#    credentials files that killed runs left behind, once they are older than
-#    any run lasts.
-# 5. Runs connectedDebugAndroidTest with the http, the three https and the
-#    prefixed server URLs, the SHA-256 fingerprints of both self-signed proxy
-#    certificates, the email and that file's path as instrumentation
-#    arguments. The emulator reaches the host's 127.0.0.1 as 10.0.2.2. The
-#    credentials work only on this container. The run fails when a test
-#    device goes away during it, even if Gradle reports success.
-# 6. Removes both containers, the certificates' keys, the credentials file,
-#    the test filter file, if any (see below), and the user CA, if it
+# 4. Starts a second Tokkl, an older release pinned by digest that has no
+#    timer API (LEGACY_IMAGE), in the same way and with an account of its
+#    own, for the tests of a server without Pomodoro and Pause.
+# 5. Copies the password and the API token, and the older server's API
+#    token, to each test device, in a file that only the shell user can read.
+#    Before that it deletes the credentials files that killed runs left
+#    behind, once they are older than any run lasts.
+# 6. Runs connectedDebugAndroidTest with the http, the three https, the
+#    prefixed and the older server's URLs, the SHA-256 fingerprints of both
+#    self-signed proxy certificates, the email and that file's path as
+#    instrumentation arguments. The emulator reaches the host's 127.0.0.1 as
+#    10.0.2.2. The credentials work only on these containers. The run fails
+#    when a test device goes away during it, even if Gradle reports success.
+# 7. Removes the three containers, the certificates' keys, the credentials
+#    file, the test filter file, if any (see below), and the user CA, if it
 #    installed one, also when a step fails.
 #
 # On an emulator it boots, the script installs this run's CA as a user CA, as
@@ -155,6 +158,11 @@ set -euo pipefail
 # Its stop rule is the one 1.6.1 brought in. To upgrade, take the index digest
 # from `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>`.
 readonly IMAGE='ghcr.io/e0ipso/tokkl:1.10.0@sha256:207db4f2a6547fea35ad898570fef892f55ef3ab26b6f142bfc3e3e0e680ad2f'
+# Tokkl 1.8.1, the last pin before 1.10.0. It has no /api/app/timer: it
+# answers 404 to the timer state, its events and every timer action, so the
+# app must hide Pomodoro and Pause there while Start and Stop still work. Take
+# the digest the same way as for IMAGE.
+readonly LEGACY_IMAGE='ghcr.io/e0ipso/tokkl:1.8.1@sha256:70106ba2a6bc5b23c11f443f33bf2c7fb76d3af75b0335461047c4d27bd52e9b'
 # HAProxy 3.2.26 on Alpine, the index digest from
 # `docker buildx imagetools inspect haproxy:3.2.26-alpine`.
 readonly PROXY_IMAGE='haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c67f33777c1b6a9dc0d4b28bcba7171460122'
@@ -394,6 +402,7 @@ if [ -L "$runs_dir" ] || [ ! -d "$runs_dir" ] || [ ! -O "$runs_dir" ]; then
 fi
 mkdir -m 700 "$work_dir"
 proxy=''
+legacy=''
 emulator_pid=''
 emulator_serial=''
 emulator_unit=''
@@ -536,6 +545,10 @@ cleanup() {
     if [ -n "$proxy" ]; then
         docker rm --force --volumes "$proxy" >/dev/null 2>&1 ||
             echo "$0: could not remove container $proxy" >&2
+    fi
+    if [ -n "$legacy" ]; then
+        docker rm --force --volumes "$legacy" >/dev/null 2>&1 ||
+            echo "$0: could not remove container $legacy" >&2
     fi
     if [ -n "$container" ]; then
         docker rm --force --volumes "$container" >/dev/null 2>&1 ||
@@ -819,8 +832,8 @@ check_test_devices() {
 # and its directory keeps the proxy's keys. Both are listed before the slot
 # files are read, as in stop_leftover_emulators.
 remove_leftover_runs() {
-    local containers dirs owned_servers owned_dirs name dir file
-    containers=$(docker ps --all --format '{{.Names}}' | grep -x 'tokkl-android-tests-[0-9a-f]*\(-tls\)\?' || true)
+    local containers dirs owned_servers owned_dirs name server_name dir file
+    containers=$(docker ps --all --format '{{.Names}}' | grep -x 'tokkl-android-tests-[0-9a-f]*\(-tls\|-legacy\)\?' || true)
     dirs=$(find "$runs_dir" -mindepth 1 -maxdepth 1 -type d)
     owned_servers=$(while read -r file; do
         sed -n 's/.*, server \(tokkl-android-tests-[0-9a-f]*\).*/\1/p' "$file"
@@ -837,7 +850,9 @@ remove_leftover_runs() {
         fi
     done < <(held_slot_files)
     while read -r name; do
-        if [ -z "$name" ] || grep -qxF -- "${name%-tls}" <<<"$owned_servers"; then continue; fi
+        server_name=${name%-tls}
+        server_name=${server_name%-legacy}
+        if [ -z "$name" ] || grep -qxF -- "$server_name" <<<"$owned_servers"; then continue; fi
         echo "Removing container $name, which no running test run started"
         docker rm --force --volumes "$name" >/dev/null 2>&1 || echo "$0: could not remove container $name" >&2
     done <<<"$containers"
@@ -1092,6 +1107,41 @@ api_token=$(printf 'user = "%s:%s"\n' "$EMAIL" "$password" |
     curl --silent --show-error --fail --config - "$server/api/v9/me" |
     jq --raw-output --exit-status .api_token)
 
+# The older Tokkl, set up as the server above: a tmpfs database, a random
+# setup code and password, and the API token from GET /api/v9/me. Only its
+# token reaches the tests, beside the others. Its container is named after the
+# server's, so a run that dies leaves nothing remove_leftover_runs misses.
+legacy="$container-legacy"
+legacy_setup_code=$(random_hex 16)
+legacy_password=$(random_hex 16)
+echo "Starting $LEGACY_IMAGE as $legacy"
+TOKKL_SETUP_CODE="$legacy_setup_code" docker run --detach --name "$legacy" \
+    --env TOKKL_SETUP_CODE --tmpfs /data:mode=1777 --publish 127.0.0.1::8080 "$LEGACY_IMAGE" >/dev/null
+legacy_port=$(docker port "$legacy" 8080/tcp | head -n 1)
+legacy_port=${legacy_port##*:}
+legacy_server="http://127.0.0.1:$legacy_port"
+if ! curl --silent --fail --output /dev/null \
+    --retry 30 --retry-delay 1 --retry-all-errors "$legacy_server/healthz"; then
+    echo "$0: the older Tokkl did not answer on $legacy_server/healthz. Last server output:" >&2
+    docker logs "$legacy" 2>&1 | grep -v 'setup code' | tail -n 20 >&2
+    exit 1
+fi
+printf '{"setup_code":"%s","email":"%s","password":"%s","fullname":"Instrumented tests","timezone":"UTC"}' \
+    "$legacy_setup_code" "$EMAIL" "$legacy_password" |
+    curl --silent --show-error --fail --output /dev/null \
+        --header 'Content-Type: application/json' --header 'X-Tokkl-Csrf: 1' \
+        --data-binary @- "$legacy_server/api/app/setup"
+legacy_api_token=$(printf 'user = "%s:%s"\n' "$EMAIL" "$legacy_password" |
+    curl --silent --show-error --fail --config - "$legacy_server/api/v9/me" |
+    jq --raw-output --exit-status .api_token)
+# The tests rely on this server having no timer API, so check it here.
+legacy_timer=$(printf 'user = "%s:%s"\n' "$EMAIL" "$legacy_password" |
+    curl --silent --output /dev/null --write-out '%{http_code}' --config - "$legacy_server/api/app/timer")
+if [ "$legacy_timer" != 404 ]; then
+    echo "$0: the older Tokkl answered $legacy_timer to GET /api/app/timer, not 404, so it is no server without the timer API" >&2
+    exit 1
+fi
+
 # The password and the token reach the tests in a file on each device, which
 # TokklTestServer reads through UiAutomation as the shell user. Instrumentation
 # arguments cannot carry them: AGP's test runner passes every one to
@@ -1102,7 +1152,7 @@ credentials="$work_dir/credentials.properties"
 credentials_on_device="$CREDENTIALS_DIR/$CREDENTIALS_PREFIX$(random_hex 4).properties"
 (
     umask 077
-    printf 'tokklPassword=%s\ntokklApiToken=%s\n' "$password" "$api_token" >"$credentials"
+    printf 'tokklPassword=%s\ntokklApiToken=%s\ntokklLegacyApiToken=%s\n' "$password" "$api_token" "$legacy_api_token" >"$credentials"
 )
 if [ -n "${ANDROID_SERIAL:-}" ]; then
     devices=("$ANDROID_SERIAL")
@@ -1184,6 +1234,7 @@ run_tests() {
         "-P$RUNNER_ARGS.tokklNewKeyTlsBaseUrl=https://10.0.2.2:$new_key_port" \
         "-P$RUNNER_ARGS.tokklNewKeyTlsFingerprint=$new_key_fingerprint" \
         "-P$RUNNER_ARGS.tokklUserCaTlsBaseUrl=https://10.0.2.2:$user_ca_port" \
+        "-P$RUNNER_ARGS.tokklLegacyBaseUrl=http://10.0.2.2:$legacy_port" \
         "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
         "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
         "${gradle_args[@]}" {slot_fd}>&- {device_fd}>&- {boot_fd}>&- 2>&1 | tee "$work_dir/gradle.log" || status=$?
@@ -1229,6 +1280,7 @@ echo "The TLS proxy is ready on https://127.0.0.1:$tls_port, with certificate SH
 echo "It serves its second certificate on https://127.0.0.1:$new_key_port, with SHA-256 $new_key_fingerprint"
 echo "It serves the certificate this run's CA signed on https://127.0.0.1:$user_ca_port"
 echo "The proxy serves Tokkl under $prefixed, which the emulator reaches as http://10.0.2.2:$prefix_port/tokkl"
+echo "The older Tokkl, without the timer API, is ready on $legacy_server, which the emulator reaches as http://10.0.2.2:$legacy_port"
 if [ "${#test_filter[@]}" -gt 0 ]; then
     printf '%s\n' "${test_filter[@]}" >"$filter"
     filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"

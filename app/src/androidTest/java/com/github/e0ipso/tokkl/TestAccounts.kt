@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import java.security.SecureRandom
 import java.time.Instant
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -14,6 +15,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
+import okhttp3.ConnectionPool
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,9 +31,28 @@ import okhttp3.RequestBody.Companion.toRequestBody
  */
 object TestAccounts {
 
-    /** `toString` leaves out the token. */
-    class Account(val id: Long, val email: String, val apiToken: String) {
+    /**
+     * `toString` leaves out the token and the password. [password] is known only for an account
+     * [create] made in this process.
+     */
+    class Account(val id: Long, val email: String, val apiToken: String, private val password: String? = null) {
         val client: TogglApiClient get() = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(apiToken))
+
+        /**
+         * Another device of the same user, such as the web app or a desktop client: it signs in
+         * with the account's email and password, not the API token the phone uses, and talks to
+         * the server straight, past the app's guard and its shared connections. It opens a new
+         * connection for each request, so none of its calls goes out on a connection the server
+         * has closed. The timer state it changes is the phone's too, as it is the same user's.
+         */
+        val otherDevice: TogglApiClient by lazy {
+            val secret = checkNotNull(password) { "only an account made by TestAccounts.create has a password" }
+            TogglApiClient(
+                TokklTestServer.url,
+                ApiCredentials.EmailPassword(email, secret),
+                httpClient = OkHttpClient.Builder().connectionPool(ConnectionPool(0, 1, TimeUnit.SECONDS)).build(),
+            )
+        }
 
         /** The account's default workspace, where [createEntry] puts entries. */
         val workspaceId: Long by lazy {
@@ -97,7 +118,7 @@ object TestAccounts {
         val me = TogglApiClient(TokklTestServer.url, ApiCredentials.EmailPassword(email, password))
             .get(TokklTestServer.url.api("me"), NewMe.serializer())
             .orFail("GET /api/v9/me")
-        return Account(me.id, email, me.apiToken)
+        return Account(me.id, email, me.apiToken, password)
     }
 
     /** Deletes [account] with its workspace and everything in it. */

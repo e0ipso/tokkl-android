@@ -69,6 +69,19 @@ object TokklTestServer {
         ServerUrl.parse(url) ?: error("tokklUserCaTlsBaseUrl is not an https URL: $url")
     }
 
+    /**
+     * A second, older Tokkl, Tokkl 1.8.1, which has no timer API: it answers 404 to
+     * `GET /api/app/timer`, its events and every timer action. The script starts it beside [url]
+     * with an account of its own, for the tests of a server without Pomodoro and Pause.
+     */
+    val legacyUrl: ServerUrl by lazy {
+        val url = argument("tokklLegacyBaseUrl")
+        ServerUrl.parse(url) ?: error("tokklLegacyBaseUrl is not an http URL: $url")
+    }
+
+    /** The API token of the account on [legacyUrl]. */
+    val legacyApiToken: String by lazy { credential("tokklLegacyApiToken") }
+
     val email: String by lazy { argument("tokklEmail") }
 
     val password: String by lazy { credential("tokklPassword") }
