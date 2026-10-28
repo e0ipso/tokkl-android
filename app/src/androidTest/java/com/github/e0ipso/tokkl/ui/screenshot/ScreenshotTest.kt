@@ -54,7 +54,6 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.PomodoroSession
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.calendar.CalendarEntry
 import com.github.e0ipso.tokkl.calendar.CalendarState
@@ -77,6 +76,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroContent
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPageState
 import com.github.e0ipso.tokkl.pomodoro.heldSession
+import com.github.e0ipso.tokkl.pomodoro.ring
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
 import com.github.e0ipso.tokkl.reports.DetailedEntry
@@ -511,7 +511,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
     private fun showPomodoroAlarm(steps: () -> Unit) {
         show({
-            PomodoroAlarmContent(PomodoroAlarmState(session = POMODORO_SESSION), onNext = {}, onEnd = {}, clock = TODAY)
+            PomodoroAlarmContent(PomodoroAlarmState(ring = RUNNING_POMODORO.held!!.ring()), onNext = {}, onEnd = {}, clock = TODAY)
         }) {
             composeRule.awaitText(string(R.string.pomodoro_alarm_title))
             steps()
@@ -660,14 +660,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             lengths = PomodoroLengths("25", "5", "15", "4"),
         )
 
-        /** Default 25-minute work phase, fixed at 1:05 overtime on [TODAY]. No store or alarm runs. */
-        val POMODORO_SESSION = PomodoroSession(
-            workspaceId = 1, workMinutes = 25.0, shortRestMinutes = 5.0, longRestMinutes = 15.0, longRestEvery = 4.0,
-            phaseKind = "work", phaseStartedAt = TODAY.instant().minusSeconds(25 * 60 + 65),
-            pomodoroStartedAt = TODAY.instant().minusSeconds(25 * 60 + 65), completed = 0.0, fields = POMODORO_FIELDS,
-        )
-
-        /** The server's session, held at the start of the same phase and read at 1:05 overtime on [TODAY]. */
+        /**
+         * The server's default 25-minute work phase, held at its start and read at 1:05 overtime on
+         * [TODAY]. The alarm captures show its ring. No alarm runs.
+         */
         val RUNNING_POMODORO = IDLE_POMODORO.copy(
             held = heldSession(phaseStart = TODAY.instant().minusSeconds(25 * 60 + 65), description = POMODORO_FIELDS.description),
         )

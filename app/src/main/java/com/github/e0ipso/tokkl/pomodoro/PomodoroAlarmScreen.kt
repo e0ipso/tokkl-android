@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -29,6 +30,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.timer.TimerNotice
+import com.github.e0ipso.tokkl.timer.timerNoticeText
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -38,7 +41,12 @@ import java.time.Clock
 import java.util.Locale
 import kotlinx.coroutines.delay
 
-/** Exactly two actions; scrolling keeps both reachable at the largest system font scale. */
+/**
+ * The held phase's alarm: its transition, "Pomodoro N of M" from the server's number and the
+ * overtime since its planned end, with exactly two actions. Scrolling keeps both reachable at the
+ * largest system font scale. A Next phase or End session that did not go through shows the
+ * standard message, and the alarm keeps ringing.
+ */
 @Composable
 internal fun PomodoroAlarmContent(
     state: PomodoroAlarmState,
@@ -47,7 +55,7 @@ internal fun PomodoroAlarmContent(
     clock: Clock = Clock.systemUTC(),
 ) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val session = state.session
+    val ring = state.ring
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState())
@@ -56,11 +64,14 @@ internal fun PomodoroAlarmContent(
         ) {
             Text(stringResource(R.string.pomodoro_alarm_title), style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.semantics { heading() })
-            if (state.failed) ErrorBanner(stringResource(R.string.pomodoro_fullscreen_save_failed))
-            if (session != null) {
-                Text(stringResource(alarmTransitionLabel(session.ring().sound)), style = MaterialTheme.typography.titleLarge)
-                var now by remember(clock, session.phaseKey()) { mutableStateOf(clock.instant()) }
-                LaunchedEffect(clock, session.phaseKey(), lifecycle) {
+            state.problem?.let { problem ->
+                ErrorBanner(timerNoticeText(LocalResources.current, TimerNotice.ActionFailed(problem, 0)))
+            }
+            if (ring != null) {
+                Text(stringResource(alarmTransitionLabel(ring.sound)), style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.pomodoro_number, ring.number, ring.longRestEvery))
+                var now by remember(clock, ring.phase) { mutableStateOf(clock.instant()) }
+                LaunchedEffect(clock, ring.phase, lifecycle) {
                     lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                         while (true) {
                             now = clock.instant()
@@ -68,7 +79,7 @@ internal fun PomodoroAlarmContent(
                         }
                     }
                 }
-                val reading = session.clockAt(now)
+                val reading = ring.clockAt(now)
                 val duration = String.format(Locale.ROOT, "%d:%02d", reading.seconds / 60, reading.seconds % 60)
                 val spoken = stringResource(
                     if (reading.overtime) R.string.pomodoro_overtime_clock else R.string.pomodoro_remaining_clock,
@@ -78,11 +89,11 @@ internal fun PomodoroAlarmContent(
                 Text(duration, style = TokklTheme.clockTextStyle,
                     modifier = Modifier.fillMaxWidth().semantics { contentDescription = spoken })
             }
-            TokklButton(onClick = onNext, enabled = session != null && !state.busy,
+            TokklButton(onClick = onNext, enabled = ring != null && !state.busy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
                 Text(stringResource(R.string.pomodoro_alarm_next))
             }
-            TokklGhostButton(onClick = onEnd, enabled = session != null && !state.busy,
+            TokklGhostButton(onClick = onEnd, enabled = ring != null && !state.busy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
                 Text(stringResource(R.string.pomodoro_alarm_end))
             }

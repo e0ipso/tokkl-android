@@ -40,7 +40,7 @@ class PomodoroTimerHandoffTest {
     }
 
     @Test
-    fun failedSessionSaveRestoresTimersAndDoesNotNotifyOrArm() {
+    fun failedSessionSaveRestoresTimersAndDoesNotNotify() {
         val f = Fixture()
         val timer = row(1, T0.minusSeconds(900))
         f.db.timers += timer
@@ -50,7 +50,6 @@ class PomodoroTimerHandoffTest {
         assertTrue(f.db.stops.isEmpty())
         assertNull(f.db.session)
         assertEquals(0, f.callbacks)
-        assertNull(f.alarms.at)
     }
 
     @Test
@@ -85,38 +84,18 @@ class PomodoroTimerHandoffTest {
     }
 
     @Test
-    fun handoffStopsRingingAfterCommitAndReentrantRefreshCannotSaveAgain() = runBlocking {
+    fun handoffSendsAfterCommitAndReentrantRefreshCannotSaveAgain() = runBlocking {
         val f = Fixture()
-        val original = f.store.start(LENGTHS, FIELDS, 7)
+        f.store.start(LENGTHS, FIELDS, 7)
         f.now = T0.plusSeconds(1500)
-        f.store.onPhaseAlarm(original.phaseKey())
-        assertTrue(f.ringing.active)
         f.onCallback = {
             assertEquals(PomodoroStep.Idle, f.db.transaction { f.store.endForTimerInTransaction(f.now) })
         }
         val step = f.db.transaction { f.store.endForTimerInTransaction(f.now) }
-        assertTrue("side effects wait for commit", f.ringing.active)
+        assertEquals("side effects wait for commit", 0, f.callbacks)
         f.store.timerHandoffCommitted(step)
-        assertFalse(f.ringing.active)
-        assertNull(f.alarms.at)
-        assertFalse(f.alarms.watching)
-        assertNull(f.store.reachedPhaseEnd())
         assertEquals(1, f.callbacks)
         assertEquals(1, f.db.creates.size)
-    }
-
-    @Test
-    fun delayedHandoffCleanupDoesNotDisarmANewerSession() = runBlocking {
-        val f = Fixture()
-        f.store.start(LENGTHS, FIELDS, 7)
-        val step = f.db.transaction { f.store.endForTimerInTransaction(T0.plusSeconds(900)) }
-        f.now = T0.plusSeconds(1800)
-        val newer = f.store.start(LENGTHS, FIELDS, 7)
-        val alarm = f.alarms.at
-        f.store.timerHandoffCommitted(step)
-        assertEquals(newer, f.db.session)
-        assertEquals(alarm, f.alarms.at)
-        assertTrue(f.alarms.watching)
     }
 
     @Test
@@ -182,13 +161,11 @@ class PomodoroTimerHandoffTest {
             override fun withZone(zone: ZoneId?): Clock = this
         }
         val db = MemoryDatabase()
-        val alarms = Alarms()
-        val ringing = Ringing()
         var callbacks = 0
         var onCallback: () -> Unit = {}
         val store = PomodoroSessionStore(
             db, Dispatchers.Unconfined, clock, accountTime = { TIME },
-            onQueued = { callbacks++; onCallback() }, alarms = alarms, ringing = ringing,
+            onQueued = { callbacks++; onCallback() },
         )
     }
 
@@ -246,19 +223,6 @@ class PomodoroTimerHandoffTest {
         }
     }
 
-    private class Alarms : PomodoroAlarmScheduler {
-        override val permissionDenied = false
-        var at: Instant? = null
-        var watching = false
-        override fun schedule(triggerAt: Instant): Boolean { at = triggerAt; return true }
-        override fun cancel() { at = null }
-        override fun watchSession(running: Boolean) { watching = running }
-    }
-    private class Ringing : PomodoroRinging {
-        var active = false
-        override suspend fun start(ring: PomodoroRing) { active = true }
-        override suspend fun stop() { active = false }
-    }
     private companion object {
         val T0: Instant = Instant.parse("2026-10-24T09:00:00Z")
         val LENGTHS = PomodoroSessionConfig(25.0, 5.0, 15.0, 4.0)

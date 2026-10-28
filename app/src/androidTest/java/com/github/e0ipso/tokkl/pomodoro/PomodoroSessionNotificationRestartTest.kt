@@ -12,15 +12,15 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
+import com.github.e0ipso.tokkl.timerstate.PhaseTransition
+import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import java.io.File
+import java.time.Duration
 import java.util.Properties
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,7 +31,11 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
-/** Run both ordered steps through the test orchestrator, each in a fresh app process. */
+/**
+ * The session notification across a process restart, from the stored timer state rather than any
+ * session of the phone's own. Run both ordered steps through the test orchestrator, each in a fresh
+ * app process.
+ */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class PomodoroSessionNotificationRestartTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -40,35 +44,38 @@ class PomodoroSessionNotificationRestartTest {
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val handover = File(context.cacheDir, "PomodoroSessionNotificationRestartTest.properties")
 
-    @Test fun step1PostsAnOfflineSessionAndLeavesItsImmutableTapForTheNextProcess() {
+    @Test fun step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess() {
         SessionRule.signOut()
-        // Disposable credentials to an unused port, as in RunningNotificationRestartTest.
-        // No queue create or request can reach an account on a real server.
-        val server = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
-        ServerTrustStore(context).confirmCleartext(server)
-        Session(context).save(server, "not a token")
+        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
+        HeldPhases.learnTheTimerApi()
         RunningNotifications.allow()
-        runBlocking {
-            app.pomodoroSessions.start(PomodoroSessionConfig(180.0, 60.0, 60.0, 4.0), EntryFields("Session across processes"), 1)
-            app.pomodoroSessionNotification.refresh(force = true)
-        }
+        // Two hours of a three-hour work phase are left, so nothing rings across the restart.
+        val held = HeldPhases.hold(PhaseTransition.WORK_TO_SHORT_REST, overtime = Duration.ofHours(-2), length = Duration.ofHours(3))
+        runBlocking { app.pomodoroSessionNotification.refresh(force = true) }
         val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotification.ID }
         val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
         Properties().apply {
             setProperty("process", processIdentity())
             setProperty("account", identity)
             setProperty("posted", posted.postTime.toString())
+            setProperty("phase", HeldPhases.key(held).start.toEpochMilli().toString())
+            setProperty("revision", held.state.revision.toString())
             handover.outputStream().use { store(it, null) }
         }
     }
 
-    @Test fun step2ThePersistedTapOpensPomodoroInTheNewProcessAndSignOutErasesTheSession() {
+    @Test fun step2TheStoredStateKeepsTheNotificationAndItsTapOpensPomodoroThenSignOutErasesIt() {
         assertTrue("step 1 must precede step 2", handover.exists())
         WorkManagerTestInitHelper.initializeTestWorkManager(context)
         val saved = Properties().apply { handover.inputStream().use { load(it) } }
         try {
             assertNotEquals(saved.getProperty("process"), processIdentity())
-            val phase = checkNotNull(runBlocking { app.pomodoroSessions.current() }).phaseKey()
+            // The new process holds the stored state, with no request for it.
+            val held = checkNotNull(app.timerState.state.value)
+            assertEquals(saved.getProperty("revision").toLong(), held.state.revision)
+            val phase = HeldPhases.key(held)
+            assertEquals(saved.getProperty("phase").toLong(), phase.start.toEpochMilli())
             assertTrue(runBlocking { app.pomodoroSessionNotification.acceptsTap(saved.getProperty("account"), phase) })
             // The process follows the persisted shown hash without reposting this notification.
             runBlocking { app.pomodoroSessionNotification.refresh() }
@@ -77,7 +84,6 @@ class PomodoroSessionNotificationRestartTest {
             posted.notification.contentIntent.send()
             val device = UiDevice.getInstance(instrumentation)
             assertTrue(device.wait(Until.hasObject(By.text("Pomodoro")), 10_000))
-            assertEquals("Session across processes", runBlocking { app.pomodoroSessions.current() }?.fields?.description)
         } finally {
             instrumentation.runOnMainSync {
                 ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
@@ -85,8 +91,8 @@ class PomodoroSessionNotificationRestartTest {
             }
             runBlocking { app.signOut.run() }
             assertNull(PomodoroSessionNotificationStore(context).load())
-            assertNull(runBlocking { app.pomodoroSessions.current() })
-            assertEquals(0, runBlocking { app.changes.unsentCount.first() })
+            assertNull(TimerStateStore(context).load())
+            assertNull(app.timerState.state.value)
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotification.ID })
             assertTrue(handover.delete())
             assertFalse(handover.exists())

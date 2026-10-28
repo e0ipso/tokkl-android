@@ -2,7 +2,7 @@
 id: 8
 group: "timer-surfaces"
 dependencies: [5, 7]
-status: "pending"
+status: "completed"
 created: 2026-10-28
 skills:
   - android-alarms
@@ -23,14 +23,14 @@ Android exact alarms and notification/ringing lifecycle.
 
 ## Acceptance Criteria
 
-- [ ] One `setAlarmClock` is scheduled at `phase.planned_end - clockOffset`, keyed by `phase.start`. Accepting a state recomputes the schedule, and a missed end rings immediately without advancing a phase.
-- [ ] Reboot, app update, clock/timezone changes and exact-alarm permission grants rearm from persisted server state without requiring a request. Capability false or signed-out state schedules no session alarm.
-- [ ] A new `phase.start` or null Pomodoro cancels the old alarm, stops the ringing service and closes the full-screen alarm. A revision change within the same phase does not dismiss its ringing.
-- [ ] Sounds follow the server `transition`. Existing sound, vibration, full-screen access, channels and denied-permission behavior remain. Stale phase deliveries cannot ring an old phase.
-- [ ] Session notification and alarm content use held phase/countdown/overtime, upcoming phase and server number. Next/End intents carry the displayed server revision and call the direct client; offline failure leaves state and ringing unchanged and shows the standard message.
-- [ ] Alarm/direct entry points refuse the Pomodoro screen when the capability is absent. Process restart restores content from the persisted holder rather than the removed Room session.
-- [ ] Rewrite `PomodoroPhaseAlarmTest`, `PomodoroRingingTest`, `PomodoroAlarmModelTest` and `PomodoroSessionNotificationTest` around held states. Run `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest' --tests 'com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest' --tests 'com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest' --tests 'com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest'`; expect zero failures and nonzero tests.
-- [ ] Run the screenshot package on tokkl-api36 through the instrumented runner, review changed alarm captures and commit updated references with the visual change. The rerun reports zero failures.
+- [x] One `setAlarmClock` is scheduled at `phase.planned_end - clockOffset`, keyed by `phase.start`. Accepting a state recomputes the schedule, and a missed end rings immediately without advancing a phase.
+- [x] Reboot, app update, clock/timezone changes and exact-alarm permission grants rearm from persisted server state without requiring a request. Capability false or signed-out state schedules no session alarm.
+- [x] A new `phase.start` or null Pomodoro cancels the old alarm, stops the ringing service and closes the full-screen alarm. A revision change within the same phase does not dismiss its ringing.
+- [x] Sounds follow the server `transition`. Existing sound, vibration, full-screen access, channels and denied-permission behavior remain. Stale phase deliveries cannot ring an old phase.
+- [x] Session notification and alarm content use held phase/countdown/overtime, upcoming phase and server number. Next/End intents carry the displayed server revision and call the direct client; offline failure leaves state and ringing unchanged and shows the standard message.
+- [x] Alarm/direct entry points refuse the Pomodoro screen when the capability is absent. Process restart restores content from the persisted holder rather than the removed Room session.
+- [x] Rewrite `PomodoroPhaseAlarmTest`, `PomodoroRingingTest`, `PomodoroAlarmModelTest` and `PomodoroSessionNotificationTest` around held states. Run `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest' --tests 'com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest' --tests 'com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest' --tests 'com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest'`; expect zero failures and nonzero tests.
+- [x] Run the screenshot package on tokkl-api36 through the instrumented runner, review changed alarm captures and commit updated references with the visual change. The rerun reports zero failures.
 
 Use your internal Todo tool to track these and keep on track.
 

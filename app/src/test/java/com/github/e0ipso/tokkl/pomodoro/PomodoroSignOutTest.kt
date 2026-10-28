@@ -10,12 +10,8 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,10 +20,14 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Account-lifetime, warning-count and output regressions, independent of a network. */
+/**
+ * Account-lifetime and warning-count regressions of the device-local session, independent of a
+ * network. The phase alarm and its ring follow the server's state, not this store; sign-out
+ * releases them through PomodoroPhaseAlarm.release, which PomodoroPhaseAlarmTest covers.
+ */
 class PomodoroSignOutTest {
     @Test
-    fun activeWorkIsDiscardedWithoutCreatingAnEntryAndAllLocalEffectsAreReleased() = runBlocking {
+    fun activeWorkIsDiscardedWithoutCreatingAnEntry() = runBlocking {
         val f = Fixture()
         f.start()
         f.now = START.plusSeconds(30)
@@ -38,29 +38,15 @@ class PomodoroSignOutTest {
     }
 
     @Test
-    fun shortAndLongRestsAreDiscardedWithoutSavingOrKeepingAnAlarm() = runBlocking {
+    fun shortAndLongRestsAreDiscardedWithoutSaving() = runBlocking {
         for (kind in listOf("shortRest", "longRest")) {
             val f = Fixture()
             val work = f.start()
             f.database.session = work.copy(phaseKind = kind, phaseStartedAt = START.plusSeconds(60))
-            f.store.rearm()
             f.store.forget()
             f.assertCleared()
             assertEquals(0, f.database.queued)
         }
-    }
-
-    @Test
-    fun ringingSignOutStopsSoundVibrationAndNotificationAndDropsTheReachedRecord() = runBlocking {
-        val f = Fixture()
-        val work = f.start()
-        f.now = START.plusSeconds(60)
-        f.store.onPhaseAlarm(work.phaseKey())
-        assertTrue(f.output.audio)
-        assertTrue(f.output.vibration)
-        assertTrue(f.output.notification)
-        f.store.forget()
-        f.assertCleared()
     }
 
     @Test
@@ -151,16 +137,13 @@ class PomodoroSignOutTest {
     @Test
     fun staleCallbacksAndRetainedCommandsCannotTouchALaterAccountsSession() = runBlocking {
         val f = Fixture()
-        val old = f.start()
+        f.start()
         f.now = START.plusSeconds(60)
-        f.store.onPhaseAlarm(old.phaseKey())
         f.store.forget()
         val nextStore = f.newStore()
         f.now = START.plusSeconds(600)
         val next = nextStore.start(LENGTHS, EntryFields("Next account"), 7)
         f.now = START.plusSeconds(660)
-        nextStore.onPhaseAlarm(next.phaseKey())
-        val posts = f.output.posts
 
         assertEquals(PomodoroStep.Idle, f.store.nextPhase())
         assertEquals(PomodoroStep.Idle, f.store.end())
@@ -170,54 +153,13 @@ class PomodoroSignOutTest {
         assertThrows(IllegalStateException::class.java) {
             runBlocking { f.store.start(LENGTHS, EntryFields("Old account"), 7) }
         }
-        f.store.onPhaseAlarm(old.phaseKey())
-        f.store.rearm()
-        f.store.rearm(deferRingingToAlarm = true)
-        f.store.repostRinging(old.phaseKey())
-        assertFalse(f.store.withRingingPhase(null) { error("sticky callback from old store") })
-        assertFalse(nextStore.withRingingPhase(old.phaseKey()) { error("old notification") })
-        assertEquals(PomodoroStep.Idle, nextStore.nextPhaseIfCurrent(old.phaseKey()))
-        assertEquals(PomodoroStep.Idle, nextStore.endIfCurrent(old.phaseKey()))
-        f.store.disarm()
-        f.store.discardRunningSession()
 
         assertEquals(next, nextStore.current())
-        assertEquals(posts, f.output.posts)
-        assertTrue(f.output.audio)
         assertEquals(0, f.database.queued)
     }
 
     @Test
-    fun signOutWaitsForValidatedPlaybackThenStopsItAndRejectsWaitingActions() = runBlocking {
-        val f = Fixture()
-        val phase = f.start().phaseKey()
-        f.now = START.plusSeconds(60)
-        f.store.onPhaseAlarm(phase)
-        val entered = CompletableDeferred<Unit>()
-        val release = CompletableDeferred<Unit>()
-        val playback = launch {
-            f.store.withRingingPhase(phase) {
-                entered.complete(Unit)
-                release.await()
-                f.controller.start(it)
-            }
-        }
-        entered.await()
-        val end = async(start = CoroutineStart.UNDISPATCHED) { f.store.endIfCurrent(phase) }
-        val signOut = async(start = CoroutineStart.UNDISPATCHED) { f.store.forget() }
-        assertTrue(f.store.isForgotten)
-        assertFalse(signOut.isCompleted)
-        release.complete(Unit)
-        playback.join()
-        assertEquals(PomodoroStep.Idle, end.await())
-        signOut.await()
-        f.assertCleared()
-        assertEquals(0, f.callbacks)
-        assertEquals(0, f.database.queued)
-    }
-
-    @Test
-    fun lateHandoffCallbackCannotScheduleCredentialBoundRetriesOrCancelTheNewAlarm() = runBlocking {
+    fun lateHandoffCallbackCannotScheduleCredentialBoundRetries() = runBlocking {
         val f = Fixture()
         f.start()
         f.now = START.plusSeconds(60)
@@ -230,41 +172,17 @@ class PomodoroSignOutTest {
         val nextStore = f.newStore()
         f.now = START.plusSeconds(600)
         val next = nextStore.start(LENGTHS, EntryFields("New account"), 7)
-        val alarm = f.alarms.at
         f.store.timerHandoffCommitted(saved)
         assertEquals(0, f.callbacks)
-        assertEquals(alarm, f.alarms.at)
         assertEquals(next, nextStore.current())
         assertEquals(0, f.database.queued)
-    }
-
-    @Test
-    fun failedSoundCleanupStillCancelsTheAlarmAndClearsTheDurableReachedRecord() = runBlocking {
-        val f = Fixture()
-        val phase = f.start().phaseKey()
-        f.now = START.plusSeconds(60)
-        f.store.onPhaseAlarm(phase)
-        f.failStop = true
-        assertTrue(runCatching { f.store.forget() }.isFailure)
-        assertTrue(f.store.isForgotten)
-        assertNull(f.database.session)
-        assertNull(f.alarms.at)
-        assertFalse(f.alarms.watching)
-        assertNull(f.store.reachedPhaseEnd())
-        f.failStop = false
-        f.store.forget()
-        f.assertCleared()
     }
 
     private class Fixture {
         var now: Instant = START
         var time: AccountTime? = null
         var callbacks = 0
-        var failStop = false
         val database = MemoryDatabase()
-        val alarms = FakeAlarms()
-        val output = FakeOutput()
-        val controller = PomodoroRingController(output)
         val store = newStore()
         fun newStore() = PomodoroSessionStore(
             database, Dispatchers.Unconfined,
@@ -273,26 +191,12 @@ class PomodoroSignOutTest {
                 override fun getZone(): ZoneId = ZoneOffset.UTC
                 override fun withZone(zone: ZoneId?): Clock = this
             },
-            accountTime = { time }, onQueued = { callbacks++ }, alarms = alarms,
-            ringing = object : PomodoroRinging {
-                override suspend fun start(ring: PomodoroRing) = controller.start(ring)
-                override suspend fun stop() {
-                    if (failStop) error("audio device failed")
-                    controller.stop()
-                }
-            },
+            accountTime = { time }, onQueued = { callbacks++ },
         )
         suspend fun start() = store.start(LENGTHS, EntryFields("Focus"), 7)
         suspend fun assertCleared() {
             assertNull(store.current())
             assertNull(database.session)
-            assertNull(store.reachedPhaseEnd())
-            assertNull(alarms.at)
-            assertFalse(alarms.watching)
-            assertNull(controller.current)
-            assertFalse(output.audio)
-            assertFalse(output.vibration)
-            assertFalse(output.notification)
         }
     }
 
@@ -323,28 +227,6 @@ class PomodoroSignOutTest {
             inTransaction = true
             return try { block() } finally { inTransaction = false }
         }
-    }
-
-    private class FakeAlarms : PomodoroAlarmScheduler {
-        var at: Instant? = null
-        var watching = false
-        override val permissionDenied = false
-        override fun schedule(triggerAt: Instant): Boolean { at = triggerAt; return true }
-        override fun cancel() { at = null }
-        override fun watchSession(running: Boolean) { watching = running }
-    }
-
-    private class FakeOutput : PomodoroRingOutput {
-        var audio = false
-        var vibration = false
-        var notification = false
-        var posts = 0
-        override fun show(ring: PomodoroRing) { notification = true; posts++ }
-        override fun play(sound: PomodoroSound) { audio = true }
-        override fun vibrate() { vibration = true }
-        override fun stopAudio() { audio = false }
-        override fun stopVibration() { vibration = false }
-        override fun removeNotification() { notification = false }
     }
 
     private companion object {

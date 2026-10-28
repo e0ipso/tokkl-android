@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.PomodoroSession
-import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
-import com.github.e0ipso.tokkl.time.SessionPhase
-import com.github.e0ipso.tokkl.time.plannedEnd
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.serverNow
 import java.time.Duration
@@ -26,11 +22,8 @@ private fun clockFor(remainingMillis: Long): PomodoroClock =
     if (remainingMillis >= 0) PomodoroClock(false, (remainingMillis + 999) / 1000)
     else PomodoroClock(true, -remainingMillis / 1000)
 
-// The local session's clock, which the phase alarm and the alarm screen still read until task 8
-// moves them to the held state. Task 10 deletes it with the local session.
-internal fun PomodoroSession.screenPhase() = SessionPhase(phaseKind, phaseStartedAt, completed)
-
-internal fun PomodoroSession.screenLengths() = PomodoroSessionConfig(workMinutes, shortRestMinutes, longRestMinutes, longRestEvery)
-
-internal fun PomodoroSession.clockAt(now: Instant): PomodoroClock =
-    clockFor(Duration.between(now, plannedEnd(screenPhase(), screenLengths())).toMillis())
+/**
+ * The ringing phase's clock at the phone's [deviceNow]: time left before its planned end, or the
+ * overtime since, rounded as [phaseClockAt] rounds them.
+ */
+fun PomodoroRing.clockAt(deviceNow: Instant): PomodoroClock = clockFor(Duration.between(deviceNow, end).toMillis())

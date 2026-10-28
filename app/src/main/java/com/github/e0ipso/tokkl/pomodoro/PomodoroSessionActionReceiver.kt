@@ -3,37 +3,34 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.TokklApplication
-import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/** No activity or network is needed: the shared store commits the phase and queued save. */
+/**
+ * The session notification's Next phase and End session. No activity is needed: the action goes
+ * to the server with the revision the notification showed, and the state it answers with reaches
+ * the notification and the alarm. One that fails, offline included, changes nothing on the phone
+ * and says why.
+ */
 class PomodoroSessionActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != NEXT && intent.action != END) return
         val account = intent.getStringExtra(POMODORO_NOTIFICATION_ACCOUNT) ?: return
         val phase = intent.phaseKey() ?: return
+        val revision = intent.shownRevision() ?: return
         val app = context.applicationContext as TokklApplication
         // Capture this account's observer before launching. Sign-out retires this instance.
         val sync = app.pomodoroSessionNotification
         val done = completed
-        val pending = goAsync()
+        // The broadcast ends before the request, so a server slow to answer cannot hold it past
+        // its time limit. The timer sync service keeps the process alive while a session runs.
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                sync.act(account, phase, end = intent.action == END)
-                sync.refresh()
-            } catch (_: SQLiteException) {
-                // A failed local transaction keeps its old phase and can be attempted again.
-            } catch (_: IOException) {
-                // A failed alarm/display write must still finish the broadcast.
-            } catch (_: IllegalArgumentException) {
-                // A clock moved behind the phase start; no earlier span can be saved.
+                sync.act(account, phase, revision, end = intent.action == END)?.let { showPomodoroActionFailure(app, it) }
             } finally {
-                pending.finish()
                 done?.countDown()
             }
         }

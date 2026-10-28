@@ -1,53 +1,74 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.PomodoroSession
-import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
-import com.github.e0ipso.tokkl.time.SessionPhase
-import com.github.e0ipso.tokkl.time.transitionKind
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.PhaseKind
+import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import java.time.Instant
 
-/** Identifies a stored phase, including its account/workspace and current pomodoro. */
-data class PomodoroPhaseKey(
-    val workspaceId: Long,
-    val kind: String,
-    val startedAt: Instant,
-    val pomodoroStartedAt: Instant,
-    val completed: Double,
-)
+/**
+ * A phase of the server's session, by its `phase.start`. The phase alarm, the ring, the alarm
+ * screen and every notification button carry it, so a delivery or a tap meant for an older phase
+ * changes nothing once another device or the phone has moved the session on.
+ */
+data class PomodoroPhaseKey(val start: Instant)
 
-internal fun PomodoroSession.phaseKey() = PomodoroPhaseKey(
-    workspaceId, phaseKind, phaseStartedAt, pomodoroStartedAt, completed,
-)
-
-/** The four released WAVs. The Android output maps these to bundled raw resources. */
-enum class PomodoroSound(val transition: String) {
-    WORK_TO_SHORT_REST("workToShortRest"),
-    WORK_TO_LONG_REST("workToLongRest"),
-    SHORT_REST_TO_WORK("shortRestToWork"),
-    LONG_REST_TO_WORK("longRestToWork"),
+/** The four released WAVs, one per server `transition`. The Android output maps them to bundled raw resources. */
+enum class PomodoroSound(val transition: PhaseTransition) {
+    WORK_TO_SHORT_REST(PhaseTransition.WORK_TO_SHORT_REST),
+    WORK_TO_LONG_REST(PhaseTransition.WORK_TO_LONG_REST),
+    SHORT_REST_TO_WORK(PhaseTransition.SHORT_REST_TO_WORK),
+    LONG_REST_TO_WORK(PhaseTransition.LONG_REST_TO_WORK),
 }
 
-data class PomodoroRing(val phase: PomodoroPhaseKey, val sound: PomodoroSound)
+/**
+ * The held session's phase as its alarm, its ring and the alarm screen show it.
+ *
+ * @property end the phone's time of the phase's planned end: the server's `planned_end` less the
+ *   held state's clock offset.
+ * @property sound what the phase end plays, from the server's `transition`.
+ * @property revision the state's revision. Next phase and End session send it.
+ */
+data class PomodoroRing(
+    val phase: PomodoroPhaseKey,
+    val kind: PhaseKind,
+    val sound: PomodoroSound,
+    val number: Int,
+    val longRestEvery: Int,
+    val end: Instant,
+    val revision: Long,
+)
 
-internal fun PomodoroSession.ring(): PomodoroRing {
-    val transition = transitionKind(
-        SessionPhase(phaseKind, phaseStartedAt, completed),
-        PomodoroSessionConfig(workMinutes, shortRestMinutes, longRestMinutes, longRestEvery),
+/** The phase this state's session is in, or null without a session. */
+fun HeldTimerState.ring(): PomodoroRing? {
+    val session = state.pomodoro ?: return null
+    return PomodoroRing(
+        phase = PomodoroPhaseKey(session.phase.start),
+        kind = session.phase.kind,
+        sound = PomodoroSound.entries.single { it.transition == session.transition },
+        number = session.number,
+        longRestEvery = session.longRestEvery,
+        end = session.phase.plannedEnd.minus(clockOffset),
+        revision = state.revision,
     )
-    return PomodoroRing(phaseKey(), PomodoroSound.entries.single { it.transition == transition })
 }
 
-/** Store callbacks run under its phase lock; Android dispatches them to the main thread. */
+/** Whether the phone's [deviceNow] has reached the phase's planned end, from which every device rings. */
+internal fun PomodoroRing.due(deviceNow: Instant): Boolean = !deviceNow.isBefore(end)
+
+/**
+ * The ringing service as [PomodoroPhaseAlarm] drives it. The alarm calls these under its lock, and
+ * Android dispatches them to the main thread.
+ */
 interface PomodoroRinging {
+
+    /** Rings [ring]. While its phase already rings, the sound goes on and the notification shows [ring]. */
     suspend fun start(ring: PomodoroRing)
 
-    suspend fun stop()
-}
+    /** Shows [ring] while its phase rings, as after a revision change within the phase. Starts nothing. */
+    suspend fun update(ring: PomodoroRing)
 
-internal object NoPomodoroRinging : PomodoroRinging {
-    override suspend fun start(ring: PomodoroRing) = Unit
-
-    override suspend fun stop() = Unit
+    /** Stops the ring, unless [keep] is the phase it rings. */
+    suspend fun stop(keep: PomodoroPhaseKey? = null)
 }
 
 /** Framework effects are separate so unit tests can keep an indefinite ring without a clock. */
@@ -66,20 +87,22 @@ internal interface PomodoroRingOutput {
 }
 
 /**
- * Main-thread state for one service. A repeated delivery only posts the notification again.
- * There is deliberately no duration, timer, auto-advance or silence action here. Only the
- * session store accepts Next/End and stops the output after committing the local change.
+ * Main-thread state for one service. A ring of the phase already ringing only posts the
+ * notification again, with that ring's revision. There is deliberately no duration, timer,
+ * auto-advance or silence action here: only a state with another phase, or none, stops it.
  */
 internal class PomodoroRingController(private val output: PomodoroRingOutput) {
     var current: PomodoroRing? = null
         private set
 
     fun start(ring: PomodoroRing) {
-        if (current == ring) {
+        val playing = current
+        if (playing != null && playing.phase == ring.phase && playing.sound == ring.sound) {
+            current = ring
             output.show(ring)
             return
         }
-        if (current != null) stop()
+        if (playing != null) stop()
         current = ring
         output.show(ring)
         // A failed audio device must not suppress the independently requested vibration.
@@ -88,10 +111,6 @@ internal class PomodoroRingController(private val output: PomodoroRingOutput) {
         } finally {
             output.vibrate()
         }
-    }
-
-    fun dismissed(phase: PomodoroPhaseKey) {
-        current?.takeIf { it.phase == phase }?.let(output::show)
     }
 
     fun stop() {

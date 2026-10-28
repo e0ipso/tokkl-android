@@ -9,9 +9,8 @@ import android.content.pm.PackageManager
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PomodoroSession
 import com.github.e0ipso.tokkl.notification.RunningNotifier
+import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import java.time.Instant
 import java.util.UUID
 import org.junit.Assert.assertEquals
@@ -25,20 +24,19 @@ import org.junit.Test
 class PomodoroSessionNotifierTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val start = Instant.parse("2026-10-20T09:00:00Z")
-    private val session = PomodoroSession(
-        workspaceId = 7, workMinutes = 25.0, shortRestMinutes = 5.0, longRestMinutes = 15.0, longRestEvery = 4.0,
-        phaseKind = "work", phaseStartedAt = start, pomodoroStartedAt = start, completed = 0.0,
-        fields = EntryFields("Native session clock"),
-    )
+    private val held = heldSession(phaseStart = start, number = 2, description = "Native session clock")
+    private val content = checkNotNull(held.notificationContent())
+    private val key = PomodoroPhaseKey(start)
 
-    @Test fun nativeClockHasOneFixedPlannedEndAndShowsThePhaseNumberAndDescription() {
-        val built = PomodoroSessionNotifier(context).build(session.notificationContent(), "native-clock")
+    @Test fun nativeClockHasOneFixedPlannedEndAndShowsTheServersPhaseNumberUpcomingPhaseAndDescription() {
+        val built = PomodoroSessionNotifier(context).build(content, "native-clock")
         assertEquals(start.plusSeconds(1500).toEpochMilli(), built.`when`)
         assertTrue(built.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
         assertTrue(built.extras.getBoolean(Notification.EXTRA_CHRONOMETER_COUNT_DOWN))
         assertTrue(built.flags and Notification.FLAG_ONGOING_EVENT != 0)
-        assertEquals("Work · Pomodoro 1", built.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+        assertEquals("Work · Pomodoro 2 of 4", built.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
         assertEquals("Native session clock", built.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        assertEquals("Up next: Short rest", built.extras.getCharSequence(Notification.EXTRA_SUB_TEXT).toString())
         assertEquals(listOf("Next phase", "End session"), built.actions.map { it.title.toString() })
         assertEquals(PomodoroSessionNotifier.CHANNEL_ID, built.channelId)
         assertNotEquals(RunningNotifier.CHANNEL_ID, built.channelId)
@@ -49,12 +47,13 @@ class PomodoroSessionNotifierTest {
         assertEquals(Notification.CATEGORY_STOPWATCH, built.category)
     }
 
-    @Test fun postedIntentsKeepDistinctActionPhaseAndAccountIdentities() {
+    @Test fun postedIntentsKeepDistinctActionPhaseRevisionAndAccountIdentities() {
         val notifier = PomodoroSessionNotifier(context)
-        val first = notifier.build(session.notificationContent(), "account-a")
-        val same = notifier.build(session.notificationContent(), "account-a")
-        val next = notifier.build(session.copy(phaseKind = "shortRest", completed = 1.0).notificationContent(), "account-a")
-        val account = notifier.build(session.notificationContent(), "account-b")
+        val first = notifier.build(content, "account-a")
+        val same = notifier.build(content, "account-a")
+        val next = notifier.build(checkNotNull(heldSession(PhaseKind.SHORT_REST, start.plusSeconds(1500), 300).notificationContent()), "account-a")
+        val account = notifier.build(content, "account-b")
+        val revision = notifier.build(content.copy(revision = content.revision + 1), "account-a")
         try {
             assertEquals(first.contentIntent, same.contentIntent)
             assertNotEquals(first.contentIntent, next.contentIntent)
@@ -62,10 +61,11 @@ class PomodoroSessionNotifierTest {
             assertNotEquals(first.actions[0].actionIntent, first.actions[1].actionIntent)
             assertNotEquals(first.actions[0].actionIntent, next.actions[0].actionIntent)
             assertNotEquals(first.actions[1].actionIntent, account.actions[1].actionIntent)
+            assertNotEquals(first.actions[0].actionIntent, revision.actions[0].actionIntent)
             assertTrue(first.contentIntent.isActivity)
             assertTrue(first.actions.all { it.actionIntent.isBroadcast && it.actionIntent.isImmutable })
         } finally {
-            listOf(first, next, account).forEach { notification ->
+            listOf(first, next, account, revision).forEach { notification ->
                 notification.contentIntent.cancel()
                 notification.actions.forEach { it.actionIntent.cancel() }
             }
@@ -73,10 +73,10 @@ class PomodoroSessionNotifierTest {
     }
 
     @Test fun tapCarriesTheGuardedPhaseAndIsConsumedOnlyOnceWithoutAffectingLauncherIntents() {
-        val tap = pomodoroSessionOpenIntent(context, "tap-account", session.phaseKey())
+        val tap = pomodoroSessionOpenIntent(context, "tap-account", key)
         assertTrue(tap.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0)
         assertTrue(tap.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0)
-        assertEquals(PomodoroNotificationTap("tap-account", session.phaseKey()), tap.takePomodoroNotificationTap())
+        assertEquals(PomodoroNotificationTap("tap-account", key), tap.takePomodoroNotificationTap())
         assertNull(tap.takePomodoroNotificationTap())
         val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         assertNull(launcher.takePomodoroNotificationTap())
@@ -92,12 +92,12 @@ class PomodoroSessionNotifierTest {
         }
         val store = PomodoroSessionNotificationStore(fixture)
         try {
-            val display = PomodoroNotificationDisplay("fixture-account", session.notificationContent().key)
+            val display = PomodoroNotificationDisplay("fixture-account", content.key)
             store.save(display)
             assertEquals(display, PomodoroSessionNotificationStore(fixture).load())
             val all = fixture.getSharedPreferences("ignored", Context.MODE_PRIVATE).all
             assertEquals(setOf("account", "shown"), all.keys)
-            assertFalse(all.values.any { it.toString().contains(session.fields.description) })
+            assertFalse(all.values.any { it.toString().contains(content.description) })
             store.save(null)
             assertNull(PomodoroSessionNotificationStore(fixture).load())
             assertTrue(fixture.getSharedPreferences("ignored", Context.MODE_PRIVATE).all.isEmpty())
@@ -114,15 +114,15 @@ class PomodoroSessionNotifierTest {
         }
         val manager = context.getSystemService(NotificationManager::class.java)
         val before = manager.activeNotifications.map { it.key }.toSet()
-        assertFalse(PomodoroSessionNotifier(denied).post(session.notificationContent(), "denied"))
+        assertFalse(PomodoroSessionNotifier(denied).post(content, "denied"))
         assertEquals(before, manager.activeNotifications.map { it.key }.toSet())
     }
 
     @Test fun restPhaseLabelsAndBlankDescriptionUseResources() {
         val notifier = PomodoroSessionNotifier(context)
-        for ((kind, label) in listOf("shortRest" to R.string.pomodoro_session_short_rest, "longRest" to R.string.pomodoro_session_long_rest)) {
-            val built = notifier.build(session.copy(phaseKind = kind, completed = 1.0, fields = EntryFields()).notificationContent(), "labels")
-            assertEquals(context.getString(R.string.pomodoro_session_title, context.getString(label), 1), built.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+        for ((kind, label) in listOf(PhaseKind.SHORT_REST to R.string.pomodoro_session_short_rest, PhaseKind.LONG_REST to R.string.pomodoro_session_long_rest)) {
+            val built = notifier.build(checkNotNull(heldSession(kind, start, 300).notificationContent()), "labels")
+            assertEquals(context.getString(R.string.pomodoro_session_title, context.getString(label), 1, 4), built.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
             assertEquals(context.getString(R.string.pomodoro_session_no_description), built.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
         }
     }

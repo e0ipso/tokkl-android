@@ -1,16 +1,13 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PomodoroSession
-import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.timerstate.PhaseKind
+import com.github.e0ipso.tokkl.timerstate.PhaseTransition
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import java.time.Duration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -19,277 +16,221 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Regression source for the phase/store/service contract; no framework or network is needed. */
+/**
+ * The ring of a held phase: it starts at the phase's planned end with the sound of the server's
+ * `transition`, goes on with no limit until a state with another phase or none arrives, keeps
+ * going through a new revision of the same phase, and an old phase's delivery, button or service
+ * start cannot touch it. No framework or network is needed.
+ */
 class PomodoroRingingTest {
-    @Test
-    fun phaseEndStartsOutputAndNeverAdvancesThePhase() = runBlocking {
-        val f = Fixture()
-        val original = f.start()
-        f.due()
-        f.store.onPhaseAlarm(original.phaseKey())
 
-        assertEquals(original, f.store.current())
-        assertEquals(ReachedPhaseEnd("work", START), f.store.reachedPhaseEnd())
+    private val key = PomodoroPhaseKey(T0)
+
+    @Test
+    fun thePhaseEndStartsBothOutputsWithTheTransitionsSoundAndNeverMovesThePhaseOn() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+
+        assertEquals(key, f.controller.current?.phase)
         assertEquals(PomodoroSound.WORK_TO_SHORT_REST, f.output.sound)
         assertTrue(f.output.audio)
         assertTrue(f.output.vibrating)
-        assertEquals(0, f.database.creates)
+        assertEquals(f.ring, f.output.notification)
+        assertEquals(3L, f.output.notification?.revision)
     }
 
     @Test
-    fun earlyDeliveryOnlyRearmsTheAlarm() = runBlocking {
-        val f = Fixture()
-        val original = f.start()
-        f.store.onPhaseAlarm(original.phaseKey())
-
-        assertNull(f.controller.current)
-        assertFalse(f.output.audio)
-        assertFalse(f.output.vibrating)
-        assertEquals(START.plusSeconds(60), f.alarms.at)
-        assertEquals(original.phaseKey(), f.alarms.phase)
-    }
-
-    @Test
-    fun nextStopsBothOutputsAndKeepsTheNextPhaseWithoutANetworkDependency() = runBlocking {
-        val f = Fixture()
-        val original = f.startAndRing()
-        val result = f.store.nextPhaseIfCurrent(original.phaseKey()) as PomodoroStep.Running
-
-        assertEquals("shortRest", result.session.phaseKind)
-        f.assertStopped()
-        assertNull(f.store.reachedPhaseEnd())
-        assertEquals(result.session.phaseKey(), f.alarms.phase)
-        assertEquals(0, f.database.creates)
-    }
-
-    @Test
-    fun endStopsBothAndQueuesTheEntryBeforeAnyServerAnswer() = runBlocking {
-        val f = Fixture()
-        val original = f.startAndRing()
-        val result = f.store.endIfCurrent(original.phaseKey()) as PomodoroStep.Saved
-
-        assertNull(result.session)
-        assertNull(f.store.current())
-        assertEquals(1, f.database.creates)
-        assertEquals(1, f.queued)
-        f.assertStopped()
-        assertNull(f.alarms.at)
-    }
-
-    @Test
-    fun duplicateAlarmDeliveryDoesNotRestartOrMultiplyTheOutput() = runBlocking {
-        val f = Fixture()
-        val original = f.startAndRing()
-        val starts = f.output.starts
-        repeat(5) { f.store.onPhaseAlarm(original.phaseKey()) }
-
-        assertEquals(starts, f.output.starts)
-        assertEquals(1, f.output.vibrationStarts)
-        assertTrue(f.output.audio)
-        assertTrue(f.output.vibrating)
-        assertEquals(original, f.store.current())
-    }
-
-    @Test
-    fun everyReleasedTransitionSelectsItsOwnSound() = runBlocking {
-        val cases = listOf(
-            Triple("work", 0.0, PomodoroSound.WORK_TO_SHORT_REST),
-            Triple("work", 3.0, PomodoroSound.WORK_TO_LONG_REST),
-            Triple("shortRest", 1.0, PomodoroSound.SHORT_REST_TO_WORK),
-            Triple("longRest", 4.0, PomodoroSound.LONG_REST_TO_WORK),
+    fun everyServerTransitionSelectsItsOwnSound() = runBlocking {
+        val cases = mapOf(
+            PhaseTransition.WORK_TO_SHORT_REST to PomodoroSound.WORK_TO_SHORT_REST,
+            PhaseTransition.WORK_TO_LONG_REST to PomodoroSound.WORK_TO_LONG_REST,
+            PhaseTransition.SHORT_REST_TO_WORK to PomodoroSound.SHORT_REST_TO_WORK,
+            PhaseTransition.LONG_REST_TO_WORK to PomodoroSound.LONG_REST_TO_WORK,
         )
-        for ((kind, completed, sound) in cases) {
-            val f = Fixture()
-            val session = f.start().copy(phaseKind = kind, completed = completed)
-            f.database.session = session
-            f.due()
-            f.store.onPhaseAlarm(session.phaseKey())
-
+        for ((transition, sound) in cases) {
+            // The sound follows the transition the server sent, whatever the phase's kind.
+            val f = AlarmFixture(heldState(revision = 3, pomodoro = work().copy(transition = transition, upcomingPhase = PhaseKind.LONG_REST)))
+            f.ringNow()
             assertEquals(sound, f.output.sound)
-            assertEquals(session, f.store.current())
             assertTrue(f.output.audio)
             assertTrue(f.output.vibrating)
         }
-        assertEquals(4, cases.map { it.third }.toSet().size)
+        assertEquals(4, cases.values.toSet().size)
+    }
+
+    @Test
+    fun duplicateDeliveriesDoNotRestartOrMultiplyTheOutput() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+        repeat(5) { f.alarm.onAlarm(key) }
+
+        assertEquals(1, f.output.plays)
+        assertEquals(1, f.output.vibrations)
+        assertEquals(0, f.output.audioStops)
+        assertTrue(f.output.audio)
     }
 
     @Test
     fun daysOfOvertimeHaveNoSilenceOrDurationCap() = runBlocking {
-        val f = Fixture()
-        val original = f.startAndRing()
-        f.now = START.plusSeconds(365L * 24 * 60 * 60)
-        f.store.onPhaseAlarm(original.phaseKey())
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+        f.clock.now = T0.plus(Duration.ofDays(365))
+        f.alarm.follow()
+        f.alarm.onAlarm(key)
 
         assertTrue(f.output.audio)
         assertTrue(f.output.vibrating)
-        assertEquals(1, f.output.starts)
-        assertEquals(original, f.store.current())
-        assertEquals(0, f.database.creates)
+        assertEquals(1, f.output.plays)
+        assertEquals(key, f.controller.current?.phase)
     }
 
     @Test
-    fun staleAlarmNextEndAndDismissCannotChangeTheNewPhase() = runBlocking {
-        val f = Fixture()
-        val old = f.startAndRing().phaseKey()
-        f.store.nextPhase()
-        val rest = checkNotNull(f.store.current())
-        f.now = START.plusSeconds(120)
-        f.store.onPhaseAlarm(rest.phaseKey())
+    fun aNewRevisionOfTheRingingPhaseKeepsPlayingAndShowsThatRevision() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
         val posts = f.output.posts
 
-        f.store.onPhaseAlarm(old)
-        assertEquals(PomodoroStep.Idle, f.store.nextPhaseIfCurrent(old))
-        assertEquals(PomodoroStep.Idle, f.store.endIfCurrent(old))
-        f.store.repostRinging(old)
-        assertFalse(f.store.withRingingPhase(old) { error("stale service start") })
+        f.held = heldState(revision = 4, description = "Renamed on the web")
+        f.alarm.follow()
 
-        assertEquals(rest, f.store.current())
-        assertEquals(rest.phaseKey(), f.controller.current?.phase)
-        assertEquals(posts, f.output.posts)
-        assertTrue(f.output.audio)
-        assertTrue(f.output.vibrating)
-    }
-
-    @Test
-    fun endedSessionsAndDifferentWorkspacesRejectOldServiceStarts() = runBlocking {
-        val f = Fixture()
-        val old = f.startAndRing().phaseKey()
-        f.store.end()
-        assertFalse(f.store.withRingingPhase(old) { error("ended session played") })
-        assertFalse(f.store.withRingingPhase(null) { error("sticky idle service played") })
-        val next = f.store.start(LENGTHS, EntryFields(), 99)
-        f.now = next.phaseStartedAt.plusSeconds(60)
-        f.store.onPhaseAlarm(next.phaseKey())
-        assertFalse(f.store.withRingingPhase(old) { error("old workspace played") })
-        assertEquals(99L, f.controller.current?.phase?.workspaceId)
-    }
-
-    @Test
-    fun swipingRepostsWithoutStoppingEitherOutput() = runBlocking {
-        val f = Fixture()
-        val original = f.startAndRing()
-        val posts = f.output.posts
-        f.store.repostRinging(original.phaseKey())
-
+        assertEquals(1, f.output.plays)
+        assertEquals(0, f.output.audioStops)
         assertEquals(posts + 1, f.output.posts)
-        assertEquals(1, f.output.starts)
-        assertEquals(1, f.output.vibrationStarts)
-        assertTrue(f.output.audio)
-        assertTrue(f.output.vibrating)
-        assertEquals(original, f.store.current())
+        assertEquals(4L, f.output.notification?.revision)
     }
 
     @Test
-    fun recreatedServiceResumesOnlyAPersistedReachedPhase() = runBlocking {
-        val f = Fixture()
-        val original = f.start()
-        assertFalse(f.store.withRingingPhase(null) { error("not due") })
-        f.due()
-        assertFalse(f.store.withRingingPhase(null) { error("not recorded") })
-        f.store.onPhaseAlarm(original.phaseKey())
-        val recreatedOutput = FakeOutput()
-        val recreated = PomodoroRingController(recreatedOutput)
-        assertTrue(f.store.withRingingPhase(null) { recreated.start(it) })
-        assertEquals(original.phaseKey(), recreated.current?.phase)
-        assertTrue(recreatedOutput.audio)
-        assertTrue(recreatedOutput.vibrating)
-        f.store.end()
-        assertFalse(f.store.withRingingPhase(null) { error("ended sticky restart") })
-    }
+    fun aConfirmOnAnyDeviceStopsBothOutputs() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
 
-    @Test
-    fun bootRecoveryDeliversAnExactAlarmInsteadOfStartingMediaPlaybackFromBoot() = runBlocking {
-        val f = Fixture()
-        val original = f.start()
-        f.due()
-        f.store.rearm(deferRingingToAlarm = true)
+        f.held = heldState(revision = 4, pomodoro = rest())
+        f.alarm.follow()
 
         assertNull(f.controller.current)
-        assertEquals(f.now, f.alarms.at)
-        assertEquals(original.phaseKey(), f.alarms.phase)
-        assertEquals(original, f.store.current())
-        f.store.onPhaseAlarm(original.phaseKey())
+        assertFalse(f.output.audio)
+        assertFalse(f.output.vibrating)
+        assertNull(f.output.notification)
+    }
+
+    @Test
+    fun anOfflineButtonLeavesTheRingAndTheStateAsTheyWere() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+        val server = FakeServer(MutableStateFlow(f.held)).apply { answer = TimerActionResult.Offline }
+
+        assertEquals(TimerActionResult.Offline, f.alarm.sendPhaseAction(server, key, revision = 3, end = false))
+        assertEquals(TimerActionResult.Offline, f.alarm.sendPhaseAction(server, key, revision = 3, end = true))
+        f.alarm.follow()
+
+        assertEquals(listOf("next 3", "end 3"), server.calls)
+        assertEquals(key, f.controller.current?.phase)
         assertTrue(f.output.audio)
-        assertTrue(f.output.vibrating)
+        assertEquals(1, f.output.plays)
     }
 
     @Test
-    fun aClockChangeBeforeTheEndStopsOutputAndRearms() = runBlocking {
-        val f = Fixture()
-        val original = f.startAndRing()
-        f.now = START.plusSeconds(30)
-        f.store.rearm()
+    fun oldPhaseDeliveriesButtonsRepostsAndServiceStartsCannotTouchTheNewPhase() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+        f.held = heldState(revision = 4, pomodoro = rest())
+        f.alarm.follow()
+        f.clock.now = T0.plusSeconds(1_800)
+        f.alarm.onAlarm(PomodoroPhaseKey(T0.plusSeconds(1_500)))
+        val rest = checkNotNull(f.controller.current)
+        val posts = f.output.posts
+        val server = FakeServer(MutableStateFlow(f.held))
 
-        f.assertStopped()
-        assertNull(f.store.reachedPhaseEnd())
-        assertEquals(START.plusSeconds(60), f.alarms.at)
-        assertEquals(original, f.store.current())
+        f.alarm.onAlarm(key)
+        f.alarm.repost(key)
+        assertNull(f.alarm.sendPhaseAction(server, key, revision = 3, end = false))
+        assertNull(f.alarm.sendPhaseAction(server, key, revision = 3, end = true))
+        assertFalse(f.alarm.withRingingPhase(key) { error("an old phase played") })
+
+        assertTrue(server.calls.isEmpty())
+        assertEquals(rest, f.controller.current)
+        assertEquals(posts, f.output.posts)
+        assertEquals(1, f.output.audioStops)
     }
 
     @Test
-    fun disarmAndDiscardReleaseBothOutputs() = runBlocking {
-        val f = Fixture()
-        f.startAndRing()
-        f.store.disarm()
-        f.assertStopped()
-        assertFalse(f.store.withRingingPhase(null) { error("disarmed restart") })
-        f.store.rearm()
+    fun aRestartedServiceRingsOnlyTheHeldPhasePastItsPlannedEnd() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.alarm.follow()
+        assertFalse(f.alarm.withRingingPhase(null) { error("not due") })
+
+        f.clock.now = T0.plusSeconds(1_500)
+        // A new process: the service restarts from the stored state with nothing in memory.
+        val output = FakeOutput()
+        val restarted = PomodoroRingController(output)
+        assertTrue(f.alarm.withRingingPhase(null) { restarted.start(it) })
+        assertEquals(key, restarted.current?.phase)
+        assertTrue(output.audio)
+        assertTrue(output.vibrating)
+
+        f.held = heldState(revision = 4, pomodoro = null)
+        assertFalse(f.alarm.withRingingPhase(null) { error("the session ended") })
+        f.available = false
+        f.held = heldState(revision = 5)
+        assertFalse(f.alarm.withRingingPhase(null) { error("no timer API") })
+    }
+
+    @Test
+    fun aSwipeRepostsWithoutStoppingEitherOutput() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+        val posts = f.output.posts
+
+        f.alarm.repost(key)
+
+        assertEquals(posts + 1, f.output.posts)
+        assertEquals(1, f.output.plays)
+        assertEquals(1, f.output.vibrations)
         assertTrue(f.output.audio)
-        f.store.discardRunningSession()
-        f.assertStopped()
-        assertNull(f.store.current())
     }
 
     @Test
-    fun validationAndPlaybackCannotRaceNextPhase() = runBlocking {
-        val f = Fixture()
-        val original = f.startAndRing()
+    fun theServiceCheckAndAConfirmElsewhereCannotRace() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.alarm.follow()
+        f.clock.now = T0.plusSeconds(1_500)
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
         val start = launch {
-            f.store.withRingingPhase(original.phaseKey()) {
+            f.alarm.withRingingPhase(key) {
                 entered.complete(Unit)
                 release.await()
                 f.controller.start(it)
             }
         }
         entered.await()
-        val next = async(start = CoroutineStart.UNDISPATCHED) { f.store.nextPhaseIfCurrent(original.phaseKey()) }
-        assertFalse(next.isCompleted)
+        f.held = heldState(revision = 4, pomodoro = rest())
+        val confirmed = async(start = CoroutineStart.UNDISPATCHED) { f.alarm.follow() }
+        assertFalse(confirmed.isCompleted)
         release.complete(Unit)
         start.join()
-        next.await()
-        f.assertStopped()
-        assertEquals("shortRest", f.store.current()?.phaseKind)
+        confirmed.await()
+
+        assertNull(f.controller.current)
+        assertFalse(f.output.audio)
+        assertFalse(f.output.vibrating)
     }
 
     @Test
-    fun anActionWithNoRemainingSessionStillReleasesTheOutputs() = runBlocking {
-        val f = Fixture()
-        f.startAndRing()
-        f.database.session = null
-        assertEquals(PomodoroStep.Idle, f.store.end())
-        f.assertStopped()
-        assertNull(f.store.reachedPhaseEnd())
-    }
-
-    @Test
-    fun replacingARingStopsTheOldOutputAndDismissalOnlyRepostsItsOwnPhase() {
+    fun aRingOfAnotherPhaseStopsTheOldOutputFirst() {
         val output = FakeOutput()
         val controller = PomodoroRingController(output)
-        val first = PomodoroRing(PomodoroPhaseKey(1, "work", START, START, 0.0), PomodoroSound.WORK_TO_SHORT_REST)
-        val second = first.copy(phase = first.phase.copy(kind = "shortRest", startedAt = START.plusSeconds(60)))
+        val first = checkNotNull(heldState(revision = 3).ring())
+        val second = checkNotNull(heldState(revision = 4, pomodoro = rest()).ring())
+
         controller.start(first)
         controller.start(second)
-        val posts = output.posts
-        controller.dismissed(first.phase)
-        assertEquals(posts, output.posts)
-        controller.dismissed(second.phase)
-        assertEquals(posts + 1, output.posts)
-        assertEquals(2, output.starts)
+
+        assertEquals(2, output.plays)
         assertEquals(1, output.audioStops)
         assertEquals(1, output.vibrationStops)
         assertEquals(second, controller.current)
+        assertEquals(PomodoroSound.SHORT_REST_TO_WORK, output.sound)
     }
 
     @Test
@@ -310,95 +251,5 @@ class PomodoroRingingTest {
         assertTrue(output.cancelled)
         assertTrue(output.removed)
         assertNull(controller.current)
-    }
-
-    private class Fixture {
-        var now: Instant = START
-        val database = MemoryDatabase()
-        val alarms = FakeAlarms()
-        val output = FakeOutput()
-        val controller = PomodoroRingController(output)
-        var queued = 0
-        val store = PomodoroSessionStore(
-            database, Dispatchers.Unconfined,
-            object : Clock() {
-                override fun instant(): Instant = now
-                override fun getZone(): ZoneId = ZoneOffset.UTC
-                override fun withZone(zone: ZoneId?): Clock = this
-            },
-            accountTime = { null }, onQueued = { queued++ }, alarms = alarms,
-            ringing = object : PomodoroRinging {
-                override suspend fun start(ring: PomodoroRing) = controller.start(ring)
-                override suspend fun stop() = controller.stop()
-            },
-        )
-        suspend fun start(): PomodoroSession {
-            val session = store.start(LENGTHS, EntryFields(description = "Focus offline"), 7)
-            output.audioStops = 0
-            output.vibrationStops = 0
-            return session
-        }
-        fun due() { now = START.plusSeconds(60) }
-        suspend fun startAndRing(): PomodoroSession {
-            val original = start()
-            due()
-            store.onPhaseAlarm(original.phaseKey())
-            return original
-        }
-        fun assertStopped() {
-            assertNull(controller.current)
-            assertFalse(output.audio)
-            assertFalse(output.vibrating)
-            assertFalse(output.notification)
-        }
-    }
-
-    private class FakeOutput : PomodoroRingOutput {
-        var audio = false
-        var vibrating = false
-        var notification = false
-        var sound: PomodoroSound? = null
-        var starts = 0
-        var vibrationStarts = 0
-        var audioStops = 0
-        var vibrationStops = 0
-        var posts = 0
-        override fun show(ring: PomodoroRing) { notification = true; posts++ }
-        override fun play(sound: PomodoroSound) { this.sound = sound; audio = true; starts++ }
-        override fun vibrate() { vibrating = true; vibrationStarts++ }
-        override fun stopAudio() { audio = false; audioStops++ }
-        override fun stopVibration() { vibrating = false; vibrationStops++ }
-        override fun removeNotification() { notification = false }
-    }
-
-    private class MemoryDatabase : PomodoroSessionDatabase {
-        var session: PomodoroSession? = null
-        var creates = 0
-        override fun current(): PomodoroSession? = session
-        override fun save(session: PomodoroSession) { this.session = session }
-        override fun delete() { session = null }
-        override fun createStopped(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
-            creates++
-            return -creates.toLong()
-        }
-        override fun <T> transaction(block: () -> T): T = block()
-    }
-
-    private class FakeAlarms : PomodoroAlarmScheduler {
-        var at: Instant? = null
-        var phase: PomodoroPhaseKey? = null
-        override val permissionDenied = false
-        override fun schedule(triggerAt: Instant): Boolean { at = triggerAt; return true }
-        override fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean {
-            this.phase = phase
-            return schedule(triggerAt)
-        }
-        override fun cancel() { at = null; phase = null }
-        override fun watchSession(running: Boolean) = Unit
-    }
-
-    private companion object {
-        val START: Instant = Instant.parse("2026-10-20T09:00:00Z")
-        val LENGTHS = PomodoroSessionConfig(1.0, 1.0, 1.0, 4.0)
     }
 }

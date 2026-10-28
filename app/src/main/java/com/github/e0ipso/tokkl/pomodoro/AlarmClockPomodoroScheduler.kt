@@ -7,10 +7,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.TokklApplication
-import java.io.IOException
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
@@ -27,13 +25,14 @@ import kotlinx.coroutines.launch
  * permission, and [permissionDenied] follows [AlarmManager.canScheduleExactAlarms]. The Pomodoro
  * page reads [permissionDenied].
  *
- * [watchSession] and [watchTimerSync] keep [PomodoroAlarmRearmReceiver] enabled only while a
- * session runs or [timerSyncStarts] says the timer sync service should start after boot and
- * updates. The manifest leaves that receiver disabled, so a reboot with neither does not start
- * the app.
+ * [watchTimerSync] keeps [PomodoroAlarmRearmReceiver] enabled only while [timerSyncStarts] says
+ * the account's server has the timer API. Only such a server has sessions, and its timer sync
+ * service starts after boot and updates. The manifest leaves that receiver disabled, so a reboot
+ * without it does not start the app.
  *
  * @param timerSyncStarts whether the account's server has the timer API, so the boot and update
- *   broadcasts must start the timer sync service. Read on every change, off the main thread.
+ *   broadcasts must start the timer sync service and arm the held phase again. Read on every
+ *   change, off the main thread.
  */
 class AlarmClockPomodoroScheduler(
     private val context: Context,
@@ -41,17 +40,10 @@ class AlarmClockPomodoroScheduler(
 ) : PomodoroAlarmScheduler {
     private val manager = context.getSystemService(AlarmManager::class.java)
 
-    /** What the session store last said through [watchSession]. */
-    private var sessionRunning = false
-
     override val permissionDenied: Boolean
         get() = !manager.canScheduleExactAlarms()
 
-    override fun schedule(triggerAt: Instant): Boolean = scheduleAlarm(triggerAt, null)
-
-    override fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean = scheduleAlarm(triggerAt, phase)
-
-    private fun scheduleAlarm(triggerAt: Instant, phase: PomodoroPhaseKey?): Boolean {
+    override fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean {
         if (permissionDenied) return false
         val pending = operation(create = true, phase) ?: return false
         return try {
@@ -68,20 +60,13 @@ class AlarmClockPomodoroScheduler(
         manager.cancel(pending)
     }
 
-    override fun watchSession(running: Boolean) {
-        synchronized(this) {
-            sessionRunning = running
-            applyRearmReceiver()
-        }
-    }
-
     /** Applies a change of [timerSyncStarts] to the receiver. */
     fun watchTimerSync() {
         synchronized(this) { applyRearmReceiver() }
     }
 
     private fun applyRearmReceiver() {
-        val state = if (sessionRunning || timerSyncStarts()) {
+        val state = if (timerSyncStarts()) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         } else {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED
@@ -124,8 +109,9 @@ class AlarmClockPomodoroScheduler(
 }
 
 /**
- * The phase alarm. Not exported: only its own [PendingIntent] reaches it. It records that the
- * phase reached its planned end and starts its ringing service. It does not start the next phase.
+ * The phase alarm. Not exported: only its own [PendingIntent] reaches it. While the held session
+ * is still in the phase it was armed for, it starts that phase's ringing service, which an alarm
+ * delivery may start from the background. It does not start the next phase.
  */
 class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -134,11 +120,7 @@ class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                (context.applicationContext as TokklApplication).pomodoroSessions.onPhaseAlarm(phase)
-            } catch (e: SQLiteException) {
-                // The disk refused the read. The phase stays where it is.
-            } catch (e: IOException) {
-                // The record of the end could not be stored. The phase stays where it is.
+                (context.applicationContext as TokklApplication).pomodoroAlarm.onAlarm(phase)
             } finally {
                 pending.finish()
             }
@@ -151,15 +133,16 @@ class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
 }
 
 /**
- * Arms the phase alarm again from the stored session after boot, an app update, a clock or
- * timezone change, or a grant of the exact-alarm permission. A planned end that has already
- * passed rings at once and leaves the phase in overtime. After boot and an app update it also
- * starts the timer sync service, which those two broadcasts allow from the background. A start the
- * platform refuses anyway is dropped: the next app open starts it, and the armed alarm still rings.
+ * Arms the phase alarm again from the stored timer state after boot, an app update, a clock or
+ * timezone change, or a grant of the exact-alarm permission, with no request to the server. A
+ * planned end that has already passed is armed in the past, so the alarm rings at once and the
+ * phase stays in overtime: API 35 and later forbid starting the ringing service from
+ * BOOT_COMPLETED, and an alarm delivery may. After boot and an app update it also starts the timer
+ * sync service, which those two broadcasts allow from the background. A start the platform refuses
+ * anyway is dropped: the next app open starts it, and the armed alarm still rings.
  *
- * Declared disabled. [AlarmClockPomodoroScheduler] enables it while a session runs or the timer
- * sync service should start. The system sends these protected broadcasts, so the receiver is
- * exported.
+ * Declared disabled. [AlarmClockPomodoroScheduler] enables it while the account's server has the
+ * timer API. The system sends these protected broadcasts, so the receiver is exported.
  */
 class PomodoroAlarmRearmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -169,23 +152,13 @@ class PomodoroAlarmRearmReceiver : BroadcastReceiver() {
         val app = context.applicationContext as TokklApplication
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                rearm(app)
+                app.pomodoroAlarm.follow(rearm = true)
                 if (intent.action in TIMER_SYNC_STARTS) app.followTimerSync()
             } finally {
                 // A direct receiver invocation in the boot test has no active broadcast result.
                 pending?.finish()
                 done?.countDown()
             }
-        }
-    }
-
-    private suspend fun rearm(app: TokklApplication) {
-        try {
-            app.pomodoroSessions.rearm(deferRingingToAlarm = true)
-        } catch (e: SQLiteException) {
-            // The disk refused the session. A later boot, update or clock change tries again.
-        } catch (e: IOException) {
-            // The phase-end record could not be stored. The session row is unchanged.
         }
     }
 

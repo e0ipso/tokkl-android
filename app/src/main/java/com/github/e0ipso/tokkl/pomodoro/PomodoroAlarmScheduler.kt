@@ -3,36 +3,20 @@ package com.github.e0ipso.tokkl.pomodoro
 import java.time.Instant
 
 /**
- * One exact alarm for the running Pomodoro phase, or none.
+ * One exact alarm for the held session's phase, or none.
  *
  * [permissionDenied] is what the Pomodoro page reads when a phase end will not wake the phone.
  */
 interface PomodoroAlarmScheduler {
     val permissionDenied: Boolean
 
-    /** Arms [triggerAt], replacing the alarm already armed. Returns false when [permissionDenied]. */
-    fun schedule(triggerAt: Instant): Boolean
-
-    /** Phase identity travels with delivery so a delayed alarm cannot ring a newer phase. */
-    fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean = schedule(triggerAt)
+    /**
+     * Arms [triggerAt] for [phase], replacing the alarm already armed. A time already past rings
+     * at once. The phase travels with the delivery, so a late alarm cannot ring a newer phase.
+     * Returns false when [permissionDenied].
+     */
+    fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean
 
     /** Drops the armed alarm. Does nothing when none is armed. */
     fun cancel()
-
-    /**
-     * Keeps boot, update and clock-change delivery on while a session exists, and off when none
-     * does. A session in overtime still needs that delivery, so cancelling the alarm leaves it on.
-     */
-    fun watchSession(running: Boolean)
-}
-
-/** Schedules nothing. Unit tests that are not about the alarm use this. */
-internal object IdlePomodoroAlarms : PomodoroAlarmScheduler {
-    override val permissionDenied: Boolean = false
-
-    override fun schedule(triggerAt: Instant): Boolean = true
-
-    override fun cancel() = Unit
-
-    override fun watchSession(running: Boolean) = Unit
 }

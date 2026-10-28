@@ -21,14 +21,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-/** Separate unexported task: no account page is exposed above the keyguard. */
+/**
+ * The full-screen alarm of the held phase. A separate unexported task: no account page is exposed
+ * above the keyguard. It finishes once the held state has another phase or none, so a confirm on
+ * any device closes it, and it never opens without the timer API.
+ */
 class PomodoroAlarmActivity : ComponentActivity() {
     private val holder by lazy { ViewModelProvider(this)[PomodoroAlarmViewModel::class.java] }
 
@@ -40,17 +39,9 @@ class PomodoroAlarmActivity : ComponentActivity() {
         WindowCompat.enableEdgeToEdge(window)
         holder.model.open(intent?.phaseKey())
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    holder.model.state.collect { if (it.closed) finish() }
-                }
-                launch {
-                    // Ring changes follow the store's durable writes. Re-read the row on each
-                    // change and resume; the display clock alone ticks locally each second.
-                    (application as TokklApplication).pomodoroRinging.state
-                        .map { it.ring?.phase }.distinctUntilChanged()
-                        .collect { holder.model.refresh() }
-                }
+            // Also while stopped, as after Home, so a confirm elsewhere leaves no stale alarm behind.
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
+                holder.model.state.collect { if (it.closed) finish() }
             }
         }
         val themes = (application as TokklApplication).themeSettings
@@ -81,14 +72,8 @@ class PomodoroAlarmActivity : ComponentActivity() {
     }
 }
 
-/** Retains an in-flight guarded command through rotation without replaying it. */
+/** Retains an in-flight command through rotation without replaying it. */
 class PomodoroAlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as TokklApplication
-    internal val model = PomodoroAlarmModel(
-        current = app.pomodoroSessions::current,
-        reached = { withContext(Dispatchers.IO) { app.pomodoroSessions.reachedPhaseEnd() } },
-        next = { app.pomodoroSessions.nextPhaseIfCurrent(it) },
-        end = { app.pomodoroSessions.endIfCurrent(it) },
-        scope = viewModelScope,
-    )
+    internal val model = PomodoroAlarmModel(held = app.heldSession, actions = app.timerActions, scope = viewModelScope)
 }

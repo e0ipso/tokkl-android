@@ -1,237 +1,215 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PomodoroSession
-import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
-import com.github.e0ipso.tokkl.time.SessionPhase
-import com.github.e0ipso.tokkl.time.plannedEnd
-import java.time.Clock
+import java.time.Duration
 import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * One exact alarm per phase, cancelled when the user confirms, skips or ends, and none without a
- * session. The alarm records a reached end and leaves the phase there, including a re-arm that
- * finds the planned end already past.
+ * One exact alarm at the held phase's planned end, corrected by the state's clock offset and keyed
+ * by `phase.start`. Every state recomputes it, a new phase or none cancels it, and a missed end
+ * rings at once without moving the phase on. Rearming reads the held state and sends nothing.
  */
 class PomodoroPhaseAlarmTest {
 
-    private val now = AtomicReference(Instant.parse("2026-10-20T09:00:00Z"))
-    private val clock = object : Clock() {
-        override fun instant(): Instant = now.get()
-
-        override fun getZone(): ZoneId = ZoneOffset.UTC
-
-        override fun withZone(zone: ZoneId?): Clock = this
-    }
-    private val database = MemoryDatabase()
-    private val alarms = FakePomodoroAlarmScheduler()
-    private val phaseEnds = MemoryPomodoroPhaseEnds()
-    private val store = PomodoroSessionStore(
-        database,
-        Dispatchers.Unconfined,
-        clock,
-        accountTime = { null },
-        alarms = alarms,
-        phaseEnds = phaseEnds,
-    )
+    private val key = PomodoroPhaseKey(T0)
 
     @Test
-    fun oneAlarmPerPhaseCancelledOnSkipConfirmAndEnd() = runBlocking {
-        at("2026-10-20T09:00:00Z")
-        val started = store.start(LENGTHS, FIELDS, WORKSPACE)
-        val workEnd = plannedEnd(started.asPhase(), LENGTHS)
-        assertEquals(parse("2026-10-20T09:25:00Z"), workEnd)
-        assertEquals(workEnd, alarms.armed)
-        assertEquals(listOf(workEnd), alarms.scheduled)
-        assertEquals(listOf<Instant?>(null), alarms.cancelled)
-        assertEquals(false, store.exactAlarmPermissionDenied())
+    fun armsOneAlarmAtThePlannedEndLessTheClockOffsetKeyedByThePhaseStart() = runBlocking {
+        // The server's clock reads 90 s later than the phone's, so its planned end comes 90 s
+        // earlier on the phone's clock.
+        val f = AlarmFixture(heldState(revision = 3, offset = Duration.ofSeconds(90)))
 
-        store.updateFields(FIELDS.copy(description = "Still focus"))
-        assertEquals(listOf(workEnd), alarms.scheduled)
-        assertEquals(workEnd, alarms.armed)
+        f.alarm.follow()
 
-        at("2026-10-20T09:10:00Z")
-        val skipped = store.nextPhase() as PomodoroStep.Running
-        assertEquals("shortRest", skipped.session.phaseKind)
-        val restEnd = plannedEnd(skipped.session.asPhase(), LENGTHS)
-        assertEquals(parse("2026-10-20T09:15:00Z"), restEnd)
-        assertEquals(restEnd, alarms.armed)
-        assertEquals(listOf(workEnd, restEnd), alarms.scheduled)
-        assertEquals(listOf(null, workEnd), alarms.cancelled)
-
-        at("2026-10-20T09:20:00Z")
-        val confirmed = store.nextPhase() as PomodoroStep.Saved
-        val nextWork = checkNotNull(confirmed.session)
-        assertEquals("work", nextWork.phaseKind)
-        val nextEnd = plannedEnd(nextWork.asPhase(), LENGTHS)
-        assertEquals(parse("2026-10-20T09:45:00Z"), nextEnd)
-        assertEquals(nextEnd, alarms.armed)
-        assertEquals(listOf(null, workEnd, restEnd), alarms.cancelled)
-
-        val ended = store.end() as PomodoroStep.Saved
-        assertNull(ended.session)
-        assertNull(alarms.armed)
-        assertNull(store.current())
-        assertEquals(false, alarms.watching.last())
-        assertEquals(listOf(null, workEnd, restEnd, nextEnd), alarms.cancelled)
+        assertEquals(T0.plusSeconds(1_500 - 90) to key, f.alarms.armed)
+        assertEquals(1, f.alarms.scheduled.size)
+        assertEquals(0, f.alarms.cancels)
+        assertNull(f.controller.current)
     }
 
     @Test
-    fun nothingIsScheduledWithoutASession() = runBlocking {
-        assertEquals(PomodoroStep.Idle, store.nextPhase())
-        assertEquals(PomodoroStep.Idle, store.end())
-        store.rearm()
+    fun eachStateRecomputesTheAlarmAndAnUnchangedOneArmsNothingMore() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.alarm.follow()
+        f.alarm.follow()
+        assertEquals(listOf(T0.plusSeconds(1_500) to key), f.alarms.scheduled)
 
-        assertEquals(emptyList<Instant>(), alarms.scheduled)
-        assertNull(alarms.armed)
-        assertNull(store.current())
-        assertTrue(alarms.watching.all { !it })
+        // A later revision of the same phase, received with the server 2 s ahead.
+        f.held = heldState(revision = 4, offset = Duration.ofSeconds(2))
+        f.alarm.follow()
+
+        assertEquals(T0.plusSeconds(1_498) to key, f.alarms.armed)
+        assertEquals(2, f.alarms.scheduled.size)
+        assertEquals(0, f.alarms.cancels)
     }
 
     @Test
-    fun deniedPermissionLeavesTheSessionAndRearmsWhenGranted() = runBlocking {
-        alarms.denied = true
-        at("2026-10-20T09:00:00Z")
-        val started = store.start(LENGTHS, FIELDS, WORKSPACE)
+    fun aNewPhaseCancelsTheOldRingAndArmsTheNewPhase() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+        assertEquals(key, f.controller.current?.phase)
 
-        assertEquals("work", started.phaseKind)
-        assertEquals(true, store.exactAlarmPermissionDenied())
-        assertEquals(emptyList<Instant>(), alarms.scheduled)
-        assertNull(alarms.armed)
-        assertEquals(true, alarms.watching.last())
+        // Another device confirmed Next phase: the rest started at the work's planned end.
+        f.held = heldState(revision = 4, pomodoro = rest())
+        f.alarm.follow()
 
-        alarms.denied = false
-        store.rearm()
-        assertEquals(plannedEnd(started.asPhase(), LENGTHS), alarms.armed)
-        assertEquals(started, store.current())
-        assertNull(store.reachedPhaseEnd())
+        assertNull(f.controller.current)
+        assertFalse(f.output.audio)
+        assertFalse(f.output.vibrating)
+        assertEquals(T0.plusSeconds(1_800) to PomodoroPhaseKey(T0.plusSeconds(1_500)), f.alarms.armed)
     }
 
     @Test
-    fun theAlarmRecordsTheEndWithoutAdvancingThePhase() = runBlocking {
-        at("2026-10-20T09:00:00Z")
-        val started = store.start(LENGTHS, FIELDS, WORKSPACE)
-        at("2026-10-20T09:10:00Z")
-        alarms.armed = null
-        alarms.scheduled.clear()
-        store.onPhaseAlarm()
-        assertNull(store.reachedPhaseEnd())
-        assertEquals(started, store.current())
-        assertEquals(listOf(plannedEnd(started.asPhase(), LENGTHS)), alarms.scheduled)
+    fun noSessionCancelsTheAlarmAndStopsTheRing() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
 
-        at("2026-10-20T09:25:00Z")
-        store.onPhaseAlarm()
-        assertEquals(ReachedPhaseEnd("work", started.phaseStartedAt), store.reachedPhaseEnd())
-        assertEquals(started, store.current())
-        assertEquals(plannedEnd(started.asPhase(), LENGTHS), alarms.armed)
+        f.held = heldState(revision = 4, pomodoro = null)
+        f.alarm.follow()
 
-        at("2026-10-20T09:30:00Z")
-        val confirmed = store.nextPhase() as PomodoroStep.Running
-        assertEquals("shortRest", confirmed.session.phaseKind)
-        assertNull(store.reachedPhaseEnd())
+        assertNull(f.alarms.armed)
+        assertTrue(f.alarms.cancels > 0)
+        assertNull(f.controller.current)
+        assertFalse(f.output.audio)
     }
 
     @Test
-    fun rearmBeforeThePlannedEndSchedulesThatEnd() = runBlocking {
-        at("2026-10-20T09:00:00Z")
-        val started = store.start(LENGTHS, FIELDS, WORKSPACE)
-        alarms.scheduled.clear()
-        at("2026-10-20T09:05:00Z")
+    fun withoutTheTimerApiOrAHeldStateNothingIsArmed() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.available = false
+        f.alarm.follow()
+        f.alarm.follow(rearm = true)
+        assertTrue(f.alarms.scheduled.isEmpty())
 
-        store.rearm()
+        f.available = true
+        f.alarm.follow()
+        assertEquals(key, f.alarms.armed?.second)
 
-        val end = plannedEnd(started.asPhase(), LENGTHS)
-        assertEquals(end, alarms.armed)
-        assertEquals(listOf(end), alarms.scheduled)
-        assertNull(store.reachedPhaseEnd())
-        assertEquals(started, store.current())
+        // The capability goes away while armed, as on Toggl Track or after sign-out.
+        f.available = false
+        f.alarm.follow()
+        assertNull(f.alarms.armed)
+
+        f.available = true
+        f.held = null
+        f.alarm.follow(rearm = true)
+        assertNull(f.alarms.armed)
+        assertEquals(1, f.alarms.scheduled.size)
     }
 
     @Test
-    fun aRebootPastThePlannedEndRingsAndLeavesOvertime() = runBlocking {
-        at("2026-10-20T09:00:00Z")
-        val started = store.start(LENGTHS, FIELDS, WORKSPACE)
-        at("2026-10-20T09:40:00Z")
+    fun aMissedEndIsArmedInThePastAndItsDeliveryRingsWithoutMovingThePhaseOn() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.clock.now = T0.plusSeconds(1_800)
 
-        store.rearm()
+        f.alarm.follow()
 
-        assertEquals(started, store.current())
-        assertEquals(ReachedPhaseEnd("work", started.phaseStartedAt), store.reachedPhaseEnd())
-        assertNull(alarms.armed)
-        assertEquals(true, alarms.watching.last())
-
-        val confirmed = store.nextPhase() as PomodoroStep.Running
-        assertEquals("shortRest", confirmed.session.phaseKind)
-        assertEquals(parse("2026-10-20T09:40:00Z"), confirmed.session.phaseStartedAt)
-        assertNull(store.reachedPhaseEnd())
-        assertEquals(plannedEnd(confirmed.session.asPhase(), LENGTHS), alarms.armed)
+        // AlarmManager delivers a past time at once, and its receiver may start the ring.
+        assertEquals(T0.plusSeconds(1_500) to key, f.alarms.armed)
+        assertNull(f.controller.current)
+        f.alarm.onAlarm(key)
+        assertEquals(key, f.controller.current?.phase)
+        assertEquals(f.ring, f.controller.current)
+        // The phase stays where it was, in overtime since its planned end.
+        assertEquals(PomodoroClock(overtime = true, seconds = 300), f.controller.current?.clockAt(f.clock.now))
     }
 
-    private fun at(text: String) {
-        now.set(parse(text))
+    @Test
+    fun anEarlyDeliveryArmsThePlannedEndAgain() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.alarm.follow()
+        f.alarms.armed = null
+        f.clock.now = T0.plusSeconds(600)
+
+        f.alarm.onAlarm(key)
+
+        assertNull(f.controller.current)
+        assertEquals(T0.plusSeconds(1_500) to key, f.alarms.armed)
     }
 
-    private fun parse(text: String): Instant = Instant.parse(text)
+    @Test
+    fun aDeliveryForAnotherPhaseRingsNothing() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 4, pomodoro = rest()))
+        f.alarm.follow()
+        f.clock.now = T0.plusSeconds(2_000)
 
-    private fun PomodoroSession.asPhase() = SessionPhase(phaseKind, phaseStartedAt, completed)
+        f.alarm.onAlarm(key)
 
-    private class MemoryDatabase : PomodoroSessionDatabase {
-        var session: PomodoroSession? = null
-
-        override fun current(): PomodoroSession? = session
-
-        override fun save(session: PomodoroSession) {
-            this.session = session
-        }
-
-        override fun delete() {
-            session = null
-        }
-
-        override fun createStopped(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long = -1
-
-        override fun <T> transaction(block: () -> T): T = block()
+        assertNull(f.controller.current)
+        assertEquals(0, f.ringing.starts)
     }
 
-    private class FakePomodoroAlarmScheduler : PomodoroAlarmScheduler {
-        var denied = false
-        val scheduled = mutableListOf<Instant>()
-        val cancelled = mutableListOf<Instant?>()
-        var armed: Instant? = null
-        val watching = mutableListOf<Boolean>()
+    @Test
+    fun rearmingArmsTheStoredPhaseAgainAndAPastEndOnlyThroughTheAlarm() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.alarm.follow()
+        f.alarm.follow(rearm = true)
+        assertEquals(2, f.alarms.scheduled.size)
 
-        override val permissionDenied: Boolean
-            get() = denied
-
-        override fun schedule(triggerAt: Instant): Boolean {
-            if (denied) return false
-            armed = triggerAt
-            scheduled += triggerAt
-            return true
-        }
-
-        override fun cancel() {
-            cancelled += armed
-            armed = null
-        }
-
-        override fun watchSession(running: Boolean) {
-            watching += running
-        }
+        // A reboot after the planned end: no ring starts from the boot broadcast itself.
+        val booted = AlarmFixture(heldState(revision = 3))
+        booted.clock.now = T0.plusSeconds(3_600)
+        booted.alarm.follow(rearm = true)
+        assertEquals(T0.plusSeconds(1_500) to key, booted.alarms.armed)
+        assertEquals(0, booted.ringing.starts)
     }
 
-    private companion object {
-        const val WORKSPACE = 7L
-        val LENGTHS = PomodoroSessionConfig(25.0, 5.0, 15.0, 4.0)
-        val FIELDS = EntryFields(description = "Focus", projectId = 3, taskId = 9, tags = listOf("deep"), billable = true)
+    @Test
+    fun aDeniedPermissionArmsNothingRingsAPastEndAtOnceAndAGrantArmsAgain() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.alarms.denied = true
+        f.alarm.follow()
+        assertTrue(f.alarm.permissionDenied)
+        assertTrue(f.alarms.scheduled.isEmpty())
+        assertNull(f.controller.current)
+
+        f.alarms.denied = false
+        f.alarm.follow(rearm = true)
+        assertEquals(T0.plusSeconds(1_500) to key, f.alarms.armed)
+
+        val missed = AlarmFixture(heldState(revision = 3))
+        missed.alarms.denied = true
+        missed.clock.now = T0.plusSeconds(1_600)
+        missed.alarm.follow()
+        assertEquals(key, missed.controller.current?.phase)
+    }
+
+    @Test
+    fun aRevisionWithinTheRingingPhaseKeepsItsRingAndArmsNothing() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+        val scheduled = f.alarms.scheduled.size
+
+        f.held = heldState(revision = 4, description = "Renamed elsewhere", offset = Duration.ofSeconds(1))
+        f.alarm.follow()
+
+        assertEquals(4L, f.controller.current?.revision)
+        assertEquals(1, f.output.plays)
+        assertEquals(0, f.ringing.stops)
+        assertEquals(scheduled, f.alarms.scheduled.size)
+    }
+
+    @Test
+    fun releaseCancelsTheAlarmAndStopsTheRing() = runBlocking {
+        val f = AlarmFixture(heldState(revision = 3))
+        f.ringNow()
+
+        f.alarm.release()
+
+        assertNull(f.alarms.armed)
+        assertNull(f.controller.current)
+        assertFalse(f.output.vibrating)
+    }
+
+    @Test
+    fun theAlarmEndFollowsAnOffsetOfEitherSign() = runBlocking {
+        val behind = AlarmFixture(heldState(revision = 3, offset = Duration.ofSeconds(-30)))
+        behind.alarm.follow()
+        assertEquals(Instant.parse("2026-10-28T08:25:30Z"), behind.alarms.armed?.first)
     }
 }

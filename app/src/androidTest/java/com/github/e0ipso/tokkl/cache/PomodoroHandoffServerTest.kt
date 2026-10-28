@@ -12,8 +12,6 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.orFail
-import com.github.e0ipso.tokkl.pomodoro.IdlePomodoroAlarms
-import com.github.e0ipso.tokkl.pomodoro.MemoryPomodoroPhaseEnds
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
 import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.session.Session
@@ -84,7 +82,6 @@ class PomodoroHandoffServerTest {
         )
         sessions = PomodoroSessionStore.open(
             db, queue, Dispatchers.IO, clock, accountTime = { time },
-            alarms = IdlePomodoroAlarms, phaseEnds = MemoryPomodoroPhaseEnds(),
         )
         cache = AccountCache(db, clock, pomodoro = { sessions })
         sender = ChangeSender(
@@ -207,7 +204,6 @@ class PomodoroHandoffServerTest {
             val persisted = PomodoroSessionStore.open(
                 shared, app.changes, Dispatchers.IO, Clock.fixed(began, ZoneOffset.UTC),
                 accountTime = { app.accountSettings.state.value?.time() },
-                alarms = IdlePomodoroAlarms, phaseEnds = MemoryPomodoroPhaseEnds(),
             )
             persisted.start(LENGTHS, EntryFields("Widget partial"), account.workspaceId)
             StartTimerAction().onAction(

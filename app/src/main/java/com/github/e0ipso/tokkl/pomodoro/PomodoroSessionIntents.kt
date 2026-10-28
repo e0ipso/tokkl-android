@@ -7,9 +7,12 @@ import com.github.e0ipso.tokkl.MainActivity
 internal const val SHOW_POMODORO = "com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION"
 internal const val POMODORO_NOTIFICATION_ACCOUNT = "pomodoro_notification_account"
 
-/** Include the account in PendingIntent identity as well as in the receiver's validation. */
-internal fun Intent.putNotificationIdentity(account: String, phase: PomodoroPhaseKey): Intent =
-    putPhase(phase, unique = true).apply {
+/**
+ * Include the account in PendingIntent identity as well as in the receiver's validation. A button
+ * also carries the [revision] its notification showed.
+ */
+internal fun Intent.putNotificationIdentity(account: String, phase: PomodoroPhaseKey, revision: Long? = null): Intent =
+    putPhase(phase, revision, unique = true).apply {
         data = data!!.buildUpon().appendQueryParameter("account", account).build()
         putExtra(POMODORO_NOTIFICATION_ACCOUNT, account)
     }
@@ -30,6 +33,7 @@ internal fun Intent.takePomodoroNotificationTap(): PomodoroNotificationTap? {
     if (action != SHOW_POMODORO) return null
     val account = getStringExtra(POMODORO_NOTIFICATION_ACCOUNT)
     val phase = phaseKey()
-    for (extra in listOf(POMODORO_NOTIFICATION_ACCOUNT, "workspace", "kind", "started", "pomodoro", "completed")) removeExtra(extra)
+    removeExtra(POMODORO_NOTIFICATION_ACCOUNT)
+    removePhase()
     return if (account != null && phase != null) PomodoroNotificationTap(account, phase) else null
 }

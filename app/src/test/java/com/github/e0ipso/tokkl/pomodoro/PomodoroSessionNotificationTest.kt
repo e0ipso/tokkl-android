@@ -1,20 +1,17 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PomodoroSession
-import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.PhaseKind
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.io.IOException
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.Duration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -24,65 +21,86 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * The session notification of the held session: its content comes from the server's phase,
+ * number and upcoming phase with the planned end corrected by the clock offset, it follows every
+ * revision, yields the shared id to the ring, and its buttons send the revision they showed for
+ * their own account and phase only.
+ */
 class PomodoroSessionNotificationTest {
-    @Test fun contentUsesThePlannedEndForCountdownAndOvertimeWithoutAppTicks() = runBlocking {
-        val f = Fixture()
-        val work = f.start().notificationContent()
-        assertEquals(START.plusSeconds(60), work.end)
-        assertEquals(1, work.pomodoro)
-        assertEquals("Focus", work.description)
-        f.now = START.plusSeconds(3600)
-        assertEquals(work, f.store.current()?.notificationContent())
-        f.store.nextPhase()
-        val rest = checkNotNull(f.store.current()).notificationContent()
-        assertEquals("shortRest", rest.phase.kind)
-        assertEquals(1, rest.pomodoro)
-        assertEquals(f.now.plusSeconds(60), rest.end)
-        f.now = f.now.plusSeconds(60)
-        f.store.nextPhase()
-        assertEquals(2, f.store.current()?.notificationContent()?.pomodoro)
+
+    private val key = PomodoroPhaseKey(T0)
+
+    @Test fun contentShowsTheServersPhaseNumberAndUpcomingPhaseWithTheCorrectedPlannedEnd() {
+        val work = checkNotNull(heldState(revision = 3, pomodoro = work(number = 2), offset = Duration.ofSeconds(40)).notificationContent())
+        assertEquals(key, work.phase)
+        assertEquals(PhaseKind.WORK, work.kind)
+        assertEquals(PhaseKind.SHORT_REST, work.upcoming)
+        assertEquals(2 to 4, work.number to work.longRestEvery)
+        assertEquals("Focused work", work.description)
+        // The native clock counts down to this instant on the phone's clock, then into overtime.
+        assertEquals(T0.plusSeconds(1_500 - 40), work.end)
+        assertEquals(3L, work.revision)
+
+        val rest = checkNotNull(heldState(revision = 4, pomodoro = rest()).notificationContent())
+        assertEquals(PhaseKind.SHORT_REST, rest.kind)
+        assertEquals(PhaseKind.WORK, rest.upcoming)
+        assertEquals(1, rest.number)
+        assertEquals(T0.plusSeconds(1_800), rest.end)
+
+        assertNull(heldState(revision = 5, pomodoro = null).notificationContent())
+        // The description is the open pomodoro's, not another running entry's.
+        assertEquals("", heldState(revision = 6, entryId = 999).notificationContent()?.description)
     }
 
-    @Test fun idleRemovesAndAnActiveSessionPostsOnlyOnceIncludingAfterObserverRecreation() = runBlocking {
-        val f = Fixture()
+    @Test fun idleRemovesAndASessionPostsOnceIncludingAfterObserverRecreation() = runBlocking {
+        val f = Fixture(held = null)
         f.sync.refresh()
         assertEquals(1, f.removes)
-        f.start()
+
+        f.held = heldState(revision = 3)
         f.sync.refresh()
         val shown = f.saved
         f.sync.refresh()
         f.newSync().refresh()
+
         assertEquals(1, f.posts.size)
         assertEquals(shown, f.saved)
-        assertFalse(checkNotNull(shown).shown!!.contains("Focus"))
+        assertFalse(checkNotNull(shown).shown!!.contains("Focused work"))
     }
 
-    @Test fun editingFieldsReplacesTheNotificationAndDenialCanBeRepostedOnGrant() = runBlocking {
+    @Test fun eachRevisionReplacesTheNotificationAndADenialCanBeRepostedOnGrant() = runBlocking {
         val f = Fixture()
-        f.start()
         f.allowed = false
         f.sync.refresh()
-        assertNull(f.saved)
+        assertNull(f.saved?.shown)
         assertEquals(0, f.posts.size)
+
         f.allowed = true
         f.sync.refresh(force = true)
-        f.store.updateFields(EntryFields("Edited"))
+        f.held = heldState(revision = 4, description = "Renamed on the web")
         f.sync.refresh()
-        assertEquals(listOf("Focus", "Edited"), f.posts.map { it.description })
-        assertNotEquals(f.posts.first().key, f.posts.last().key)
+        f.held = heldState(revision = 5, pomodoro = rest())
+        f.sync.refresh()
+
+        assertEquals(listOf(3L, 4L, 5L), f.posts.map { it.revision })
+        assertEquals(listOf("Focused work", "Renamed on the web"), f.posts.take(2).map { it.description })
+        assertEquals(PhaseKind.SHORT_REST, f.posts.last().kind)
+        assertNotEquals(f.posts[0].key, f.posts[1].key)
     }
 
     @Test fun aFailedDisplayWriteDoesNotRepostAndTheNextEmissionPersistsIt() = runBlocking {
         val f = Fixture()
-        f.start()
         f.writeFailure = true
         f.sync.refresh()
         assertEquals(1, f.posts.size)
         assertNull(f.saved)
+
         f.writeFailure = false
         f.sync.refresh()
         assertEquals(1, f.posts.size)
         assertEquals(f.posts.single().key, f.saved?.shown)
+
         f.writeFailure = true
         assertTrue(runCatching { f.sync.forget() }.isFailure)
         f.sync.refresh(force = true)
@@ -90,177 +108,171 @@ class PomodoroSessionNotificationTest {
         assertTrue(f.removes > 0)
     }
 
-    @Test fun ringingOwnsTheSharedIdUntilTheServiceHasFinishedStopping() = runBlocking {
+    @Test fun theRingOwnsTheSharedIdUntilTheServiceHasStopped() = runBlocking {
         val f = Fixture()
-        val phase = f.start().phaseKey()
         f.sync.refresh()
         val removals = f.removes
-        f.now = START.plusSeconds(60)
-        f.store.onPhaseAlarm(phase)
+
+        f.alarm.ringNow()
         f.sync.refresh()
         assertEquals(1, f.posts.size)
         assertEquals(removals, f.removes)
         assertNull(f.saved?.shown)
+
+        // Next phase elsewhere: the ring stops, but the service is still stopping.
         f.serviceRunning = true
-        f.store.nextPhase()
+        f.held = heldState(revision = 4, pomodoro = rest())
+        f.alarm.alarm.follow()
         f.sync.refresh()
         assertEquals(1, f.posts.size)
+
         f.serviceRunning = false
         f.sync.refresh()
         assertEquals(2, f.posts.size)
-        assertEquals("shortRest", f.posts.last().phase.kind)
+        assertEquals(PhaseKind.SHORT_REST, f.posts.last().kind)
         assertEquals(3, PomodoroSessionNotification.ID)
     }
 
-    @Test fun nextAndEndRejectWrongAccountStalePhaseAndDuplicateDeliveries() = runBlocking {
+    @Test fun aPhasePastItsPlannedEndLeavesTheSharedIdToItsAlarm() = runBlocking {
+        // The ring must add its notification, not replace this one, or Android opens no
+        // full-screen alarm. The alarm of a phase past its end goes off at once.
         val f = Fixture()
-        val work = f.start().phaseKey()
+        f.alarm.clock.now = T0.plusSeconds(1_500)
         f.sync.refresh()
-        val account = checkNotNull(f.saved).account
-        assertEquals(PomodoroStep.Idle, f.sync.act("another account", work, end = false))
-        assertFalse(f.sync.acceptsTap("another account", work))
-        assertTrue(f.sync.acceptsTap(account, work))
-        f.now = START.plusSeconds(30)
-        assertTrue(f.sync.act(account, work, end = false) is PomodoroStep.Running)
-        assertEquals(PomodoroStep.Idle, f.sync.act(account, work, end = false))
-        assertEquals(PomodoroStep.Idle, f.sync.act(account, work, end = true))
-        assertFalse(f.sync.acceptsTap(account, work))
-        val rest = checkNotNull(f.store.current()).phaseKey()
-        f.now = START.plusSeconds(90)
-        assertTrue(f.sync.act(account, rest, end = true) is PomodoroStep.Saved)
-        assertEquals(PomodoroStep.Idle, f.sync.act(account, rest, end = true))
-        f.sync.refresh()
-        assertNull(f.store.current())
-        assertEquals(1, f.database.creates)
-        assertEquals(listOf("create", "delete", "queued"), f.database.events.takeLast(3))
-        assertEquals(1, f.store.unsavedChangeCount())
+        assertEquals(0, f.posts.size)
         assertNull(f.saved?.shown)
+
+        f.held = heldState(revision = 4, pomodoro = rest())
+        f.sync.refresh()
+        assertEquals(PhaseKind.SHORT_REST, f.posts.single().kind)
     }
 
-    @Test fun noSignedInAccountCanPublishOrActEvenWithAPersistedSession() = runBlocking {
+    @Test fun withoutTheTimerApiOrSignedOutNothingIsPostedAndNothingIsSent() = runBlocking {
         val f = Fixture()
-        val phase = f.start().phaseKey()
+        f.alarm.available = false
         f.sync.refresh()
+        assertEquals(0, f.posts.size)
+        assertTrue(f.removes > 0)
         val account = checkNotNull(f.saved).account
+        assertNull(f.sync.act(account, key, revision = 3, end = false))
+        assertFalse(f.sync.acceptsTap(account, key))
+
+        f.alarm.available = true
         f.signedIn = false
         f.sync.refresh(force = true)
-        assertEquals(1, f.posts.size)
-        assertEquals(PomodoroStep.Idle, f.sync.act(account, phase, end = true))
-        assertFalse(f.sync.acceptsTap(account, phase))
-        assertEquals(phase, f.store.current()?.phaseKey())
+        assertEquals(0, f.posts.size)
+        assertNull(f.sync.act(account, key, revision = 3, end = true))
+        assertFalse(f.sync.acceptsTap(account, key))
+        assertTrue(f.server.calls.isEmpty())
     }
 
-    @Test fun forgetCancelsACollectorWaitingForThePhaseLockBeforeErasingDisplayState() = runBlocking {
+    @Test fun buttonsSendTheirShownRevisionOnlyForTheirAccountAndTheHeldPhase() = runBlocking {
         val f = Fixture()
-        val phase = f.start().phaseKey()
+        f.sync.refresh()
+        val account = checkNotNull(f.saved).account
+
+        assertNull(f.sync.act("another account", key, revision = 3, end = false))
+        assertFalse(f.sync.acceptsTap("another account", key))
+        assertTrue(f.sync.acceptsTap(account, key))
+        assertEquals(TimerActionResult.Done, f.sync.act(account, key, revision = 3, end = false))
+
+        // The server moved to the rest. The old phase's buttons and tap do nothing.
+        f.held = f.server.held.value
+        assertNull(f.sync.act(account, key, revision = 3, end = false))
+        assertNull(f.sync.act(account, key, revision = 3, end = true))
+        assertFalse(f.sync.acceptsTap(account, key))
+
+        val rest = PomodoroPhaseKey(T0.plusSeconds(1_500))
+        assertTrue(f.sync.acceptsTap(account, rest))
+        assertEquals(TimerActionResult.Done, f.sync.act(account, rest, revision = 4, end = true))
+        assertEquals(listOf("next 3", "end 4"), f.server.calls)
+    }
+
+    @Test fun aStaleRevisionGetsTheServersRefusalAndOfflineChangesNothing() = runBlocking {
+        val f = Fixture()
+        f.sync.refresh()
+        val account = checkNotNull(f.saved).account
+
+        // Another device renamed the pomodoro: the notification still shows revision 3.
+        f.server.held.value = heldState(revision = 4, description = "Renamed")
+        assertEquals(TimerActionResult.Refused, f.sync.act(account, key, revision = 3, end = false))
+
+        f.server.answer = TimerActionResult.Offline
+        assertEquals(TimerActionResult.Offline, f.sync.act(account, key, revision = 3, end = true))
+        assertEquals(3L, f.held?.state?.revision)
+        f.sync.refresh()
+        assertEquals(1, f.posts.size)
+    }
+
+    @Test fun forgetCancelsARefreshWaitingForTheAlarmBeforeErasingTheDisplay() = runBlocking {
+        val f = Fixture()
         f.sync.refresh()
         val account = checkNotNull(f.saved).account
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
         val locked = launch(start = CoroutineStart.UNDISPATCHED) {
-            f.store.withNotificationState { _, _ -> entered.complete(Unit); release.await() }
+            f.alarm.alarm.withState { _, _ -> entered.complete(Unit); release.await() }
         }
         entered.await()
         f.sync.start()
+        // A new revision arrives while the alarm is busy; its refresh waits for the alarm.
+        f.held = heldState(revision = 4)
+        f.changes.emit(Unit)
         f.sync.forget()
         assertNull(f.saved)
         release.complete(Unit)
         locked.join()
-        f.store.forget()
+
         f.sync.refresh(force = true)
         assertEquals(1, f.posts.size)
-        assertEquals(PomodoroStep.Idle, f.sync.act(account, phase, end = true))
-        assertEquals(0, f.database.creates)
+        assertNull(f.sync.act(account, key, revision = 4, end = true))
+        assertTrue(f.server.calls.isEmpty())
         assertNull(f.saved)
     }
 
-    @Test fun forgetWaitsForAnAlreadyAcceptedActionAndNeverRepostsItsResult() = runBlocking {
+    @Test fun aNewAccountRejectsAnOldIdentityEvenForTheSamePhase() = runBlocking {
         val f = Fixture()
-        val phase = f.start().phaseKey()
-        f.sync.refresh()
-        val account = checkNotNull(f.saved).account
-        val entered = CompletableDeferred<Unit>()
-        val release = CompletableDeferred<Unit>()
-        f.stopOutput = { entered.complete(Unit); release.await() }
-        f.now = START.plusSeconds(30)
-        val end = async(start = CoroutineStart.UNDISPATCHED) { f.sync.act(account, phase, end = true) }
-        entered.await()
-        val forget = async(start = CoroutineStart.UNDISPATCHED) { f.sync.forget() }
-        assertFalse(forget.isCompleted)
-        release.complete(Unit)
-        assertTrue(end.await() is PomodoroStep.Saved)
-        forget.await()
-        f.sync.refresh()
-        assertNull(f.saved)
-        assertEquals(1, f.database.creates)
-        assertEquals(1, f.posts.size)
-    }
-
-    @Test fun newAccountRejectsAnOldIdentityEvenWhenPhaseFieldsAreIdentical() = runBlocking {
-        val f = Fixture()
-        val phase = f.start().phaseKey()
         f.sync.refresh()
         val oldAccount = checkNotNull(f.saved).account
         f.sync.forget()
-        f.store.forget()
+
         val next = Fixture()
-        assertEquals(phase, next.start().phaseKey())
         next.sync.refresh()
         assertNotEquals(oldAccount, next.saved?.account)
-        assertEquals(PomodoroStep.Idle, next.sync.act(oldAccount, phase, end = true))
-        assertFalse(next.sync.acceptsTap(oldAccount, phase))
-        assertEquals(0, next.database.creates)
+        assertNull(next.sync.act(oldAccount, key, revision = 3, end = true))
+        assertFalse(next.sync.acceptsTap(oldAccount, key))
+        assertTrue(next.server.calls.isEmpty())
     }
 
-    private class Fixture {
-        var now: Instant = START
+    private class Fixture(held: HeldTimerState? = heldState(revision = 3)) {
+        val alarm = AlarmFixture(held)
+        val server = FakeServer(MutableStateFlow(held))
+        var held: HeldTimerState?
+            get() = alarm.held
+            set(value) {
+                alarm.held = value
+                server.held.value = value
+            }
         var saved: PomodoroNotificationDisplay? = null
         var writeFailure = false
         var allowed = true
         var signedIn = true
         var serviceRunning = false
-        var stopOutput: suspend () -> Unit = {}
         var removes = 0
+        val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
         val posts = mutableListOf<PomodoroSessionNotificationContent>()
-        val database = MemoryDatabase()
-        val store = PomodoroSessionStore(
-            database, Dispatchers.Unconfined,
-            object : Clock() {
-                override fun instant(): Instant = now
-                override fun getZone(): ZoneId = ZoneOffset.UTC
-                override fun withZone(zone: ZoneId?): Clock = this
-            },
-            accountTime = { null }, onQueued = { database.events += "queued" },
-            ringing = object : PomodoroRinging {
-                override suspend fun start(ring: PomodoroRing) = Unit
-                override suspend fun stop() = stopOutput()
-            },
-        )
         val sync = newSync()
+
+        init {
+            // The server's answers become the held state, as the timer actions give them to it.
+            server.advance = { current -> heldState((current?.state?.revision ?: 0) + 1, rest()).also { alarm.held = it } }
+        }
+
         fun newSync() = PomodoroSessionNotificationSync(
-            store, store.notificationChanges.map { Unit }, { signedIn }, { serviceRunning },
+            alarm.alarm, server, changes, { signedIn }, { serviceRunning },
             { saved }, { if (writeFailure) throw IOException("fixture write failed"); saved = it },
             { content, _ -> if (allowed) posts += content; allowed }, { removes++ },
             CoroutineScope(SupervisorJob() + Dispatchers.Unconfined), Dispatchers.Unconfined,
         )
-        suspend fun start() = store.start(PomodoroSessionConfig(1.0, 1.0, 1.0, 4.0), EntryFields("Focus"), 7)
     }
-
-    private class MemoryDatabase : PomodoroSessionDatabase {
-        var session: PomodoroSession? = null
-        var creates = 0
-        val events = mutableListOf<String>()
-        override fun current() = session
-        override fun save(session: PomodoroSession) { this.session = session }
-        override fun delete() { session = null; events += "delete" }
-        override fun queuedCount() = creates
-        override fun createStopped(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
-            events += "create"
-            creates++
-            return -creates.toLong()
-        }
-        override fun <T> transaction(block: () -> T): T = block()
-    }
-
-    private companion object { val START: Instant = Instant.parse("2026-10-20T09:00:00Z") }
 }

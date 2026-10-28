@@ -1,13 +1,14 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import android.app.ForegroundServiceStartNotAllowedException
 import android.app.Notification
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import com.github.e0ipso.tokkl.TokklApplication
-import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,9 +20,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The store calls start/stop under its lock. Stop releases both outputs on the main thread
- * before returning, including when the phone has no network. Queued service intents still
- * have to validate the stored phase before playing.
+ * The ringing service as [PomodoroPhaseAlarm] drives it. Stop releases both outputs on the main
+ * thread before returning, including when the phone has no network. A queued service start still
+ * checks the held phase before it plays.
  */
 internal class ServicePomodoroRinging(private val context: Context) : PomodoroRinging {
     internal var service: PomodoroRingingService? = null
@@ -32,18 +33,31 @@ internal class ServicePomodoroRinging(private val context: Context) : PomodoroRi
 
     override suspend fun start(ring: PomodoroRing) = withContext(Dispatchers.Main.immediate) {
         val active = service
-        if (active != null && active.current == ring) {
-            active.repost(ring.phase)
+        if (active != null && active.current?.phase == ring.phase) {
+            active.show(ring)
         } else {
-            context.startForegroundService(
-                Intent(context, PomodoroRingingService::class.java).setAction(START).putPhase(ring.phase),
-            )
+            try {
+                context.startForegroundService(
+                    Intent(context, PomodoroRingingService::class.java).setAction(START).putPhase(ring.phase),
+                )
+            } catch (e: ForegroundServiceStartNotAllowedException) {
+                // A start the platform refuses from the background rings nothing. An alarm
+                // delivery is allowed to start it, and the armed alarm still goes off.
+            }
         }
         Unit
     }
 
-    override suspend fun stop() = withContext(Dispatchers.Main.immediate) {
-        service?.finishRinging()
+    override suspend fun update(ring: PomodoroRing) = withContext(Dispatchers.Main.immediate) {
+        service?.takeIf { it.current?.phase == ring.phase }?.show(ring)
+        Unit
+    }
+
+    override suspend fun stop(keep: PomodoroPhaseKey?) = withContext(Dispatchers.Main.immediate) {
+        val active = service
+        // A start still checking the held phase stops itself when that phase has gone.
+        if (keep != null && (active?.current == null || active.current?.phase == keep)) return@withContext
+        active?.finishRinging()
         context.stopService(Intent(context, PomodoroRingingService::class.java))
         Unit
     }
@@ -70,8 +84,8 @@ internal data class PomodoroRingingState(
 
 /**
  * One indefinite alarm, with no phase advancement. START_STICKY restores a killed service only
- * after re-reading the persisted phase-end record and current session. Swiping its notification
- * reposts it, and removing the app's task leaves playback running.
+ * while the persisted held state still has the phase it rang, past its planned end. Swiping its
+ * notification reposts it, and removing the app's task leaves playback running.
  *
  * mediaPlayback permits background audio with FOREGROUND_SERVICE and, on API 34+,
  * FOREGROUND_SERVICE_MEDIA_PLAYBACK. It has no shortService/dataSync timeout. Boot recovery
@@ -88,6 +102,9 @@ class PomodoroRingingService : Service() {
     private lateinit var controller: PomodoroRingController
     internal val current: PomodoroRing? get() = controller.current
 
+    /** Whether this service has posted its notification yet. */
+    private var promoted = false
+
     override fun onCreate() {
         super.onCreate()
         notifier = PomodoroRingingNotifier(this)
@@ -101,9 +118,14 @@ class PomodoroRingingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val done = processed
         val expected = intent?.phaseKey()
-        // Meet startForeground's deadline before opening Room. This provisional notification
-        // plays nothing. A sticky restart gets its actions only after validation.
-        promote(notifier.build(current?.phase ?: expected))
+        if (!promoted) {
+            // The session notification shares the id. Android opens a full-screen intent only for
+            // a notification it adds, not for one that replaces another, so remove it first.
+            getSystemService(NotificationManager::class.java).cancel(PomodoroSessionNotification.ID)
+        }
+        // Meet startForeground's deadline before reading the held state. This provisional
+        // notification plays nothing and has no actions; it gets them only after the check below.
+        promote(notifier.build(current, current?.phase ?: expected))
         if (intent != null && (intent.action != ServicePomodoroRinging.START || expected == null)) {
             if (current == null) finishRinging(startId)
             done?.countDown()
@@ -111,15 +133,11 @@ class PomodoroRingingService : Service() {
         }
         scope.launch {
             try {
-                val valid = app.pomodoroSessions.withRingingPhase(expected) { ring ->
+                val valid = app.pomodoroAlarm.withRingingPhase(expected) { ring ->
                     withContext(Dispatchers.Main.immediate) { controller.start(ring) }
                 }
                 // An old start must neither play nor stop a newer valid ring.
                 if (!valid && current == null) finishRinging(startId)
-            } catch (failure: android.database.sqlite.SQLiteException) {
-                if (current == null) finishRinging(startId)
-            } catch (failure: IOException) {
-                if (current == null) finishRinging(startId)
             } finally {
                 done?.countDown()
             }
@@ -129,6 +147,7 @@ class PomodoroRingingService : Service() {
 
     internal fun promote(notification: Notification) {
         startForeground(PomodoroSessionNotification.ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+        promoted = true
     }
 
     internal fun publishState() {
@@ -144,7 +163,8 @@ class PomodoroRingingService : Service() {
         )
     }
 
-    internal fun repost(phase: PomodoroPhaseKey) = controller.dismissed(phase)
+    /** Shows [ring] of the phase already ringing, as after a swipe or a new revision. */
+    internal fun show(ring: PomodoroRing) = controller.start(ring)
 
     internal fun finishRinging(startId: Int? = null) {
         controller.stop()

@@ -28,7 +28,7 @@ import com.github.e0ipso.tokkl.pomodoro.AlarmClockPomodoroScheduler
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
-import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseEndStore
+import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
@@ -221,11 +221,23 @@ class TokklApplication : Application() {
         AlarmClockPomodoroScheduler(this, timerSyncStarts = { capabilities.state.value.timerState })
     }
 
-    /**
-     * The running Pomodoro. Loaded on first use, from the phase alarm or from the page. A queued
-     * pomodoro asks for the same send as any other create.
-     */
+    /** The ringing service at a Pomodoro phase's planned end, as [pomodoroAlarm] drives it. */
     internal val pomodoroRinging by lazy { ServicePomodoroRinging(this) }
+
+    /**
+     * The exact alarm and the ring of the server's Pomodoro session, which follow the held timer
+     * state while the server offers the timer API (docs/PRD.md W7). Loaded at process start; its
+     * first call loads the held state and the capabilities from disk.
+     */
+    internal val pomodoroAlarm: PomodoroPhaseAlarm by lazy {
+        PomodoroPhaseAlarm(
+            held = { timerState.state.value },
+            available = { capabilities.state.value.timerState },
+            alarms = alarmClock,
+            ringing = pomodoroRinging,
+            io = Dispatchers.IO,
+        )
+    }
 
     private val pomodoroSessionLock = Any()
     private var pomodoroSessionsForAccount = newPomodoroSessions()
@@ -235,14 +247,12 @@ class TokklApplication : Application() {
         get() = synchronized(pomodoroSessionLock) { pomodoroNotificationForAccount.value }
 
     private fun newPomodoroNotification(restore: Boolean = true): Lazy<PomodoroSessionNotificationSync> = lazy {
-        val sessions = pomodoroSessions
         val store = PomodoroSessionNotificationStore(this)
         val notifier = PomodoroSessionNotifier(this)
         PomodoroSessionNotificationSync(
-            sessions = sessions,
-            changes = combine(
-                cacheDatabase.pomodoroSessions().running(), sessions.notificationChanges, pomodoroRinging.state,
-            ) { _, _, _ -> Unit },
+            alarm = pomodoroAlarm,
+            actions = timerActions,
+            changes = combine(heldTimerState, flow { emitAll(capabilities.state) }, pomodoroRinging.state) { _, _, _ -> Unit },
             signedIn = { Session(this).isSignedIn() },
             serviceRunning = { pomodoroRinging.state.value.serviceRunning },
             load = { if (restore) store.load() else null }, save = store::save, post = notifier::post, remove = notifier::remove,
@@ -265,9 +275,6 @@ class TokklApplication : Application() {
                 BackgroundSend.schedule(this)
                 sender.send()
             },
-            alarms = pomodoroAlarms,
-            phaseEnds = PomodoroPhaseEndStore(this),
-            ringing = pomodoroRinging,
         )
     }
 
@@ -371,6 +378,15 @@ class TokklApplication : Application() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val heldTimerState: Flow<HeldTimerState?> by lazy {
         timerStateRenewals.flatMapLatest { flow { emitAll(timerState.state) } }.flowOn(Dispatchers.IO)
+    }
+
+    /**
+     * [heldTimerState] while the account's server offers the timer API, and null otherwise: what
+     * the full-screen alarm shows. Loads the stored state and the capabilities off the main thread.
+     */
+    internal val heldSession: Flow<HeldTimerState?> by lazy {
+        combine(heldTimerState, flow { emitAll(capabilities.state) }) { held, flags -> held.takeIf { flags.timerState } }
+            .flowOn(Dispatchers.IO)
     }
 
     /**
@@ -665,6 +681,8 @@ class TokklApplication : Application() {
             steps = listOf(
                 { Session(this).clear() },
                 { timerState.retire() },
+                // With the held state retired, nothing arms or rings the account's phase again.
+                { pomodoroAlarm.release() },
                 // Before the stores clear, so no stream or reconnect of this account outlives them.
                 {
                     timerSync.stop()
@@ -735,6 +753,11 @@ class TokklApplication : Application() {
         // Reads the cache off the main thread, and posts or removes nothing for the entry the
         // notification already followed, so opening the app never brings back a dismissed one.
         runningNotification.start()
+        // Arms, moves and drops the phase alarm and its ring on every held state and capability
+        // change, from the stored state at process start on, also with the app in the background.
+        MainScope().launch(Dispatchers.IO) {
+            combine(heldTimerState, flow { emitAll(capabilities.state) }) { _, _ -> Unit }.collect { pomodoroAlarm.follow() }
+        }
         pomodoroSessionNotification.start()
         reminder.follow(
             combine(cache.running, flow { emitAll(reminderSettings.state) }) { running, preferences -> running to preferences },

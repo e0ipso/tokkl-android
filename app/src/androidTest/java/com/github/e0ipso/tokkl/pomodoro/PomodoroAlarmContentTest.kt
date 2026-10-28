@@ -25,8 +25,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PomodoroSession
+import com.github.e0ipso.tokkl.timerstate.PhaseKind
+import com.github.e0ipso.tokkl.timerstate.PhaseTransition
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
@@ -40,7 +41,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 
-/** Device/UI acceptance source; no screenshot or device execution in this sitting. */
+/** The alarm and Pomodoro page content at the largest font scale, with no server or ring. */
 @SignedOut
 class PomodoroAlarmContentTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
@@ -48,22 +49,25 @@ class PomodoroAlarmContentTest {
         .around(SystemFontScale(SystemFontScale.LARGEST)).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val at = Instant.parse("2026-10-24T09:00:00Z")
-    private var state by mutableStateOf(PomodoroAlarmState(session = session()))
+    private var state by mutableStateOf(PomodoroAlarmState(ring = ring(PhaseTransition.WORK_TO_SHORT_REST)))
     private var nexts = 0
     private var ends = 0
 
-    @Test fun largestTextShowsEveryTransitionAndExactlyTwoLargeLabelledActions() {
+    @Test fun largestTextShowsEveryServerTransitionItsNumberAndExactlyTwoLargeLabelledActions() {
         show()
-        for ((kind, completed, label) in listOf(
-            Triple("work", 0.0, R.string.pomodoro_fullscreen_work_short),
-            Triple("work", 3.0, R.string.pomodoro_fullscreen_work_long),
-            Triple("shortRest", 1.0, R.string.pomodoro_fullscreen_short_work),
-            Triple("longRest", 4.0, R.string.pomodoro_fullscreen_long_work),
+        for ((transition, label) in listOf(
+            PhaseTransition.WORK_TO_SHORT_REST to R.string.pomodoro_fullscreen_work_short,
+            PhaseTransition.WORK_TO_LONG_REST to R.string.pomodoro_fullscreen_work_long,
+            PhaseTransition.SHORT_REST_TO_WORK to R.string.pomodoro_fullscreen_short_work,
+            PhaseTransition.LONG_REST_TO_WORK to R.string.pomodoro_fullscreen_long_work,
         )) {
-            compose.runOnIdle { state = state.copy(session = session().copy(phaseKind = kind, completed = completed)) }
-            val transition = compose.onNodeWithText(context.getString(label))
-            transition.performScrollTo().assertIsDisplayed()
-            readable(transition)
+            compose.runOnIdle { state = state.copy(ring = ring(transition)) }
+            val shown = compose.onNodeWithText(context.getString(label))
+            shown.performScrollTo().assertIsDisplayed()
+            readable(shown)
+            val number = compose.onNodeWithText(context.getString(R.string.pomodoro_number, 3, 4))
+            number.performScrollTo().assertIsDisplayed()
+            readable(number)
             compose.onAllNodes(hasClickAction()).assertCountEquals(2)
             for (action in listOf(R.string.pomodoro_alarm_next, R.string.pomodoro_alarm_end)) {
                 button(action).performScrollTo().assertIsDisplayed().assertIsEnabled().assertHeightIsAtLeast(64.dp)
@@ -77,6 +81,7 @@ class PomodoroAlarmContentTest {
     }
 
     @Test fun clockTicksLocallyAcrossTheDeadlineAndExposesOvertimeOnDemand() {
+        // The phone's time of the planned end is one minute after [at].
         var now = at.plusSeconds(59)
         val clock = object : Clock() {
             override fun instant() = now
@@ -119,6 +124,16 @@ class PomodoroAlarmContentTest {
         compose.onNodeWithText(context.getString(R.string.pomodoro_alarm_denied)).performScrollTo().assertIsDisplayed()
     }
 
+    @Test fun aFailedActionShowsTheStandardMessageAndKeepsBothActions() {
+        show()
+        compose.runOnIdle { state = state.copy(problem = TimerActionResult.Offline) }
+        val message = compose.onNodeWithText(context.getString(R.string.timer_action_offline))
+        message.performScrollTo().assertIsDisplayed()
+        readable(message)
+        button(R.string.pomodoro_alarm_next).performScrollTo().assertIsEnabled()
+        button(R.string.pomodoro_alarm_end).performScrollTo().assertIsEnabled()
+    }
+
     @Test fun unavailableSystemSettingsHasReadableFallbackInstructions() {
         edgeToEdge()
         compose.setContent {
@@ -151,8 +166,9 @@ class PomodoroAlarmContentTest {
         layouts.forEach { assertFalse("text clipped vertically", it.didOverflowHeight) }
     }
 
-    private fun session() = PomodoroSession(
-        workspaceId = 1, workMinutes = 1.0, shortRestMinutes = 1.0, longRestMinutes = 1.0, longRestEvery = 4.0,
-        phaseKind = "work", phaseStartedAt = at, pomodoroStartedAt = at, completed = 0.0, fields = EntryFields(),
+    /** A [transition] phase that started at [at], third of four, whose planned end is a minute later. */
+    private fun ring(transition: PhaseTransition) = PomodoroRing(
+        phase = PomodoroPhaseKey(at), kind = PhaseKind.WORK, sound = PomodoroSound.entries.single { it.transition == transition },
+        number = 3, longRestEvery = 4, end = at.plusSeconds(60), revision = 7,
     )
 }

@@ -17,8 +17,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * What finishing a phase did to the session and the queue. [TooShort] is the result a screen
@@ -56,10 +54,9 @@ sealed class PomodoroStep {
  * Blocks on disk once the call has read [clock], so call it off the main thread. [clock] is the
  * time of the tap, read before the transaction, as the timer reads its own.
  *
- * A phase start arms one exact alarm at that phase's planned end. Next phase and end cancel it
- * and, when a phase continues, arm the next one. The alarm records that the planned end was
- * reached and leaves the phase in place, including when a reboot finds that end already past.
- * Nothing is armed while no session runs.
+ * This device-local session no longer arms, rings or posts anything: the phase alarm, its ring
+ * and the session notification follow the server's timer state (pomodoro/PomodoroPhaseAlarm.kt).
+ * Task 10 of plan 02 deletes this store with its table.
  *
  * @param accountTime the account's zone and resolution at the tap. Null means the phone cannot
  *   resolve the zone: the times are kept as they are and no zone is invented. A missing or
@@ -71,26 +68,9 @@ class PomodoroSessionStore internal constructor(
     private val clock: Clock = Clock.systemUTC(),
     private val accountTime: () -> AccountTime?,
     private val onQueued: () -> Unit = {},
-    private val alarms: PomodoroAlarmScheduler = IdlePomodoroAlarms,
-    private val phaseEnds: PomodoroPhaseEndRecord = MemoryPomodoroPhaseEnds(),
-    private val ringing: PomodoroRinging = NoPomodoroRinging,
 ) {
     private val phaseLock = Mutex()
     private val callbacks = Any()
-    private val notificationRevision = MutableStateFlow(0L)
-    internal val notificationChanges = notificationRevision.asStateFlow()
-
-    /** Read and publish under the phase lock, so a late collector cannot replace a ring. */
-    internal suspend fun withNotificationState(use: suspend (PomodoroSession?, Boolean) -> Unit) = withContext(io) {
-        phaseLock.withLock {
-            val session = if (isForgotten) null else database.current()
-            val reached = session != null &&
-                phaseEnds.read() == ReachedPhaseEnd(session.phaseKind, session.phaseStartedAt)
-            use(session, reached)
-        }
-    }
-
-    private fun notificationChanged() { notificationRevision.value += 1 }
 
     /** A forgotten store is never reused by a later account, including by retained page models. */
     @Volatile internal var isForgotten: Boolean = false
@@ -125,12 +105,6 @@ class PomodoroSessionStore internal constructor(
         }
     }
 
-    /** True when the exact-alarm permission is denied. The Pomodoro page reads this. */
-    fun exactAlarmPermissionDenied(): Boolean = alarms.permissionDenied
-
-    /** The phase the alarm has reached, or null when the running phase has not, or none runs. */
-    fun reachedPhaseEnd(): ReachedPhaseEnd? = phaseEnds.read()
-
     /**
      * Starts a session at the tap time with [lengths] and [fields] in [workspaceId]. The lengths
      * use the rules' ranges. Throws when a session is already running, so an open pomodoro is
@@ -143,14 +117,12 @@ class PomodoroSessionStore internal constructor(
         val session = phase.stored(workspaceId, lengths, fields.distinctTags(), pomodoroStartedAt = phase.startedAt)
         val (saved, stoppedTimers) = locked {
             check(!isForgotten) { "This account has signed out." }
-            val result = database.transaction {
+            database.transaction {
                 if (database.current() != null) throw IllegalStateException("A pomodoro session is already running.")
                 val stopped = database.stopTimers(session.phaseStartedAt)
                 database.save(session)
                 session to stopped
             }
-            follow(database.current())
-            result
         }
         if (stoppedTimers) notifyQueued()
         return saved
@@ -160,17 +132,13 @@ class PomodoroSessionStore internal constructor(
      * Confirms the running phase at the tap time, including a skip before its planned end and a
      * confirm in overtime. A rest that returns to work finishes the pomodoro.
      */
-    suspend fun nextPhase(): PomodoroStep = nextPhaseIfCurrent(null)
-
-    /** Notification actions carry the phase they were posted for. A stale action changes nothing. */
-    internal suspend fun nextPhaseIfCurrent(expected: PomodoroPhaseKey?): PomodoroStep {
+    suspend fun nextPhase(): PomodoroStep {
         val at = Instant.ofEpochMilli(clock.instant().toEpochMilli())
         val time = accountTime()
         val result = locked {
             if (isForgotten) return@locked PomodoroStep.Idle
-            val step = database.transaction {
+            database.transaction {
                 val session = database.current() ?: return@transaction PomodoroStep.Idle
-                if (expected != null && session.phaseKey() != expected) return@transaction PomodoroStep.Idle
                 val change = advancePhase(session.phase(), at, session.config())
                 val closes = change.transition == "shortRestToWork" || change.transition == "longRestToWork"
                 if (!closes) {
@@ -180,29 +148,22 @@ class PomodoroSessionStore internal constructor(
                 }
                 close(session, change.next.startedAt, time, change.next)
             }
-            if (step != PomodoroStep.Idle || database.current() == null) follow(database.current())
-            step
         }
         if (result is PomodoroStep.Saved) notifyQueued()
         return result
     }
 
     /** Ends the session at the tap time and finishes the open pomodoro. */
-    suspend fun end(): PomodoroStep = endIfCurrent(null)
-
-    internal suspend fun endIfCurrent(expected: PomodoroPhaseKey?): PomodoroStep {
+    suspend fun end(): PomodoroStep {
         val at = Instant.ofEpochMilli(clock.instant().toEpochMilli())
         val time = accountTime()
         val result = locked {
             if (isForgotten) return@locked PomodoroStep.Idle
-            val step = database.transaction {
+            database.transaction {
                 val session = database.current() ?: return@transaction PomodoroStep.Idle
-                if (expected != null && session.phaseKey() != expected) return@transaction PomodoroStep.Idle
                 require(!at.isBefore(session.phaseStartedAt)) { "Confirm must not be before the phase start" }
                 close(session, at, time, next = null)
             }
-            if (step != PomodoroStep.Idle || database.current() == null) follow(database.current())
-            step
         }
         if (result is PomodoroStep.Saved) notifyQueued()
         return result
@@ -221,122 +182,35 @@ class PomodoroSessionStore internal constructor(
     }
 
     /**
-     * Reconcile only after the outer transaction committed. Take the phase lock without
-     * dispatching: AccountCache's blocking IO caller can also use this through runBlocking
-     * without dispatching back onto its own executor. A new session keeps its own alarms.
-     * Queue callbacks run after releasing the lock, including callbacks that refresh the cache.
+     * Reconcile only after the outer transaction committed: the queue sends a pomodoro it saved.
+     * AccountCache's blocking IO caller also uses this through runBlocking.
      */
     internal suspend fun timerHandoffCommitted(step: PomodoroStep, notifyQueue: Boolean = true) {
-        if (step == PomodoroStep.Idle) return
-        try {
-            phaseLock.withLock {
-                if (!isForgotten && database.current() == null) releaseAlarm()
-            }
-        } finally {
-            if (notifyQueue && step is PomodoroStep.Saved) notifyQueued()
-        }
+        if (notifyQueue && step is PomodoroStep.Saved) notifyQueued()
     }
 
     /**
      * Keeps [fields] for the pomodoro in progress and for later ones. A pomodoro already queued
      * keeps the fields it was queued with.
      */
-    suspend fun updateFields(fields: EntryFields): PomodoroSession? = updateFieldsIfCurrent(fields, null)
-
-    /** Page drafts must not overwrite fields belonging to a phase the page never displayed. */
-    internal suspend fun updateFieldsIfCurrent(fields: EntryFields, expected: PomodoroPhaseKey?): PomodoroSession? = locked {
+    suspend fun updateFields(fields: EntryFields): PomodoroSession? = locked {
         if (isForgotten) return@locked null
         database.transaction {
             val session = database.current() ?: return@transaction null
-            if (expected != null && session.phaseKey() != expected) return@transaction null
             val updated = session.copy(fields = fields.distinctTags())
             database.save(updated)
-            notificationChanged()
             updated
         }
     }
 
     /**
-     * The phase alarm fired. Records that the running phase has reached its planned end, once
-     * [clock] says so. An early delivery is armed again for that end. The phase stays where it is.
-     */
-    internal suspend fun onPhaseAlarm(expected: PomodoroPhaseKey? = null) {
-        locked {
-            if (isForgotten) return@locked
-            val session = database.current() ?: return@locked
-            if (expected != null && session.phaseKey() != expected) return@locked
-            val end = plannedEnd(session.phase(), session.config())
-            if (now().isBefore(end)) {
-                alarms.schedule(end, session.phaseKey())
-                return@locked
-            }
-            ring(session)
-        }
-    }
-
-    /**
-     * Arms the stored phase's alarm again. With no session, nothing is armed. A planned end that
-     * has already passed rings at once and leaves that phase in overtime until the user confirms.
-     */
-    internal suspend fun rearm(deferRingingToAlarm: Boolean = false) {
-        locked {
-            notificationChanged()
-            if (isForgotten) return@locked
-            val session = database.current()
-            if (session == null) {
-                releaseAlarm()
-                return@locked
-            }
-            alarms.watchSession(true)
-            val end = plannedEnd(session.phase(), session.config())
-            if (!now().isBefore(end)) {
-                alarms.cancel()
-                if (deferRingingToAlarm) {
-                    // API 35+ forbids starting mediaPlayback from BOOT_COMPLETED. Deliver an
-                    // immediate user-requested exact alarm instead; its receiver may start it.
-                    phaseEnds.write(ReachedPhaseEnd(session.phaseKind, session.phaseStartedAt))
-                    alarms.schedule(now(), session.phaseKey())
-                } else {
-                    ring(session)
-                }
-            } else {
-                ringing.stop()
-                phaseEnds.clear()
-                alarms.schedule(end, session.phaseKey())
-            }
-        }
-    }
-
-    /**
-     * Drops the armed alarm and the record that a phase reached its end, and stops listening for
-     * boot and clock changes. The session row is unchanged. Sign-out (TKA-0253) clears that row
-     * with the cache and calls this so the alarm does not outlive the account.
-     */
-    suspend fun disarm() = locked { if (!isForgotten) releaseAlarm() }
-
-    /**
-     * Fence account-bound commands before waiting for any in-flight phase/output operation.
-     * Delete without saving work, then attempt every local cleanup even if one effect fails.
-     * The queue's existing sign-out steps cancel retries, await its sender and clear its rows.
+     * Fence account-bound commands before waiting for any in-flight one, then delete the row
+     * without saving work. The queue's existing sign-out steps cancel retries, await its sender
+     * and clear its rows.
      */
     suspend fun forget() {
         synchronized(callbacks) { isForgotten = true }
-        locked {
-            try {
-                database.transaction { database.delete() }
-            } finally {
-                releaseAlarm()
-            }
-        }
-    }
-
-    /** Removes the session row and the alarm without queueing an entry. The boot test uses it. */
-    internal suspend fun discardRunningSession() {
-        locked {
-            if (isForgotten) return@locked
-            database.transaction { database.delete() }
-            releaseAlarm()
-        }
+        locked { database.transaction { database.delete() } }
     }
 
     /**
@@ -360,71 +234,6 @@ class PomodoroSessionStore internal constructor(
     /** The instant of a check, at the session rules' millisecond precision. */
     private fun now(): Instant = Instant.ofEpochMilli(clock.instant().toEpochMilli())
 
-    /**
-     * The phase has reached its planned end. This does not change the phase: overtime continues
-     * until the user confirms. The service loops that transition until Next or End.
-     */
-    private suspend fun ring(session: PomodoroSession) {
-        phaseEnds.write(ReachedPhaseEnd(session.phaseKind, session.phaseStartedAt))
-        notificationChanged()
-        ringing.start(session.ring())
-    }
-
-    /** Revalidates a service start/restart while excluding a concurrent Next/End. */
-    internal suspend fun withRingingPhase(
-        expected: PomodoroPhaseKey?,
-        use: suspend (PomodoroRing) -> Unit,
-    ): Boolean = locked {
-        val session = currentRinging(expected) ?: return@locked false
-        use(session.ring())
-        true
-    }
-
-    /** Swiping the notification never changes the phase or stops either output. */
-    internal suspend fun repostRinging(expected: PomodoroPhaseKey) = locked {
-        val session = currentRinging(expected) ?: return@locked
-        ringing.start(session.ring())
-    }
-
-    private fun currentRinging(expected: PomodoroPhaseKey?): PomodoroSession? {
-        if (isForgotten) return null
-        val session = database.current() ?: return null
-        if (expected != null && session.phaseKey() != expected) return null
-        if (phaseEnds.read() != ReachedPhaseEnd(session.phaseKind, session.phaseStartedAt)) return null
-        return session.takeUnless { now().isBefore(plannedEnd(it.phase(), it.config())) }
-    }
-
-    private suspend fun follow(session: PomodoroSession?) {
-        notificationChanged()
-        if (isForgotten) return
-        if (session == null) {
-            releaseAlarm()
-            return
-        }
-        ringing.stop()
-        alarms.watchSession(true)
-        phaseEnds.clear()
-        alarms.cancel()
-        alarms.schedule(plannedEnd(session.phase(), session.config()), session.phaseKey())
-    }
-
-    private suspend fun releaseAlarm() {
-        notificationChanged()
-        try {
-            ringing.stop()
-        } finally {
-            try {
-                alarms.watchSession(false)
-            } finally {
-                try {
-                    alarms.cancel()
-                } finally {
-                    phaseEnds.clear()
-                }
-            }
-        }
-    }
-
     companion object {
         /** A store on [database] whose creates go through [queue]. */
         fun open(
@@ -434,18 +243,12 @@ class PomodoroSessionStore internal constructor(
             clock: Clock = Clock.systemUTC(),
             accountTime: () -> AccountTime?,
             onQueued: () -> Unit = {},
-            alarms: PomodoroAlarmScheduler,
-            phaseEnds: PomodoroPhaseEndRecord,
-            ringing: PomodoroRinging = NoPomodoroRinging,
         ): PomodoroSessionStore = PomodoroSessionStore(
             RoomPomodoroSessionDatabase(database, queue),
             io,
             clock,
             accountTime,
             onQueued,
-            alarms,
-            phaseEnds,
-            ringing,
         )
     }
 }

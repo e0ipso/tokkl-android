@@ -4,29 +4,33 @@ import android.content.Intent
 import android.net.Uri
 import java.time.Instant
 
-/** PendingIntent identity includes the phase, so an old button never becomes a new button. */
-internal fun Intent.putPhase(phase: PomodoroPhaseKey, unique: Boolean = false): Intent = apply {
-    putExtra("workspace", phase.workspaceId)
-    putExtra("kind", phase.kind)
-    putExtra("started", phase.startedAt.toEpochMilli())
-    putExtra("pomodoro", phase.pomodoroStartedAt.toEpochMilli())
-    putExtra("completed", phase.completed)
+private const val EXTRA_PHASE_START = "pomodoro_phase_start"
+private const val EXTRA_REVISION = "pomodoro_revision"
+
+/**
+ * Puts [phase], and the [revision] a button was shown at, on this intent. With [unique], they also
+ * go in its data, which PendingIntent identity includes, so an old button never becomes a new one.
+ */
+internal fun Intent.putPhase(phase: PomodoroPhaseKey, revision: Long? = null, unique: Boolean = false): Intent = apply {
+    putExtra(EXTRA_PHASE_START, phase.start.toEpochMilli())
+    if (revision != null) putExtra(EXTRA_REVISION, revision)
     if (unique) {
-        data = Uri.Builder().scheme("tokkl-pomodoro").authority("phase")
-            .appendPath(phase.workspaceId.toString()).appendPath(phase.kind)
-            .appendPath(phase.startedAt.toEpochMilli().toString())
-            .appendPath(phase.pomodoroStartedAt.toEpochMilli().toString())
-            .appendPath(phase.completed.toString()).build()
+        val uri = Uri.Builder().scheme("tokkl-pomodoro").authority("phase").appendPath(phase.start.toEpochMilli().toString())
+        if (revision != null) uri.appendPath(revision.toString())
+        data = uri.build()
     }
 }
 
-internal fun Intent.phaseKey(): PomodoroPhaseKey? {
-    if (!listOf("workspace", "kind", "started", "pomodoro", "completed").all(::hasExtra)) return null
-    val kind = getStringExtra("kind")?.takeIf { it in listOf("work", "shortRest", "longRest") } ?: return null
-    val completed = getDoubleExtra("completed", -1.0)
-    if (!completed.isFinite() || completed < 0 || completed % 1.0 != 0.0) return null
-    return PomodoroPhaseKey(
-        getLongExtra("workspace", 0), kind, Instant.ofEpochMilli(getLongExtra("started", 0)),
-        Instant.ofEpochMilli(getLongExtra("pomodoro", 0)), completed,
-    )
+/** The phase this intent carries, or null without one. */
+internal fun Intent.phaseKey(): PomodoroPhaseKey? =
+    if (hasExtra(EXTRA_PHASE_START)) PomodoroPhaseKey(Instant.ofEpochMilli(getLongExtra(EXTRA_PHASE_START, 0))) else null
+
+/** The revision this intent's button was shown at, or null without one. */
+internal fun Intent.shownRevision(): Long? =
+    if (hasExtra(EXTRA_REVISION)) getLongExtra(EXTRA_REVISION, 0).takeIf { it >= 0 } else null
+
+/** Removes what [putPhase] added to the extras. The action and data stay. */
+internal fun Intent.removePhase() {
+    removeExtra(EXTRA_PHASE_START)
+    removeExtra(EXTRA_REVISION)
 }

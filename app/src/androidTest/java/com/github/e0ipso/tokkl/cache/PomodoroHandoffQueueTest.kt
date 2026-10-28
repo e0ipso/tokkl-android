@@ -3,8 +3,6 @@ package com.github.e0ipso.tokkl.cache
 import android.database.sqlite.SQLiteException
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.pomodoro.IdlePomodoroAlarms
-import com.github.e0ipso.tokkl.pomodoro.MemoryPomodoroPhaseEnds
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.shortcuts.FavoriteNames
@@ -77,7 +75,6 @@ class PomodoroHandoffQueueTest {
         )
         sessions = PomodoroSessionStore.open(
             db, queue, Dispatchers.IO, clock, accountTime = { TIME }, onQueued = { callbacks++ },
-            alarms = IdlePomodoroAlarms, phaseEnds = MemoryPomodoroPhaseEnds(),
         )
         cache = AccountCache(db, clock, pomodoro = { sessions })
     }

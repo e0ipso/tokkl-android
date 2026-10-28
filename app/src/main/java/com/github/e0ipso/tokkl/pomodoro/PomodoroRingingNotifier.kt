@@ -25,7 +25,17 @@ internal class PomodoroRingingNotifier(private val context: Context) {
         )
     }
 
-    fun build(phase: PomodoroPhaseKey?): Notification {
+    /**
+     * The ringing notification of [ring]: its transition, "Pomodoro N of M" and the overtime since
+     * its planned end, with Next phase and End session for its phase at its revision.
+     *
+     * While the service still checks the held state, [ring] is null and the notification has no
+     * actions. It still opens the alarm of [phase], the phase the alarm delivered, over the lock
+     * screen: Android launches a full-screen intent only when the notification is first posted,
+     * and the alarm screen shows nothing for a phase that is not the held one. A sticky restart
+     * knows no phase and opens nothing.
+     */
+    fun build(ring: PomodoroRing?, phase: PomodoroPhaseKey? = ring?.phase): Notification {
         val open = PendingIntent.getActivity(
             context, 0,
             Intent(context, MainActivity::class.java).setAction("com.github.e0ipso.tokkl.action.SHOW_POMODORO")
@@ -44,22 +54,30 @@ internal class PomodoroRingingNotifier(private val context: Context) {
             .setContentIntent(open)
         if (phase != null) {
             val alarm = pomodoroAlarmPendingIntent(context, phase)
+            builder.setContentIntent(alarm).setFullScreenIntent(alarm, true)
+        }
+        if (ring != null) {
             builder
-                .setContentIntent(alarm)
-                .setFullScreenIntent(alarm, true)
-                .setDeleteIntent(actionIntent(PomodoroRingingActionReceiver.REPOST, phase))
-                .addAction(action(R.drawable.ic_play, R.string.pomodoro_alarm_next, PomodoroRingingActionReceiver.NEXT, phase))
-                .addAction(action(R.drawable.ic_stop, R.string.pomodoro_alarm_end, PomodoroRingingActionReceiver.END, phase))
+                .setContentText(context.getString(alarmTransitionLabel(ring.sound)))
+                .setSubText(context.getString(R.string.pomodoro_number, ring.number, ring.longRestEvery))
+                // The native clock counts the overtime up from the planned end, with no app ticks.
+                .setWhen(ring.end.toEpochMilli())
+                .setShowWhen(true)
+                .setUsesChronometer(true)
+                .setDeleteIntent(actionIntent(PomodoroRingingActionReceiver.REPOST, ring))
+                .addAction(action(R.drawable.ic_play, R.string.pomodoro_alarm_next, PomodoroRingingActionReceiver.NEXT, ring))
+                .addAction(action(R.drawable.ic_stop, R.string.pomodoro_alarm_end, PomodoroRingingActionReceiver.END, ring))
         }
         return builder.build()
     }
 
-    private fun action(icon: Int, title: Int, action: String, phase: PomodoroPhaseKey): Notification.Action =
-        Notification.Action.Builder(Icon.createWithResource(context, icon), context.getString(title), actionIntent(action, phase)).build()
+    private fun action(icon: Int, title: Int, action: String, ring: PomodoroRing): Notification.Action =
+        Notification.Action.Builder(Icon.createWithResource(context, icon), context.getString(title), actionIntent(action, ring)).build()
 
-    private fun actionIntent(action: String, phase: PomodoroPhaseKey): PendingIntent = PendingIntent.getBroadcast(
+    private fun actionIntent(action: String, ring: PomodoroRing): PendingIntent = PendingIntent.getBroadcast(
         context, 0,
-        Intent(context, PomodoroRingingActionReceiver::class.java).setAction(action).putPhase(phase, unique = true),
+        Intent(context, PomodoroRingingActionReceiver::class.java).setAction(action)
+            .putPhase(ring.phase, revision = ring.revision, unique = true),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 

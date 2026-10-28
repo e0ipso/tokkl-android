@@ -3,35 +3,43 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.TokklApplication
-import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/** Local Room/queue actions; neither needs a server answer or an activity. */
+/**
+ * The ringing notification's buttons. Next phase and End session go to the server with the
+ * revision the notification showed, and the state it answers with ends the ring here and on every
+ * other device. One that fails, offline included, leaves the ring going and says why. A swipe
+ * posts the notification again.
+ */
 class PomodoroRingingActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action !in setOf(NEXT, END, REPOST)) return
         val phase = intent.phaseKey() ?: return
+        val revision = intent.shownRevision()
+        if (intent.action != REPOST && revision == null) return
         val done = completed
         val pending = goAsync()
+        val app = context.applicationContext as TokklApplication
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val sessions = (context.applicationContext as TokklApplication).pomodoroSessions
-                when (intent.action) {
-                    NEXT -> sessions.nextPhaseIfCurrent(phase)
-                    END -> sessions.endIfCurrent(phase)
-                    REPOST -> sessions.repostRinging(phase)
+                if (intent.action == REPOST) {
+                    try {
+                        app.pomodoroAlarm.repost(phase)
+                    } finally {
+                        pending.finish()
+                    }
+                } else {
+                    // The broadcast ends before the request, so a server slow to answer cannot
+                    // hold it past its time limit. The ringing service keeps the process alive.
+                    pending.finish()
+                    app.pomodoroAlarm.sendPhaseAction(app.timerActions, phase, checkNotNull(revision), end = intent.action == END)
+                        ?.let { showPomodoroActionFailure(app, it) }
                 }
-            } catch (failure: SQLiteException) {
-                // Keep ringing if the local change could not commit; the actions can be retried.
-            } catch (failure: IOException) {
-                // The persisted phase-end record could not be changed.
             } finally {
-                pending.finish()
                 done?.countDown()
             }
         }

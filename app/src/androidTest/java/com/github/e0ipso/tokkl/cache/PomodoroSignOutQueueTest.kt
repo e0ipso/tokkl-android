@@ -2,8 +2,6 @@ package com.github.e0ipso.tokkl.cache
 
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.pomodoro.IdlePomodoroAlarms
-import com.github.e0ipso.tokkl.pomodoro.MemoryPomodoroPhaseEnds
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroStep
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -50,7 +48,6 @@ class PomodoroSignOutQueueTest {
         queue = ChangeQueue(db, Dispatchers.IO, onQueued = {}, clock = clock, pomodoro = { store })
         store = PomodoroSessionStore.open(
             db, queue, Dispatchers.IO, clock, accountTime = { TIME },
-            alarms = IdlePomodoroAlarms, phaseEnds = MemoryPomodoroPhaseEnds(),
         )
         cache = AccountCache(db, clock, pomodoro = { store })
     }

@@ -60,7 +60,7 @@ internal class AndroidPomodoroRingOutput(
     val looping: Boolean get() = player?.let { runCatching { it.isLooping }.getOrDefault(false) } ?: false
 
     override fun show(ring: PomodoroRing) {
-        service.promote(notifier.build(ring.phase))
+        service.promote(notifier.build(ring))
     }
 
     override fun play(sound: PomodoroSound) {

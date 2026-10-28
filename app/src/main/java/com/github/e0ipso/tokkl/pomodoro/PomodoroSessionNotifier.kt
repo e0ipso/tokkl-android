@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.os.Build
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.timerstate.PhaseKind
 
 /** A native countdown crosses zero into negative elapsed overtime without app ticks. */
 internal class PomodoroSessionNotifier(private val context: Context) {
@@ -40,19 +41,18 @@ internal class PomodoroSessionNotifier(private val context: Context) {
     fun remove() { manager.cancel(PomodoroSessionNotification.ID) }
 
     internal fun build(content: PomodoroSessionNotificationContent, account: String): Notification {
-        val phaseLabel = when (content.phase.kind) {
-            "work" -> R.string.pomodoro_session_work
-            "shortRest" -> R.string.pomodoro_session_short_rest
-            else -> R.string.pomodoro_session_long_rest
-        }
+        val label = phaseLabel(content.kind)
         val open = PendingIntent.getActivity(
             context, 0, pomodoroSessionOpenIntent(context, account, content.phase),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_nav_pomodoro)
-            .setContentTitle(context.getString(R.string.pomodoro_session_title, context.getString(phaseLabel), content.pomodoro))
+            .setContentTitle(
+                context.getString(R.string.pomodoro_session_title, context.getString(label), content.number, content.longRestEvery),
+            )
             .setContentText(content.description.ifBlank { context.getString(R.string.pomodoro_session_no_description) })
+            .setSubText(context.getString(R.string.pomodoro_up_next, context.getString(phaseLabel(content.upcoming))))
             .setWhen(content.end.toEpochMilli())
             .setShowWhen(true)
             .setUsesChronometer(true)
@@ -72,10 +72,16 @@ internal class PomodoroSessionNotifier(private val context: Context) {
             PendingIntent.getBroadcast(
                 context, 0,
                 Intent(context, PomodoroSessionActionReceiver::class.java).setAction(action)
-                    .putNotificationIdentity(account, content.phase),
+                    .putNotificationIdentity(account, content.phase, content.revision),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             ),
         ).build()
+
+    private fun phaseLabel(kind: PhaseKind): Int = when (kind) {
+        PhaseKind.WORK -> R.string.pomodoro_session_work
+        PhaseKind.SHORT_REST -> R.string.pomodoro_session_short_rest
+        PhaseKind.LONG_REST -> R.string.pomodoro_session_long_rest
+    }
 
     companion object { const val CHANNEL_ID = "pomodoro_session" }
 }
