@@ -107,6 +107,15 @@ class TimerStateSource(
     }
 
     /**
+     * Calls [read] with the held state while no [accept] is between publishing a state and
+     * writing its running entry to the cache, so a cache read inside [read] matches the state it
+     * gets. The shared timer controls read both this way, so a resumed clone never shows as
+     * nothing running for the moment between the two writes. Keep [read] short: an accept waits
+     * for it. Blocks on disk I/O when [read] reads the cache.
+     */
+    fun <T> withState(read: (HeldTimerState?) -> T): T = synchronized(lock) { read(mutableState.value) }
+
+    /**
      * The too-short pomodoro notice, for the one surface that shows it, or null when there is none
      * or another surface took it. Records its entry id with the state, so a replay of the same
      * revision or a restart does not show it again.

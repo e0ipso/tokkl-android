@@ -1,17 +1,25 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import java.time.Duration
 import java.time.Instant
 
 /**
- * What a timer control acts on (docs/PRD.md T1): the session it was shown in, the pause chain and
- * its revision, and the running entry it showed. Each surface passes the target it drew, and the
- * queue acts only while the phone still holds that state, so a second tap, a tap on an old
+ * What a timer control acts on (docs/PRD.md T1). Each surface passes the target it drew, and the
+ * action goes ahead only while the phone still shows that state, so a second tap, a tap on an old
  * notification or a widget drawn before sign-out does nothing.
  *
- * @property session the [TimerSession] the control was shown in.
- * @property chainId the chain it was shown for, or 0 outside a chain.
- * @property revision the chain's revision then, or 0 outside a chain.
+ * Two kinds exist while the phone moves to the server's pause chain. A target drawn from the
+ * server's timer state, made with [server], has no session and no chain: a paused one carries the
+ * server [revision] it was shown at, which Resume and Discard send, and a running one the entry
+ * it showed. The queue's own pause chain fences accept none of these. The notification, the
+ * widget and the tile still draw targets of the phone's own chain, with its session, chain id and
+ * revision.
+ *
+ * @property session the [TimerSession] the control was shown in, or 0 for a server target.
+ * @property chainId the phone's chain it was shown for, or 0 outside one.
+ * @property revision the phone chain's revision then, or the server revision a paused server
+ *   target was shown at, or 0.
  * @property entryId the running entry it showed, or 0 while paused.
  */
 data class TimerTarget(
@@ -19,7 +27,15 @@ data class TimerTarget(
     val chainId: Long = 0,
     val revision: Long = 0,
     val entryId: Long = 0,
-)
+) {
+    companion object {
+        /**
+         * A control drawn from the server's timer state: the running entry [entryId], or a paused
+         * chain shown at the server's [revision].
+         */
+        fun server(revision: Long = 0, entryId: Long = 0) = TimerTarget(session = 0, revision = revision, entryId = entryId)
+    }
+}
 
 /**
  * What every timer surface shows and offers: the timer panel, the notification, the widget, the
@@ -33,19 +49,26 @@ sealed interface TimerControls {
     /**
      * [entry] runs, marked [unsent] while the queue holds a change to it. Pause and Stop act on it.
      *
-     * @property accumulatedSeconds what the chain's stopped segments store before this one, or 0
+     * @property accumulatedSeconds what the chain's stopped entries store before this one, or 0
      *   outside a chain. The clock shows it plus the time since [CachedTimeEntry.start].
+     * @property clockOffset what to add to the phone's clock when counting from the entry's
+     *   start: the server's clock offset while the entry is the server's resumed clone, whose
+     *   start the server set, and zero otherwise.
+     * @property pausable whether Pause is offered. The server's chain needs the timer API, and the
+     *   server refuses Pause during a Pomodoro session.
      */
     data class Running(
         val entry: CachedTimeEntry,
         val unsent: Boolean,
         val accumulatedSeconds: Long,
         val target: TimerTarget,
+        val clockOffset: Duration = Duration.ZERO,
+        val pausable: Boolean = true,
     ) : TimerControls
 
     /**
-     * A chain is paused at [seconds], the time its segments store. Resume starts [fields] in
-     * [workspaceId] as a new entry, and Stop ends the chain without a request.
+     * A chain is paused at [seconds], the time its entries store. Resume starts [fields] in
+     * [workspaceId] as a new entry, and Stop ends the chain.
      */
     data class Paused(
         val seconds: Long,
@@ -55,10 +78,19 @@ sealed interface TimerControls {
     ) : TimerControls
 }
 
+/** The target these controls were drawn with, or null while idle. */
+val TimerControls.target: TimerTarget?
+    get() = when (this) {
+        is TimerControls.Running -> target
+        is TimerControls.Paused -> target
+        TimerControls.Idle -> null
+    }
+
 /**
- * The controls for the cache's [running] entry, the pause [chain] and the [session]. A running
- * entry always shows, as the server's running timer wins over a chain. The chain adds its time
- * only while that entry is its clone, and shows as paused only while nothing runs.
+ * The controls for the cache's [running] entry, the phone's own pause [chain] and the [session],
+ * which the notification, the widget, the tile and the reminder still show. A running entry always
+ * shows, as the server's running timer wins over a chain. The chain adds its time only while that
+ * entry is its clone, and shows as paused only while nothing runs.
  */
 fun timerControls(running: EntryWithSendState?, chain: PauseChain?, session: Long): TimerControls {
     if (running != null) {
@@ -82,6 +114,47 @@ fun timerControls(running: EntryWithSendState?, chain: PauseChain?, session: Lon
     return TimerControls.Idle
 }
 
-/** The whole seconds the clock shows at [now]: the chain's stored time and this segment's. */
+/**
+ * The controls for the cache's [running] entry and the server's timer state [held], as the Timer
+ * page and the full-screen timer show them. [timerApi] is whether the server offers the timer
+ * API: without it the held state counts for nothing, so no chain shows and Pause is not offered.
+ *
+ * The cache's running entry always shows, as it carries the queued Starts and Stops the server
+ * may not have yet. It adds the chain's stored seconds only while it is the chain's clone, and
+ * then counts on the server's clock, which set the clone's start. A chain shows as paused only
+ * while nothing runs, with the seconds and fields the server holds. A chain whose clone no longer
+ * runs in the cache, as after a queued Stop, shows nothing. Pause is offered outside a Pomodoro
+ * session, which the server refuses it in.
+ */
+fun serverTimerControls(running: EntryWithSendState?, held: HeldTimerState?, timerApi: Boolean): TimerControls {
+    val state = held?.takeIf { timerApi }?.state
+    val pause = state?.pause
+    if (running != null) {
+        val entry = running.entry
+        val clone = pause?.takeIf { !it.paused && it.cloneEntryId == entry.id }
+        return TimerControls.Running(
+            entry = entry,
+            unsent = running.unsent,
+            accumulatedSeconds = clone?.seconds ?: 0,
+            target = TimerTarget.server(entryId = entry.id),
+            clockOffset = clone?.let { held?.clockOffset } ?: Duration.ZERO,
+            pausable = timerApi && state?.pomodoro == null,
+        )
+    }
+    if (pause != null && pause.paused) {
+        return TimerControls.Paused(
+            seconds = pause.seconds,
+            workspaceId = pause.workspaceId,
+            fields = EntryFields(pause.description, pause.projectId, pause.taskId, pause.tags, pause.billable),
+            target = TimerTarget.server(revision = state?.revision ?: 0),
+        )
+    }
+    return TimerControls.Idle
+}
+
+/**
+ * The whole seconds the clock shows at the phone's [now]: the chain's stored time and this
+ * entry's, counted on the server's clock for its clone.
+ */
 fun TimerControls.Running.seconds(now: Instant): Long =
-    accumulatedSeconds + Duration.between(entry.start, now).seconds.coerceAtLeast(0)
+    accumulatedSeconds + Duration.between(entry.start, now.plus(clockOffset)).seconds.coerceAtLeast(0)

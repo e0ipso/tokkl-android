@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.catalog
 
+import android.content.res.Resources
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -11,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -37,13 +39,16 @@ fun changeText(change: CatalogChange): String = when (change) {
 
 /** What [problem] means for the user, in a sentence. */
 @Composable
-fun problemText(problem: ServerProblem): String = when (problem) {
-    ServerProblem.Unreachable -> stringResource(R.string.catalog_error_unreachable)
-    ServerProblem.AuthFailed -> stringResource(R.string.catalog_error_auth)
-    ServerProblem.TrustRefused -> stringResource(R.string.catalog_error_trust)
+fun problemText(problem: ServerProblem): String = problemText(LocalResources.current, problem)
+
+/** What [problem] means for the user, in a sentence, from [resources], for text made outside composition. */
+fun problemText(resources: Resources, problem: ServerProblem): String = when (problem) {
+    ServerProblem.Unreachable -> resources.getString(R.string.catalog_error_unreachable)
+    ServerProblem.AuthFailed -> resources.getString(R.string.catalog_error_auth)
+    ServerProblem.TrustRefused -> resources.getString(R.string.catalog_error_trust)
     is ServerProblem.Refused -> problem.reason
-    is ServerProblem.Unexpected -> problem.status?.let { stringResource(R.string.catalog_error_status, it) }
-        ?: stringResource(R.string.catalog_error_unreadable)
+    is ServerProblem.Unexpected -> problem.status?.let { resources.getString(R.string.catalog_error_status, it) }
+        ?: resources.getString(R.string.catalog_error_unreadable)
 }
 
 /**

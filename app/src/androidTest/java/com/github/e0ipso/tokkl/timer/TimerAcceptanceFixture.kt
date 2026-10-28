@@ -21,6 +21,12 @@ internal class TimerAcceptanceFixture {
         // else, and a test may store a relay before it starts a timer.
         account.workspaceId
         refresh()
+        // Sign in as the sign-in screen stores it, with the settings that refresh read. That
+        // gives the account a new, empty timer state. The state an earlier test's account left
+        // on the phone would otherwise hold back every state of this account with a lower
+        // revision. The refresh after it seeds the new state.
+        app.storeSignIn(TokklTestServer.url, account.apiToken, app.accountSettings.state.value!!)
+        refresh()
     }
     fun cleanup() {
         try { AirplaneMode.set(false, account.client) }
@@ -31,7 +37,22 @@ internal class TimerAcceptanceFixture {
     }
     fun refresh() = runBlocking { app.accountSettings.refresh().join() }
     fun rows(): List<CachedTimeEntry> = runBlocking { app.cache.timeEntries.first() }
+    /** The phone's own pause chain, which the notification, the widget and the tile still show. */
     fun controls(): TimerControls = runBlocking { app.changes.timerControls.first() }
+
+    /** What the Timer page and the full-screen timer show: the cache's running entry and the server's pause chain. */
+    fun shown(): TimerControls = runBlocking { app.timerControls.first() }
+
+    /**
+     * Starts [description] on the server, [seconds] ago, and waits for a refresh that read the
+     * server after it. Nothing goes through the queue, so no send, and no refresh a send starts
+     * without waiting, is still on its way when this returns.
+     */
+    fun startOnServer(description: String, seconds: Long = 600): TimerControls.Running {
+        account.createEntry(description, Instant.now().minusSeconds(seconds))
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        return shown() as TimerControls.Running
+    }
     fun start(description: String = "Focused work"): TimerControls.Running {
         runBlocking { app.changes.start(account.workspaceId, EntryFields(description)) }
         return controls() as TimerControls.Running

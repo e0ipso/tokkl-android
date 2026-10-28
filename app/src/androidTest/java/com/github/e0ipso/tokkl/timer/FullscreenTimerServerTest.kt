@@ -31,6 +31,7 @@ import com.github.e0ipso.tokkl.time.parseDuration
 import java.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.After
@@ -40,7 +41,11 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 
-/** Normal real-host acceptance at usual and largest font sizes on API31/36. */
+/**
+ * Normal real-host acceptance at usual and largest font sizes on API31/36. The focused timer reads
+ * the app's shared timer controls, so Pause, Resume and Stop while paused go to the server's
+ * pause chain, and Start, Stop of a running entry and edits of it to the queue.
+ */
 abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
     private val compose = createEmptyComposeRule()
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(SystemFontScale(fontScale)).around(compose)
@@ -48,7 +53,10 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
     private val app get() = fixture.app
     private val context get() = fixture.context
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
-    @Before fun prepare() { fixture.prepare(); fixture.start("Pause fixture"); fixture.ageRunning(); fixture.drain() }
+
+    // The running entry starts on the server, so no queued setup change, and no refresh its send
+    // starts without waiting, is still on its way when a test begins.
+    @Before fun prepare() { fixture.prepare(); fixture.startOnServer("Pause fixture") }
     @After fun cleanup() { fixture.cleanup() }
 
     @Test
@@ -104,7 +112,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.awaitTimerPage()
             openFocused()
             AirplaneMode.set(true, fixture.account.client)
-            val original = (fixture.controls() as TimerControls.Running).entry
+            val original = (fixture.shown() as TimerControls.Running).entry
             focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
             compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
             compose.onNode(hasText(context.getString(R.string.entry_end)) and hasSetTextAction()).assertDoesNotExist()
@@ -116,36 +124,59 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.onNode(hasText(context.getString(R.string.entry_start)) and hasSetTextAction()).performTextInput(earlier)
             compose.onNodeWithText(context.getString(R.string.entry_save)).performScrollTo().performClick()
             awaitFocused()
-            assertEquals(original.id, (fixture.controls() as TimerControls.Running).entry.id)
-            assertTrue((fixture.controls() as TimerControls.Running).entry.start < original.start)
+            assertEquals(original.id, (fixture.shown() as TimerControls.Running).entry.id)
+            assertTrue((fixture.shown() as TimerControls.Running).entry.start < original.start)
             val first = elapsedText()
             compose.waitUntil("focused clock ticks locally", 5_000) { elapsedText() != first }
+            // Offline, Pause needs the server: it says so, queues nothing and the entry runs on.
+            val queued = runBlocking { app.changes.unsentCount.first() }
+            assertTrue("the start edit waits in the queue", queued > 0)
             focusedButton(R.string.timer_pause).performScrollTo().performClick()
-            awaitPaused()
+            awaitNotice(R.string.timer_action_offline)
+            assertEquals(original.id, awaitRunning().entry.id)
+            assertActions(running = true)
+            assertEquals(queued, runBlocking { app.changes.unsentCount.first() })
+            AirplaneMode.set(false, fixture.account.client)
+            fixture.drain()
+            // Online, the server pauses it and the paused fields are read-only.
+            focusedButton(R.string.timer_pause).performScrollTo().performClick()
+            val paused = awaitPaused()
             assertActions(running = false)
-            val frozen = (fixture.controls() as TimerControls.Paused).seconds
+            compose.onAllNodes(hasSetTextAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))).assertCountEquals(0)
+            val frozen = paused.seconds
+            assertEquals(frozen, app.timerState.state.value!!.state.pause!!.seconds)
             assertEquals(frozen, parseDuration(elapsedText()))
-            focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
-            compose.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")))
-                .performTextClearance()
-            compose.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")))
-                .performTextInput("Edited paused fields")
-            focusedButton(R.string.timer_fields_done).performScrollTo().performClick()
-            assertEquals(frozen, parseDuration(elapsedText()))
+            assertEquals(0, runBlocking { app.changes.unsentCount.first() })
             scenario.recreate()
             awaitFocused()
             assertEquals(frozen, parseDuration(elapsedText()))
+            assertEquals(paused.target, shownTarget())
+            // Offline, Resume and Stop while paused need the server too, and the pause stays as it was.
+            AirplaneMode.set(true, fixture.account.client)
+            focusedButton(R.string.timer_resume).performScrollTo().performClick()
+            awaitNotice(R.string.timer_action_offline)
+            assertEquals(paused, awaitPaused())
+            focusedButton(R.string.timer_stop).performScrollTo().performClick()
+            awaitNotice(R.string.timer_action_offline)
+            assertEquals(paused, awaitPaused())
+            assertActions(running = false)
+            assertEquals(0, runBlocking { app.changes.unsentCount.first() })
+            AirplaneMode.set(false, fixture.account.client)
             focusedButton(R.string.timer_resume).performScrollTo().performClick()
             val resumed = awaitRunning()
             assertActions(running = true)
             assertNotEquals(original.id, resumed.entry.id)
-            assertEquals("Edited paused fields", resumed.entry.description)
+            assertEquals("Resume starts the fields kept at Pause", "Pause fixture", resumed.entry.description)
+            assertEquals(frozen, resumed.accumulatedSeconds)
             assertTrue(parseDuration(elapsedText())!! >= frozen)
             assertEquals("Pause fixture", runBlocking { app.cache.timeEntries.first() }.first { it.id == original.id }.description)
+            // A clone's Stop is an ordinary queued Stop, offline too, and the focused timer leaves.
+            AirplaneMode.set(true, fixture.account.client)
             focusedButton(R.string.timer_stop).performScrollTo().performClick()
             awaitIdle()
             compose.awaitTimerPage()
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
+            assertTrue(runBlocking { app.changes.unsentCount.first() } > 0)
             AirplaneMode.set(false, fixture.account.client)
             fixture.drain()
         }
@@ -181,10 +212,23 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                     assertTrue("enlarged clock text is not clipped", layouts.none { it.didOverflowHeight })
                     assertEquals(token, shownTarget())
                     focusedButton(R.string.timer_stop).performScrollTo().assertIsDisplayed()
-                    focusedButton(R.string.timer_focused_edit).performScrollTo().assertIsDisplayed()
+                    if (paused) {
+                        focusedButton(R.string.timer_resume).performScrollTo().assertIsDisplayed()
+                        focusedButton(R.string.timer_focused_edit).assertDoesNotExist()
+                    } else {
+                        focusedButton(R.string.timer_pause).performScrollTo().assertIsDisplayed()
+                        focusedButton(R.string.timer_focused_edit).performScrollTo().assertIsDisplayed()
+                    }
                     focusedButton(R.string.timer_exit_fullscreen).performScrollTo().assertIsDisplayed()
                 }
             }
+            // Stop while paused ends the chain on the server, and the focused timer leaves.
+            focusedButton(R.string.timer_stop).performScrollTo().performClick()
+            awaitIdle()
+            compose.awaitTimerPage()
+            compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
+            assertNull(app.timerState.state.value!!.state.pause)
+            assertEquals(0, runBlocking { app.changes.unsentCount.first() })
         }
     }
 
@@ -195,7 +239,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             openFocused()
             lateinit var model: TimerModel
             scenario.onActivity { model = ViewModelProvider(it)[TimerViewModel::class.java].model }
-            val old = fixture.controls() as TimerControls.Running
+            val old = fixture.shown() as TimerControls.Running
             focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
             compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
             val replacementId = fixture.account.createEntry("Remote replacement", old.entry.start)
@@ -211,8 +255,8 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.waitUntil("the old editor refuses the save", 10_000) {
                 compose.onAllNodesWithText(context.getString(R.string.entry_form_missing)).fetchSemanticsNodes().isNotEmpty()
             }
-            assertEquals(replacementId, (fixture.controls() as TimerControls.Running).entry.id)
-            assertEquals("Remote replacement", (fixture.controls() as TimerControls.Running).entry.description)
+            assertEquals(replacementId, (fixture.shown() as TimerControls.Running).entry.id)
+            assertEquals("Remote replacement", (fixture.shown() as TimerControls.Running).entry.description)
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             awaitFocused()
             compose.onNodeWithText("Remote replacement").assertExists()
@@ -261,6 +305,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
 
     @Test
     fun focusedLocalTicksAndFrozenPauseAddNoRequests() {
+        holdTimerEventsOnTheServerItself()
         RequestCounter(TokklTestServer.url, " HTTP/1.1").use { requests ->
             ServerTrustStore(context).confirmCleartext(requests.url)
             Session(context).save(requests.url, fixture.account.apiToken)
@@ -270,18 +315,23 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 compose.awaitTimerPage()
                 scenario.onActivity { activity ->
                     val model = ViewModelProvider(activity)[TimerViewModel::class.java].model
-                    activity.setContent { TokklTheme { FullscreenTimerScreen(model, app.cache, {}, {}, clock) } }
+                    activity.setContent { TokklTheme { FullscreenTimerScreen(model, {}, {}, clock) } }
                 }
                 awaitFocused()
+                // The activity's start refreshes once. Joining the refresh in flight, or running
+                // one when it has ended, leaves none to come, so the counts below start settled.
+                fixture.refresh()
+                val running = fixture.shown() as TimerControls.Running
                 val beforeText = elapsedText()
                 val beforeRequests = requests.count
                 clock.at = clock.at.plusSeconds(2)
                 compose.waitUntil("local focused tick", 5_000) { elapsedText() != beforeText }
-                assertEquals(beforeRequests, requests.count)
+                assertEquals("a local tick adds no requests: ${requests.lines.drop(beforeRequests)}", beforeRequests, requests.count)
                 // Each start of the activity reads the server once (docs/PRD.md O2). Count what
                 // one such refresh sends, so the trip below may add that and nothing for the clock.
                 fixture.refresh()
                 val refreshRequests = requests.count - beforeRequests
+                assertTrue("a refresh reads the server", refreshRequests > 0)
                 val tripRequests = requests.count + refreshRequests
                 scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
                 clock.at = clock.at.plusSeconds(10)
@@ -289,15 +339,33 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 compose.waitUntil("foreground catches up locally", 5_000) { parseDuration(elapsedText())!! >= parseDuration(beforeText)!! + 10 }
                 compose.waitUntil("the foreground refresh is sent", 5_000) { requests.count >= tripRequests }
                 assertEquals("the clock's catch-up adds no requests to the foreground refresh", tripRequests, requests.count)
+                // Pause goes to the server and nowhere else. Its answer, the authoritative pause,
+                // is what the phone holds and shows before anything is counted.
+                val pauseRequests = requests.count
+                val linesBeforePause = requests.lines.size
                 focusedButton(R.string.timer_pause).performScrollTo().performClick()
                 val paused = awaitPaused()
-                compose.waitUntil("paused display matches durable total", 5_000) { parseDuration(elapsedText()) == paused.seconds }
-                fixture.drain()
+                val held = app.timerState.state.value!!.state
+                val pause = held.pause!!
+                assertTrue(pause.paused)
+                assertEquals(pause.seconds, paused.seconds)
+                assertEquals(TimerTarget.server(revision = held.revision), paused.target)
+                assertEquals("Pause queued no Stop", 0, runBlocking { app.changes.unsentCount.first() })
+                compose.waitUntil("paused display matches the server's total", 5_000) { parseDuration(elapsedText()) == paused.seconds }
+                // The paused state took the running entry out of the cache, and the one refresh
+                // that brings it back stopped writes the cache after its last request.
+                compose.waitUntil("the refresh after Pause brings the entry back stopped", 10_000) {
+                    fixture.rows().any { it.id == running.entry.id && it.stop != null }
+                }
+                val sent = requests.lines.drop(linesBeforePause)
+                assertEquals("one Pause and one refresh: $sent", pauseRequests + 1 + refreshRequests, requests.count)
+                assertEquals("one direct Pause: $sent", 1, sent.count { it.startsWith("POST /api/app/timer/pause ") })
+                assertTrue("no queued Stop went out: $sent", sent.none { it.contains("/stop ") })
                 val frozenRequests = requests.count
                 clock.at = clock.at.plusSeconds(3_600)
                 compose.mainClock.advanceTimeBy(2_000)
                 assertEquals(paused.seconds, parseDuration(elapsedText()))
-                assertEquals("frozen display adds no requests", frozenRequests, requests.count)
+                assertEquals("frozen display adds no requests: ${requests.lines.drop(linesBeforePause)}", frozenRequests, requests.count)
                 assertEquals(paused.target, shownTarget())
                 assertTrue(requests.failures.isEmpty())
             }
@@ -312,7 +380,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             openFocused()
             focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
             compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
-            val row = (fixture.controls() as TimerControls.Running).entry
+            val row = (fixture.shown() as TimerControls.Running).entry
             val client = fixture.account.client
             client.send("PATCH", client.server.api("workspaces", fixture.account.workspaceId.toString(), "time_entries", row.id.toString(), "stop"),
                 buildJsonObject { put("stop", Instant.now().toString()) }, ServerTimeEntry.serializer()).orFail("external Stop from editor")
@@ -331,21 +399,44 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         override fun instant(): Instant = at
     }
 
-    private fun shownTarget(): TimerTarget = when (val state = fixture.controls()) {
+    /**
+     * Opens the timer event stream afresh to the test server itself and waits for its first
+     * state, while the stored server is still that server. The stream then stays open for the
+     * test, and a relay stored later sees neither its request nor its events and keep-alives.
+     * Nothing else accepts a state between the stop and the stream's first event.
+     */
+    private fun holdTimerEventsOnTheServerItself() {
+        app.timerSync.stop()
+        val stopped = Instant.now()
+        app.timerSync.run(app.timerState)
+        val first = runBlocking {
+            withTimeoutOrNull(15_000) { app.timerState.state.first { it?.receivedAt?.isAfter(stopped) == true } }
+        }
+        assertNotNull("the timer event stream sent its first state", first)
+    }
+
+    private fun shownTarget(): TimerTarget = when (val state = fixture.shown()) {
         is TimerControls.Running -> state.target
         is TimerControls.Paused -> state.target
         TimerControls.Idle -> error("timer is idle")
     }
     private fun awaitRunning(): TimerControls.Running {
-        compose.waitUntil("running durable state", 5_000) { fixture.controls() is TimerControls.Running }
-        return fixture.controls() as TimerControls.Running
+        compose.waitUntil("running durable state", 5_000) { fixture.shown() is TimerControls.Running }
+        return fixture.shown() as TimerControls.Running
     }
     private fun awaitPaused(): TimerControls.Paused {
-        compose.waitUntil("paused durable state", 5_000) { fixture.controls() is TimerControls.Paused }
-        return fixture.controls() as TimerControls.Paused
+        compose.waitUntil("paused durable state", 5_000) { fixture.shown() is TimerControls.Paused }
+        return fixture.shown() as TimerControls.Paused
     }
     private fun awaitIdle() {
-        compose.waitUntil("idle durable state", 5_000) { fixture.controls() == TimerControls.Idle }
+        compose.waitUntil("idle durable state", 5_000) { fixture.shown() == TimerControls.Idle }
+    }
+
+    /** Waits until the timer's notice [message] shows, then until it has gone, so the next one is new. */
+    private fun awaitNotice(message: Int) {
+        val text = context.getString(message)
+        compose.waitUntil("the notice \"$text\" shows", 10_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil("the notice \"$text\" goes", 15_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun chooseView(view: TimerView) {
@@ -363,6 +454,11 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         (if (label == R.string.timer_focused_edit) hasContentDescription(context.getString(label)) else hasText(context.getString(label))) and
             hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")),
     )
+
+    /**
+     * The focused timer's actions: Pause, Stop, Edit and Exit while running, and Resume, Stop and
+     * Exit while paused, when the paused fields are read-only and Edit is hidden.
+     */
     private fun assertActions(running: Boolean) {
         compose.waitUntil("shared focused controls settle", 5_000) {
             compose.onAllNodes(hasText(context.getString(if (running) R.string.timer_pause else R.string.timer_resume)) and hasClickAction()).fetchSemanticsNodes().size == 1
@@ -370,9 +466,9 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         focusedButton(if (running) R.string.timer_pause else R.string.timer_resume).assertExists()
         compose.onNode(hasText(context.getString(if (running) R.string.timer_resume else R.string.timer_pause)) and hasClickAction()).assertDoesNotExist()
         focusedButton(R.string.timer_stop).assertExists()
-        focusedButton(R.string.timer_focused_edit).assertExists()
+        if (running) focusedButton(R.string.timer_focused_edit).assertExists() else focusedButton(R.string.timer_focused_edit).assertDoesNotExist()
         focusedButton(R.string.timer_exit_fullscreen).assertExists()
-        compose.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))).assertCountEquals(4)
+        compose.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))).assertCountEquals(if (running) 4 else 3)
     }
     private fun elapsedText(): String = compose.onNodeWithTag("fullscreen_elapsed").fetchSemanticsNode().config[SemanticsProperties.Text]
         .joinToString("") { it.text }

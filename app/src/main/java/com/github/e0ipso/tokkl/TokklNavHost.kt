@@ -97,6 +97,7 @@ import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.target
 import com.github.e0ipso.tokkl.timer.TimerBar
 import com.github.e0ipso.tokkl.timer.TimerModel
+import com.github.e0ipso.tokkl.timer.TimerNotices
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
@@ -294,7 +295,9 @@ fun TokklNavHost(
     val discarded by discardedChanges.collectAsState()
     val changes = (appContext as TokklApplication).changes
     val shortUndo by changes.shortStopUndo.collectAsState(initial = null)
+    // The short Stop's Undo and the timer's notices share one host, so they queue, never overlap.
     val shortHost = remember { SnackbarHostState() }
+    val timerPage = destination in TIMER_PAGES
     val shortMessage = stringResource(R.string.timer_short_stop_trashed)
     val undoLabel = stringResource(R.string.history_undo)
     LaunchedEffect(destination, shortUndo?.entryId, shortUndo?.capturedAt) {
@@ -329,7 +332,7 @@ fun TokklNavHost(
     ) {
         if (destination == Destination.FULLSCREEN_TIMER) {
             FullscreenTimerScreen(
-                model = timer, cache = cache,
+                model = timer,
                 onExit = { if (backStack.lastOrNull() == Destination.FULLSCREEN_TIMER) backStack.removeAt(backStack.lastIndex) },
                 onEditRunning = { target ->
                     scope.launch {
@@ -414,7 +417,10 @@ fun TokklNavHost(
             }
         }
         if (discarded > 0) DiscardNotice(discarded, onDismiss = onDismissDiscarded, modifier = Modifier.align(Alignment.BottomCenter))
-        if (destination == Destination.TIMER) SnackbarHost(shortHost, Modifier.align(Alignment.BottomCenter))
+        if (timerPage) {
+            TimerNotices(timer, shortHost)
+            SnackbarHost(shortHost, Modifier.align(Alignment.BottomCenter))
+        }
         if (notificationPermission != null) {
             NotificationPermissionPrompt(
                 permissionStarts,
@@ -685,6 +691,12 @@ private fun Screen(
         }
     }
 }
+
+/**
+ * The pages that show the timer, where its notices show: a failed Pause, Resume or Stop while
+ * paused, and a pomodoro too short to save.
+ */
+private val TIMER_PAGES = setOf(Destination.TIMER, Destination.FULLSCREEN_TIMER, Destination.POMODORO)
 
 /** Shows [page] right above Timer, or Timer alone, dropping whatever stood above Timer before. */
 private fun SnapshotStateList<Destination>.open(page: TopLevelPage) {

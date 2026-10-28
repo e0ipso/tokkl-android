@@ -6,22 +6,26 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.seconds
+import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.cache.target
 import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.entry.withPicked
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
+import com.github.e0ipso.tokkl.timerstate.PauseChainActions
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,6 +36,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -59,8 +64,13 @@ sealed interface TimerState {
      * @property original the project, task and tags the cache has, which the picker keeps on offer
      *   when they are archived.
      * @property unsent the server has not received every change to the entry.
-     * @property accumulatedSeconds what the pause chain's stopped segments store before this entry,
-     *   which the clock adds to the time since [start] (docs/PRD.md T1), or 0 outside a chain.
+     * @property accumulatedSeconds what the server's pause chain stored before this entry, its
+     *   resumed clone, which the clock adds to the time since [start] (docs/PRD.md T1), or 0
+     *   outside a chain.
+     * @property pausable whether Pause shows: on a server with the timer API, outside a Pomodoro
+     *   session.
+     * @property clockOffset what the clock adds to the phone's time when it counts from [start]:
+     *   the server's clock offset for the clone, whose start the server set, and zero otherwise.
      */
     data class Running(
         val entryId: Long?,
@@ -72,15 +82,16 @@ sealed interface TimerState {
         val unsent: Boolean,
         val accumulatedSeconds: Long = 0,
         val target: TimerTarget? = null,
+        val pausable: Boolean = true,
+        val clockOffset: Duration = Duration.ZERO,
     ) : TimerState
 
     /**
-     * The timer is paused at [seconds], the time the pause chain's segments store (docs/PRD.md
-     * T1). Resume starts [fields] in [workspaceId] as a new entry, and an edit changes what it
-     * starts. Stop ends the chain.
+     * The server's pause chain is paused at [seconds], the time its entries store (docs/PRD.md
+     * T1). Resume starts [fields] in [workspaceId] as a new entry, and Stop ends the chain. The
+     * fields are read-only: the server keeps the ones recorded at Pause.
      *
-     * @property original the project, task and tags the chain keeps, which the picker keeps on
-     *   offer when they are archived.
+     * @property original the project, task and tags the chain keeps.
      */
     data class Paused(
         val workspaceId: Long,
@@ -93,31 +104,65 @@ sealed interface TimerState {
 }
 
 /**
+ * What the timer's screens say about it: a Pause, Resume or Stop while paused that did not
+ * happen, and a pomodoro the server discarded as too short. The navigation host shows them in one
+ * place, whichever of the timer's pages is on screen.
+ */
+sealed interface TimerNotice {
+
+    /**
+     * A pause chain action the server refused, or that got no answer, as [result] says.
+     * [number] tells two failures with the same result apart.
+     */
+    data class ActionFailed(val result: TimerActionResult, val number: Long) : TimerNotice
+
+    /** The server discarded the pomodoro [entryId] as too short to save. */
+    data class PomodoroDiscarded(val entryId: Long) : TimerNotice
+}
+
+/**
  * The timer on the Timer page (docs/PRD.md T1): Start, Pause, Resume, Stop and the running entry's
- * fields. Every tap goes to [changes], the change queue, which changes the cache on the phone and
- * queues the change for the server, so nothing here waits for the network (docs/PRD.md principle
- * 2). The timer shows what the queue's [controls] say, and from the tap until the cache shows it,
- * what the tap did. Taps in between are ignored, so a double tap starts one entry.
+ * fields. Start, Stop of a running entry, Continue, favorites and edits of the running entry go to
+ * [changes], the change queue, which changes the cache on the phone and queues the change for the
+ * server, so they never wait for the network (docs/PRD.md principle 2). The timer shows what the
+ * [controls] say, and from such a tap until the cache shows it, what the tap did. Taps in between
+ * are ignored, so a double tap starts one entry.
+ *
+ * Pause, Resume and Stop while paused belong to the server's pause chain and go to [pauseChain]
+ * at once. They wait for the server's answer, and until it shows, the timer keeps what it showed
+ * and ignores other taps. Resume and Stop while paused send the server revision the paused timer
+ * was shown at, so a stale tap gets a refusal. A refusal or no answer leaves the timer as the
+ * server's state says and becomes a [notice]. Without [pauseChain] they do nothing.
  *
  * Start starts the draft that the idle timer holds, and [continueEntry] starts a timer from a past
  * entry. The cache keeps one running entry, and a start on the phone stops a cached running entry
- * first, as the server does, so one entry runs at a time, offline too. Pause stops the running
- * entry and Resume starts a new one with its fields (T1); any other start ends the pause chain.
+ * first, as the server does, so one entry runs at a time, offline too. Any start other than
+ * Resume ends the server's chain once the server has it.
  *
  * A pick of project, task or tags, and billable, goes to the queue at once. A description goes
  * once typing ends, with [descriptionDone], Pause or Stop, so the queue does not get a change for
  * every letter. Until the cache has an edit, the timer shows it over the cache's entry, so a
- * refresh cannot take back what is being typed. While paused, edits change what Resume starts.
+ * refresh cannot take back what is being typed. A paused timer's fields are read-only, as the
+ * server and the web app keep them.
  *
  * Call the tap handlers on the main thread. The running clock is the screen's: it counts from
  * [TimerState.Running.start] on the phone and never asks the server (principle 3).
  *
- * @param controls the running entry or paused chain, as ChangeQueue.timerControls gives them.
+ * @param controls the running entry or paused chain, as the app's shared timer controls give them.
  * @param accountSettings for the default workspace, where Start starts, and for the Today and
  *   This week totals.
  * @param clock the time a Start tap shows until the cache has the queue's own tap time.
  * @param trace marks each Start and Stop tap until the screen reports with [shown] that it drew
  *   what the tap did.
+ * @param pauseChain the server's Pause, Resume and Discard, or null where the app sends none.
+ * @param sendQueued sends the queue now and waits for it, so a description typed before Pause
+ *   reaches the server before the Pause does.
+ * @param discardNotices the too-short pomodoro whose notice no screen has shown, from the
+ *   account's timer state.
+ * @param takeDiscardNotice records that a screen shows that notice, and returns it, or null when
+ *   none is left to show.
+ * @param timerApi whether the server offers the timer API, which decides whether a timer that
+ *   the cache does not show yet offers Pause.
  */
 class TimerModel(
     controls: Flow<TimerControls>,
@@ -128,6 +173,11 @@ class TimerModel(
     private val scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),
     private val trace: TapTrace = TapTrace.None,
+    private val pauseChain: PauseChainActions? = null,
+    private val sendQueued: suspend () -> Unit = {},
+    discardNotices: Flow<DiscardedPomodoro?> = flowOf(null),
+    private val takeDiscardNotice: suspend () -> DiscardedPomodoro? = { null },
+    timerApi: Flow<Boolean> = flowOf(true),
 ) {
 
     /** The trace section of the last Start or Stop tap, until the screen shows what it did. */
@@ -152,15 +202,55 @@ class TimerModel(
 
     /**
      * One item for each timer start made here, Start, Resume, Continue or a favorite, once the
-     * queue has it, for the notification permission's question (docs/PRD.md N5). The start never
-     * waits for a collector. The latest start waits for a screen collector after a configuration
-     * change.
+     * queue or the server has it, for the notification permission's question (docs/PRD.md N5).
+     * The start never waits for a collector. The latest start waits for a screen collector after
+     * a configuration change.
      */
     val starts: SharedFlow<Unit> = queuedStarts.asSharedFlow()
 
-    val state: StateFlow<TimerState> = combine(cached, catalog, accountSettings, local) { running, names, settings, taps ->
-        timerState(running, settings?.defaultWorkspaceId, taps).labelled(names)
+    private val pauseOffered: StateFlow<Boolean> = timerApi.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
+
+    val state: StateFlow<TimerState> = combine(cached, catalog, accountSettings, local, pauseOffered) { running, names, settings, taps, offered ->
+        timerState(running, settings?.defaultWorkspaceId, taps, offered).labelled(names)
     }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), TimerState.Loading)
+
+    private val failures = MutableStateFlow<TimerNotice.ActionFailed?>(null)
+    private var failureCount = 0L
+
+    /** The too-short pomodoro notice a screen has claimed and not finished showing. */
+    private val claimedDiscard = MutableStateFlow<TimerNotice.PomodoroDiscarded?>(null)
+
+    /**
+     * What the timer's screens should say now, or null: a claimed notice until it has shown, then
+     * the latest failed pause chain action, then a too-short pomodoro no screen has shown yet. A
+     * screen [claim]s a notice before it shows it and calls [noticeShown] after.
+     */
+    val notice: StateFlow<TimerNotice?> = combine(claimedDiscard, failures, discardNotices) { claimed, failure, discarded ->
+        claimed ?: failure ?: discarded?.let { TimerNotice.PomodoroDiscarded(it.entryId) }
+    }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+
+    /**
+     * Claims [notice] for the screen about to show it, and returns what to show, or null when
+     * there is nothing left to show. A too-short pomodoro is recorded as shown here, once, so a
+     * replay of its state or a restart does not show it again.
+     */
+    suspend fun claim(notice: TimerNotice): TimerNotice? = when (notice) {
+        is TimerNotice.ActionFailed -> notice.takeIf { failures.value == it }
+        is TimerNotice.PomodoroDiscarded ->
+            if (claimedDiscard.value == notice) {
+                notice
+            } else {
+                takeDiscardNotice()?.let { taken -> TimerNotice.PomodoroDiscarded(taken.entryId).also { claimedDiscard.value = it } }
+            }
+    }
+
+    /** The screen has shown [notice], or stopped showing it. */
+    fun noticeShown(notice: TimerNotice) {
+        when (notice) {
+            is TimerNotice.ActionFailed -> failures.compareAndSet(notice, null)
+            is TimerNotice.PomodoroDiscarded -> claimedDiscard.compareAndSet(notice, null)
+        }
+    }
 
     /** Starts a timer with the idle timer's fields, unless one runs or no workspace is known yet. */
     fun start() {
@@ -193,7 +283,7 @@ class TimerModel(
      * Continues [source] (docs/PRD.md T2): starts a timer with its description, project, task,
      * tags and billable, in its workspace, as the web app's Continue does. A running entry stops
      * at the new one's start, with a description still being typed for it. Ignored while the
-     * cache is unread, and while a Start or Stop the cache does not show yet is pending, so a
+     * cache is unread, and while a tap the cache or the server does not show yet is pending, so a
      * double tap starts one entry.
      */
     fun continueEntry(source: CachedTimeEntry) {
@@ -211,7 +301,7 @@ class TimerModel(
      * default workspace, through the same start as Continue: a running entry stops at the new
      * one's start, with a description still being typed for it, as the server does for the web
      * app's favorites (TimerBar.tsx in ../tokkl/packages/web). Does nothing until a workspace is
-     * known, or while a Start or Stop is pending.
+     * known, or while a tap is pending.
      */
     fun startFrom(fields: EntryFields) {
         if (local.value.pending != null) return
@@ -262,19 +352,20 @@ class TimerModel(
     }
 
     /**
-     * Stops the running entry, with a description still being typed, which ends a pause chain.
-     * While paused, ends the chain, which needs no request.
+     * Stops the running entry, with a description still being typed, through the queue. A
+     * running clone stops in the same way, and the server ends its chain. While paused, ends the
+     * server's chain with Discard.
      */
     fun stop() {
         if (local.value.pending != null) return
         when (val shown = snapshot()) {
             is TimerState.Running -> stopRunning(shown)
-            is TimerState.Paused -> stopPaused()
+            is TimerState.Paused -> discardPaused()
             else -> Unit
         }
     }
 
-    private fun stopRunning(shown: TimerState.Running, target: TimerTarget? = null) {
+    private fun stopRunning(shown: TimerState.Running) {
         val entryId = shown.entryId ?: return
         val edited = editFor(shown)?.fields
         beginTap(TapTrace.STOP) { it is TimerState.Idle }
@@ -282,89 +373,90 @@ class TimerModel(
         local.update { it.copy(pending = stopping, edit = null) }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                val stopped = if (target == null) changes.stop(entryId, edited) else changes.stop(target, edited)
-                if (stopped) settle { it.runningEntry()?.start != shown.start }
+                if (changes.stop(entryId, edited)) settle { it.runningEntry()?.start != shown.start }
             } finally {
                 local.update { if (it.pending == stopping) it.copy(pending = null) else it }
             }
         }
     }
 
-    private fun stopPaused() {
+    /** Ends the paused chain on the server, at the revision it was shown at. */
+    private fun discardPaused() {
+        val actions = pauseChain ?: return
         val paused = cachedControls() as? TimerControls.Paused ?: return
         beginTap(TapTrace.STOP) { it is TimerState.Idle }
-        val clearing = Pending.Clearing(paused.target.chainId)
-        local.update { it.copy(pending = clearing, pausedEdit = null) }
-        scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                if (changes.stop(paused.target)) settle { (it as? TimerControls.Paused)?.target?.chainId != clearing.chainId }
-            } finally {
-                local.update { if (it.pending == clearing) it.copy(pending = null) else it }
-            }
-        }
+        act(paused.target, done = { it.target != paused.target }) { actions.discard(paused.target.revision) }
     }
 
     /**
-     * Pauses the running entry (docs/PRD.md T1), with a description still being typed: the queue
-     * stops it and keeps its fields, and the timer shows the paused total at once.
+     * Pauses the running entry on the server (docs/PRD.md T1). A description still being typed is
+     * queued and sent first, so the chain keeps it. The timer shows what it showed until the
+     * server's paused state does.
      */
     fun pause() {
+        val actions = pauseChain ?: return
         if (local.value.pending != null) return
         val shown = snapshot() as? TimerState.Running ?: return
         val running = cachedControls() as? TimerControls.Running ?: return
-        if (shown.entryId != running.entry.id) return
-        val edited = editFor(shown)?.fields
-        val pausing = Pending.Pausing(shown.start, shown.workspaceId, running.seconds(clock.instant()), shown.fields, shown.original)
-        local.update { it.copy(pending = pausing, edit = null) }
-        scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                if (changes.pause(running.target, edited)) settle { it.runningEntry()?.start != shown.start }
-            } finally {
-                local.update { if (it.pending == pausing) it.copy(pending = null) else it }
+        if (!running.pausable || shown.entryId != running.entry.id) return
+        val typed = editFor(shown)?.takeIf { !it.sent }
+        if (typed != null) send(shown, typed.fields)
+        act(running.target, done = { it.target != running.target }) {
+            if (typed != null) {
+                while (fieldWrites.isNotEmpty()) fieldWrites.toList().joinAll()
+                sendQueued()
             }
+            actions.pause()
         }
     }
 
     /**
-     * Resumes the paused timer (docs/PRD.md T1): the queue starts a new entry with the kept
-     * fields, and an edit still being made to them, and the clock goes on from the paused total.
+     * Resumes the paused chain on the server (docs/PRD.md T1), at the revision it was shown at:
+     * the server starts a clone with the fields kept at Pause, and the clock goes on from the
+     * chain's seconds. The paused view stays until the server's clone shows.
      */
     fun resume() {
+        val actions = pauseChain ?: return
         if (local.value.pending != null) return
-        val shown = snapshot() as? TimerState.Paused ?: return
+        if (snapshot() !is TimerState.Paused) return
         val paused = cachedControls() as? TimerControls.Paused ?: return
-        val edited = local.value.pausedEdit?.takeIf { it.chainId == paused.target.chainId }?.fields
-        val starting = Pending.Starting(clock.instant().truncatedTo(ChronoUnit.MILLIS), shown.fields, shown.workspaceId, shown.seconds)
-        local.update { it.copy(pending = starting, pausedEdit = null) }
+        act(paused.target, done = { it.target != paused.target }, onDone = { queuedStarts.tryEmit(Unit) }) {
+            actions.resume(paused.target.revision)
+        }
+    }
+
+    /**
+     * Sends a pause chain action for what [target] showed, ignoring other taps until the server
+     * answers and its state shows, as [done] tells. A refusal or no answer becomes a [notice].
+     */
+    private fun act(target: TimerTarget, done: (TimerControls) -> Boolean, onDone: () -> Unit = {}, send: suspend () -> TimerActionResult) {
+        val acting = Pending.Acting(target)
+        local.update { it.copy(pending = acting) }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                val id = changes.resume(paused.target, edited)
-                starting.entryId.complete(id)
-                if (id != null) {
-                    queuedStarts.tryEmit(Unit)
-                    settle { it.runningEntry()?.start?.isBefore(starting.at) == false }
+                val result = send()
+                if (result == TimerActionResult.Done) {
+                    onDone()
+                    settle(done)
+                } else {
+                    failures.value = TimerNotice.ActionFailed(result, ++failureCount)
                 }
             } finally {
-                starting.entryId.complete(null)
-                local.update { if (it.pending == starting) it.copy(pending = null) else it }
+                local.update { if (it.pending == acting) it.copy(pending = null) else it }
             }
         }
     }
 
     /** A focused control keeps the durable target that supplied its displayed context. */
-    fun isShown(target: TimerTarget): Boolean = local.value.pending == null && when (val current = cachedControls()) {
-        is TimerControls.Running -> current.target == target
-        is TimerControls.Paused -> current.target == target
-        else -> false
-    }
+    fun isShown(target: TimerTarget): Boolean = local.value.pending == null && cachedControls()?.target == target
 
     fun pauseShown(target: TimerTarget) { if (isShown(target)) pause() }
     fun resumeShown(target: TimerTarget) { if (isShown(target)) resume() }
     fun stopShown(target: TimerTarget) {
         if (!isShown(target)) return
         when (val shown = snapshot()) {
-            is TimerState.Running -> stopRunning(shown, target)
-            is TimerState.Paused -> stopPaused()
+            is TimerState.Running -> stopRunning(shown)
+            is TimerState.Paused -> discardPaused()
             else -> Unit
         }
     }
@@ -376,28 +468,15 @@ class TimerModel(
     /** Shows [description] as typed. It goes to the queue with [descriptionDone], a pick, Pause or Stop. */
     fun editDescription(description: String) = edit(send = false) { it.copy(description = description) }
 
-    /** Sends a description typed for the running entry, or the paused timer, when it differs from the cache's. */
+    /** Sends a description typed for the running entry when it differs from the cache's. */
     fun descriptionDone() {
         if (local.value.pending != null) return
-        when (val shown = snapshot()) {
-            is TimerState.Running -> {
-                val edit = editFor(shown)?.takeIf { !it.sent } ?: return
-                if (edit.fields == cachedRunning()?.fields()) {
-                    local.update { if (it.edit == edit) it.copy(edit = null) else it }
-                } else {
-                    send(shown, edit.fields)
-                }
-            }
-            is TimerState.Paused -> {
-                val paused = cachedControls() as? TimerControls.Paused ?: return
-                val edit = local.value.pausedEdit?.takeIf { it.chainId == paused.target.chainId && !it.sent } ?: return
-                if (edit.fields == paused.fields) {
-                    local.update { if (it.pausedEdit == edit) it.copy(pausedEdit = null) else it }
-                } else {
-                    sendPaused(paused, edit.fields)
-                }
-            }
-            else -> Unit
+        val shown = snapshot() as? TimerState.Running ?: return
+        val edit = editFor(shown)?.takeIf { !it.sent } ?: return
+        if (edit.fields == cachedRunning()?.fields()) {
+            local.update { if (it.edit == edit) it.copy(edit = null) else it }
+        } else {
+            send(shown, edit.fields)
         }
     }
 
@@ -406,13 +485,13 @@ class TimerModel(
      * clears field focus first, so the text field has handed over its latest value. Waiting is
      * for local writes only. Keep the captured id through remapping and never select a replacement
      * just because it has the same start time. Cancellation, including a disposed navigation host,
-     * opens nothing.
+     * opens nothing. Nothing opens while a Stop or a pause chain action is on its way.
      */
     suspend fun runningForEdit(): RunningEntryIdentity? {
         if (openingRunning) return null
         val shown = snapshot() as? TimerState.Running ?: return null
         val pending = local.value.pending
-        if (pending is Pending.Stopping) return null
+        if (pending is Pending.Stopping || pending is Pending.Acting) return null
         openingRunning = true
         try {
             val id = if (pending is Pending.Starting) {
@@ -443,13 +522,13 @@ class TimerModel(
     fun fill(fields: EntryFields) = edit(send = true) { fields }
 
     /**
-     * Changes the idle timer's draft, the running entry's fields, or what the paused timer resumes.
-     * While a tap the cache does not show yet is pending, the running entry's fields stay as they
-     * are: its id is not known yet, or it has stopped.
+     * Changes the idle timer's draft or the running entry's fields. While a tap the cache or the
+     * server does not show yet is pending, the running entry's fields stay as they are: its id is
+     * not known yet, or it is stopping. A paused timer's fields are read-only.
      */
     private fun edit(send: Boolean, change: (EntryFields) -> EntryFields) {
         when (val shown = snapshot()) {
-            TimerState.Loading -> Unit
+            TimerState.Loading, is TimerState.Paused -> Unit
             is TimerState.Idle -> local.update { it.copy(draft = change(it.draft)) }
             is TimerState.Running -> {
                 if (local.value.pending != null || shown.entryId == null) return
@@ -459,31 +538,6 @@ class TimerModel(
                     send -> send(shown, fields)
                     else -> local.update { it.copy(edit = Edit(shown.entryId, shown.workspaceId, shown.start, fields, sent = false)) }
                 }
-            }
-            is TimerState.Paused -> {
-                if (local.value.pending != null) return
-                val paused = cachedControls() as? TimerControls.Paused ?: return
-                val fields = change(shown.fields)
-                when {
-                    fields == shown.fields -> Unit
-                    send -> sendPaused(paused, fields)
-                    else -> local.update { it.copy(pausedEdit = PausedEdit(paused.target.chainId, fields, sent = false)) }
-                }
-            }
-        }
-    }
-
-    /** Keeps [fields] for the [paused] timer's Resume, and shows them until the cache has them. */
-    private fun sendPaused(paused: TimerControls.Paused, fields: EntryFields) {
-        val edit = PausedEdit(paused.target.chainId, fields, sent = true)
-        local.update { it.copy(pausedEdit = edit) }
-        scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                if (changes.editPaused(paused.target, fields)) {
-                    settle { (it as? TimerControls.Paused)?.takeIf { now -> now.target.chainId == edit.chainId }?.fields != paused.fields }
-                }
-            } finally {
-                local.update { if (it.pausedEdit == edit) it.copy(pausedEdit = null) else it }
             }
         }
     }
@@ -513,7 +567,7 @@ class TimerModel(
         write.invokeOnCompletion { fieldWrites -= write }
     }
 
-    /** Waits until the queue's controls pass [done], or gives up after [SETTLE_MS]. */
+    /** Waits until the controls pass [done], or gives up after [SETTLE_MS]. */
     private suspend fun settle(done: (TimerControls) -> Boolean) {
         withTimeoutOrNull(SETTLE_MS) {
             cached.first { it is CachedControls.Read && done(it.controls) }
@@ -539,9 +593,9 @@ class TimerModel(
     }
 
     /** The state as of now, without labels, which the tap handlers act on. */
-    private fun snapshot(): TimerState = timerState(cached.value, accountSettings.value?.defaultWorkspaceId, local.value)
+    private fun snapshot(): TimerState = timerState(cached.value, accountSettings.value?.defaultWorkspaceId, local.value, pauseOffered.value)
 
-    private fun timerState(cached: CachedControls, defaultWorkspaceId: Long?, taps: Local): TimerState {
+    private fun timerState(cached: CachedControls, defaultWorkspaceId: Long?, taps: Local, pauseOffered: Boolean): TimerState {
         if (cached !is CachedControls.Read) return TimerState.Loading
         val controls = cached.controls
         val idle = TimerState.Idle(taps.draft, EntryLabels(), defaultWorkspaceId, authoritative = controls == TimerControls.Idle && taps.pending == null)
@@ -555,21 +609,19 @@ class TimerModel(
                 labels = EntryLabels(),
                 original = Picked(),
                 unsent = true,
-                accumulatedSeconds = pending.accumulatedSeconds,
+                // A tap on it waits for the cache's entry, as every tap during a Start does.
+                pausable = pauseOffered,
             )
             is Pending.Stopping -> if (controls.runningEntry()?.start == pending.start) return idle
-            is Pending.Pausing -> if (controls.runningEntry()?.start == pending.start) {
-                return TimerState.Paused(pending.workspaceId, pending.seconds, pending.fields, EntryLabels(), pending.original)
-            }
-            is Pending.Clearing -> if ((controls as? TimerControls.Paused)?.target?.chainId == pending.chainId) return idle
-            null -> Unit
+            // The timer shows what it showed until the server's answer reaches the controls.
+            is Pending.Acting, null -> Unit
         }
         return when (controls) {
             TimerControls.Idle -> idle
             is TimerControls.Paused -> TimerState.Paused(
                 workspaceId = controls.workspaceId,
                 seconds = controls.seconds,
-                fields = taps.pausedEdit?.takeIf { it.chainId == controls.target.chainId }?.fields ?: controls.fields,
+                fields = controls.fields,
                 labels = EntryLabels(),
                 original = Picked(controls.fields.projectId, controls.fields.taskId, controls.fields.tags),
                 target = controls.target,
@@ -587,6 +639,8 @@ class TimerModel(
                     unsent = controls.unsent,
                     accumulatedSeconds = controls.accumulatedSeconds,
                     target = controls.target,
+                    pausable = controls.pausable,
+                    clockOffset = controls.clockOffset,
                 )
             }
         }
@@ -599,7 +653,7 @@ class TimerModel(
         is TimerState.Paused -> copy(labels = entryLabels(fields, names.projects, names.tasks))
     }
 
-    /** The queue's controls, once read. */
+    /** The controls, once read. */
     private sealed interface CachedControls {
         data object Unread : CachedControls
 
@@ -608,20 +662,16 @@ class TimerModel(
 
     private data class Catalog(val projects: List<CachedProject> = emptyList(), val tasks: List<CachedTask> = emptyList())
 
-    /** What the taps have done that the cache may not show yet. */
+    /** What the taps have done that the cache or the server may not show yet. */
     private data class Local(
         /** What Start starts with. */
         val draft: EntryFields = EntryFields(),
         val edit: Edit? = null,
-        val pausedEdit: PausedEdit? = null,
         val pending: Pending? = null,
     )
 
     /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
     private data class Edit(val entryId: Long, val workspaceId: Long, val start: Instant, val fields: EntryFields, val sent: Boolean)
-
-    /** [fields] for the Resume of the paused chain [chainId], shown until the chain has them. [sent] once kept. */
-    private data class PausedEdit(val chainId: Long, val fields: EntryFields, val sent: Boolean)
 
     /** A tap's open trace section, which [end] closes once the screen shows a state that is [done]. */
     private class OpenTap(val end: () -> Unit, val done: (TimerState) -> Boolean)
@@ -629,30 +679,18 @@ class TimerModel(
     /** An [edit] not queued yet for the active [identity], which a Continue or a favorite stops. */
     private data class Typed(val identity: RunningEntryIdentity, val edit: Edit)
 
-    /** A tap that the cache may not show yet. */
+    /** A tap that the cache or the server may not show yet. */
     private sealed interface Pending {
-        /**
-         * Start or Resume was tapped at [at], in whole milliseconds as the cache keeps times.
-         * [accumulatedSeconds] is the paused total a Resume goes on from.
-         */
-        data class Starting(val at: Instant, val fields: EntryFields, val workspaceId: Long, val accumulatedSeconds: Long = 0) : Pending {
+        /** Start was tapped at [at], in whole milliseconds as the cache keeps times. */
+        data class Starting(val at: Instant, val fields: EntryFields, val workspaceId: Long) : Pending {
             val entryId = CompletableDeferred<Long?>()
         }
 
         /** Stop was tapped for the entry that started at [start]. */
         data class Stopping(val start: Instant) : Pending
 
-        /** Pause was tapped for the entry that started at [start], with the clock at [seconds]. */
-        data class Pausing(
-            val start: Instant,
-            val workspaceId: Long,
-            val seconds: Long,
-            val fields: EntryFields,
-            val original: Picked,
-        ) : Pending
-
-        /** Stop was tapped while the chain [chainId] was paused. */
-        data class Clearing(val chainId: Long) : Pending
+        /** Pause, Resume or Stop while paused went to the server for what [target] showed. */
+        data class Acting(val target: TimerTarget) : Pending
     }
 
     private companion object {
@@ -660,7 +698,8 @@ class TimerModel(
 
         /**
          * How long a tap shows what it did while the cache does not: far longer than a write to
-         * the phone's database takes, so only a cache that never shows the tap reaches it.
+         * the phone's database or a server's answer reaching the cache takes, so only a cache that
+         * never shows the tap reaches it.
          */
         const val SETTLE_MS = 5_000L
     }
@@ -673,3 +712,9 @@ internal val TimerState.target: TimerTarget?
         is TimerState.Paused -> target
         else -> null
     }
+
+/**
+ * The instant the running clock counts from on the phone's clock: the start, moved back by the
+ * server's clock offset for its clone.
+ */
+internal val TimerState.Running.countsFrom: Instant get() = start.minus(clockOffset)

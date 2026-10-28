@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     What a timer action says when it fails: Pause, Resume and Discard, and a Pomodoro session's
-    Start, Next phase and End. Worded as the web app's timer (packages/web/src/api/timerState.ts).
+    Start, Next phase and End. Worded as the web app's timer (packages/web/src/api/timerState.ts),
+    as is the notice for a pomodoro the server discarded.
 -->
 <resources>
     <!-- The server refused the action because the timer changed after the phone showed it. -->
     <string name="timer_action_refused">Another device changed the timer first.</string>
     <!-- The action got no answer. Nothing changed on the phone and nothing waits to be sent. -->
     <string name="timer_action_offline">Can\'t reach the server. Try again when you\'re back online.</string>
+    <!-- The server sent a pomodoro too short to keep to the trash. Shown once per pomodoro. -->
+    <string name="timer_pomodoro_too_short">This pomodoro was too short to save.</string>
 </resources>

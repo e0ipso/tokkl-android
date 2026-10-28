@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.cache.serverTimerControls
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationStore
@@ -66,6 +67,7 @@ import com.github.e0ipso.tokkl.sync.shownSyncStatus
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
+import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
 import com.github.e0ipso.tokkl.timerstate.ElapsedTimerSyncClock
 import com.github.e0ipso.tokkl.timerstate.StreamEnd
 import com.github.e0ipso.tokkl.timerstate.TimerActions
@@ -84,18 +86,23 @@ import java.io.IOException
 import java.security.GeneralSecurityException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TokklApplication : Application() {
@@ -304,6 +311,9 @@ class TokklApplication : Application() {
     private val timerStateLock = Any()
     private var timerStateForAccount = newTimerState(restore = true)
 
+    /** Counts the replacements of [timerState], so flows of its state follow the new account's source. */
+    private val timerStateRenewals = MutableStateFlow(0)
+
     /**
      * The account's timer state from a Tokkl server with the timer API, which every timer request,
      * action and event feeds. Loaded on first use from the stored state, a small file. Sign-out
@@ -330,6 +340,36 @@ class TokklApplication : Application() {
      */
     val timerActions: TimerActions by lazy {
         TimerActions(client = Session(this)::client, source = { timerState }, io = Dispatchers.IO)
+    }
+
+    /**
+     * What the Timer page and the full-screen timer show and act on (docs/PRD.md T1): the cache's
+     * running entry, with its queued Starts, Stops and edits, and the pause chain of the server's
+     * timer state in [timerState], as [serverTimerControls] puts them together, while the server
+     * offers the timer API. Each value reads the cache and the held state under the holder's
+     * lock, so a state never shows apart from the running entry it wrote to the cache. Reads the
+     * disk off the main thread.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val timerControls: Flow<TimerControls> by lazy {
+        val dao = cacheDatabase.changes()
+        val heldStates = timerStateRenewals.flatMapLatest { flow { emitAll(timerState.state) } }
+        combine(
+            cacheDatabase.invalidationTracker.createFlow("time_entries", "pending_changes"),
+            heldStates,
+            flow { emitAll(capabilities.state) },
+        ) { _, _, flags ->
+            timerState.withState { held -> serverTimerControls(dao.latestRunning(), held, flags.timerState) }
+        }.flowOn(Dispatchers.IO).distinctUntilChanged()
+    }
+
+    /**
+     * The too-short pomodoro of the signed-in account's timer state that no screen has shown yet,
+     * following [timerState] across sign-ins. Loads the stored state off the main thread.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val timerDiscardNotice: Flow<DiscardedPomodoro?> by lazy {
+        timerStateRenewals.flatMapLatest { flow { emitAll(timerState.discardNotice) } }.flowOn(Dispatchers.IO)
     }
 
     /** [TimerSyncService] while it runs in the foreground. The service sets it. */
@@ -397,6 +437,7 @@ class TokklApplication : Application() {
         timerState.retire()
         TimerStateStore(this).clear()
         synchronized(timerStateLock) { timerStateForAccount = newTimerState(restore = false) }
+        timerStateRenewals.update { it + 1 }
     }
 
     /**

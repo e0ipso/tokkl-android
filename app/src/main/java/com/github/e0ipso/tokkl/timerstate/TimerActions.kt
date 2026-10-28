@@ -40,7 +40,7 @@ class TimerActions(
     private val client: () -> TogglApiClient?,
     private val source: () -> TimerStateSource,
     private val io: CoroutineContext,
-) {
+) : PauseChainActions {
 
     /** Reads the state with `GET /api/app/timer`. */
     suspend fun read(): TimerActionResult = call { api ->
@@ -54,13 +54,13 @@ class TimerActions(
      * Pauses the running entry. The server refuses it during a session and while nothing runs.
      * Pause reads no field, so it sends an empty object.
      */
-    suspend fun pause(): TimerActionResult = post(JsonObject(emptyMap()), "timer", "pause")
+    override suspend fun pause(): TimerActionResult = post(JsonObject(emptyMap()), "timer", "pause")
 
     /** Resumes the paused chain shown at [revision], with a clone of its fields. */
-    suspend fun resume(revision: Long): TimerActionResult = post(revisioned(revision), "timer", "resume")
+    override suspend fun resume(revision: Long): TimerActionResult = post(revisioned(revision), "timer", "resume")
 
     /** Ends the paused chain shown at [revision], which is Stop while paused. */
-    suspend fun discard(revision: Long): TimerActionResult = post(revisioned(revision), "timer", "discard")
+    override suspend fun discard(revision: Long): TimerActionResult = post(revisioned(revision), "timer", "discard")
 
     /**
      * Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths] in place
@@ -95,6 +95,22 @@ class TimerActions(
                     if (answer.error is ApiError.Network) TimerActionResult.Offline else TimerActionResult.Failed(answer.error)
             }
         }
+}
+
+/**
+ * The pause chain's actions on the server, which the Timer page and the full-screen timer send.
+ * [TimerActions] sends them.
+ */
+interface PauseChainActions {
+
+    /** Pauses the running entry. The server refuses it during a session and while nothing runs. */
+    suspend fun pause(): TimerActionResult
+
+    /** Resumes the paused chain shown at [revision], with a clone of its fields. */
+    suspend fun resume(revision: Long): TimerActionResult
+
+    /** Ends the paused chain shown at [revision], which is Stop while paused. */
+    suspend fun discard(revision: Long): TimerActionResult
 }
 
 /** What a timer action, or the timer read, came to. */

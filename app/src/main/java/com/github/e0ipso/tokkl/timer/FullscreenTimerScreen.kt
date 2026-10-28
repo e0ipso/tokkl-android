@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timer
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -17,10 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
@@ -31,10 +26,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.sp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
-import com.github.e0ipso.tokkl.picker.EntityPicker
-import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -46,12 +37,15 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import java.time.Clock
 
-/** A presentation of the shared owner. It creates no timer, queue or cumulative clock state. */
+/**
+ * A presentation of the shared owner. It creates no timer, queue or cumulative clock state. While
+ * paused, the fields Resume starts show read-only, and Edit is hidden: the server keeps them as
+ * they were at Pause. Pause shows only where the running state offers it.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FullscreenTimerScreen(
     model: TimerModel,
-    cache: AccountCache,
     onEditRunning: (TimerTarget) -> Unit,
     onExit: () -> Unit,
     clock: Clock = Clock.systemUTC(),
@@ -60,16 +54,9 @@ fun FullscreenTimerScreen(
     val running = state as? TimerState.Running
     val paused = state as? TimerState.Paused
     val token = state.target
-    val elapsed = rememberElapsedSeconds(running?.start, clock) + (running?.accumulatedSeconds ?: 0)
+    val elapsed = rememberElapsedSeconds(running?.countsFrom, clock) + (running?.accumulatedSeconds ?: 0)
     val seconds = paused?.seconds ?: elapsed
-    var editingFields by rememberSaveable(token?.session, token?.chainId, token?.entryId) { mutableStateOf(false) }
     val focus = LocalFocusManager.current
-    fun finishFields() {
-        focus.clearFocus()
-        if (token != null && model.isShown(token)) model.descriptionDone()
-        editingFields = false
-    }
-    BackHandler(enabled = editingFields) { finishFields() }
     Scaffold(contentWindowInsets = ScrollingScreenInsets) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
@@ -78,7 +65,7 @@ fun FullscreenTimerScreen(
                 .testTag("fullscreen_timer"),
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
         ) {
-            TokklGhostButton(onClick = { finishFields(); onExit() }) {
+            TokklGhostButton(onClick = { focus.clearFocus(); onExit() }) {
                 Text(stringResource(R.string.timer_exit_fullscreen))
             }
             if (token != null && (running != null || paused != null)) {
@@ -96,48 +83,39 @@ fun FullscreenTimerScreen(
                 if (fields.tags.isNotEmpty()) Text(fields.tags.joinToString(", "), style = MaterialTheme.typography.bodyLarge)
                 if (fields.billable) Text(stringResource(R.string.entry_billable), style = MaterialTheme.typography.bodyLarge)
                 if (running?.unsent == true) Text(stringResource(R.string.history_unsent), style = MaterialTheme.typography.labelLarge)
-                val primaryAction = stringResource(if (paused != null) R.string.timer_resume_spoken else R.string.timer_pause_spoken)
                 val stopAction = stringResource(R.string.timer_stop_spoken)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
                     verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
                 ) {
-                    TokklButton(modifier = Modifier.semantics { contentDescription = primaryAction }, onClick = {
-                        if (paused != null) model.resumeShown(token) else model.pauseShown(token)
-                        focus.clearFocus()
-                    }) { Text(stringResource(if (paused != null) R.string.timer_resume else R.string.timer_pause)) }
+                    if (paused != null) {
+                        val resumeAction = stringResource(R.string.timer_resume_spoken)
+                        TokklButton(modifier = Modifier.semantics { contentDescription = resumeAction }, onClick = {
+                            model.resumeShown(token)
+                            focus.clearFocus()
+                        }) { Text(stringResource(R.string.timer_resume)) }
+                    } else if (running?.pausable == true) {
+                        val pauseAction = stringResource(R.string.timer_pause_spoken)
+                        TokklButton(modifier = Modifier.semantics { contentDescription = pauseAction }, onClick = {
+                            model.pauseShown(token)
+                            focus.clearFocus()
+                        }) { Text(stringResource(R.string.timer_pause)) }
+                    }
                     TokklDangerButton(modifier = Modifier.semantics { contentDescription = stopAction }, onClick = {
                         model.stopShown(token)
                         focus.clearFocus()
                     }) { Text(stringResource(R.string.timer_stop)) }
-                    TokklIconButton(
-                        icon = R.drawable.ic_edit,
-                        description = stringResource(R.string.timer_focused_edit),
-                        onClick = {
-                            if (model.isShown(token)) {
-                                focus.clearFocus()
-                                if (paused != null) editingFields = true else onEditRunning(token)
-                            }
-                        },
-                    )
-                }
-                if (paused != null && editingFields) {
-                    // Field writes already use the paused snapshot revision fence. There is no new
-                    // Save/Cancel transaction; accepted fields belong only to the next Resume clone.
-                    key(token.session, token.chainId) {
-                        EntryFieldsEditor(
-                            fields = paused.fields, labels = paused.labels, original = paused.original,
-                            descriptionHint = stringResource(R.string.timer_description_running),
-                            onDescriptionChange = { if (model.isShown(token)) model.editDescription(it) },
-                            onDescriptionDone = { if (model.isShown(token)) model.descriptionDone() },
-                            onPick = { if (model.isShown(token)) model.pick(it) },
-                            onBillableChange = { if (model.isShown(token)) model.setBillable(it) },
-                            picker = { original, picked, onPickedChange, modifier ->
-                                EntityPicker(cache, paused.workspaceId, original, picked, onPickedChange, modifier)
+                    if (running != null) {
+                        TokklIconButton(
+                            icon = R.drawable.ic_edit,
+                            description = stringResource(R.string.timer_focused_edit),
+                            onClick = {
+                                if (model.isShown(token)) {
+                                    focus.clearFocus()
+                                    onEditRunning(token)
+                                }
                             },
-                        ) {
-                            TokklGhostButton(onClick = ::finishFields) { Text(stringResource(R.string.timer_fields_done)) }
-                        }
+                        )
                     }
                 }
             }

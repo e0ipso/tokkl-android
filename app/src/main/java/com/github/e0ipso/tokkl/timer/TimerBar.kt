@@ -107,7 +107,7 @@ fun TimerBar(
         model.shown(state)
     }
     val running = state as? TimerState.Running
-    val elapsed = (running?.accumulatedSeconds ?: 0) + rememberElapsedSeconds(running?.start, clock)
+    val elapsed = (running?.accumulatedSeconds ?: 0) + rememberElapsedSeconds(running?.countsFrom, clock)
     val focusManager = LocalFocusManager.current
     val timerFields = when (val shown = state) {
         is TimerState.Running -> shown.fields
@@ -198,9 +198,10 @@ private fun TimerBarCore(
 /**
  * The timer as the web app's TimerBar.tsx draws it, for [state]: the entry's fields, then the
  * clock and Start, or while an entry runs, the "Running" label, the clock at [elapsedSeconds],
- * Pause and Stop. While paused (docs/PRD.md T1) come the "Paused" label, the paused total, which
- * stands still, Resume and Stop. The frame takes the running colour while an entry runs, and the
- * label and the Stop button's square say so too, so colour is never the only sign. Until the
+ * Pause where the running state offers it, and Stop. While paused (docs/PRD.md T1) come the
+ * "Paused" label, the paused total, which stands still, Resume and Stop, and the fields that
+ * Resume starts, which are read-only. The frame takes the running colour while an entry runs, and
+ * the label and the Stop button's square say so too, so colour is never the only sign. Until the
  * phone knows the account's workspace, which the first account settings bring, the fields and
  * Start are disabled. After the timer's buttons comes the one that adds a past entry by hand, as
  * the web app's bar holds its manual mode (M1), whatever the timer does. With [suggestions], the
@@ -252,7 +253,8 @@ fun TimerBarContent(
             picker = { original, picked, onPickedChange, pickerModifier ->
                 if (workspaceId != null) picker(workspaceId, original, picked, onPickedChange, pickerModifier)
             },
-            enabled = workspaceId != null,
+            // The server keeps a paused chain's fields as they were at Pause.
+            enabled = workspaceId != null && paused == null,
             suggestions = suggestions,
             onSuggestion = onSuggestion,
             modifier = Modifier.padding(spacing.space3),
@@ -269,9 +271,11 @@ fun TimerBarContent(
                         focusManager.clearFocus()
                         onEditRunning()
                     }
-                    TimerButton(R.drawable.ic_pause, R.string.timer_pause, R.string.timer_pause_spoken, TimerButtonLook.Neutral, enabled = true) {
-                        onPause()
-                        focusManager.clearFocus()
+                    if (running.pausable) {
+                        TimerButton(R.drawable.ic_pause, R.string.timer_pause, R.string.timer_pause_spoken, TimerButtonLook.Neutral, enabled = true) {
+                            onPause()
+                            focusManager.clearFocus()
+                        }
                     }
                     TimerButton(R.drawable.ic_stop, R.string.timer_stop, R.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
                 }
