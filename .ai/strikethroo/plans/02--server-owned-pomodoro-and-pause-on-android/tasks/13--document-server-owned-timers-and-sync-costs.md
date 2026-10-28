@@ -2,7 +2,7 @@
 id: 13
 group: "documentation"
 dependencies: [12]
-status: "pending"
+status: "completed"
 created: 2026-10-28
 skills:
   - technical-writing
@@ -21,13 +21,13 @@ Technical writing grounded in the completed implementation and acceptance eviden
 
 ## Acceptance Criteria
 
-- [ ] `docs/PRD.md` updates T1, N1/N3/N4/N7, W2/W5/W7/W9/W10/W12, G3, sections 6.3/7/8.3 and the Built paragraph as specified by this plan. It states online-only session/pause actions, read-only paused fields, server rules/state, capability hiding, the second foreground service and the accepted silent ongoing notification/25-second keep-alive cost.
-- [ ] The PRD records actual API 31/API 36 start restrictions and Doze observations from task 12, including any measured delay. Ordinary queued Start/Stop/edit behavior and the kept defaults, alarms, sounds and permission flows remain accurately described.
-- [ ] README Timer/Pomodoro bullets explain cross-device sessions/pauses and their requirement for a supporting Tokkl server. The `CLAUDE.md` introduction describes server-owned state and the ongoing sync notification, following any existing link/shared-file arrangement.
-- [ ] Update/remove the plan-named alarm, change-queue/handoff, capability, Start/Stop, RunningCheck and real-server knowledge nodes; add durable holder/service documentation and wire it into the relevant indexes. Use live paths and the verified image digest, not stale planning snapshots.
-- [ ] Do not manually edit `CHANGELOG.md`; release tooling owns it. No documentation promises offline Pause/Resume or a device-local Pomodoro fallback.
-- [ ] Run `npx kenkeep doctor`; expect exit 0 with no new node/schema/link problems. Run `npx kenkeep freshness --verbose`, inspect flags relevant to this plan and reconcile changed nodes; unrelated pre-existing flags are reported accurately rather than rewritten without need.
-- [ ] Run `git diff --check` and `rg -n 'device only|device-local|only the phone|offline Pause|no push|no wakeups' docs/PRD.md README.md CLAUDE.md .ai/kenkeep/nodes`. The diff check exits 0; each search hit is reviewed and either removed if superseded or recorded as valid context rather than treated as an automatic failure.
+- [x] `docs/PRD.md` updates T1, N1/N3/N4/N7, W2/W5/W7/W9/W10/W12, G3, sections 6.3/7/8.3 and the Built paragraph as specified by this plan. It states online-only session/pause actions, read-only paused fields, server rules/state, capability hiding, the second foreground service and the accepted silent ongoing notification/25-second keep-alive cost.
+- [x] The PRD records actual API 31/API 36 start restrictions and Doze observations from task 12, including any measured delay. Ordinary queued Start/Stop/edit behavior and the kept defaults, alarms, sounds and permission flows remain accurately described.
+- [x] README Timer/Pomodoro bullets explain cross-device sessions/pauses and their requirement for a supporting Tokkl server. The `CLAUDE.md` introduction describes server-owned state and the ongoing sync notification, following any existing link/shared-file arrangement.
+- [x] Update/remove the plan-named alarm, change-queue/handoff, capability, Start/Stop, RunningCheck and real-server knowledge nodes; add durable holder/service documentation and wire it into the relevant indexes. Use live paths and the verified image digest, not stale planning snapshots.
+- [x] Do not manually edit `CHANGELOG.md`; release tooling owns it. No documentation promises offline Pause/Resume or a device-local Pomodoro fallback.
+- [x] Run `npx kenkeep doctor`; expect exit 0 with no new node/schema/link problems. Run `npx kenkeep freshness --verbose`, inspect flags relevant to this plan and reconcile changed nodes; unrelated pre-existing flags are reported accurately rather than rewritten without need.
+- [x] Run `git diff --check` and `rg -n 'device only|device-local|only the phone|offline Pause|no push|no wakeups' docs/PRD.md README.md CLAUDE.md .ai/kenkeep/nodes`. The diff check exits 0; each search hit is reviewed and either removed if superseded or recorded as valid context rather than treated as an automatic failure.
 
 Use your internal Todo tool to track these and keep on track.
 

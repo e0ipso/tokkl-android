@@ -16,7 +16,7 @@ _None._
 - Open [**Pin self-signed certificates by fingerprint and warn before plain HTTP**](practice-pin-self-signed-certs-warn-on-http.md) to learn about: Trust a self-signed cert only by its pinned SHA-256 fingerprint, never accept any cert, and put plain HTTP behind a stronger warning. #security #network
 
 ## Components (what exists)
-- Open [**API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError**](map-api-client-shared-okhttp-serverurl-and-errors.md) to learn about: The api package holds the app's only OkHttpClient, base URL handling, JSON calls, sendNoContent for empty bodies and typed errors. #api #network #okhttp
+- Open [**API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError**](map-api-client-shared-okhttp-serverurl-and-errors.md) to learn about: The api package holds the app's only OkHttpClient, base URL handling, JSON calls, sendNoContent for empty bodies, sendRefusable for 409 states and typed errors. #api #network #okhttp
 - Open [**Connection trust: ServerTrustStore, PinningTrustManager and the trust prompts**](map-connection-trust-store-pinning-and-prompts.md) to learn about: The shared client refuses unconfirmed http and unpinned self-signed certificates. SessionTrustModel prompts on every screen but sign-in. #security #network #ui #dialogs
 - Open [**Tokkl and Toggl API endpoints, auth and Tokkl-only extensions**](map-tokkl-toggl-api.md) to learn about: Tokkl speaks a subset of Toggl API v9 at /api/v9 and Reports v3 at /reports/api/v3 with Basic auth, plus Tokkl-only fields and endpoints. #api #toggl #network
 - Open [**API token store and the rules that keep app data out of backups**](map-api-token-store-and-backup-exclusion.md) to learn about: ApiTokenStore encrypts the token with a Keystore AES-GCM key. Backup is off and the data extraction rules exclude every domain in every mode. #security #credentials #backup
@@ -26,14 +26,14 @@ _None._
 ### #network
 - Open [**Tokkl and Toggl API endpoints, auth and Tokkl-only extensions**](map-tokkl-toggl-api.md) — Tokkl speaks a subset of Toggl API v9 at /api/v9 and Reports v3 at /reports/api/v3 with Basic auth, plus Tokkl-only fields and endpoints.
 - Open [**Pin self-signed certificates by fingerprint and warn before plain HTTP**](practice-pin-self-signed-certs-warn-on-http.md) — Trust a self-signed cert only by its pinned SHA-256 fingerprint, never accept any cert, and put plain HTTP behind a stronger warning.
-- Open [**API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError**](map-api-client-shared-okhttp-serverurl-and-errors.md) — The api package holds the app's only OkHttpClient, base URL handling, JSON calls, sendNoContent for empty bodies and typed errors.
+- Open [**Never make Start or Stop wait for the server**](../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
 ### #security
 - Open [**Keep release builds reproducible and signed with the project key**](../release/practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
 - Open [**Release signing key, Actions secrets and signature checks**](../release/map-release-signing-key-actions-secrets-and-signature-checks.md) — The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks.
 - Open [**Pin self-signed certificates by fingerprint and warn before plain HTTP**](practice-pin-self-signed-certs-warn-on-http.md) — Trust a self-signed cert only by its pinned SHA-256 fingerprint, never accept any cert, and put plain HTTP behind a stronger warning.
 ### #api
 - Open [**Trash capability and server operations**](../screens/session-and-navigation/map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
-- Open [**Never make Start or Stop wait for the server**](../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Taps change state on the phone at once and queue the change. The server is the source of truth, with a cache and queue, no sync engine.
+- Open [**Never make Start or Stop wait for the server**](../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
 - Open [**Ordered entry sending and refusals**](../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
 ### #toggl
 - Open [**Tokkl and Toggl API endpoints, auth and Tokkl-only extensions**](map-tokkl-toggl-api.md) — Tokkl speaks a subset of Toggl API v9 at /api/v9 and Reports v3 at /reports/api/v3 with Basic auth, plus Tokkl-only fields and endpoints.
@@ -42,16 +42,16 @@ _None._
 ### #backup
 - Open [**API token store and the rules that keep app data out of backups**](map-api-token-store-and-backup-exclusion.md) — ApiTokenStore encrypts the token with a Keystore AES-GCM key. Backup is off and the data extraction rules exclude every domain in every mode.
 ### #battery
-- Open [**Home screen widget: cache state and a native ticking clock**](../screens/map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) — Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates.
 - Open [**RunningCheck: guarded background current-entry refresh**](../data-and-offline/map-runningcheck-guarded-background-current-entry-refresh.md) — One connected 15-minute worker follows cached running state and protects unsent edits, newer writes and sign-out.
-- Open [**Refresh on events, never on a short polling timer**](practice-refresh-on-events-no-polling.md) — Refresh when the app opens, after a change and when the network returns. No short polling, so Toggl's base URL later fits its quotas.
+- Open [**Home screen widget: cache state and a native ticking clock**](../screens/map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) — Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates.
+- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](../data-and-offline/map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
 ### #compatibility
 - Open [**Offline cache and capabilities: AccountCache, HistoryWindow, CapabilitiesSource**](../data-and-offline/map-account-cache-and-capabilities.md) — One refresh reads /me with related data and /me/preferences, then fills the Room cache and the capability flags that screens read offline.
 - Open [**Check server capabilities instead of requiring a server version**](practice-check-capabilities-not-server-version.md) — Probe optional Tokkl features by capability; snapping follows the latest supported contract, with no version selector.
 ### #credentials
+- Open [**Sign-out ordering and account cleanup**](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md) — Warn about unsent work and retire account tasks before clearing local session data.
 - Open [**Session stores and pre-frame preferences**](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md) — Private session stores separate credentials, account settings, trust and device preferences.
 - Open [**Sign-in request and credential admission**](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md) — Validate configured-server credentials and required account settings before storing a session.
-- Open [**Sign-out ordering and account cleanup**](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md) — Warn about unsent work and retire account tasks before clearing local session data.
 ### #dialogs
 - Open [**Connection trust: ServerTrustStore, PinningTrustManager and the trust prompts**](map-connection-trust-store-pinning-and-prompts.md) — The shared client refuses unconfirmed http and unpinned self-signed certificates. SessionTrustModel prompts on every screen but sign-in.
 ### #fdroid
@@ -59,7 +59,7 @@ _None._
 - Open [**Release signing key, Actions secrets and signature checks**](../release/map-release-signing-key-actions-secrets-and-signature-checks.md) — The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks.
 - Open [**F-Droid metadata layout and release artifacts**](../release/map-fdroid-metadata-release-artifacts.md) — Store text lives in fastlane/metadata/android/en-US/, the fdroiddata recipe in fdroid/metadata/com.canpicasoft.tokkl.yml. Check it in Docker before every new build.
 ### #okhttp
-- Open [**API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError**](map-api-client-shared-okhttp-serverurl-and-errors.md) — The api package holds the app's only OkHttpClient, base URL handling, JSON calls, sendNoContent for empty bodies and typed errors.
+- Open [**API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError**](map-api-client-shared-okhttp-serverurl-and-errors.md) — The api package holds the app's only OkHttpClient, base URL handling, JSON calls, sendNoContent for empty bodies, sendRefusable for 409 states and typed errors.
 ### #privacy
 - Open [**Talk only to the configured server and use only free software**](practice-talk-only-to-configured-server.md) — No telemetry, analytics, crash reporting, ads or proprietary libraries. The app sends requests only to the configured server.
 - Open [**Opt the Android SDK tools out of usage metrics with ~/.androidrc**](../build-and-tooling/practice-opt-sdk-tools-out-of-usage-metrics.md) — sdkmanager 23.0 runs Google's android CLI, which sends usage data unless given --no-metrics. A ~/.androidrc holding --no-metrics opts out.

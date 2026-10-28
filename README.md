@@ -10,10 +10,10 @@ Download the APK from the [latest release](https://github.com/e0ipso/tokkl-andro
 
 ## What it does
 
-- **Timer.** Start a new entry or continue a recent one, then pause or stop it. Control the running timer from its notification, a home screen widget or a Quick Settings tile.
+- **Timer.** Start a new entry or continue a recent one, then pause or stop it. Control the running timer from its notification, a home screen widget or a Quick Settings tile. Pauses live on the server, so Tokkl's web app and your other devices show the same paused timer. Pause and Resume need a connection and a Tokkl server that has the timer API (Tokkl 1.10.0 or later); on Toggl Track and older Tokkl they are hidden.
 - **Works offline.** Start, stop and edit with no connection. The phone queues your changes and sends them in order when the network returns.
 - **History.** Past entries by day, grouped like the web app, or on a week calendar. Add, edit, split or duplicate an entry. Deleting one offers Undo.
-- **Pomodoro.** Work and rest phases with an alarm at the end of each, over the lock screen if you allow it.
+- **Pomodoro.** Work and rest phases with an alarm at the end of each, over the lock screen if you allow it. The server owns the session, so one started on another device shows here and every signed-in phone rings together; confirming a phase on one device silences the rest. It needs a Tokkl server with the timer API (Tokkl 1.10.0 or later) and a connection to start, advance or end a session, and the Pomodoro page is hidden elsewhere. To hear about changes made elsewhere, the app keeps a connection to your server open with a silent "Timer sync is on" notification.
 - **Reports.** Summary, detailed and weekly reports with the web app's filters, exportable as CSV.
 - **Manage.** Projects, tasks, clients and tags. Restore deleted entries from Trash.
 - **Private.** No ads, analytics or tracking. The app talks only to your server, and signing out deletes your data from the phone.

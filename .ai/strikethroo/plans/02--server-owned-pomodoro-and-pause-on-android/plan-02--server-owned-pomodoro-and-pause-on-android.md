@@ -443,11 +443,11 @@ graph TD
 
 - ✔️ Task 012 (completed): [Verify service lifecycle, Doze and final test gates](tasks/12--verify-service-lifecycle-doze-and-final-test-gates.md), depends on 011.
 
-### Phase 9: Reconcile product and agent documentation
+### ✅ Phase 9: Reconcile product and agent documentation
 
 **Parallel Tasks:**
 
-- Task 013: [Document server-owned timers and sync costs](tasks/13--document-server-owned-timers-and-sync-costs.md), depends on 012.
+- ✔️ Task 013 (completed): [Document server-owned timers and sync costs](tasks/13--document-server-owned-timers-and-sync-costs.md), depends on 012.
 
 ### Requirement coverage
 

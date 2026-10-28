@@ -3,7 +3,8 @@ type: map
 title: 'API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError'
 description: >-
   The api package holds the app's only OkHttpClient, base URL handling, JSON
-  calls, sendNoContent for empty bodies and typed errors.
+  calls, sendNoContent for empty bodies, sendRefusable for 409 states and typed
+  errors.
 tags:
   - api
   - network
@@ -12,6 +13,7 @@ kk_schema_version: 3
 kk_id: map-api-client-shared-okhttp-serverurl-and-errors
 kk_derived_from: []
 kk_relates_to:
+  - map-timer-state-holder-and-sync-service
   - map-tokkl-toggl-api
   - practice-talk-only-to-configured-server
   - practice-pin-self-signed-certs-warn-on-http
@@ -29,11 +31,16 @@ The HTTP code lives in `app/src/main/java/com/github/e0ipso/tokkl/api/`. `Shared
 
 When a connection OkHttp reused fails after the request went out, OkHttp sends the request again on a new connection, so a POST whose answer was lost can create its object twice. `send(..., resend = false)` wraps the body in `SentOnce`, a one-shot `RequestBody`, which OkHttp sends again only when the request never left the phone, and the caller gets the failure instead. The change queue posts creates that way.
 
+`sendRefusable` serves the timer actions, which answer a refusal with a 409 whose body has the same type as their 2xx answer, the timer state. It sends once (`resend = false`) and returns `Refusable(value, refused)`: `refused` is true for a 409 body that decodes. A 409 whose body is a JSON string becomes `ApiError.UnexpectedStatus` with that reason. A request tagged `StreamingRead` reads its body with no read timeout, for the timer event stream; `StreamingReads` lifts that one timeout and nothing else.
+
+The connection pool keeps an idle connection for 4 seconds (`IDLE_CONNECTION_SECONDS`), not OkHttp's default 5 minutes. Tokkl runs on Node, which closes a keep-alive connection after 5 idle seconds, and OkHttp reuses a connection idle for under 10 seconds without checking it. A request sent once on such a closed connection failed, so a timer action a few seconds after the last request said there was no connection. With a 4 second pool the client drops the connection before the server does and opens a new one. `sendingOnce` derives a client that does not retry; it shares the pool, interceptors and trust checks.
+
 Every call returns `ApiResult.Success` or `ApiResult.Failure(ApiError)`. 403 maps to `AuthFailed`, 429 to `RateLimited` with the `Retry-After` seconds (null when the header is missing or not a whole number), and any other status outside 2xx to `UnexpectedStatus(status, message)`. `message` is the server's reason when the body is a JSON string, as Tokkl sends for a change it refuses, such as "Name has already been taken". The catalog pages show that reason for a 4xx. `Network` wraps the `IOException` of a request that got no response. `InvalidResponse` is a 2xx body that is not the expected JSON. `TrustRefused` covers the `TrustQuestion`s `CleartextNotConfirmed` and `UntrustedCertificate`, and `CertificateHostMismatch`. The client also reports each to its `TrustListener`.
 
 <!-- kk:related:start -->
 # Related
 
+- Related: [map-timer-state-holder-and-sync-service](../data-and-offline/map-timer-state-holder-and-sync-service.md)
 - Related: [map-tokkl-toggl-api](map-tokkl-toggl-api.md)
 - Related: [practice-talk-only-to-configured-server](practice-talk-only-to-configured-server.md)
 - Related: [practice-pin-self-signed-certs-warn-on-http](practice-pin-self-signed-certs-warn-on-http.md)

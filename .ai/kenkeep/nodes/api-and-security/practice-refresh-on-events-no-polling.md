@@ -13,7 +13,8 @@ kk_id: practice-refresh-on-events-no-polling
 kk_derived_from:
   - docs/PRD.md
   - '9c8de91d-411b-498c-b4ed-241fabaa877e:practice:5'
-kk_relates_to: []
+kk_relates_to:
+  - map-timer-state-holder-and-sync-service
 kk_depends_on: []
 kk_confidence: high
 ---
@@ -23,9 +24,10 @@ In the code, `session/ForegroundRefresh` decides when the app reads the server a
 
 Toggl's quotas are the reason. A later version points the app at Toggl's base URL. Toggl caps workspace and organization requests per user per organization at 30 an hour on Free, 240 on Starter and 600 on Premium. User endpoints such as `/me` are capped at 30 an hour on every plan below Enterprise. The window slides over 60 minutes, and a request over the limit gets HTTP 402. Tokkl's web app polls the running timer every 30 seconds, which alone is 120 requests an hour. An app that polled like that would hit the Free quota within 15 minutes.
 
-`cache/RunningCheck` is the sole periodic exception. It schedules one connected 15-minute current-entry check while the cache holds a running timer and cancels it when idle. It updates the cache used by native timer surfaces without refreshing history or draining the queue.
+On a Tokkl server with the timer API the app does not poll but holds an event stream open, so a timer, pause or session started elsewhere arrives in seconds (see the timer state node). The stream is a long-lived connection with a 25 second keep-alive, not a request on a timer, and it exists only on that server. Toggl Track and older Tokkl keep the events above, so Toggl's quotas stay out of reach.
+`cache/RunningCheck` is the sole periodic job. It schedules one connected 15-minute current-entry check while the cache holds a running timer and cancels it when idle. It updates the cache used by native timer surfaces without refreshing history or draining the queue.
 
-Battery follows the same rule. The app makes no wakeups while no timer runs and the queue is empty.
+Battery follows the same rule on servers without the stream: no wakeups while no timer runs and the queue is empty. With the stream, the connection and its notification stay up while signed in, which `docs/PRD.md` section 7 accepts as the price of cross-device sessions.
 
 <!-- kk:citations:start -->
 # Citations

@@ -15,13 +15,15 @@ kk_schema_version: 3
 kk_id: practice-screenshot-references-on-tokkl-api36
 kk_derived_from: []
 kk_relates_to:
-  - practice-run-instrumented-tests-only-through-the-script
-  - practice-emulator-plain-aosp-image-headless
+  - practice-use-the-instrumented-runner-and-its-device-selection
+  - practice-use-the-pinned-test-server-and-tls-proxies
+  - practice-choose-plain-aosp-images-and-compatible-renderers
+  - practice-account-for-emulator-recording-and-screenshot-quirks
   - map-design-foundation-spacing-shapes-type-brand
 kk_depends_on: []
 kk_confidence: high
 ---
-`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ScreenshotTest.kt` holds the abstract `ScreenshotTest` and one subclass per theme and font scale: `LightScreenshotTest`, `DarkScreenshotTest`, `LightLargestFontScreenshotTest` and `DarkLargestFontScreenshotTest`. Each class captures 25 cases, so there are 100 references, recorded on 2026-10-25: sign-in with each method, the Timer page's List view with the idle timer, its Calendar view on one day under the week's strip with a running entry, both views' totals header, Settings, Licences, the Summary, Detailed and Weekly report tabs, Projects, Clients, Tags, the More sheet, the http warning, the certificate prompt, the Pomodoro start form, overtime and alarm (each also scrolled to its actions), and two captures in a wider window forced with `DeviceConfigurationOverride.WindowSize`: the List view beside the navigation rail on a medium window, and the entry form beside the history on an expanded one. `ReferenceImages` shrinks each capture to a third in each direction, averaging 3x3 blocks, and compares it with its PNG in `app/src/androidTest/assets/screenshots/`. A pixel counts as different when any channel differs by more than 8, and up to 20 such pixels pass. Run the four classes with:
+`app/src/androidTest/java/com/github/e0ipso/tokkl/ui/screenshot/ScreenshotTest.kt` holds the abstract `ScreenshotTest` and one subclass per theme and font scale: `LightScreenshotTest`, `DarkScreenshotTest`, `LightLargestFontScreenshotTest` and `DarkLargestFontScreenshotTest`. Each class captures 25 cases, so there are 100 references, recorded on 2026-10-25 and, for the Pomodoro and the alarm captures and the pages beside them that changed, again on 2026-10-28: sign-in with each method, the Timer page's List view with the idle timer, its Calendar view on one day under the week's strip with a running entry, both views' totals header, Settings, Licences, the Summary, Detailed and Weekly report tabs, Projects, Clients, Tags, the More sheet, the http warning, the certificate prompt, the Pomodoro start form, overtime and alarm (each also scrolled to its actions; they draw the server's state through `PomodoroPageState` and `PomodoroAlarmContent`, with a fixed held state), and two captures in a wider window forced with `DeviceConfigurationOverride.WindowSize`: the List view beside the navigation rail on a medium window, and the entry form beside the history on an expanded one. `ReferenceImages` shrinks each capture to a third in each direction, averaging 3x3 blocks, and compares it with its PNG in `app/src/androidTest/assets/screenshots/`. A pixel counts as different when any channel differs by more than 8, and up to 20 such pixels pass. Run the four classes with:
 
 ```sh
 TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh \
@@ -39,15 +41,9 @@ Keep the captures deterministic. The reports capture uses a fixed week and a fix
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-keep-instrumented-credentials-out-of-process-arguments](instrumented-runner/practice-keep-instrumented-credentials-out-of-process-arguments.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-pass-class-and-package-lists-through-runner-filter-files](instrumented-runner/practice-pass-class-and-package-lists-through-runner-filter-files.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-instrumented-runner-and-its-device-selection](instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-pinned-test-server-and-tls-proxies](instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-verify-device-test-results-and-process-isolation-receipts](instrumented-runner/practice-verify-device-test-results-and-process-isolation-receipts.md)
-- Related: [practice-emulator-plain-aosp-image-headless → practice-account-for-emulator-recording-and-screenshot-quirks](emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md)
-- Related: [practice-emulator-plain-aosp-image-headless → practice-choose-plain-aosp-images-and-compatible-renderers](emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md)
-- Related: [practice-emulator-plain-aosp-image-headless → practice-clean-up-only-owned-emulator-resources](emulator-runtime/practice-clean-up-only-owned-emulator-resources.md)
-- Related: [practice-emulator-plain-aosp-image-headless → practice-let-the-runner-own-emulator-boot-and-settings](emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md)
-- Related: [practice-emulator-plain-aosp-image-headless → practice-respect-emulator-slots-and-resource-ownership](emulator-runtime/practice-respect-emulator-slots-and-resource-ownership.md)
+- Related: [practice-use-the-instrumented-runner-and-its-device-selection](instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
+- Related: [practice-use-the-pinned-test-server-and-tls-proxies](instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
+- Related: [practice-choose-plain-aosp-images-and-compatible-renderers](emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md)
+- Related: [practice-account-for-emulator-recording-and-screenshot-quirks](emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md)
 - Related: [map-design-foundation-spacing-shapes-type-brand](../design/map-design-foundation-spacing-shapes-type-brand.md)
 <!-- kk:related:end -->

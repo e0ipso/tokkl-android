@@ -13,7 +13,9 @@ kk_id: map-quick-settings-tile-default-listening-and-cached-actions
 kk_derived_from:
   - '9c8de91d-411b-498c-b4ed-241fabaa877e:map:3'
 kk_relates_to:
-  - map-change-queue-sends-entry-changes-in-order
+  - map-timer-state-holder-and-sync-service
+  - map-ordered-entry-sending-and-refusals
+  - map-offline-entry-mutations-and-local-id-mapping
   - practice-never-wait-for-server-on-start-stop
 kk_depends_on: []
 kk_confidence: high
@@ -22,16 +24,14 @@ kk_confidence: high
 
 The tile stops its displayed running entry, or continues the latest stopped entry when idle, through the offline change queue. The tap uses the displayed state rather than guessing from a newer cache value; before the first emission it takes no action. The action has its own scope, so stopping the listening interval does not cancel a queued write.
 
+While the server's chain is paused the tile is inactive and a tap resumes it. Resume goes to the server, so offline it fails with a toast and the tile keeps showing the paused timer. A long press on a running or paused tile opens `TileControlsActivity`: Pause and Stop while it runs, Resume and Stop while it is paused. Stop of a running timer is queued and works offline; Pause, Resume and Stop while paused need the server. Pause and Resume are absent without the `timerState` capability.
+
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-change-queue-sends-entry-changes-in-order → map-background-queue-work-and-empty-queue-cancellation](../data-and-offline/change-queue/map-background-queue-work-and-empty-queue-cancellation.md)
-- Related: [map-change-queue-sends-entry-changes-in-order → map-cached-entity-picker-and-offline-creation](../data-and-offline/change-queue/map-cached-entity-picker-and-offline-creation.md)
-- Related: [map-change-queue-sends-entry-changes-in-order → map-offline-entry-mutations-and-local-id-mapping](../data-and-offline/change-queue/map-offline-entry-mutations-and-local-id-mapping.md)
-- Related: [map-change-queue-sends-entry-changes-in-order → map-ordered-entry-sending-and-refusals](../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md)
-- Related: [map-change-queue-sends-entry-changes-in-order → map-queued-delete-and-short-stop-undo](../data-and-offline/change-queue/map-queued-delete-and-short-stop-undo.md)
-- Related: [map-change-queue-sends-entry-changes-in-order → map-remote-running-conflicts-and-lost-create-responses](../data-and-offline/change-queue/map-remote-running-conflicts-and-lost-create-responses.md)
-- Related: [map-change-queue-sends-entry-changes-in-order → map-room-queue-migration-continuity](../data-and-offline/change-queue/map-room-queue-migration-continuity.md)
+- Related: [map-timer-state-holder-and-sync-service](../data-and-offline/map-timer-state-holder-and-sync-service.md)
+- Related: [map-ordered-entry-sending-and-refusals](../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md)
+- Related: [map-offline-entry-mutations-and-local-id-mapping](../data-and-offline/change-queue/map-offline-entry-mutations-and-local-id-mapping.md)
 - Related: [practice-never-wait-for-server-on-start-stop](../data-and-offline/practice-never-wait-for-server-on-start-stop.md)
 <!-- kk:related:end -->
 

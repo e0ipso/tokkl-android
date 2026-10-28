@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:9dfff36c040466d5b16fbde2e02d053ed8008a22113aad4caab7fbe10a9e1fab'
-node_count: 89
+nodes_hash: 'sha256:fb8c2be188feb7c155e560af64db4482b1956ba3aec51c241b97893d39244df0'
+node_count: 90
 ---
 # kenkeep Graph
 
-Total nodes: 89
+Total nodes: 90
 
 ## map-account-cache-and-capabilities
 
@@ -13,7 +13,7 @@ Total nodes: 89
 - **title:** Offline cache and capabilities: AccountCache, HistoryWindow, CapabilitiesSource
 - **path:** data-and-offline/map-account-cache-and-capabilities.md
 - **tags:** offline, cache, room, api, compatibility
-- **relates_to:** map-account-settings-source-and-account-time, practice-check-capabilities-not-server-version, practice-never-wait-for-server-on-start-stop, map-signin-session-settings-and-navigation-host, map-change-queue-sends-entry-changes-in-order
+- **relates_to:** map-account-settings-source-and-account-time, practice-check-capabilities-not-server-version, practice-never-wait-for-server-on-start-stop, map-timer-state-holder-and-sync-service, map-sign-out-ordering-and-account-cleanup, map-trash-capability-and-server-operations, map-ordered-entry-sending-and-refusals, map-offline-entry-mutations-and-local-id-mapping
 
 ## map-account-settings-source-and-account-time
 
@@ -29,7 +29,7 @@ Total nodes: 89
 - **title:** API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError
 - **path:** api-and-security/map-api-client-shared-okhttp-serverurl-and-errors.md
 - **tags:** api, network, okhttp
-- **relates_to:** map-tokkl-toggl-api, practice-talk-only-to-configured-server, practice-pin-self-signed-certs-warn-on-http, map-connection-trust-store-pinning-and-prompts
+- **relates_to:** map-timer-state-holder-and-sync-service, map-tokkl-toggl-api, practice-talk-only-to-configured-server, practice-pin-self-signed-certs-warn-on-http, map-connection-trust-store-pinning-and-prompts
 
 ## map-api-token-store-and-backup-exclusion
 
@@ -147,7 +147,7 @@ Total nodes: 89
 - **title:** Home screen widget: cache state and a native ticking clock
 - **path:** screens/map-home-screen-widget-cache-state-and-a-native-ticking-clock.md
 - **tags:** android, widget, offline, battery
-- **relates_to:** practice-never-wait-for-server-on-start-stop, map-change-queue-sends-entry-changes-in-order, practice-refresh-on-events-no-polling
+- **relates_to:** map-timer-state-holder-and-sync-service, practice-never-wait-for-server-on-start-stop, map-ordered-entry-sending-and-refusals, map-offline-entry-mutations-and-local-id-mapping, practice-refresh-on-events-no-polling
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:2
 
 ## map-jdk-android-sdk-and-agent-shells
@@ -205,7 +205,8 @@ Total nodes: 89
 - **kind:** map
 - **title:** Pomodoro phase alarms and rearming
 - **path:** data-and-offline/map-pomodoro-phase-alarms-and-rearming.md
-- **tags:** pomodoro, alarms, offline
+- **tags:** pomodoro, alarms, sync
+- **relates_to:** map-timer-state-holder-and-sync-service
 - **derived_from:** 9d79d56b-af9b-4d8b-8914-97ca84e70b1e:map:0
 
 ## map-queued-delete-and-short-stop-undo
@@ -223,7 +224,7 @@ Total nodes: 89
 - **title:** Quick Settings tile: default listening and cached actions
 - **path:** screens/map-quick-settings-tile-default-listening-and-cached-actions.md
 - **tags:** android, tile, offline
-- **relates_to:** map-change-queue-sends-entry-changes-in-order, practice-never-wait-for-server-on-start-stop
+- **relates_to:** map-timer-state-holder-and-sync-service, map-ordered-entry-sending-and-refusals, map-offline-entry-mutations-and-local-id-mapping, practice-never-wait-for-server-on-start-stop
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:3
 
 ## map-release-signing-key-actions-secrets-and-signature-checks
@@ -266,7 +267,7 @@ Total nodes: 89
 - **title:** Running timer notification follows the cache's running entry
 - **path:** data-and-offline/map-running-timer-notification-follows-the-cache.md
 - **tags:** notification, offline, android
-- **relates_to:** practice-never-wait-for-server-on-start-stop, map-change-queue-sends-entry-changes-in-order, practice-talk-only-to-configured-server
+- **relates_to:** map-timer-state-holder-and-sync-service, practice-never-wait-for-server-on-start-stop, map-ordered-entry-sending-and-refusals, map-offline-entry-mutations-and-local-id-mapping, practice-talk-only-to-configured-server
 
 ## map-runningcheck-guarded-background-current-entry-refresh
 
@@ -274,7 +275,7 @@ Total nodes: 89
 - **title:** RunningCheck: guarded background current-entry refresh
 - **path:** data-and-offline/map-runningcheck-guarded-background-current-entry-refresh.md
 - **tags:** offline, cache, android, battery
-- **relates_to:** practice-refresh-on-events-no-polling, map-account-cache-and-capabilities, map-running-timer-notification-follows-the-cache
+- **relates_to:** practice-refresh-on-events-no-polling, map-account-cache-and-capabilities, map-running-timer-notification-follows-the-cache, map-timer-state-holder-and-sync-service
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:5
 
 ## map-saveable-navigation-stack-and-session-guard
@@ -359,6 +360,14 @@ Total nodes: 89
 - **relates_to:** map-ui-components-and-compose-layout-gotchas, map-timer-controls-and-cached-start-suggestions
 - **derived_from:** b3f87464-06de-4fac-8d0a-ff4dd64ea60f:map:0
 
+## map-timer-state-holder-and-sync-service
+
+- **kind:** map
+- **title:** Timer state holder and sync service: the server owns Pomodoro and pause
+- **path:** data-and-offline/map-timer-state-holder-and-sync-service.md
+- **tags:** pomodoro, sync, network, android, battery, offline
+- **relates_to:** map-pomodoro-phase-alarms-and-rearming, map-account-cache-and-capabilities, map-runningcheck-guarded-background-current-entry-refresh, map-tokkl-toggl-api, practice-never-wait-for-server-on-start-stop, map-api-client-shared-okhttp-serverurl-and-errors
+
 ## map-timer-today-and-this-week-totals
 
 - **kind:** map
@@ -442,7 +451,7 @@ Total nodes: 89
 - **title:** Check server capabilities instead of requiring a server version
 - **path:** api-and-security/practice-check-capabilities-not-server-version.md
 - **tags:** api, toggl, compatibility
-- **relates_to:** map-account-cache-and-capabilities
+- **relates_to:** map-account-cache-and-capabilities, map-timer-state-holder-and-sync-service
 - **derived_from:** docs/PRD.md, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:2
 
 ## practice-choose-plain-aosp-images-and-compatible-renderers
@@ -466,10 +475,10 @@ Total nodes: 89
 ## practice-drain-sittings-gate-on-memory-not-a-sitting-cap
 
 - **kind:** practice
-- **title:** Gate drain sittings on free memory, not on a sitting count
+- **title:** Run drain Gradle and device jobs in the OOM-safe scope, not behind a sitting cap
 - **path:** build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md
 - **tags:** sift, agents, memory
-- **relates_to:** practice-reuse-drain-checks-by-content-and-test-configuration, map-oom-kill-ends-agent-session, practice-emulator-plain-aosp-image-headless
+- **relates_to:** practice-reuse-drain-checks-by-content-and-test-configuration, map-oom-kill-ends-agent-session, practice-choose-plain-aosp-images-and-compatible-renderers, practice-let-the-runner-own-emulator-boot-and-settings
 
 ## practice-gradle-no-daemon-in-parallel-worktrees
 
@@ -564,7 +573,7 @@ Total nodes: 89
 - **title:** Never make Start or Stop wait for the server
 - **path:** data-and-offline/practice-never-wait-for-server-on-start-stop.md
 - **tags:** offline, network, api
-- **relates_to:** map-change-queue-sends-entry-changes-in-order
+- **relates_to:** map-timer-state-holder-and-sync-service, map-ordered-entry-sending-and-refusals, map-offline-entry-mutations-and-local-id-mapping
 - **derived_from:** docs/PRD.md
 
 ## practice-opt-sdk-tools-out-of-usage-metrics
@@ -626,6 +635,7 @@ Total nodes: 89
 - **title:** Refresh on events, never on a short polling timer
 - **path:** api-and-security/practice-refresh-on-events-no-polling.md
 - **tags:** network, toggl, battery
+- **relates_to:** map-timer-state-holder-and-sync-service
 - **derived_from:** docs/PRD.md, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:5
 
 ## practice-reproducible-builds-project-key
@@ -684,7 +694,7 @@ Total nodes: 89
 - **title:** Record screenshot references on tokkl-api36, in the commit that changes the look
 - **path:** testing/practice-screenshot-references-on-tokkl-api36.md
 - **tags:** testing, android, emulator, ui
-- **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-emulator-plain-aosp-image-headless, map-design-foundation-spacing-shapes-type-brand
+- **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection, practice-use-the-pinned-test-server-and-tls-proxies, practice-choose-plain-aosp-images-and-compatible-renderers, practice-account-for-emulator-recording-and-screenshot-quirks, map-design-foundation-spacing-shapes-type-brand
 
 ## practice-split-process-restart-acceptance-into-orchestrated-steps
 
@@ -701,7 +711,7 @@ Total nodes: 89
 - **title:** Talk only to the configured server and use only free software
 - **path:** api-and-security/practice-talk-only-to-configured-server.md
 - **tags:** privacy, network, fdroid, security
-- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-timer-state-holder-and-sync-service
 - **derived_from:** docs/PRD.md
 
 ## practice-test-against-a-real-tokkl-server
@@ -710,7 +720,7 @@ Total nodes: 89
 - **title:** Test against a real Tokkl server
 - **path:** testing/practice-test-against-a-real-tokkl-server.md
 - **tags:** testing, ci
-- **relates_to:** practice-run-instrumented-tests-only-through-the-script, map-change-queue-sends-entry-changes-in-order
+- **relates_to:** map-timer-state-holder-and-sync-service, practice-use-the-instrumented-runner-and-its-device-selection, practice-use-the-pinned-test-server-and-tls-proxies, map-ordered-entry-sending-and-refusals, map-offline-entry-mutations-and-local-id-mapping
 - **derived_from:** docs/PRD.md
 
 ## practice-tokkl-palette-wcag-english-strings
