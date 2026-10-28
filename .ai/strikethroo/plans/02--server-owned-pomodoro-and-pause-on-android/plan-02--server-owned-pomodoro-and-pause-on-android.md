@@ -91,6 +91,19 @@ Facts read in both trees on 2026-10-27:
   - The only foreground service is the `mediaPlayback` Pomodoro ringing service. A receiver already handles `BOOT_COMPLETED` and `MY_PACKAGE_REPLACED` for alarm re-arming.
 - **PRD today.** W10 ("The session lives on the device only") and W12 (syncing out of scope) are reversed by this plan. Sections 6.3 and 7 promise no wakeups while no timer runs, and the owner accepted changing that.
 
+### Server release status
+
+Task 01 checked this on 2026-10-28. No published Tokkl release contains plan 3, so the release gate stays closed and tasks 02 to 13 must not start.
+
+- `ghcr.io/e0ipso/tokkl:1.9.0` exists, with index digest `sha256:ce7e9f18a6541e5264cb4c4509f35d0dbe4543cccafaf740f2f61b2642f75252` for linux/amd64 and linux/arm64. The `1.9` and `latest` tags point at the same index, and 1.9.0 is the newest version tag in the registry.
+- Tag `v1.9.0` is commit `61e08ad` ("chore(release): 1.9.0"), which is also `main` on GitHub. Its changelog entry lists only tokkl plan 2, the desktop Pomodoro mode from PR #46. The image has no revision label, so the source revision comes from the tag.
+- The `v1.9.0` tree has no `packages/api/src/services/timerState.ts`. `git grep` finds no `/api/app/timer`, `/api/app/pomodoro` or `TimerState` under `packages/` or `docs/`.
+- A container started from that digest, with a fresh account and Basic auth, answers 200 to `GET /api/v9/me` and `GET /api/app/bounds`. It answers 404 `"Not found"` to `GET /api/app/timer`, `GET /api/app/timer/events`, `POST /api/app/timer/pause` and `POST /api/app/pomodoro`.
+- Plan 3 lives on the branch `feature/3--server-owned-timer-state-and-cross-device-sync`, open and unmerged as e0ipso/tokkl#48 at `c6a0902`. Four fixes landed after the archive commit `abbbf1b`. One of them changes the API (`6e2c59d`, "move the timer revision when a name it shows changes"), so the contract can still change before a release. At `c6a0902` git no longer tracks the plan 3 archive. Read it at `abbbf1b`, or in the sibling's working tree.
+- The blueprint's earlier claim that 1.9.0 is the first candidate came from the top entry of the sibling's changelog, and it was wrong.
+
+Still to do once a release contains plan 3: reconcile this plan with its API table, `TimerState` types, routes and SSE behaviour, move `IMAGE` in `scripts/instrumented-tests.sh` (still Tokkl 1.8.1), check the Stop assertions against that release, and run the focused device check. Re-run task 01 then. Confirm the release tag sits on a commit that contains plan 3 before taking its index digest.
+
 ## Architectural Approach
 
 ```mermaid
@@ -295,6 +308,7 @@ The phone moves to the server state in one release, after the tokkl release that
 - The paused-fields edit is dropped to match plan 3. A server endpoint for it would be a separate tokkl change.
 - The long-running reminder (N7) keeps its WorkManager request. Its Pause action becomes an online action.
 - 2026-10-28: Per the user-source clarification above, assigned issue #14's fifth failure to Task 06, recorded the live-code refresh race and retained assertions, and added exact focused method/class checks on both APIs. This documentation refinement changes no implementation or task status; Plan 01 remains untouched.
+- 2026-10-28: Task 01 failed on its external prerequisite. Tokkl 1.9.0 is published but lacks plan 3, and no later release exists. The script's `IMAGE` pin was not changed. See [Server release status](#server-release-status).
 
 ## Execution Blueprint
 
@@ -303,7 +317,7 @@ Generated on 2026-10-28 after switching to `main` and fast-forwarding it to `ori
 **Validation Gates:**
 
 - Reference: `/config/hooks/POST_PHASE.md`, relative to the Strikethroo root. Follow the live hook for phase commits and progress updates.
-- Task 01 is the external release gate. The sibling plan 3 is now archived, its timer routes and shared types are implemented, and its changelog identifies 1.9.0 as the first candidate release. Task 01 must verify the published image, digest and release-tagged contract before implementation proceeds. The historical planning snapshot above is not evidence of image availability.
+- Task 01 is the external release gate. The sibling implements plan 3 on an unmerged branch (e0ipso/tokkl#48). Tokkl 1.9.0 does not contain it, and on 2026-10-28 no published release did (see [Server release status](#server-release-status)). Task 01 must verify the published image, digest and release-tagged contract before implementation proceeds. The historical planning snapshot above is not evidence of image availability.
 - Every task has concrete verification commands and expected results. Run Gradle and device checks in the host's OOM-safe scope; all instrumented checks use `scripts/instrumented-tests.sh`, with its server, credentials, device selection and result receipts. Do not interpret zero executed tests as a pass.
 - Tests of removed behavior leave with their owning implementation. Meaningful state, action, migration and workflow checks remain. Inventory and resolve focused failures before the final full-suite runs in task 12.
 - Task 06 owns issue #14's fifth failure and must pass its exact inherited method in both concrete focused-timer classes on API 36 and API 31, then both complete classes, before broader suites. See the user-source clarification and Task 06's root-cause/verification sections. Plan 01/issue #14 closure remains pending until three consecutive successful main CI runs cover both APIs. Only run [40466307618](https://github.com/e0ipso/tokkl-android/actions/runs/40466307618) at `9d5ccb4` is currently reported successful; release `v0.5.1` at `f643a81` used `[skip ci]` and adds no run. PR #7 and eventual Plan 02 merges may supply two further runs only if their main CI actually completes successfully on both APIs. Do not count PR-only, skipped, unrun or failed CI as a success.
@@ -455,3 +469,20 @@ At execution completion, preserve the server image digest, two-API result counts
 - Task status: all pending
 - Complexity scores: 4 to 7, validated by the required helper
 - Execution profiles: 10 complex-architecture, 2 standard-implementation, 1 docs-and-config
+
+## Execution Summary
+
+**Status**: ⛔ Halted in phase 1
+**Completed Date**: Not completed (halted 2026-10-28)
+
+### Results
+Phase 1 failed. Task 01 found that no published Tokkl release contains server plan 3. No application code changed, the `IMAGE` pin in `scripts/instrumented-tests.sh` stays at Tokkl 1.8.1, and tasks 02 to 13 did not start.
+
+### Noteworthy Events
+- Task 01 failed on its external prerequisite. `ghcr.io/e0ipso/tokkl:1.9.0` (index `sha256:ce7e9f18a6541e5264cb4c4509f35d0dbe4543cccafaf740f2f61b2642f75252`, tag `v1.9.0` at `61e08ad`, also `main`) ships tokkl plan 2 only. The coordinator re-checked that `v1.9.0` has no `packages/api/src/services/timerState.ts` and that e0ipso/tokkl#48 (plan 3) is open with `mergedAt: null`. The worker reported that a 1.9.0 container answers 404 on every timer route.
+- The blueprint's statement that 1.9.0 was the first candidate release was wrong and has been corrected under [Server release status](#server-release-status).
+- The code review gate did not run because execution halted before `POST_EXECUTION.md`.
+
+### Necessary follow-ups
+- Merge e0ipso/tokkl#48 and publish a Tokkl release that contains plan 3.
+- Reset task 01 to `pending` and re-run this blueprint. Task 01 then reconciles the plan with the released contract, pins the new image digest and runs the focused device check.

@@ -2,7 +2,7 @@
 id: 1
 group: "server-contract"
 dependencies: []
-status: "pending"
+status: "failed"
 created: 2026-10-28
 skills:
   - api-contracts
@@ -55,3 +55,7 @@ Verified contract and release evidence in this plan, the updated `IMAGE` and com
 5. Use `systemd-run --user --scope --quiet -p OOMPolicy=continue -- choom -n 1000 -- env TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh ... --no-daemon` for the focused device run. The script owns emulator and server lifetime. Keep credentials out of process arguments and retained evidence. Preserve the JUnit files before later runs overwrite their output directory.
 
 </details>
+
+## Execution Result
+
+Failed on 2026-10-28 because the external prerequisite is missing. `ghcr.io/e0ipso/tokkl:1.9.0` is published (index `sha256:ce7e9f18a6541e5264cb4c4509f35d0dbe4543cccafaf740f2f61b2642f75252`, tag `v1.9.0` at `61e08ad`), but it ships tokkl plan 2 only. Its tree has no timer state service, and the running image answers 404 to `/api/app/timer`, `/api/app/timer/events`, `/api/app/timer/pause` and `/api/app/pomodoro`. Plan 3 is still the open tokkl PR #48. `IMAGE` stays at Tokkl 1.8.1, and the contract reconciliation, the Stop check and the device run wait for a release. The plan's "Server release status" section has the evidence. Re-run this task after a Tokkl release that contains plan 3 is published.
