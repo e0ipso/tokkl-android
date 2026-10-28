@@ -45,6 +45,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
@@ -84,6 +85,25 @@ enum class TopLevelPage(
         fun of(destination: Destination): TopLevelPage? = entries.firstOrNull { it.destination == destination }
     }
 }
+
+/**
+ * The pages the server's [flags] leave without a use: Trash without the trash API, Timer
+ * templates without the favorites key or without the host's favorites model
+ * ([hasFavorites]), and Pomodoro without the timer API, since the server owns the session. The
+ * bar, the rail and the More sheet leave them out, and the host opens none of them.
+ */
+fun unavailablePages(flags: Capabilities, hasFavorites: Boolean): Set<TopLevelPage> = buildSet {
+    if (!flags.trash) add(TopLevelPage.TRASH)
+    if (!(flags.favorites && hasFavorites)) add(TopLevelPage.TEMPLATES)
+    if (!flags.timerState) add(TopLevelPage.POMODORO)
+}
+
+/**
+ * This destination, or Timer when it belongs to a page in [unavailable]. A back stack restored
+ * from before a capability was lost, or a direct open of a page, then shows Timer.
+ */
+fun Destination.orTimerIfUnavailable(unavailable: Set<TopLevelPage>): Destination =
+    if (TopLevelPage.of(this) in unavailable) Destination.TIMER else this
 
 /**
  * The bottom bar of a signed-in screen on a compact window: Timer, Pomodoro, Projects, Settings and

@@ -56,7 +56,7 @@ class SessionRule : TestRule {
 
         /**
          * Deletes the stored server, the token, its Keystore key, the account settings, the
-         * server's capabilities, the offline cache, the Timer view, the Pomodoro defaults, trust and
+         * server's capabilities, the held timer state, the offline cache, the Timer view, the Pomodoro defaults, trust and
          * the sign-in cooldowns and the time the server last answered.
          * Also forgets account settings and capabilities already loaded by process-start observers.
          * A cooldown is kept by server origin, and every test signs in to the same few, so one
@@ -78,6 +78,9 @@ class SessionRule : TestRule {
             AccountSettingsStore(context).clear()
             app.capabilities.forget()
             CapabilitiesStore(context).clear()
+            // The timer state of the account the last test signed in as. Its revision is higher
+            // than a new account's, so the holder would drop the new account's states.
+            app.renewTimerState()
             app.cache.clear()
             TimerViewStore(context).clear()
             PomodoroDefaultsStore(context).clear()

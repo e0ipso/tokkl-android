@@ -69,6 +69,7 @@ import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
 import com.github.e0ipso.tokkl.timerstate.ElapsedTimerSyncClock
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.StreamEnd
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
@@ -364,6 +365,15 @@ class TokklApplication : Application() {
     }
 
     /**
+     * The signed-in account's held timer state, following [timerState] across sign-ins, or null
+     * without one. Loads the stored state off the main thread.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val heldTimerState: Flow<HeldTimerState?> by lazy {
+        timerStateRenewals.flatMapLatest { flow { emitAll(timerState.state) } }.flowOn(Dispatchers.IO)
+    }
+
+    /**
      * The too-short pomodoro of the signed-in account's timer state that no screen has shown yet,
      * following [timerState] across sign-ins. Loads the stored state off the main thread.
      */
@@ -433,7 +443,7 @@ class TokklApplication : Application() {
      * the account signing in. Blocks on disk I/O.
      */
     @Throws(IOException::class)
-    private fun renewTimerState() {
+    internal fun renewTimerState() {
         timerState.retire()
         TimerStateStore(this).clear()
         synchronized(timerStateLock) { timerStateForAccount = newTimerState(restore = false) }

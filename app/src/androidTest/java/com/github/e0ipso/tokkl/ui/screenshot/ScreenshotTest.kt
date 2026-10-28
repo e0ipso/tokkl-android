@@ -76,6 +76,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmState
 import com.github.e0ipso.tokkl.pomodoro.PomodoroContent
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPageState
+import com.github.e0ipso.tokkl.pomodoro.heldSession
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
 import com.github.e0ipso.tokkl.reports.DetailedEntry
@@ -495,10 +496,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
     private fun showPomodoro(state: PomodoroPageState, steps: () -> Unit) {
         show({
-            SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = state.session != null) {
+            SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = state.pomodoro != null) {
                 PomodoroContent(
                     state = state,
-                    onLengths = {}, onFields = {}, onStart = {}, onNext = {}, onEnd = {}, onReload = {},
+                    onLengths = {}, onFields = {}, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
                     clock = TODAY,
                 )
             }
@@ -666,7 +667,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             pomodoroStartedAt = TODAY.instant().minusSeconds(25 * 60 + 65), completed = 0.0, fields = POMODORO_FIELDS,
         )
 
-        val RUNNING_POMODORO = IDLE_POMODORO.copy(session = POMODORO_SESSION)
+        /** The server's session, held at the start of the same phase and read at 1:05 overtime on [TODAY]. */
+        val RUNNING_POMODORO = IDLE_POMODORO.copy(
+            held = heldSession(phaseStart = TODAY.instant().minusSeconds(25 * 60 + 65), description = POMODORO_FIELDS.description),
+        )
 
         val WEEK = ReportRange(LocalDate.of(2026, 10, 12), LocalDate.of(2026, 10, 18))
 

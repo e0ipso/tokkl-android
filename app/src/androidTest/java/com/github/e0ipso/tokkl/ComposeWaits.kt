@@ -41,6 +41,16 @@ fun ComposeTestRule.awaitTimerPage(timeoutMillis: Long = START_TIMEOUT_MS) {
 }
 
 /**
+ * Waits until the bar offers Pomodoro. It does so only once the server's refresh has found the
+ * timer API, which the first Timer page does not wait for.
+ */
+fun ComposeTestRule.awaitPomodoroOffered(timeoutMillis: Long = START_TIMEOUT_MS) {
+    waitUntil("the bar offers Pomodoro", timeoutMillis) {
+        onAllNodes(bottomBarItem(R.string.pomodoro_title)).fetchSemanticsNodes().isNotEmpty()
+    }
+}
+
+/**
  * The bottom bar's item named [label], found by its tab role. Text and a click action alone also
  * match every cached history row whose description is that text, since each row is clickable.
  */

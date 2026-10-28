@@ -66,6 +66,8 @@ import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
 import com.github.e0ipso.tokkl.navigation.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.orTimerIfUnavailable
+import com.github.e0ipso.tokkl.navigation.unavailablePages
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
@@ -116,7 +118,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -145,7 +149,9 @@ enum class Destination { SIGN_IN, TIMER, FULLSCREEN_TIMER, POMODORO, REPORTS, PR
  * ([SignedInPanes]), an entry's menu deletes it through
  * [entryActions], and its Continue button starts [timer] with its fields. Trash, on [trash], shows
  * only while the server's [capabilities] have it: when they lose it, the page goes back to Timer.
- * Timer templates, on [favorites], show in More the same way, while the server keeps that key.
+ * Timer templates, on [favorites], show in More the same way, while the server keeps that key. Pomodoro shows in the bar
+ * and the rail only while the server has the timer API, since the server owns the session. Without it the page opens
+ * nowhere, and a back stack restored from before the server lost it shows Timer ([unavailablePages]).
  *
  * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
  * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
@@ -228,6 +234,9 @@ fun TokklNavHost(
         }
         return
     }
+    val capabilityFlags = capabilities.collectAsState().value
+    val unavailable = unavailablePages(capabilityFlags, hasFavorites = favorites != null)
+    val openPage: (TopLevelPage) -> Unit = { page -> backStack.open(if (page in unavailable) TopLevelPage.TIMER else page) }
     LaunchedEffect(openPomodoro) {
         val request = openPomodoro ?: return@LaunchedEffect
         val accepted = withContext(Dispatchers.IO) {
@@ -235,12 +244,13 @@ fun TokklNavHost(
         }
         if (accepted) {
             entryForm.close()
-            backStack.open(TopLevelPage.POMODORO)
+            openPage(TopLevelPage.POMODORO)
         }
         onPomodoroOpened(request)
     }
     BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
-    val destination = backStack.last()
+    // A page the server lacks never shows, not even for the frame before the stack is corrected.
+    val destination = backStack.last().orTimerIfUnavailable(unavailable)
     if (destination == Destination.SIGN_IN) {
         LaunchedEffect(Unit) { timerPageState.removeState("timer-page") }
         SignInScreen(
@@ -255,18 +265,14 @@ fun TokklNavHost(
     LaunchedEffect(openReminderTimer) {
         if (openReminderTimer > 0) backStack.open(TopLevelPage.TIMER)
     }
-    val capabilityFlags = capabilities.collectAsState().value
-    val offersTrash = capabilityFlags.trash
-    val offersTemplates = capabilityFlags.favorites && favorites != null
-    LaunchedEffect(offersTrash, offersTemplates) {
-        if ((!offersTrash && Destination.TRASH in backStack) || (!offersTemplates && Destination.TEMPLATES in backStack)) {
-            backStack.open(TopLevelPage.TIMER)
-        }
+    LaunchedEffect(unavailable) {
+        if (backStack.any { TopLevelPage.of(it) in unavailable }) backStack.open(TopLevelPage.TIMER)
     }
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
+    // The server's session, from the held timer state.
     val pomodoroRunningFlow = remember(appContext) {
-        (appContext as TokklApplication).cacheDatabase.pomodoroSessions().running()
+        (appContext as TokklApplication).heldTimerState.map { it?.state?.pomodoro != null }.distinctUntilChanged()
     }
     val pomodoroRunning by pomodoroRunningFlow.collectAsState(initial = false)
     val status by syncStatus.collectAsState(initial = null)
@@ -310,13 +316,10 @@ fun TokklNavHost(
     SignedInFrame(
         current = backStack.currentPage(),
         showNavigation = !focused,
-        onOpen = backStack::open,
+        onOpen = openPage,
         timerRunning = running,
         pomodoroRunning = pomodoroRunning,
-        hidden = buildSet {
-            if (!offersTrash) add(TopLevelPage.TRASH)
-            if (!offersTemplates) add(TopLevelPage.TEMPLATES)
-        },
+        hidden = unavailable,
         syncStatus = status,
         onOpenNeedsAttention = needsAttention?.let { { if (backStack.lastOrNull() != Destination.NEEDS_ATTENTION) backStack.add(Destination.NEEDS_ATTENTION) } },
         onSignInAgain = {

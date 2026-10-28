@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -44,6 +45,9 @@ import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.picked
 import com.github.e0ipso.tokkl.entry.withPicked
 import com.github.e0ipso.tokkl.picker.EntityPicker
+import com.github.e0ipso.tokkl.timer.TimerNotice
+import com.github.e0ipso.tokkl.timer.timerNoticeText
+import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -80,22 +84,21 @@ fun PomodoroScreen(
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
-    LaunchedEffect(model, lifecycle) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { model.observeSession() }
-    }
-    // Capture the identity drawn by this composition, before any later state emission or tap.
-    val displayedPhase = state.session?.phaseKey()
+    // Capture the revision and pomodoro drawn by this composition, before any later state
+    // emission or tap, so a tap on a page another device has moved on from is refused.
+    val displayed = state.shown
     PomodoroContent(
         state = state,
         onLengths = model::editLengths,
-        onFields = { model.editFields(it, displayedPhase) },
+        onFields = { model.editFields(it, displayed?.entryId) },
+        onDescription = { model.editFields(it, displayed?.entryId, send = false) },
+        onDescriptionDone = { model.fieldsDone(displayed?.entryId) },
         onStart = {
             model.permissionsChanged(pomodoroPermissions(context))
             model.start(onNotificationStart)
         },
-        onNext = { model.next(displayedPhase) },
-        onEnd = { model.end(displayedPhase) },
-        onReload = { model.reload() },
+        onNext = { model.next(displayed) },
+        onEnd = { model.end(displayed) },
         projects = projects,
         tasks = tasks,
         picker = { original, picked, onPicked, pickerModifier ->
@@ -138,10 +141,11 @@ fun PomodoroContent(
     state: PomodoroPageState,
     onLengths: (PomodoroLengths) -> Unit,
     onFields: (EntryFields) -> Unit,
+    onDescription: (EntryFields) -> Unit,
+    onDescriptionDone: () -> Unit,
     onStart: () -> Unit,
     onNext: () -> Unit,
     onEnd: () -> Unit,
-    onReload: () -> Unit,
     modifier: Modifier = Modifier,
     projects: List<CachedProject> = emptyList(),
     tasks: List<CachedTask> = emptyList(),
@@ -187,16 +191,14 @@ fun PomodoroContent(
             }
             if (state.loading) {
                 Text(stringResource(R.string.pomodoro_loading))
-                if (state.problem != null) {
-                    TokklGhostButton(onClick = onReload) { Text(stringResource(R.string.pomodoro_reload)) }
-                }
             } else {
-                val session = state.session
-                if (session == null) {
+                val session = state.pomodoro
+                val held = state.held
+                if (session == null || held == null) {
                     PomodoroLengthForm(state.lengths, enabled = !state.busy, onChange = onLengths)
                 } else {
-                    var now by remember(clock, session.phaseStartedAt) { mutableStateOf(clock.instant()) }
-                    LaunchedEffect(clock, session.phaseStartedAt, lifecycle) {
+                    var now by remember(clock, session.phase.start) { mutableStateOf(clock.instant()) }
+                    LaunchedEffect(clock, session.phase.start, lifecycle) {
                         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                             while (true) {
                                 now = clock.instant()
@@ -204,13 +206,13 @@ fun PomodoroContent(
                             }
                         }
                     }
-                    val reading = session.clockAt(now)
+                    val reading = held.phaseClockAt(now) ?: PomodoroClock(overtime = false, seconds = 0)
                     Text(
-                        stringResource(phaseLabel(session.phaseKind)),
+                        stringResource(phaseLabel(session.phase.kind)),
                         style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.semantics { heading() },
                     )
-                    Text(stringResource(R.string.pomodoro_number, session.number()))
+                    Text(stringResource(R.string.pomodoro_number, session.number, session.longRestEvery))
                     val duration = state.account?.formatDuration(reading.seconds) ?: clockDuration(reading.seconds)
                     val spoken = stringResource(
                         if (reading.overtime) R.string.pomodoro_overtime_clock else R.string.pomodoro_remaining_clock,
@@ -223,27 +225,28 @@ fun PomodoroContent(
                         // The clock is readable on demand, without an announcement every second.
                         modifier = Modifier.fillMaxWidth().semantics { contentDescription = spoken },
                     )
+                    Text(stringResource(R.string.pomodoro_up_next, stringResource(phaseLabel(session.upcomingPhase))))
                 }
                 EntryFieldsEditor(
                     fields = state.fields,
                     labels = entryLabels(state.fields, projects, tasks),
                     original = state.fields.picked,
                     descriptionHint = stringResource(R.string.pomodoro_description_hint),
-                    onDescriptionChange = { onFields(state.fields.copy(description = it)) },
-                    onDescriptionDone = {},
+                    onDescriptionChange = { onDescription(state.fields.copy(description = it)) },
+                    onDescriptionDone = onDescriptionDone,
                     onPick = { onFields(state.fields.withPicked(it, projects)) },
                     onBillableChange = { onFields(state.fields.copy(billable = it)) },
                     picker = picker,
                     enabled = !state.busy && state.workspaceId != null,
                 )
                 if (state.workspaceId == null) Text(stringResource(R.string.pomodoro_workspace_missing))
-                if (session == null) {
+                if (session == null || held == null) {
                     TokklButton(onClick = { settle(onStart) }, enabled = state.canStart, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.pomodoro_start))
                     }
                 } else {
                     TokklButton(onClick = { settle(onNext) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(nextLabel(session.nextKind())))
+                        Text(stringResource(nextLabel(session.upcomingPhase)))
                     }
                     TokklGhostButton(onClick = { settle(onEnd) }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.pomodoro_end))
@@ -284,22 +287,10 @@ private fun LengthInput(value: String, @StringRes label: Int, range: IntRange, e
 private fun PomodoroFeedback(state: PomodoroPageState) {
     Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         if (state.alarmDenied) ErrorBanner(stringResource(R.string.pomodoro_alarm_denied))
-        val problem = state.problem
-        if (problem != null) {
-            val action = stringResource(when (problem.action) {
-                PomodoroAction.LOAD -> R.string.pomodoro_action_load
-                PomodoroAction.START -> R.string.pomodoro_action_start
-                PomodoroAction.FIELDS -> R.string.pomodoro_action_fields
-                PomodoroAction.NEXT -> R.string.pomodoro_action_next
-                PomodoroAction.END -> R.string.pomodoro_action_end
-            })
-            ErrorBanner(stringResource(R.string.pomodoro_save_error, action, problem.reason ?: stringResource(R.string.pomodoro_unknown_error)))
+        // The standard message for a refusal, no connection or another failure, as the Timer page says it.
+        state.problem?.let { problem ->
+            ErrorBanner(timerNoticeText(LocalResources.current, TimerNotice.ActionFailed(problem.result, 0)))
         }
-        val notice = state.notice
-        if (notice != null) Text(
-            stringResource(if (notice == PomodoroNotice.TOO_SHORT) R.string.pomodoro_too_short else R.string.pomodoro_saved_on_phone),
-            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-        )
         state.unsentCount?.takeIf { it > 0 }?.let { count ->
             Text(
                 pluralStringResource(R.plurals.pomodoro_unsent, count, count),
@@ -317,17 +308,17 @@ private fun PomodoroFeedback(state: PomodoroPageState) {
 }
 
 @StringRes
-private fun phaseLabel(kind: String): Int = when (kind) {
-    "work" -> R.string.pomodoro_work
-    "shortRest" -> R.string.pomodoro_short_rest
-    else -> R.string.pomodoro_long_rest
+private fun phaseLabel(kind: PhaseKind): Int = when (kind) {
+    PhaseKind.WORK -> R.string.pomodoro_work
+    PhaseKind.SHORT_REST -> R.string.pomodoro_short_rest
+    PhaseKind.LONG_REST -> R.string.pomodoro_long_rest
 }
 
 @StringRes
-private fun nextLabel(kind: String): Int = when (kind) {
-    "work" -> R.string.pomodoro_start_work
-    "shortRest" -> R.string.pomodoro_start_short_rest
-    else -> R.string.pomodoro_start_long_rest
+private fun nextLabel(kind: PhaseKind): Int = when (kind) {
+    PhaseKind.WORK -> R.string.pomodoro_start_work
+    PhaseKind.SHORT_REST -> R.string.pomodoro_start_short_rest
+    PhaseKind.LONG_REST -> R.string.pomodoro_start_long_rest
 }
 
 private fun clockDuration(seconds: Long): String = "%d:%02d".format(java.util.Locale.ROOT, seconds / 60, seconds % 60)

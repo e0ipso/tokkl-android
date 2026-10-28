@@ -1,7 +1,6 @@
 <resources>
     <string name="pomodoro_title">Pomodoro</string>
     <string name="pomodoro_loading">Loading session…</string>
-    <string name="pomodoro_reload">Try again</string>
     <string name="pomodoro_work_minutes">Work minutes</string>
     <string name="pomodoro_short_rest_minutes">Short rest minutes</string>
     <string name="pomodoro_long_rest_minutes">Long rest minutes</string>
@@ -14,7 +13,8 @@
     <string name="pomodoro_work">Work</string>
     <string name="pomodoro_short_rest">Short rest</string>
     <string name="pomodoro_long_rest">Long rest</string>
-    <string name="pomodoro_number">Pomodoro %1$d</string>
+    <string name="pomodoro_number">Pomodoro %1$d of %2$d</string>
+    <string name="pomodoro_up_next">Up next: %1$s</string>
     <string name="pomodoro_start_work">Start work</string>
     <string name="pomodoro_start_short_rest">Start short rest</string>
     <string name="pomodoro_start_long_rest">Start long rest</string>
@@ -23,15 +23,6 @@
     <string name="pomodoro_remaining_clock">Time remaining: %1$s</string>
     <string name="pomodoro_overtime_clock">Overtime: %1$s</string>
     <string name="pomodoro_alarm_denied">Exact alarms are not allowed. The countdown still works, but the phase-end alarm cannot ring in the background. Allow alarms and reminders for Tokkl in Android settings.</string>
-    <string name="pomodoro_too_short">Too short, not saved.</string>
-    <string name="pomodoro_saved_on_phone">Pomodoro saved on this phone.</string>
-    <string name="pomodoro_save_error">Could not %1$s: %2$s</string>
-    <string name="pomodoro_action_load">load the session</string>
-    <string name="pomodoro_action_start">start the session</string>
-    <string name="pomodoro_action_fields">save the entry fields</string>
-    <string name="pomodoro_action_next">finish the phase</string>
-    <string name="pomodoro_action_end">end the session</string>
-    <string name="pomodoro_unknown_error">The phone could not store the change. Try again.</string>
     <string name="pomodoro_send_error">Could not send “%1$s”: %2$s</string>
     <string name="pomodoro_no_description">No description</string>
     <string name="pomodoro_unknown_refusal">The server refused this change. Open Needs attention to review it.</string>

@@ -27,10 +27,12 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
+import com.github.e0ipso.tokkl.timerstate.SessionLengths
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Instant
@@ -74,6 +76,7 @@ class BottomBarTest {
     @Test
     fun eachBarItemOpensItsPageAndBackGoesToTimer() {
         launch { scenario ->
+            composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
             for (page in listOf(TopLevelPage.POMODORO, TopLevelPage.PROJECTS, TopLevelPage.SETTINGS)) {
                 barItem(page.label).performClick()
                 heading(page.label).assertIsDisplayed()
@@ -214,18 +217,22 @@ class BottomBarTest {
         }
     }
 
-    /** A session keeps its mark off-page, through rest and recreation, until End removes it. */
+    /** The server's session keeps its mark off-page, through rest and recreation, until End removes it. */
     @Test
-    fun thePomodoroItemFollowsTheStoredSessionAndBackReturnsToTimer() {
+    fun thePomodoroItemFollowsTheServersSessionAndBackReturnsToTimer() {
         val account = signInToNewAccount()
         launch { scenario ->
+            composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
             val marker = barItemMatcher(R.string.pomodoro_title) and
                 SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.nav_pomodoro_running))
             assertEquals(0, composeRule.onAllNodes(marker).fetchSemanticsNodes().size)
             barItem(R.string.pomodoro_title).performClick()
             heading(R.string.pomodoro_title).assertIsDisplayed()
             barItem(R.string.pomodoro_title).assertIsSelected()
-            runBlocking { app.pomodoroSessions.start(PomodoroSessionConfig(), EntryFields(description = "Navigation session"), account.workspaceId) }
+            // Another device starts the session; the phone's own action answers go to the same holder.
+            assertEquals(TimerActionResult.Done, runBlocking {
+                app.timerActions.startSession(account.workspaceId, EntryFields(description = "Navigation session"), SessionLengths(25, 5, 15, 4))
+            })
             composeRule.waitUntil("Pomodoro has its running state", TIMEOUT_MS) {
                 composeRule.onAllNodes(marker).fetchSemanticsNodes().isNotEmpty()
             }
@@ -233,18 +240,20 @@ class BottomBarTest {
             composeRule.awaitTimerPage()
             composeRule.onNode(marker).assertIsDisplayed()
             barItem(R.string.nav_projects).performClick()
-            runBlocking { app.pomodoroSessions.nextPhase() }
+            assertEquals(TimerActionResult.Done, runBlocking { app.timerActions.nextPhase(heldRevision()) })
             composeRule.onNode(marker).assertIsDisplayed()
             scenario.recreate()
             heading(R.string.nav_projects).assertIsDisplayed()
             composeRule.onNode(marker).assertIsDisplayed()
-            runBlocking { app.pomodoroSessions.end() }
+            assertEquals(TimerActionResult.Done, runBlocking { app.timerActions.endSession(heldRevision()) })
             composeRule.waitUntil("Pomodoro drops its running state", TIMEOUT_MS) {
                 composeRule.onAllNodes(marker).fetchSemanticsNodes().isEmpty()
             }
             barItem(R.string.pomodoro_title).assertIsDisplayed().assertIsNotSelected()
         }
     }
+
+    private fun heldRevision(): Long = app.timerState.state.value!!.state.revision
 
     /** Signs in to a new account of the test server, which the test deletes at its end. */
     private fun signInToNewAccount(): TestAccounts.Account {

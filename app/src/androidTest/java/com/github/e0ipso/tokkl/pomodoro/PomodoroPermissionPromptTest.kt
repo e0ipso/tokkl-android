@@ -78,8 +78,8 @@ class PomodoroPermissionPromptTest {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
                 TokklTheme {
                     Box {
-                        PomodoroContent(page, {}, {}, onStart = { started++; starts.trySend(Unit) },
-                            onNext = {}, onEnd = {}, onReload = {},
+                        PomodoroContent(page, {}, {}, {}, {}, onStart = { started++; starts.trySend(Unit) },
+                            onNext = {}, onEnd = {},
                             onNotificationRetry = { retries.trySend(Unit) },
                             onExactAlarmSettings = { exactSettings++ }, onFullScreenSettings = { fullSettings++ })
                         NotificationPermissionPrompt(startFlow, ask, retries = retryFlow,

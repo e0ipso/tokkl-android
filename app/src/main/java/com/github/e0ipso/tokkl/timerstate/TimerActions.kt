@@ -40,10 +40,10 @@ class TimerActions(
     private val client: () -> TogglApiClient?,
     private val source: () -> TimerStateSource,
     private val io: CoroutineContext,
-) : PauseChainActions {
+) : PauseChainActions, SessionActions {
 
     /** Reads the state with `GET /api/app/timer`. */
-    suspend fun read(): TimerActionResult = call { api ->
+    override suspend fun read(): TimerActionResult = call { api ->
         when (val answer = api.get(api.server.app("timer"), TimerState.serializer())) {
             is ApiResult.Success -> ApiResult.Success(Refusable(answer.value, refused = false))
             is ApiResult.Failure -> answer
@@ -67,14 +67,14 @@ class TimerActions(
      * of the account's defaults. The server refuses it while a session runs, and otherwise stops
      * the running entry and ends any pause chain.
      */
-    suspend fun startSession(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): TimerActionResult =
+    override suspend fun startSession(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): TimerActionResult =
         post(sessionStart(workspaceId, fields, lengths), "pomodoro")
 
     /** Confirms the phase shown at [revision] and starts the next one. */
-    suspend fun nextPhase(revision: Long): TimerActionResult = post(revisioned(revision), "pomodoro", "next")
+    override suspend fun nextPhase(revision: Long): TimerActionResult = post(revisioned(revision), "pomodoro", "next")
 
     /** Ends the session shown at [revision]. */
-    suspend fun endSession(revision: Long): TimerActionResult = post(revisioned(revision), "pomodoro", "end")
+    override suspend fun endSession(revision: Long): TimerActionResult = post(revisioned(revision), "pomodoro", "end")
 
     private suspend fun post(body: JsonObject, vararg path: String): TimerActionResult = call { api ->
         api.sendRefusable("POST", api.server.app(*path), body, TimerState.serializer())
@@ -111,6 +111,25 @@ interface PauseChainActions {
 
     /** Ends the paused chain shown at [revision], which is Stop while paused. */
     suspend fun discard(revision: Long): TimerActionResult
+}
+
+/**
+ * A Pomodoro session's actions on the server, which the Pomodoro page sends, and the timer read it
+ * uses to learn the revision after its own edits reach the server. [TimerActions] sends them.
+ */
+interface SessionActions {
+
+    /** Reads the state with `GET /api/app/timer`. */
+    suspend fun read(): TimerActionResult
+
+    /** Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths]. */
+    suspend fun startSession(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): TimerActionResult
+
+    /** Confirms the phase shown at [revision] and starts the next one. */
+    suspend fun nextPhase(revision: Long): TimerActionResult
+
+    /** Ends the session shown at [revision]. */
+    suspend fun endSession(revision: Long): TimerActionResult
 }
 
 /** What a timer action, or the timer read, came to. */

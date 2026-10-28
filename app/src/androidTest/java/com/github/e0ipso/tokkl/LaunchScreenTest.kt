@@ -35,6 +35,7 @@ class LaunchScreenTest {
     @Test
     fun opensOnTheTimerPageWithTheBottomBar() {
         composeRule.awaitTimerPage()
+        composeRule.awaitPomodoroOffered()
 
         composeRule.onNode(hasText(string(R.string.nav_timer)) and isHeading()).assertIsDisplayed()
         composeRule.onNode(hasText(string(R.string.timer_view_list)) and isSelectable()).assertIsSelected()

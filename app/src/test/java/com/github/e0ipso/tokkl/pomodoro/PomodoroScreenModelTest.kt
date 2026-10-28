@@ -1,22 +1,9 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PendingChange
-import com.github.e0ipso.tokkl.cache.PomodoroSession
-import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.time.PomodoroSessionConfig
-import java.io.IOException
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -26,389 +13,217 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Source coverage for page commands; no Android clock, alarm or network is needed. */
+/** The Pomodoro page as the controller of the server's session: the start form and the open pomodoro's fields. */
 class PomodoroScreenModelTest {
-    private var now = Instant.parse("2026-10-24T09:07:00Z")
-    private val clock = object : Clock() {
-        override fun instant(): Instant = now
-        override fun getZone(): ZoneId = ZoneOffset.UTC
-        override fun withZone(zone: ZoneId?): Clock = this
-    }
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-    private val defaults = MutableStateFlow(PomodoroDefaults(40, 8, 20, 3))
-    private val settings = MutableStateFlow<AccountSettings?>(
-        AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 11),
-    )
-    private val unsent = MutableStateFlow(0)
-    private val refused = MutableStateFlow<List<PendingChange>>(emptyList())
-    private val database = PageDatabase()
-    private var denied = false
-    private var callbackFailure = false
-    private val alarms = object : PomodoroAlarmScheduler {
-        override val permissionDenied: Boolean get() = denied
-        override fun schedule(triggerAt: Instant): Boolean = !denied
-        override fun cancel() = Unit
-        override fun watchSession(running: Boolean) = Unit
-    }
-    private val store = PomodoroSessionStore(
-        database, Dispatchers.Unconfined, clock,
-        accountTime = { settings.value?.time(clock) },
-        onQueued = { if (callbackFailure) throw IOException("background sender unavailable") },
-        alarms = alarms,
-    )
-    private fun model() = PomodoroScreenModel(store, defaults, settings, unsent, refused, scope).also { it.reload() }
+    private val fixtures = mutableListOf<PageFixture>()
+    private fun idle() = PageFixture().also { fixtures += it }
+    private fun running(description: String = "Focused work") =
+        PageFixture(heldState(revision = 4, description = description), cachedEntry(description)).also { fixtures += it }
 
     @After
-    fun stopCollectors() { scope.cancel() }
+    fun stop() = fixtures.forEach { it.close() }
 
     @Test
-    fun settingsChangesAffectTheNextSessionWithoutChangingTheRunningSession() = runBlocking {
-        val page = model()
-        val custom = PomodoroLengths("1", "2", "3", "2")
-        page.editLengths(custom)
-        page.start()!!.join()
-        defaults.value = PomodoroDefaults(50, 10, 30, 4)
-        assertEquals(custom, page.state.value.lengths)
-        assertEquals(PomodoroSessionConfig(1.0, 2.0, 3.0, 2.0), store.current()!!.screenLengths())
-        page.end()!!.join()
-        assertNull(store.current())
-        assertEquals(PomodoroLengths("50", "10", "30", "4"), page.state.value.lengths)
-        page.start()!!.join()
-        assertEquals(PomodoroSessionConfig(50.0, 10.0, 30.0, 4.0), store.current()!!.screenLengths())
+    fun theFormStartsFromTheDefaultsAndEditingItLeavesThemAlone() {
+        val f = idle()
+        assertEquals(PomodoroLengths("40", "8", "20", "3"), f.page.state.value.lengths)
+        f.page.editLengths(PomodoroLengths("30", "5", "12", "2"))
+        assertEquals(PomodoroDefaults(40, 8, 20, 3), f.defaults.value)
+        f.defaults.value = PomodoroDefaults(45, 9, 20, 3)
+        assertEquals("a changed default does not overwrite what the user typed", "30", f.page.state.value.lengths.work)
     }
 
     @Test
-    fun aSessionEndedElsewhereResetsTheNextFormToCurrentDefaultsOnReload() = runBlocking {
-        val page = model()
-        page.editLengths(PomodoroLengths("1", "2", "3", "2"))
-        page.start()!!.join()
-        defaults.value = PomodoroDefaults(60, 12, 25, 5)
-        store.end()
-        page.reload().join()
-        assertNull(page.state.value.session)
-        assertEquals(PomodoroLengths("60", "12", "25", "5"), page.state.value.lengths)
-        defaults.value = PomodoroDefaults(45, 9, 20, 3)
-        assertEquals(PomodoroLengths("45", "9", "20", "3"), page.state.value.lengths)
+    fun aDefaultChangeReachesTheFormUntilTheUserEditsIt() {
+        val f = idle()
+        f.defaults.value = PomodoroDefaults(45, 9, 20, 3)
+        assertEquals(PomodoroLengths("45", "9", "20", "3"), f.page.state.value.lengths)
     }
 
     @Test
-    fun storedDefaultsRefreshUntilEditedAndEditedLengthsStartOnlyThisSession() = runBlocking {
-        val page = model()
-        assertEquals(PomodoroLengths("40", "8", "20", "3"), page.state.value.lengths)
-        defaults.value = PomodoroDefaults(50, 10, 30, 4)
-        assertEquals("50", page.state.value.lengths.work)
-        val edited = PomodoroLengths("1", "2", "3", "2")
-        page.editLengths(edited)
-        defaults.value = PomodoroDefaults.DEFAULT
-        assertEquals(edited, page.state.value.lengths)
-        page.start()!!.join()
-        val saved = store.current()!!
-        assertEquals(PomodoroSessionConfig(1.0, 2.0, 3.0, 2.0), saved.screenLengths())
-        assertEquals(11L, saved.workspaceId)
-        assertEquals(PomodoroDefaults.DEFAULT, defaults.value)
+    fun rangesMatchWhatTheServerAcceptsAndAnyOtherLengthBlocksStart() {
+        val f = idle()
+        assertEquals(PomodoroLengths("180", "60", "60", "12").sessionLengths()!!.run { listOf(workMinutes, shortRestMinutes, longRestMinutes, longRestEvery) }, listOf(180, 60, 60, 12))
+        assertNotNull(PomodoroLengths("1", "1", "1", "1").sessionLengths())
+        for (bad in listOf(
+            PomodoroLengths("181", "5", "15", "4"), PomodoroLengths("25", "61", "15", "4"),
+            PomodoroLengths("25", "5", "0", "4"), PomodoroLengths("25", "5", "15", "13"),
+            PomodoroLengths("", "5", "15", "4"), PomodoroLengths("25", "5.5", "15", "4"),
+        )) {
+            f.page.editLengths(bad)
+            assertFalse("$bad", f.page.state.value.canStart)
+            assertNull(f.page.start())
+        }
+        assertTrue(f.server.calls.isEmpty())
     }
 
     @Test
-    fun everyLengthRejectsMissingFractionalAndOutOfRangeValuesAndAcceptsBothBounds() {
-        val page = model()
-        val valid = PomodoroLengths("25", "5", "15", "4")
-        val edits: List<(String) -> PomodoroLengths> = listOf(
-            { valid.copy(work = it) }, { valid.copy(shortRest = it) },
-            { valid.copy(longRest = it) }, { valid.copy(every = it) },
+    fun startSendsTheFormToTheServerAndCreatesNothingOnThePhone() = runBlocking {
+        val f = idle()
+        f.page.editLengths(PomodoroLengths("30", "5", "12", "2"))
+        f.page.editFields(EntryFields(description = "First work", tags = listOf("deep")))
+        var started = 0
+        f.page.start { started++ }!!.join()
+        assertEquals(listOf("start $WORKSPACE EntryFields(description=First work, projectId=null, taskId=null, tags=[deep], billable=false) 30/5/12/2"), f.server.calls)
+        assertEquals(1, started)
+        assertTrue(f.changes.updates.isEmpty())
+        // The server's answer is the session the page shows.
+        assertNotNull(f.page.state.value.pomodoro)
+        assertFalse(f.page.state.value.busy)
+        assertNull(f.page.state.value.problem)
+    }
+
+    @Test
+    fun aStartThatDoesNotGoThroughKeepsTheFormAndSaysWhy() = runBlocking {
+        for (result in listOf(TimerActionResult.Offline, TimerActionResult.Refused)) {
+            val f = idle()
+            f.server.answer = result
+            f.page.editFields(EntryFields(description = "Keep me"))
+            var started = 0
+            f.page.start { started++ }!!.join()
+            assertEquals(0, started)
+            assertEquals(PomodoroProblem(PomodoroAction.START, result), f.page.state.value.problem)
+            assertNull(f.page.state.value.pomodoro)
+            assertEquals("Keep me", f.page.state.value.fields.description)
+            assertTrue(f.page.state.value.canStart)
+        }
+    }
+
+    @Test
+    fun aSecondTapWhileTheFirstIsOnItsWayStartsNothing() = runBlocking {
+        val f = idle()
+        f.server.gate = kotlinx.coroutines.CompletableDeferred()
+        val first = f.page.start()!!
+        assertNull(f.page.start())
+        f.server.gate.complete(Unit)
+        first.join()
+        assertEquals(1, f.server.calls.size)
+    }
+
+    @Test
+    fun withoutAWorkspaceOrWhileLoadingNothingStarts() {
+        val f = idle()
+        f.settings.value = null
+        assertNull(f.page.start())
+        assertTrue(f.server.calls.isEmpty())
+    }
+
+    @Test
+    fun nothingStartsUntilTheHeldStateAndTheCacheHaveBeenRead() {
+        val f = idle()
+        val unread = PomodoroScreenModel(
+            emptyFlow(), emptyFlow(), f.server, f.changes, f.defaults, f.settings, f.unsent, f.refused, f.scope,
         )
-        val maxima = listOf(180, 60, 60, 12)
-        for ((index, edit) in edits.withIndex()) {
-            for (bad in listOf("", "0", "-1", "1.5", "NaN", "999999999999", (maxima[index] + 1).toString())) {
-                page.editLengths(edit(bad))
-                assertFalse("input $index: $bad", page.state.value.canStart)
-                assertNull(page.start())
-                assertNull(database.row)
-            }
-            page.editLengths(edit("1"))
-            assertTrue(page.state.value.canStart)
-            page.editLengths(edit(maxima[index].toString()))
-            assertTrue(page.state.value.canStart)
-        }
+        assertTrue(unread.state.value.loading)
+        assertFalse(unread.state.value.canStart)
+        assertNull(unread.start())
+        assertTrue(f.server.calls.isEmpty())
+        assertFalse("read as soon as both inputs have spoken", f.page.state.value.loading)
     }
 
     @Test
-    fun skipOvertimeAndEndKeepOneContinuousEntryWithCurrentFields() = runBlocking {
-        val page = model()
-        page.start()!!.join()
-        val work = page.state.value.session!!
-        assertEquals(PomodoroClock(false, 2400), work.clockAt(now))
-        now = now.plusSeconds(60)
-        page.next()!!.join()
-        val rest = page.state.value.session!!
-        assertEquals("shortRest", rest.phaseKind)
-        assertEquals(1L, rest.number())
-        assertEquals("work", rest.nextKind())
-        assertTrue(database.creates.isEmpty())
-        now = now.plusSeconds(8 * 60 + 13)
-        assertEquals(PomodoroClock(true, 13), rest.clockAt(now))
-        page.editFields(EntryFields("Current", projectId = 3, taskId = 5, tags = listOf("focus"), billable = true))!!.join()
-        page.end()!!.join()
-        assertNull(page.state.value.session)
-        assertEquals(1, database.creates.size)
-        assertEquals(EntryFields("Current", 3, 5, listOf("focus"), true), database.creates.single().fields)
-        assertEquals(work.pomodoroStartedAt, database.creates.single().start)
-        assertEquals(now, database.creates.single().stop)
-        assertEquals(PomodoroNotice.SAVED_ON_PHONE, page.state.value.notice)
-        assertNull(page.end())
+    fun theOpenPomodorosFieldsComeFromTheCacheAndNeverStartASession() {
+        val f = running("Typed on the phone")
+        // The cache carries a queued edit the server's state does not have yet.
+        assertEquals("Typed on the phone", f.page.state.value.fields.description)
+        assertNull(f.page.start())
+        f.page.editLengths(PomodoroLengths("1", "1", "1", "1"))
+        assertEquals("the lengths of a running session are not editable", "40", f.page.state.value.lengths.work)
+        assertTrue(f.server.calls.isEmpty())
     }
 
     @Test
-    fun editingTheNewPomodoroCannotRewriteOrDuplicateTheImmutablePriorEntry() = runBlocking {
-        val page = model()
-        page.editFields(EntryFields(description = "First", tags = listOf("old")))
-        page.start()!!.join()
-        now = now.plusSeconds(100)
-        page.next()!!.join()
-        now = now.plusSeconds(60)
-        page.next()!!.join()
-        val prior = database.creates.single()
-        page.editFields(EntryFields(description = "Second", tags = listOf("new"), billable = true))!!.join()
-        page.editFields(page.state.value.fields.copy(projectId = 8, taskId = 9))!!.join()
-        assertEquals(listOf(prior), database.creates)
-        assertEquals("First", prior.fields.description)
-        assertEquals(listOf("old"), prior.fields.tags)
-        assertEquals("Second", store.current()!!.fields.description)
-        assertEquals(2L, page.state.value.session!!.number())
-        now = now.plusSeconds(120)
-        page.end()!!.join()
-        assertEquals(2, database.creates.size)
-        assertEquals(prior, database.creates.first())
-        assertEquals("Second", database.creates.last().fields.description)
+    fun withoutACachedRowTheOpenPomodorosFieldsComeFromTheServersState() {
+        val f = PageFixture(heldState(revision = 4, description = "From the server")).also { fixtures += it }
+        assertEquals("From the server", f.page.state.value.fields.description)
     }
 
     @Test
-    fun tooShortAndQueuedCountStaySeparateAndCountsAndRefusalsReloadAfterEnd() = runBlocking {
-        settings.value = settings.value!!.copy(timeResolutionMinutes = 15.0)
-        val page = model()
-        page.start()!!.join()
-        now = now.plusSeconds(10)
-        page.end()!!.join()
-        assertEquals(PomodoroNotice.TOO_SHORT, page.state.value.notice)
-        assertTrue(database.creates.isEmpty())
-        unsent.value = 2
-        val held = PendingChange.of(ChangeKind.CREATE, com.github.e0ipso.tokkl.cache.CachedTimeEntry(
-            id = -1, workspaceId = 11, projectId = null, taskId = null, description = "First",
-            start = now, stop = now.plusSeconds(60), billable = false, tags = emptyList(), tagIds = emptyList(),
-        )).copy(held = true, refusal = "Project does not belong to workspace")
-        refused.value = listOf(held)
-        assertEquals(2, page.state.value.unsentCount)
-        val reopened = model().state.value
-        assertNull(reopened.session)
-        assertEquals(2, reopened.unsentCount)
-        assertEquals("Project does not belong to workspace", reopened.refused.single().refusal)
+    fun aPickOrBillableEditGoesToTheQueuedRunningEntryEditOfThePomodorosEntry() = runBlocking {
+        val f = running()
+        val shown = f.page.state.value.shown!!
+        f.page.editFields(EntryFields("Focused work", projectId = 9, billable = true), shown.entryId)!!.join()
+        val (identity, fields) = f.changes.updates.single()
+        assertEquals(RunningEntryIdentity(ENTRY, WORKSPACE, T0), identity)
+        assertEquals(EntryFields("Focused work", projectId = 9, billable = true), fields)
+        assertEquals(fields, f.page.state.value.fields)
+        // No session request: the server carries the fields to the later pomodoros.
+        assertTrue(f.server.calls.isEmpty())
     }
 
     @Test
-    fun saveFailureNamesTheActionAndReasonAndRetainsTheSessionForRetry() = runBlocking {
-        val page = model()
-        page.start()!!.join()
-        now = now.plusSeconds(60)
-        database.failCreate = true
-        page.end()!!.join()
-        assertEquals(PomodoroSaveProblem(PomodoroAction.END, "disk full"), page.state.value.problem)
-        assertNotNull(page.state.value.session)
-        assertNull(page.state.value.notice)
-        assertTrue(database.creates.isEmpty())
-        database.failCreate = false
-        page.end()!!.join()
-        assertNull(page.state.value.problem)
-        assertEquals(1, database.creates.size)
+    fun aTypedDescriptionShowsAtOnceAndGoesToTheQueueWhenTheFieldIsDone() = runBlocking {
+        val f = running()
+        val entry = f.page.state.value.shown!!.entryId
+        assertNull(f.page.editFields(EntryFields("Focused work, typed"), entry, send = false))
+        assertEquals("Focused work, typed", f.page.state.value.fields.description)
+        assertTrue(f.changes.updates.isEmpty())
+        f.page.fieldsDone(entry)!!.join()
+        assertEquals("Focused work, typed", f.changes.updates.single().second.description)
     }
 
     @Test
-    fun aPostCommitCallbackFailureReloadsTheRowWithoutRepeatingTheFinishedEntry() = runBlocking {
-        val page = model()
-        page.editLengths(PomodoroLengths("1", "2", "3", "2"))
-        page.start()!!.join()
-        defaults.value = PomodoroDefaults(50, 10, 30, 4)
-        now = now.plusSeconds(60)
-        callbackFailure = true
-        page.end()!!.join()
-        assertNull(page.state.value.session)
-        assertEquals("background sender unavailable", page.state.value.problem!!.reason)
-        assertEquals(PomodoroLengths("50", "10", "30", "4"), page.state.value.lengths)
-        assertEquals(1, database.creates.size)
-        assertNull(page.end())
-        assertEquals(1, database.creates.size)
+    fun aDescriptionTypedBackToTheOriginalSendsNothing() {
+        val f = running()
+        val entry = f.page.state.value.shown!!.entryId
+        f.page.editFields(EntryFields("x"), entry, send = false)
+        f.page.editFields(EntryFields("Focused work"), entry, send = false)
+        assertNull(f.page.fieldsDone(entry))
+        assertTrue(f.changes.updates.isEmpty())
     }
 
     @Test
-    fun aFailedFieldWriteSurvivesReloadAndMustBeStoredBeforeEndCanSave() = runBlocking {
-        val page = model()
-        page.start()!!.join()
-        database.failSave = true
-        page.editFields(EntryFields(description = "Keep this edit"))!!.join()
-        assertEquals(PomodoroSaveProblem(PomodoroAction.FIELDS, "session write refused"), page.state.value.problem)
-        page.reload().join()
-        assertEquals("Keep this edit", page.state.value.fields.description)
-        now = now.plusSeconds(60)
-        page.end()!!.join()
-        assertNotNull(page.state.value.session)
-        assertTrue(database.creates.isEmpty())
-        database.failSave = false
-        page.end()!!.join()
-        assertEquals("Keep this edit", database.creates.single().fields.description)
+    fun anEditFromAPageDrawnForAnotherPomodoroChangesNothing() {
+        val f = running()
+        assertNull(f.page.editFields(EntryFields("Stale"), entryId = ENTRY + 1))
+        assertNull(f.page.editFields(EntryFields("Stale form edit"), entryId = null))
+        assertEquals("Focused work", f.page.state.value.fields.description)
+        assertTrue(f.changes.updates.isEmpty())
     }
 
     @Test
-    fun deniedAlarmsRemainVisibleAcrossStartAndReloadWithoutBlockingTheSession() = runBlocking {
-        denied = true
-        val page = model()
-        assertTrue(page.state.value.alarmDenied)
-        page.start()!!.join()
-        assertNotNull(page.state.value.session)
-        assertTrue(page.state.value.alarmDenied)
-        denied = false
-        page.reload().join()
-        assertFalse(page.state.value.alarmDenied)
+    fun anEditTheQueueRefusesDoesNotStayOnScreen() = runBlocking {
+        val f = running()
+        f.changes.accepts = false
+        f.page.editFields(EntryFields("Lost"), f.page.state.value.shown!!.entryId)!!.join()
+        assertEquals("Focused work", f.page.state.value.fields.description)
     }
 
     @Test
-    fun accountTimezoneParsingUsesIntlCaseAndOffsetSemanticsForSnapping() = runBlocking {
-        settings.value = settings.value!!.copy(timeZone = "asia/kathmandu", timeResolutionMinutes = 30.0)
-        val page = model()
-        page.start()!!.join()
-        now = now.plusSeconds(30 * 60)
-        page.end()!!.join()
-        assertEquals(Instant.parse("2026-10-24T09:15:00Z"), database.creates.single().start)
-        assertEquals(Instant.parse("2026-10-24T09:45:00Z"), database.creates.single().stop)
+    fun theStartFormKeepsTheLastPomodorosFieldsAfterTheSessionEnds() {
+        val f = running("Report")
+        f.page.editLengths(PomodoroLengths("1", "1", "1", "1"))
+        f.held.value = heldState(revision = 5, pomodoro = null)
+        f.controls.value = com.github.e0ipso.tokkl.cache.TimerControls.Idle
+        assertNull(f.page.state.value.pomodoro)
+        assertEquals("Report", f.page.state.value.fields.description)
+        assertEquals(PomodoroLengths("40", "8", "20", "3"), f.page.state.value.lengths)
     }
 
     @Test
-    fun unknownAccountZoneKeepsDurationsAndCommandsAvailableWithoutInventingAZone() = runBlocking {
-        settings.value = settings.value!!.copy(timeZone = "Not/AZone", timeResolutionMinutes = 30.0)
-        val page = model()
-        assertTrue(page.state.value.canStart)
-        page.start()!!.join()
-        now = now.plusSeconds(600)
-        page.end()!!.join()
-        assertEquals(Instant.parse("2026-10-24T09:07:00Z"), database.creates.single().start)
-        assertEquals(now, database.creates.single().stop)
+    fun theLengthsOfAnEndedSessionGiveWayToTheDefaultsAgain() {
+        val f = idle()
+        f.page.editLengths(PomodoroLengths("30", "5", "12", "2"))
+        f.held.value = heldState(revision = 1)
+        f.held.value = heldState(revision = 2, pomodoro = null)
+        assertEquals(PomodoroLengths("40", "8", "20", "3"), f.page.state.value.lengths)
+        f.defaults.value = PomodoroDefaults(45, 9, 20, 3)
+        assertEquals("45", f.page.state.value.lengths.work)
     }
 
     @Test
-    fun longRestLabelAndNumberFollowTheConfiguredWorkCount() = runBlocking {
-        val page = model()
-        page.editLengths(PomodoroLengths("25", "5", "15", "1"))
-        page.start()!!.join()
-        assertEquals("longRest", page.state.value.session!!.nextKind())
-        now = now.plusSeconds(60)
-        page.next()!!.join()
-        assertEquals("longRest", page.state.value.session!!.phaseKind)
-        assertEquals(1L, page.state.value.session!!.number())
-        now = now.plusSeconds(60)
-        page.next()!!.join()
-        assertEquals(1L, page.state.value.session!!.number())
-    }
-
-    @Test
-    fun missingWorkspaceDisablesStartUntilAccountSettingsArrive() {
-        settings.value = null
-        val page = model()
-        assertFalse(page.state.value.canStart)
-        assertNull(page.start())
-        settings.value = AccountSettings("+05:30", DayOfWeek.MONDAY, null, defaultWorkspaceId = 11)
-        assertTrue(page.state.value.canStart)
-    }
-
-    @Test
-    fun permissionRequestRunsAfterTheSessionIsStoredAndDoesNotWaitForAnAnswer() = runBlocking {
-        val page = model()
-        var requests = 0
-        page.start {
-            assertNotNull(database.row)
-            assertEquals(database.row, page.state.value.session)
-            requests++ // Intentionally leave permission unanswered.
-        }!!.join()
-        assertEquals(1, requests)
-        assertNotNull(store.current())
-        assertFalse(page.state.value.busy)
-        assertNull(page.start { requests++ })
-        assertEquals(1, requests)
-        now = now.plusSeconds(60)
-        page.end()!!.join()
-        assertNull(store.current())
-    }
-
-    @Test
-    fun failedAndInvalidStartsDoNotRequestPermission() = runBlocking {
-        val page = model()
-        var requests = 0
-        database.failSave = true
-        page.start { requests++ }!!.join()
-        assertNull(store.current())
-        assertEquals(0, requests)
-        database.failSave = false
-        page.editLengths(PomodoroLengths("", "5", "15", "4"))
-        assertNull(page.start { requests++ })
-        assertEquals(0, requests)
-    }
-
-    @Test
-    fun actualDeniedGrantsPersistAcrossCommandsAndLateGrantsKeepTheStartedSession() = runBlocking {
-        val page = model()
-        page.permissionsChanged(PomodoroPermissions(false, false, false))
-        assertTrue(page.state.value.canStart)
-        page.start()!!.join()
-        val started = store.current()!!
-        page.reload().join()
-        assertTrue(page.state.value.notificationsDenied)
-        assertTrue(page.state.value.alarmDenied)
-        assertTrue(page.state.value.fullScreenDenied)
-        page.permissionsChanged(PomodoroPermissions(true, true, true))
-        page.reload().join()
-        assertFalse(page.state.value.notificationsDenied)
-        assertFalse(page.state.value.alarmDenied)
-        assertFalse(page.state.value.fullScreenDenied)
-        assertEquals(started, store.current())
-        assertEquals(started, page.state.value.session)
-        assertTrue(database.creates.isEmpty())
-    }
-
-    @Test
-    fun recreatingThePageLoadsTheRunningSessionWithoutEmittingAStart() = runBlocking {
-        var requests = 0
-        val page = model()
-        page.start { requests++ }!!.join()
-        val restored = model()
-        assertEquals(page.state.value.session, restored.state.value.session)
-        assertNull(restored.start { requests++ })
-        assertEquals(1, requests)
-    }
-
-    private data class Created(val fields: EntryFields, val start: Instant, val stop: Instant)
-
-    private inner class PageDatabase : PomodoroSessionDatabase {
-        var row: PomodoroSession? = null
-        val creates = mutableListOf<Created>()
-        var failCreate = false
-        var failSave = false
-        override fun current() = row
-        override fun save(session: PomodoroSession) {
-            if (failSave) throw IOException("session write refused")
-            row = session
-        }
-        override fun delete() { row = null }
-        override fun createStopped(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
-            if (failCreate) throw IOException("disk full")
-            creates += Created(fields, start, stop)
-            unsent.value = creates.size
-            return -creates.size.toLong()
-        }
-        override fun <T> transaction(block: () -> T): T {
-            val previous = row
-            val oldCreates = creates.toList()
-            return try { block() } catch (e: Exception) {
-                row = previous
-                creates.clear()
-                creates.addAll(oldCreates)
-                throw e
-            }
-        }
+    fun permissionGuidanceStaysIndependentAndTheQueueCountsStayVisible() {
+        val f = idle()
+        f.alarmsDenied = true
+        f.page.fullScreenPermissionChanged(false)
+        f.page.permissionsChanged(PomodoroPermissions(notifications = false, exactAlarm = true, fullScreen = false))
+        assertTrue(f.page.state.value.notificationsDenied)
+        assertFalse(f.page.state.value.alarmDenied)
+        assertTrue(f.page.state.value.fullScreenDenied)
+        f.page.fullScreenPermissionChanged(true)
+        assertFalse(f.page.state.value.fullScreenDenied)
+        assertTrue("the notification denial stays", f.page.state.value.notificationsDenied)
+        f.unsent.value = 2
+        assertEquals(2, f.page.state.value.unsentCount)
     }
 }

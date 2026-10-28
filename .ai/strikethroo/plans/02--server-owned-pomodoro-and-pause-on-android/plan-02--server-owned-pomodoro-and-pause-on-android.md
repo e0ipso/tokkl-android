@@ -410,13 +410,13 @@ graph TD
 - ✔️ Task 003 (completed): [Send session and pause actions directly](tasks/03--send-session-and-pause-actions-directly.md), depends on 002.
 - ✔️ Task 004 (completed): [Probe and persist timer state capability](tasks/04--probe-and-persist-timer-state-capability.md), depends on 002.
 
-### Phase 4: Connect background sync and app controls
+### ✅ Phase 4: Connect background sync and app controls
 
 **Parallel Tasks:**
 
-- Task 005: [Hold timer SSE in a foreground service](tasks/05--hold-timer-sse-in-a-foreground-service.md), depends on 003 and 004.
-- Task 006: [Move timer controls to server pause state](tasks/06--move-timer-controls-to-server-pause-state.md), depends on 003 and 004.
-- Task 007: [Render Pomodoro and navigation from server state](tasks/07--render-pomodoro-and-navigation-from-server-state.md), depends on 003 and 004.
+- ✔️ Task 005 (completed): [Hold timer SSE in a foreground service](tasks/05--hold-timer-sse-in-a-foreground-service.md), depends on 003 and 004.
+- ✔️ Task 006 (completed): [Move timer controls to server pause state](tasks/06--move-timer-controls-to-server-pause-state.md), depends on 003 and 004.
+- ✔️ Task 007 (completed): [Render Pomodoro and navigation from server state](tasks/07--render-pomodoro-and-navigation-from-server-state.md), depends on 003 and 004.
 
 ### Phase 5: Connect alarms and native surfaces
 

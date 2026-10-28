@@ -30,7 +30,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PomodoroSession
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -91,7 +91,7 @@ class PomodoroPageFontScaleTest {
 
     @Test
     fun runningOvertimeHasASpokenClockAndBothActionsFitAtTheLargestFontScale() {
-        state = state.copy(session = running(), fields = EntryFields(description = "Current work"))
+        state = state.copy(held = heldSession(phaseStart = at, description = "Current work"), fields = EntryFields(description = "Current work"))
         show(Clock.fixed(at.plusSeconds(25 * 60 + 65), ZoneOffset.UTC))
         compose.onNodeWithText(context.getString(R.string.pomodoro_overtime)).performScrollTo().assertIsDisplayed()
         val duration = state.account!!.formatDuration(65)
@@ -108,16 +108,14 @@ class PomodoroPageFontScaleTest {
     }
 
     @Test
-    fun alarmDenialTooShortAndPreciseSaveFailureAreReadableAndDoNotHideStart() {
+    fun alarmDenialAndTheNoConnectionMessageAreReadableAndDoNotHideStart() {
         state = state.copy(
-            alarmDenied = true, notice = PomodoroNotice.TOO_SHORT,
-            problem = PomodoroSaveProblem(PomodoroAction.END, "Not enough space on device"), unsentCount = 2,
+            alarmDenied = true, problem = PomodoroProblem(PomodoroAction.END, TimerActionResult.Offline), unsentCount = 2,
         )
         show()
         for (text in listOf(
             context.getString(R.string.pomodoro_alarm_denied),
-            context.getString(R.string.pomodoro_too_short),
-            context.getString(R.string.pomodoro_save_error, context.getString(R.string.pomodoro_action_end), "Not enough space on device"),
+            context.getString(TimerActionResult.Offline.message),
             context.resources.getQuantityString(R.plurals.pomodoro_unsent, 2, 2),
         )) {
             val notice = compose.onNodeWithText(text)
@@ -138,7 +136,9 @@ class PomodoroPageFontScaleTest {
                     state,
                     onLengths = { state = state.copy(lengths = it) },
                     onFields = { state = state.copy(fields = it) },
-                    onStart = { starts++ }, onNext = { nexts++ }, onEnd = { ends++ }, onReload = {}, clock = clock,
+                    onDescription = { state = state.copy(fields = it) },
+                    onDescriptionDone = {},
+                    onStart = { starts++ }, onNext = { nexts++ }, onEnd = { ends++ }, clock = clock,
                 )
             }
         }
@@ -152,9 +152,4 @@ class PomodoroPageFontScaleTest {
         assertTrue("text had no layout", layouts.isNotEmpty())
         layouts.forEach { assertFalse("text was clipped vertically", it.didOverflowHeight) }
     }
-
-    private fun running() = PomodoroSession(
-        workspaceId = 1, workMinutes = 25.0, shortRestMinutes = 5.0, longRestMinutes = 15.0, longRestEvery = 4.0,
-        phaseKind = "work", phaseStartedAt = at, pomodoroStartedAt = at, completed = 0.0, fields = state.fields,
-    )
 }
