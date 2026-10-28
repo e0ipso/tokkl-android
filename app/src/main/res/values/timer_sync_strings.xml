@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The timer sync service's notification, which shows while the phone keeps its connection to a
+    Tokkl server with the timer API open.
+-->
+<resources>
+    <!-- The notification channel, as the app's notification settings list it. -->
+    <string name="timer_sync_channel">Timer sync</string>
+    <string name="timer_sync_channel_description">Shows while the app stays connected to your Tokkl server, so timers, pauses and Pomodoro sessions from your other devices reach this phone. It makes no sound.</string>
+    <string name="timer_sync_title">Timer sync is on</string>
+    <string name="timer_sync_text">Changes from your other devices show here.</string>
+</resources>

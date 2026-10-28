@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.api
 
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.DeserializationStrategy
@@ -151,12 +152,31 @@ class TogglApiClient(
         }
     }
 
+    /**
+     * Opens a Server-Sent Events stream with `GET [url]` and hands the 2xx body to [read], which
+     * reads it until the stream ends, and returns what [read] returns. A stream waits for events by
+     * design, so its reads have no timeout: the caller watches for silence itself and cancels the
+     * call through [cancellation]. A 2xx answer that is not `text/event-stream` is
+     * [ApiError.InvalidResponse]. An [IOException] while reading, as when the connection drops or
+     * the call is cancelled, is [ApiError.Network]. Other statuses fail as in [send].
+     */
+    fun <T> stream(url: HttpUrl, cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
+        execute("GET", url, body = null, resend = true, cancellation = cancellation, streaming = true) { response ->
+            val type = response.body.contentType()
+            if (type == null || type.type != "text" || type.subtype != "event-stream") {
+                ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("Expected an event stream")))
+            } else {
+                ApiResult.Success(response.body.byteStream().use(read))
+            }
+        }
+
     private fun <T> execute(
         method: String,
         url: HttpUrl,
         body: JsonElement?,
         resend: Boolean,
         cancellation: ApiCallCancellation? = null,
+        streaming: Boolean = false,
         onConflict: ((Response) -> ApiResult<T>)? = null,
         onSuccess: (Response) -> ApiResult<T>,
     ): ApiResult<T> {
@@ -165,10 +185,12 @@ class TogglApiClient(
             .url(url)
             .header("Authorization", credentials.authorizationHeader)
             .method(method, json)
+            .apply { if (streaming) tag(StreamingRead::class.java, StreamingRead) }
             .build()
         val call = (if (resend) httpClient else sendingOnce).newCall(request)
         // Exports have a finite whole-call deadline as well as the shared connect/read timeouts.
-        if (cancellation != null) call.timeout().timeout(60, TimeUnit.SECONDS)
+        // A stream lasts as long as it is open, so it has none.
+        if (cancellation != null && !streaming) call.timeout().timeout(60, TimeUnit.SECONDS)
         cancellation?.attach(call)
         return try {
             cancellation?.check()

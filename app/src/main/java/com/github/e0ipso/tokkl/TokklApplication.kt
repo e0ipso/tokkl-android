@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl
 
 import android.app.Application
 import android.app.NotificationManager
+import android.os.Handler
+import android.os.Looper
 import androidx.glance.appwidget.updateAll
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
@@ -64,9 +66,14 @@ import com.github.e0ipso.tokkl.sync.shownSyncStatus
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
+import com.github.e0ipso.tokkl.timerstate.ElapsedTimerSyncClock
+import com.github.e0ipso.tokkl.timerstate.StreamEnd
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
+import com.github.e0ipso.tokkl.timerstate.TimerSync
+import com.github.e0ipso.tokkl.timerstate.TimerSyncService
+import com.github.e0ipso.tokkl.timerstate.holdTimerEvents
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import com.github.e0ipso.tokkl.widget.TokklWidget
 import com.github.e0ipso.tokkl.widget.WidgetState
@@ -75,8 +82,10 @@ import com.github.e0ipso.tokkl.widget.WidgetSync
 import com.github.e0ipso.tokkl.widget.widgetState
 import java.io.IOException
 import java.security.GeneralSecurityException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -87,6 +96,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class TokklApplication : Application() {
 
@@ -126,6 +136,8 @@ class TokklApplication : Application() {
                 pomodoroDefaults.refreshed(preferences, keepsPreferences = flags.favorites)
                 reminderSettings.refreshed(preferences, tokkl = flags.favorites)
                 sender.send()
+                // The first refresh after sign-in learns the capability, and any refresh can lose it.
+                followTimerSync()
             },
         )
     }
@@ -194,7 +206,12 @@ class TokklApplication : Application() {
      * [PomodoroAlarmScheduler.permissionDenied] is what the Pomodoro page reads when that alarm
      * cannot be set. Loaded on first use, which reads the permission from the platform.
      */
-    val pomodoroAlarms: PomodoroAlarmScheduler by lazy { AlarmClockPomodoroScheduler(this) }
+    val pomodoroAlarms: PomodoroAlarmScheduler get() = alarmClock
+
+    /** [pomodoroAlarms], whose boot and update receiver also starts the timer sync service. */
+    private val alarmClock: AlarmClockPomodoroScheduler by lazy {
+        AlarmClockPomodoroScheduler(this, timerSyncStarts = { capabilities.state.value.timerState })
+    }
 
     /**
      * The running Pomodoro. Loaded on first use, from the phase alarm or from the page. A queued
@@ -313,6 +330,62 @@ class TokklApplication : Application() {
      */
     val timerActions: TimerActions by lazy {
         TimerActions(client = Session(this)::client, source = { timerState }, io = Dispatchers.IO)
+    }
+
+    /** [TimerSyncService] while it runs in the foreground. The service sets it. */
+    @Volatile
+    internal var timerSyncService: TimerSyncService? = null
+
+    /**
+     * The one owner of the timer event stream, which [TimerSyncService] runs for the account's
+     * [timerState]. Each connection takes the signed-in client and feeds the source it was opened
+     * for, so a stream of a retired account changes nothing. A refused credential pauses the queue
+     * as the queue's own refusal does, which shows the existing prompt to sign in again, and stops
+     * the service, as a stream with no account does.
+     */
+    val timerSync: TimerSync<TimerStateSource> by lazy {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        TimerSync(
+            clock = ElapsedTimerSyncClock(scope),
+            open = { source, link ->
+                scope.launch(Dispatchers.IO) { link.ended(holdTimerEvents(Session(this@TokklApplication).client(), source, link)) }
+            },
+            stopped = { source, end ->
+                if (end == StreamEnd.Refused && source === timerState) sender.signInRefused()
+                stopTimerSyncService()
+            },
+        )
+    }
+
+    /**
+     * Whether the timer event stream should run: signed in to a server with the timer API, whose
+     * token the server has not refused. Reads the disk.
+     */
+    internal fun timerSyncWanted(): Boolean =
+        capabilities.state.value.timerState && !sender.signInNeeded.value && Session(this).isSignedIn()
+
+    /**
+     * Starts [TimerSyncService], or points the running one at the account signed in now, while
+     * [timerSyncWanted], and stops the stream and the service otherwise. App open, every account
+     * refresh, sign-in and the boot and update receiver call it. A start the platform refuses, as
+     * in the background, is dropped: the next app open starts the service, and an exact alarm
+     * already set still rings. Blocks on disk I/O.
+     */
+    fun followTimerSync() {
+        alarmClock.watchTimerSync()
+        if (!timerSyncWanted()) {
+            timerSync.stop()
+            stopTimerSyncService()
+        } else if (timerSyncService != null) {
+            timerSync.run(timerState)
+        } else {
+            TimerSyncService.start(this)
+        }
+    }
+
+    /** Stops [TimerSyncService] unless a newer start is on its way, which then decides for itself. */
+    private fun stopTimerSyncService() {
+        Handler(Looper.getMainLooper()).post { timerSyncService?.stopLatest() }
     }
 
     /**
@@ -436,6 +509,9 @@ class TokklApplication : Application() {
         Session(this).save(server, token)
         pomodoroSessionNotification.start()
         if (sender.signInNeeded.value) sender.resume()
+        // Signing in again over a refused token keeps the capability: the stream restarts for the
+        // new source now. A first sign-in starts it once its refresh has learned the capability.
+        followTimerSync()
     }
 
     /**
@@ -524,7 +600,8 @@ class TokklApplication : Application() {
     /**
      * Sign-out (docs/PRD.md S6). It forgets the server and the token with its Keystore key first,
      * so the app sends nothing new, and retires the timer state, so a late answer cannot write it
-     * or the cache again. Then it cancels the queue's background work and every call in flight,
+     * or the cache again. It stops the timer event stream, its reconnects and its service. Then it
+     * cancels the queue's background work and every call in flight,
      * waits for the refresh and the queue's drain to end, and clears the timer state's store and
      * the cache with the queue and the Pomodoro session, its alarm and ringing, the running timer's notification, the launcher shortcuts, the account settings,
      * the capabilities, the Timer page's view, the Pomodoro defaults, the reminder and its settings, the trust decisions, the last answer and the count of
@@ -537,6 +614,11 @@ class TokklApplication : Application() {
             steps = listOf(
                 { Session(this).clear() },
                 { timerState.retire() },
+                // Before the stores clear, so no stream or reconnect of this account outlives them.
+                {
+                    timerSync.stop()
+                    stopTimerSyncService()
+                },
                 { pomodoroSessionNotification.forget() },
                 { pomodoroSessions.forget() },
                 // ID 3 is shared with the session notification, including a non-ringing form.
@@ -566,6 +648,7 @@ class TokklApplication : Application() {
                 {
                     capabilities.forget()
                     CapabilitiesStore(this).clear()
+                    alarmClock.watchTimerSync()
                 },
                 {
                     timerView.forget()

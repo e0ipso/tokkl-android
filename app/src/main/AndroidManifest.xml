@@ -20,15 +20,19 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!--
-        Only the Pomodoro phase-end alarm runs a foreground service: mediaPlayback keeps its
-        bundled transition sound looping until Next phase or End session. API 34+ also requires
-        the type-specific permission. VIBRATE is for its repeating alarm vibration. No runtime
-        grant is needed for these permissions. WorkManager's SystemForegroundService stays
-        removed below; the queue never calls setForeground. The running timer (N1) has no service.
+        Two foreground services. The Pomodoro phase-end alarm is mediaPlayback: it keeps its
+        bundled transition sound looping until Next phase or End session. The timer sync service
+        is specialUse: it holds the Tokkl server's timer event stream open, so sessions and pauses
+        from other devices reach the phone in the background. API 34+ also requires each
+        type-specific permission. VIBRATE is for the alarm's repeating vibration. No runtime grant
+        is needed for these permissions. WorkManager's SystemForegroundService stays removed
+        below; the queue never calls setForeground. The running timer (N1) has no service.
         https://developer.android.com/develop/background-work/services/fgs/service-types#media
+        https://developer.android.com/develop/background-work/services/fgs/service-types#special-use
     -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <!--
         Only the high-importance Pomodoro phase-end alarm opens over the lock screen.
@@ -127,6 +131,19 @@
             android:exported="false"
             android:stopWithTask="false"
             android:foregroundServiceType="mediaPlayback" />
+        <!--
+            The timer sync service holds GET /api/app/timer/events while signed in to a Tokkl
+            server with the timer API. It keeps running when the app's task is removed.
+        -->
+        <service
+            android:name=".timerstate.TimerSyncService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the user's self-hosted Tokkl server's timer event stream (Server-Sent Events) open, so a Pomodoro session or pause started on another device reaches the phone before its phase ends and every device rings together. The app ships on F-Droid without a push service, and the stream is the server's only way to reach the phone." />
+        </service>
         <receiver
             android:name=".pomodoro.PomodoroSessionActionReceiver"
             android:exported="false" />
@@ -152,9 +169,10 @@
             android:exported="false" />
         <!--
             Arms that alarm again from the stored session after boot, an update, or a clock or
-            timezone change, and when the exact-alarm permission is granted. Disabled until a
-            session is running, so a reboot with no session does not start the app. The system
-            sends these protected broadcasts, so the receiver is exported.
+            timezone change, and when the exact-alarm permission is granted. After boot and an
+            update it also starts the timer sync service. Disabled until a session is running or
+            the account's server has the timer API, so a reboot with neither does not start the
+            app. The system sends these protected broadcasts, so the receiver is exported.
         -->
         <receiver
             android:name=".pomodoro.PomodoroAlarmRearmReceiver"

@@ -199,6 +199,7 @@ class MainActivity : ComponentActivity() {
      * offline cache with the same `GET /api/v9/me` (O2), but a rotation's start does not. After a
      * trip to the background, the calendar loads its weeks from the server again. From here to
      * [onStop] the network is watched, so its return refreshes too. Nothing refreshes on a timer.
+     * Every start, a rotation's too, starts the timer sync service when it should run.
      */
     override fun onStart() {
         super.onStart()
@@ -208,6 +209,8 @@ class MainActivity : ComponentActivity() {
         notificationsAllowed = allowed
         (application as TokklApplication).foregroundRefresh.started(online = network.start())
         calendarViewModel.model.cameToForeground()
+        // The app is on screen, so the platform lets the timer sync service start, also offline.
+        lifecycleScope.launch(Dispatchers.IO) { (application as TokklApplication).followTimerSync() }
     }
 
     /**

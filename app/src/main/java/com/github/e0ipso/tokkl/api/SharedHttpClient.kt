@@ -1,11 +1,14 @@
 package com.github.e0ipso.tokkl.api
 
 import java.security.KeyStore
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlinx.serialization.json.Json
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Response
 
 /**
  * The app's only [OkHttpClient]. Every request goes through it, or through
@@ -19,6 +22,10 @@ import okhttp3.OkHttpClient
  * [PinningTrustManager]: the platform's CAs first, then the certificate the
  * user pinned. OkHttp's own host name check stays on. Later security
  * settings go into [build], never into a second client.
+ *
+ * A request tagged [StreamingRead] reads its body with no read timeout, for
+ * an event stream that waits between events by design. Every other setting
+ * stays as it is for it.
  */
 object SharedHttpClient {
 
@@ -53,8 +60,18 @@ object SharedHttpClient {
             .followRedirects(false)
             .followSslRedirects(false)
             .sslSocketFactory(tls.socketFactory, trustManager)
+            .addInterceptor(StreamingReads)
             .addInterceptor(ConfiguredServerGuard(configured = { ConfiguredServer.current }, trust = { ConfiguredTrust.current }))
             .build()
+    }
+
+    /** Lifts the read timeout, and only that, for a request tagged [StreamingRead]. */
+    private object StreamingReads : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val request = chain.request()
+            if (request.tag(StreamingRead::class.java) == null) return chain.proceed(request)
+            return chain.withReadTimeout(0, TimeUnit.MILLISECONDS).proceed(request)
+        }
     }
 
     /**
@@ -68,6 +85,13 @@ object SharedHttpClient {
             .filterIsInstance<X509TrustManager>()
             .single()
 }
+
+/**
+ * Tags a request whose response body stays open and waits between events, as
+ * `GET /api/app/timer/events` does, so [SharedHttpClient] reads it with no read
+ * timeout. Its caller must watch for silence and cancel the call itself.
+ */
+internal object StreamingRead
 
 /** JSON settings for both APIs. Models declare only the fields the app reads. */
 internal val ApiJson: Json = Json { ignoreUnknownKeys = true }

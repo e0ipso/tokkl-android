@@ -85,7 +85,8 @@ class SharedHttpClientTest {
         assertSame(shared.dispatcher, once.dispatcher)
         assertEquals(shared.interceptors, once.interceptors)
         assertEquals(shared.networkInterceptors, once.networkInterceptors)
-        assertTrue(once.interceptors.single() is ConfiguredServerGuard)
+        // The guard, beside the interceptor that lifts the read timeout for event streams.
+        assertEquals(1, once.interceptors.count { it is ConfiguredServerGuard })
         // NoTrustAllTest keeps the socket factory and host name check out of every file but
         // SharedHttpClient.kt, so the test checks the trust manager, which newBuilder copies with them.
         assertSame(shared.x509TrustManager, once.x509TrustManager)

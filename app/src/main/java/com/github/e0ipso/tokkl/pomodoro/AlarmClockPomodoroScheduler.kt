@@ -27,11 +27,22 @@ import kotlinx.coroutines.launch
  * permission, and [permissionDenied] follows [AlarmManager.canScheduleExactAlarms]. The Pomodoro
  * page reads [permissionDenied].
  *
- * [watchSession] keeps [PomodoroAlarmRearmReceiver] enabled only while a session runs. The
- * manifest leaves that receiver disabled, so a reboot with no session does not start the app.
+ * [watchSession] and [watchTimerSync] keep [PomodoroAlarmRearmReceiver] enabled only while a
+ * session runs or [timerSyncStarts] says the timer sync service should start after boot and
+ * updates. The manifest leaves that receiver disabled, so a reboot with neither does not start
+ * the app.
+ *
+ * @param timerSyncStarts whether the account's server has the timer API, so the boot and update
+ *   broadcasts must start the timer sync service. Read on every change, off the main thread.
  */
-class AlarmClockPomodoroScheduler(private val context: Context) : PomodoroAlarmScheduler {
+class AlarmClockPomodoroScheduler(
+    private val context: Context,
+    private val timerSyncStarts: () -> Boolean = { false },
+) : PomodoroAlarmScheduler {
     private val manager = context.getSystemService(AlarmManager::class.java)
+
+    /** What the session store last said through [watchSession]. */
+    private var sessionRunning = false
 
     override val permissionDenied: Boolean
         get() = !manager.canScheduleExactAlarms()
@@ -58,7 +69,19 @@ class AlarmClockPomodoroScheduler(private val context: Context) : PomodoroAlarmS
     }
 
     override fun watchSession(running: Boolean) {
-        val state = if (running) {
+        synchronized(this) {
+            sessionRunning = running
+            applyRearmReceiver()
+        }
+    }
+
+    /** Applies a change of [timerSyncStarts] to the receiver. */
+    fun watchTimerSync() {
+        synchronized(this) { applyRearmReceiver() }
+    }
+
+    private fun applyRearmReceiver() {
+        val state = if (sessionRunning || timerSyncStarts()) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         } else {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED
@@ -130,28 +153,39 @@ class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
 /**
  * Arms the phase alarm again from the stored session after boot, an app update, a clock or
  * timezone change, or a grant of the exact-alarm permission. A planned end that has already
- * passed rings at once and leaves the phase in overtime.
+ * passed rings at once and leaves the phase in overtime. After boot and an app update it also
+ * starts the timer sync service, which those two broadcasts allow from the background. A start the
+ * platform refuses anyway is dropped: the next app open starts it, and the armed alarm still rings.
  *
- * Declared disabled. [AlarmClockPomodoroScheduler.watchSession] enables it while a session runs.
- * The system sends these protected broadcasts, so the receiver is exported.
+ * Declared disabled. [AlarmClockPomodoroScheduler] enables it while a session runs or the timer
+ * sync service should start. The system sends these protected broadcasts, so the receiver is
+ * exported.
  */
 class PomodoroAlarmRearmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action !in ACTIONS) return
         val done = completed
         val pending = goAsync()
+        val app = context.applicationContext as TokklApplication
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                (context.applicationContext as TokklApplication).pomodoroSessions.rearm(deferRingingToAlarm = true)
-            } catch (e: SQLiteException) {
-                // The disk refused the session. A later boot, update or clock change tries again.
-            } catch (e: IOException) {
-                // The phase-end record could not be stored. The session row is unchanged.
+                rearm(app)
+                if (intent.action in TIMER_SYNC_STARTS) app.followTimerSync()
             } finally {
                 // A direct receiver invocation in the boot test has no active broadcast result.
                 pending?.finish()
                 done?.countDown()
             }
+        }
+    }
+
+    private suspend fun rearm(app: TokklApplication) {
+        try {
+            app.pomodoroSessions.rearm(deferRingingToAlarm = true)
+        } catch (e: SQLiteException) {
+            // The disk refused the session. A later boot, update or clock change tries again.
+        } catch (e: IOException) {
+            // The phase-end record could not be stored. The session row is unchanged.
         }
     }
 
@@ -163,6 +197,9 @@ class PomodoroAlarmRearmReceiver : BroadcastReceiver() {
             Intent.ACTION_TIMEZONE_CHANGED,
             AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED,
         )
+
+        /** The broadcasts that may start a foreground service from the background. */
+        private val TIMER_SYNC_STARTS = setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)
 
         /** The boot test waits on this. Production leaves it null. */
         @Volatile

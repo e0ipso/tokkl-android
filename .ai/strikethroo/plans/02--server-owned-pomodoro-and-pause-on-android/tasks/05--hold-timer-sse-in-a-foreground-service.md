@@ -2,7 +2,7 @@
 id: 5
 group: "timer-state"
 dependencies: [3, 4]
-status: "pending"
+status: "completed"
 created: 2026-10-28
 skills:
   - android-services
@@ -23,13 +23,13 @@ Android foreground-service lifecycle and OkHttp streaming I/O.
 
 ## Acceptance Criteria
 
-- [ ] A `specialUse` foreground service declares its permission and `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`, and posts a silent low-importance notification on its own channel.
-- [ ] It runs only with a signed-in account and `timerState` capability, starts at app open and after sign-in, and is started from the existing boot/package-replacement receiver. Sign-out, capability loss and account replacement cancel the stream and all scheduled reconnects.
-- [ ] `GET /api/app/timer/events` uses the shared client, existing trust/pinning and account Authorization header, honors configured URL prefixes and has no stream read timeout. No second HTTP client, SSE dependency or short polling loop is added.
-- [ ] The parser accepts `event: timer` blocks containing the contract's single JSON `data:` line, ignores comments, counts keep-alives as liveness and feeds valid states to the holder. Fragmented reads do not break framing.
-- [ ] About 60 seconds without a data/comment heartbeat closes the dead stream. Disconnects reconnect with capped exponential backoff; network return reconnects immediately without opening duplicate calls. Offline state and alarms remain available.
-- [ ] HTTP 401/403 stops reconnecting and invokes the existing re-sign-in path. Shutdown and account changes prevent a late callback from publishing another account's state.
-- [ ] Add `TimerEventStreamTest` and `TimerSyncLifecycleTest` for custom framing, watchdog/backoff and lifecycle decisions. Run `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest' --tests 'com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest' :app:lintDebug`; expect nonzero tests, zero failures and no new lint errors.
+- [x] A `specialUse` foreground service declares its permission and `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`, and posts a silent low-importance notification on its own channel.
+- [x] It runs only with a signed-in account and `timerState` capability, starts at app open and after sign-in, and is started from the existing boot/package-replacement receiver. Sign-out, capability loss and account replacement cancel the stream and all scheduled reconnects.
+- [x] `GET /api/app/timer/events` uses the shared client, existing trust/pinning and account Authorization header, honors configured URL prefixes and has no stream read timeout. No second HTTP client, SSE dependency or short polling loop is added.
+- [x] The parser accepts `event: timer` blocks containing the contract's single JSON `data:` line, ignores comments, counts keep-alives as liveness and feeds valid states to the holder. Fragmented reads do not break framing.
+- [x] About 60 seconds without a data/comment heartbeat closes the dead stream. Disconnects reconnect with capped exponential backoff; network return reconnects immediately without opening duplicate calls. Offline state and alarms remain available.
+- [x] HTTP 401/403 stops reconnecting and invokes the existing re-sign-in path. Shutdown and account changes prevent a late callback from publishing another account's state.
+- [x] Add `TimerEventStreamTest` and `TimerSyncLifecycleTest` for custom framing, watchdog/backoff and lifecycle decisions. Run `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest' --tests 'com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest' :app:lintDebug`; expect nonzero tests, zero failures and no new lint errors.
 
 Use your internal Todo tool to track these and keep on track.
 

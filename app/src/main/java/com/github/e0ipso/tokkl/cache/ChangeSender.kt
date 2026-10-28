@@ -193,6 +193,15 @@ class ChangeSender(
      */
     val signInNeeded: StateFlow<Boolean> = mutableSignInNeeded.asStateFlow()
 
+    /**
+     * The server refused the session's token on another request, as the timer event stream's 401
+     * or 403. Pauses the queue as its own refusal would, so the status asks to sign in again, until
+     * [resume].
+     */
+    fun signInRefused() {
+        mutableSignInNeeded.value = true
+    }
+
     /** Lifts the pause after a refused token, once the user has signed in again, and drains the queue. */
     fun resume(): Job {
         mutableSignInNeeded.value = false
