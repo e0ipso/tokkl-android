@@ -132,7 +132,7 @@ internal class RunningCheckResults {
 }
 
 /** What one running entry check writes to the cache. */
-internal data class RunningCheckWrites(
+data class RunningCheckWrites(
     /** The cached running entries the server no longer runs. */
     val delete: List<Long> = emptyList(),
     /** The server's running entry, to replace the cached row or to add. */
@@ -142,10 +142,13 @@ internal data class RunningCheckWrites(
 /**
  * What a check writes, given [server], the entry the server runs or null when none runs, read
  * after the cache held the running entries [before]. [now] are the cached running entries when
- * the answer arrives. [unsent] tells whether the queue holds a change to an entry, and [cached]
- * gives the cached row of an id.
+ * the answer arrives. [unsent] tells whether the queue holds a change to an entry, [cached]
+ * gives the cached row of an id, and [pendingAtStart] holds the ids the queue had changes to
+ * when the request began, with the server ids that pending local ids have taken since.
  *
- * - An entry with unsent changes stays as it is, whatever the server says.
+ * - An entry with unsent changes stays as it is, whatever the server says. So does an entry with
+ *   a change queued when the request began: the sender may have sent it during the request, after
+ *   the server read the answer, as a refresh's protection does for the same reason.
  * - An entry that changed or started since [before] stays: the phone or a refresh wrote it after
  *   the check's request went out, so the answer may be older than the row.
  * - Any other running entry the server no longer runs goes. The server stopped or deleted it, and
@@ -162,11 +165,14 @@ internal fun runningCheckWrites(
     server: CachedTimeEntry?,
     unsent: (Long) -> Boolean,
     cached: (Long) -> CachedTimeEntry?,
+    pendingAtStart: Set<Long> = emptySet(),
 ): RunningCheckWrites {
-    val unchanged = now.filter { it in before && !unsent(it.id) }
-    val running = server?.takeIf { it.stop == null && !unsent(it.id) }
-    // A timer the phone started and has not sent runs on the phone, whatever runs on the server.
-    val phoneRuns = now.any { unsent(it.id) }
+    val held = { id: Long -> id in pendingAtStart || unsent(id) }
+    val unchanged = now.filter { it in before && !held(it.id) }
+    val running = server?.takeIf { it.stop == null && !held(it.id) }
+    // A timer with a change the server may lack, such as an unsent start, runs as the phone has
+    // it, whatever runs on the server.
+    val phoneRuns = now.any { held(it.id) }
     val upsert = running?.takeIf { !phoneRuns && now.all { it in before } }?.takeIf { entry ->
         val row = cached(entry.id)
         if (row == null) entry.id !in before.map { it.id } else row in unchanged

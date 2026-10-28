@@ -196,6 +196,31 @@ class RunningEntryQueueTest {
         }
     }
 
+    @Test
+    fun aRunningEntryAnswerKeepsAStartAndAnEditSentDuringItsRead() {
+        runBlocking {
+            val cache = AccountCache(database, clock)
+            val store = RoomChangeStore(database)
+            val local = queue.start(WORKSPACE, EntryFields("Running"))
+            val startRead = cache.runningCheckStart()
+            store.sent(database.changes().changesFor(local).single(), serverId = 501, answer = null)
+
+            cache.checkedRunning(startRead, server = null)
+            assertEquals("the sent start stays", listOf(501L), database.changes().runningEntries().map { it.id })
+
+            assertTrue(queue.updateRunning(identity(501), EntryFields("Edited on the phone"), START))
+            val editRead = cache.runningCheckStart()
+            val stale = database.changes().entry(501)!!.copy(description = "Running")
+            store.sent(database.changes().changesFor(501).single(), serverId = 501, answer = null)
+
+            cache.checkedRunning(editRead, server = stale)
+            assertEquals("Edited on the phone", database.changes().entry(501)!!.description)
+
+            cache.checkedRunning(cache.runningCheckStart(), server = stale)
+            assertEquals("a read begun after the send takes the server's values", "Running", database.changes().entry(501)!!.description)
+        }
+    }
+
     private fun reopen() {
         database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
         queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock)

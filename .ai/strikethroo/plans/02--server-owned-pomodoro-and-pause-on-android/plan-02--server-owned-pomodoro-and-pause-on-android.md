@@ -397,11 +397,11 @@ graph TD
 
 - ✔️ Task 001 (completed): [Verify the shipped timer contract and pin the test server](tasks/01--verify-shipped-timer-contract-and-pin-test-server.md).
 
-### Phase 2: Establish the account state source
+### ✅ Phase 2: Establish the account state source
 
 **Parallel Tasks:**
 
-- Task 002: [Add persisted account timer state](tasks/02--add-persisted-account-timer-state.md), depends on 001.
+- ✔️ Task 002 (completed): [Add persisted account timer state](tasks/02--add-persisted-account-timer-state.md), depends on 001.
 
 ### Phase 3: Add actions and capability detection
 

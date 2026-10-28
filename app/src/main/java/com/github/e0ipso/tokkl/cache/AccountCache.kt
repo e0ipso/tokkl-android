@@ -26,7 +26,7 @@ class AccountCache(
     private val database: CacheDatabase,
     private val clock: Clock = Clock.systemUTC(),
     private val pomodoro: () -> PomodoroSessionStore? = { null },
-) {
+) : CurrentEntryCache {
 
     private val dao = database.cache()
 
@@ -98,44 +98,52 @@ class AccountCache(
     }
 
     /**
-     * The cached running entries and the pause chain, as a running entry check reads them before
-     * its request. Blocks on disk I/O.
+     * The cached running entries, the ids with queued changes and the pause chain, read together,
+     * as a running entry check reads them before its request. Blocks on disk I/O.
      */
-    fun runningCheckStart(): RunningCheckStart {
+    override fun runningCheckStart(): RunningCheckStart {
         val changes = database.changes()
-        return database.runInTransaction<RunningCheckStart> { RunningCheckStart(changes.runningEntries(), changes.chainMark()) }
+        return database.runInTransaction<RunningCheckStart> {
+            RunningCheckStart(changes.runningEntries(), changes.chainMark(), changes.pendingEntryIds().toSet())
+        }
     }
 
     /**
      * Writes a running entry check's answer, [server], the entry the server runs or null when none
      * runs, read after the cache held what [before] holds, in one transaction, as
-     * [runningCheckWrites] describes: entries with unsent changes, and rows written since
-     * [before], stay as they are. A pause chain whose timer changed elsewhere ends, as
-     * [ChangeDao.reconcilePauseChain] describes. A failed write keeps the cache for the next
-     * check. Blocks on disk I/O.
+     * [runningCheckWrites] describes: entries with unsent changes, entries with changes queued at
+     * [before] that the sender may have sent since, and rows written since [before], stay as they
+     * are. A pending local id that the server has answered since protects its server id too. A
+     * pause chain whose timer changed elsewhere ends, as [ChangeDao.reconcilePauseChain]
+     * describes. Returns what it wrote, or null when the write failed and the cache stays for the
+     * next check. Blocks on disk I/O.
      */
-    fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?) {
+    override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? {
         val changes = database.changes()
         val sessions = pomodoro()
-        val handoff = try {
-            database.runInTransaction<PomodoroStep> {
+        val (writes, handoff) = try {
+            database.runInTransaction<Pair<RunningCheckWrites, PomodoroStep>> {
+                // A pending local start may have been answered and remapped during the read.
+                val mappedIds = before.pendingIds.filter { it < 0 }.mapNotNull(changes::serverId)
                 val writes = runningCheckWrites(
                     before = before.running,
                     now = changes.runningEntries(),
                     server = server,
                     unsent = { changes.countFor(it) > 0 },
                     cached = changes::entry,
+                    pendingAtStart = before.pendingIds + mappedIds,
                 )
                 writes.delete.forEach(changes::deleteEntry)
                 writes.upsert?.let(changes::upsertEntry)
                 changes.reconcilePauseChain(before.chain)
-                endForForeignTimer(sessions, listOfNotNull(writes.upsert))
+                writes to endForForeignTimer(sessions, listOfNotNull(writes.upsert))
             }
         } catch (e: SQLiteException) {
             // Keeps both the cache and session until the next check.
-            return
+            return null
         }
         finishHandoff(sessions, handoff)
+        return writes
     }
 
     /** All identity checks and the partial save use the refresh's existing transaction. */
@@ -173,8 +181,26 @@ class AccountCache(
     }
 }
 
-/** What a running entry check read before its request: the [running] entries and the [chain]. */
-class RunningCheckStart(val running: List<CachedTimeEntry>, val chain: ChainMark?)
+/**
+ * What a running entry check read before its request: the [running] entries, the [chain] and the
+ * [pendingIds] of the entries the queue held changes to.
+ */
+class RunningCheckStart(
+    val running: List<CachedTimeEntry>,
+    val chain: ChainMark?,
+    val pendingIds: Set<Long> = emptySet(),
+)
+
+/**
+ * The cache's current-entry reconciliation, for every server answer that names the running entry:
+ * the running entry check, the tile's refresh and the timer state. Read [runningCheckStart] before
+ * the request, then hand its answer to [checkedRunning]. [AccountCache] implements it.
+ */
+interface CurrentEntryCache {
+    fun runningCheckStart(): RunningCheckStart
+
+    fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites?
+}
 
 /** Keep stale, locally overlaid, phone-created and already observed starts out of the handoff. */
 internal fun foreignPomodoroStart(

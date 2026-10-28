@@ -82,6 +82,33 @@ class RunningCheckTest {
     }
 
     @Test
+    fun aChangeQueuedWhenTheRequestBeganStaysAfterItWasSent() {
+        // The edit was queued before the request and sent during it, so the answer may predate it.
+        val edited = entry(1, description = "Edited on the phone")
+
+        assertEquals(
+            "a stale answer does not undo the edit",
+            RunningCheckWrites(),
+            writes(before = listOf(edited), server = entry(1, description = "Older"), pendingAtStart = setOf(1L)),
+        )
+        assertEquals(
+            "nor drops the timer",
+            RunningCheckWrites(),
+            writes(before = listOf(edited), server = null, pendingAtStart = setOf(1L)),
+        )
+    }
+
+    @Test
+    fun aDeleteSentDuringTheRequestIsNotAddedBack() {
+        val running = entry(1)
+
+        assertEquals(
+            RunningCheckWrites(),
+            writes(before = emptyList(), now = emptyList(), server = running, cached = emptyList(), pendingAtStart = setOf(1L)),
+        )
+    }
+
+    @Test
     fun aStopOnThePhoneAfterTheRequestIsNotUndone() {
         val running = entry(1)
         val stopped = entry(1, stop = STOP)
@@ -136,6 +163,7 @@ class RunningCheckTest {
         now: List<CachedTimeEntry> = before,
         unsent: Set<Long> = emptySet(),
         cached: List<CachedTimeEntry> = now,
+        pendingAtStart: Set<Long> = emptySet(),
     ): RunningCheckWrites =
         runningCheckWrites(
             before = before,
@@ -143,6 +171,7 @@ class RunningCheckTest {
             server = server,
             unsent = { it in unsent },
             cached = { id -> cached.firstOrNull { it.id == id } },
+            pendingAtStart = pendingAtStart,
         )
 
     private fun entry(id: Long, description: String = "Running", stop: Instant? = null) = CachedTimeEntry(

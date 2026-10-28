@@ -64,6 +64,8 @@ import com.github.e0ipso.tokkl.sync.shownSyncStatus
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
 import com.github.e0ipso.tokkl.widget.TokklWidget
 import com.github.e0ipso.tokkl.widget.WidgetState
@@ -281,6 +283,40 @@ class TokklApplication : Application() {
     /** The offline cache. */
     val cache: AccountCache by lazy { AccountCache(cacheDatabase, pomodoro = { pomodoroSessions }) }
 
+    private val timerStateLock = Any()
+    private var timerStateForAccount = newTimerState(restore = true)
+
+    /**
+     * The account's timer state from a Tokkl server with the timer API, which every timer request,
+     * action and event feeds. Loaded on first use from the stored state, a small file. Sign-out
+     * retires it and sign-in replaces it, so take it once per request or stream and give its
+     * answer to the same source: an answer kept for a retired source changes nothing.
+     */
+    val timerState: TimerStateSource
+        get() = synchronized(timerStateLock) { timerStateForAccount.value }
+
+    private fun newTimerState(restore: Boolean): Lazy<TimerStateSource> = lazy {
+        val store = TimerStateStore(this)
+        TimerStateSource(
+            initial = if (restore) store.load() else null,
+            save = store::save,
+            cache = cache,
+            // The state does not carry a stopped entry's stop; the history read does.
+            onRunningEnded = { accountSettings.refreshAfterChange() },
+        )
+    }
+
+    /**
+     * Retires the timer state source and clears its store, then installs a new, empty source for
+     * the account signing in. Blocks on disk I/O.
+     */
+    @Throws(IOException::class)
+    private fun renewTimerState() {
+        timerState.retire()
+        TimerStateStore(this).clear()
+        synchronized(timerStateLock) { timerStateForAccount = newTimerState(restore = false) }
+    }
+
     /**
      * Start, stop, create, edit and delete entries on the phone. The [sender] sends each change at
      * once, and [BackgroundSend] sends what is left when the network returns, also with the app
@@ -378,14 +414,16 @@ class TokklApplication : Application() {
     }
 
     /**
-     * Stores what a sign-in got from the server: the account settings first, then the server and
-     * its token. If the session write fails, the app stays signed out and the next sign-in replaces
-     * the settings. A sign-in again after a refused token then lifts the queue's pause, and the
-     * changes that waited go out (docs/PRD.md O6). Blocks on disk I/O.
+     * Stores what a sign-in got from the server: the account settings first, then a new, empty
+     * timer state, then the server and its token. If the session write fails, the app stays
+     * signed out and the next sign-in replaces the settings. A sign-in again after a refused token
+     * then lifts the queue's pause, and the changes that waited go out (docs/PRD.md O6). Blocks on
+     * disk I/O.
      */
     @Throws(GeneralSecurityException::class, IOException::class)
     fun storeSignIn(server: ServerUrl, token: String, settings: AccountSettings) {
         accountSettings.store(settings)
+        renewTimerState()
         Session(this).save(server, token)
         pomodoroSessionNotification.start()
         if (sender.signInNeeded.value) sender.resume()
@@ -476,9 +514,10 @@ class TokklApplication : Application() {
 
     /**
      * Sign-out (docs/PRD.md S6). It forgets the server and the token with its Keystore key first,
-     * so the app sends nothing new. Then it cancels the queue's background work and every call in
-     * flight, waits for the refresh and the queue's drain to end, and clears the cache with the
-     * queue and the Pomodoro session, its alarm and ringing, the running timer's notification, the launcher shortcuts, the account settings,
+     * so the app sends nothing new, and retires the timer state, so a late answer cannot write it
+     * or the cache again. Then it cancels the queue's background work and every call in flight,
+     * waits for the refresh and the queue's drain to end, and clears the timer state's store and
+     * the cache with the queue and the Pomodoro session, its alarm and ringing, the running timer's notification, the launcher shortcuts, the account settings,
      * the capabilities, the Timer page's view, the Pomodoro defaults, the reminder and its settings, the trust decisions, the last answer and the count of
      * discarded changes. MainActivity then drops its view models, and with them
      * the history's older days and what every other screen loaded. The theme and the sign-in
@@ -488,6 +527,7 @@ class TokklApplication : Application() {
         SignOut(
             steps = listOf(
                 { Session(this).clear() },
+                { timerState.retire() },
                 { pomodoroSessionNotification.forget() },
                 { pomodoroSessions.forget() },
                 // ID 3 is shared with the session notification, including a non-ringing form.
@@ -498,6 +538,7 @@ class TokklApplication : Application() {
                 { SharedHttpClient.cancelAll() },
                 { accountSettings.forget() },
                 { sender.stop() },
+                { TimerStateStore(this).clear() },
                 {
                     cache.clear()
                     synchronized(pomodoroSessionLock) {

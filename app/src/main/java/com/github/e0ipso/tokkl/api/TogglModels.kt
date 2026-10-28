@@ -48,10 +48,11 @@ class ServerTask(
 
 /**
  * A time entry from `GET /api/v9/me/time_entries`. [start] and [stop] are RFC 3339 timestamps,
- * and [stop] is null while the entry runs.
+ * and [stop] is null while the entry runs. A data class, because the timer state holds the running
+ * entry in this shape and compares states by value.
  */
 @Serializable
-class ServerTimeEntry(
+data class ServerTimeEntry(
     val id: Long,
     @SerialName("workspace_id") val workspaceId: Long,
     @SerialName("project_id") val projectId: Long? = null,
