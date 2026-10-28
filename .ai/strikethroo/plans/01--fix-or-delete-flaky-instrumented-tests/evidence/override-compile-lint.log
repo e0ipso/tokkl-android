@@ -1,0 +1,76 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as no cached configuration is available for tasks: :app:compileDebugAndroidTestKotlin :app:lintDebug
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+> Task :app:compileDebugKotlin UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:generateDebugAndroidTestResources
+> Task :app:packageDebugAndroidTestResources
+> Task :app:processDebugAndroidTestNavigationResources
+> Task :app:parseDebugAndroidTestLocalResources
+> Task :app:generateDebugAndroidTestRFile
+> Task :app:kspDebugAndroidTestKotlin
+> Task :app:copyRoomSchemas NO-SOURCE
+> Task :app:compileDebugAndroidTestKotlin
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AdditionalAccessibilityTest.kt:154:67 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/clients/ClientsServerTest.kt:320:64 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/entry/EntryFormServerTest.kt:476:32 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/entry/EntryFormServerTest.kt:597:77 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/entry/RunningEntryEditorServerTest.kt:488:77 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningLiveUpdateTest.kt:70:33 'field contentView: RemoteViews!' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningLiveUpdateTest.kt:71:33 'field bigContentView: RemoteViews!' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningLiveUpdateTest.kt:72:33 'field headsUpContentView: RemoteViews!' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPageFontScaleTest.kt:133:73 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPageServerTest.kt:400:73 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/projects/ProjectsServerTest.kt:434:64 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/reports/AppSummaryPresentationTest.kt:84:81 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/settings/PomodoroDefaultsUiTest.kt:119:67 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/tags/TagsServerTest.kt:315:64 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/SystemDisplaySize.kt:90:22 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+
+> Task :app:generateDebugAndroidTestLintModel
+> Task :app:extractProguardFiles
+> Task :app:generateDebugLintReportModel
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:generateDebugUnitTestLintModel
+> Task :app:lintAnalyzeDebug
+> Task :app:lintAnalyzeDebugAndroidTest
+> Task :app:lintAnalyzeDebugUnitTest
+
+> Task :app:lintReportDebug
+Wrote HTML report to file:///home/e0ipso/workspace/apps/tokkl-android/app/build/reports/lint-results-debug.html
+Wrote SARIF report to file:///home/e0ipso/workspace/apps/tokkl-android/app/build/reports/lint-results-debug.sarif
+
+> Task :app:lintDebug
+
+[Incubating] Problems report is available at: file:///home/e0ipso/workspace/apps/tokkl-android/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 6m 14s
+35 actionable tasks: 16 executed, 19 up-to-date
+Configuration cache entry stored.

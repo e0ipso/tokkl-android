@@ -1,0 +1,57 @@
+Task 003: SyncStatusFitTest CI evidence
+Captured 2026-10-26 from GitHub Actions artifacts. No credentials are included.
+
+Failing main run
+================
+Run: 40348957121
+Revision: 5b8e906
+Artifact: instrumented-reports-api-31-shard-1
+Retrieval command:
+  gh run download 40348957121 -n instrumented-reports-api-31-shard-1 -D <temporary-directory>
+
+JUnit suite summary:
+  <testsuites tests="93" failures="1" errors="0" skipped="0"
+
+SyncStatusFitTest report excerpt:
+  java.lang.AssertionError: needs attention label DpRect(left=28.148148.dp, top=520.8889.dp, right=291.85184.dp, bottom=595.55554.dp) overlaps Pomodoro item DpRect(left=65.77778.dp, top=575.1111.dp, right=123.55556.dp, bottom=655.1111.dp)
+      at com.github.e0ipso.tokkl.sync.SyncStatusFitTest.assertNoOverlap(SyncStatusFitTest.kt:105)
+      at com.github.e0ipso.tokkl.sync.SyncStatusFitTest.theStatusFitsAboveTheBarAndOpensTheNeedsAttentionList(SyncStatusFitTest.kt:91)
+
+The vertical intersection is 595.55554dp - 575.1111dp = 20.44444dp.
+
+Relevant device-configuration log excerpt:
+  10-26 15:39:36.278 I TokklAccessibility: largest display density=540; physical=420; size=Physical size: 1080x2400
+  10-26 15:39:36.386 I TokklAccessibility: font scale=2.0; largest display=true
+
+Passing main run
+================
+Run: 40287959415
+Revision: b58fa73
+Artifact: instrumented-reports-api-31-shard-1
+Retrieval command:
+  gh run download 40287959415 -n instrumented-reports-api-31-shard-1 -D <temporary-directory>
+
+JUnit excerpt:
+  <testsuite name="com.github.e0ipso.tokkl.sync.SyncStatusFitTest" tests="1" failures="0" errors="0" skipped="0" time="5.815">
+    <testcase name="theStatusFitsAboveTheBarAndOpensTheNeedsAttentionList" classname="com.github.e0ipso.tokkl.sync.SyncStatusFitTest" time="5.815" />
+
+History and source comparison
+=============================
+The coordinator observed main run 40358339173 at c599620 succeed; run 40348957121 at 5b8e906 failed; later runs 40380995661 and 40381019276 were incomplete at inspection time.
+
+`git diff b58fa73..5b8e906` contains no change to:
+  app/src/androidTest/java/com/github/e0ipso/tokkl/sync/SyncStatusFitTest.kt
+  app/src/main/java/com/github/e0ipso/tokkl/sync/SyncStatusBand.kt
+  app/src/main/java/com/github/e0ipso/tokkl/TokklNavHost.kt
+  app/src/main/java/com/github/e0ipso/tokkl/navigation/AppNavigation.kt
+  app/src/main/java/com/github/e0ipso/tokkl/ui/theme/NavigationBar.kt
+
+Conclusion
+==========
+The overlap is confirmed in one run and absent in another with unchanged relevant source. That comparison does not rule out dependency, asset or runtime effects. Late application of the requested font/display configuration is not supported by the failing log, but it is not conclusively ruled out. Static inspection cannot distinguish an API 31 relayout between the test's separately fetched semantics rectangles from a transient multiline TextButton measurement defect. The method-only API 31 run needed to settle that cause was not started because the mandatory memory admission gate rejected the workload, so the exact cause remains open.
+
+Source correction pending runtime verification
+==============================================
+The failure from run 40348957121 remains the RED evidence; no redundant emulator attempt was made while device admission remained unavailable. Static inspection of Compose UI test 1.12.1 showed that `getUnclippedBoundsInRoot()` fetches a live `SemanticsNode`, then reads its position and size outside that fetch's main-thread task. `SyncStatusFitTest.assertNoOverlap` repeated that operation separately for every status and navigation node, so its pairwise comparison did not guarantee one layout frame. This mechanism makes cross-layout sampling possible, but the available artifact does not prove that it caused the failed runtime observation.
+
+The source correction resolves every `SemanticsNodeInteraction` before `runOnIdle`, then reads all node positions and sizes in one main-thread task, following the existing `SignInFormLayout.layoutOf` pattern. The same nodes and every original pairwise overlap assertion remain; window containment, text overflow, touch-target and click assertions are unchanged. No production layout or screenshot method changed. Compilation and the exact API 31 method remain pending coordinator-provided capacity.
