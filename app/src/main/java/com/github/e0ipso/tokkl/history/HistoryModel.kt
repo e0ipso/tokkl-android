@@ -132,6 +132,9 @@ class HistoryModel(
     /** Where the account's history starts, once the server has said or shown that it cannot. */
     private var bounds: Bounds? = null
 
+    /** Online updates since the model opened, including one arriving during an older-page read. */
+    private var reconnects = 0L
+
     /**
      * The entries of the days the cache dropped between [Older.until] and its first day, and the
      * cached entries as [state] last saw them. Only [state]'s upstream reads and writes these, one
@@ -204,6 +207,7 @@ class HistoryModel(
         val before = current.from ?: firstCachedDay(time)
         older.value = current.copy(status = OlderDays.Loading)
         val known = bounds
+        val reconnectsBefore = reconnects
         scope.launch {
             val (page, read) = withContext(io) { fetch(time, before, known) }
             bounds = read
@@ -216,6 +220,9 @@ class HistoryModel(
                     status = page.status,
                 )
             }
+            // The request may still have used the old route when an online update arrived.
+            // Retry that failure once for the newer event; a successful page never pages on.
+            if (page is Page.NotLoaded && page.status == OlderDays.Unreachable && reconnects != reconnectsBefore) loadOlder()
         }
     }
 
@@ -225,6 +232,7 @@ class HistoryModel(
      * ask nothing. Call it on the main thread.
      */
     fun reconnected() {
+        reconnects++
         if (older.value.status == OlderDays.Unreachable) loadOlder()
     }
 

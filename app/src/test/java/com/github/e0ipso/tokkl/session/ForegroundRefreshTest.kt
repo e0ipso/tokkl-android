@@ -69,4 +69,20 @@ class ForegroundRefreshTest {
         foreground.started(online = true)
         assertEquals("the start refreshes, once", 2, refreshes)
     }
+
+    @Test
+    fun onlineUpdatesRetryFailedPagesWithoutRefreshingTheAccountAgain() {
+        var onlineUpdates = 0
+        val retryPage = { onlineUpdates++; Unit }
+        foreground.started(online = false)
+
+        assertTrue(foreground.networkChanged(online = true, onOnline = retryPage))
+        assertFalse(foreground.networkChanged(online = true, onOnline = retryPage))
+        assertEquals("a second usable route can recover the failed page", 2, onlineUpdates)
+        assertEquals("only the actual return refreshes the account", 2, refreshes)
+
+        foreground.stopped(changingConfigurations = false)
+        assertFalse(foreground.networkChanged(online = true, onOnline = retryPage))
+        assertEquals("background updates load nothing", 2, onlineUpdates)
+    }
 }

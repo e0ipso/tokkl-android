@@ -234,8 +234,13 @@ class MainActivity : ComponentActivity() {
         // written, so the queue could not tell whether a delete reached the server, and Undo
         // would need the server. Without one, the request fails before it leaves the phone.
         if (!online) SharedHttpClient.instance.connectionPool.evictAll()
-        if (!(application as TokklApplication).foregroundRefresh.networkChanged(online)) return
-        historyViewModel.model.reconnected()
+        val returned = (application as TokklApplication).foregroundRefresh.networkChanged(online) {
+            // A cellular route can appear before it works, followed by Wi-Fi without an
+            // offline interval. Retry failed older days on each online update, while keeping
+            // the account refresh and other foreground work debounced.
+            historyViewModel.model.reconnected()
+        }
+        if (!returned) return
         calendarViewModel.model.reconnected()
         reportsViewModel.model.reconnected()
     }

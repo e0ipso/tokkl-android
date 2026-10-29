@@ -19,8 +19,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +44,7 @@ import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -262,6 +266,38 @@ class HistoryModelTest {
         awaitShown(model) { it.older.settled() || it.older == OlderDays.More(auto = true) }
         assertEquals("older days that loaded ask nothing", asked, requests.toList())
         assertEquals(loaded.days, awaitShown(model) { true }.days)
+    }
+
+    @Test
+    fun anOnlineUpdateDuringAFailingReadRetriesTheSameOlderDays() {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val held = AtomicBoolean(false)
+        val usual = server.dispatcher
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.url.encodedPath == "/api/app/bounds" && held.compareAndSet(false, true)) {
+                    entered.countDown()
+                    check(release.await(10, TimeUnit.SECONDS)) { "the failed read was not released" }
+                    return MockResponse.Builder().code(503).build()
+                }
+                return usual.dispatch(request)
+            }
+        }
+        cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+        onMain { model.loadOlder() }
+        try {
+            assertTrue("the old route's request started", entered.await(5, TimeUnit.SECONDS))
+            onMain { model.reconnected() }
+        } finally {
+            release.countDown()
+        }
+
+        val loaded = awaitShown(model) { it.older != OlderDays.Loading && it.days.size > 14 }
+        assertEquals(days("2026-10-19", "2026-09-22"), loaded.days.map { it.date })
+        assertEquals("the online event retries the failed page, without paging on", 1, pages.size)
     }
 
     @Test

@@ -49,13 +49,16 @@ class ForegroundRefresh(private val refresh: () -> Unit, private val refreshOnRe
      * The phone's default network changed while the app is in the foreground: [online] is whether
      * it reaches the internet now. Coming back online refreshes once and returns true, so the
      * caller can tell the screens on show to load what they could not. A change of network that
-     * stays online, or a report while stopped, does nothing and returns false.
+     * stays online returns false without refreshing the account. [onOnline] still hears each
+     * online update while started, so a failed page can recover when a second network becomes
+     * usable. A report while stopped does nothing.
      */
-    fun networkChanged(online: Boolean): Boolean {
+    fun networkChanged(online: Boolean, onOnline: () -> Unit = {}): Boolean {
         val before = this.online ?: return false
         this.online = online
         val back = online && !before
         if (back) refreshOnReconnect()
+        if (online) onOnline()
         return back
     }
 }
