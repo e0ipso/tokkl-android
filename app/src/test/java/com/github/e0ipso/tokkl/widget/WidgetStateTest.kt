@@ -7,10 +7,15 @@ import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.time.DurationFormat
+import com.github.e0ipso.tokkl.timer.timerPeriodTotals
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import java.io.IOException
+import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
@@ -18,6 +23,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WidgetStateTest {
@@ -25,6 +32,7 @@ class WidgetStateTest {
     private val start: Instant = Instant.parse("2026-10-20T08:15:30.250Z")
     private val project = CachedProject(id = 7, workspaceId = 1, clientId = null, name = "Tokkl for Android", color = "#06aaf5", active = true, billable = false)
     private val task = CachedTask(id = 9, workspaceId = 1, projectId = 7, name = "Design", active = true)
+    private val settings = AccountSettings("Asia/Tokyo", DayOfWeek.MONDAY, timeResolutionMinutes = null)
     private val running = CachedTimeEntry(
         id = -3,
         workspaceId = 1,
@@ -51,7 +59,24 @@ class WidgetStateTest {
         tasks: List<CachedTask> = listOf(task),
         held: HeldTimerState? = null,
         timerApi: Boolean = true,
-    ) = widgetState(workspaceId, ServerTimerStates.controls(entry, held, timerApi), favorites, favoritesAvailable, projects, tasks)
+        entries: List<CachedTimeEntry> = listOfNotNull(entry),
+        settings: AccountSettings = this.settings,
+        now: Instant = start.plusSeconds(1_800),
+        serverIdOf: Map<Long, Long> = emptyMap(),
+    ) = widgetState(workspaceId, ServerTimerStates.controls(entry, held, timerApi), favorites, favoritesAvailable, projects, tasks,
+        entries = entries, settings = settings, now = now, serverIdOf = serverIdOf)
+
+    @Test
+    fun projectColourChangesRedrawRunningAndPausedWidgets() {
+        val recoloured = project.copy(color = "#ff5500")
+        assertNotEquals(state().key(), state(projects = listOf(recoloured)).key())
+
+        val held = ServerTimerStates.held(3, start, ServerTimerStates.paused(600, EntryFields("Widget", projectId = 7)))
+        assertNotEquals(
+            state(entry = null, held = held).key(),
+            state(entry = null, held = held, projects = listOf(recoloured)).key(),
+        )
+    }
 
     @Test
     fun showsTheRunningEntryWithItsProjectAndTaskAndPause() {
@@ -67,6 +92,7 @@ class WidgetStateTest {
                 accumulatedSeconds = 0,
                 target = TimerTarget.server(entryId = -3, account = ServerTimerStates.ACCOUNT),
                 pausable = true,
+                projectColor = project.color,
             ),
             shown.running,
         )
@@ -171,6 +197,7 @@ class WidgetStateTest {
                 task = "Design",
                 seconds = 600,
                 target = TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT),
+                projectColor = project.color,
             ),
             shown.paused,
         )
@@ -221,6 +248,157 @@ class WidgetStateTest {
         assertNotEquals(shown.key(), state(entry = null).key())
         assertNotEquals(shown.key(), state(favoritesAvailable = false).key())
         assertNotEquals(shown.key(), state(workspaceId = null).key())
+    }
+
+    @Test
+    fun dayReportMatchesTimerTotalsWithMappedRowsBillableTimeAndNoProject() {
+        val local = running.copy(id = -4, stop = start.plusSeconds(600), billable = true)
+        val server = local.copy(id = 80, stop = start.plusSeconds(10))
+        val otherProject = project.copy(id = 8, name = "Other", color = "#ff5500")
+        val other = local.copy(id = 2, projectId = 8, stop = start.plusSeconds(1_200), billable = false)
+        val unassigned = local.copy(id = 3, projectId = null, stop = start.plusSeconds(300))
+        val rows = listOf(server, local, local, other, unassigned)
+        val mapping = mapOf(-4L to 80L)
+        val now = start.plusSeconds(1_800)
+        val day = (state(entry = null, entries = rows, projects = listOf(project, otherProject), now = now, serverIdOf = mapping) as WidgetState.Ready).day!!
+
+        assertEquals(LocalDate.of(2026, 10, 20), day.date)
+        assertEquals(timerPeriodTotals(rows, settings, now, mapping)!!.todaySeconds, day.totalSeconds(now))
+        assertEquals(2_100L, day.stoppedSeconds)
+        assertEquals(900L, day.billableSeconds(now))
+        assertEquals(3, day.entryCount)
+        assertEquals(listOf(8L, 7L, null), day.projects.map { it.projectId })
+        assertEquals(listOf(1_200L, 600L, 300L), day.projects.map { it.stoppedSeconds })
+        assertEquals(listOf("Other", project.name, null), day.projects.map { it.project })
+        assertEquals(listOf(otherProject.color, project.color, null), day.projects.map { it.projectColor })
+        assertEquals(listOf("0:20", "0:10", "0:05"), day.projects.map { it.formattedStopped })
+        assertTrue(day.projects.none { it.running })
+        assertNull(day.running)
+    }
+
+    @Test
+    fun resumedDayCountsActualSegmentsWithoutAddingThePauseChainAgain() {
+        val stopped = running.copy(id = 1, start = start.minusSeconds(900), stop = start.minusSeconds(300), billable = true)
+        val current = running.copy(billable = true)
+        val held = ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = -3), offset = Duration.ofSeconds(20))
+        val now = start.plusSeconds(100)
+        val day = (state(entry = current, held = held, entries = listOf(stopped, current), now = now) as WidgetState.Ready).day!!
+        val segment = day.running!!
+
+        assertEquals(600L, day.stoppedSeconds)
+        assertEquals(700L, day.totalSeconds(now))
+        assertEquals(timerPeriodTotals(listOf(stopped, current), settings, now)!!.todaySeconds, day.totalSeconds(now))
+        assertEquals(700L, day.billableSeconds(now))
+        assertEquals(2, day.entryCount)
+        assertEquals(current.id, segment.entryId)
+        assertEquals("the report uses the entry's real start, as the Timer page does", start, segment.start)
+        assertTrue(day.projects.single().running)
+        assertEquals(1_000_000L - 700_000, chronometerBase(segment.start, now, 1_000_000, day.stoppedSeconds))
+        assertEquals("0:11:40", day.formattedTotal(now))
+    }
+
+    @Test
+    fun aMappedRunningRowKeepsTheLocalContributionAndUnassignedRunningMarker() {
+        val local = running.copy(projectId = null, billable = true)
+        val server = local.copy(id = 80, start = start.plusSeconds(50))
+        val now = start.plusSeconds(100)
+        val rows = listOf(server, local)
+        val mappings = mapOf(local.id to server.id)
+        val day = (state(entry = server, entries = rows, now = now, serverIdOf = mappings) as WidgetState.Ready).day!!
+
+        assertEquals(timerPeriodTotals(rows, settings, now, mappings)!!.todaySeconds, day.totalSeconds(now))
+        assertEquals(100L, day.billableSeconds(now))
+        assertEquals(1, day.entryCount)
+        assertEquals(local.id, day.running!!.entryId)
+        assertNull(day.projects.single().projectId)
+        assertTrue(day.projects.single().running)
+    }
+
+    @Test
+    fun dayRolloverUsesTheAccountStartDayWithoutSplittingOvernightEntries() {
+        val before = Instant.parse("2026-10-20T14:59:00Z")
+        val after = before.plusSeconds(120)
+        val current = running.copy(start = before.minusSeconds(60))
+        val stopped = running.copy(id = 8, start = before.minusSeconds(300), stop = after)
+        val tomorrow = running.copy(id = 9, start = after.plusSeconds(86_400), stop = after.plusSeconds(86_500))
+        val rows = listOf(current, stopped, tomorrow)
+        val old = state(entry = current, entries = rows, now = before) as WidgetState.Ready
+        val next = state(entry = current, entries = rows, now = after) as WidgetState.Ready
+        val oldDay = old.day!!
+        val nextDay = next.day!!
+
+        assertEquals(LocalDate.of(2026, 10, 20), oldDay.date)
+        assertEquals(LocalDate.of(2026, 10, 21), nextDay.date)
+        assertEquals(timerPeriodTotals(rows, settings, before)!!.todaySeconds, oldDay.totalSeconds(before))
+        assertEquals(0L, nextDay.totalSeconds(after))
+        assertEquals(0, nextDay.entryCount)
+        assertTrue(nextDay.projects.isEmpty())
+        assertNull(nextDay.running)
+        assertNotEquals(old.key(), next.key())
+        assertEquals("the timer still runs", current.id, next.running!!.entryId)
+    }
+
+    @Test
+    fun dayDurationsUseElapsedInstantsAcrossBothDstTransitions() {
+        val account = settings.copy(timeZone = "America/New_York")
+        for ((first, last) in listOf(
+            "2026-03-08T06:30:00Z" to "2026-03-08T07:30:00Z",
+            "2026-11-01T05:30:00Z" to "2026-11-01T06:30:00Z",
+        )) {
+            val row = running.copy(start = Instant.parse(first), stop = Instant.parse(last))
+            val now = row.stop!!.plusSeconds(60)
+            val day = (state(entry = null, entries = listOf(row), settings = account, now = now) as WidgetState.Ready).day!!
+            assertEquals(3_600L, day.totalSeconds(now))
+            assertEquals(timerPeriodTotals(listOf(row), account, now)!!.todaySeconds, day.totalSeconds(now))
+        }
+    }
+
+    @Test
+    fun unknownAccountZoneHidesTheDayReportAndKeepsTimerControls() {
+        val shown = state(settings = settings.copy(timeZone = "GMT+5")) as WidgetState.Ready
+        assertNull(shown.day)
+        assertEquals(running.id, shown.running!!.entryId)
+        assertEquals(2, shown.favorites.size)
+    }
+
+    @Test
+    fun totalsAndProjectRowsUseTheAccountDurationFormat() {
+        val row = running.copy(stop = start.plusSeconds(3_661), billable = true)
+        val now = row.stop!!
+        for (format in DurationFormat.entries) {
+            val account = settings.copy(durationFormat = format)
+            val day = (state(entry = null, entries = listOf(row), settings = account, now = now) as WidgetState.Ready).day!!
+            assertEquals(account.formatDuration(3_661), day.formattedTotal(now))
+            assertEquals(account.formatDuration(3_661), day.formattedBillable(now))
+            assertEquals(account.formatDurationWithoutSeconds(3_661), day.projects.single().formattedStopped)
+        }
+    }
+
+    @Test
+    fun aTickingReportKeyStaysStableUntilTheDayOrCacheChanges() {
+        val now = start.plusSeconds(100)
+        assertEquals(state(now = now).key(), state(now = now.plusSeconds(300)).key())
+        val first = state(now = now) as WidgetState.Ready
+        val day = first.day!!
+        val row = day.projects.single()
+        val segment = day.running!!
+        val changes = listOf(
+            day.copy(date = day.date.plusDays(1)),
+            day.copy(stoppedSeconds = 1),
+            day.copy(stoppedBillableSeconds = 1),
+            day.copy(entryCount = day.entryCount + 1),
+            day.copy(durationFormat = DurationFormat.DECIMAL),
+            day.copy(running = segment.copy(entryId = 50)),
+            day.copy(running = segment.copy(start = start.plusSeconds(1))),
+            day.copy(running = segment.copy(billable = true)),
+            day.copy(projects = listOf(row.copy(projectId = 50))),
+            day.copy(projects = listOf(row.copy(project = "Changed"))),
+            day.copy(projects = listOf(row.copy(projectColor = "#ff5500"))),
+            day.copy(projects = listOf(row.copy(stoppedSeconds = 50))),
+            day.copy(projects = listOf(row.copy(formattedStopped = "changed"))),
+            day.copy(projects = listOf(row.copy(running = false))),
+        )
+        for (changed in changes) assertNotEquals(first.key(), first.copy(day = changed).key())
     }
 
     @Test
