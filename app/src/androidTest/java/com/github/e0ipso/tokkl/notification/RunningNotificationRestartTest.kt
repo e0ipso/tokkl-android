@@ -8,8 +8,10 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.io.File
@@ -46,7 +48,15 @@ class RunningNotificationRestartTest {
 
         val id = runBlocking { app.changes.start(WORKSPACE, EntryFields(description = "Dismissed before the restart")) }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
-        RunningNotifications.awaitShown("the start")
+        val controls = app.awaitControls<TimerControls.Running>("the new running entry") { it.entry.id == id }
+        val content = checkNotNull(runningNotificationContent(controls, emptyList(), emptyList()))
+        val store = RunningNotificationStore(context)
+        // Process-start observers may still be retiring the previous test's notification.
+        // Dismiss this start only once its notification and restart record both reached it.
+        RunningNotifications.awaitShown("the persisted start") {
+            it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == content.description &&
+                store.load() == FollowedEntry(content.key, id)
+        }
         RunningNotifications.dismiss()
 
         Properties().apply {

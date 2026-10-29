@@ -111,7 +111,9 @@ class TimerSyncServiceLifecycleTest {
 
         ServerTrustStore(context).confirmCleartext(TokklTestServer.legacyUrl)
         Session(context).save(TokklTestServer.legacyUrl, TokklTestServer.legacyApiToken)
-        fixture.refresh()
+        // The stream may have started a refresh for the old server when the session replaced
+        // its running entry. Wait for that refresh, then read the newly stored server.
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
 
         assertFalse("1.8.1 has no timer API", app.capabilities.state.value.timerState)
         awaitEverythingStopped("the loss of the timer API")
