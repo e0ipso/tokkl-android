@@ -86,6 +86,14 @@ internal object BlackholeDiagnostics {
         }
     }
 
+    /** Request paths only, so an unrelated background call cannot hide behind a relay count. */
+    fun recordHttpCalls() {
+        if (!active) return
+        val dispatcher = com.github.e0ipso.tokkl.api.SharedHttpClient.instance.dispatcher
+        val calls = dispatcher.runningCalls() + dispatcher.queuedCalls()
+        record("http.calls=" + calls.joinToString { it.request().url.encodedPath })
+    }
+
     fun finish() {
         record("finish")
         RunningCheck.currentRequestDiagnostic = previousRequestDiagnostic

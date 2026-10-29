@@ -195,6 +195,14 @@ class RunningTileServerTest {
                     BlackholeDiagnostics.mark("tile.airplane.enter")
                     tileNetworkSnapshot()
                     AirplaneMode.set(true, web)
+                    // A failed server probe can precede Android losing its default network.
+                    // The tile uses that network state, so settle it before changing servers.
+                    val connectivity = context.getSystemService(ConnectivityManager::class.java)
+                    runBlocking {
+                        withTimeout(TIMEOUT_MS) {
+                            while (connectivity.reachesInternet()) delay(20)
+                        }
+                    }
                     BlackholeDiagnostics.mark("tile.airplane.return.web_network_failure")
                     tileNetworkSnapshot()
                     BlackholeDiagnostics.mark("tile.session.save.enter")

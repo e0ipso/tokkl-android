@@ -46,6 +46,7 @@ class RequestCounter(server: ServerUrl, private val request: String) : Closeable
 
         init {
             BlackholeDiagnostics.record("counter.connection listen_port=${url.toString().toHttpUrl().port} connection=$connection")
+            BlackholeDiagnostics.recordHttpCalls()
         }
 
         override fun sent(bytes: ByteArray, count: Int) {
