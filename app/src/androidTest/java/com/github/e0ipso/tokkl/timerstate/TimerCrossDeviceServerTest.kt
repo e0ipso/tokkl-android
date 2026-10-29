@@ -156,16 +156,31 @@ class TimerCrossDeviceServerTest {
             val started = postTimer("pomodoro", body = sessionBody("Shared session", every = 2))
             val sent = SystemClock.elapsedRealtime()
             val session = checkNotNull(started.pomodoro)
+            var countdown: Pair<HeldTimerState, Notification>? = null
             within("the remote session reaches the backgrounded phone", sent,
                 "held" to { held()?.let { it.revision >= started.revision && it.pomodoro?.phase?.start == session.phase.start } == true },
-                "notification" to { TimerSurfaces.sessionNotification()?.title() == sessionTitle(R.string.pomodoro_session_work, 1, 2) },
+                "notification" to {
+                    val snapshot = app.timerState.state.value
+                    val shown = TimerSurfaces.sessionNotification()
+                    if (snapshot == null || shown == null) false else {
+                        // A same-phase refresh can move the offset while its notification post
+                        // is still on its way. Capture the pair that agrees within the original
+                        // arrival deadline instead of mixing snapshots after the wait returns.
+                        val remaining = Duration.between(snapshot.state.serverTime, session.phase.plannedEnd)
+                        val matches = snapshot.state.revision >= started.revision && snapshot.state.pomodoro == session &&
+                            shown.title() == sessionTitle(R.string.pomodoro_session_work, 1, 2) &&
+                            shown.notification.`when` == snapshot.receivedAt.plus(remaining).toEpochMilli()
+                        if (matches) countdown = snapshot to shown.notification
+                        matches
+                    }
+                },
             )
-            val held = checkNotNull(app.timerState.state.value)
+            val (held, notification) = checkNotNull(countdown)
             assertEquals("the phone holds the server's session", session, held.state.pomodoro)
             assertEquals(PhaseKind.WORK, session.phase.kind)
             assertEquals(1, session.number)
             assertEquals(2, session.longRestEvery)
-            assertCountsDownTo(checkNotNull(TimerSurfaces.sessionNotification()).notification, session, held, R.string.pomodoro_short_rest)
+            assertCountsDownTo(notification, session, held, R.string.pomodoro_short_rest)
 
             // The server's one-minute work phase ends, and the phone rings from its planned end.
             val work = awaitRingAtItsEnd(session)

@@ -74,3 +74,20 @@ The same folder preserves all 12 device JUnit reports and the three JVM
 reports covering the new network/history regressions. The historical local
 run files were preserved from the referenced thread; this completion session
 ran no local tests.
+
+## Post-archive validation
+
+[Run 40844280259](https://github.com/e0ipso/tokkl-android/actions/runs/40844280259)
+at 0084990 exposed a further API 31 timing race in
+`TimerCrossDeviceServerTest#aSessionFromAnotherDeviceReachesTheBackgroundedPhoneAndItsNextAndEndSilenceTheRing`.
+The expected and posted countdown endpoints differed by 15 milliseconds.
+A same-phase refresh replaced the held clock snapshot while the notification
+for the earlier snapshot was still posted. This was a mixed-snapshot assertion,
+not a need to relax clock accuracy.
+
+The test now captures an agreeing notification/held-state pair inside the
+existing two-second arrival check, then applies the exact countdown and
+session assertions to that captured pair. It no longer reads a newer held
+snapshot separately after the arrival wait. The two-second arrival deadline,
+exact millisecond equality, alarm timing and remote silencing checks remain.
+Full main CI is used for validation; no local tests are run.
