@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.bottomBarItem
+import com.github.e0ipso.tokkl.followNoTimerEvents
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -127,6 +128,11 @@ class ForegroundRefreshServerTest {
         settle()
         assertEquals("a rotation refreshes nothing", beforeOpen + 2, me.count)
 
+        // Offline, the timer event stream tries GET /api/app/timer/events again after 1 s, 2 s and
+        // so on (docs/PRD.md section 6.3), and the outer relay cannot pass those on. Those are the
+        // stream's requests, which TimerSyncLifecycleTest covers. This test counts the refreshes,
+        // so it goes offline without the stream. The network's return refreshes and starts it again.
+        app.followNoTimerEvents()
         val offlineFrom = all.count
         AirplaneMode.set(true, direct)
         settle()

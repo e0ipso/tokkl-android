@@ -28,6 +28,7 @@ import com.github.e0ipso.tokkl.orFail
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonObject
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.formatTime
@@ -170,6 +171,11 @@ class SyncStatusServerTest {
             app.accountSettings.refresh().join()
             app.sender.send().join()
         }
+        // The server ends the timer event stream when the token is reset. The stream's refused
+        // reconnect would then ask for sign-in before the app opens, as TimerSyncLifecycleTest
+        // covers. This test is about the queue finding the refusal when the app opens, as on
+        // Toggl Track, so it runs without the stream.
+        app.followNoTimerEvents()
         val workspace = account.workspaceId
         val start = Instant.now().minusSeconds(3600)
         // This represents a queue written by a previous process: no in-memory sender event.

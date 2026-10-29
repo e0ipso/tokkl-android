@@ -29,8 +29,15 @@ object RunningNotifications {
         }
     }
 
-    /** The notification on show, or null. */
-    fun shown(): StatusBarNotification? = manager.activeNotifications.firstOrNull { it.id == RunningNotifier.NOTIFICATION_ID }
+    /**
+     * The notification on show, or null. Android 16 groups the app's silent notifications, this one
+     * and the timer sync service's, under a summary that the system posts with the same id and a
+     * tag. That summary has no title and no actions and stays while the sync notification does, so
+     * it is left out.
+     */
+    fun shown(): StatusBarNotification? = manager.activeNotifications.firstOrNull {
+        it.id == RunningNotifier.NOTIFICATION_ID && it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0
+    }
 
     /** The notification once it is on show and matches [done]. It is posted off the main thread. */
     fun awaitShown(what: String, done: (StatusBarNotification) -> Boolean = { true }): StatusBarNotification {

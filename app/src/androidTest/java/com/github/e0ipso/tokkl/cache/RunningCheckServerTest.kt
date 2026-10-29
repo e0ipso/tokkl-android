@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -134,6 +135,9 @@ class RunningCheckServerTest {
         // launch an independent post-send refresh that could observe the remote stop first.
         val id = startOnTheWeb("Stopped on the web")
         runBlocking { app.accountSettings.refresh().join() }
+        // The timer event stream would bring the web's stop to the phone at once and cancel the
+        // check. Without it, as on Toggl Track or while the stream is down, only the check learns of it.
+        app.followNoTimerEvents()
         assertEquals(0, unsentCount())
         RunningNotifications.awaitShown("the start")
         val check = awaitCheck("the start schedules a check") { it.state == WorkInfo.State.ENQUEUED }

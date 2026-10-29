@@ -31,6 +31,7 @@ import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerState
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -162,6 +163,9 @@ class PomodoroPageServerTest {
         assertTrue(serverTimer().runningEntry!!.billable != true)
         compose.onNode(hasText(context.getString(R.string.entry_billable)) and isToggleable()).performScrollTo().performClick()
         await { model.state.value.fields.billable }
+        // The page shows the switch at once and queues the edit a moment later. Send once the
+        // queue has it, which the cache's running entry shows.
+        await { runBlocking { app.cache.running.first() }?.entry?.billable == true }
         runBlocking { app.sender.sendAndWait() }
         assertEquals(true, serverTimer().runningEntry!!.billable)
         assertNotNull(serverTimer().pomodoro)

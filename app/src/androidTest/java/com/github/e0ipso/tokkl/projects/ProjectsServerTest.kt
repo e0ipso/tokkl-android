@@ -125,6 +125,8 @@ class ProjectsServerTest {
     @Test
     fun createEditArchiveAndRestoreAProjectAndTheCacheFollowsEachChange() {
         show()
+        // New project stays off until the page has loaded the workspace's projects.
+        awaitEnabled(button(R.string.projects_new))
 
         button(R.string.projects_new).performClick()
         composeRule.awaitText(string(R.string.project_form_new))
@@ -237,6 +239,7 @@ class ProjectsServerTest {
     @Test
     fun anEmptyNameIsAMistakeUnderTheField() {
         show()
+        awaitEnabled(button(R.string.projects_new))
         button(R.string.projects_new).performClick()
         field(R.string.project_rate).type("abc")
         button(R.string.project_create).tap()

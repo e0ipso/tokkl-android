@@ -118,6 +118,8 @@ class TagsServerTest {
     @Test
     fun createRenameAndDeleteATagAndTheCacheAndHistoryFollow() {
         show()
+        // The field and Add tag stay off until the page has loaded the workspace's tags.
+        awaitEnabled(button(R.string.tags_add))
         field(R.string.tags_new_name).type("focus")
         button(R.string.tags_add).tap()
 

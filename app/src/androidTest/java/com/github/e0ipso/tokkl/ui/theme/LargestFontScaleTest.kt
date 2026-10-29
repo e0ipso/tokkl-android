@@ -48,6 +48,7 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -768,7 +769,13 @@ class LargestFontScaleTest {
         val app = composeRule.activity.application as TokklApplication
         assertEquals("refused session has no loaded capabilities", Capabilities.NONE, app.capabilities.state.value)
         assertNull("refused session has no loaded account settings", app.accountSettings.state.value)
-        assertTimerPageFits(timerPageParts(), over = listOf(text(message), "review button" to button(R.string.trust_refused_review)))
+        // Without the capabilities the bar cannot know of the server's timer API, so it offers no Pomodoro.
+        composeRule.onNode(bottomBarItem(R.string.pomodoro_title)).assertDoesNotExist()
+        assertTimerPageFits(
+            timerPageParts(),
+            over = listOf(text(message), "review button" to button(R.string.trust_refused_review)),
+            bar = BAR_LABELS - R.string.pomodoro_title,
+        )
         val label = inside(R.string.trust_refused_review, hasClickAction())
         label.second.textLayout()?.let { assertFalse("text is cut off: ${label.first}", it.didOverflowHeight) }
     }
@@ -798,27 +805,28 @@ class LargestFontScaleTest {
             ),
         )
 
-    /** The navigation bar's items, under the Timer page. */
-    private fun barParts(): List<Pair<String, SemanticsNodeInteraction>> =
-        BAR_LABELS.map { label -> "${string(label)} item" to button(label) }
+    /** The navigation bar's items [labels], under the Timer page. */
+    private fun barParts(labels: List<Int>): List<Pair<String, SemanticsNodeInteraction>> =
+        labels.map { label -> "${string(label)} item" to button(label) }
 
     /**
-     * The Timer page's [parts], the bar, and what shows [over] the page. Where the page fits, all
-     * of them show at once without overlapping. At the largest display size the page scrolls, its
-     * title and timer scrolling away, so each part has to fit once scrolled to, clear of the bar
-     * and of what shows over the page.
+     * The Timer page's [parts], the [bar]'s items, and what shows [over] the page. Where the page
+     * fits, all of them show at once without overlapping. At the largest display size the page
+     * scrolls, its title and timer scrolling away, so each part has to fit once scrolled to, clear
+     * of the bar and of what shows over the page.
      */
     private fun assertTimerPageFits(
         parts: List<Pair<String, SemanticsNodeInteraction>>,
         over: List<Pair<String, SemanticsNodeInteraction>> = emptyList(),
+        bar: List<Int> = BAR_LABELS,
     ) {
         val pageMatcher = hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable())
         if (composeRule.onAllNodes(pageMatcher).fetchSemanticsNodes().isEmpty()) {
-            assertFitWithoutOverlap(*(parts + barParts() + over).toTypedArray())
+            assertFitWithoutOverlap(*(parts + barParts(bar) + over).toTypedArray())
             return
         }
         val page = composeRule.onNode(pageMatcher)
-        val pinned = barParts() + over
+        val pinned = barParts(bar) + over
         assertFitWithoutOverlap(*pinned.toTypedArray())
         val pinnedBoxes = pinned.map { (name, node) -> name to node.getBoundsInRoot() }
         val screen = composeRule.onRoot().getBoundsInRoot()

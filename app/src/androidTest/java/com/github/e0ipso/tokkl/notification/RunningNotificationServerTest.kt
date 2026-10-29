@@ -29,6 +29,7 @@ import com.github.e0ipso.tokkl.cache.countsFrom
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.TimerSyncService
 import com.github.e0ipso.tokkl.trash.TrashServer
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -132,10 +133,12 @@ class RunningNotificationServerTest {
         assertEquals(context.getString(R.string.notification_channel_running), RunningNotifications.channelName().toString())
         assertEquals(context.getString(R.string.notification_channel_running_description), RunningNotifications.channelDescription())
 
-        // Nothing posts it again to tick the clock, and no foreground service keeps the app up.
+        // Nothing posts it again to tick the clock, and the timer adds no foreground service. The
+        // one that runs is the timer sync service, which a Tokkl server with the timer API keeps
+        // running whether or not a timer runs (docs/PRD.md N1).
         Thread.sleep(RunningNotifications.STAYS_GONE_MS)
         assertEquals("posted once", shown.postTime, RunningNotifications.shown()!!.postTime)
-        assertEquals(emptyList<String>(), RunningNotifications.foregroundServices())
+        assertEquals(listOf(TimerSyncService::class.java.name), RunningNotifications.foregroundServices())
     }
 
     @Test

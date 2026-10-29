@@ -44,6 +44,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -264,6 +265,10 @@ class TimerServerTest {
     @Test
     fun theClockTicksWithoutAnyRequest() {
         launch {
+            // The hang cuts the timer event stream too, and the stream reconnects through the
+            // relay on its own schedule. That is the stream's behaviour, covered by its own tests,
+            // not a request made for the clock, so this test runs without it.
+            app.followNoTimerEvents()
             relay.hang()
             start().performClick()
             awaitAtOnce("Stop shows") { shows(stopButton()) }
@@ -288,6 +293,10 @@ class TimerServerTest {
     @Test
     fun startingWhileAnotherEntryRunsLeavesOneRunning() {
         launch {
+            // The timer event stream would bring the web's start to the phone within a second, and
+            // the page would then offer Stop for it. This test is about a start the phone has not
+            // seen, as on Toggl Track or while the stream is down, so it runs without the stream.
+            app.followNoTimerEvents()
             val fromTheWeb = web.send(
                 "POST",
                 web.server.api("workspaces", workspace.toString(), "time_entries"),

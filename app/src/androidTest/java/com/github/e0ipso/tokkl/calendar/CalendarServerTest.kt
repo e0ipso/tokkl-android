@@ -139,11 +139,12 @@ class CalendarServerTest {
             fun deleteFromEditor() {
                 composeRule.onNode(blockOf(description)).performScrollTo()
                     .performSemanticsAction(SemanticsActions.OnClick)
+                // The editor's Delete is an icon button, named by its content description.
                 composeRule.waitUntil("the calendar opens its entry editor", LOAD_TIMEOUT_MS) {
                     exists(hasText(string(R.string.entry_form_edit))) &&
-                        exists(hasText(string(R.string.history_delete)) and hasClickAction())
+                        exists(hasContentDescription(string(R.string.history_delete)) and hasClickAction())
                 }
-                composeRule.onNode(hasText(string(R.string.history_delete)) and hasClickAction())
+                composeRule.onNode(hasContentDescription(string(R.string.history_delete)) and hasClickAction())
                     .performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.waitUntil("Delete closes the editor and removes the calendar block", LOAD_TIMEOUT_MS) {
                     !exists(hasText(string(R.string.entry_save))) && !exists(blockOf(description)) &&

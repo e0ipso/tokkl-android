@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.time.parseDuration
@@ -349,7 +350,8 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 val pause = held.pause!!
                 assertTrue(pause.paused)
                 assertEquals(pause.seconds, paused.seconds)
-                assertEquals(TimerTarget.server(revision = held.revision), paused.target)
+                // Native surfaces carry the sign-in's account id, so a tap drawn for another account does nothing.
+                assertEquals(TimerTarget.server(revision = held.revision, account = TimerStateStore(app).account()), paused.target)
                 assertEquals("Pause queued no Stop", 0, runBlocking { app.changes.unsentCount.first() })
                 compose.waitUntil("paused display matches the server's total", 5_000) { parseDuration(elapsedText()) == paused.seconds }
                 // The paused state took the running entry out of the cache, and the one refresh
