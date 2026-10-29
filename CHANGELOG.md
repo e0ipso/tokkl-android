@@ -1,3 +1,22 @@
+## [0.6.0](https://github.com/e0ipso/tokkl-android/compare/v0.5.1...v0.6.0) (2026-10-29)
+
+### Features
+
+* hold the timer event stream in a foreground service ([cf98af2](https://github.com/e0ipso/tokkl-android/commit/cf98af28a0ffa79b9b9f77ec3d7b3a89837c7557))
+* keep the server's timer state on the phone ([c620ec1](https://github.com/e0ipso/tokkl-android/commit/c620ec1432a036a404ff7ae0bf05b2dbc5aef6cb))
+* pause and resume the timer on the server ([3db56bf](https://github.com/e0ipso/tokkl-android/commit/3db56bf0626059187a38d0817a51da003a4b37dc)), references [#14](https://github.com/e0ipso/tokkl-android/issues/14) [#14](https://github.com/e0ipso/tokkl-android/issues/14)
+* pause from native surfaces through the server ([0169d78](https://github.com/e0ipso/tokkl-android/commit/0169d78111dee82d238579badc22af09f4e0beee))
+* ring and notify from the server's Pomodoro phases ([4149b1b](https://github.com/e0ipso/tokkl-android/commit/4149b1bd5f78a71da3b9d62ac8e4670bfbb3534b))
+* send timer actions and probe the timer API ([d9a439c](https://github.com/e0ipso/tokkl-android/commit/d9a439c911db428be34e2950d61d01f508e18dc0))
+* show Pomodoro sessions from the server's state ([70e14eb](https://github.com/e0ipso/tokkl-android/commit/70e14eb334e18af09a49dd946c58d3ff0b5c421b))
+
+### Bug Fixes
+
+* drop idle connections before the server closes them ([2383df8](https://github.com/e0ipso/tokkl-android/commit/2383df878ad158265c9a24ecfe3239159aaee39d))
+* filter repeated network capability reports ([31d9bdb](https://github.com/e0ipso/tokkl-android/commit/31d9bdbb1b3530bd393c37793927c6f2fca9e808))
+* retry older history after network updates ([089a644](https://github.com/e0ipso/tokkl-android/commit/089a64439b963238dcaa9760570282ac08bb878c))
+* use icons for secondary actions ([78e8f5b](https://github.com/e0ipso/tokkl-android/commit/78e8f5bb37011f63229dea947a4493729d0af1ff))
+
 ## [0.5.1](https://github.com/e0ipso/tokkl-android/compare/v0.5.0...v0.5.1) (2026-10-27)
 
 ### Bug Fixes
