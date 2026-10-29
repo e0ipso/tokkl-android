@@ -551,8 +551,10 @@ class TimerCrossDeviceServerTest {
     private fun assertCountsDownTo(notification: Notification, session: TimerPomodoro, held: HeldTimerState, upcoming: Int) {
         assertTrue(notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
         assertTrue(notification.extras.getBoolean(Notification.EXTRA_CHRONOMETER_COUNT_DOWN))
-        assertEquals("it counts down to the planned end", session.phase.plannedEnd.minus(held.clockOffset).toEpochMilli(), notification.`when`)
-        assertTrue("the phone's clock is near the server's: ${held.clockOffset}", abs(held.clockOffset.toMillis()) <= CLOCK_TOLERANCE_MS)
+        // The device need not share the server's clock. Check the actual notification against
+        // the server's remaining interval at receipt, without using the production offset helper.
+        val remaining = Duration.between(held.state.serverTime, session.phase.plannedEnd)
+        assertEquals("it counts down for the server's remaining time", held.receivedAt.plus(remaining).toEpochMilli(), notification.`when`)
         assertEquals(context.getString(R.string.pomodoro_up_next, context.getString(upcoming)),
             notification.extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString())
     }
@@ -630,7 +632,7 @@ class TimerCrossDeviceServerTest {
         /** How late after its planned end a phase may begin to ring: alarm delivery and the player. */
         const val RING_LATE_MS = 10_000L
 
-        /** The emulator's clock follows the host's, which runs the server. */
+        /** Early alarm-delivery tolerance, measured on the corrected phone clock. */
         const val CLOCK_TOLERANCE_MS = 1_000L
 
         /** Whole seconds on two clocks sampled a request apart. */
