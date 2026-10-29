@@ -483,6 +483,56 @@ At execution completion, preserve the server image digest, two-API result counts
 - Hard dependency edges: 18
 - Soft dependencies: 0
 - Dependency graph: acyclic, all references resolve, each task appears in exactly one phase after its prerequisites
-- Task status: all pending
+- Task status: all 13 completed
 - Complexity scores: 4 to 7, validated by the required helper
 - Execution profiles: 10 complex-architecture, 2 standard-implementation, 1 docs-and-config
+
+## Execution summary
+
+**Status**: Completed successfully
+**Completed date**: 2026-10-29
+**Code Review**: Skipped; Code review is disabled. Set code_review.enabled to true in config/config.yaml or select Enable code review in Customize to opt in.
+
+### Results
+
+All nine phases and 13 tasks are complete. Server-owned Pomodoro sessions
+and pause chains, the foreground event stream, online actions, native
+controls, persisted state, alarms, Room migration and documentation are
+landed on main. Ordinary Start, Stop and entry edits retain their offline
+queue. Unsupported servers hide Pomodoro and Pause.
+
+[Main CI 40839958989](https://github.com/e0ipso/tokkl-android/actions/runs/40839958989)
+passed all 18 jobs at 31d9bdb and published
+[v0.6.0](https://github.com/e0ipso/tokkl-android/releases/tag/v0.6.0) with its
+signed APK. Reports show 1,030 JVM tests, 606 API 31 device tests and 713 API
+36 device tests, all with zero failures/errors/skips. All 12 device shards,
+Android lint, commitlint and release reproducibility passed. See
+[the CI evidence](evidence/ci-40839958989/summary.json) and
+[the failure/fix inventory](evidence/ci-completion-attempts.md).
+
+### Noteworthy events
+
+Completion used CI exclusively for test execution, as the owner requested.
+The earlier local probe logs remain historical evidence. CI repairs retained
+the app's behavior and timing assertions while fixing asynchronous fixture
+setup, stale notification matching and a real older-history reconnect race.
+The countdown oracle now checks the exact server-relative timestamp without
+requiring aligned physical clocks.
+
+The earlier review gate returned this exact result and was not rerun:
+
+```json
+{"kind":"skipped","reason":"review-disabled","detail":"Code review is disabled. Set code_review.enabled to true in config/config.yaml or select Enable code review in Customize to opt in.","action":"continue","codeReview":"Skipped; Code review is disabled. Set code_review.enabled to true in config/config.yaml or select Enable code review in Customize to opt in."}
+```
+
+No review findings were produced because review was disabled. No review was
+reported as clean. Knowledge lint exits zero with the pre-existing orphan
+and redirected-edge warnings; unrelated freshness warnings remain outside
+this feature's scope.
+
+### Necessary follow-ups
+
+The owner accepted the missing API 31 boot, package replacement, process
+restart and Doze measurements. The PRD records this limit; no unmeasured
+platform behavior is claimed as verified. Issue 14 retains its separate
+three-consecutive-green-main closure gate and is not closed by this plan.

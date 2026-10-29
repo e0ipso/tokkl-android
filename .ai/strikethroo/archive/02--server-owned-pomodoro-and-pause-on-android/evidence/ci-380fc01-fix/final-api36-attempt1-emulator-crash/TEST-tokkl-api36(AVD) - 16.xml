@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="14" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-28T22:20:29" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.calendar.CalendarServerTest" tests="1" failures="0" errors="0" skipped="0" time="10.031" timestamp="2026-10-28T22:20:29" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="10.031" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" tests="5" failures="0" errors="0" skipped="0" time="37.111" timestamp="2026-10-28T22:20:29" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="stopFromTheNotificationWorksOfflineAndTheQueueSendsItWhenTheNetworkReturns" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="6.248" />
+    <testcase name="anOfflineStartShowsTheEntryWithAClockTheSystemTicks" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="6.795" />
+    <testcase name="twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="10.446" />
+    <testcase name="aDismissedNotificationStaysGoneWhenTheAppOpensAndTheNextEditOrStartPostsItAgain" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="11.089" />
+    <testcase name="aStartStopsTheRunningEntryAndShowsTheNewOne" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="2.533" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.projects.ProjectsServerTest" tests="2" failures="0" errors="0" skipped="0" time="42.091" timestamp="2026-10-28T22:20:29" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anEmptyNameIsAMistakeUnderTheField" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="9.128" />
+    <testcase name="createEditArchiveAndRestoreAProjectAndTheCacheFollowsEachChange" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="32.963" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" tests="1" failures="0" errors="0" skipped="0" time="15.059" timestamp="2026-10-28T22:20:29" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="focusedLocalTicksAndFrozenPauseAddNoRequests" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" time="15.059" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.TimerServerTest" tests="2" failures="0" errors="0" skipped="0" time="25.518" timestamp="2026-10-28T22:20:29" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theClockTicksWithoutAnyRequest" classname="com.github.e0ipso.tokkl.timer.TimerServerTest" time="11.662" />
+    <testcase name="startingWhileAnotherEntryRunsLeavesOneRunning" classname="com.github.e0ipso.tokkl.timer.TimerServerTest" time="13.856" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest" tests="1" failures="0" errors="0" skipped="0" time="90.328" timestamp="2026-10-28T22:20:29" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theAppReadsTheServerOnOpenForegroundAndReconnectOnly" classname="com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest" time="90.328" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" tests="1" failures="0" errors="0" skipped="0" time="16.588" timestamp="2026-10-28T22:20:29" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="focusedLocalTicksAndFrozenPauseAddNoRequests" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" time="16.588" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" tests="1" failures="0" errors="0" skipped="0" time="16.579" timestamp="2026-10-28T22:20:29" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="noticeAfterCancellingTheHttpWarningFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="16.579" />
+  </testsuite>
+</testsuites>

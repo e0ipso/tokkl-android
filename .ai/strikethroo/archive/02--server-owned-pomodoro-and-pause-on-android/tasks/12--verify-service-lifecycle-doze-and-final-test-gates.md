@@ -28,8 +28,8 @@ Android instrumented acceptance testing and foreground-service/platform diagnost
 - [x] Sign-out/capability loss stops streams/reconnects, notifications and session alarms, clears account state and rejects retired callbacks. Signing out does not end the server session for other devices.
 - [ ] (API 36 recorded below; API 31 not measured, by owner decision) Force Doze with the app backgrounded, start a session remotely and record whether notification/state arrives and its measured delay on both APIs. Restore idle mode/settings after the probe. An observed Doze delay is reported for the PRD and owner, not hidden behind a new transport, exemption or battery workaround.
 - [x] Retain permission-denied notification/exact-alarm/full-screen behavior, the existing sounds and ringing service, and the alarm's offline failure behavior. Review screenshot references on tokkl-api36 in the commit that changes them; API 31 uses its intended screenshot exclusions.
-- [ ] (Written; passed on API 36 locally; API 31 delegated to CI) Add or adapt `TimerSyncServiceLifecycleTest` for critical account/process/start lifecycle behavior. Run it on each AVD through `scripts/instrumented-tests.sh -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest --no-daemon`; expect nonzero tests, zero unexpected failures and valid run receipts.
-- [ ] (JVM suite and lint passed locally; full device suites delegated to CI on main) After all known focused failures are resolved, run `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug` and complete `TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh --no-daemon` plus the same full run with `TOKKL_TEST_AVD=tokkl-api31`. Require zero failures, expected nonzero test counts and device/process-isolation receipts. Retain results from each run before the next overwrites them.
+- [x] (Passed on both APIs in full main CI 40839958989) Add or adapt `TimerSyncServiceLifecycleTest` for critical account/process/start lifecycle behavior. Run it on each AVD through `scripts/instrumented-tests.sh -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.timerstate.TimerSyncServiceLifecycleTest --no-daemon`; expect nonzero tests, zero unexpected failures and valid run receipts.
+- [x] (All suites and lint passed in main CI 40839958989) After all known focused failures are resolved, run `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug` and complete `TOKKL_TEST_AVD=tokkl-api36 scripts/instrumented-tests.sh --no-daemon` plus the same full run with `TOKKL_TEST_AVD=tokkl-api31`. Require zero failures, expected nonzero test counts and device/process-isolation receipts. Retain results from each run before the next overwrites them.
 - [x] The evidence matrix covers all six primary success criteria, including migration from version 8, plain offline Start/Stop and unsupported-server hiding. Separate measured platform limitations from passing results and surface any required decision before completing execution.
 
 Use your internal Todo tool to track these and keep on track.
@@ -67,7 +67,7 @@ Write a few tests, mostly integration. Write tests for custom business logic and
 
 Written as each result comes in, because T3 restarts have ended the run twice. Raw excerpts are in [evidence/task-12-api36-probes.txt](../evidence/task-12-api36-probes.txt).
 
-Coordinator change to the brief: the two full local instrumented suites are not run here. PR CI runs every instrumented test on six API 36 and six API 31 shards against the pinned image.
+Coordinator change to the brief: the two full local instrumented suites are not run here. Main CI runs every instrumented test on six API 36 and six API 31 shards against the pinned image.
 
 ### JVM suite and lint
 
@@ -94,7 +94,7 @@ Cleanup of tokkl-api36, which the device tools' emulator writes to: the app is u
 
 ### Platform probes on tokkl-api31
 
-Not measured, by owner decision; a known gap. The owner stopped all local device runs before the API 31 probes, so app-open start, boot, package replacement, process restart and Doze have no API 31 measurement. PR CI runs the instrumented tests on API 31, but no test there reboots, reinstalls or forces Doze.
+Not measured, by owner decision; a known gap. The owner stopped all local device runs before the API 31 probes, so app-open start, boot, package replacement, process restart and Doze have no API 31 measurement. Main CI runs the instrumented tests on API 31, but no test there reboots, reinstalls or forces Doze.
 
 ### Device runs through the runner
 
@@ -113,7 +113,7 @@ Fixes after the 21:47 run, both in test code:
 | 21:52 | tokkl-api36 | the 21:47 selection, after both fixes | 0 | 3 tests, 0 failures | GREEN: lose-the-timer-API 7.8 s, sign-out 10.1 s, tile 11.3 s. One `TOKKL_DEVICE_BUILD` receipt (sdk 36), no `AndroidTestRunner failed`. |
 | 21:55 | tokkl-api36 | `TimerSyncServiceLifecycleTest`, both compact-control methods of `RunningTileServerTest`, `PomodoroRingingServiceTest`, `PomodoroPermissionPromptTest`, `PomodoroAlarmActivityTest`, `PomodoroPhaseAlarmRearmTest`, `PomodoroSessionNotificationRestartTest` | 0 | 27 tests, 0 failures, 0 skipped | Lifecycle 2, tile 2, ringing 9, permission prompt 3 (one is API 31 to 32 only and not counted on 36), alarm activity 8, boot re-arm 1, session notification restart 2. One receipt (sdk 36), no `AndroidTestRunner failed`. JUnit copies: [evidence/task-12-junit-api36-5](../evidence/task-12-junit-api36-5). |
 
-Owner decision, relayed by the coordinator at about 22:00: no more local device or emulator runs; PR CI runs every instrumented test on API 36 and API 31. The 21:55 run had already finished. No emulator, tokkl container or adb server is left running.
+Owner decision, relayed by the coordinator at about 22:00: no more local device or emulator runs; Main CI runs every instrumented test on API 36 and API 31. The 21:55 run had already finished. No emulator, tokkl container or adb server is left running.
 
 ### Evidence matrix
 
@@ -124,7 +124,7 @@ Owner decision, relayed by the coordinator at about 22:00: no more local device 
 | 3. A session and pause started on the phone show through the API. Pause, Resume and Discard work both ways with the same total | `TimerCrossDeviceServerTest` (phone session; pause, resume and discard) | Task 11: 7/7 on both APIs, totals within 1 s. |
 | 4. Toggl Track and Tokkl without the timer API hide Pomodoro and Pause, and Start and Stop still work | `TimerCrossDeviceServerTest` (Tokkl 1.8.1), `PomodoroAvailabilityTest`, `CapabilitiesTest`, `CapabilitiesServerTest`, `TimerSyncServiceLifecycleTest` (capability loss) | Task 11 against a real 1.8.1. JVM `CapabilitiesTest` passed. |
 | 5. Offline session and pause actions fail with the message and change nothing, while Start and Stop still queue | `TimerActionsOfflineServerTest`, `TimerActionsTest`, `RunningTileServerTest` (offline long press), `WidgetServerTest`, `ReminderServerTest` | Task 11: 3/3 on both APIs. 21:55 run: tile compact controls 2/2. |
-| 6. The legacy types are gone, Room migrates from 8 and keeps the queue, and every suite passes | Task 10's removal scan, `CacheDatabaseMigrationTest`, the JVM suite, all instrumented tests | Removal scan empty. JVM suite 1025 tests with 0 failures and lint with 0 errors at 22:03. The full API 36 and API 31 device suites run in CI on main: run 40767794471 at 380fc01. |
+| 6. The legacy types are gone, Room migrates from 8 and keeps the queue, and every suite passes | Task 10's removal scan, `CacheDatabaseMigrationTest`, the JVM suite, all instrumented tests | Removal scan empty. JVM suite 1025 tests with 0 failures and lint with 0 errors at 22:03. Full API 36 and API 31 device suites passed in main CI 40839958989 at 31d9bdb: 713 and 606 tests respectively, zero failures/errors/skips. |
 
 ### Measured platform limits (not passes)
 
@@ -141,3 +141,18 @@ Owner decision, relayed by the coordinator at about 22:00: no more local device 
 - The 120 s reconnect backoff cap. The plan says only "capped".
 - Whether the wording of the 409 after the phone's own edit on native surfaces is acceptable, or whether they should re-read the revision as the Pomodoro page does.
 
+### Final CI acceptance, 2026-10-29
+
+[Main run 40839958989](https://github.com/e0ipso/tokkl-android/actions/runs/40839958989)
+completed successfully at 31d9bdb with all 18 jobs passing. The JVM reports
+contain 1,030 tests across 110 suites; the full API 31 and API 36 reports
+contain 606 and 713 tests across six shards each. All have zero failures,
+errors and skips. Android lint has zero errors. Commitlint, reproducibility,
+release creation, signed APK build and publishing passed.
+
+The [final report summary](../evidence/ci-40839958989/summary.json) and its
+neighboring JUnit files preserve the counts and new regression coverage.
+[The completion inventory](../evidence/ci-completion-attempts.md) records
+failures and fixes. No local tests ran during this completion session.
+The accepted API 31 boot/update/restart/Doze measurement gap remains as
+recorded above; ordinary lifecycle tests passed on both APIs in CI.

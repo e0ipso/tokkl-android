@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.session.ForegroundRefreshTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-29T08:10:37.465Z" hostname="runnervm48cm3" time="0.001">
+  <properties/>
+  <testcase name="onlineUpdatesRetryFailedPagesWithoutRefreshingTheAccountAgain" classname="com.github.e0ipso.tokkl.session.ForegroundRefreshTest" time="0.001"/>
+  <testcase name="aNetworkReportWhileStoppedRefreshesNothing" classname="com.github.e0ipso.tokkl.session.ForegroundRefreshTest" time="0.0"/>
+  <testcase name="theNetworksReturnRefreshesOnce" classname="com.github.e0ipso.tokkl.session.ForegroundRefreshTest" time="0.0"/>
+  <testcase name="aRotationRefreshesNothing" classname="com.github.e0ipso.tokkl.session.ForegroundRefreshTest" time="0.0"/>
+  <testcase name="eachTripToTheForegroundRefreshesOnce" classname="com.github.e0ipso.tokkl.session.ForegroundRefreshTest" time="0.0"/>
+  <testcase name="anOfflineStartRefreshesAgainWhenTheNetworkComesBack" classname="com.github.e0ipso.tokkl.session.ForegroundRefreshTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

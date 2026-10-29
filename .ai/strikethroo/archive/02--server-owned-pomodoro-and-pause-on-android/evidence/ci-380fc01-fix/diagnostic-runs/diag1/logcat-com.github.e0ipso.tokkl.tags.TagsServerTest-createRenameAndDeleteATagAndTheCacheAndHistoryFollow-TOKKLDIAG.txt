@@ -1,0 +1,11 @@
+10-28 22:51:08.191  3560  3594 I TestRunner: started: createRenameAndDeleteATagAndTheCacheAndHistoryFollow(com.github.e0ipso.tokkl.tags.TagsServerTest)
+10-28 22:51:10.606  3560  3586 I TOKKLDIAG: accept rev=0 held=null running=null pause=null pomodoro=false
+10-28 22:51:10.702  3560  3560 I TOKKLDIAG: sync.onAvailable 108 current=null
+10-28 22:51:10.702  3560  3560 I TOKKLDIAG: model +4ms data=false loading=false problem=null canChange=false
+10-28 22:51:10.710  3560  3592 I TOKKLDIAG: stream.open
+10-28 22:51:10.725  3560  3592 I TOKKLDIAG: stream.connected
+10-28 22:51:10.726  3560  3592 I TOKKLDIAG: accept rev=0 held=0 running=null pause=null pomodoro=false
+10-28 22:51:11.237  3560  3560 I TOKKLDIAG: model +539ms data=false loading=true problem=null canChange=false
+10-28 22:51:11.901  3560  3592 I TOKKLDIAG: stream.end Success(value=Ended)
+10-28 22:51:12.417  3560  3594 E TestRunner: failed: createRenameAndDeleteATagAndTheCacheAndHistoryFollow(com.github.e0ipso.tokkl.tags.TagsServerTest)
+10-28 22:51:12.430  3560  3594 I TestRunner: finished: createRenameAndDeleteATagAndTheCacheAndHistoryFollow(com.github.e0ipso.tokkl.tags.TagsServerTest)

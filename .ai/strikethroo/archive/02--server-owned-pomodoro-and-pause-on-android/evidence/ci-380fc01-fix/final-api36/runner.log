@@ -1,0 +1,35 @@
+* daemon not running; starting now at tcp:5037
+* daemon started successfully
+Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-6d172865.scope with the lavapipe renderer, -read-only
+emulator-5554 runs tokkl-api36 on API 36
+Starting ghcr.io/e0ipso/tokkl:1.10.0@sha256:207db4f2a6547fea35ad898570fef892f55ef3ab26b6f142bfc3e3e0e680ad2f as tokkl-android-tests-157cd837
+Starting haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c67f33777c1b6a9dc0d4b28bcba7171460122 as tokkl-android-tests-157cd837-tls
+Starting ghcr.io/e0ipso/tokkl:1.8.1@sha256:70106ba2a6bc5b23c11f443f33bf2c7fb76d3af75b0335461047c4d27bd52e9b as tokkl-android-tests-157cd837-legacy
+Tokkl is ready on http://127.0.0.1:32834, which the emulator reaches as http://10.0.2.2:32834
+The TLS proxy is ready on https://127.0.0.1:32836, with certificate SHA-256 80:FD:27:F5:C6:1B:EF:4C:11:19:40:F3:A6:63:6C:28:FD:D6:33:AE:E5:70:0C:D4:3A:EB:45:DB:8F:88:2A:1C
+It serves its second certificate on https://127.0.0.1:32837, with SHA-256 C5:A0:4C:45:22:86:63:74:02:03:74:0E:08:29:21:F3:E4:4E:5C:3B:2A:18:F9:6B:12:C6:E0:36:AF:30:8E:34
+It serves the certificate this run's CA signed on https://127.0.0.1:32838
+The proxy serves Tokkl under http://127.0.0.1:32835/tokkl, which the emulator reaches as http://10.0.2.2:32835/tokkl
+The older Tokkl, without the timer API, is ready on http://127.0.0.1:32839, which the emulator reaches as http://10.0.2.2:32839
+/run/user/1000/tokkl-instrumented-tests-1000-runs/7ce2fd84/user-ca.pem: 1 file pushed, 0 skipped. 1.4 MB/s (648 bytes in 0.000s)
+Installed this run's CA as a user CA on emulator-5554
+/run/user/1000/tokkl-instrumented-tests-1000-runs/7ce2fd84/credentials.properties: 1 file pushed, 0 skipped. 2.3 MB/s (147 bytes in 0.000s)
+/run/user/1000/tokkl-instrumented-tests-1000-runs/7ce2fd84/test-filter.txt: 1 file pushed, 0 skipped. 34.0 MB/s (1966 bytes in 0.000s)
+TOKKL_DEVICE_BUILD {"avd":"tokkl-api36","build":{"brand":"Android","device":"emu64x","fingerprint":"Android/sdk_phone64_x86_64/emu64x:16/BE2A.250530.026.D1/13818094:userdebug/test-keys","id":"BE2A.250530.026.D1","model":"Android SDK built for x86_64","type":"userdebug","version":{"codename":"REL","sdk":36}},"observed_at_ns":1793226093976881393,"serial":"emulator-5554"}
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Reusing configuration cache.
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:kspDebugAndroidTestKotlin
+> Task :app:compileDebugAndroidTestKotlin
+> Task :app:dexBuilderDebugAndroidTest
+> Task :app:mergeProjectDexDebugAndroidTest
+> Task :app:packageDebugAndroidTest
+
+> Task :app:connectedDebugAndroidTest
+Running tests on devices: tokkl-api36(AVD) - 16
+
+BUILD SUCCESSFUL in 5m 12s
+71 actionable tasks: 6 executed, 65 up-to-date
+Configuration cache entry reused.
+exit=0

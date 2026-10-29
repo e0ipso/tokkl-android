@@ -1,0 +1,132 @@
+{
+  "run_id": 40839958989,
+  "commit": "31d9bdbb1b3530bd393c37793927c6f2fca9e808",
+  "url": "https://github.com/e0ipso/tokkl-android/actions/runs/40839958989",
+  "jvm": {
+    "tests": 1030,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 110
+  },
+  "device": {
+    "31": {
+      "tests": 606,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "36": {
+      "tests": 713,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "shards": [
+    {
+      "api": 31,
+      "shard": 0,
+      "tests": 108,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 31,
+      "shard": 1,
+      "tests": 89,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 31,
+      "shard": 2,
+      "tests": 90,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 31,
+      "shard": 3,
+      "tests": 115,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 31,
+      "shard": 4,
+      "tests": 98,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 31,
+      "shard": 5,
+      "tests": 106,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 36,
+      "shard": 0,
+      "tests": 128,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 36,
+      "shard": 1,
+      "tests": 106,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 36,
+      "shard": 2,
+      "tests": 103,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 36,
+      "shard": 3,
+      "tests": 131,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 36,
+      "shard": 4,
+      "tests": 120,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 36,
+      "shard": 5,
+      "tests": 125,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 7
+  },
+  "workflow_conclusion": "success",
+  "jobs_passed": 18,
+  "release": "v0.6.0",
+  "release_url": "https://github.com/e0ipso/tokkl-android/releases/tag/v0.6.0"
+}

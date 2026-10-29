@@ -1,0 +1,241 @@
+CI run 40767794471 on main at 380fc01. Failures per shard, with messages (first 500 chars).
+
+== api31-s0
+com.github.e0ipso.tokkl.calendar.CalendarServerTest deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline 
+    androidx.compose.ui.test.ComposeTimeoutException: Condition (the calendar opens its entry editor) still not satisfied after 30000 ms
+    	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:901)
+    	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:507)
+    	at com.github.e0ipso.tokkl.calendar.CalendarServerTest.deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline$lambda$0$
+com.github.e0ipso.tokkl.notification.RunningNotificationServerTest anOfflineStartShowsTheEntryWithAClockTheSystemTicks 
+    java.lang.AssertionError: expected:<[]> but was:<[com.github.e0ipso.tokkl.timerstate.TimerSyncService]>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at org.junit.Assert.assertEquals(Assert.java:146)
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationServerTest.anOfflineStartShowsTheEntryWithAClockTheSystemTicks(RunningNotificationServerTest.kt:138)
+    
+com.github.e0ipso.tokkl.projects.ProjectsServerTest anEmptyNameIsAMistakeUnderTheField 
+    java.lang.AssertionError: Action performScrollTo() failed.
+    Reason: Expected exactly '1' node but could not find any node that satisfies: ((Text + InputText + EditableText contains 'Hourly rate' (ignoreCase: false)) && (SetText is defined))
+    
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+    	at androidx.compose.ui.test.SemanticsNodeInt
+com.github.e0ipso.tokkl.sync.SyncStatusServerTest openingTheAppWithAnExpiredTokenAndSavedChangesAsksForSignIn 
+    java.lang.AssertionError
+    	at org.junit.Assert.fail(Assert.java:87)
+    	at org.junit.Assert.assertTrue(Assert.java:42)
+    	at org.junit.Assert.assertTrue(Assert.java:53)
+    	at com.github.e0ipso.tokkl.sync.SyncStatusServerTest.openingTheAppWithAnExpiredTokenAndSavedChangesAsksForSignIn(SyncStatusServerTest.kt:186)
+    
+com.github.e0ipso.tokkl.tile.RunningTileServerTest longPressPausesResumesAndStopsWhilePausedOnTheServer 
+    java.lang.AssertionError: the long press Pause: last controls Running(entry=CachedTimeEntry(id=1, workspaceId=2, projectId=null, taskId=null, description=Long press controls, start=2026-10-28T21:04:09Z, stop=null, billable=false, tags=[], tagIds=[]), unsent=false, accumulatedSeconds=0, target=TimerTarget(revision=0, entryId=1, account=8b58c6d8-af9e-44aa-a26b-8f9cdd940aca), clockOffset=PT0S, pausable=true); held TimerState(revision=1, serverTime=2026-10-28T21:14:10.031Z, runningEntry=ServerTimeEn
+
+== api31-s1
+com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest focusedLocalTicksAndFrozenPauseAddNoRequests 
+    java.lang.AssertionError: expected:<TimerTarget(revision=2, entryId=0, account=)> but was:<TimerTarget(revision=2, entryId=0, account=76f22f2d-7b83-4da9-bfad-783dc76b8e2e)>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at org.junit.Assert.assertEquals(Assert.java:146)
+    	at com.github.e0ipso.tokkl.timer.FullscreenTimerAcceptanceTest.focusedLocalTicksAndFrozenPauseAddNoRequests(FullscreenTimerServerT
+com.github.e0ipso.tokkl.timer.TimerServerTest theClockTicksWithoutAnyRequest 
+    java.lang.AssertionError: requests while the clock ticked from 0:00:00 past 0:00:01 expected:<1> but was:<2>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at com.github.e0ipso.tokkl.timer.TimerServerTest.theClockTicksWithoutAnyRequest$lambda$0(TimerServerTest.kt:280)
+    	at com.github.e0ipso.tokkl.timer.TimerServerTest$$ExternalSyntheticLambda8.invoke(D8$$SyntheticClass:0)
+    	at com.github.e0ipso.tokkl
+
+== api31-s2
+com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest theAppReadsTheServerOnOpenForegroundAndReconnectOnly 
+    java.lang.AssertionError: the relays reached the server each time expected:<[]> but was:<[connect: java.net.ConnectException: failed to connect to /10.0.2.2 (port 32768) from /:: (port 0): connect failed: ENETUNREACH (Network is unreachable)]>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest.theAppReadsTheServerOnOpenForegroundAndReconnec
+com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest focusedLocalTicksAndFrozenPauseAddNoRequests 
+    java.lang.AssertionError: expected:<TimerTarget(revision=2, entryId=0, account=)> but was:<TimerTarget(revision=2, entryId=0, account=72286208-5767-4204-b30a-997260ce69ca)>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at org.junit.Assert.assertEquals(Assert.java:146)
+    	at com.github.e0ipso.tokkl.timer.FullscreenTimerAcceptanceTest.focusedLocalTicksAndFrozenPauseAddNoRequests(FullscreenTimerServerT
+com.github.e0ipso.tokkl.timer.TimerServerTest startingWhileAnotherEntryRunsLeavesOneRunning 
+    java.lang.AssertionError: Failed to inject touch input.
+    Reason: Expected exactly '1' node but could not find any node that satisfies: ((ContentDescription = 'Start timer' (ignoreCase: false)) && (OnClick is defined))
+    
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemantics
+com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest noticeAfterCancellingTheCertificatePromptFits 
+    java.lang.AssertionError: Assert failed: The component with (Text + InputText + EditableText contains 'Pomodoro' (ignoreCase: false)) && (OnClick is defined) is not displayed!
+    	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+    	at com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest.assertFitWithoutOverlap(LargestFontScaleTest.kt:624)
+    	at com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest.assertTimerPageFits(LargestFontScaleTest.kt:822)
+    	at com.github.e0ipso.tokkl.
+
+== api31-s3
+com.github.e0ipso.tokkl.cache.RunningCheckServerTest aTimerStoppedOnTheServerLeavesTheCacheAndTheNotificationAtTheNextCheck 
+    java.lang.AssertionError: one current-entry request expected:<1> but was:<0>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at com.github.e0ipso.tokkl.cache.RunningCheckServerTest.aTimerStoppedOnTheServerLeavesTheCacheAndTheNotificationAtTheNextCheck(RunningCheckServerTest.kt:152)
+    
+com.github.e0ipso.tokkl.projects.ProjectsServerTest createEditArchiveAndRestoreAProjectAndTheCacheFollowsEachChange 
+    java.lang.AssertionError: Action performScrollTo() failed.
+    Reason: Expected exactly '1' node but could not find any node that satisfies: ((Text + InputText + EditableText contains 'Name' (ignoreCase: false)) && (SetText is defined))
+    
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+    	at androidx.compose.ui.test.SemanticsNodeInteractio
+
+== api31-s4
+com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest billableChangedOnThePageUpdatesTheServersRunningEntry 
+    java.lang.AssertionError: expected:<true> but was:<false>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at org.junit.Assert.assertEquals(Assert.java:146)
+    	at com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest.billableChangedOnThePageUpdatesTheServersRunningEntry(PomodoroPageServerTest.kt:166)
+    
+com.github.e0ipso.tokkl.tags.TagsServerTest createRenameAndDeleteATagAndTheCacheAndHistoryFollow 
+    java.lang.AssertionError: Action performScrollTo() failed.
+    Reason: Expected exactly '1' node but could not find any node that satisfies: ((Text + InputText + EditableText contains 'New tag' (ignoreCase: false)) && (SetText is defined))
+    
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+    	at androidx.compose.ui.test.SemanticsNodeInterac
+
+== api31-s5
+com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest noticeAfterCancellingTheHttpWarningFits 
+    java.lang.AssertionError: Assert failed: The component with (Text + InputText + EditableText contains 'Pomodoro' (ignoreCase: false)) && (OnClick is defined) is not displayed!
+    	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+    	at com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest.assertFitWithoutOverlap(LargestFontScaleTest.kt:624)
+    	at com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest.assertTimerPageFits(LargestFontScaleTest.kt:822)
+    	at com.github.e0ipso.tokkl.
+
+== api36-s0
+com.github.e0ipso.tokkl.calendar.CalendarServerTest deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline 
+    androidx.compose.ui.test.ComposeTimeoutException: Condition (the calendar opens its entry editor) still not satisfied after 30000 ms
+    	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:901)
+    	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:507)
+    	at com.github.e0ipso.tokkl.calendar.CalendarServerTest.deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline$lambda$0$
+com.github.e0ipso.tokkl.notification.RunningNotificationServerTest anOfflineStartShowsTheEntryWithAClockTheSystemTicks 
+    java.lang.AssertionError: posted once expected:<1793221872109> but was:<1793221872316>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:647)
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationServerTest.anOfflineStartShowsTheEntryWithAClockTheSystemTicks(RunningNotificationServerTest.kt:137)
+    
+com.github.e0ipso.tokkl.notification.RunningNotificationServerTest aStartStopsTheRunningEntryAndShowsTheNewOne 
+    java.lang.AssertionError: the second start: shown Bundle[mParcelledData.dataSize=2268]
+    	at com.github.e0ipso.tokkl.notification.RunningNotifications.awaitShown(RunningNotifications.kt:40)
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationServerTest.aStartStopsTheRunningEntryAndShowsTheNewOne(RunningNotificationServerTest.kt:192)
+    
+com.github.e0ipso.tokkl.projects.ProjectsServerTest anEmptyNameIsAMistakeUnderTheField 
+    java.lang.AssertionError: Action performScrollTo() failed.
+    Reason: Expected exactly '1' node but could not find any node that satisfies: ((Text + InputText + EditableText contains 'Hourly rate' (ignoreCase: false)) && (SetText is defined))
+    
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+    	at androidx.compose.ui.test.SemanticsNodeInt
+
+== api36-s1
+com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest focusedLocalTicksAndFrozenPauseAddNoRequests 
+    java.lang.AssertionError: expected:<TimerTarget(revision=2, entryId=0, account=)> but was:<TimerTarget(revision=2, entryId=0, account=fb477109-8f45-45f5-aa93-805b01e53c92)>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at org.junit.Assert.assertEquals(Assert.java:146)
+    	at com.github.e0ipso.tokkl.timer.FullscreenTimerAcceptanceTest.focusedLocalTicksAndFrozenPauseAddNoRequests(FullscreenTimerServerT
+com.github.e0ipso.tokkl.timer.TimerServerTest theClockTicksWithoutAnyRequest 
+    java.lang.AssertionError: requests while the clock ticked from 0:00:00 past 0:00:01 expected:<1> but was:<2>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at com.github.e0ipso.tokkl.timer.TimerServerTest.theClockTicksWithoutAnyRequest$lambda$0(TimerServerTest.kt:280)
+    	at com.github.e0ipso.tokkl.timer.TimerServerTest$$ExternalSyntheticLambda8.invoke(D8$$SyntheticClass:0)
+    	at com.github.e0ipso.tokkl
+
+== api36-s2
+com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest theAppReadsTheServerOnOpenForegroundAndReconnectOnly 
+    java.lang.AssertionError: the relays reached the server each time expected:<[]> but was:<[connect: java.net.ConnectException: failed to connect to /10.0.2.2 (port 32768) from /:: (port 0): connect failed: ENETUNREACH (Network is unreachable), connect: java.net.ConnectException: failed to connect to /10.0.2.2 (port 32768) from /:: (port 0): connect failed: ENETUNREACH (Network is unreachable)]>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.j
+com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest focusedLocalTicksAndFrozenPauseAddNoRequests 
+    java.lang.AssertionError: expected:<TimerTarget(revision=2, entryId=0, account=)> but was:<TimerTarget(revision=2, entryId=0, account=1ea62499-d927-491a-a8fc-c5b53a951328)>
+    	at org.junit.Assert.fail(Assert.java:89)
+    	at org.junit.Assert.failNotEquals(Assert.java:835)
+    	at org.junit.Assert.assertEquals(Assert.java:120)
+    	at org.junit.Assert.assertEquals(Assert.java:146)
+    	at com.github.e0ipso.tokkl.timer.FullscreenTimerAcceptanceTest.focusedLocalTicksAndFrozenPauseAddNoRequests(FullscreenTimerServerT
+com.github.e0ipso.tokkl.timer.TimerServerTest startingWhileAnotherEntryRunsLeavesOneRunning 
+    java.lang.AssertionError: Failed to inject touch input.
+    Reason: Expected exactly '1' node but could not find any node that satisfies: ((ContentDescription = 'Start timer' (ignoreCase: false)) && (OnClick is defined))
+    
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemantics
+com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest noticeAfterCancellingTheCertificatePromptFits 
+    java.lang.AssertionError: Assert failed: The component with (Text + InputText + EditableText contains 'Pomodoro' (ignoreCase: false)) && (OnClick is defined) is not displayed!
+    	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+    	at com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest.assertFitWithoutOverlap(LargestFontScaleTest.kt:624)
+    	at com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest.assertTimerPageFits(LargestFontScaleTest.kt:822)
+    	at com.github.e0ipso.tokkl.
+
+== api36-s3
+com.github.e0ipso.tokkl.notification.RunningNotificationServerTest twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry 
+    java.lang.AssertionError: the notification after its Stop: still shown
+    	at com.github.e0ipso.tokkl.notification.RunningNotifications.awaitGone(RunningNotifications.kt:48)
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationServerTest.twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry(RunningNotificationServerTest.kt:377)
+    
+com.github.e0ipso.tokkl.notification.RunningNotificationServerTest aDismissedNotificationStaysGoneWhenTheAppOpensAndTheNextEditOrStartPostsItAgain 
+    java.lang.AssertionError: the next start: shown Bundle[mParcelledData.dataSize=2268]
+    	at com.github.e0ipso.tokkl.notification.RunningNotifications.awaitShown(RunningNotifications.kt:40)
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationServerTest.aDismissedNotificationStaysGoneWhenTheAppOpensAndTheNextEditOrStartPostsItAgain(RunningNotificationServerTest.kt:348)
+    
+com.github.e0ipso.tokkl.projects.ProjectsServerTest createEditArchiveAndRestoreAProjectAndTheCacheFollowsEachChange 
+    java.lang.AssertionError: Action performScrollTo() failed.
+    Reason: Expected exactly '1' node but could not find any node that satisfies: ((Text + InputText + EditableText contains 'Name' (ignoreCase: false)) && (SetText is defined))
+    
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+    	at androidx.compose.ui.test.SemanticsNodeInteractio
+
+== api36-s4
+com.github.e0ipso.tokkl.notification.RunningNotificationServerTest stopFromTheNotificationWorksOfflineAndTheQueueSendsItWhenTheNetworkReturns 
+    java.lang.NullPointerException: actions must not be null
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationsKt.action(RunningNotifications.kt:92)
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationsKt.stopAction(RunningNotifications.kt:96)
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationServerTest.stopFromTheNotificationWorksOfflineAndTheQueueSendsItWhenTheNetworkReturns(RunningNotificationServerTest.kt:205)
+    
+com.github.e0ipso.tokkl.tags.TagsServerTest createRenameAndDeleteATagAndTheCacheAndHistoryFollow 
+    java.lang.AssertionError: Action performScrollTo() failed.
+    Reason: Expected exactly '1' node but could not find any node that satisfies: ((Text + InputText + EditableText contains 'New tag' (ignoreCase: false)) && (SetText is defined))
+    
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+    	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+    	at androidx.compose.ui.test.SemanticsNodeInterac
+com.github.e0ipso.tokkl.timerstate.TimerCrossDeviceServerTest pauseResumeAndDiscardFromEitherDeviceShareOneChainAndOneTotal 
+    java.lang.AssertionError: the notification after Discard elsewhere: still shown
+    	at com.github.e0ipso.tokkl.notification.RunningNotifications.awaitGone(RunningNotifications.kt:48)
+    	at com.github.e0ipso.tokkl.timerstate.TimerCrossDeviceServerTest.pauseResumeAndDiscardFromEitherDeviceShareOneChainAndOneTotal(TimerCrossDeviceServerTest.kt:335)
+    
+com.github.e0ipso.tokkl.widget.WidgetServerTest theWidgetFollowsTheAppNotificationAndTileWithinASecond 
+    java.lang.NullPointerException: actions must not be null
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationsKt.action(RunningNotifications.kt:92)
+    	at com.github.e0ipso.tokkl.notification.RunningNotificationsKt.stopAction(RunningNotifications.kt:96)
+    	at com.github.e0ipso.tokkl.widget.WidgetServerTest.theWidgetFollowsTheAppNotificationAndTileWithinASecond(WidgetServerTest.kt:264)
+    
+
+== api36-s5 (fetched after the job finished)
+com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest noticeAfterCancellingTheHttpWarningFits
+    java.lang.AssertionError: Assert failed: The component with (Text + InputText + EditableText contains 'Pomodoro' (ignoreCase: false)) && (OnClick is defined) is not displayed!
+    	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+    	at com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest.assertFitWithoutOverlap(LargestFontScaleTest.kt:624)
+    	at com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest.assertTimerPageFits(LargestFontScaleTest.kt:822)
+    	at com.github.e0ipso.tokkl.

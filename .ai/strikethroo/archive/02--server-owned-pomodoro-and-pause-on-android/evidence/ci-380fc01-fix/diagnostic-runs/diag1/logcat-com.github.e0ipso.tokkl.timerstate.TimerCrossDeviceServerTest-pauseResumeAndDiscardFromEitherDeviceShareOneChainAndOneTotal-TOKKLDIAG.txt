@@ -1,0 +1,40 @@
+10-28 22:50:29.849  3238  3269 I TestRunner: started: pauseResumeAndDiscardFromEitherDeviceShareOneChainAndOneTotal(com.github.e0ipso.tokkl.timerstate.TimerCrossDeviceServerTest)
+10-28 22:50:31.313  3238  3256 I TOKKLDIAG: accept rev=0 held=null running=null pause=null pomodoro=false
+10-28 22:50:31.399  3238  3238 I TOKKLDIAG: sync.onAvailable 108 current=null
+10-28 22:50:31.412  3238  3263 I TOKKLDIAG: stream.open
+10-28 22:50:31.437  3238  3263 I TOKKLDIAG: stream.connected
+10-28 22:50:31.438  3238  3263 I TOKKLDIAG: accept rev=0 held=null running=null pause=null pomodoro=false
+10-28 22:50:31.447  3238  3260 I TOKKLDIAG: accept rev=0 held=0 running=null pause=null pomodoro=false
+10-28 22:50:31.787  3238  3260 I TOKKLDIAG: accept rev=0 held=0 running=null pause=null pomodoro=false
+10-28 22:50:34.482  3238  3263 I TOKKLDIAG: accept rev=1 held=0 running=1 pause=null pomodoro=false
+10-28 22:50:34.498  3238  3270 I TOKKLDIAG: notif.apply content=id=1 key=5c5bfd0e paused=false pausable=true target=TimerTarget(revision=0, entryId=1, account=2dba8a06-eabb-4d6d-8b66-c39482b0eea3) start=2026-10-28T21:40:34Z acc=0 stored=null followed=null change=Post
+10-28 22:50:34.499  3238  3270 I TOKKLDIAG: notifier.post id=1 paused=false pausable=true
+10-28 22:50:35.044  3238  3263 I TOKKLDIAG: accept rev=2 held=1 running=null pause=paused=true clone=null s=600 pomodoro=false
+10-28 22:50:35.054  3238  3257 I TOKKLDIAG: accept rev=2 held=2 running=null pause=paused=true clone=null s=600 pomodoro=false
+10-28 22:50:35.084  3238  3286 I TOKKLDIAG: notif.apply content=id=0 key=07130e83 paused=true pausable=false target=TimerTarget(revision=2, entryId=0, account=2dba8a06-eabb-4d6d-8b66-c39482b0eea3) start=1970-01-01T00:00:00Z acc=600 stored=5c5bfd0e/1 followed=1 change=Post
+10-28 22:50:35.090  3238  3286 I TOKKLDIAG: notifier.post id=0 paused=true pausable=false
+10-28 22:50:35.158  3238  3261 I TOKKLDIAG: accept rev=2 held=2 running=null pause=paused=true clone=null s=600 pomodoro=false
+10-28 22:50:35.876  3238  3263 I TOKKLDIAG: accept rev=3 held=2 running=2 pause=paused=false clone=2 s=600 pomodoro=false
+10-28 22:50:35.899  3238  3256 I TOKKLDIAG: notif.apply content=id=2 key=a975e207 paused=false pausable=true target=TimerTarget(revision=0, entryId=2, account=2dba8a06-eabb-4d6d-8b66-c39482b0eea3) start=2026-10-28T21:50:35Z acc=600 stored=07130e83/0 followed=0 change=Post
+10-28 22:50:35.902  3238  3256 I TOKKLDIAG: notifier.post id=2 paused=false pausable=true
+10-28 22:50:36.196  3238  3263 I TOKKLDIAG: accept rev=4 held=3 running=null pause=paused=true clone=null s=600 pomodoro=false
+10-28 22:50:36.211  3238  3253 I TOKKLDIAG: notif.apply content=id=0 key=d7df8ff8 paused=true pausable=false target=TimerTarget(revision=4, entryId=0, account=2dba8a06-eabb-4d6d-8b66-c39482b0eea3) start=1970-01-01T00:00:00Z acc=600 stored=a975e207/2 followed=2 change=Post
+10-28 22:50:36.212  3238  3253 I TOKKLDIAG: notifier.post id=0 paused=true pausable=false
+10-28 22:50:36.251  3238  3316 I TOKKLDIAG: accept rev=4 held=4 running=null pause=paused=true clone=null s=600 pomodoro=false
+10-28 22:50:36.293  3238  3263 I TOKKLDIAG: accept rev=5 held=4 running=3 pause=paused=false clone=3 s=600 pomodoro=false
+10-28 22:50:36.301  3238  3271 I TOKKLDIAG: accept rev=5 held=5 running=3 pause=paused=false clone=3 s=600 pomodoro=false
+10-28 22:50:36.318  3238  3316 I TOKKLDIAG: notif.apply content=id=3 key=a975e207 paused=false pausable=true target=TimerTarget(revision=0, entryId=3, account=2dba8a06-eabb-4d6d-8b66-c39482b0eea3) start=2026-10-28T21:50:35Z acc=600 stored=d7df8ff8/0 followed=0 change=Post
+10-28 22:50:36.320  3238  3316 I TOKKLDIAG: notifier.post id=3 paused=false pausable=true
+10-28 22:50:37.365  3238  3263 I TOKKLDIAG: accept rev=6 held=5 running=null pause=paused=true clone=null s=600 pomodoro=false
+10-28 22:50:37.379  3238  3258 I TOKKLDIAG: accept rev=6 held=6 running=null pause=paused=true clone=null s=600 pomodoro=false
+10-28 22:50:37.392  3238  3262 I TOKKLDIAG: notif.apply content=id=0 key=0eacf4c2 paused=true pausable=false target=TimerTarget(revision=6, entryId=0, account=2dba8a06-eabb-4d6d-8b66-c39482b0eea3) start=1970-01-01T00:00:00Z acc=600 stored=a975e207/3 followed=3 change=Post
+10-28 22:50:37.393  3238  3262 I TOKKLDIAG: notifier.post id=0 paused=true pausable=false
+10-28 22:50:37.425  3238  3257 I TOKKLDIAG: accept rev=6 held=6 running=null pause=paused=true clone=null s=600 pomodoro=false
+10-28 22:50:37.604  3238  3263 I TOKKLDIAG: accept rev=7 held=6 running=null pause=null pomodoro=false
+10-28 22:50:37.619  3238  3254 I TOKKLDIAG: notif.apply content=null stored=0eacf4c2/0 followed=0 change=Remove
+10-28 22:50:37.619  3238  3254 I TOKKLDIAG: notifier.remove
+10-28 22:50:48.993  3238  3317 I TOKKLDIAG: accept rev=7 held=7 running=null pause=null pomodoro=false
+10-28 22:50:49.528  3238  3263 I TOKKLDIAG: stream.end Success(value=Ended)
+10-28 22:50:49.614  3238  3269 E TestRunner: failed: pauseResumeAndDiscardFromEitherDeviceShareOneChainAndOneTotal(com.github.e0ipso.tokkl.timerstate.TimerCrossDeviceServerTest)
+10-28 22:50:49.616  3238  3269 E TestRunner: java.lang.AssertionError: the notification after Discard elsewhere: still shown TOKKLDIAG TOKKLDIAG sbn id=1 key=0|com.canpicasoft.tokkl|1|0|com.canpicasoft.tokkl|g:Aggregate_SilentSection|10151|0|com.canpicasoft.tokkl|g:Aggregate_SilentSection groupKey=0|com.canpicasoft.tokkl|g:Aggregate_SilentSection override=0|com.canpicasoft.tokkl|g:Aggregate_SilentSection post=1793224234705 when=1793224234705 flags=0x722 title=null text=null actions=null channel=running_timer group=0|com.canpicasoft.tokkl|g:Aggregate_SilentSection extras=[android.reduced.images, android.appInfo, android.showWhen] all=[(1, 1793224234705), (4, 1793224231391)] controls=Idle held=TimerState(revision=7, serverTime=2026-10-28T21:50:38.312Z, runningEntry=null, pause=null, pomodoro=null, discardedPomodoro=null)
+10-28 22:50:49.622  3238  3269 I TestRunner: finished: pauseResumeAndDiscardFromEitherDeviceShareOneChainAndOneTotal(com.github.e0ipso.tokkl.timerstate.TimerCrossDeviceServerTest)
