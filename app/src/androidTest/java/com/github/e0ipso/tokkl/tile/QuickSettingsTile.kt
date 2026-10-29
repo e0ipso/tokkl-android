@@ -20,11 +20,30 @@ object QuickSettingsTile {
 
     fun add() {
         DeviceShell.run("cmd statusbar add-tile $component")
+        awaitTileSpec(present = true)
     }
 
     fun remove() {
         DeviceShell.run("cmd statusbar remove-tile $component")
+        awaitTileSpec(present = false)
     }
+
+    /** SystemUI applies these shell commands asynchronously, including the previous test's cleanup. */
+    private fun awaitTileSpec(present: Boolean) {
+        val spec = "custom($component)"
+        val deadline = System.nanoTime() + TIMEOUT_NANOS
+        while (true) {
+            val specs = tileSpecs()
+            if ((spec in specs) == present) return
+            if (System.nanoTime() > deadline) {
+                throw AssertionError("tile setting did not reach present=$present: $specs")
+            }
+            Thread.sleep(POLL_MS)
+        }
+    }
+
+    private fun tileSpecs(): List<String> =
+        DeviceShell.run("settings get secure sysui_qs_tiles").trim().split(',')
 
     /** Opens the full Quick Settings panel, where the system binds the tile and it listens. */
     fun expand() {
@@ -58,7 +77,7 @@ object QuickSettingsTile {
         val deadline = System.nanoTime() + TIMEOUT_NANOS
         var nextExpand = System.nanoTime() + REEXPAND_NANOS
         while (!shows(text)) {
-            if (System.nanoTime() > deadline) throw AssertionError("$what: the panel does not show \"$text\"")
+            if (System.nanoTime() > deadline) throw AssertionError("$what: the panel does not show \"$text\"; tiles=${tileSpecs()}")
             if (System.nanoTime() > nextExpand) {
                 expand()
                 nextExpand = System.nanoTime() + REEXPAND_NANOS
