@@ -71,8 +71,8 @@ class PomodoroRingingServiceTest {
         // Reuse the suite's permission helper. Revoking this permission kills instrumentation,
         // so, like the other notification tests, leave this grant to the runner's setup.
         RunningNotifications.allow()
-        DeviceShell.run("cmd notification set_dnd off")
         DeviceShell.run("cmd media_session volume --stream 4 --set ${maxOf(1, alarmVolume)}")
+        setDnd("off", NotificationManager.INTERRUPTION_FILTER_ALL)
         DeviceShell.run("cmd connectivity airplane-mode enable")
         assertEquals("1", DeviceShell.run("settings get global airplane_mode_on").trim())
     }
@@ -91,7 +91,13 @@ class PomodoroRingingServiceTest {
                 if (Build.VERSION.SDK_INT >= 36) setRinger(ringer)
                 DeviceShell.run("cmd media_session volume --stream 4 --set $alarmVolume")
                 val mode = when (zen) { "1" -> "priority"; "2" -> "none"; "3" -> "alarms"; else -> "off" }
-                DeviceShell.run("cmd notification set_dnd $mode")
+                val filter = when (zen) {
+                    "1" -> NotificationManager.INTERRUPTION_FILTER_PRIORITY
+                    "2" -> NotificationManager.INTERRUPTION_FILTER_NONE
+                    "3" -> NotificationManager.INTERRUPTION_FILTER_ALARMS
+                    else -> NotificationManager.INTERRUPTION_FILTER_ALL
+                }
+                setDnd(mode, filter)
                 // Wait for the network to come back, or the next test's first request fails.
                 AirplaneMode.set(airplane, TokklTestServer.url)
                 if (screenWasOn) device.wakeUp() else device.sleep()
@@ -147,7 +153,7 @@ class PomodoroRingingServiceTest {
 
     @Test
     fun alarmsAllowedDndKeepsTheAlarmPlayerLoopingAndVibrationRequested() {
-        DeviceShell.run("cmd notification set_dnd alarms")
+        setDnd("alarms", NotificationManager.INTERRUPTION_FILTER_ALARMS)
         assertEquals(NotificationManager.INTERRUPTION_FILTER_ALARMS, notifications.currentInterruptionFilter)
         seedDuePhase()
         assertAlarmOutput(awaitPlaying())
@@ -341,6 +347,18 @@ class PomodoroRingingServiceTest {
             else -> "NORMAL"
         }
         DeviceShell.run("cmd audio set-ringer-mode $name")
+    }
+
+    /** The shell returns before NotificationManager publishes the requested DND filter. */
+    private fun setDnd(mode: String, filter: Int) {
+        DeviceShell.run("cmd notification set_dnd $mode")
+        val deadline = SystemClock.uptimeMillis() + 10_000
+        while (notifications.currentInterruptionFilter != filter) {
+            if (SystemClock.uptimeMillis() > deadline) {
+                assertEquals("DND mode $mode did not settle", filter, notifications.currentInterruptionFilter)
+            }
+            Thread.sleep(50)
+        }
     }
 
     private fun onMain(block: () -> Unit) {
