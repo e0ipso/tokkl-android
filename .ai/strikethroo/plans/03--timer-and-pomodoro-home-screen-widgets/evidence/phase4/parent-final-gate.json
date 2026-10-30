@@ -1,0 +1,22 @@
+{
+  "observed_utc": "2026-10-30T16:15:25.443178+00:00",
+  "runtime_input_hashes_rechecked": 1011,
+  "api36_cases_from_terminal_xml": 736,
+  "per_shard": [
+    134,
+    108,
+    108,
+    132,
+    127,
+    127
+  ],
+  "jvm_cases_from_terminal_xml": 1069,
+  "failures_errors_skips": 0,
+  "lint_errors": 0,
+  "npm_tests": 11,
+  "nested_python_tests": 5,
+  "all_six_tasks_completed": true,
+  "self_validation_7_documentation_match": true,
+  "api31": "deferred to existing CI by explicit user direction",
+  "runtime_evidence_reuse": "All 1011 checked inputs unchanged; docs-only changes after fresh accepted runs."
+}

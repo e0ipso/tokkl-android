@@ -251,10 +251,10 @@ Verify focused JVM/build/lint and focused device layout checks. Record API36 scr
 
 Inventory and isolate all failing tests, then run full local suites on API36 and record JUnit counts and all seven Self Validation steps. API31 remains deferred to the existing CI matrix under the user's explicit scope override.
 
-### Phase 4: Documentation of verified behavior
-**Status:** pending
+### ✅ Phase 4: Documentation of verified behavior
+**Status:** completed
 **Parallel Tasks:**
-- Task 006: Document verified Timer and Pomodoro widgets (depends on: 005)
+- ✔️ Task 006: Document verified Timer and Pomodoro widgets (depends on: 005)
 
 ### Post-phase Actions
 
@@ -365,3 +365,11 @@ The next complete local API36 validation uses the existing CI configuration: six
 The six final API36 shards passed 134/108/108/132/127/127 cases. The parent independently parsed all terminal XML, required zero failures/errors/skips, compared the exact 736 identities with the complete inventory, checked all 33 widget methods and eight reference classes, and verified all 1,011 current input hashes against every accepted run. Receipt: `evidence/phase3/task5/parent-shard-xml-audit.json`. The worker's independent union audit additionally proves all eight ordered restart groups stayed whole, all 736 actual start/finish receipts match, and six distinct owned boots were used. All 208 widget reference comparisons passed; 40 changed captures were reviewed and copied, with 168 preserved.
 
 Fresh host verification passed 1,069 JVM tests with zero failures/errors/skips, executed Android test compilation, and produced lint with zero Error/Fatal issues (12 warnings and one hint). All 11 npm tests passed, including the five-case Python lifecycle suite wrapper. The parent checked saved XML/exit codes/npm counts and fresh `git diff --check`. Accepted source/resource/build/runner/npm manifests match the current tree. All owned final units are inactive and the Device panel is closed. Task 5 is completed within the explicit API36 local/API31 CI scope. Task 6 still owns the documentation updates and final Self Validation 7 doc-match; whole-plan completion and the terminal review gate are not yet claimed.
+
+## Phase 4 and POST_EXECUTION verification
+
+The parent read PRD N3, N8, W7, the architecture and Battery rows, AGENTS.md and both widget knowledge nodes against the live implementation and task 5 receipts. CLAUDE.md remains a symlink to AGENTS.md. Self Validation 7 now passes. The supported kenkeep index rebuild added the Pomodoro node to the catalog. Knowledge lint has no newly introduced findings; the inherited orphan and redirected edges are recorded separately.
+
+All six tasks are completed. A fresh parent audit parsed the saved terminal XML, rechecked all 1,011 runtime input hashes and confirmed 736 API36 cases, 1,069 JVM cases, zero failures/errors/skips, zero lint errors and 11 passing npm cases with five nested Python cases. Source, tests, resources, build configuration and runner inputs remain unchanged after the accepted runs. Documentation-only updates do not invalidate those receipts. Evidence: `evidence/phase4/parent-final-gate.json` and `evidence/phase3/task5/acceptance-map.json`. The original offline Pause/Resume requirement is superseded by current server-owned semantics; midnight proof advances only the injected account-day clock. API31 is deferred to existing CI by explicit user direction.
+
+The four advisory review findings are addressed, including dead code removal. No new dependencies, periodic widget jobs, compatibility layers or unresolved known product defects remain from this plan. No local API31 or physical battery measurement is claimed.

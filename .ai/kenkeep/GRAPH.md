@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:b2746932345db150bfc1be862c1a85d92ea044ca21cd257832b94c8daf3959b4'
-node_count: 90
+nodes_hash: 'sha256:fcffd2b29599bc64d09e5c50227b0acb46c1a95637b584c8479d91f5ba329598'
+node_count: 91
 ---
 # kenkeep Graph
 
-Total nodes: 90
+Total nodes: 91
 
 ## map-account-cache-and-capabilities
 
@@ -147,7 +147,7 @@ Total nodes: 90
 - **title:** Home screen widget: cache state and a native ticking clock
 - **path:** screens/map-home-screen-widget-cache-state-and-a-native-ticking-clock.md
 - **tags:** android, widget, offline, battery
-- **relates_to:** map-timer-state-holder-and-sync-service, practice-never-wait-for-server-on-start-stop, map-ordered-entry-sending-and-refusals, map-offline-entry-mutations-and-local-id-mapping, practice-refresh-on-events-no-polling
+- **relates_to:** map-timer-state-holder-and-sync-service, practice-never-wait-for-server-on-start-stop, map-ordered-entry-sending-and-refusals, map-offline-entry-mutations-and-local-id-mapping, practice-refresh-on-events-no-polling, map-pomodoro-home-screen-widget
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:2
 
 ## map-jdk-android-sdk-and-agent-shells
@@ -199,6 +199,14 @@ Total nodes: 90
 - **tags:** settings, offline, api, pomodoro
 - **relates_to:** map-account-settings-source-and-account-time, practice-check-capabilities-not-server-version
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:6
+
+## map-pomodoro-home-screen-widget
+
+- **kind:** map
+- **title:** Pomodoro home screen widget
+- **path:** screens/map-pomodoro-home-screen-widget.md
+- **tags:** android, widget, pomodoro, battery
+- **relates_to:** map-home-screen-widget-cache-state-and-a-native-ticking-clock, map-timer-state-holder-and-sync-service, map-pomodoro-phase-alarms-and-rearming
 
 ## map-pomodoro-phase-alarms-and-rearming
 
@@ -539,7 +547,7 @@ Total nodes: 90
 - **path:** testing/emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md
 - **tags:** testing, android, emulator
 - **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection
-- **derived_from:** scripts/instrumented-tests.sh
+- **derived_from:** scripts/instrumented-tests.sh, scripts/emulator-discovery.py
 
 ## practice-match-javascript-decimal-and-percentage-formatting
 
