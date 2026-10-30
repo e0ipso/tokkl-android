@@ -1,0 +1,24 @@
+[
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest",
+    "name": "signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields",
+    "time": "5.770",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest",
+    "name": "remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields",
+    "time": "8.643",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  }
+]

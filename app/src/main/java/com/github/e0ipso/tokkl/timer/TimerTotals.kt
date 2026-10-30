@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Today and this week on the Timer page, in whole seconds, as TimerPage.tsx sums them from the
@@ -50,10 +51,8 @@ internal fun timerPeriodTotals(
     val weekStart = time.startOfWeek(today)
     var todaySeconds = 0L
     var weekSeconds = 0L
-    for (entry in entries.countedOnce(serverIdOf)) {
-        val day = time.local(entry.start).toLocalDate()
+    for ((_, day, seconds) in countedTimerEntries(entries, time, now, serverIdOf)) {
         if (day > today) continue
-        val seconds = entrySeconds(entry.start, entry.stop, now)
         if (day == today) todaySeconds += seconds
         if (day in weekStart..today) weekSeconds += seconds
     }
@@ -87,13 +86,26 @@ internal fun nextTotalsDelay(now: Instant, time: AccountTime, hasRunning: Boolea
 }
 
 /** Whole seconds from [start] to [stop], or to [now] while the entry runs, never below zero. */
-private fun entrySeconds(start: Instant, stop: Instant?, now: Instant): Long {
+internal fun timerEntrySeconds(start: Instant, stop: Instant?, now: Instant): Long {
     val end = stop ?: now
     return Duration.between(start, end).seconds.coerceAtLeast(0L)
 }
 
+/** One effective cached segment, its account-local start day, and its nonnegative elapsed seconds. */
+internal data class CountedTimerEntry(val entry: CachedTimeEntry, val day: LocalDate, val seconds: Long)
+
+/** Shared by the Timer page and widget so remaps, start days and elapsed time cannot drift. */
+internal fun countedTimerEntries(
+    entries: List<CachedTimeEntry>,
+    time: AccountTime,
+    now: Instant,
+    serverIdOf: Map<Long, Long> = emptyMap(),
+): List<CountedTimerEntry> = entries.countedOnce(serverIdOf).map { entry ->
+    CountedTimerEntry(entry, time.local(entry.start).toLocalDate(), timerEntrySeconds(entry.start, entry.stop, now))
+}
+
 /**
- * One row per entry. A local id whose server id is also present yields to the local row, and
+ * One row per entry. A server row with a mapped local row present yields to the local row, and
  * two rows that share a canonical id count as the first of them.
  */
 private fun List<CachedTimeEntry>.countedOnce(serverIdOf: Map<Long, Long>): List<CachedTimeEntry> {

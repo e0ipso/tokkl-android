@@ -1,0 +1,2 @@
+10-29 23:32:35.983  2280  2317 I TestRunner: started: nativeCountdownAndOvertimeTickWithoutProviderUpdates(com.github.e0ipso.tokkl.widget.PomodoroWidgetClockTest)
+10-29 23:32:35.984  2280  2317 I TestRunner: finished: nativeCountdownAndOvertimeTickWithoutProviderUpdates(com.github.e0ipso.tokkl.widget.PomodoroWidgetClockTest)

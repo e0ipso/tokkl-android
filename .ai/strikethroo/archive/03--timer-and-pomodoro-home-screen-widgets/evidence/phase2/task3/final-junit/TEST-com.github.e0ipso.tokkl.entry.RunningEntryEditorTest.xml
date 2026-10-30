@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:27.913Z" hostname="punta-des-patro" time="0.288">
+  <properties/>
+  <testcase name="stoppedSegmentCannotBeRevivedByStaleSave" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.037"/>
+  <testcase name="openingWaitsForPendingDescriptionBeforeReadingTheForm" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.047"/>
+  <testcase name="invalidStartDoesNotFlushMetadataOrQueueAnything" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.008"/>
+  <testcase name="pendingDescriptionSurvivesServerIdAndWholeSecondRemapping" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.025"/>
+  <testcase name="parsesTwelveHourStartAgainstTheAccountClock" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.016"/>
+  <testcase name="openingWaitsForInitialStartAndUsesItsAssignedId" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.013"/>
+  <testcase name="stopDuringDescriptionSettlementDoesNotReviveOrOpenTheEntry" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.032"/>
+  <testcase name="sameInstantReplacementDoesNotInheritPendingTimerText" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.033"/>
+  <testcase name="cancelDiscardsUnsavedDateStartAndMetadata" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.011"/>
+  <testcase name="ignoresHiddenEndAndDurationInRunningMode" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.021"/>
+  <testcase name="backdatesAcrossMidnightWithoutSnappingRunningStart" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.025"/>
+  <testcase name="opensRunningModeInAccountDateAndKeepsSecondsOnMetadataSave" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorTest" time="0.018"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

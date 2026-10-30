@@ -1,0 +1,2 @@
+10-30 10:15:15.513  2370  2411 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest)
+10-30 10:15:15.513  2370  2411 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest)

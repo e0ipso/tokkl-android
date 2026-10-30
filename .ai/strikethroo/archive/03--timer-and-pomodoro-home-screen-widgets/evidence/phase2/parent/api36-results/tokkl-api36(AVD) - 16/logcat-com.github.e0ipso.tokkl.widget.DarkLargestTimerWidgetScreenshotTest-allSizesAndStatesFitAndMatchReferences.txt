@@ -1,0 +1,946 @@
+10-30 00:18:52.798  2463  2501 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest)
+10-30 00:18:52.806  2463  2501 D WM-ForceStopRunnable: The default process name was not specified.
+10-30 00:18:52.807  2463  2501 D WM-ForceStopRunnable: Performing cleanup operations.
+10-30 00:18:52.821  2463  2501 D WM-ForceStopRunnable: Application was force-stopped, rescheduling.
+10-30 00:18:52.823  2463  2487 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/database/sqlite/SQLiteDatabase;->getThreadSession()Landroid/database/sqlite/SQLiteSession; (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/sqlite/db/framework/FrameworkSQLiteDatabase; (domain=app) using reflection: allowed
+10-30 00:18:52.823  2463  2487 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/database/sqlite/SQLiteSession;->beginTransaction(ILandroid/database/sqlite/SQLiteTransactionListener;ILandroid/os/CancellationSignal;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/sqlite/db/framework/FrameworkSQLiteDatabase; (domain=app) using reflection: allowed
+10-30 00:18:52.863  2463  2501 I UiAutomation: Initialized for user 0 on display 0
+10-30 00:18:52.868  2463  2514 V UiAutomation: Init UiAutomation@f39ddbf[id=2, displayId=0, flags=0]
+10-30 00:18:52.946  2463  2501 I TokklAccessibility: font scale=2.0; largest display=false
+10-30 00:18:52.947  2463  2501 I npicasoft.tokkl: AssetManager2(0x75fa12f99df8) locale list changing from [] to [en-US]
+10-30 00:18:52.964   656   656 I system_server: AssetManager2(0x75fa12fb0eb8) locale list changing from [] to [en-US]
+10-30 00:18:52.968  1192  1192 D TaskbarManager: onConfigurationChanged: {2.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h914dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 0 - 1080, 2400) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.128 fontWeightAdjustment=0} displayId=0 isDefaultDisplay=true
+10-30 00:18:52.969   893   954 I ndroid.systemui: AssetManager2(0x75fa12fce058) locale list changing from [] to [en-US]
+10-30 00:18:52.969   893   954 I ndroid.systemui: AssetManager2(0x75fa12fa7278) locale list changing from [] to [en-US]
+10-30 00:18:52.970  1192  1192 D TaskbarManager: onConfigurationChanged: | configDiff={CONFIG_FONT_SCALE} displayId=0 isDefaultDisplay=true
+10-30 00:18:52.970  1192  1192 D TaskbarManager: onConfigurationChanged: call recreateTaskbars displayId=0 isDefaultDisplay=true
+10-30 00:18:52.970  1192  1192 D TaskbarManager: recreateTaskbars displayId=0 isDefaultDisplay=true
+10-30 00:18:52.970  1192  1192 D TaskbarManager: recreateTaskbars: create external taskbar displayId=0 isDefaultDisplay=true
+10-30 00:18:52.970  1192  1192 D TaskbarManager: recreateTaskbarForDisplay:  displayId=0 isDefaultDisplay=true
+10-30 00:18:52.970  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: getting device profile displayId=0 isDefaultDisplay=true
+10-30 00:18:52.971  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: destroying taskbar displayId=0 isDefaultDisplay=true
+10-30 00:18:52.971  1192  1192 D TaskbarManager: destroyTaskbarForDisplay displayId=0 isDefaultDisplay=true
+10-30 00:18:52.971   893   893 I NoBackGesture: Config changed: newConfig={2.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h914dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 0 - 1080, 2400) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.173 fontWeightAdjustment=0} lastReportedConfig={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h914dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 0 - 1080, 2400) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.124 fontWeightAdjustment=0}
+10-30 00:18:52.971   893   893 D NavigationModeController: getCurrentUserContext: contextUser=0 currentUser=0
+10-30 00:18:52.971  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: isTaskbarEnabled=true [dp != null (i.e. mUserUnlocked)]=true FLAG_HIDE_NAVBAR_WINDOW=true dp.isTaskbarPresent=false displayExists=true displayId=0 isDefaultDisplay=true
+10-30 00:18:52.971  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: creating taskbar displayId=0 isDefaultDisplay=true
+10-30 00:18:52.972  1192  1192 I droid.launcher3: AssetManager2(0x75fa12faf5b8) locale list changing from [] to [en-US]
+10-30 00:18:52.975   893   893 I NoBackGesture: NavbarController: newConfig={2.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h914dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 0 - 1080, 2400) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.173 fontWeightAdjustment=0} mTaskbarDelegate initialized=true willApplyConfigToNavbars=true navBarCount=0
+10-30 00:18:52.975   893   893 D ShadeStateTraceLogger: New configuration change from Shade window. smallestScreenWidthDp: 411, densityDpi: 420
+10-30 00:18:52.980  2463  2501 W Settings: Setting always_finish_activities has moved from android.provider.Settings.System to android.provider.Settings.Global, returning read-only value.
+10-30 00:18:52.982   523   523 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: No service published for: ethernet
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: android.os.ServiceManager$ServiceNotFoundException: No service published for: ethernet
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.os.ServiceManager.getServiceOrThrow(ServiceManager.java:203)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.app.SystemServiceRegistry$149.createService(SystemServiceRegistry.java:2232)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.app.SystemServiceRegistry$CachedServiceFetcher.getService(SystemServiceRegistry.java:2343)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.app.SystemServiceRegistry.getSystemService(SystemServiceRegistry.java:1918)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.app.ContextImpl.getSystemService(ContextImpl.java:2315)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.content.ContextWrapper.getSystemService(ContextWrapper.java:964)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at com.android.networkstack.tethering.Tethering.isEthernetSupported(Tethering.java:1862)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at com.android.networkstack.tethering.Tethering.makeSupportedDownstreams(Tethering.java:2843)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at com.android.networkstack.tethering.Tethering.updateSupportedDownstreams(Tethering.java:2817)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at com.android.networkstack.tethering.Tethering.updateConfiguration(Tethering.java:564)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at com.android.networkstack.tethering.Tethering.-$$Nest$mupdateConfiguration(Tethering.java:0)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at com.android.networkstack.tethering.Tethering$StateReceiver.onReceive(Tethering.java:1396)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.app.LoadedApk$ReceiverDispatcher$Args.lambda$getRunnable$0(LoadedApk.java:1839)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.app.LoadedApk$ReceiverDispatcher$Args.$r8$lambda$mcNAAl1SQ4MyJPyDg8TJ2x2h0Rk(Unknown Source:0)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.app.LoadedApk$ReceiverDispatcher$Args$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.os.Handler.handleCallback(Handler.java:995)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.os.Looper.loop(Looper.java:338)
+10-30 00:18:52.983   978  1106 E SystemServiceRegistry: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+10-30 00:18:52.986   893   893 I ndroid.systemui: AssetManager2(0x75fa12fa4cf8) locale list changing from [] to [en-US]
+10-30 00:18:52.998   656   870 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10151, packageName = null, attributionTag = null, token = android.os.Binder@8bdb474, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-30 00:18:53.002  1192  1192 E Overrides: Bad overriden class
+10-30 00:18:53.002  1192  1192 E Overrides: java.lang.NoSuchMethodException: com.android.launcher3.taskbar.TaskbarModelCallbacksFactory.<init> [class android.content.Context]
+10-30 00:18:53.002  1192  1192 E Overrides: 	at java.lang.Class.getConstructor0(Class.java:3385)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at java.lang.Class.getDeclaredConstructor(Class.java:3067)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.util.ResourceBasedOverride$Overrides.getObject(ResourceBasedOverride.java:42)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarModelCallbacksFactory$Companion.newInstance(TaskbarModelCallbacksFactory.kt:35)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarModelCallbacksFactory.newInstance(TaskbarModelCallbacksFactory.kt:0)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarViewController.<init>(TaskbarViewController.java:236)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarActivityContext.<init>(TaskbarActivityContext.java:370)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.createTaskbarActivityContext(TaskbarManager.java:1274)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.recreateTaskbarForDisplay(TaskbarManager.java:784)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.recreateTaskbars(TaskbarManager.java:739)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager$4.onConfigurationChanged(TaskbarManager.java:1370)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.lambda$dispatchConfigurationChanged$0(ComponentCallbacksController.java:91)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController$$ExternalSyntheticLambda2.accept(D8$$SyntheticClass:0)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.forAllComponentCallbacks(ComponentCallbacksController.java:124)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.dispatchConfigurationChanged(ComponentCallbacksController.java:91)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.window.WindowContext.dispatchConfigurationChanged(WindowContext.java:159)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChangedInner(WindowTokenClient.java:205)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChanged(WindowTokenClient.java:153)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChanged(WindowTokenClient.java:112)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.window.WindowTokenClientController.onWindowContextInfoChanged(WindowTokenClientController.java:251)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.app.ActivityThread.handleWindowContextInfoChanged(ActivityThread.java:6908)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.app.servertransaction.WindowContextInfoChangeItem.execute(WindowContextInfoChangeItem.java:53)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:133)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:103)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2823)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.os.Looper.loop(Looper.java:338)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at java.lang.reflect.Method.invoke(Native Method)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-30 00:18:53.002  1192  1192 E Overrides: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+10-30 00:18:53.012   893  1057 I ndroid.systemui: AssetManager2(0x75fa12fcf958) locale list changing from [] to [en-US]
+10-30 00:18:53.015  1192  1192 E Overrides: Bad overriden class
+10-30 00:18:53.015  1192  1192 E Overrides: java.lang.NoSuchMethodException: com.android.launcher3.taskbar.TaskbarViewCallbacksFactory.<init> [class android.content.Context]
+10-30 00:18:53.015  1192  1192 E Overrides: 	at java.lang.Class.getConstructor0(Class.java:3385)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at java.lang.Class.getDeclaredConstructor(Class.java:3067)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.util.ResourceBasedOverride$Overrides.getObject(ResourceBasedOverride.java:42)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarViewCallbacksFactory$Companion.newInstance(TaskbarViewCallbacksFactory.kt:68)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarViewCallbacksFactory.newInstance(TaskbarViewCallbacksFactory.kt:0)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarViewController.init(TaskbarViewController.java:263)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarControllers.init(TaskbarControllers.java:165)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarActivityContext.init(TaskbarActivityContext.java:517)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.recreateTaskbarForDisplay(TaskbarManager.java:797)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.recreateTaskbars(TaskbarManager.java:739)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager$4.onConfigurationChanged(TaskbarManager.java:1370)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.lambda$dispatchConfigurationChanged$0(ComponentCallbacksController.java:91)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController$$ExternalSyntheticLambda2.accept(D8$$SyntheticClass:0)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.forAllComponentCallbacks(ComponentCallbacksController.java:124)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.dispatchConfigurationChanged(ComponentCallbacksController.java:91)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.window.WindowContext.dispatchConfigurationChanged(WindowContext.java:159)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChangedInner(WindowTokenClient.java:205)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChanged(WindowTokenClient.java:153)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChanged(WindowTokenClient.java:112)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.window.WindowTokenClientController.onWindowContextInfoChanged(WindowTokenClientController.java:251)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.app.ActivityThread.handleWindowContextInfoChanged(ActivityThread.java:6908)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.app.servertransaction.WindowContextInfoChangeItem.execute(WindowContextInfoChangeItem.java:53)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:133)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:103)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2823)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.os.Looper.loop(Looper.java:338)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at java.lang.reflect.Method.invoke(Native Method)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-30 00:18:53.015  1192  1192 E Overrides: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+10-30 00:18:53.018  1192  1192 I ContextualSearchInvoker: Contextual Search invocation failed: no ContextualSearchManager
+10-30 00:18:53.018   893  1060 D SplashScreenView: Build android.window.SplashScreenView{638db04 V.E...... ......ID 0,0-0,0}
+10-30 00:18:53.018   893  1060 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-30 00:18:53.018   893  1060 D SplashScreenView: Branding: view: android.view.View{208a8ed G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-30 00:18:53.018  1192  1192 D StatsLog: LAUNCHER_LAUNCH_ASSISTANT_FAILED_SERVICE_ERROR
+10-30 00:18:53.020  1192  1192 D LauncherBinder: Starting sync inflation
+10-30 00:18:53.020  1192  1192 D LauncherBinder: Calling onCompleteSignal
+10-30 00:18:53.025  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-30 00:18:53.025  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-30 00:18:53.026  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-30 00:18:53.026  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 00:18:53.026  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-30 00:18:53.027  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-30 00:18:53.027  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-30 00:18:53.027  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-30 00:18:53.028  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-30 00:18:53.030  1192  1192 D TaskbarManager: createTaskbarUIControllerForRecentsViewContainer displayId=0 isDefaultDisplay=true
+10-30 00:18:53.032  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: adding rootView displayId=0 isDefaultDisplay=true
+10-30 00:18:53.032  1192  1192 D TaskbarManager: addTaskbarRootViewToWindow: displayId=0 isDefaultDisplay=true
+10-30 00:18:53.032  1192  1192 D TaskbarManager: addTaskbarRootViewToWindow: rootLayout already added! displayId=0 isDefaultDisplay=true
+10-30 00:18:53.032  1192  1192 D TaskbarManager: getTaskbarRootLayoutForDisplay: displayId=0 isDefaultDisplay=true
+10-30 00:18:53.032  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: adding root layout displayId=0 isDefaultDisplay=true
+10-30 00:18:53.033  1192  1192 I droid.launcher3: AssetManager2(0x75fa12fc27f8) locale list changing from [] to [en-US]
+10-30 00:18:53.033  1192  1192 D b/254119092: DisplayController#onConfigurationChanged: {2.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h914dp 420dpi nrml long port finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 0 - 1080, 2400) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} s.128 fontWeightAdjustment=0}
+10-30 00:18:53.040  1192  1192 I droid.launcher3: AssetManager2(0x75fa12fc0bd8) locale list changing from [] to [en-US]
+10-30 00:18:53.059   893   893 W ConstraintSet: Unknown attribute 0x39   0
+10-30 00:18:53.060   893   893 W ConstraintSet: Unknown attribute 0x39   0
+10-30 00:18:53.060   893   893 W ConstraintSet: Unknown attribute 0x39   0
+10-30 00:18:53.082   893   893 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.125  2463  2502 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=2b66bfde-f967-4c77-9bb6-1f3cf7eecd3a, generation=0)
+10-30 00:18:53.128  1192  1192 I droid.launcher3: AssetManager2(0x75fa12fc2b18) locale list changing from [] to [en-US]
+10-30 00:18:53.129  1192  1192 D IDP     : After initGrid:gridName:5_by_5, dbFile:launcher.db, LauncherPrefs GRID_NAME:5_by_5, LauncherPrefs DB_FILE:launcher.db
+10-30 00:18:53.129  1192  1192 D TaskbarManager: mActivity onDeviceProfileChanged displayId=0 isDefaultDisplay=true
+10-30 00:18:53.129  1192  1192 D TaskbarManager: mActivity and mWindowContext agree taskbarIsPresent=false
+10-30 00:18:53.129  1192  1192 D TaskbarManager: mActivity onDeviceProfileChanged displayId=0 isDefaultDisplay=true
+10-30 00:18:53.129  1192  1192 D TaskbarManager: mActivity and mWindowContext agree taskbarIsPresent=false
+10-30 00:18:53.131  1192  1192 D TaskbarManager: QuickstepLauncher#onDeviceProfileChanged displayId=0 isDefaultDisplay=true
+10-30 00:18:53.131  1192  1192 D TaskbarManager: mActivity and mWindowContext agree taskbarIsPresent=false
+10-30 00:18:53.131  1192  1192 D TaskbarManager: QuickstepLauncher#onDeviceProfileChanged displayId=0 isDefaultDisplay=true
+10-30 00:18:53.131  1192  1192 D TaskbarManager: mActivity and mWindowContext agree taskbarIsPresent=false
+10-30 00:18:53.132  1192  1192 D OverviewActionsView: updateActionButtonsVisibility() called: showSingleTaskActions = [true], showGroupActions = [false]
+10-30 00:18:53.134  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.qsb.QsbContainerView{ed898b V.E...... .......D 0,0-1035,390 #7f0902cd app:id/search_container_workspace}
+10-30 00:18:53.134  1192  1192 D ModelCallbacks: startBinding: hotseat layout was vertical: false and is setting to false
+10-30 00:18:53.134  2463  2502 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 00:18:53.135  1192  1192 D Launcher.Workspace: addInScreenFromBind: hotseat inflation with x = 0 and y = 0
+10-30 00:18:53.135  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{7626ccf VFED..C.. ......ID 0,0-0,0 #1}
+10-30 00:18:53.136  1192  1192 D Launcher.Workspace: addInScreenFromBind: hotseat inflation with x = 1 and y = 0
+10-30 00:18:53.136  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{8961a3a VFED..C.. ......ID 0,0-0,0 #2}
+10-30 00:18:53.136  1192  1192 D Launcher.Workspace: addInScreenFromBind: hotseat inflation with x = 3 and y = 0
+10-30 00:18:53.136  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{6c306eb VFED..C.. ......ID 0,0-0,0 #3}
+10-30 00:18:53.136  1192  1192 D Launcher.Workspace: addInScreenFromBind: hotseat inflation with x = 4 and y = 0
+10-30 00:18:53.136  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{1e7bc48 VFED..C.. ......ID 0,0-0,0 #4}
+10-30 00:18:53.136  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{2b94ae1 VFED..C.. ......ID 0,0-0,0 #5}
+10-30 00:18:53.136  1192  1192 D LauncherBinder: Starting async inflation
+10-30 00:18:53.136  1192  1192 D LauncherBinder: Starting sync inflation
+10-30 00:18:53.136  1192  1192 D LauncherBinder: Calling onCompleteSignal
+10-30 00:18:53.137  2463  2502 D WM-PackageManagerHelper: androidx.work.impl.background.systemalarm.RescheduleReceiver enabled
+10-30 00:18:53.138  1192  1192 D AllAppsStore: setApps: apps.length=13
+10-30 00:18:53.138  1192  1192 D AllAppsStore: notifyUpdate: notifying listeners
+10-30 00:18:53.138  1192  1192 D ActivityAllAppsContainerView: onAppsUpdated; number of apps: 13
+10-30 00:18:53.139  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: force: false
+10-30 00:18:53.139  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+10-30 00:18:53.139  1192  1192 D StatsLog: LAUNCHER_ALLAPPS_COUNT
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 00:18:53.139  1192  1192 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 00:18:53.143  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-30 00:18:53.143  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-30 00:18:53.144  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-30 00:18:53.144  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 00:18:53.144  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-30 00:18:53.145  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-30 00:18:53.145  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-30 00:18:53.145  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-30 00:18:53.146  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-30 00:18:53.146  1192  1192 D TaskbarManager: onDisplayInfoChanged: Display density changed displayId=0 isDefaultDisplay=true
+10-30 00:18:53.146  1192  1192 D TaskbarManager: recreateTaskbars displayId=0 isDefaultDisplay=true
+10-30 00:18:53.146  1192  1192 D TaskbarManager: recreateTaskbars: create external taskbar displayId=0 isDefaultDisplay=true
+10-30 00:18:53.146  1192  1192 D TaskbarManager: recreateTaskbarForDisplay:  displayId=0 isDefaultDisplay=true
+10-30 00:18:53.146  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: getting device profile displayId=0 isDefaultDisplay=true
+10-30 00:18:53.146  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: destroying taskbar displayId=0 isDefaultDisplay=true
+10-30 00:18:53.146  1192  1192 D TaskbarManager: destroyTaskbarForDisplay displayId=0 isDefaultDisplay=true
+10-30 00:18:53.147  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: isTaskbarEnabled=true [dp != null (i.e. mUserUnlocked)]=true FLAG_HIDE_NAVBAR_WINDOW=true dp.isTaskbarPresent=false displayExists=true displayId=0 isDefaultDisplay=true
+10-30 00:18:53.147  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: creating taskbar displayId=0 isDefaultDisplay=true
+10-30 00:18:53.160  1192  1192 E Overrides: Bad overriden class
+10-30 00:18:53.160  1192  1192 E Overrides: java.lang.NoSuchMethodException: com.android.launcher3.taskbar.TaskbarModelCallbacksFactory.<init> [class android.content.Context]
+10-30 00:18:53.160  1192  1192 E Overrides: 	at java.lang.Class.getConstructor0(Class.java:3385)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at java.lang.Class.getDeclaredConstructor(Class.java:3067)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.ResourceBasedOverride$Overrides.getObject(ResourceBasedOverride.java:42)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarModelCallbacksFactory$Companion.newInstance(TaskbarModelCallbacksFactory.kt:35)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarModelCallbacksFactory.newInstance(TaskbarModelCallbacksFactory.kt:0)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarViewController.<init>(TaskbarViewController.java:236)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarActivityContext.<init>(TaskbarActivityContext.java:370)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.createTaskbarActivityContext(TaskbarManager.java:1274)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.recreateTaskbarForDisplay(TaskbarManager.java:784)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.recreateTaskbars(TaskbarManager.java:739)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager$RecreationListener.onDisplayInfoChanged(TaskbarManager.java:237)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController$PerDisplayInfo.notifyListeners(DisplayController.java:781)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.lambda$notifyConfigChangeForDisplay$5(DisplayController.java:439)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.$r8$lambda$M9Os22BT880ea8_YgNbiahw_73g(DisplayController.java:0)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController$$ExternalSyntheticLambda6.run(R8$$SyntheticClass:0)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.LooperExecutor.execute(LooperExecutor.kt:50)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.notifyConfigChangeForDisplay(DisplayController.java:433)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.notifyConfigChange(DisplayController.java:371)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.onConfigurationChanged(DisplayController.java:317)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.-$$Nest$monConfigurationChanged(DisplayController.java:0)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController$PerDisplayInfo.onConfigurationChanged(DisplayController.java:787)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.lambda$dispatchConfigurationChanged$0(ComponentCallbacksController.java:91)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController$$ExternalSyntheticLambda2.accept(D8$$SyntheticClass:0)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.forAllComponentCallbacks(ComponentCallbacksController.java:124)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.dispatchConfigurationChanged(ComponentCallbacksController.java:91)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.window.WindowContext.dispatchConfigurationChanged(WindowContext.java:159)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChangedInner(WindowTokenClient.java:205)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChanged(WindowTokenClient.java:153)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChanged(WindowTokenClient.java:112)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.window.WindowTokenClientController.onWindowContextInfoChanged(WindowTokenClientController.java:251)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.app.ActivityThread.handleWindowContextInfoChanged(ActivityThread.java:6908)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.app.servertransaction.WindowContextInfoChangeItem.execute(WindowContextInfoChangeItem.java:53)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:133)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:103)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2823)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.os.Looper.loop(Looper.java:338)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at java.lang.reflect.Method.invoke(Native Method)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-30 00:18:53.160  1192  1192 E Overrides: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+10-30 00:18:53.162  1192  1192 E Overrides: Bad overriden class
+10-30 00:18:53.162  1192  1192 E Overrides: java.lang.NoSuchMethodException: com.android.launcher3.taskbar.TaskbarViewCallbacksFactory.<init> [class android.content.Context]
+10-30 00:18:53.162  1192  1192 E Overrides: 	at java.lang.Class.getConstructor0(Class.java:3385)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at java.lang.Class.getDeclaredConstructor(Class.java:3067)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.ResourceBasedOverride$Overrides.getObject(ResourceBasedOverride.java:42)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarViewCallbacksFactory$Companion.newInstance(TaskbarViewCallbacksFactory.kt:68)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarViewCallbacksFactory.newInstance(TaskbarViewCallbacksFactory.kt:0)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarViewController.init(TaskbarViewController.java:263)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarControllers.init(TaskbarControllers.java:165)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarActivityContext.init(TaskbarActivityContext.java:517)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.recreateTaskbarForDisplay(TaskbarManager.java:797)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager.recreateTaskbars(TaskbarManager.java:739)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.taskbar.TaskbarManager$RecreationListener.onDisplayInfoChanged(TaskbarManager.java:237)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController$PerDisplayInfo.notifyListeners(DisplayController.java:781)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.lambda$notifyConfigChangeForDisplay$5(DisplayController.java:439)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.$r8$lambda$M9Os22BT880ea8_YgNbiahw_73g(DisplayController.java:0)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController$$ExternalSyntheticLambda6.run(R8$$SyntheticClass:0)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.LooperExecutor.execute(LooperExecutor.kt:50)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.notifyConfigChangeForDisplay(DisplayController.java:433)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.notifyConfigChange(DisplayController.java:371)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.onConfigurationChanged(DisplayController.java:317)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController.-$$Nest$monConfigurationChanged(DisplayController.java:0)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at com.android.launcher3.util.DisplayController$PerDisplayInfo.onConfigurationChanged(DisplayController.java:787)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.lambda$dispatchConfigurationChanged$0(ComponentCallbacksController.java:91)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController$$ExternalSyntheticLambda2.accept(D8$$SyntheticClass:0)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.forAllComponentCallbacks(ComponentCallbacksController.java:124)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.content.ComponentCallbacksController.dispatchConfigurationChanged(ComponentCallbacksController.java:91)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.window.WindowContext.dispatchConfigurationChanged(WindowContext.java:159)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChangedInner(WindowTokenClient.java:205)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChanged(WindowTokenClient.java:153)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.window.WindowTokenClient.onConfigurationChanged(WindowTokenClient.java:112)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.window.WindowTokenClientController.onWindowContextInfoChanged(WindowTokenClientController.java:251)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.app.ActivityThread.handleWindowContextInfoChanged(ActivityThread.java:6908)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.app.servertransaction.WindowContextInfoChangeItem.execute(WindowContextInfoChangeItem.java:53)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:133)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:103)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2823)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.os.Looper.loop(Looper.java:338)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+10-30 00:18:53.162  1192  1192 E Overrides: 	at java.lang.reflect.Method.invoke(Native Method)
+10-30 00:18:53.163  1192  1192 E Overrides: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-30 00:18:53.163  1192  1192 E Overrides: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+10-30 00:18:53.163  1192  1192 I ContextualSearchInvoker: Contextual Search invocation failed: no ContextualSearchManager
+10-30 00:18:53.163  1192  1192 D StatsLog: LAUNCHER_LAUNCH_ASSISTANT_FAILED_SERVICE_ERROR
+10-30 00:18:53.164  1192  1192 D LauncherBinder: Starting sync inflation
+10-30 00:18:53.164  1192  1192 D LauncherBinder: Calling onCompleteSignal
+10-30 00:18:53.169  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-30 00:18:53.170  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-30 00:18:53.170  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-30 00:18:53.170  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 00:18:53.170  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-30 00:18:53.171  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-30 00:18:53.171  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-30 00:18:53.171  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-30 00:18:53.171  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-30 00:18:53.173  1192  1192 D TaskbarManager: createTaskbarUIControllerForRecentsViewContainer displayId=0 isDefaultDisplay=true
+10-30 00:18:53.173  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: adding rootView displayId=0 isDefaultDisplay=true
+10-30 00:18:53.173  1192  1192 D TaskbarManager: addTaskbarRootViewToWindow: displayId=0 isDefaultDisplay=true
+10-30 00:18:53.173  1192  1192 D TaskbarManager: addTaskbarRootViewToWindow: rootLayout already added! displayId=0 isDefaultDisplay=true
+10-30 00:18:53.173  1192  1192 D TaskbarManager: getTaskbarRootLayoutForDisplay: displayId=0 isDefaultDisplay=true
+10-30 00:18:53.173  1192  1192 D TaskbarManager: recreateTaskbarForDisplay: adding root layout displayId=0 isDefaultDisplay=true
+10-30 00:18:53.174  1192  1192 W SplitSelectStateCtor: Missing session instanceIds
+10-30 00:18:53.175  1192  1192 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+10-30 00:18:53.175  1192  1192 D BaseDepthController: setSurface:
+10-30 00:18:53.175  1192  1192 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 00:18:53.175  1192  1192 D BaseDepthController: 	mBaseSurface: null
+10-30 00:18:53.175  1192  1192 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+10-30 00:18:53.177  1192  1192 D RecentsView: destroy
+10-30 00:18:53.177  1192  1192 D TaskbarManager: onActivityDestroyed: displayId=0 isDefaultDisplay=true
+10-30 00:18:53.177  1192  1192 D TaskbarManager: onActivityDestroyed: unregistering callbacks displayId=0 isDefaultDisplay=true
+10-30 00:18:53.177  1192  1192 D TaskbarManager: onActivityDestroyed: setting taskbarUIController displayId=0 isDefaultDisplay=true
+10-30 00:18:53.177  1192  1192 D ViewOnDrawExecutor: Cancelling tasks
+10-30 00:18:53.177  1192  1192 D ViewOnDrawExecutor: markCompleted ignored: cancelled
+10-30 00:18:53.177  1192  1192 D AllAppsStore: disableDeferUpdatesSilently: 1 mDeferUpdatesFlags=0
+10-30 00:18:53.178  1192  1192 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=com.android.launcher3.uioverrides.QuickstepLauncher$3@2c3842a
+10-30 00:18:53.178  1192  1192 D RecentsView: reset - mEnableDrawingLiveTile: false, mRecentsAnimationController: null
+10-30 00:18:53.179  1192  1192 D ViewRootImpl: Skipping stats log for color mode
+10-30 00:18:53.185   893   893 D QSPanel : setUsingHorizontalLayout: false, true
+10-30 00:18:53.186   893   893 D QSPanel : Reattaching media host: false, current com.android.systemui.qs.QSPanel{56b51cf I.E...... ......ID 0,126-996,1733 #7f0a0697 app:id/quick_settings_panel}, new com.android.systemui.qs.QSPanel{4db42da V.E...... ......I. 0,0-0,0 #7f0a0697 app:id/quick_settings_panel}
+10-30 00:18:53.187   893   893 D QSPanel : setUsingHorizontalLayout: false, true
+10-30 00:18:53.187   893   893 D QSPanel : Reattaching media host: false, current com.android.systemui.qs.QSPanel{4db42da V.E...... ......I. 0,0-0,0 #7f0a0697 app:id/quick_settings_panel}, new com.android.systemui.qs.QSPanel{4db42da V.E...... ......I. 0,0-0,0 #7f0a0697 app:id/quick_settings_panel}
+10-30 00:18:53.191   893   893 D QuickQSPanel: setUsingHorizontalLayout: false, true
+10-30 00:18:53.191   893   893 D QuickQSPanel: Reattaching media host: false, current com.android.systemui.qs.QuickQSPanel{e0c033a VFE...... ......ID 0,126-996,526 #7f0a0695 app:id/quick_qs_panel}, new com.android.systemui.qs.QuickQSPanel{ced05de VFE...... ......I. 0,0-0,0 #7f0a0695 app:id/quick_qs_panel}
+10-30 00:18:53.198  1192  1192 W Resources: Drawable com.android.launcher3:drawable/ic_chevron_end has unresolved theme attributes! Consider using Resources.getDrawable(int, Theme) or Context.getDrawable(int).
+10-30 00:18:53.198  1192  1192 W Resources: java.lang.RuntimeException
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.content.res.Resources.getDrawable(Resources.java:926)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.pageindicators.PageIndicatorDots.<init>(PageIndicatorDots.java:189)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.pageindicators.PageIndicatorDots.<init>(PageIndicatorDots.java:173)
+10-30 00:18:53.198  1192  1192 W Resources: 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+10-30 00:18:53.198  1192  1192 W Resources: 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.createView(LayoutInflater.java:743)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:895)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:850)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1012)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:973)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1015)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:973)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:571)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:462)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:413)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.statemanager.StatefulActivity.inflateRootView(StatefulActivity.java:73)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.Launcher.setupViews(Launcher.java:1376)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.uioverrides.QuickstepLauncher.setupViews(QuickstepLauncher.java:298)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.Launcher.onCreate(Launcher.java:540)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.uioverrides.QuickstepLauncher.onCreate(QuickstepLauncher.java:705)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.Activity.performCreate(Activity.java:9155)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.Activity.performCreate(Activity.java:9133)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1521)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4262)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4467)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.handleRelaunchActivityInner(ActivityThread.java:6610)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.handleRelaunchActivity(ActivityThread.java:6501)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.ActivityRelaunchItem.execute(ActivityRelaunchItem.java:106)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:63)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:133)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:103)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2823)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.os.Looper.loop(Looper.java:338)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+10-30 00:18:53.198  1192  1192 W Resources: 	at java.lang.reflect.Method.invoke(Native Method)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+10-30 00:18:53.198  1192  1192 W Resources: Drawable com.android.launcher3:drawable/ic_chevron_start has unresolved theme attributes! Consider using Resources.getDrawable(int, Theme) or Context.getDrawable(int).
+10-30 00:18:53.198  1192  1192 W Resources: java.lang.RuntimeException
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.content.res.Resources.getDrawable(Resources.java:926)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.pageindicators.PageIndicatorDots.<init>(PageIndicatorDots.java:190)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.pageindicators.PageIndicatorDots.<init>(PageIndicatorDots.java:173)
+10-30 00:18:53.198  1192  1192 W Resources: 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+10-30 00:18:53.198  1192  1192 W Resources: 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.createView(LayoutInflater.java:743)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:895)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:850)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1012)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:973)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1015)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:973)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:571)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:462)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:413)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.statemanager.StatefulActivity.inflateRootView(StatefulActivity.java:73)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.Launcher.setupViews(Launcher.java:1376)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.uioverrides.QuickstepLauncher.setupViews(QuickstepLauncher.java:298)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.Launcher.onCreate(Launcher.java:540)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.launcher3.uioverrides.QuickstepLauncher.onCreate(QuickstepLauncher.java:705)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.Activity.performCreate(Activity.java:9155)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.Activity.performCreate(Activity.java:9133)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1521)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4262)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4467)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.handleRelaunchActivityInner(ActivityThread.java:6610)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.handleRelaunchActivity(ActivityThread.java:6501)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.ActivityRelaunchItem.execute(ActivityRelaunchItem.java:106)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:63)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:133)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:103)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:80)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2823)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.os.Looper.loop(Looper.java:338)
+10-30 00:18:53.198  1192  1192 W Resources: 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+10-30 00:18:53.198  1192  1192 W Resources: 	at java.lang.reflect.Method.invoke(Native Method)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+10-30 00:18:53.198  1192  1192 W Resources: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+10-30 00:18:53.210  1192  1192 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-30 00:18:53.211  1192  1192 E RecyclerView: Cannot scroll to position a LayoutManager set. Call setLayoutManager with a non-null argument.
+10-30 00:18:53.211  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: force: true
+10-30 00:18:53.211  1192  1192 D ActivityAllAppsContainerView: replaceAppsRVContainer: showTabs: false
+10-30 00:18:53.212  1192  1192 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:18:53.212  1192  1192 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: true
+10-30 00:18:53.212  1192  1192 E RecyclerView: Cannot scroll to position a LayoutManager set. Call setLayoutManager with a non-null argument.
+10-30 00:18:53.215  1192  1192 D b/267448330: provider: ComponentInfo{com.android.quicksearchbox/com.android.quicksearchbox.SearchWidgetProvider}, paddedSizes: [382.09525x136.38095, 382.09525x136.38095, 732.5714x62.095238, 732.5714x62.095238], getMinMaxSizes: Rect(382, 62 - 732, 136)
+10-30 00:18:53.217  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.218  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.218  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.219  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.219  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.220  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.220  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.221  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.221  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.221  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.222  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.222  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.222  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.224  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.qsb.QsbContainerView{ab8bc V.E...... ......I. 0,0-0,0 #7f0902cd app:id/search_container_workspace}
+10-30 00:18:53.224  1192  1192 D OverviewActionsView: updateActionButtonsVisibility() called: showSingleTaskActions = [true], showGroupActions = [false]
+10-30 00:18:53.227   893   893 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.234   893   893 E PhoneStatusBarView: mHasCornerCutoutFetcher unexpectedly null
+10-30 00:18:53.234   893   893 E PhoneStatusBarView: mInsetsFetcher unexpectedly null
+10-30 00:18:53.239   893   893 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.243  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.qsb.QsbContainerView{ab8bc V.E...... ......I. 0,0-0,0 #7f0902cd app:id/search_container_workspace}
+10-30 00:18:53.243  1192  1192 D ModelCallbacks: startBinding: hotseat layout was vertical: false and is setting to false
+10-30 00:18:53.246  1192  1192 D Launcher.Workspace: addInScreenFromBind: hotseat inflation with x = 0 and y = 0
+10-30 00:18:53.246  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{a9a70d6 VFED..C.. ......ID 0,0-0,0 #1}
+10-30 00:18:53.246  1192  1192 D Launcher.Workspace: addInScreenFromBind: hotseat inflation with x = 1 and y = 0
+10-30 00:18:53.246  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{da76f57 VFED..C.. ......ID 0,0-0,0 #2}
+10-30 00:18:53.246  1192  1192 D Launcher.Workspace: addInScreenFromBind: hotseat inflation with x = 3 and y = 0
+10-30 00:18:53.246  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{8811a44 VFED..C.. ......ID 0,0-0,0 #3}
+10-30 00:18:53.246  1192  1192 D Launcher.Workspace: addInScreenFromBind: hotseat inflation with x = 4 and y = 0
+10-30 00:18:53.246  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{991172d VFED..C.. ......ID 0,0-0,0 #4}
+10-30 00:18:53.246  1192  1192 D CellLayout: Adding view to ShortcutsAndWidgetsContainer: com.android.launcher3.views.DoubleShadowBubbleTextView{1a4c462 VFED..C.. ......ID 0,0-0,0 #5}
+10-30 00:18:53.271  1192  1192 D LauncherBinder: Starting async inflation
+10-30 00:18:53.273  1192  1192 D AllAppsStore: setApps: apps.length=13
+10-30 00:18:53.273  1192  1192 D AllAppsStore: notifyUpdate: notifying listeners
+10-30 00:18:53.273  1192  1192 D ActivityAllAppsContainerView: onAppsUpdated; number of apps: 13
+10-30 00:18:53.273  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: force: false
+10-30 00:18:53.273  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+10-30 00:18:53.274  1192  1192 D StatsLog: LAUNCHER_ALLAPPS_COUNT
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 00:18:53.274  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 00:18:53.275  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 00:18:53.275  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 00:18:53.275  1192  1192 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 00:18:53.275  1192  2541 D ViewPool: initPool complete
+10-30 00:18:53.278  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-30 00:18:53.282  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-30 00:18:53.282  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-30 00:18:53.283  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 00:18:53.283  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-30 00:18:53.284  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-30 00:18:53.284  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-30 00:18:53.284  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-30 00:18:53.285  1192  1192 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-30 00:18:53.287  1192  1192 D OverviewActionsView: updateActionButtonsVisibility() called: showSingleTaskActions = [true], showGroupActions = [false]
+10-30 00:18:53.288  1192  1192 D b/380940677: [mStateHandlerRequest=0, mCurrentStateRequest=0, mLastActivityFlags=5, mIgnoreAutoRotateSettings=false, mHomeRotationEnabled=false, mForceAllowRotationForTesting=false, mDestroyed=false, mIsFixedLandscape=false]
+10-30 00:18:53.292  1192  1696 I droid.launcher3: AssetManager2(0x75fa12fd1ed8) locale list changing from [] to [en-US]
+10-30 00:18:53.302  1192  2542 D ViewPool: initPool complete
+10-30 00:18:53.315  1192  1192 D BubbleBarView: BubbleBar RTL properties changed, new layoutDirection=0 previous layoutDirection=-1
+10-30 00:18:53.335  1192  1196 I droid.launcher3: Background concurrent mark compact GC freed 7450KB AllocSpace bytes, 2(40KB) LOS objects, 49% free, 10MB/20MB, paused 1.334ms,889us total 151.380ms
+10-30 00:18:53.354  1192  1192 D OverviewActionsView: updateActionButtonsVisibility() called: showSingleTaskActions = [true], showGroupActions = [false]
+10-30 00:18:53.368  1192  1192 D BaseDepthController: setSurface:
+10-30 00:18:53.368  1192  1192 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 00:18:53.368  1192  1192 D BaseDepthController: 	mBaseSurface: Surface(name=com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher)/@0xd69c61e
+10-30 00:18:53.380  1192  1192 W SplitSelectStateCtor: Missing session instanceIds
+10-30 00:18:53.380  1192  1192 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+10-30 00:18:53.403  1192  1192 D LauncherBinder: Calling onCompleteSignal
+10-30 00:18:53.404  1192  1192 D ViewOnDrawExecutor: markCompleted ignored: cancelled
+10-30 00:18:53.404  1192  1192 D TISBindHelper: TIS service connected
+10-30 00:18:53.405  1192  1192 D TaskbarManager: setActivity: mActivity=null displayId=0 isDefaultDisplay=true
+10-30 00:18:53.405  1192  1192 D TaskbarManager: setActivity: registering activity lifecycle callbacks. displayId=0 isDefaultDisplay=true
+10-30 00:18:53.405  1192  1192 D TaskbarManager: getUnfoldTransitionProgressProviderForActivity displayId=0 isDefaultDisplay=true
+10-30 00:18:53.405  1192  1192 D TaskbarManager: setRecentsViewContainer displayId=0 isDefaultDisplay=true
+10-30 00:18:53.405  1192  1192 D TaskbarManager: createTaskbarUIControllerForRecentsViewContainer displayId=0 isDefaultDisplay=true
+10-30 00:18:53.406  1192  1192 D LauncherBinder: Calling onCompleteSignal
+10-30 00:18:53.406  1192  1192 D ViewOnDrawExecutor: markCompleted: executing tasks
+10-30 00:18:53.407  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: force: false
+10-30 00:18:53.407  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+10-30 00:18:53.412  2463  2463 I npicasoft.tokkl: AssetManager2(0x75fa12f9c378) locale list changing from [] to [en-US]
+10-30 00:18:53.413  2463  2544 W libc    : Access denied finding property "vendor.mesa.log"
+10-30 00:18:53.414  2463  2544 W libc    : Access denied finding property "vendor.mesa.log.file"
+10-30 00:18:53.414  2463  2544 E MESA    : Failed to open rendernode: No such file or directory
+10-30 00:18:53.441   656   803 D ConnectivityService: NetReassign [no changes] [c 1] [a 0] [i 0]
+10-30 00:18:53.443  2463  2544 D vulkan  : searching for layers in '/data/app/~~f8TFVEQzhCYlgEnIrpXzmg==/com.canpicasoft.tokkl-2_ewJAlZp0NojGTkQhPwvA==/lib/x86_64'
+10-30 00:18:53.444  2463  2544 D vulkan  : searching for layers in '/data/app/~~vop8LYXr4a8rsyNJ8oRFXQ==/com.canpicasoft.tokkl.test-8YdEPFunVWlW4vkyW2lkOA==/base.apk!/lib/x86_64'
+10-30 00:18:53.450  2463  2544 D vulkan  : searching for layers in '/data/app/~~f8TFVEQzhCYlgEnIrpXzmg==/com.canpicasoft.tokkl-2_ewJAlZp0NojGTkQhPwvA==/base.apk!/lib/x86_64'
+10-30 00:18:53.460  2463  2463 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9ad2bdd in: PRE_ON_CREATE
+10-30 00:18:53.460  2463  2463 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-30 00:18:53.461  2463  2544 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-30 00:18:53.462  2463  2544 W libc    : Access denied finding property "vendor.mesa.gallium.print.optio"
+10-30 00:18:53.464  2463  2544 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-30 00:18:53.467  2463  2463 D CompatChangeReporter: Compat change id reported: 377864165; UID 10151; state: ENABLED
+10-30 00:18:53.468  2463  2463 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+10-30 00:18:53.469  2463  2544 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-30 00:18:53.476   893  1254 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.481  2463  2463 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9ad2bdd in: CREATED
+10-30 00:18:53.481  2463  2463 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=androidx.activity.ComponentActivity@9ad2bdd
+10-30 00:18:53.488  2463  2463 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9ad2bdd in: STARTED
+10-30 00:18:53.488  2463  2463 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=androidx.activity.ComponentActivity@9ad2bdd
+10-30 00:18:53.490   893  1090 D StatusBar##isHomeStatusBarAllowed: newValue: true
+10-30 00:18:53.498  2463  2463 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9ad2bdd in: RESUMED
+10-30 00:18:53.498  2463  2463 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=androidx.activity.ComponentActivity@9ad2bdd
+10-30 00:18:53.513  2463  2463 W HWUI    : Unknown dataspace 0
+10-30 00:18:53.539   893  1254 W HWUI    : Image decoding logging dropped!
+10-30 00:18:53.586  1192  1192 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 00:18:53.598   893   901 I ndroid.systemui: Background concurrent mark compact GC freed 8149KB AllocSpace bytes, 1(20KB) LOS objects, 49% free, 21MB/42MB, paused 5.556ms,1.530ms total 356.419ms
+10-30 00:18:53.643   893  1254 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:18:53.654   893  1254 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:18:53.733   656   679 I ActivityTaskManager: Displayed com.canpicasoft.tokkl/androidx.activity.ComponentActivity for user 0: +734ms
+10-30 00:18:53.790   656   768 I ImeTracker: com.canpicasoft.tokkl:ff894f3d: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-30 00:18:53.792  2463  2463 D InsetsController: hide(ime(), fromIme=false)
+10-30 00:18:53.793  2463  2463 I ImeTracker: com.canpicasoft.tokkl:ff894f3d: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-30 00:18:53.795   656  1481 I ImeTracker: system_server:d1f12af0: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 00:18:53.800   656   682 I ImeTracker: system_server:d1f12af0: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 00:18:53.880   452   510 I netd    : tetherGetStats() -> {[]} <0.46ms>
+10-30 00:18:53.895  1192  1192 D BaseDepthController: setSurface:
+10-30 00:18:53.895  1192  1192 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 00:18:53.895  1192  1192 D BaseDepthController: 	mBaseSurface: null
+10-30 00:18:53.895  1192  1192 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+10-30 00:18:53.895  1192  1192 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+10-30 00:18:53.895  1192  1192 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:463)
+10-30 00:18:53.895  1192  1192 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:454)
+10-30 00:18:53.895  1192  1192 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(StatefulActivity.java:120)
+10-30 00:18:53.895  1192  1192 D StatsLog: LAUNCHER_ONSTOP
+10-30 00:18:53.990  2463  2470 I npicasoft.tokkl: Compiler allocated 5042KB to compile void android.view.ViewRootImpl.performTraversals()
+10-30 00:18:54.287  2463  2463 I npicasoft.tokkl: AssetManager2(0x75fa12f9d958) locale list changing from [] to [en-US]
+10-30 00:18:54.665  2131  2131 I AidlLazyServiceRegistrar: Process has 0 (of 1 available) client(s) in use after notification artd has clients: 0
+10-30 00:18:54.665  2131  2131 I AidlLazyServiceRegistrar: Trying to shut down the service. No clients in use for any service in process.
+10-30 00:18:54.666  2131  2131 I AidlLazyServiceRegistrar: Unregistered all clients and exiting
+10-30 00:18:55.367   656   793 D WifiClientModeImpl[12029:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=2 freq=2437 RxLinkSpeed=2
+10-30 00:18:55.368   656   793 D WifiDataStall: tx tput in kbps: 37000
+10-30 00:18:55.368   656   793 D WifiDataStall: rx tput in kbps: 37000
+10-30 00:18:55.368   656   793 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 00:18:55.368   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:18:55.368   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:18:55.368   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:18:55.368   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:18:55.368   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:18:55.368   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:18:55.368   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:18:55.368   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:18:55.368   656   793 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 2Mbps, Tx Link speed: 2Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 00:18:55.368   656   793 D WifiScoreCard: txRate: 1 txSpeed: 2
+10-30 00:18:55.368   656   793 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 00:18:55.369   656   793 D WifiClientModeImpl[12029:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=2 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3004] from screen [on:0 period:-1980394359] score=60
+10-30 00:18:55.823   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 00:18:55.824   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 00:18:55.824   656   803 D InetDiagMessage: Destroyed live tcp sockets for uids={10153} in 1ms
+10-30 00:18:55.824   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 00:18:55.824   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 00:18:55.824   656   803 D InetDiagMessage: Destroyed live tcp sockets for uids={20153} in 1ms
+10-30 00:18:55.976  2463  2463 I npicasoft.tokkl: AssetManager2(0x75fa12fa2db8) locale list changing from [] to [en-US]
+10-30 00:18:56.035  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:18:56.286  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296415, res-name=glance_view_id_003, desc=Elapsed time, visibility=VISIBLE, width=274, height=100, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:56.377  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:18:56.902  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:18:56.977   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 00:18:56.978   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 00:18:56.978   656   803 D InetDiagMessage: Destroyed live tcp sockets for uids={10148} in 2ms
+10-30 00:18:56.989  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296415, res-name=glance_view_id_003, visibility=VISIBLE, width=234, height=100, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:57.016  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:18:57.319   520   534 W GpuWork : Failed to attach bpf program to power/gpu_work_period tracepoint [2(No such file or directory)]
+10-30 00:18:57.484   452   510 I netd    : tetherGetStats() -> {[]} <0.43ms>
+10-30 00:18:57.500  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:18:57.567  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296415, res-name=glance_view_id_003, visibility=VISIBLE, width=234, height=100, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:57.574  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:18:57.950  1007  1213 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-30 00:18:58.067  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:18:58.111  2463  2463 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:58.118  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:18:58.370   656   793 D WifiClientModeImpl[12029:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=2 freq=2437 RxLinkSpeed=2
+10-30 00:18:58.370   656   793 D WifiDataStall: tx tput in kbps: 37000
+10-30 00:18:58.370   656   793 D WifiDataStall: rx tput in kbps: 37000
+10-30 00:18:58.370   656   793 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 00:18:58.370   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:18:58.370   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:18:58.370   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:18:58.370   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:18:58.371   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:18:58.371   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:18:58.371   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:18:58.371   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:18:58.371   656   793 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 2Mbps, Tx Link speed: 2Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 00:18:58.371   656   793 D WifiScoreCard: txRate: 1 txSpeed: 2
+10-30 00:18:58.371   656   793 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 00:18:58.371   656   793 D WifiClientModeImpl[12029:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=2 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3002] from screen [on:0 period:-1980391357] score=60
+10-30 00:18:58.649  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:18:58.681  2463  2471 W npicasoft.tokkl: Cleared Reference was only reachable from finalizer (only reported once)
+10-30 00:18:58.793  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=Widget mock-ups, Tokkl for Android · Design, visibility=VISIBLE, width=720, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:58.794  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296429, res-name=glance_view_id_017, desc=Elapsed time, visibility=VISIBLE, width=322, height=114, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=6.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:58.795  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296428, res-name=glance_view_id_016, visibility=VISIBLE, width=720, height=126, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=157.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:58.795  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296441, res-name=glance_view_id_029, desc=Open Today report, visibility=VISIBLE, width=720, height=105, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:58.796  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296444, res-name=glance_view_id_032, desc=Today total, visibility=VISIBLE, width=274, height=100, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=446.0, y=2.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:58.799  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296451, res-name=glance_view_id_039, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=720, height=95, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=142.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:58.802  2463  2557 D ProfileInstaller: Installing profile for com.canpicasoft.tokkl
+10-30 00:18:58.837  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:18:59.353  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:18:59.490  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=Widget mock-ups, Tokkl for Android · Design, Paused, visibility=VISIBLE, width=720, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:59.491  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296429, res-name=glance_view_id_017, visibility=VISIBLE, width=275, height=114, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=6.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:59.492  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296428, res-name=glance_view_id_016, visibility=VISIBLE, width=720, height=126, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=157.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:59.493  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296441, res-name=glance_view_id_029, desc=Open Today report, visibility=VISIBLE, width=720, height=105, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:59.494  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296444, res-name=glance_view_id_032, visibility=VISIBLE, width=234, height=100, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=486.0, y=2.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:59.495  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296451, res-name=glance_view_id_039, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=720, height=95, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=142.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:18:59.514  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:00.019  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:19:00.119  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=No timer running, visibility=VISIBLE, width=720, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:00.120  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296427, res-name=glance_view_id_015, desc=Open Today report, visibility=VISIBLE, width=720, height=105, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:00.121  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296430, res-name=glance_view_id_018, visibility=VISIBLE, width=234, height=100, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=486.0, y=2.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:00.121  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296437, res-name=glance_view_id_025, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=720, height=95, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=142.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:00.122  2463  2463 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:00.150  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:00.617  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:19:00.662  2463  2463 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:00.685  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:00.704  2463  2471 I npicasoft.tokkl: Background concurrent mark compact GC freed 9524KB AllocSpace bytes, 10(7904KB) LOS objects, 49% free, 9940KB/19MB, paused 369us,5.265ms total 39.191ms
+10-30 00:19:01.144   893  1008 E FrameTracker: force finish cuj, time out: J<DEFAULT_TASK_TO_TASK_ANIMATION>
+10-30 00:19:01.240  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:19:01.372   656   793 D WifiClientModeImpl[12029:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=2 freq=2437 RxLinkSpeed=2
+10-30 00:19:01.373   656   793 D WifiDataStall: tx tput in kbps: 37000
+10-30 00:19:01.373   656   793 D WifiDataStall: rx tput in kbps: 37000
+10-30 00:19:01.373   656   793 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 00:19:01.373   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:19:01.373   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:19:01.373   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:19:01.373   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:19:01.373   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:19:01.373   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:19:01.373   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:19:01.373   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:19:01.374   656   793 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 2Mbps, Tx Link speed: 2Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 00:19:01.374   656   793 D WifiScoreCard: txRate: 1 txSpeed: 2
+10-30 00:19:01.374   656   793 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 00:19:01.374   656   793 D WifiClientModeImpl[12029:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=2 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3003] from screen [on:0 period:-1980388354] score=60
+10-30 00:19:01.393  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=Widget mock-ups, Tokkl for Android · Design, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:01.394  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296429, res-name=glance_view_id_017, desc=Elapsed time, visibility=VISIBLE, width=382, height=134, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=17.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:01.395  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296435, res-name=glance_view_id_023, desc=Open Today report, visibility=VISIBLE, width=922, height=79, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:01.396  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296439, res-name=glance_view_id_027, visibility=VISIBLE, width=922, height=168, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=79.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:01.397  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Today total, visibility=VISIBLE, width=254, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:01.398  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296448, res-name=glance_view_id_036, visibility=VISIBLE, width=217, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:01.398  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=41, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:01.399  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296455, res-name=glance_view_id_043, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:01.443  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:01.568  1098  1114 I PermissionControllerServiceImpl: Updating user sensitive for user 0
+10-30 00:19:01.568   452   510 I netd    : tetherGetStats() -> {[]} <0.34ms>
+10-30 00:19:01.573   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 00:19:01.573   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 00:19:01.573   656   803 D InetDiagMessage: Destroyed live tcp sockets for uids={10063} in 1ms
+10-30 00:19:01.586   656  1481 W ParceledListSlice: Element #53 is 145032 bytes.
+10-30 00:19:01.586   656  1481 W ParceledListSlice: Overly large reply size: 204776
+10-30 00:19:01.591   656  1481 W ParceledListSlice: Element #164 is 31228 bytes.
+10-30 00:19:01.643   893  1057 E FrameTracker: force finish cuj, time out: J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:01.643   893  1057 W FrameTracker: Missed App frame:UNKNOWN: 3, 5601, 204556516, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:01.643   893  1057 W FrameTracker: Missed SF frame:UNKNOWN: 3, 5601, 204556516, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:01.643   893  1057 W FrameTracker: Missed App frame:UNKNOWN: 3, 5637, 315870805, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:01.643   893  1057 W FrameTracker: Missed SF frame:UNKNOWN: 3, 5637, 315870805, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:01.643   893  1057 W FrameTracker: Missed App frame:UNKNOWN: 3, 5718, 266451730, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:01.643   893  1057 W FrameTracker: Missed SF frame:UNKNOWN: 3, 5718, 266451730, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:01.644   893  1004 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-39 - not enough time since last trigger
+10-30 00:19:01.756   656   698 I WifiService: isFeatureSupported uid=1000 returns [WIFI_FEATURE_INFRA, WIFI_FEATURE_P2P, WIFI_FEATURE_MOBILE_HOTSPOT, WIFI_FEATURE_WPA3_SAE, WIFI_FEATURE_WPA3_SUITE_B, WIFI_FEATURE_OWE, WIFI_FEATURE_DPP, WIFI_FEATURE_AP_RAND_MAC, WIFI_FEATURE_MBO, WIFI_FEATURE_FILS_SHA256, WIFI_FEATURE_FILS_SHA384, WIFI_FEATURE_SAE_PK, WIFI_FEATURE_DPP_ENROLLEE_RESPONDER, WIFI_FEATURE_PASSPOINT_TERMS_AND_CONDITIONS, WIFI_FEATURE_WFD_R2, WIFI_FEATURE_DECORATED_IDENTITY, WIFI_FEATURE_TRUST_ON_FIRST_USE, WIFI_FEATURE_SET_TLS_MINIMUM_VERSION, WIFI_FEATURE_TLS_V1_3, WIFI_FEATURE_WEP, WIFI_FEATURE_WPA_PERSONAL]
+10-30 00:19:01.968  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:19:01.993   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 00:19:01.993   656   803 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 00:19:01.993   656   803 D InetDiagMessage: Destroyed live tcp sockets for uids={10153} in 1ms
+10-30 00:19:02.112  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=Widget mock-ups, Tokkl for Android · Design, Paused, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.113  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296429, res-name=glance_view_id_017, visibility=VISIBLE, width=326, height=134, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=17.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.113  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296435, res-name=glance_view_id_023, desc=Open Today report, visibility=VISIBLE, width=922, height=79, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.114  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296439, res-name=glance_view_id_027, visibility=VISIBLE, width=922, height=168, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=79.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.115  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, visibility=VISIBLE, width=217, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.116  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296448, res-name=glance_view_id_036, visibility=VISIBLE, width=217, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.117  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=41, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.118  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296455, res-name=glance_view_id_043, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.155  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.714  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:19:02.737   656   679 I ServiceWatcher: [TrustManagerService] chose new implementation null
+10-30 00:19:02.742  1192  1217 D PackageUpdatedTask: Package updated: mOp=UPDATE packages=[com.canpicasoft.tokkl], user=UserHandle{0}
+10-30 00:19:02.742  1098  1114 I PermissionControllerServiceImpl: Updating user sensitive for uid 10151
+10-30 00:19:02.743   656   682 I system_server: AssetManager2(0x75fa12fae618) locale list changing from [] to [en-US]
+10-30 00:19:02.743   656   769 I system_server: AssetManager2(0x75fa12fba7d8) locale list changing from [] to [en-US]
+10-30 00:19:02.747   656   769 I system_server: AssetManager2(0x75fa12faf5b8) locale list changing from [] to [en-US]
+10-30 00:19:02.748   656   772 I system_server: AssetManager2(0x75fa12f9ec18) locale list changing from [] to [en-US]
+10-30 00:19:02.749  1192  1192 D b/267448330: provider: ComponentInfo{com.android.quicksearchbox/com.android.quicksearchbox.SearchWidgetProvider}, paddedSizes: [382.09525x136.38095, 382.09525x136.38095, 732.5714x62.095238, 732.5714x62.095238], getMinMaxSizes: Rect(382, 62 - 732, 136)
+10-30 00:19:02.751   656   656 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:02.752   656   656 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:02.755  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.755  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.756  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.756  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.757  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.757  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.758  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.758  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.759  1192  1192 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.766  1192  1217 I droid.launcher3: AssetManager2(0x75fa12fc53b8) locale list changing from [] to [en-US]
+10-30 00:19:02.769  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.772  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.789  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.789  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 00:19:02.790  1192  1192 D AllAppsStore: setApps: apps.length=13
+10-30 00:19:02.790  1192  1192 D AllAppsStore: notifyUpdate: notifying listeners
+10-30 00:19:02.790  1192  1192 D ActivityAllAppsContainerView: onAppsUpdated; number of apps: 13
+10-30 00:19:02.790  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: force: false
+10-30 00:19:02.790  1192  1192 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+10-30 00:19:02.790  1192  1192 D StatsLog: LAUNCHER_ALLAPPS_COUNT
+10-30 00:19:02.790  1192  1192 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:19:02.790  1192  1192 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 00:19:02.790  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 00:19:02.790  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 00:19:02.790  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 00:19:02.790  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 00:19:02.790  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 00:19:02.790  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 00:19:02.791  1192  1192 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 00:19:02.795  1192  1217 I droid.launcher3: AssetManager2(0x75fa12fadcb8) locale list changing from [] to [en-US]
+10-30 00:19:02.798  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.801  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.801  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: allSubInfos.size()=1
+10-30 00:19:02.801  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: newSubsInfoListPerPriority.size()=0
+10-30 00:19:02.801  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: no satellite subscription available
+10-30 00:19:02.806  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.808  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.816  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.818  1192  1217 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.829  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-30 00:19:02.830  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-30 00:19:02.830  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-30 00:19:02.830  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 00:19:02.831  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-30 00:19:02.831  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-30 00:19:02.831  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-30 00:19:02.832  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-30 00:19:02.832  1192  1217 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-30 00:19:02.879  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=No timer running, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.880  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296427, res-name=glance_view_id_015, desc=Open Today report, visibility=VISIBLE, width=922, height=79, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.881  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296431, res-name=glance_view_id_019, visibility=VISIBLE, width=922, height=168, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=79.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.881  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296434, res-name=glance_view_id_022, visibility=VISIBLE, width=217, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.882  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296440, res-name=glance_view_id_028, visibility=VISIBLE, width=217, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.883  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296443, res-name=glance_view_id_031, visibility=VISIBLE, width=41, height=94, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=71.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.883  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296444, res-name=glance_view_id_032, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=922, height=147, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=247.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.884  2463  2463 I AccessibilityValidator: LinearLayout{id=2131296453, res-name=glance_view_id_041, desc=Client site, 0:30, visibility=VISIBLE, width=922, height=147, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=394.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.885  2463  2463 I AccessibilityValidator: FrameLayout{id=2131296463, res-name=glance_view_id_051, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:02.889  2463  2463 W System  : ClassLoader referenced unknown path:
+10-30 00:19:02.889  2463  2463 D nativeloader: Configuring clns-10 for other apk . target_sdk_version=36, uses_libraries=, library_path=/data/app/~~vop8LYXr4a8rsyNJ8oRFXQ==/com.canpicasoft.tokkl.test-8YdEPFunVWlW4vkyW2lkOA==/lib/x86_64:/data/app/~~f8TFVEQzhCYlgEnIrpXzmg==/com.canpicasoft.tokkl-2_ewJAlZp0NojGTkQhPwvA==/lib/x86_64:/data/app/~~vop8LYXr4a8rsyNJ8oRFXQ==/com.canpicasoft.tokkl.test-8YdEPFunVWlW4vkyW2lkOA==/base.apk!/lib/x86_64:/data/app/~~f8TFVEQzhCYlgEnIrpXzmg==/com.canpicasoft.tokkl-2_ewJAlZp0NojGTkQhPwvA==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.canpicasoft.tokkl
+10-30 00:19:02.933  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:02.956  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: allSubInfos.size()=1
+10-30 00:19:02.956  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: newSubsInfoListPerPriority.size()=0
+10-30 00:19:02.956  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: no satellite subscription available
+10-30 00:19:03.154  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: allSubInfos.size()=1
+10-30 00:19:03.154  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: newSubsInfoListPerPriority.size()=0
+10-30 00:19:03.154  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: no satellite subscription available
+10-30 00:19:03.158  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: allSubInfos.size()=1
+10-30 00:19:03.159  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: newSubsInfoListPerPriority.size()=0
+10-30 00:19:03.159  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: no satellite subscription available
+10-30 00:19:03.418  2463  2463 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 00:19:03.470  2463  2463 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 00:19:03.506  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:03.981  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: allSubInfos.size()=1
+10-30 00:19:03.981  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: newSubsInfoListPerPriority.size()=0
+10-30 00:19:03.981  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: no satellite subscription available
+10-30 00:19:03.996  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: allSubInfos.size()=1
+10-30 00:19:03.996  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: newSubsInfoListPerPriority.size()=0
+10-30 00:19:03.996  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: no satellite subscription available
+10-30 00:19:04.023  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:04.344   893  1057 E FrameTracker: force finish cuj, time out: J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:04.344   893  1057 W FrameTracker: Missed App frame:UNKNOWN: 3, 7092, 183324211, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:04.344   893  1057 W FrameTracker: Missed SF frame:UNKNOWN: 3, 7092, 183324211, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:04.345   893  1057 W FrameTracker: Missed App frame:UNKNOWN: 3, 7121, 280030446, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:04.345   893  1057 W FrameTracker: Missed SF frame:UNKNOWN: 3, 7121, 280030446, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:04.345   893  1057 W FrameTracker: Missed App frame:JANK_APPLICATION, 7181, 259604898, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:19:04.345   893  1004 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-39 - not enough time since last trigger
+10-30 00:19:04.376   656   793 D WifiClientModeImpl[12029:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=2 freq=2437 RxLinkSpeed=2
+10-30 00:19:04.376   656   793 D WifiDataStall: tx tput in kbps: 37000
+10-30 00:19:04.376   656   793 D WifiDataStall: rx tput in kbps: 37000
+10-30 00:19:04.376   656   793 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 00:19:04.376   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:19:04.376   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:19:04.376   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:19:04.376   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:19:04.376   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:19:04.376   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:19:04.376   656   793 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:19:04.377   656   793 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:19:04.377   656   793 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 2Mbps, Tx Link speed: 2Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 00:19:04.377   656   793 D WifiScoreCard: txRate: 1 txSpeed: 2
+10-30 00:19:04.377   656   793 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 00:19:04.377   656   793 D WifiClientModeImpl[12029:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=2 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3003] from screen [on:0 period:-1980385351] score=60
+10-30 00:19:04.520  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:04.923  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: allSubInfos.size()=1
+10-30 00:19:04.923  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: newSubsInfoListPerPriority.size()=0
+10-30 00:19:04.923  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: no satellite subscription available
+10-30 00:19:05.004  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:05.475  2463  2501 W HWUI    : Image decoding logging dropped!
+10-30 00:19:05.511  2463  2463 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=2b66bfde-f967-4c77-9bb6-1f3cf7eecd3a, class=androidx.glance.session.SessionWorker, tags={ androidx.glance.session.SessionWorker } ]
+10-30 00:19:05.514  2463  2463 D WM-Processor: Processor 2b66bfde-f967-4c77-9bb6-1f3cf7eecd3a executed; reschedule = false
+10-30 00:19:05.523  2463  2463 D WM-StopWorkRunnable: StopWorkRunnable for 2b66bfde-f967-4c77-9bb6-1f3cf7eecd3a; Processor.stopWork = false, reason: -512
+10-30 00:19:05.532   656  1204 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10153, packageName = null, attributionTag = null, token = android.os.Binder@8bdb474, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-30 00:19:05.545  2463  2463 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9ad2bdd in: PAUSED
+10-30 00:19:05.545  2463  2463 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=androidx.activity.ComponentActivity@9ad2bdd
+10-30 00:19:05.549   523   523 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-30 00:19:05.555   656  1481 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.557   893  1060 D SplashScreenView: Build android.window.SplashScreenView{82e0ea5 V.E...... ......ID 0,0-0,0}
+10-30 00:19:05.557   893  1060 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-30 00:19:05.557   893  1060 D SplashScreenView: Branding: view: android.view.View{cb0b27a G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-30 00:19:05.570  2411  2426 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-30 00:19:05.570  2411  2426 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-30 00:19:05.573  2411  2426 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-30 00:19:05.584   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.585   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.585   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.585   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.586   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.587   656   682 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:19:05.590   893   954 I ndroid.systemui: AssetManager2(0x75fa12fbb138) locale list changing from [] to [en-US]
+10-30 00:19:05.600   452   510 I netd    : tetherGetStats() -> {[]} <0.37ms>
+10-30 00:19:05.637   893   954 I ndroid.systemui: AssetManager2(0x75fa12fb46f8) locale list changing from [] to [en-US]
+10-30 00:19:05.644  2411  2411 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-30 00:19:05.698  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: allSubInfos.size()=1
+10-30 00:19:05.698  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: newSubsInfoListPerPriority.size()=0
+10-30 00:19:05.698  1007  1213 D SatelliteController: evaluateESOSProfilesPrioritization: no satellite subscription available
+10-30 00:19:05.734   656   679 I ActivityTaskManager: Displayed com.canpicasoft.tokkl.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity for user 0: +200ms
+10-30 00:19:05.745  1192  1192 D ViewRootImpl: Skipping stats log for color mode
+10-30 00:19:05.746  1192  1192 D StatsLog: LAUNCHER_ONRESUME
+10-30 00:19:05.757  1192  1192 D BaseDepthController: setSurface:
+10-30 00:19:05.757  1192  1192 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 00:19:05.757  1192  1192 D BaseDepthController: 	mBaseSurface: Surface(name=com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher)/@0xd69c61e
+10-30 00:19:05.887  2463  2463 D VRI[ComponentActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 00:19:05.891  1192  1192 D StateManager: createAtomicAnimation - fromState: Background, toState: Normal, partial trace:
+10-30 00:19:05.891  1192  1192 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.prepareToAnimate(WorkspaceRevealAnim.java:146)
+10-30 00:19:05.891  1192  1192 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.<init>(WorkspaceRevealAnim.java:69)
+10-30 00:19:05.891  1192  1192 D StateManager: 	at com.android.launcher3.QuickstepTransitionManager.createWallpaperOpenAnimations(QuickstepTransitionManager.java:1844)
+10-30 00:19:05.892  1192  1192 D b/311077782: LauncherAnimationRunner.setAnimation
+10-30 00:19:05.904   656   768 I ImeTracker: com.android.launcher3:6208d9de: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-30 00:19:05.910  1192  1192 D InsetsController: hide(ime(), fromIme=false)
+10-30 00:19:05.910  1192  1192 I ImeTracker: com.android.launcher3:6208d9de: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-30 00:19:05.919   656   725 I ImeTracker: system_server:8ee435eb: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 00:19:05.921  2463  2463 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9ad2bdd in: STOPPED
+10-30 00:19:05.921  2463  2463 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=androidx.activity.ComponentActivity@9ad2bdd
+10-30 00:19:05.922   656   682 I ImeTracker: system_server:8ee435eb: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 00:19:05.923  2463  2463 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@bbd2981
+10-30 00:19:05.923  2463  2463 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9ad2bdd in: DESTROYED
+10-30 00:19:05.924  2463  2463 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-30 00:19:05.926  2463  2463 D ViewRootImpl: Skipping stats log for color mode
+10-30 00:19:06.038  2463  2501 I TokklAccessibility: font scale restored to 1.0
+10-30 00:19:06.038  2463  2501 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest)

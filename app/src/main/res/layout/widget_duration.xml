@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The widget's elapsed time (docs/PRD.md N3). The launcher ticks it from the base the widget sets,
+    so the widget needs no update to count. Its colour comes from the widget, in light and dark.
+-->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_duration"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:fontFamily="@font/anybody_wdth_wght"
+    android:fontFeatureSettings="tnum"
+    android:fontVariationSettings="'wght' 600, 'wdth' 85"
+    android:includeFontPadding="false"
+    android:maxLines="1"
+    android:scrollHorizontally="true"
+    android:textSize="13sp" />

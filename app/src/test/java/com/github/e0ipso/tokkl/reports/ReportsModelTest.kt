@@ -108,6 +108,24 @@ class ReportsModelTest {
     }
 
     @Test
+    fun widgetTodayReplacesARetainedWeeklyTabAndItsFiltersWithTheAccountDay() {
+        model.open()
+        io.runAll()
+        model.applyFilters(ReportFilters(billable = BillableFilter.BILLABLE))
+        model.selectTab(ReportTab.WEEKLY)
+        model.openToday()
+        assertEquals(ReportTab.SUMMARY, model.tab.value)
+        assertEquals(ReportFilters(), model.filters.value)
+        io.runAll()
+        assertEquals(RangeSelection(range("2026-10-21", "2026-10-21"), RangePreset.TODAY), loaded().selection)
+        assertSearched("2026-10-21", "2026-10-21")
+        model.close()
+        model.openToday()
+        io.runAll()
+        assertEquals(RangePreset.TODAY, loaded().selection.preset)
+    }
+
+    @Test
     fun presetsAndShiftsStartFromTheAccountsToday() {
         model.open()
         io.runAll()

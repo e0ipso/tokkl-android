@@ -15,10 +15,11 @@
 _None yet._
 
 ## Components (what exists)
+- Open [**Home screen widget: cache state and a native ticking clock**](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) to learn about: Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates. #android #widget #offline #battery
+- Open [**Pomodoro home screen widget**](map-pomodoro-home-screen-widget.md) to learn about: A separate provider shows the server session and uses native countdowns and online-only session actions. #android #widget #pomodoro #battery
 - Open [**Reports: Summary summed on the phone, Detailed paged, Weekly from v3**](map-reports-summary-from-detailed-search.md) to learn about: reports/ sums the v3 detailed search on the phone for Summary, pages it for Detailed, reads v3 weekly for Weekly, and filters all three. #reports #api #toggl #ui
 - Open [**Catalog pages: projects, clients and tags changed on the server at once**](map-catalog-pages-projects-clients-tags.md) to learn about: catalog/ is the shared model and UI of the Projects, Clients and Tags pages: no queue, refreshAfterChange, the server's reason on a 4xx. #ui #api #catalog
 - Open [**Favorite launcher shortcuts: cache publication and tap handling**](map-favorite-launcher-shortcuts-cache-publication-and-tap-handling.md) to learn about: FavoriteShortcutSync publishes favorites; StartFavoriteActivity resolves the current favorite and queues an offline start. #android #shortcuts #offline
-- Open [**Home screen widget: cache state and a native ticking clock**](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) to learn about: Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates. #android #widget #offline #battery
 - Open [**Quick Settings tile: default listening and cached actions**](map-quick-settings-tile-default-listening-and-cached-actions.md) to learn about: RunningTileService follows the cache while visible and acts on the state it displayed. #android #tile #offline
 
 ## By topic
@@ -35,16 +36,23 @@ _None yet._
 - Open [**Trash capability and server operations**](session-and-navigation/map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
 - Open [**Never make Start or Stop wait for the server**](../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
 - Open [**Ordered entry sending and refusals**](../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
+### #battery
+- Open [**Home screen widget: cache state and a native ticking clock**](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) — Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates.
+- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](../data-and-offline/map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
+- Open [**Pomodoro home screen widget**](map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.
 ### #ui
 - Open [**Timer page layout and scroll-away header**](timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
 - Open [**Timer List and Calendar preference sync**](timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
 - Open [**Tokkl favorites storage and capability**](timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
-### #battery
-- Open [**RunningCheck: guarded background current-entry refresh**](../data-and-offline/map-runningcheck-guarded-background-current-entry-refresh.md) — One connected 15-minute worker follows cached running state and protects unsent edits, newer writes and sign-out.
+### #widget
 - Open [**Home screen widget: cache state and a native ticking clock**](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) — Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates.
-- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](../data-and-offline/map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
+- Open [**Pomodoro home screen widget**](map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.
 ### #catalog
 - Open [**Catalog pages: projects, clients and tags changed on the server at once**](map-catalog-pages-projects-clients-tags.md) — catalog/ is the shared model and UI of the Projects, Clients and Tags pages: no queue, refreshAfterChange, the server's reason on a 4xx.
+### #pomodoro
+- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](../data-and-offline/map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
+- Open [**Pomodoro home screen widget**](map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.
+- Open [**Pomodoro phase alarms and rearming**](../data-and-offline/map-pomodoro-phase-alarms-and-rearming.md) — One exact alarm per server phase, set from its planned end and the clock offset. A state from any device silences it; rearming never advances a phase.
 ### #reports
 - Open [**Reports: Summary summed on the phone, Detailed paged, Weekly from v3**](map-reports-summary-from-detailed-search.md) — reports/ sums the v3 detailed search on the phone for Summary, pages it for Detailed, reads v3 weekly for Weekly, and filters all three.
 ### #shortcuts
@@ -55,5 +63,3 @@ _None yet._
 - Open [**Tokkl and Toggl API endpoints, auth and Tokkl-only extensions**](../api-and-security/map-tokkl-toggl-api.md) — Tokkl speaks a subset of Toggl API v9 at /api/v9 and Reports v3 at /reports/api/v3 with Basic auth, plus Tokkl-only fields and endpoints.
 - Open [**Check server capabilities instead of requiring a server version**](../api-and-security/practice-check-capabilities-not-server-version.md) — Probe optional Tokkl features by capability; snapping follows the latest supported contract, with no version selector.
 - Open [**Reports: Summary summed on the phone, Detailed paged, Weekly from v3**](map-reports-summary-from-detailed-search.md) — reports/ sums the v3 detailed search on the phone for Summary, pages it for Detailed, reads v3 weekly for Weekly, and filters all three.
-### #widget
-- Open [**Home screen widget: cache state and a native ticking clock**](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) — Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates.

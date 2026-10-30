@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:31.235Z" hostname="punta-des-patro" time="1.377">
+  <properties/>
+  <testcase name="networkRecoveryRetriesSummaryButAuthAndQuotaRemainVisible" classname="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" time="0.274"/>
+  <testcase name="accountTimezoneAndWeekStartSelectTheAppReportDates" classname="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" time="0.093"/>
+  <testcase name="foregroundRefreshDropsOldValuesAndUsesTheNewServerAnswer" classname="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" time="0.14"/>
+  <testcase name="latestRangeAndFiltersCancelQueuedLoads" classname="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" time="0.104"/>
+  <testcase name="closeCancelsPendingLoadsAndReopenReadsTheAccountAgain" classname="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" time="0.234"/>
+  <testcase name="failureRefreshShowsNoStaleNumbersAndRetryCanRecover" classname="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" time="0.209"/>
+  <testcase name="closingWhileTheServerIsAnsweringCannotPublishItsLateSummary" classname="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" time="0.111"/>
+  <testcase name="switchingTabsKeepsDetailedAndWeeklyOnTheirExistingEndpoints" classname="com.github.e0ipso.tokkl.reports.AppSummaryModelTest" time="0.212"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

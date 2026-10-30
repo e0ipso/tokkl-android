@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.calendar.CalendarTimeZoneTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:30.008Z" hostname="punta-des-patro" time="0.008">
+  <properties/>
+  <testcase name="theWeekAndItsBlocksFollowTheAccountTimezone" classname="com.github.e0ipso.tokkl.calendar.CalendarTimeZoneTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

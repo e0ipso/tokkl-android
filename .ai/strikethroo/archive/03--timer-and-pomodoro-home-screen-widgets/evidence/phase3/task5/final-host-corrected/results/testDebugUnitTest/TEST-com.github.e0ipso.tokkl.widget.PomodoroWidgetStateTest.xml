@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:52.395Z" hostname="punta-des-patro" time="0.126">
+  <properties/>
+  <testcase name="activeKeepsServerCycleRevisionAndEntryFieldsAndCorrectsBothBoundaries" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.009"/>
+  <testcase name="keysDistinguishTagNamesContainingSeparators" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.039"/>
+  <testcase name="missingOrWrongEntryDoesNotLeakAnotherTimersFields" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.001"/>
+  <testcase name="noAccountAndUnsupportedNeverExposeHeldFields" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.0"/>
+  <testcase name="rememberedFieldsRoundTripOnlyForTheirAccountAndInvalidDataIsIgnored" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.001"/>
+  <testcase name="onlyTheSessionsMatchingRunningEntryIsRemembered" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.0"/>
+  <testcase name="keyFollowsEverythingDrawnAndControlsButNotTheTickingClock" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.052"/>
+  <testcase name="plannedEndAndMatchingRingRedrawWithoutAdvancingThePhase" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.001"/>
+  <testcase name="idleUsesAllStoredDefaultsAndLastFieldsInTheirWorkspace" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.0"/>
+  <testcase name="catalogLabelsAreScopedToTheEntryWorkspace" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.0"/>
+  <testcase name="firstUseAndAnotherAccountStartWithEmptyFields" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.0"/>
+  <testcase name="acceptedStatesRememberFieldsBeforeIdleAndRejectStaleAndRetiredResponses" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.018"/>
+  <testcase name="bothRestKindsRetainTheServersCompletedWorkAndUpcomingTransition" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

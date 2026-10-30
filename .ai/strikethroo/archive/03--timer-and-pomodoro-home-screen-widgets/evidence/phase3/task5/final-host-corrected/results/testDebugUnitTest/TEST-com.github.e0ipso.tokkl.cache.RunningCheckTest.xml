@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.cache.RunningCheckTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:11.757Z" hostname="punta-des-patro" time="0.039">
+  <properties/>
+  <testcase name="aTimerTheServerNoLongerRunsLeavesTheCache" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.016"/>
+  <testcase name="aDeleteSentDuringTheRequestIsNotAddedBack" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.002"/>
+  <testcase name="aRowWrittenAfterTheRequestStays" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.001"/>
+  <testcase name="anOlderAnswerDoesNotAddASecondTimerAfterANewStartReachedTheCache" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.004"/>
+  <testcase name="anEntryWithUnsentChangesStaysAsItIs" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.013"/>
+  <testcase name="theServersValuesReplaceTheRunningEntrysRow" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.0"/>
+  <testcase name="theServersEntryWithUnsentChangesIsNotWritten" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.0"/>
+  <testcase name="aReplyFromBeforeSignOutCannotRefillTheCache" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.0"/>
+  <testcase name="aChangeQueuedWhenTheRequestBeganStaysAfterItWasSent" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.001"/>
+  <testcase name="aStopOnThePhoneAfterTheRequestIsNotUndone" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.0"/>
+  <testcase name="aTimerStartedElsewhereReplacesTheOneItStopped" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.0"/>
+  <testcase name="anEntryDeletedOnThePhoneAfterTheRequestIsNotAddedBack" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.0"/>
+  <testcase name="aTimerTheCacheDidNotHoldIsAdded" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.0"/>
+  <testcase name="theServersEntryIsNotAddedWhileAnUnsentTimerRunsOnThePhone" classname="com.github.e0ipso.tokkl.cache.RunningCheckTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

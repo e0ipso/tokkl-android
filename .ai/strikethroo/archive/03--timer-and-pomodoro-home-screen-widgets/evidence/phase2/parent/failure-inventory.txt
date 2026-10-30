@@ -1,0 +1,16 @@
+API36 package verification failed on the combined uncommitted phase 2 tree: 24 tests, 2 failures, 0 errors/skips.
+
+com.github.e0ipso.tokkl.widget.WidgetNavigationTest#pomodoroPageRouteWorksOnColdAndRetainedActivityAndFallsBackWithoutCapability
+
+java.lang.AssertionError: Assert failed: The component with (Text + InputText + EditableText contains 'Pomodoro' (ignoreCase: false)) && (Heading is defined) is not displayed!
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+	at com.github.e0ipso.tokkl.widget.WidgetNavigationTest.pomodoroPageRouteWorksOnColdAndRetainedActivityAndFallsBackWithoutCapability(WidgetNavigationTest.kt:57)
+
+
+com.github.e0ipso.tokkl.widget.WidgetServerTest#pauseResumeAndStopWhilePausedGoToTheServerFromTheNativeControls
+
+java.lang.AssertionError: widget text Paused · 0:10:00; native text: [Paused · Paused on the widget, No project, 0:10:00, Today, Fri 30 Oct, Open report ›, Total, 0:10:00, Billable, 0:00:00, Entries, 1, No project, 0:10]
+	at com.github.e0ipso.tokkl.widget.NativeWidget.await(NativeWidget.kt:260)
+	at com.github.e0ipso.tokkl.widget.NativeWidget.awaitText(NativeWidget.kt:126)
+	at com.github.e0ipso.tokkl.widget.NativeWidget.awaitText$default(NativeWidget.kt:126)
+	at com.github.e0ipso.tokkl.widget.WidgetServerTest.pauseResumeAndStopWhilePausedGoToTheServerFromTheNativeControls(WidgetServerTest.kt:150)

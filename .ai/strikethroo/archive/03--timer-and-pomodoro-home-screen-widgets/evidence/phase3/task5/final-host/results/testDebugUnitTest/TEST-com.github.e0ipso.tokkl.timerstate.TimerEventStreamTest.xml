@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:48.649Z" hostname="punta-des-patro" time="1.107">
+  <properties/>
+  <testcase name="timerEventsReachTheHolderAndEveryEventOrCommentCountsAsAlive" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.006"/>
+  <testcase name="theStreamUsesTheAccountsServerPathAndCredentialWithNoReadTimeout" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.921"/>
+  <testcase name="readsCutAnywhereGiveTheSameEventsAsOneRead" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.036"/>
+  <testcase name="aDroppedConnectionKeepsTheLastStateForTheOfflinePhone" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.005"/>
+  <testcase name="crAndCrlfEndLinesAsLfDoesEvenWhenAReadEndsBetweenThem" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.002"/>
+  <testcase name="aCancelledLinkTakesNoFurtherStateAndARetiredAccountTakesNone" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.001"/>
+  <testcase name="anEventDispatchesOnlyAtTheBlankLineThatEndsItsBlock" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.001"/>
+  <testcase name="aMalformedOrTruncatedStateNeverReplacesTheHeldOne" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.002"/>
+  <testcase name="aRefusedCredentialEndsTheStreamBeforeAnyEventAndOtherFailuresRetry" classname="com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest" time="0.13"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

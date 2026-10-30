@@ -1,10 +1,13 @@
 package com.github.e0ipso.tokkl
 
+import android.app.Activity
 import android.app.Application
 import android.app.NotificationManager
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.glance.appwidget.updateAll
+import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
@@ -79,22 +82,32 @@ import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncService
 import com.github.e0ipso.tokkl.timerstate.holdTimerEvents
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.widget.PomodoroWidget
+import com.github.e0ipso.tokkl.widget.PomodoroWidgetFieldsStore
+import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import com.github.e0ipso.tokkl.widget.TokklWidget
 import com.github.e0ipso.tokkl.widget.WidgetState
 import com.github.e0ipso.tokkl.widget.WidgetStore
 import com.github.e0ipso.tokkl.widget.WidgetSync
+import com.github.e0ipso.tokkl.widget.key
+import com.github.e0ipso.tokkl.widget.pomodoroWidgetState
+import com.github.e0ipso.tokkl.widget.pomodoroWidgetDeadlineChanges
 import com.github.e0ipso.tokkl.widget.widgetState
 import java.io.IOException
 import java.security.GeneralSecurityException
+import java.time.Clock
+import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
@@ -103,6 +116,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -323,16 +337,29 @@ class TokklApplication : Application() {
 
     private fun newTimerState(restore: Boolean): Lazy<AccountTimerState> = lazy {
         val store = TimerStateStore(this)
+        val account = store.account()
+        val lastFields = PomodoroWidgetFieldsStore(this)
+        val initial = if (restore) store.load() else null
+        // A pre-widget held session is already sufficient to seed its idle Start fields.
+        try {
+            initial?.let { lastFields.remember(account, it.held) }
+        } catch (_: IOException) {
+            // A later accepted state retries, as the timer state's own store does.
+        }
         AccountTimerState(
             TimerStateSource(
-                initial = if (restore) store.load() else null,
-                save = store::save,
+                initial = initial,
+                save = { stored ->
+                    store.save(stored)
+                    // Under the holder's acceptance lock, for actions and SSE from any surface.
+                    lastFields.remember(account, stored.held)
+                },
                 cache = cache,
                 // The state does not carry a stopped entry's stop; the history read does.
                 onRunningEnded = { accountSettings.refreshAfterChange() },
             ),
             // Made anew after each sign-in and sign-out, which clear the store.
-            account = store.account(),
+            account = account,
         )
     }
 
@@ -473,6 +500,7 @@ class TokklApplication : Application() {
     @Throws(IOException::class)
     internal fun renewTimerState() {
         timerState.retire()
+        PomodoroWidgetFieldsStore(this).clear()
         TimerStateStore(this).clear()
         synchronized(timerStateLock) { timerStateForAccount = newTimerState(restore = false) }
         timerStateRenewals.update { it + 1 }
@@ -617,14 +645,51 @@ class TokklApplication : Application() {
     /**
      * What the home screen widget shows (docs/PRD.md N3): the running entry or paused timer (T1)
      * of [timerControls], the favorites from the cache, the favorites capability and the account's
-     * default workspace, all from the phone. The first use loads the account settings and the
-     * capabilities from disk.
+     * default workspace, all from the phone. Cached history and ID mappings share the Timer
+     * page's day rule. App opens and the existing running check reread the day even offline or
+     * when an unchanged current entry produces no Room write. No widget work is scheduled.
      */
+    /** Clock read on widget events; injectable for account-midnight integration tests. */
+    @Volatile internal var widgetClock: Clock = Clock.systemUTC()
+
     val widgetState: Flow<WidgetState> by lazy {
-        val catalog = combine(cache.projects, cache.tasks, ::Pair)
-        combine(accountSettings.state, capabilities.state, timerControls, cache.favorites, catalog) { settings, flags, controls, favorites, (projects, tasks) ->
-            widgetState(settings?.defaultWorkspaceId, controls, favorites, flags.favorites, projects, tasks)
-        }.distinctUntilChanged()
+        val openings = callbackFlow {
+            val callbacks = object : ActivityLifecycleCallbacks {
+                override fun onActivityStarted(activity: Activity) { trySend(Unit) }
+                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+                override fun onActivityResumed(activity: Activity) = Unit
+                override fun onActivityPaused(activity: Activity) = Unit
+                override fun onActivityStopped(activity: Activity) = Unit
+                override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+                override fun onActivityDestroyed(activity: Activity) = Unit
+            }
+            registerActivityLifecycleCallbacks(callbacks)
+            trySend(Unit)
+            awaitClose { unregisterActivityLifecycleCallbacks(callbacks) }
+        }
+        val refreshes = merge(
+            openings,
+            WorkManager.getInstance(this).getWorkInfosForUniqueWorkFlow(RunningCheck.WORK_NAME).map { Unit },
+        )
+        val history = combine(
+            cache.timeEntries,
+            cacheDatabase.invalidationTracker.createFlow("entry_ids"),
+            refreshes,
+        ) { entries, _, _ ->
+            val dao = cacheDatabase.changes()
+            val mappings = entries.filter { it.id < 0 }.mapNotNull { entry ->
+                dao.serverId(entry.id)?.let { entry.id to it }
+            }.toMap()
+            entries to mappings
+        }
+        val catalog = combine(cache.projects, cache.tasks, history) { projects, tasks, history -> Triple(projects, tasks, history) }
+        combine(accountSettings.state, capabilities.state, timerControls, cache.favorites, catalog) { settings, flags, controls, favorites, (projects, tasks, history) ->
+            val (entries, mappings) = history
+            widgetState(
+                settings?.defaultWorkspaceId, controls, favorites, flags.favorites, projects, tasks,
+                entries = entries, settings = settings, now = widgetClock.instant(), serverIdOf = mappings,
+            )
+        }.flowOn(Dispatchers.IO).distinctUntilChanged()
     }
 
     /**
@@ -638,6 +703,58 @@ class TokklApplication : Application() {
             loadShown = store::load,
             saveShown = store::save,
             update = { TokklWidget().updateAll(this) },
+            scope = MainScope(),
+            io = Dispatchers.IO,
+        )
+    }
+
+    /**
+     * The Pomodoro widget's held session and idle defaults. Read the current account under its
+     * holder lock, rather than combining a previous account's emitted state with new settings.
+     * The ringing service and a single in-process phase-end wait trigger redraws. The latter
+     * also works with denied exact alarms. No ticking job or idle work is added.
+     */
+    val pomodoroWidgetState: Flow<PomodoroWidgetState> by lazy {
+        val store = PomodoroWidgetFieldsStore(this)
+        val deadlines = pomodoroWidgetDeadlineChanges(heldTimerState.map { held ->
+            held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
+        })
+        val catalog = combine(cache.projects, cache.tasks, pomodoroRinging.state, deadlines) { projects, tasks, ring, _ ->
+            Triple(projects, tasks, ring.ring?.phase)
+        }
+        combine(
+            heldTimerState,
+            flow { emitAll(capabilities.state) },
+            flow { emitAll(accountSettings.state) },
+            flow { emitAll(pomodoroDefaults.defaults) },
+            catalog,
+        ) { _, flags, settings, defaults, (projects, tasks, ringing) ->
+            val owner = accountTimerState()
+            owner.source.withState { held ->
+                pomodoroWidgetState(
+                    workspaceId = settings?.defaultWorkspaceId,
+                    account = owner.account.takeIf { Session(this).isSignedIn() },
+                    available = flags.timerState,
+                    held = held,
+                    defaults = defaults,
+                    remembered = store.load(owner.account),
+                    projects = projects,
+                    tasks = tasks,
+                    deviceNow = Instant.now(),
+                    ringing = ringing,
+                )
+            }
+        }.flowOn(Dispatchers.IO).distinctUntilChanged()
+    }
+
+    /** Phase 2 supplies the provider's redraw; its key is independent of the Timer widget. */
+    fun pomodoroWidgetSync(update: suspend () -> Unit): WidgetSync {
+        val store = WidgetStore(this, keyName = WidgetStore.POMODORO_KEY)
+        return WidgetSync(
+            keys = flow { emitAll(pomodoroWidgetState.map { it.key() }) },
+            loadShown = store::load,
+            saveShown = store::save,
+            update = update,
             scope = MainScope(),
             io = Dispatchers.IO,
         )
@@ -709,6 +826,7 @@ class TokklApplication : Application() {
                 { accountSettings.forget() },
                 { sender.stop() },
                 { TimerStateStore(this).clear() },
+                { PomodoroWidgetFieldsStore(this).clear() },
                 {
                     cache.clear()
                     synchronized(pomodoroNotificationLock) {
@@ -773,6 +891,7 @@ class TokklApplication : Application() {
             MainScope(), Dispatchers.IO,
         )
         widgetSync.start()
+        pomodoroWidgetSync { PomodoroWidget().updateAll(this) }.start()
         favoriteShortcuts.start()
         // Check every 15 minutes while the cache holds a running entry.
         RunningCheck.follow(this, cache.running.map { it != null }, MainScope(), Dispatchers.IO)

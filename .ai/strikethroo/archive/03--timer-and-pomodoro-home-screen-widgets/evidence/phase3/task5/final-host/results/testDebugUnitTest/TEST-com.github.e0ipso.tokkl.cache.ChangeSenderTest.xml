@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.cache.ChangeSenderTest" tests="64" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:23.406Z" hostname="punta-des-patro" time="5.642">
+  <properties/>
+  <testcase name="signedOutSendsNothing" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.04"/>
+  <testcase name="onlyAConnectionThatFailedAfterTheRequestLeftThePhoneIsWorthAnotherTryAtOnce" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.001"/>
+  <testcase name="a400HoldsTheChangeWithTheServersMessage" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.008"/>
+  <testcase name="undoOfAnUnsentDeleteTakesItOutOfTheQueueWithNoRequest" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.015"/>
+  <testcase name="undoOfASentDeleteOfAnEntryMadeOnThePhoneRestoresItUnderTheServerId" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.162"/>
+  <testcase name="undoOfAnEntryMadeOnThePhoneThatNeitherQueueNorServerHasFails" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.003"/>
+  <testcase name="a404LookupPreservesAnAuthenticationFailureOrARetryableFailure" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.013"/>
+  <testcase name="undoOfASentDeleteNeedsTheServerOfflineAndSignedOut" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.016"/>
+  <testcase name="a404DiscardsEveryChangeToTheMissingEntryAndContinues" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.057"/>
+  <testcase name="aCreateAnswered5xxOrUnreadableStaysMarked" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.051"/>
+  <testcase name="aLostDuplicateTakesTheCopyItsPostMadeBesideItsSource" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.022"/>
+  <testcase name="aNetworkFailureStopsTheDrainAndKeepsTheChangeForTheNextDrain" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.206"/>
+  <testcase name="aLostCreateMatchesTheStartWhereTheServerSnappedIt" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.013"/>
+  <testcase name="a429WaitsForRetryAfterBeforeTheNextTry" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.142"/>
+  <testcase name="aRestoreAnsweredWithAnUnreadableBodyStillCountsAsRestored" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.006"/>
+  <testcase name="aLostCreateIsPostedWhenNoUnmappedEntryMatchesIt" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.05"/>
+  <testcase name="aQueuedStartGoesStoppedWhereALaterRunningTimerStartsAndThatTimerStaysInTheCache" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.051"/>
+  <testcase name="aLegacyQueuedStopStillSendsEveryFieldAfterMigration" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.004"/>
+  <testcase name="aRefusedCreateIsNotMarkedAndGoesWithoutALookupNextTime" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.05"/>
+  <testcase name="aQueuedStartAndItsLaterChangesEndOnTheGridWhereTheLaterTimersStartSnaps" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.098"/>
+  <testcase name="a400BlocksOnlyItsEntryAndAReleasedChangeCanGoAgain" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.141"/>
+  <testcase name="aChangeQueuedDuringADrainIsSentByThatDrain" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.136"/>
+  <testcase name="sendAndWaitWhenSignedOutSendsNothing" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.008"/>
+  <testcase name="anUncertainCapturedStopReadsTheMatchingRowInsteadOfReplayingPatch" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.012"/>
+  <testcase name="aLostDuplicateIsPostedInsteadOfTakingItsSource" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.05"/>
+  <testcase name="laterChangesThatWouldRunOrStopTheEntryAfterTheLaterTimerStopItWhereThatTimerStarts" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.191"/>
+  <testcase name="aCapturedStopUsesTheFrozenTapInstantAfterTheClockMoves" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.016"/>
+  <testcase name="onSentRunsOncePerDrainJobAfterItsLastPass" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.241"/>
+  <testcase name="aDeleteThatUndoTookBackBeforeItsMarkNeverGoesOut" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.113"/>
+  <testcase name="a429WithoutRetryAfterWaitsTheDefault" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.013"/>
+  <testcase name="a403PausesAllRequestsUntilSignInResumesTheQueue" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.102"/>
+  <testcase name="a5xxStopsTheDrainAndTheNextDrainResumesInOrder" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.228"/>
+  <testcase name="aFailedReadOfTheRunningEntryKeepsTheStartQueuedAndSendsNothing" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.007"/>
+  <testcase name="theServersAnswerReachesTheStore" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.005"/>
+  <testcase name="aQueuedStopBeforeTheLaterTimerEndsTheStartInstead" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.09"/>
+  <testcase name="onlyRefusalsAndRequestsThatNeverLeftThePhoneLeaveNothingOnTheServer" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.004"/>
+  <testcase name="aStartWhoseAnswerWasLostIsLookedUpBeforeTheRunningEntry" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.008"/>
+  <testcase name="aSendDuringQueueCleanupJoinsTheDrainUntilCancellationFinishes" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.071"/>
+  <testcase name="a404ForAValueDoesNotDiscardAnEntryTheServerStillHas" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.054"/>
+  <testcase name="aRunningCreateSendsTheTapTimeAsItsStartAndTagsByName" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.051"/>
+  <testcase name="anAlreadyStoppedConflictWithDifferentSpanIsHeld" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.048"/>
+  <testcase name="aQueuedStartGoesAsQueuedWhenTheRunningTimerStartedEarlierOrAtTheSameSecond" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.133"/>
+  <testcase name="aDeleteSendsNoBody" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.007"/>
+  <testcase name="anUncertainShortStopRequiresTheExactTrashRow" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.05"/>
+  <testcase name="undoOfAnUnsentDeleteOfAnEntryMadeOnThePhoneLeavesItsCreateQueued" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.003"/>
+  <testcase name="a409OnAStopLeavesTheQueueSilently" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.005"/>
+  <testcase name="aCreateWhoseAnswerIsLostIsLookedUpInTheSameDrainInsteadOfPostedAgain" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.11"/>
+  <testcase name="sendAndWaitReturnsHowTheDrainEnded" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.096"/>
+  <testcase name="aConnectionThatDropsAfterTheServerAnsweredLeadsToOneMoreTryAtMost" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.112"/>
+  <testcase name="aRestoreTheServerRefusesFailsWithItsStatus" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.1"/>
+  <testcase name="onEmptiedRunsOnceWhenADrainSendsTheQueueEmpty" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.239"/>
+  <testcase name="aDeleteThatFailedWithoutReachingTheServerStaysUnmarkedSoUndoNeedsNoRequest" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.007"/>
+  <testcase name="sendAndWaitDuringADrainReturnsItsLastPass" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.105"/>
+  <testcase name="aQueuedStartGoesAsQueuedWhenNothingRuns" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.058"/>
+  <testcase name="theNextDrainTakesTheEntryALostCreateMadeAndSendsLaterChangesToIt" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.054"/>
+  <testcase name="undoOfASentDeleteRestoresTheEntryThroughTokklsRestoreEndpoint" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.059"/>
+  <testcase name="aRestoreRefreshesTheAccountOnceAndACancelledDeleteDoesNot" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.014"/>
+  <testcase name="sendTriesAgainByItselfOnceRetryAfterHasPassed" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="1.076"/>
+  <testcase name="aDrainThatSendsNothingDoesNotRunOnSent" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.013"/>
+  <testcase name="undoOfADeleteWhoseAnswerWasLostAsksTheServerAndTakesItOutOfTheQueue" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.112"/>
+  <testcase name="aStoppedCreateReadsNoRunningEntry" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.007"/>
+  <testcase name="aChangeWhosePooledConnectionTheServerClosedGoesOutOnANewOneInTheSameDrain" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.386"/>
+  <testcase name="sendsCreateEditStopAndDeleteOfAnOfflineEntryInOrderUnderTheServerId" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.176"/>
+  <testcase name="aCreateWhoseAnswerIsLostStaysMarkedAndOkHttpDoesNotPostItAgain" classname="com.github.e0ipso.tokkl.cache.ChangeSenderTest" time="0.112"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

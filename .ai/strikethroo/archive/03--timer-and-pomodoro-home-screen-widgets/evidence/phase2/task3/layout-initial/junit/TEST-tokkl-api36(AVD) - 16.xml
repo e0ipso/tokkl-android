@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="2" failures="2" errors="0" skipped="0" time="0.000" timestamp="2026-10-29T22:31:34" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest" tests="1" failures="1" errors="0" skipped="0" time="6.162" timestamp="2026-10-29T22:31:34" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesAndStatesFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest" time="6.162">
+      <failure>java.util.NoSuchElementException: Key Elapsed time is missing in the map.
+	at kotlin.collections.MapsKt__MapWithDefaultKt.getOrImplicitDefaultNullable(MapWithDefault.kt:25)
+	at kotlin.collections.MapsKt__MapsKt.getValue(Maps.kt:437)
+	at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:61)
+</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest" tests="1" failures="1" errors="0" skipped="0" time="6.079" timestamp="2026-10-29T22:31:34" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesAndStatesFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest" time="6.079">
+      <failure>java.lang.AssertionError: 1:12:35 is not clipped by its row: 91 / 95
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.github.e0ipso.tokkl.widget.NativeWidget.assertTextFitsVertically$lambda$0(NativeWidget.kt:163)
+	at com.github.e0ipso.tokkl.widget.NativeWidget$$ExternalSyntheticLambda15.invoke(D8$$SyntheticClass:0)
+	at com.github.e0ipso.tokkl.widget.NativeWidget.onMain$lambda$0(NativeWidget.kt:277)
+	at com.github.e0ipso.tokkl.widget.NativeWidget$$ExternalSyntheticLambda10.run(D8$$SyntheticClass:0)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at android.app.Instrumentation$SyncRunnable.run(Instrumentation.java:2616)
+	at android.os.Handler.handleCallback(Handler.java:995)
+	at android.os.Handler.dispatchMessage(Handler.java:103)
+	at android.os.Looper.loopOnce(Looper.java:248)
+	at android.os.Looper.loop(Looper.java:338)
+	at android.app.ActivityThread.main(ActivityThread.java:9067)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

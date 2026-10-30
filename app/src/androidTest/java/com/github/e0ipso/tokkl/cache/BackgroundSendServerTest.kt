@@ -250,8 +250,10 @@ class BackgroundSendServerTest {
         Session(context).save(server, token)
     }
 
-    /** Every work the app has enqueued, in any state. */
-    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(WorkQuery.fromStates(WorkInfo.State.entries)).get()
+    /** Tokkl's work in any state; Glance owns its independent widget sessions. */
+    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(WorkQuery.fromTags(listOf(
+        BackgroundSendWorker::class.java.name, RunningCheckWorker::class.java.name, ReminderWorker::class.java.name,
+    ))).get()
 
     private fun queueWork(): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(BackgroundSend.WORK_NAME).get()
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:49.762Z" hostname="punta-des-patro" time="0.046">
+  <properties/>
+  <testcase name="aTimerStartedElsewhereReplacesTheCachedOneAndAsksForItsStop" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.009"/>
+  <testcase name="anEditSentDuringTheReadIsNotUndoneByAStaleState" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.001"/>
+  <testcase name="theCountdownAndOvertimeRunOnTheCorrectedClock" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.0"/>
+  <testcase name="aNoticeNotShownBeforeARestartIsShownOnceAfterIt" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.001"/>
+  <testcase name="anIncomingNullCurrentEntryKeepsAPendingLocalStart" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.0"/>
+  <testcase name="aFreshProcessReadsTheStateAndItsClockWithoutARequest" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.012"/>
+  <testcase name="theServersTimerStateReadsFieldForField" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.015"/>
+  <testcase name="aRetiredAccountsLateAnswerRestoresNothing" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.001"/>
+  <testcase name="aNewerStateUpdatesTheCacheAfterAnOlderOneWroteDuringItsRead" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.001"/>
+  <testcase name="aDiscardedPomodoroGivesOneNoticeAcrossReplaysAndRestarts" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.001"/>
+  <testcase name="aPausedChainIsFrozenAndARunningCloneAddsItsTimeSinceItsStart" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.0"/>
+  <testcase name="anEqualRevisionRefreshesTheArrivalTimeAndClockOffset" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.0"/>
+  <testcase name="aSlowerAnswerWithALowerRevisionNeverReplacesTheNewerState" classname="com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

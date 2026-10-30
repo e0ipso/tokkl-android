@@ -1,0 +1,891 @@
+[
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest-signInWithEmailAndPassword.txt",
+    "test_runner_lines": [
+      "10-30 16:41:51.706 17004 17039 I TestRunner: started: signInWithEmailAndPassword(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)",
+      "10-30 16:41:55.983 17004 17039 I TestRunner: finished: signInWithEmailAndPassword(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest-nextAndEndGoToTheServerWithTheShownRevisionAndItsAnswerClosesTheAlarm.txt",
+    "test_runner_lines": [
+      "10-30 16:27:26.269  7514  7552 I TestRunner: started: nextAndEndGoToTheServerWithTheShownRevisionAndItsAnswerClosesTheAlarm(com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest)",
+      "10-30 16:29:38.265  7514  7552 I TestRunner: finished: nextAndEndGoToTheServerWithTheShownRevisionAndItsAnswerClosesTheAlarm(com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest-anUnpinnedCertificateIsNeverOffered.txt",
+    "test_runner_lines": [
+      "10-30 16:38:14.080 14180 14218 I TestRunner: started: anUnpinnedCertificateIsNeverOffered(com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest)",
+      "10-30 16:38:21.995 14180 14218 I TestRunner: finished: anUnpinnedCertificateIsNeverOffered(com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.WindowBackgroundTest-followingTheSystemLaunchShowsTheSystemsSchemeBackground.txt",
+    "test_runner_lines": [
+      "10-30 16:44:56.023 20784 20838 I TestRunner: started: followingTheSystemLaunchShowsTheSystemsSchemeBackground(com.github.e0ipso.tokkl.ui.theme.WindowBackgroundTest)",
+      "10-30 16:45:02.140 20784 20838 I TestRunner: finished: followingTheSystemLaunchShowsTheSystemsSchemeBackground(com.github.e0ipso.tokkl.ui.theme.WindowBackgroundTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.sync.SyncStatusServerTest-theNeedsAttentionLinkOpensTheReasonAndItsEditResendAndDiscardActions.txt",
+    "test_runner_lines": [
+      "10-30 16:38:56.503 14577 14619 I TestRunner: started: theNeedsAttentionLinkOpensTheReasonAndItsEditResendAndDiscardActions(com.github.e0ipso.tokkl.sync.SyncStatusServerTest)",
+      "10-30 16:39:06.591 14577 14619 I TestRunner: finished: theNeedsAttentionLinkOpensTheReasonAndItsEditResendAndDiscardActions(com.github.e0ipso.tokkl.sync.SyncStatusServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest-projectForm.txt",
+    "test_runner_lines": [
+      "10-30 16:23:29.249  3834  3871 I TestRunner: started: projectForm(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)",
+      "10-30 16:23:34.085  3834  3871 I TestRunner: finished: projectForm(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest-version6KeepsARunningTimerAndItsQueueAndStopsItAfterTheUpdate.txt",
+    "test_runner_lines": [
+      "10-30 16:22:13.712  2582  2625 I TestRunner: started: version6KeepsARunningTimerAndItsQueueAndStopsItAfterTheUpdate(com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest)",
+      "10-30 16:22:14.120  2582  2625 I TestRunner: finished: version6KeepsARunningTimerAndItsQueueAndStopsItAfterTheUpdate(com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reminder.ReminderServerTest-stopBeforeDelayCancelsAndDisableEnableKeepsOnlyOneRequest.txt",
+    "test_runner_lines": [
+      "10-30 16:32:16.358 10326 10365 I TestRunner: started: stopBeforeDelayCancelsAndDisableEnableKeepsOnlyOneRequest(com.github.e0ipso.tokkl.reminder.ReminderServerTest)",
+      "10-30 16:32:18.726 10326 10365 I TestRunner: finished: stopBeforeDelayCancelsAndDisableEnableKeepsOnlyOneRequest(com.github.e0ipso.tokkl.reminder.ReminderServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest-eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds_font_1__display_false__dark_true_.txt",
+    "test_runner_lines": [
+      "10-30 16:35:02.033 12120 12157 I TestRunner: started: eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=1, display=false, dark=true](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)",
+      "10-30 16:35:49.928 12120 12157 I TestRunner: finished: eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=1, display=false, dark=true](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest-clientForm.txt",
+    "test_runner_lines": [
+      "10-30 16:23:48.758  4381  4418 I TestRunner: started: clientForm(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)",
+      "10-30 16:23:52.332  4381  4418 I TestRunner: finished: clientForm(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.history.HistoryGroupUiTest-aGroupShowsItsCountAndTotalAndExpandsToItsMembersWithTheStateForTalkBack.txt",
+    "test_runner_lines": [
+      "10-30 16:26:10.049  6173  6217 I TestRunner: started: aGroupShowsItsCountAndTotalAndExpandsToItsMembersWithTheStateForTalkBack(com.github.e0ipso.tokkl.history.HistoryGroupUiTest)",
+      "10-30 16:26:14.438  6173  6217 I TestRunner: finished: aGroupShowsItsCountAndTotalAndExpandsToItsMembersWithTheStateForTalkBack(com.github.e0ipso.tokkl.history.HistoryGroupUiTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest-deniedAccessKeepsRingingAndNotificationActionsWithoutOpeningTheLockScreenActivity.txt",
+    "test_runner_lines": [
+      "10-30 16:27:17.312  7376  7421 I TestRunner: started: deniedAccessKeepsRingingAndNotificationActionsWithoutOpeningTheLockScreenActivity(com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest)",
+      "10-30 16:27:24.907  7376  7421 I TestRunner: finished: deniedAccessKeepsRingingAndNotificationActionsWithoutOpeningTheLockScreenActivity(com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetServerTest-startAndStopWorkOfflineThroughTheNativeControls.txt",
+    "test_runner_lines": [
+      "10-30 16:45:27.236 21366 21399 I TestRunner: started: startAndStopWorkOfflineThroughTheNativeControls(com.github.e0ipso.tokkl.widget.WidgetServerTest)",
+      "10-30 16:45:32.434 21366 21399 I TestRunner: finished: startAndStopWorkOfflineThroughTheNativeControls(com.github.e0ipso.tokkl.widget.WidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest-timerTotals.txt",
+    "test_runner_lines": [
+      "10-30 16:41:57.600 17128 17168 I TestRunner: started: timerTotals(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)",
+      "10-30 16:42:02.668 17128 17168 I TestRunner: finished: timerTotals(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.catalog.CatalogForegroundTest-aProjectRenamedElsewhereShowsAfterTheForegroundAndARotationLoadsNothing.txt",
+    "test_runner_lines": [
+      "10-30 16:23:09.999  3477  3516 I TestRunner: started: aProjectRenamedElsewhereShowsAfterTheForegroundAndARotationLoadsNothing(com.github.e0ipso.tokkl.catalog.CatalogForegroundTest)",
+      "10-30 16:23:22.857  3477  3516 I TestRunner: finished: aProjectRenamedElsewhereShowsAfterTheForegroundAndARotationLoadsNothing(com.github.e0ipso.tokkl.catalog.CatalogForegroundTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest-a400HoldsItsEntryWhileOthersSendAndAFixResendsIt.txt",
+    "test_runner_lines": [
+      "10-30 16:22:50.812  3036  3083 I TestRunner: started: a400HoldsItsEntryWhileOthersSendAndAFixResendsIt(com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest)",
+      "10-30 16:22:52.445  3036  3083 I TestRunner: finished: a400HoldsItsEntryWhileOthersSendAndAFixResendsIt(com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.projects.ProjectsServerTest-offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer.txt",
+    "test_runner_lines": [
+      "10-30 16:31:57.032  9868  9904 I TestRunner: started: offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer(com.github.e0ipso.tokkl.projects.ProjectsServerTest)",
+      "10-30 16:32:05.445  9868  9904 I TestRunner: finished: offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer(com.github.e0ipso.tokkl.projects.ProjectsServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest-tagsList.txt",
+    "test_runner_lines": [
+      "10-30 16:23:58.809  4677  4718 I TestRunner: started: tagsList(com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest)",
+      "10-30 16:24:01.853  4677  4718 I TestRunner: finished: tagsList(com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest-httpWarning.txt",
+    "test_runner_lines": [
+      "10-30 16:42:29.938 17806 17842 I TestRunner: started: httpWarning(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)",
+      "10-30 16:42:33.391 17806 17842 I TestRunner: finished: httpWarning(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest-unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity.txt",
+    "test_runner_lines": [
+      "10-30 16:39:37.619 15306 15352 I TestRunner: started: unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity(com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest)",
+      "10-30 16:39:47.911 15306 15352 I TestRunner: finished: unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity(com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.trash.TrashFitTest-theEmptyQuestionFits.txt",
+    "test_runner_lines": [
+      "10-30 16:41:25.041 16377 16423 I TestRunner: started: theEmptyQuestionFits(com.github.e0ipso.tokkl.trash.TrashFitTest)",
+      "10-30 16:41:29.741 16377 16423 I TestRunner: finished: theEmptyQuestionFits(com.github.e0ipso.tokkl.trash.TrashFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetNavigationTest-widgetRoutesWithoutAnAccountOpenSignInAndConsumeTheExtras.txt",
+    "test_runner_lines": [
+      "10-30 16:45:13.090 21134 21174 I TestRunner: started: widgetRoutesWithoutAnAccountOpenSignInAndConsumeTheExtras(com.github.e0ipso.tokkl.widget.WidgetNavigationTest)",
+      "10-30 16:45:18.958 21134 21174 I TestRunner: finished: widgetRoutesWithoutAnAccountOpenSignInAndConsumeTheExtras(com.github.e0ipso.tokkl.widget.WidgetNavigationTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest-replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits.txt",
+    "test_runner_lines": [
+      "10-30 16:39:49.084 15588 15628 I TestRunner: started: replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits(com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest)",
+      "10-30 16:39:56.790 15588 15628 I TestRunner: finished: replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits(com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetLargeTextTest-theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize.txt",
+    "test_runner_lines": [
+      "10-30 16:45:03.278 20918 20961 I TestRunner: started: theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize(com.github.e0ipso.tokkl.widget.WidgetLargeTextTest)",
+      "10-30 16:45:11.512 20918 20961 I TestRunner: finished: theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize(com.github.e0ipso.tokkl.widget.WidgetLargeTextTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.StickerCardTest-darkCardHasALavenderFrameAndHardOffsetShadow.txt",
+    "test_runner_lines": [
+      "10-30 16:41:45.439 16846 16889 I TestRunner: started: darkCardHasALavenderFrameAndHardOffsetShadow(com.github.e0ipso.tokkl.ui.StickerCardTest)",
+      "10-30 16:41:47.024 16846 16889 I TestRunner: finished: darkCardHasALavenderFrameAndHardOffsetShadow(com.github.e0ipso.tokkl.ui.StickerCardTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest-aFailedSignOut.txt",
+    "test_runner_lines": [
+      "10-30 16:37:54.998 13699 13741 I TestRunner: started: aFailedSignOut(com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest)",
+      "10-30 16:37:59.695 13699 13741 I TestRunner: finished: aFailedSignOut(com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest-licences.txt",
+    "test_runner_lines": [
+      "10-30 16:43:08.856 18816 18851 I TestRunner: started: licences(com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest)",
+      "10-30 16:43:14.321 18816 18851 I TestRunner: finished: licences(com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest-step2SendsTheQueueWithoutASecondCopy.txt",
+    "test_runner_lines": [
+      "10-30 16:22:18.253  2723  2760 I TestRunner: started: step2SendsTheQueueWithoutASecondCopy(com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest)",
+      "10-30 16:22:19.376  2723  2760 I TestRunner: finished: step2SendsTheQueueWithoutASecondCopy(com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.calendar.DayCalendarTest-theNextDaySlidesIn.txt",
+    "test_runner_lines": [
+      "10-30 16:23:01.701  3284  3327 I TestRunner: started: theNextDaySlidesIn(com.github.e0ipso.tokkl.calendar.DayCalendarTest)",
+      "10-30 16:23:04.502  3284  3327 I TestRunner: finished: theNextDaySlidesIn(com.github.e0ipso.tokkl.calendar.DayCalendarTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest-licences.txt",
+    "test_runner_lines": [
+      "10-30 16:42:22.345 17660 17702 I TestRunner: started: licences(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)",
+      "10-30 16:42:28.182 17660 17702 I TestRunner: finished: licences(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest-aDeclinedRequestStillPostsTheRegularNotificationWithItsClockAndStop.txt",
+    "test_runner_lines": [
+      "10-30 16:27:16.028  7302  7355 I TestRunner: started: aDeclinedRequestStillPostsTheRegularNotificationWithItsClockAndStop(com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest)",
+      "10-30 16:27:16.185  7302  7355 I TestRunner: finished: aDeclinedRequestStillPostsTheRegularNotificationWithItsClockAndStop(com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.timerstate.TimerCrossDeviceServerTest-aSessionFromThePhoneShowsThroughTheApiAndAStaleNextFromTheRingIsRefused.txt",
+    "test_runner_lines": [
+      "10-30 16:40:12.504 16019 16073 I TestRunner: started: aSessionFromThePhoneShowsThroughTheApiAndAStaleNextFromTheRingIsRefused(com.github.e0ipso.tokkl.timerstate.TimerCrossDeviceServerTest)",
+      "10-30 16:41:23.810 16019 16073 I TestRunner: finished: aSessionFromThePhoneShowsThroughTheApiAndAStaleNextFromTheRingIsRefused(com.github.e0ipso.tokkl.timerstate.TimerCrossDeviceServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reports.DetailedReportServerTest-rowsMatchTheWebAppAndTheEndLoadsTheNextPage.txt",
+    "test_runner_lines": [
+      "10-30 16:32:20.072 10405 10446 I TestRunner: started: rowsMatchTheWebAppAndTheEndLoadsTheNextPage(com.github.e0ipso.tokkl.reports.DetailedReportServerTest)",
+      "10-30 16:32:33.438 10405 10446 I TestRunner: finished: rowsMatchTheWebAppAndTheEndLoadsTheNextPage(com.github.e0ipso.tokkl.reports.DetailedReportServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reports.ReportFiltersTest-eachFilterNarrowsEveryReportAsTheWebAppDoes.txt",
+    "test_runner_lines": [
+      "10-30 16:33:12.688 11090 11127 I TestRunner: started: eachFilterNarrowsEveryReportAsTheWebAppDoes(com.github.e0ipso.tokkl.reports.ReportFiltersTest)",
+      "10-30 16:33:52.831 11090 11127 I TestRunner: finished: eachFilterNarrowsEveryReportAsTheWebAppDoes(com.github.e0ipso.tokkl.reports.ReportFiltersTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-signInFieldErrorsLeaveTheFormInPlace.txt",
+    "test_runner_lines": [
+      "10-30 16:44:28.368 20353 20401 I TestRunner: started: signInFieldErrorsLeaveTheFormInPlace(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 16:44:45.408 20353 20401 I TestRunner: finished: signInFieldErrorsLeaveTheFormInPlace(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest-projectFormWithTasks.txt",
+    "test_runner_lines": [
+      "10-30 16:23:42.167  4199  4237 I TestRunner: started: projectFormWithTasks(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)",
+      "10-30 16:23:46.835  4199  4237 I TestRunner: finished: projectFormWithTasks(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard.txt",
+    "test_runner_lines": [
+      "10-30 16:44:18.656 20147 20192 I TestRunner: started: signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 16:44:26.830 20147 20192 I TestRunner: finished: signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-allFourPomodoroDefaultDialogsFitAtLargestFont.txt",
+    "test_runner_lines": [
+      "10-30 16:43:58.182 19905 19952 I TestRunner: started: allFourPomodoroDefaultDialogsFitAtLargestFont(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 16:44:17.184 19905 19952 I TestRunner: finished: allFourPomodoroDefaultDialogsFitAtLargestFont(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest-certificatePrompt.txt",
+    "test_runner_lines": [
+      "10-30 16:43:15.765 18956 19001 I TestRunner: started: certificatePrompt(com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest)",
+      "10-30 16:43:18.470 18956 19001 I TestRunner: finished: certificatePrompt(com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.projects.ProjectsServerTest-aRefusedChangeShowsTheServersReasonAndKeepsTheForm.txt",
+    "test_runner_lines": [
+      "10-30 16:31:43.202  9727  9769 I TestRunner: started: aRefusedChangeShowsTheServersReasonAndKeepsTheForm(com.github.e0ipso.tokkl.projects.ProjectsServerTest)",
+      "10-30 16:31:55.345  9727  9769 I TestRunner: finished: aRefusedChangeShowsTheServersReasonAndKeepsTheForm(com.github.e0ipso.tokkl.projects.ProjectsServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest-physicalSwipeRepostsTheNotificationAndKeepsTheSamePlayer.txt",
+    "test_runner_lines": [
+      "10-30 16:31:25.369  9293  9330 I TestRunner: started: physicalSwipeRepostsTheNotificationAndKeepsTheSamePlayer(com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest)",
+      "10-30 16:31:39.090  9293  9330 I TestRunner: finished: physicalSwipeRepostsTheNotificationAndKeepsTheSamePlayer(com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest-aDeniedNotificationPermissionDoesNotPostOrThrow.txt",
+    "test_runner_lines": [
+      "10-30 16:31:41.738  9655  9710 I TestRunner: started: aDeniedNotificationPermissionDoesNotPostOrThrow(com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest)",
+      "10-30 16:31:41.749  9655  9710 I TestRunner: finished: aDeniedNotificationPermissionDoesNotPostOrThrow(com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.calendar.CalendarGesturesTest-eachDaysHeadOffersTalkBackAnActionThatAddsAnEntry.txt",
+    "test_runner_lines": [
+      "10-30 16:22:56.067  3180  3217 I TestRunner: started: eachDaysHeadOffersTalkBackAnActionThatAddsAnEntry(com.github.e0ipso.tokkl.calendar.CalendarGesturesTest)",
+      "10-30 16:23:00.128  3180  3217 I TestRunner: finished: eachDaysHeadOffersTalkBackAnActionThatAddsAnEntry(com.github.e0ipso.tokkl.calendar.CalendarGesturesTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.history.HistoryFitTest-theUndoMessagesFit.txt",
+    "test_runner_lines": [
+      "10-30 16:26:02.972  5998  6036 I TestRunner: started: theUndoMessagesFit(com.github.e0ipso.tokkl.history.HistoryFitTest)",
+      "10-30 16:26:07.984  5998  6036 I TestRunner: finished: theUndoMessagesFit(com.github.e0ipso.tokkl.history.HistoryFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest-step1SendsACreateAndDiesBeforeTheAnswer.txt",
+    "test_runner_lines": [
+      "10-30 16:22:15.144  2646  2689 I TestRunner: started: step1SendsACreateAndDiesBeforeTheAnswer(com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest)",
+      "10-30 16:22:17.244  2646  2689 I TestRunner: finished: step1SendsACreateAndDiesBeforeTheAnswer(com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.favorites.FavoritesServerTest-favoritesEditedOnThePhoneReachTheWebInItsFormat.txt",
+    "test_runner_lines": [
+      "10-30 16:25:14.803  5536  5581 I TestRunner: started: favoritesEditedOnThePhoneReachTheWebInItsFormat(com.github.e0ipso.tokkl.favorites.FavoritesServerTest)",
+      "10-30 16:25:25.842  5536  5581 I TestRunner: finished: favoritesEditedOnThePhoneReachTheWebInItsFormat(com.github.e0ipso.tokkl.favorites.FavoritesServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reports.ReportFiltersTest-isNotDropsWhatTheWebAppDrops.txt",
+    "test_runner_lines": [
+      "10-30 16:33:54.043 11386 11428 I TestRunner: started: isNotDropsWhatTheWebAppDrops(com.github.e0ipso.tokkl.reports.ReportFiltersTest)",
+      "10-30 16:34:29.921 11386 11428 I TestRunner: finished: isNotDropsWhatTheWebAppDrops(com.github.e0ipso.tokkl.reports.ReportFiltersTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.entry.EntryFormServerTest-shortTypedSpansShowValidationAndCreateNoPendingChange.txt",
+    "test_runner_lines": [
+      "10-30 16:24:38.375  5149  5191 I TestRunner: started: shortTypedSpansShowValidationAndCreateNoPendingChange(com.github.e0ipso.tokkl.entry.EntryFormServerTest)",
+      "10-30 16:24:50.393  5149  5191 I TestRunner: finished: shortTypedSpansShowValidationAndCreateNoPendingChange(com.github.e0ipso.tokkl.entry.EntryFormServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest-pomodoroIdle.txt",
+    "test_runner_lines": [
+      "10-30 16:42:40.190 18082 18114 I TestRunner: started: pomodoroIdle(com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest)",
+      "10-30 16:42:43.495 18082 18114 I TestRunner: finished: pomodoroIdle(com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest-theBarOffersPomodoroOnlyWhileTheServerHasTheTimerApi.txt",
+    "test_runner_lines": [
+      "10-30 16:26:43.982  6861  6911 I TestRunner: started: theBarOffersPomodoroOnlyWhileTheServerHasTheTimerApi(com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest)",
+      "10-30 16:26:49.594  6861  6911 I TestRunner: finished: theBarOffersPomodoroOnlyWhileTheServerHasTheTimerApi(com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.licences.LicencesScreenTest-aboutEntryReachesTokklSoundCreditWithTheFullMitNotice.txt",
+    "test_runner_lines": [
+      "10-30 16:26:26.183  6631  6674 I TestRunner: started: aboutEntryReachesTokklSoundCreditWithTheFullMitNotice(com.github.e0ipso.tokkl.licences.LicencesScreenTest)",
+      "10-30 16:26:34.938  6631  6674 I TestRunner: finished: aboutEntryReachesTokklSoundCreditWithTheFullMitNotice(com.github.e0ipso.tokkl.licences.LicencesScreenTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.LaunchSplashTest-theSplashIconFitsTheWordmarkInTheCircle.txt",
+    "test_runner_lines": [
+      "10-30 16:22:12.091  2519  2554 I TestRunner: started: theSplashIconFitsTheWordmarkInTheCircle(com.github.e0ipso.tokkl.LaunchSplashTest)",
+      "10-30 16:22:12.658  2519  2554 I TestRunner: finished: theSplashIconFitsTheWordmarkInTheCircle(com.github.e0ipso.tokkl.LaunchSplashTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest-allFourLabelledLengthInputsAndEntryControlsAreReachableWithTheKeyboard.txt",
+    "test_runner_lines": [
+      "10-30 16:29:54.606  8288  8327 I TestRunner: started: allFourLabelledLengthInputsAndEntryControlsAreReachableWithTheKeyboard(com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest)",
+      "10-30 16:30:10.196  8288  8327 I TestRunner: finished: allFourLabelledLengthInputsAndEntryControlsAreReachableWithTheKeyboard(com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reminder.ReminderServerTest-reminderPauseGoesToTheServerAndOfflineKeepsTheReminder.txt",
+    "test_runner_lines": [
+      "10-30 16:32:06.973 10132 10189 I TestRunner: started: reminderPauseGoesToTheServerAndOfflineKeepsTheReminder(com.github.e0ipso.tokkl.reminder.ReminderServerTest)",
+      "10-30 16:32:10.910 10132 10189 I TestRunner: finished: reminderPauseGoesToTheServerAndOfflineKeepsTheReminder(com.github.e0ipso.tokkl.reminder.ReminderServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest-step1ChoosesLight.txt",
+    "test_runner_lines": [
+      "10-30 16:37:26.210 13267 13315 I TestRunner: started: step1ChoosesLight(com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest)",
+      "10-30 16:37:31.930 13267 13315 I TestRunner: finished: step1ChoosesLight(com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest-signOutKeepsTheDevicePermissionHistoryForTheNextAccount.txt",
+    "test_runner_lines": [
+      "10-30 16:30:51.737  8781  8825 I TestRunner: started: signOutKeepsTheDevicePermissionHistoryForTheNextAccount(com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest)",
+      "10-30 16:30:51.843  8781  8825 I TestRunner: finished: signOutKeepsTheDevicePermissionHistoryForTheNextAccount(com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest-pomodoroAlarmActions.txt",
+    "test_runner_lines": [
+      "10-30 16:42:49.013 18322 18360 I TestRunner: started: pomodoroAlarmActions(com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest)",
+      "10-30 16:42:51.705 18322 18360 I TestRunner: finished: pomodoroAlarmActions(com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest-step2KeepsLightAndChoosesDark.txt",
+    "test_runner_lines": [
+      "10-30 16:37:33.424 13378 13423 I TestRunner: started: step2KeepsLightAndChoosesDark(com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest)",
+      "10-30 16:37:39.733 13378 13423 I TestRunner: finished: step2KeepsLightAndChoosesDark(com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.entry.EntryFormServerTest-anotherEntryOpenedBesideTheHistoryDropsTheOpenFormsUnsavedEdits.txt",
+    "test_runner_lines": [
+      "10-30 16:24:24.052  5013  5049 I TestRunner: started: anotherEntryOpenedBesideTheHistoryDropsTheOpenFormsUnsavedEdits(com.github.e0ipso.tokkl.entry.EntryFormServerTest)",
+      "10-30 16:24:36.931  5013  5049 I TestRunner: finished: anotherEntryOpenedBesideTheHistoryDropsTheOpenFormsUnsavedEdits(com.github.e0ipso.tokkl.entry.EntryFormServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest-clockTicksLocallyAcrossTheDeadlineAndExposesOvertimeOnDemand.txt",
+    "test_runner_lines": [
+      "10-30 16:29:47.773  8152  8196 I TestRunner: started: clockTicksLocallyAcrossTheDeadlineAndExposesOvertimeOnDemand(com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest)",
+      "10-30 16:29:52.291  8152  8196 I TestRunner: finished: clockTicksLocallyAcrossTheDeadlineAndExposesOvertimeOnDemand(com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest-pomodoroIdleActions.txt",
+    "test_runner_lines": [
+      "10-30 16:42:34.863 17948 17990 I TestRunner: started: pomodoroIdleActions(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)",
+      "10-30 16:42:38.828 17948 17990 I TestRunner: finished: pomodoroIdleActions(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest-postedIntentsKeepDistinctActionPhaseRevisionAndAccountIdentities.txt",
+    "test_runner_lines": [
+      "10-30 16:31:40.458  9591  9640 I TestRunner: started: postedIntentsKeepDistinctActionPhaseRevisionAndAccountIdentities(com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest)",
+      "10-30 16:31:40.480  9591  9640 I TestRunner: finished: postedIntentsKeepDistinctActionPhaseRevisionAndAccountIdentities(com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.timer.TimerServerTest-startEditsAndStopWorkInAirplaneModeAndReachTheServerAfterwards.txt",
+    "test_runner_lines": [
+      "10-30 16:39:57.988 15743 15792 I TestRunner: started: startEditsAndStopWorkInAirplaneModeAndReachTheServerAfterwards(com.github.e0ipso.tokkl.timer.TimerServerTest)",
+      "10-30 16:40:11.128 15743 15792 I TestRunner: finished: startEditsAndStopWorkInAirplaneModeAndReachTheServerAfterwards(com.github.e0ipso.tokkl.timer.TimerServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.tile.RunningTileServerTest-aTapStopsTheRunningTimerWithTheNetworkDown.txt",
+    "test_runner_lines": [
+      "10-30 16:39:07.822 14702 14739 I TestRunner: started: aTapStopsTheRunningTimerWithTheNetworkDown(com.github.e0ipso.tokkl.tile.RunningTileServerTest)",
+      "10-30 16:39:15.019 14702 14739 I TestRunner: finished: aTapStopsTheRunningTimerWithTheNetworkDown(com.github.e0ipso.tokkl.tile.RunningTileServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reports.DetailedReportServerTest-rowsFitAtTheLargestFontScale.txt",
+    "test_runner_lines": [
+      "10-30 16:32:34.855 10554 10599 I TestRunner: started: rowsFitAtTheLargestFontScale(com.github.e0ipso.tokkl.reports.DetailedReportServerTest)",
+      "10-30 16:32:50.209 10554 10599 I TestRunner: finished: rowsFitAtTheLargestFontScale(com.github.e0ipso.tokkl.reports.DetailedReportServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetServerTest-widgetActionsDoNotWaitForANetworkThatNeverAnswers.txt",
+    "test_runner_lines": [
+      "10-30 16:45:33.486 21482 21521 I TestRunner: started: widgetActionsDoNotWaitForANetworkThatNeverAnswers(com.github.e0ipso.tokkl.widget.WidgetServerTest)",
+      "10-30 16:45:38.687 21482 21521 I TestRunner: finished: widgetActionsDoNotWaitForANetworkThatNeverAnswers(com.github.e0ipso.tokkl.widget.WidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest-aTimerWithoutPauseOffersStopAlone.txt",
+    "test_runner_lines": [
+      "10-30 16:27:14.658  7236  7274 I TestRunner: started: aTimerWithoutPauseOffersStopAlone(com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest)",
+      "10-30 16:27:14.812  7236  7274 I TestRunner: finished: aTimerWithoutPauseOffersStopAlone(com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest-step3KeepsDarkAndChoosesTheSystem.txt",
+    "test_runner_lines": [
+      "10-30 16:37:41.025 13483 13519 I TestRunner: started: step3KeepsDarkAndChoosesTheSystem(com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest)",
+      "10-30 16:37:46.859 13483 13519 I TestRunner: finished: step3KeepsDarkAndChoosesTheSystem(com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest-theFormSendsItsLengthsAndFieldsAndNextPhaseAndEndFollowTheServer.txt",
+    "test_runner_lines": [
+      "10-30 16:30:34.110  8633  8675 I TestRunner: started: theFormSendsItsLengthsAndFieldsAndNextPhaseAndEndFollowTheServer(com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest)",
+      "10-30 16:30:50.159  8633  8675 I TestRunner: finished: theFormSendsItsLengthsAndFieldsAndNextPhaseAndEndFollowTheServer(com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-signInServerUrlErrorFitsInTheHintsLines.txt",
+    "test_runner_lines": [
+      "10-30 16:43:48.811 19712 19752 I TestRunner: started: signInServerUrlErrorFitsInTheHintsLines(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 16:43:56.252 19712 19752 I TestRunner: finished: signInServerUrlErrorFitsInTheHintsLines(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest-aServerPauseWhileTheEditorIsOpenCannotBeRevivedBySave.txt",
+    "test_runner_lines": [
+      "10-30 16:25:02.735  5401  5449 I TestRunner: started: aServerPauseWhileTheEditorIsOpenCannotBeRevivedBySave(com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest)",
+      "10-30 16:25:13.356  5401  5449 I TestRunner: finished: aServerPauseWhileTheEditorIsOpenCannotBeRevivedBySave(com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.SettingsScreenTest-reminderSwitchAndHoursValidateAndApply.txt",
+    "test_runner_lines": [
+      "10-30 16:37:16.460 13142 13184 I TestRunner: started: reminderSwitchAndHoursValidateAndApply(com.github.e0ipso.tokkl.settings.SettingsScreenTest)",
+      "10-30 16:37:25.123 13142 13184 I TestRunner: finished: reminderSwitchAndHoursValidateAndApply(com.github.e0ipso.tokkl.settings.SettingsScreenTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest-projectsOffline.txt",
+    "test_runner_lines": [
+      "10-30 16:23:23.949  3634  3679 I TestRunner: started: projectsOffline(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)",
+      "10-30 16:23:27.605  3634  3679 I TestRunner: finished: projectsOffline(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.signin.SignInScreenTest-apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore.txt",
+    "test_runner_lines": [
+      "10-30 16:38:42.939 14449 14484 I TestRunner: started: apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore(com.github.e0ipso.tokkl.signin.SignInScreenTest)",
+      "10-30 16:38:55.262 14449 14484 I TestRunner: finished: apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore(com.github.e0ipso.tokkl.signin.SignInScreenTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest-unavailableSystemSettingsHasReadableFallbackInstructions.txt",
+    "test_runner_lines": [
+      "10-30 16:29:39.611  8014  8056 I TestRunner: started: unavailableSystemSettingsHasReadableFallbackInstructions(com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest)",
+      "10-30 16:29:45.295  8014  8056 I TestRunner: finished: unavailableSystemSettingsHasReadableFallbackInstructions(com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.BrandTest-theBrandDrawsTheWordmarkAndNoOtherImage.txt",
+    "test_runner_lines": [
+      "10-30 16:41:42.314 16774 16806 I TestRunner: started: theBrandDrawsTheWordmarkAndNoOtherImage(com.github.e0ipso.tokkl.ui.BrandTest)",
+      "10-30 16:41:44.166 16774 16806 I TestRunner: finished: theBrandDrawsTheWordmarkAndNoOtherImage(com.github.e0ipso.tokkl.ui.BrandTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.signin.SignInScreenTest-fieldErrorsLeaveTheFormInPlace.txt",
+    "test_runner_lines": [
+      "10-30 16:38:23.408 14314 14351 I TestRunner: started: fieldErrorsLeaveTheFormInPlace(com.github.e0ipso.tokkl.signin.SignInScreenTest)",
+      "10-30 16:38:41.678 14314 14351 I TestRunner: finished: fieldErrorsLeaveTheFormInPlace(com.github.e0ipso.tokkl.signin.SignInScreenTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest-mediumListAndCalendarClocksOpenTheRunningEditor.txt",
+    "test_runner_lines": [
+      "10-30 16:24:51.483  5283  5324 I TestRunner: started: mediumListAndCalendarClocksOpenTheRunningEditor(com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest)",
+      "10-30 16:25:01.562  5283  5324 I TestRunner: finished: mediumListAndCalendarClocksOpenTheRunningEditor(com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest-savingOneDefaultKeepsARefreshOfTheOtherDefaults_font_2__display_true__dark_true_.txt",
+    "test_runner_lines": [
+      "10-30 16:36:14.403 12608 12656 I TestRunner: started: savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=2, display=true, dark=true](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)",
+      "10-30 16:36:23.533 12608 12656 I TestRunner: finished: savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=2, display=true, dark=true](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest-editingAHeldCreateKeepsExistingEntriesOutOfALostPostLookup.txt",
+    "test_runner_lines": [
+      "10-30 16:22:53.394  3106  3144 I TestRunner: started: editingAHeldCreateKeepsExistingEntriesOutOfALostPostLookup(com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest)",
+      "10-30 16:22:54.909  3106  3144 I TestRunner: finished: editingAHeldCreateKeepsExistingEntriesOutOfALostPostLookup(com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest-ciphertextWithoutItsKeyLoadsNull.txt",
+    "test_runner_lines": [
+      "10-30 16:24:22.967  4953  4997 I TestRunner: started: ciphertextWithoutItsKeyLoadsNull(com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest)",
+      "10-30 16:24:23.001  4953  4997 I TestRunner: finished: ciphertextWithoutItsKeyLoadsNull(com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest-timerBesideTheRail.txt",
+    "test_runner_lines": [
+      "10-30 16:43:02.935 18688 18724 I TestRunner: started: timerBesideTheRail(com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest)",
+      "10-30 16:43:07.419 18688 18724 I TestRunner: finished: timerBesideTheRail(com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest-cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept_font_2__display_true__dark_false_.txt",
+    "test_runner_lines": [
+      "10-30 16:35:51.151 12370 12412 I TestRunner: started: cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=2, display=true, dark=false](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)",
+      "10-30 16:36:11.987 12370 12412 I TestRunner: finished: cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=2, display=true, dark=false](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest-timer.txt",
+    "test_runner_lines": [
+      "10-30 16:42:52.912 18438 18478 I TestRunner: started: timer(com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest)",
+      "10-30 16:42:56.701 18438 18478 I TestRunner: finished: timer(com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.history.EntryActionsUiTest-theMenuAndDeleteHaveTalkBackLabelsAndTalkBackAnnouncesUndo.txt",
+    "test_runner_lines": [
+      "10-30 16:25:58.276  5903  5949 I TestRunner: started: theMenuAndDeleteHaveTalkBackLabelsAndTalkBackAnnouncesUndo(com.github.e0ipso.tokkl.history.EntryActionsUiTest)",
+      "10-30 16:26:01.754  5903  5949 I TestRunner: finished: theMenuAndDeleteHaveTalkBackLabelsAndTalkBackAnnouncesUndo(com.github.e0ipso.tokkl.history.EntryActionsUiTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.ChangeQueueServerTest-aCreateThatNeverReachedTheServerIsNotTakenForAnEntryWithOtherTags.txt",
+    "test_runner_lines": [
+      "10-30 16:22:25.074  2865  2904 I TestRunner: started: aCreateThatNeverReachedTheServerIsNotTakenForAnEntryWithOtherTags(com.github.e0ipso.tokkl.cache.ChangeQueueServerTest)",
+      "10-30 16:22:49.577  2865  2904 I TestRunner: finished: aCreateThatNeverReachedTheServerIsNotTakenForAnEntryWithOtherTags(com.github.e0ipso.tokkl.cache.ChangeQueueServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest-step4KeepsFollowingTheSystem.txt",
+    "test_runner_lines": [
+      "10-30 16:37:48.302 13590 13636 I TestRunner: started: step4KeepsFollowingTheSystem(com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest)",
+      "10-30 16:37:53.619 13590 13636 I TestRunner: finished: step4KeepsFollowingTheSystem(com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reminder.ReminderServerTest-preferenceRoundtripAndOfflineRetryPreserveOtherKeys.txt",
+    "test_runner_lines": [
+      "10-30 16:32:12.188 10249 10290 I TestRunner: started: preferenceRoundtripAndOfflineRetryPreserveOtherKeys(com.github.e0ipso.tokkl.reminder.ReminderServerTest)",
+      "10-30 16:32:15.134 10249 10290 I TestRunner: finished: preferenceRoundtripAndOfflineRetryPreserveOtherKeys(com.github.e0ipso.tokkl.reminder.ReminderServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.history.DeleteUndoServerTest-undoOfADeleteWhoseAnswerWasLostRestoresTheEntryThroughTheRestoreEndpoint.txt",
+    "test_runner_lines": [
+      "10-30 16:25:32.294  5765  5806 I TestRunner: started: undoOfADeleteWhoseAnswerWasLostRestoresTheEntryThroughTheRestoreEndpoint(com.github.e0ipso.tokkl.history.DeleteUndoServerTest)",
+      "10-30 16:25:57.211  5765  5806 I TestRunner: finished: undoOfADeleteWhoseAnswerWasLostRestoresTheEntryThroughTheRestoreEndpoint(com.github.e0ipso.tokkl.history.DeleteUndoServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest-aDescriptionTypedJustBeforeNextPhaseReachesTheServerAndCarriesToTheNextPhase.txt",
+    "test_runner_lines": [
+      "10-30 16:30:13.729  8461  8507 I TestRunner: started: aDescriptionTypedJustBeforeNextPhaseReachesTheServerAndCarriesToTheNextPhase(com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest)",
+      "10-30 16:30:32.687  8461  8507 I TestRunner: finished: aDescriptionTypedJustBeforeNextPhaseReachesTheServerAndCarriesToTheNextPhase(com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest-signInWithEmailAndPassword.txt",
+    "test_runner_lines": [
+      "10-30 16:42:57.856 18554 18592 I TestRunner: started: signInWithEmailAndPassword(com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest)",
+      "10-30 16:43:01.409 18554 18592 I TestRunner: finished: signInWithEmailAndPassword(com.github.e0ipso.tokkl.ui.screenshot.LightLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest-savingOneDefaultKeepsARefreshOfTheOtherDefaults_font_1__display_false__dark_true_.txt",
+    "test_runner_lines": [
+      "10-30 16:34:53.169 11980 12026 I TestRunner: started: savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=1, display=false, dark=true](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)",
+      "10-30 16:35:00.800 11980 12026 I TestRunner: finished: savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=1, display=false, dark=true](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.favorites.TemplatesUiTest-theBarListsTemplatesFirstAndHidesThemWithoutTheCapability.txt",
+    "test_runner_lines": [
+      "10-30 16:25:27.036  5661  5710 I TestRunner: started: theBarListsTemplatesFirstAndHidesThemWithoutTheCapability(com.github.e0ipso.tokkl.favorites.TemplatesUiTest)",
+      "10-30 16:25:30.934  5661  5710 I TestRunner: finished: theBarListsTemplatesFirstAndHidesThemWithoutTheCapability(com.github.e0ipso.tokkl.favorites.TemplatesUiTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest-pomodoroOvertime.txt",
+    "test_runner_lines": [
+      "10-30 16:42:04.259 17263 17305 I TestRunner: started: pomodoroOvertime(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)",
+      "10-30 16:42:08.455 17263 17305 I TestRunner: finished: pomodoroOvertime(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest-detailedReport.txt",
+    "test_runner_lines": [
+      "10-30 16:42:10.068 17391 17437 I TestRunner: started: detailedReport(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)",
+      "10-30 16:42:14.666 17391 17437 I TestRunner: finished: detailedReport(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetServerTest-todayReportTapOpensReportsOnToday.txt",
+    "test_runner_lines": [
+      "10-30 16:45:20.092 21230 21264 I TestRunner: started: todayReportTapOpensReportsOnToday(com.github.e0ipso.tokkl.widget.WidgetServerTest)",
+      "10-30 16:45:25.568 21230 21264 I TestRunner: finished: todayReportTapOpensReportsOnToday(com.github.e0ipso.tokkl.widget.WidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest-pomodoroAlarmActions.txt",
+    "test_runner_lines": [
+      "10-30 16:43:19.750 19080 19119 I TestRunner: started: pomodoroAlarmActions(com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest)",
+      "10-30 16:43:22.664 19080 19119 I TestRunner: finished: pomodoroAlarmActions(com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.trust.UnconfirmedHttpWhileSignedInTest-unconfirmedHttpSessionShowsTheWarningAndSendsNothingUntilConfirmed.txt",
+    "test_runner_lines": [
+      "10-30 16:41:31.407 16561 16604 I TestRunner: started: unconfirmedHttpSessionShowsTheWarningAndSendsNothingUntilConfirmed(com.github.e0ipso.tokkl.trust.UnconfirmedHttpWhileSignedInTest)",
+      "10-30 16:41:35.512 16561 16604 I TestRunner: finished: unconfirmedHttpSessionShowsTheWarningAndSendsNothingUntilConfirmed(com.github.e0ipso.tokkl.trust.UnconfirmedHttpWhileSignedInTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.TopBarTest-theBackButtonIs48dpSaysBackAndGoesBack.txt",
+    "test_runner_lines": [
+      "10-30 16:41:48.209 16923 16958 I TestRunner: started: theBackButtonIs48dpSaysBackAndGoesBack(com.github.e0ipso.tokkl.ui.TopBarTest)",
+      "10-30 16:41:50.230 16923 16958 I TestRunner: finished: theBackButtonIs48dpSaysBackAndGoesBack(com.github.e0ipso.tokkl.ui.TopBarTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest-everyTransitionUsesItsBundledWavWithAlarmAttributesAndRepeatingVibration.txt",
+    "test_runner_lines": [
+      "10-30 16:31:00.155  8930  8971 I TestRunner: started: everyTransitionUsesItsBundledWavWithAlarmAttributesAndRepeatingVibration(com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest)",
+      "10-30 16:31:24.007  8930  8971 I TestRunner: finished: everyTransitionUsesItsBundledWavWithAlarmAttributesAndRepeatingVibration(com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.calendar.DayCalendarTest-aTapOnADayOfTheStripShowsIt.txt",
+    "test_runner_lines": [
+      "10-30 16:23:05.863  3395  3438 I TestRunner: started: aTapOnADayOfTheStripShowsIt(com.github.e0ipso.tokkl.calendar.DayCalendarTest)",
+      "10-30 16:23:08.633  3395  3438 I TestRunner: finished: aTapOnADayOfTheStripShowsIt(com.github.e0ipso.tokkl.calendar.DayCalendarTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest-exactAndFullScreenSettingsNeverDisableStartAndNoticesRemainUntilGrant.txt",
+    "test_runner_lines": [
+      "10-30 16:30:53.025  8845  8879 I TestRunner: started: exactAndFullScreenSettingsNeverDisableStartAndNoticesRemainUntilGrant(com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest)",
+      "10-30 16:30:58.484  8845  8879 I TestRunner: finished: exactAndFullScreenSettingsNeverDisableStartAndNoticesRemainUntilGrant(com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest-aFailedSignOut.txt",
+    "test_runner_lines": [
+      "10-30 16:34:46.792 11794 11838 I TestRunner: started: aFailedSignOut(com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest)",
+      "10-30 16:34:51.649 11794 11838 I TestRunner: finished: aFailedSignOut(com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest-tags.txt",
+    "test_runner_lines": [
+      "10-30 16:43:23.904 19192 19226 I TestRunner: started: tags(com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest)",
+      "10-30 16:43:27.125 19192 19226 I TestRunner: finished: tags(com.github.e0ipso.tokkl.ui.screenshot.LightScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard.txt",
+    "test_runner_lines": [
+      "10-30 16:44:47.172 20586 20635 I TestRunner: started: signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 16:44:54.320 20586 20635 I TestRunner: finished: signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.navigation.TabHueTest-inDarkTheBarKeepsTheRunningDotVisible.txt",
+    "test_runner_lines": [
+      "10-30 16:27:00.492  7060  7109 I TestRunner: started: inDarkTheBarKeepsTheRunningDotVisible(com.github.e0ipso.tokkl.navigation.TabHueTest)",
+      "10-30 16:27:06.432  7060  7109 I TestRunner: finished: inDarkTheBarKeepsTheRunningDotVisible(com.github.e0ipso.tokkl.navigation.TabHueTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest-enterBackAndExitKeepBothViewPositionsAndIdentity.txt",
+    "test_runner_lines": [
+      "10-30 16:39:22.506 15131 15171 I TestRunner: started: enterBackAndExitKeepBothViewPositionsAndIdentity(com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest)",
+      "10-30 16:39:35.888 15131 15171 I TestRunner: finished: enterBackAndExitKeepBothViewPositionsAndIdentity(com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.history.HistoryServerTest-offlineOlderDaysLoadOnceTheNetworkComesBack.txt",
+    "test_runner_lines": [
+      "10-30 16:26:16.379  6360  6407 I TestRunner: started: offlineOlderDaysLoadOnceTheNetworkComesBack(com.github.e0ipso.tokkl.history.HistoryServerTest)",
+      "10-30 16:26:24.901  6360  6407 I TestRunner: finished: offlineOlderDaysLoadOnceTheNetworkComesBack(com.github.e0ipso.tokkl.history.HistoryServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.tile.RunningTileServerTest-stopAndContinueDoNotWaitForANetworkThatNeverAnswers.txt",
+    "test_runner_lines": [
+      "10-30 16:39:16.247 14972 15006 I TestRunner: started: stopAndContinueDoNotWaitForANetworkThatNeverAnswers(com.github.e0ipso.tokkl.tile.RunningTileServerTest)",
+      "10-30 16:39:21.468 14972 15006 I TestRunner: finished: stopAndContinueDoNotWaitForANetworkThatNeverAnswers(com.github.e0ipso.tokkl.tile.RunningTileServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-noticeAfterCancellingTheHttpWarningFits.txt",
+    "test_runner_lines": [
+      "10-30 16:43:28.273 19305 19340 I TestRunner: started: noticeAfterCancellingTheHttpWarningFits(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 16:43:37.468 19305 19340 I TestRunner: finished: noticeAfterCancellingTheHttpWarningFits(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest-eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds_font_2__display_true__dark_true_.txt",
+    "test_runner_lines": [
+      "10-30 16:36:25.243 12807 12853 I TestRunner: started: eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=2, display=true, dark=true](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)",
+      "10-30 16:37:14.510 12807 12853 I TestRunner: finished: eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=2, display=true, dark=true](com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.ChangeQueueServerTest-aQueuedStartRunsWhenNoTimerRunsOnTheServer.txt",
+    "test_runner_lines": [
+      "10-30 16:22:20.342  2787  2824 I TestRunner: started: aQueuedStartRunsWhenNoTimerRunsOnTheServer(com.github.e0ipso.tokkl.cache.ChangeQueueServerTest)",
+      "10-30 16:22:23.835  2787  2824 I TestRunner: finished: aQueuedStartRunsWhenNoTimerRunsOnTheServer(com.github.e0ipso.tokkl.cache.ChangeQueueServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.navigation.TabHueTest-inLightEachBarTabTakesItsPagesHue.txt",
+    "test_runner_lines": [
+      "10-30 16:26:50.916  6967  7009 I TestRunner: started: inLightEachBarTabTakesItsPagesHue(com.github.e0ipso.tokkl.navigation.TabHueTest)",
+      "10-30 16:26:59.060  6967  7009 I TestRunner: finished: inLightEachBarTabTakesItsPagesHue(com.github.e0ipso.tokkl.navigation.TabHueTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.clients.ClientsServerTest-createEditArchiveAndRestoreAClientAndTheCacheFollowsEachChange.txt",
+    "test_runner_lines": [
+      "10-30 16:24:03.270  4793  4830 I TestRunner: started: createEditArchiveAndRestoreAClientAndTheCacheFollowsEachChange(com.github.e0ipso.tokkl.clients.ClientsServerTest)",
+      "10-30 16:24:21.593  4793  4830 I TestRunner: finished: createEditArchiveAndRestoreAClientAndTheCacheFollowsEachChange(com.github.e0ipso.tokkl.clients.ClientsServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.navigation.PageTopBarTest-licencesHasTheBarWithABackButton.txt",
+    "test_runner_lines": [
+      "10-30 16:26:36.387  6752  6802 I TestRunner: started: licencesHasTheBarWithABackButton(com.github.e0ipso.tokkl.navigation.PageTopBarTest)",
+      "10-30 16:26:42.735  6752  6802 I TestRunner: finished: licencesHasTheBarWithABackButton(com.github.e0ipso.tokkl.navigation.PageTopBarTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest-theLauncherPublishesFavoritesUpToItsLimit.txt",
+    "test_runner_lines": [
+      "10-30 16:38:01.010 13814 13865 I TestRunner: started: theLauncherPublishesFavoritesUpToItsLimit(com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest)",
+      "10-30 16:38:03.764 13814 13865 I TestRunner: finished: theLauncherPublishesFavoritesUpToItsLimit(com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-certificatePromptOverTheHomeScreenFits.txt",
+    "test_runner_lines": [
+      "10-30 16:43:39.217 19509 19555 I TestRunner: started: certificatePromptOverTheHomeScreenFits(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 16:43:47.084 19509 19555 I TestRunner: finished: certificatePromptOverTheHomeScreenFits(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.trust.UnconfirmedHttpWhileSignedInTest-cancellingKeepsRequestsRefusedAndTheNoticeReopensTheWarning.txt",
+    "test_runner_lines": [
+      "10-30 16:41:36.807 16675 16724 I TestRunner: started: cancellingKeepsRequestsRefusedAndTheNoticeReopensTheWarning(com.github.e0ipso.tokkl.trust.UnconfirmedHttpWhileSignedInTest)",
+      "10-30 16:41:41.305 16675 16724 I TestRunner: finished: cancellingKeepsRequestsRefusedAndTheNoticeReopensTheWarning(com.github.e0ipso.tokkl.trust.UnconfirmedHttpWhileSignedInTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest-theShortcutUpdatesTheNativeWidgetOffline.txt",
+    "test_runner_lines": [
+      "10-30 16:38:04.968 13909 13960 I TestRunner: started: theShortcutUpdatesTheNativeWidgetOffline(com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest)",
+      "10-30 16:38:12.955 13909 13960 I TestRunner: finished: theShortcutUpdatesTheNativeWidgetOffline(com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest-certificatePrompt.txt",
+    "test_runner_lines": [
+      "10-30 16:42:44.633 18206 18246 I TestRunner: started: certificatePrompt(com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest)",
+      "10-30 16:42:47.854 18206 18246 I TestRunner: finished: certificatePrompt(com.github.e0ipso.tokkl.ui.screenshot.DarkScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest-projectsOffline.txt",
+    "test_runner_lines": [
+      "10-30 16:23:54.257  4552  4592 I TestRunner: started: projectsOffline(com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest)",
+      "10-30 16:23:57.415  4552  4592 I TestRunner: finished: projectsOffline(com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reports.WeeklyReportServerTest-aLongerRangeShowsTodaysWeekAndOnlyWeekPresets.txt",
+    "test_runner_lines": [
+      "10-30 16:34:31.111 11655 11697 I TestRunner: started: aLongerRangeShowsTodaysWeekAndOnlyWeekPresets(com.github.e0ipso.tokkl.reports.WeeklyReportServerTest)",
+      "10-30 16:34:45.591 11655 11697 I TestRunner: finished: aLongerRangeShowsTodaysWeekAndOnlyWeekPresets(com.github.e0ipso.tokkl.reports.WeeklyReportServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.LaunchSplashTest-inLightTheSplashIsTheWordmarkOnTheWindowBackground.txt",
+    "test_runner_lines": [
+      "10-30 16:22:10.889  2457  2493 I TestRunner: started: inLightTheSplashIsTheWordmarkOnTheWindowBackground(com.github.e0ipso.tokkl.LaunchSplashTest)",
+      "10-30 16:22:11.081  2457  2493 I TestRunner: finished: inLightTheSplashIsTheWordmarkOnTheWindowBackground(com.github.e0ipso.tokkl.LaunchSplashTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest-tagDeleteQuestion.txt",
+    "test_runner_lines": [
+      "10-30 16:23:35.735  4017  4054 I TestRunner: started: tagDeleteQuestion(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)",
+      "10-30 16:23:40.469  4017  4054 I TestRunner: finished: tagDeleteQuestion(com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest-clients.txt",
+    "test_runner_lines": [
+      "10-30 16:42:16.468 17522 17573 I TestRunner: started: clients(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)",
+      "10-30 16:42:20.746 17522 17573 I TestRunner: finished: clients(com.github.e0ipso.tokkl.ui.screenshot.DarkLargestFontScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.reports.DetailedReportServerTest-offlineShowsTheSummarysMessageAndNoRows.txt",
+    "test_runner_lines": [
+      "10-30 16:32:52.561 10788 10858 I TestRunner: started: offlineShowsTheSummarysMessageAndNoRows(com.github.e0ipso.tokkl.reports.DetailedReportServerTest)",
+      "10-30 16:33:11.443 10788 10858 I TestRunner: finished: offlineShowsTheSummarysMessageAndNoRows(com.github.e0ipso.tokkl.reports.DetailedReportServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.navigation.TabHueTest-inLightTheBarKeepsTheRunningDotVisible.txt",
+    "test_runner_lines": [
+      "10-30 16:27:07.555  7154  7191 I TestRunner: started: inLightTheBarKeepsTheRunningDotVisible(com.github.e0ipso.tokkl.navigation.TabHueTest)",
+      "10-30 16:27:13.355  7154  7191 I TestRunner: finished: inLightTheBarKeepsTheRunningDotVisible(com.github.e0ipso.tokkl.navigation.TabHueTest)"
+    ]
+  }
+]

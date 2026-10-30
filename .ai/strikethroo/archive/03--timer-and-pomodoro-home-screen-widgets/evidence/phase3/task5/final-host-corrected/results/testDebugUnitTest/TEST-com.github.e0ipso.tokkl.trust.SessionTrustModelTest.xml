@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.trust.SessionTrustModelTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:51.865Z" hostname="punta-des-patro" time="0.057">
+  <properties/>
+  <testcase name="changedCertificatePromptsWithTheNewOneAndAcceptingPinsIt" classname="com.github.e0ipso.tokkl.trust.SessionTrustModelTest" time="0.017"/>
+  <testcase name="anAnswerFromTheServerClearsTheRefusal" classname="com.github.e0ipso.tokkl.trust.SessionTrustModelTest" time="0.009"/>
+  <testcase name="aFailedWriteKeepsTheRefusalAndTheWayBack" classname="com.github.e0ipso.tokkl.trust.SessionTrustModelTest" time="0.009"/>
+  <testcase name="cancellingKeepsRequestsRefusedAndTheSameRefusalLeavesThePromptClosed" classname="com.github.e0ipso.tokkl.trust.SessionTrustModelTest" time="0.007"/>
+  <testcase name="otherNetworkFailuresShowNoPrompt" classname="com.github.e0ipso.tokkl.trust.SessionTrustModelTest" time="0.004"/>
+  <testcase name="anotherRefusalOpensThePromptAgain" classname="com.github.e0ipso.tokkl.trust.SessionTrustModelTest" time="0.002"/>
+  <testcase name="unconfirmedHttpSessionPromptsAndSendsNothingUntilTheUserConfirms" classname="com.github.e0ipso.tokkl.trust.SessionTrustModelTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

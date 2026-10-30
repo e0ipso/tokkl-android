@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "env",
+    "TOKKL_TEST_AVD=tokkl-api36",
+    "scripts/instrumented-tests.sh",
+    "--no-daemon",
+    "-Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest,com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest,com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest,com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest,com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest,com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest,com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest,com.github.e0ipso.tokkl.widget.DarkLargestPomodoroWidgetScreenshotTest"
+  ],
+  "outer": "flock --close /tmp/tokkl-plan3-gradle.lock systemd-run --user --scope --quiet -p OOMPolicy=continue -- choom -n 1000 -- python3 /tmp/tokkl-task5-run.py ...",
+  "started": 1793351962.5866704
+}

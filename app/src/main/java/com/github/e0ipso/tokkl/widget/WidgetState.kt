@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.widget
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
@@ -10,9 +11,16 @@ import com.github.e0ipso.tokkl.cache.countsFrom
 import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.favorites.fields
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.time.DurationFormat
+import com.github.e0ipso.tokkl.time.formatDuration
+import com.github.e0ipso.tokkl.timer.countedTimerEntries
+import com.github.e0ipso.tokkl.timer.timerEntrySeconds
 import java.security.MessageDigest
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * What the home screen widget shows (docs/PRD.md N3). It comes from the phone alone: the cache's
@@ -28,8 +36,14 @@ sealed interface WidgetState {
      * @param running the running entry, null when no timer runs.
      * @param favorites in the user's order, empty when the server keeps no favorites.
      * @param paused the paused timer (docs/PRD.md T1), null unless the server's pause chain is paused.
+     * @param day the cached account-local day, null when the account's zone cannot be resolved.
      */
-    data class Ready(val running: WidgetRunning?, val favorites: List<WidgetFavorite>, val paused: WidgetPaused? = null) : WidgetState
+    data class Ready(
+        val running: WidgetRunning?,
+        val favorites: List<WidgetFavorite>,
+        val paused: WidgetPaused? = null,
+        val day: WidgetDayReport? = null,
+    ) : WidgetState
 }
 
 /**
@@ -54,6 +68,7 @@ data class WidgetRunning(
     val accumulatedSeconds: Long,
     val target: TimerTarget,
     val pausable: Boolean,
+    val projectColor: String? = null,
 )
 
 /** The paused timer: what Resume starts, the paused total [seconds], and what Resume and Stop act on. */
@@ -63,15 +78,57 @@ data class WidgetPaused(
     val task: String?,
     val seconds: Long,
     val target: TimerTarget,
+    val projectColor: String? = null,
 )
 
 /** One favorite: what a tap starts, and the names of its project and task. */
 data class WidgetFavorite(val fields: EntryFields, val project: String?, val task: String?)
 
 /**
+ * The account-local start day of cached entries. Only the stopped seconds are stored here;
+ * the running start lets a launcher Chronometer tick without changing the redraw key. Pass
+ * [stoppedSeconds] as its accumulated time, never the pause chain's cumulative display total.
+ */
+data class WidgetDayReport(
+    val date: LocalDate,
+    val stoppedSeconds: Long,
+    val stoppedBillableSeconds: Long,
+    val entryCount: Int,
+    val projects: List<WidgetDayProject>,
+    val running: WidgetDayRunning?,
+    val durationFormat: DurationFormat,
+) {
+    fun totalSeconds(now: Instant): Long = stoppedSeconds + (running?.seconds(now) ?: 0)
+
+    fun billableSeconds(now: Instant): Long =
+        stoppedBillableSeconds + (running?.takeIf { it.billable }?.seconds(now) ?: 0)
+
+    fun formattedTotal(now: Instant): String = formatDuration(totalSeconds(now), durationFormat)
+
+    fun formattedBillable(now: Instant): String = formatDuration(billableSeconds(now), durationFormat)
+}
+
+/** Only this segment's elapsed time, excluding the pause chain already counted in stopped rows. */
+data class WidgetDayRunning(val entryId: Long, val start: Instant, val billable: Boolean) {
+    fun seconds(now: Instant): Long = timerEntrySeconds(start, null, now)
+}
+
+/** Project rows are sorted by stopped seconds. A null [projectId] is the unassigned group. */
+data class WidgetDayProject(
+    val projectId: Long?,
+    val project: String?,
+    val projectColor: String?,
+    val stoppedSeconds: Long,
+    val formattedStopped: String,
+    val running: Boolean,
+)
+
+/**
  * The widget for an account whose default workspace is [workspaceId], null when the phone has no
  * account, with what the timer [controls] show and the cached [favorites]. [favoritesAvailable]
  * is the favorites capability: without it, as on Toggl Track, the widget shows none.
+ * [entries], [settings], [now] and [serverIdOf] supply the day report using the Timer page's
+ * start-day rule. The clock snapshot selects the day; it is not part of the redraw key.
  */
 fun widgetState(
     workspaceId: Long?,
@@ -80,6 +137,10 @@ fun widgetState(
     favoritesAvailable: Boolean,
     projects: List<CachedProject>,
     tasks: List<CachedTask>,
+    entries: List<CachedTimeEntry> = emptyList(),
+    settings: AccountSettings? = null,
+    now: Instant = Clock.systemUTC().instant(),
+    serverIdOf: Map<Long, Long> = emptyMap(),
 ): WidgetState {
     if (workspaceId == null) return WidgetState.NoAccount
     val shown = (controls as? TimerControls.Running)?.let { running ->
@@ -94,11 +155,15 @@ fun widgetState(
             accumulatedSeconds = running.accumulatedSeconds,
             target = running.target,
             pausable = running.pausable,
+            projectColor = projects.firstOrNull { it.id == entry.projectId }?.color,
         )
     }
     val paused = (controls as? TimerControls.Paused)?.let { chain ->
         val labels = entryLabels(chain.fields, projects, tasks)
-        WidgetPaused(chain.fields.description, labels.project, labels.task, chain.seconds, chain.target)
+        WidgetPaused(
+            chain.fields.description, labels.project, labels.task, chain.seconds, chain.target,
+            projectColor = projects.firstOrNull { it.id == chain.fields.projectId }?.color,
+        )
     }
     val starts = if (!favoritesAvailable) {
         emptyList()
@@ -109,17 +174,38 @@ fun widgetState(
             WidgetFavorite(fields, labels.project, labels.task)
         }
     }
-    return WidgetState.Ready(shown, starts, paused)
-}
-
-/**
- * How many of [count] favorites fit in a widget [heightDp] tall, under the timer row. Each takes
- * a row of [WidgetLayout.FAVORITE_ROW_DP], the size of a touch target.
- */
-fun favoritesThatFit(heightDp: Float, count: Int, fontScale: Float = 1f): Int {
-    val room = heightDp - 2 * WidgetLayout.PADDING_DP - WidgetLayout.timerRowHeight(fontScale)
-    if (room <= 0f) return 0
-    return (room / WidgetLayout.favoriteRowHeight(fontScale)).toInt().coerceIn(0, count)
+    val day = settings?.time()?.let { time ->
+        val today = time.local(now).toLocalDate()
+        val rows = countedTimerEntries(entries, time, now, serverIdOf).filter { it.day == today }
+        val stopped = rows.filter { it.entry.stop != null }
+        // Use the effective cached row, including a local replacement of the ID the controls
+        // already show. Its elapsed time belongs to the day even across that remap emission.
+        val active = rows.firstOrNull { it.entry.stop == null }?.entry
+        val byId = projects.associateBy { it.id }
+        val grouped = rows.groupBy { it.entry.projectId }
+        val reportProjects = grouped.map { (projectId, segments) ->
+            val project = byId[projectId]
+            val seconds = segments.filter { it.entry.stop != null }.sumOf { it.seconds }
+            WidgetDayProject(
+                projectId = projectId,
+                project = project?.name,
+                projectColor = project?.color,
+                stoppedSeconds = seconds,
+                formattedStopped = settings.formatDurationWithoutSeconds(seconds),
+                running = segments.any { it.entry.id == active?.id },
+            )
+        }.sortedWith(compareByDescending<WidgetDayProject> { it.stoppedSeconds }.thenBy { it.projectId })
+        WidgetDayReport(
+            date = today,
+            stoppedSeconds = stopped.sumOf { it.seconds },
+            stoppedBillableSeconds = stopped.filter { it.entry.billable }.sumOf { it.seconds },
+            entryCount = rows.size,
+            projects = reportProjects,
+            running = active?.let { WidgetDayRunning(it.id, it.start, it.billable) },
+            durationFormat = settings.durationFormat,
+        )
+    }
+    return WidgetState.Ready(shown, starts, paused, day)
 }
 
 /**
@@ -140,15 +226,19 @@ fun WidgetState.key(): String {
     return digest.joinToString("") { "%02x".format(it) }
 }
 
-/** The widget's sizes, in dp, which [favoritesThatFit] and the layout share. */
+/** Sizes shared by responsive fitting and the widget layout, in dp. */
 object WidgetLayout {
+    // Approved 298×222 and 375×338 cards, with room for launcher padding.
+    const val MEDIUM_WIDTH_DP = 260f
+    const val MEDIUM_HEIGHT_DP = 200f
+    const val LARGE_WIDTH_DP = 340f
+    const val LARGE_HEIGHT_DP = 310f
+    const val MAX_SEGMENTS = 5
+
+    fun clockRowHeight(large: Boolean, scale: Float): Float =
+        if (large) 46f + 18f * (scale.coerceAtLeast(1f) - 1f) else 28f + 20f * (scale.coerceAtLeast(1f) - 1f)
+    fun reportHeadingHeight(scale: Float): Float = 22f + 8f * (scale.coerceAtLeast(1f) - 1f)
+    fun statsHeight(scale: Float): Float = 44f + 20f * (scale.coerceAtLeast(1f) - 1f)
+    fun todayRowHeight(scale: Float): Float = 26f + 14f * (scale.coerceAtLeast(1f) - 1f)
     const val PADDING_DP = 12f
-    const val TIMER_ROW_DP = 80f
-    const val FAVORITE_ROW_DP = 48f
-
-    fun buttonHeight(fontScale: Float): Float = 48f + 16f * (fontScale.coerceAtLeast(1f) - 1f)
-
-    fun timerRowHeight(fontScale: Float): Float = buttonHeight(fontScale) + (TIMER_ROW_DP - 48f) * fontScale.coerceAtLeast(1f)
-
-    fun favoriteRowHeight(fontScale: Float): Float = FAVORITE_ROW_DP * fontScale.coerceAtLeast(1f)
 }

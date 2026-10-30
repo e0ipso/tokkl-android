@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.api.NoTrustAllTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:19.928Z" hostname="punta-des-patro" time="1.447">
+  <properties/>
+  <testcase name="sharedClientUsesThePinningTrustManagerAndOkHttpsHostNameCheck" classname="com.github.e0ipso.tokkl.api.NoTrustAllTest" time="0.002"/>
+  <testcase name="noSourceOrScriptBuildsAnotherTrustPath" classname="com.github.e0ipso.tokkl.api.NoTrustAllTest" time="0.852"/>
+  <testcase name="noCompiledAppClassButThePinningTrustManagerIsATrustManagerOrHostnameVerifier" classname="com.github.e0ipso.tokkl.api.NoTrustAllTest" time="0.592"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

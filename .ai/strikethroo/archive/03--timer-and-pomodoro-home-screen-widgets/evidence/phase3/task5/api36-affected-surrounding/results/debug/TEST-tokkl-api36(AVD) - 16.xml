@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="41" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-30T11:37:17" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" tests="5" failures="0" errors="0" skipped="0" time="45.411" timestamp="2026-10-30T11:37:17" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anAppDrainThatEmptiesTheQueueCancelsTheWaitingRetry" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="2.297" />
+    <testcase name="aRunningWorkerThatJoinedTheAppsDrainSucceeds" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="2.772" />
+    <testcase name="theRetryAfterTheBackoffSendsTheQueue" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="32.949" />
+    <testcase name="callsThatQueueNothingScheduleNoWork" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="1.783" />
+    <testcase name="restoringTheNetworkSendsTheQueueWithTheAppClosed" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="5.610" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" tests="4" failures="0" errors="0" skipped="0" time="12.519" timestamp="2026-10-30T11:37:17" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aTimerStartedOnTheServerTakesThePlaceOfTheOneItStopped" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="2.528" />
+    <testcase name="startingATimerSchedulesOneCheckAndStoppingItCancelsIt" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="3.224" />
+    <testcase name="aTimerStoppedOnTheServerLeavesTheCacheAndTheNotificationAtTheNextCheck" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="3.942" />
+    <testcase name="theCheckLeavesAnEntryWithUnsentChangesAsItIs" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="2.825" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.settings.SettingsScreenTest" tests="9" failures="0" errors="0" skipped="0" time="64.834" timestamp="2026-10-30T11:37:17" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="eachThemeModeAppliesAtOnce" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="9.904" />
+    <testcase name="everyControlHasATalkBackLabelAndRole" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="6.006" />
+    <testcase name="followsTheSystemWithTokklsPaletteByDefault" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="5.065" />
+    <testcase name="licencesRowOpensLicencesAndBackReturnsToSettings" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="5.675" />
+    <testcase name="wallpaperColoursReplaceTokklsPaletteUntilTurnedOff" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="8.342" />
+    <testcase name="tappingTheReminderOpensTimerFromSettings" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="6.076" />
+    <testcase name="everyTextComesFromStringResources" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="5.894" />
+    <testcase name="reminderSwitchAndHoursValidateAndApply" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="10.793" />
+    <testcase name="signOutWithAnEmptyQueueGoesStraightToSignIn" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="7.079" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest" tests="1" failures="0" errors="0" skipped="0" time="14.689" timestamp="2026-10-30T11:37:17" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField" classname="com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest" time="14.689" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" tests="22" failures="0" errors="0" skipped="0" time="435.350" timestamp="2026-10-30T11:37:17" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="pastEntryFormFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="14.180" />
+    <testcase name="certificatePromptFromSignInFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="14.496" />
+    <testcase name="licencesHeadingsFit" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="11.973" />
+    <testcase name="noticeAfterCancellingTheHttpWarningFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="10.581" />
+    <testcase name="signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="9.784" />
+    <testcase name="noticeAfterCancellingTheCertificatePromptFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="10.388" />
+    <testcase name="certificatePromptOverTheHomeScreenFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="9.767" />
+    <testcase name="signInServerUrlErrorFitsInTheHintsLines" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="9.404" />
+    <testcase name="httpWarningOverTheHomeScreenFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="13.955" />
+    <testcase name="focusedSignInFieldStaysAboveTheKeyboard" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="14.773" />
+    <testcase name="settingsFit" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="28.354" />
+    <testcase name="allFourPomodoroDefaultDialogsFitAtLargestFont" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="37.023" />
+    <testcase name="signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="18.743" />
+    <testcase name="signInWithEmailAndPasswordFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="20.435" />
+    <testcase name="signInFieldErrorsLeaveTheFormInPlace" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="41.449" />
+    <testcase name="timerPageFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="23.874" />
+    <testcase name="emailErrorFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="32.642" />
+    <testcase name="reminderDialogFitsAtLargestFont" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="23.925" />
+    <testcase name="httpWarningFromSignInFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="28.578" />
+    <testcase name="signInWithApiTokenFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="16.854" />
+    <testcase name="signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="17.657" />
+    <testcase name="certificateHostMessageFits" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="26.515" />
+  </testsuite>
+</testsuites>

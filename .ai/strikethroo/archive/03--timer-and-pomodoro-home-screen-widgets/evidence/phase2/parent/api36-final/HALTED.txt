@@ -1,0 +1,1 @@
+Incomplete run. Device support failed after its advised refresh/retry. Parent halted phase 2 under device-tool instructions and requested shutdown of only its own test scope. No passing result accepted for this run.

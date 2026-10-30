@@ -1,0 +1,22 @@
+{
+  "completed_shards": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "actual_cases": 609,
+  "unique_expected_cases": 609,
+  "duplicates": [],
+  "unexpected": [],
+  "remaining_expected_cases": 127,
+  "remaining_widget_methods": [
+    "com.github.e0ipso.tokkl.widget.WidgetLargeTextTest#theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize",
+    "com.github.e0ipso.tokkl.widget.WidgetNavigationTest#widgetRoutesWithoutAnAccountOpenSignInAndConsumeTheExtras",
+    "com.github.e0ipso.tokkl.widget.WidgetServerTest#startAndStopWorkOfflineThroughTheNativeControls",
+    "com.github.e0ipso.tokkl.widget.WidgetServerTest#todayReportTapOpensReportsOnToday",
+    "com.github.e0ipso.tokkl.widget.WidgetServerTest#widgetActionsDoNotWaitForANetworkThatNeverAnswers"
+  ],
+  "final_acceptance": false
+}

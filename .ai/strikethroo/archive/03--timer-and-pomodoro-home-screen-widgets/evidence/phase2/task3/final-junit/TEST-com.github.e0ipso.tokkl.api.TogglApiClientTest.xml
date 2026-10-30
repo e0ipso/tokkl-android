@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.api.TogglApiClientTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:17.720Z" hostname="punta-des-patro" time="0.66">
+  <properties/>
+  <testcase name="malformedBodyIsAnInvalidResponse" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.02"/>
+  <testcase name="onlyA2xxAnswerReachesTheSuccessListener" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.11"/>
+  <testcase name="status403IsAnAuthFailure" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.009"/>
+  <testcase name="noContentCallReportsANetworkFailure" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.007"/>
+  <testcase name="timeoutIsANetworkError" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.308"/>
+  <testcase name="status429WithoutUsableRetryAfterHasNoSeconds" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.024"/>
+  <testcase name="refusedConnectionIsANetworkError" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.012"/>
+  <testcase name="droppedConnectionIsANetworkError" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.013"/>
+  <testcase name="noContentCallSucceedsOn204" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.011"/>
+  <testcase name="noContentCallKeepsTheHttpErrorMappings" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.058"/>
+  <testcase name="noContentCallSucceedsOn200WithAnEmptyBody" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.01"/>
+  <testcase name="getSendsBasicAuthToThePathBearingUrlAndDecodesJson" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.021"/>
+  <testcase name="otherStatusesKeepTheirCode" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.009"/>
+  <testcase name="status429CarriesRetryAfterSeconds" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.014"/>
+  <testcase name="sendPostsJsonToReports" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.015"/>
+  <testcase name="emptyBodyOnADecodingCallIsAnInvalidResponse" classname="com.github.e0ipso.tokkl.api.TogglApiClientTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,6416 @@
+[
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "anotherUrlAsksAgain",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "aUserNameOrPasswordInTheServerUrlIsRefused",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "onlyTheServerOriginAndTheDeadlineAreStored",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "signingInAgainRefusesAnotherAccountAndKeepsTheExistingSession",
+    "time": "0.212",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "aRestoredFormStillChecksThePersistedAccountBeforeStoringCredentials",
+    "time": "0.389",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "apiTokenSignInKeepsTheBasePathAndStoresServerAndToken",
+    "time": "0.295",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "recreatedModelWithinTheCooldownStillBlocksSignIn",
+    "time": "0.02",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "aQueryAndAFragmentInTheServerUrlAreDropped",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "meWithoutAnApiTokenFailsEmailAndPasswordSignIn",
+    "time": "0.024",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "confirmationThatCannotBeStoredSendsNothing",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "emailAndPasswordSignInStoresOnlyTheTokenFromMe",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "untrustedCertificatePromptsAndTrustingItPinsThatCertificateThenSends",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "meWithoutTimeResolutionSignsInWithNoSnapping",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "passwordIsSentExactlyAsTyped",
+    "time": "0.146",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "aPassedDeadlineIsGoneFromThePhone",
+    "time": "0.171",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "forbiddenIsABadCredentialsFailureAndStoresNothing",
+    "time": "0.022",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "storageFailureIsReported",
+    "time": "0.149",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "httpsServerNeverShowsTheWarning",
+    "time": "0.138",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "handshakeFailureFromThePinningTrustManagerCarriesTheCertificate",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "redirectToAnotherHostIsRefusedAndStoresNothing",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "aDeadlineBlocksOnlyItsOwnServer",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "signingInAgainAcceptsTheSameAccountWithItsNewToken",
+    "time": "0.052",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "changedCertificatePromptsAgainAndCancelKeepsTheOldPin",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "aFormOpenedBeforeSettingsLoadStillChecksThePersistedIdentity",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "tooManyRequestsBlocksSubmitUntilRetryAfterPassesAndNeverRetriesAlone",
+    "time": "0.046",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "aStoredDeadlineThatHasPassedIsDroppedWhenTheModelStarts",
+    "time": "0.075",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "incompleteFormSendsNothing",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "signingInAgainRefusesAnotherServerWithoutSendingTheToken",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "meWithoutTimezoneOrWeekStartIsNotTokklAndStoresNothing",
+    "time": "0.099",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "aSuccessfulSignInForgetsTheDeadline",
+    "time": "0.239",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "tooManyRequestsWithoutRetryAfterWaitsAMinute",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "plainHttpServerShowsTheWarningAndSendsNothingUntilTheUserConfirms",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "answerThatIsNotAUserIsNotTokkl",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "notFoundKeepsItsStatus",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "dismissingTheWarningSendsAndStoresNothingAndTheNextSubmitAsksAgain",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInModelTest",
+    "name": "stateAndCredentialsNeverPrintSecrets",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.ForegroundRefreshTest",
+    "name": "onlineUpdatesRetryFailedPagesWithoutRefreshingTheAccountAgain",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.ForegroundRefreshTest",
+    "name": "aNetworkReportWhileStoppedRefreshesNothing",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.ForegroundRefreshTest",
+    "name": "theNetworksReturnRefreshesOnce",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.ForegroundRefreshTest",
+    "name": "aRotationRefreshesNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.ForegroundRefreshTest",
+    "name": "eachTripToTheForegroundRefreshesOnce",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.ForegroundRefreshTest",
+    "name": "anOfflineStartRefreshesAgainWhenTheNetworkComesBack",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.ThemeContrastTest",
+    "name": "darkSchemePairsMeetWcagAa",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.ThemeContrastTest",
+    "name": "lightSchemePairsMeetWcagAa",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.ContinueEntryTest",
+    "name": "continueLastStartsTheStoppedEntryThatStartedLast",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.ContinueEntryTest",
+    "name": "tiedServerStartsPreferTheLargerIdInEitherOrder",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.ContinueEntryTest",
+    "name": "continueLastCopiesEveryFieldOfTheNewestTiedLocalEntry",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.ContinueEntryTest",
+    "name": "tiedLocalAndServerStartsPreferTheNewestQueuedCreateInEveryOrder",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.ContinueEntryTest",
+    "name": "aLaterStartWinsOverCreationIdsAndRunningEntriesAreExcluded",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.ContinueEntryTest",
+    "name": "withoutAStoppedEntryNothingStarts",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "purgeDeletesOneEntryAtOnce",
+    "time": "0.164",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "anUnreachableServerTurnsEveryActionOff",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "aPurgeOfAnEntryNoLongerInTheTrashLoadsTheListAgain",
+    "time": "0.203",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "aServerWithoutTheTrashHidesItInsteadOfFailing",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "anEmptyTrashAsksNothing",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "openingListsTheDeletedEntries",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "anAnswerThatIsNotAListHidesTheTrashToo",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "restoreTakesTheEntryOutOfTheTrashAndRefreshesTheCache",
+    "time": "0.082",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "cancellingTheQuestionKeepsTheTrash",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trash.TrashModelTest",
+    "name": "emptyingSendsNothingUntilTheQuestionIsAnswered",
+    "time": "0.05",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.UnavailablePagesTest",
+    "name": "withoutTheTimerApiThePomodoroPageIsGone",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.UnavailablePagesTest",
+    "name": "aServerWithEveryFeatureOffersEveryPage",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.UnavailablePagesTest",
+    "name": "trashAndTemplatesStillFollowTheirOwnCapabilities",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.UnavailablePagesTest",
+    "name": "aRestoredOrDirectOpenOfAnUnavailablePageShowsTimerAndOtherPagesStay",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "addingPinsAtTheEndAndSavesTheWholeList",
+    "time": "0.058",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "anAddTellsItsCallerHowItWent",
+    "time": "0.038",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "movingAndRemovingSaveTheNewOrder",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "theSavedBodyIsTheWebAppsFormat",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "aChangeTheServerDoesNotStoreLeavesTheListAndSaysWhy",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "nineFavoritesAreTheMost",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "theCachedFavoritesShowInOrderWithTheirProjects",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "withoutTheCapabilityNothingShowsAndNothingChanges",
+    "time": "0.312",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesModelTest",
+    "name": "replacingSavesTheEditedTemplateInPlace",
+    "time": "0.018",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ApiCredentialsTest",
+    "name": "emailWithAColonIsRejected",
+    "time": "0.025",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ApiCredentialsTest",
+    "name": "emailAndPasswordAreSentAsUtf8",
+    "time": "0.038",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ApiCredentialsTest",
+    "name": "apiTokenSendsTheTokenWithApiTokenAsPassword",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ApiCredentialsTest",
+    "name": "toStringHidesSecrets",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileControlsTest",
+    "name": "aPausedTimerOffersResumeAndStopOnTheServerAtTheRevisionItShows",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileControlsTest",
+    "name": "aButtonKeepsTheTargetItWasDrawnWithAfterTheTimerMovesOn",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileControlsTest",
+    "name": "pauseIsLeftOutWithoutTheTimerApiAndDuringAPomodoroSession",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileControlsTest",
+    "name": "anIdleTimerOffersNoCompactControls",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileControlsTest",
+    "name": "aRunningTimerOffersPauseAndStopForTheTargetItShows",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileControlsTest",
+    "name": "theLongPressRegistersADialogActivityForTilePreferences",
+    "time": "0.039",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.DiscardedChangesTest",
+    "name": "discardsAggregateUntilDismissedAndAreSavedForTheNextProcess",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.DiscardedChangesTest",
+    "name": "nonpositiveCountsLeaveTheNoticeAlone",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "aDeleteOfAnEntryTheCacheNoLongerHoldsShowsNothing",
+    "time": "0.027",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "aDismissedMessageGoesAndALaterOneStays",
+    "time": "0.044",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "anEntryTheCacheDroppedPinsNothing",
+    "time": "0.04",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "withoutRestoreADeleteAsksFirstAndOffersNoUndo",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "duplicateCopiesTheFieldsAndTimesOfAStoppedEntry",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "splitCutsTheEntryInTwoThroughTheQueueAndTheHalvesAddUpToTheWhole",
+    "time": "0.111",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "pinSavesTheEntrysFieldsAtTheEndOfTheFavoritesAndSaysSo",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "undoOfflineSaysItNeedsTheServerAndCanBeTriedAgain",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "aSplitTimeOutsideTheEntryOrUnreadableIsRefusedAndNothingIsQueued",
+    "time": "0.058",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "undoTakesTheDeleteBackAndClearsTheMessage",
+    "time": "0.05",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "aRunningEntryOrOneTheCacheDroppedMakesNoCopy",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "withNineFavoritesAPinSaysTheListIsFull",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "withRestoreADeleteGoesAtOnceAndOffersUndo",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "whenTheOriginalLeftTheCacheTheSecondHalfGoesToo",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "aServerThatCannotBeReachedOrDoesNotStoreThePinSaysWhy",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "offlineAPinTriesNothingAndSaysTheServerIsNeeded",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "cancellingTheQuestionDeletesNothing",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "aRefusedRestoreSaysSo",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsModelTest",
+    "name": "aRunningEntryOrOneTheCacheDroppedOpensNoSplit",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "continueWhilePausedQueuesANewEntryAndNotTheChain",
+    "time": "0.03",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "aFocusedStopWhilePausedIsNotAuthoritativeUntilTheServerEndsTheChain",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "focusedCallbacksCannotPauseStopOrEditAReplacement",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "resumeSendsTheShownRevisionAndTheCloneCountsOnTheServersClock",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "anOfflinePauseSaysSoAndLeavesTheTimerRunning",
+    "time": "0.038",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "focusedStopExitsOnlyAfterAuthoritativeIdleAndCannotRepeat",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "pauseSendsADescriptionStillBeingTypedBeforeItself",
+    "time": "0.023",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "aTooShortPomodoroIsNoticedOnceEvenWhenItsStateArrivesAgain",
+    "time": "0.52",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "aRefusedPauseShowsTheServersStateAndSaysAnotherDeviceChangedIt",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "aPausedTimersFieldsAreReadOnly",
+    "time": "0.318",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "stopOfTheRunningCloneIsAQueuedStop",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "pauseWaitsForTheServerAndThenShowsItsFrozenSeconds",
+    "time": "0.02",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "focusedPauseAndResumeKeepTheChainsSecondsAndFenceAnOlderRevision",
+    "time": "0.076",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "anOfflineResumeOrStopLeavesThePausedTimerAsItWas",
+    "time": "0.029",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "stopWhilePausedDiscardsTheShownRevisionOnTheServer",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "theRunningEditorDoesNotOpenWhilePausedOrWhileAPauseIsOnItsWay",
+    "time": "0.041",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerPauseTest",
+    "name": "pauseIsNotOfferedWithoutTheTimerApiOrDuringASession",
+    "time": "0.409",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "stoppedSegmentCannotBeRevivedByStaleSave",
+    "time": "0.168",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "openingWaitsForPendingDescriptionBeforeReadingTheForm",
+    "time": "0.056",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "invalidStartDoesNotFlushMetadataOrQueueAnything",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "pendingDescriptionSurvivesServerIdAndWholeSecondRemapping",
+    "time": "0.034",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "parsesTwelveHourStartAgainstTheAccountClock",
+    "time": "0.059",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "openingWaitsForInitialStartAndUsesItsAssignedId",
+    "time": "0.058",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "stopDuringDescriptionSettlementDoesNotReviveOrOpenTheEntry",
+    "time": "0.046",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "sameInstantReplacementDoesNotInheritPendingTimerText",
+    "time": "0.036",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "cancelDiscardsUnsavedDateStartAndMetadata",
+    "time": "0.041",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "ignoresHiddenEndAndDurationInRunningMode",
+    "time": "0.06",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "backdatesAcrossMidnightWithoutSnappingRunningStart",
+    "time": "0.033",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorTest",
+    "name": "opensRunningModeInAccountDateAndKeepsSecondsOnMetadataSave",
+    "time": "0.03",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "only the first comma becomes a dot",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "a number that overflows a double is null",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "a span over 999 hours is null on every branch",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "a format other than classic or decimal is improved",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "decimal rounds the double's exact value as toFixed does",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "white space is what JavaScript counts as white space",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "a duration from 2 to the power 53 up is rounded to a double first",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "decimal writes a dot in a locale that writes a comma",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "halves round up as Math round does",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationJsSemanticsTest",
+    "name": "a unit named constructor is null, as in the TypeScript",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TopLevelPageHueTest",
+    "name": "eachPageHasItsSectionsHue",
+    "time": "0.089",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "theOnlyProbesAreOneGetOfTheTrashAndOneOfTheTimer",
+    "time": "0.077",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "theFlagIsStoredWithTheOthersAndSurvivesARestart",
+    "time": "0.119",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "anAnswerWithoutAClearVerdictKeepsTheFlagAndSeedsNothing",
+    "time": "0.438",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "aSuccessfulAnswerThatIsNotATimerStateMeansAbsent",
+    "time": "0.431",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "signOutForgetsTheFlagAndALateRefreshOfTheOldAccountSeedsNothing",
+    "time": "0.06",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "anUnreachableServerKeepsAPresentFlagForAnOfflinePhone",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "aTimerStateMeansPresentAndSeedsTheHolderFromTheSameRequest",
+    "time": "0.065",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "allFlagsAreTrueOnTokkl",
+    "time": "0.068",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "favoritesAreFalseWhenMeLacksRole",
+    "time": "0.069",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "aMissingTimerRouteMeansAbsentAndTurnsAPresentFlagOff",
+    "time": "0.094",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "aTrashAnswerThatIsNotAListHidesTrashAndRestore",
+    "time": "0.096",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "aMissingTrashWritesNothingWhenTheFlagsAlreadySaySo",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "aMissingTrashTurnsTrashAndRestoreOffAndStoresThem",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "aProbeWithoutAClearAnswerKeepsTheTrashFlags",
+    "time": "0.057",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "trashAndRestoreAreFalseWhenTheTrashAnswers404",
+    "time": "0.059",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "aFailedWriteKeepsTheNewFlagsAndTheNextRefreshWritesAgain",
+    "time": "0.168",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesTest",
+    "name": "timeResolutionIsFalseWhenMeLacksTimeResolutionMinutes",
+    "time": "0.066",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicenceReflowTest",
+    "name": "joinsWithOneSpaceAndKeepsNoTrailingSpace",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicenceReflowTest",
+    "name": "joinsTheLinesOfEachParagraph",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicenceReflowTest",
+    "name": "startsEachNumberedConditionOnItsOwnLine",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicenceReflowTest",
+    "name": "breaksALineOnlyAtAParagraphEndAHeadingOrACondition",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicenceReflowTest",
+    "name": "keepsEveryWordInOrder",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicenceReflowTest",
+    "name": "keepsTheHeadingsOnTheirOwnLines",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicenceReflowTest",
+    "name": "keepsTheThreeBlocksBetweenTheRules",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "aFailedDisplayWriteDoesNotRepostAndTheNextEmissionPersistsIt",
+    "time": "0.033",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "eachRevisionReplacesTheNotificationAndADenialCanBeRepostedOnGrant",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "aNewAccountRejectsAnOldIdentityEvenForTheSamePhase",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "withoutTheTimerApiOrSignedOutNothingIsPostedAndNothingIsSent",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "buttonsSendTheirShownRevisionOnlyForTheirAccountAndTheHeldPhase",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "aPhasePastItsPlannedEndLeavesTheSharedIdToItsAlarm",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "idleRemovesAndASessionPostsOnceIncludingAfterObserverRecreation",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "contentShowsTheServersPhaseNumberAndUpcomingPhaseWithTheCorrectedPlannedEnd",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "forgetCancelsARefreshWaitingForTheAlarmBeforeErasingTheDisplay",
+    "time": "0.035",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "theRingOwnsTheSharedIdUntilTheServiceHasStopped",
+    "time": "0.025",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest",
+    "name": "aStaleRevisionGetsTheServersRefusalAndOfflineChangesNothing",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusTest",
+    "name": "aChangeSentWithinTheGraceNeverShowsTheStatus",
+    "time": "0.917",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusTest",
+    "name": "theTimeIsInTheAccountsTimezoneAndClockFormat",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusTest",
+    "name": "anOlderDayNoAnswerAndAnUnknownZoneSayEachTheirOwn",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusTest",
+    "name": "theStatusShowsOnceChangesHaveWaitedAndThenFollowsTheQueueAtOnce",
+    "time": "0.42",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSettingTest",
+    "name": "anInFlightPreferenceSendCannotPersistAfterSignOut",
+    "time": "0.037",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSettingTest",
+    "name": "oldTokklAndTogglKeepLocalDefaultsAndChanges",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSettingTest",
+    "name": "rangesRejectMalformedServerValuesAndClampLocalValues",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSettingTest",
+    "name": "failedReadKeepsValuesAndSignOutClearsThem",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSettingTest",
+    "name": "discoveringTheKeysSendsALocalChangeMadeDuringTheFirstRefresh",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSettingTest",
+    "name": "failedWriteSurvivesRestartAndRetriesOnRefresh",
+    "time": "0.066",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSettingTest",
+    "name": "readsBothExactKeysAndPostsOnlyThem",
+    "time": "0.05",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.LastAnswerTest",
+    "name": "eachAnswerTakesTheClockTimeAndSavesIt",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.LastAnswerTest",
+    "name": "aTimeNeverGoesBack",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.LastAnswerTest",
+    "name": "forgetClearsTheTimeAndTheFile",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aRefreshStoresTheDefaultWorkspace",
+    "time": "0.28",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "failedPreferencesKeepTheStoredGrouping",
+    "time": "0.252",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aReconnectWithNoRefreshRunningRefreshesOnce",
+    "time": "0.05",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aReconnectDuringARefreshThatAnswersSendsNothingMore",
+    "time": "0.099",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aReconnectDuringARefreshThatFailsRefreshesOnceMore",
+    "time": "0.142",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aMeWithoutTheDefaultWorkspaceKeepsTheStoredOne",
+    "time": "0.169",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "theDurationFormatComesFromThePreferences",
+    "time": "0.065",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aRefreshWhileOneRunsJoinsItAndSendsNoSecondRequest",
+    "time": "0.178",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "meWithoutTimeResolutionRefreshesWithNoSnapping",
+    "time": "0.147",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "theClockFormatComesFromThePreferences",
+    "time": "0.684",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "preferencesWithoutClassicOrDecimalReadAsImproved",
+    "time": "0.423",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aFailedMeKeepsTheStoredDefaultWorkspace",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "theGroupingOfSimilarEntriesComesFromThePreferences",
+    "time": "0.777",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aNewDefaultWorkspaceReplacesTheStoredOne",
+    "time": "0.076",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "failedPreferencesBeforeAnyAreStoredReadAsImproved",
+    "time": "0.141",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "settingsStoredWhileARefreshRunsAreNotReplacedByItsOlderAnswer",
+    "time": "0.096",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "aRefreshThatAnswersAfterForgetStoresNothingAndRefreshesNothingElse",
+    "time": "0.096",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "failedPreferencesKeepTheStoredDurationFormat",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsSourceTest",
+    "name": "failedPreferencesKeepTheStoredClockFormat",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryModelTest",
+    "name": "networkRecoveryRetriesSummaryButAuthAndQuotaRemainVisible",
+    "time": "0.371",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryModelTest",
+    "name": "accountTimezoneAndWeekStartSelectTheAppReportDates",
+    "time": "0.159",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryModelTest",
+    "name": "foregroundRefreshDropsOldValuesAndUsesTheNewServerAnswer",
+    "time": "0.162",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryModelTest",
+    "name": "latestRangeAndFiltersCancelQueuedLoads",
+    "time": "0.118",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryModelTest",
+    "name": "closeCancelsPendingLoadsAndReopenReadsTheAccountAgain",
+    "time": "0.437",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryModelTest",
+    "name": "failureRefreshShowsNoStaleNumbersAndRetryCanRecover",
+    "time": "0.71",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryModelTest",
+    "name": "closingWhileTheServerIsAnsweringCannotPublishItsLateSummary",
+    "time": "0.238",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryModelTest",
+    "name": "switchingTabsKeepsDetailedAndWeeklyOnTheirExistingEndpoints",
+    "time": "0.35",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeZoneTest",
+    "name": "offsets past 18 hours return null, though Intl takes them up to 23-59",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeZoneTest",
+    "name": "names Intl rejects return null, also where ZoneId of takes them",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeZoneTest",
+    "name": "names only ICU knows map to the zone Intl resolves them to",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeZoneTest",
+    "name": "canonical names resolve unchanged",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeZoneTest",
+    "name": "offsets take a sign, two-digit hours and optional minutes",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeZoneTest",
+    "name": "names match in any ASCII case, as in Intl",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "durationPredictionRetainsTheTypedSpanAcrossFocusChangesAndFractionalDst",
+    "time": "0.112",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "unchangedTimesOfALegacyZeroEntryCanBeEditedButMovingThemIsRejected",
+    "time": "0.047",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "togglWithoutResolutionStillAcceptsShortAndZeroTypedSpans",
+    "time": "0.029",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anEntryOpensWithItsFieldsOnTheAccountsClock",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "aPastEntryOpensOnTodayInTheAccountsTimezone",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "twelveHourAccountsGetTheNearerStartAndTheFirstEndAfterIt",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "timesLeftAsTheyOpenedKeepTheEntrysOwnInstants",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anUnsentEntryOpensWithTheTimesTheServerWillStore",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "shortTypedCreatesAndTimeEditsNeverReachTheQueue",
+    "time": "0.022",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anOlderEntryTheCacheDroppedBeforeTheSaveSavesAsAnOlderOne",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "everyFieldChangesAndTheQueueGetsThemAll",
+    "time": "0.029",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "spansTheServerRefusesAreMarkedAndNothingIsQueued",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "aPastEntryWithoutReadableTimesIsMarkedInTheManualFormsWords",
+    "time": "0.024",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anEntryFrom23To01EndsOnTheNextDay",
+    "time": "0.022",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anEntryThatIsNotOnThePhoneOrRunsCannotBeEdited",
+    "time": "0.018",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anEntryFromTheOlderDaysOpensAsTheHistoryHoldsItAndSavesWithEveryField",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "aChangedDurationSetsTheStopFromTheStart",
+    "time": "0.022",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "theDurationFillsInTheEndAndTheTimesTheDuration",
+    "time": "0.036",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "aPastEntryWaitsForTheAccountsWorkspace",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "timesThatCannotBeReadAreMarkedAndNothingIsQueued",
+    "time": "0.027",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "aProjectThatIsBillableMakesTheEntryBillable",
+    "time": "0.061",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anEndEarlierOnTheClockThanTheStartIsOnTheNextDay",
+    "time": "0.028",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anEntryTheCacheDroppedBeforeTheSaveIsMissing",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "aNewEntryOpensOnTheDayItIsGiven",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "coincidentSnappedEndpointsAreRejectedEvenAboveHalfAStep",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "everyM1ExampleSavesWhatTheWebAppSaves",
+    "time": "0.069",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "anEntryNeitherTheCacheNorTheHistoryHoldsIsMissing",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "wallTimesOnTheDaysTheClocksChangeResolveAsTokklResolvesThem",
+    "time": "0.033",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "theCachesCopyWinsOverTheOlderDaysOne",
+    "time": "0.052",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "withoutTheAccountsTimezoneTheFormTakesNoTimes",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormModelTest",
+    "name": "twelveHourAccountsSeeAndTypeTheirOwnClock",
+    "time": "0.038",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageFullScreenStateTest",
+    "name": "permissionResumeRefreshKeepsExactAlarmDenialIndependent",
+    "time": "0.043",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CreateOnceTest",
+    "name": "theSecondCreateIsLookedForTooAndThenItsFailureStands",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CreateOnceTest",
+    "name": "whenTheListLacksTheItemTheCreateGoesOnceMore",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CreateOnceTest",
+    "name": "whenTheListDoesNotLoadTheCreatesFailureStands",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CreateOnceTest",
+    "name": "anItemThePageAlreadyListedIsNotTakenForTheOneTheCreateMade",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CreateOnceTest",
+    "name": "anAnsweredCreateReadsNothingMore",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CreateOnceTest",
+    "name": "aRefusalStandsWithTheServersReasonAndReadsNothingMore",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CreateOnceTest",
+    "name": "aLostAnswerTakesTheItemTheListThenHasUnderTheName",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest",
+    "name": "phaseEndRedrawDoesNotDependOnAnAlarmOrAnotherServerEvent",
+    "time": "0.081",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest",
+    "name": "aNewPhaseCancelsThePreviousDeadline",
+    "time": "0.054",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest",
+    "name": "sessionEndCancelsTheDeadlineAndPastEndsNeedNoFutureWork",
+    "time": "0.081",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest",
+    "name": "aFractionalMillisecondCannotRedrawBeforeThePhaseEnds",
+    "time": "0.058",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.PrimaryFillTest",
+    "name": "lightTakesTheWallpaperPrimaryAndKeepsTokklsOtherColours",
+    "time": "0.018",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.PrimaryFillTest",
+    "name": "darkTakesTheWallpaperPrimaryAndKeepsTokklsOtherColours",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "everyServerTransitionSelectsItsOwnSound",
+    "time": "0.069",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "stopAttemptsVibrationCleanupEvenWhenAudioCleanupFails",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "thePhaseEndStartsBothOutputsWithTheTransitionsSoundAndNeverMovesThePhaseOn",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "duplicateDeliveriesDoNotRestartOrMultiplyTheOutput",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "daysOfOvertimeHaveNoSilenceOrDurationCap",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "oldPhaseDeliveriesButtonsRepostsAndServiceStartsCannotTouchTheNewPhase",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "aConfirmOnAnyDeviceStopsBothOutputs",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "anOfflineButtonLeavesTheRingAndTheStateAsTheyWere",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "aRestartedServiceRingsOnlyTheHeldPhasePastItsPlannedEnd",
+    "time": "0.027",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "aNewRevisionOfTheRingingPhaseKeepsPlayingAndShowsThatRevision",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "aSwipeRepostsWithoutStoppingEitherOutput",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "theServiceCheckAndAConfirmElsewhereCannotRace",
+    "time": "0.052",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest",
+    "name": "aRingOfAnotherPhaseStopsTheOldOutputFirst",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "anArchivedProjectGoesOnceItsLastEntryIsPruned",
+    "time": "0.076",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "historyStartsThirteenDaysBeforeTodayAtMidnightInTheAccountZone",
+    "time": "0.082",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "queuedChangesStayAppliedOverTheRefreshedEntriesUntilSent",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "theSameMomentGivesAnotherWindowInAnotherZone",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "entriesBeforeTheWindowArePrunedAndTheFirstInstantIsKept",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "withoutAKnownZoneNothingIsPruned",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "aRefreshReadBeforeRemovalWasSentCannotRestoreTheEntry",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "aQueuedChangeToAnEntryBeforeTheWindowStaysAndKeepsItsArchivedProject",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "cachedEntriesArePrunedEvenWhenTheEntriesRequestFailed",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "doneTasksStayWhileAnEntryUsesThem",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "aRefreshReadBeforeStopWasSentCannotRestartTheTimer",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "rowsTheServerNoLongerSendsStayWhileACachedEntryUsesThem",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "aRefreshReadBeforeStartWasSentKeepsTheRemappedEntryUntilTheNextRefresh",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "archivedProjectsStayWhileAnEntryOrFavoriteUsesThem",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "aRefreshReplacesStaleRowsWithTheServersValues",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheContentsTest",
+    "name": "listsTheRefreshDidNotReadStayAsTheyWere",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.SummaryReportTest",
+    "name": "tiedProjectsKeepTheOrderOfFirstUseAndAmountsNeedARate",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.SummaryReportTest",
+    "name": "fallbackDistinguishesAMissingGroupAmountFromAnExplicitZero",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.SummaryReportTest",
+    "name": "weekBucketsFollowAnotherWeekStart",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.SummaryReportTest",
+    "name": "weekBucketsStartOnTheWeekStartAndEntriesOutsideCountInTheTotalsOnly",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.SummaryReportTest",
+    "name": "totalsSeriesAndProjects",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.TasksModelTest",
+    "name": "openTasksComeBeforeDoneOnesEachByName",
+    "time": "0.07",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.TasksModelTest",
+    "name": "deletingAsksFirstAndCancellingKeepsTheTask",
+    "time": "0.026",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.TasksModelTest",
+    "name": "aRefusalKeepsTheListWithTheServersReason",
+    "time": "0.065",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.TasksModelTest",
+    "name": "aNewTaskGoesWithItsNameTrimmedAndRefreshesTheCache",
+    "time": "0.071",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.TasksModelTest",
+    "name": "theFormRenamesTheTaskAndMarksItDone",
+    "time": "0.119",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.TasksModelTest",
+    "name": "anotherProjectsFormLoadsItsOwnTasks",
+    "time": "0.054",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "malformedBodyIsAnInvalidResponse",
+    "time": "0.061",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "onlyA2xxAnswerReachesTheSuccessListener",
+    "time": "0.206",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "status403IsAnAuthFailure",
+    "time": "0.039",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "noContentCallReportsANetworkFailure",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "timeoutIsANetworkError",
+    "time": "0.277",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "status429WithoutUsableRetryAfterHasNoSeconds",
+    "time": "0.062",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "refusedConnectionIsANetworkError",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "droppedConnectionIsANetworkError",
+    "time": "0.185",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "noContentCallSucceedsOn204",
+    "time": "0.029",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "noContentCallKeepsTheHttpErrorMappings",
+    "time": "0.07",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "noContentCallSucceedsOn200WithAnEmptyBody",
+    "time": "0.182",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "getSendsBasicAuthToThePathBearingUrlAndDecodesJson",
+    "time": "0.075",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "otherStatusesKeepTheirCode",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "status429CarriesRetryAfterSeconds",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "sendPostsJsonToReports",
+    "time": "0.148",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.TogglApiClientTest",
+    "name": "emptyBodyOnADecodingCallIsAnInvalidResponse",
+    "time": "0.03",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.EntryBesideTest",
+    "name": "compactAndMediumWindowsShowTheFormAlone",
+    "time": "0.186",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.EntryBesideTest",
+    "name": "onlyTheFormOnTopOfTheTimerPageGoesBeside",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.EntryBesideTest",
+    "name": "theCalendarKeepsTheWholeWidth",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.EntryBesideTest",
+    "name": "anExpandedWindowShowsTheFormBesideTheHistory",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest",
+    "name": "nextAndEndSendTheDisplayedRevisionEvenAfterASamePhaseEdit",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest",
+    "name": "staleIdleStartRefusesWithoutReplacingTheActiveSession",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest",
+    "name": "idleStartKeepsAllDisplayedFieldsWorkspaceAndFourDefaults",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest",
+    "name": "correctedEndIsAFutureCountdownBaseWithoutClamping",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest",
+    "name": "offlineAndConflictReturnOnceWithoutReadingRetryingOrAdvancingLocally",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest",
+    "name": "endedPhaseCountsUpFromCorrectedEnd",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest",
+    "name": "phaseControlsNeverActOnANewerPhaseOrAnEndedSession",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest",
+    "name": "anotherAccountOrUnavailableSurfaceSendsNothing",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.NavigationBarColoursTest",
+    "name": "darkItemsFollowTheDecision",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.NavigationBarColoursTest",
+    "name": "lightItemsFollowTheDecision",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "withoutBoundsAnEmptyPageWaitsForATap",
+    "time": "0.24",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "anOnlineUpdateDuringAFailingReadRetriesTheSameOlderDays",
+    "time": "0.155",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "entryGivesTheCachesCopyOrTheOlderDaysOne",
+    "time": "0.11",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "theNetworksReturnLoadsOlderDaysThatFailedOfflineAndAsksNothingOtherwise",
+    "time": "0.165",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "boundsWithNoEntriesEndTheListWithoutAPage",
+    "time": "0.025",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "offlineTheOlderDaysAreUnreachableAndTheNextTryLoadsThem",
+    "time": "0.219",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "theDaysTheCacheDropsStayWhenTheServerHasNothingOlder",
+    "time": "0.022",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "aProxyThatCannotReachTheServerIsUnreachable",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "anOlderEntryEditedOnThePhoneKeepsShowingTheEditAfterTheCacheDropsIt",
+    "time": "0.147",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "theDaysTheCacheDropsWhenItsWindowMovesStayBetweenItAndTheOlderDays",
+    "time": "0.182",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryModelTest",
+    "name": "olderDaysLoadFourteenAtATimeUntilTheAccountsFirstDay",
+    "time": "0.164",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "theKeyChangesWithEachPauseResumeAndRevision",
+    "time": "0.099",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "projectColourChangesRedrawRunningAndPausedWidgets",
+    "time": "0.02",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "showsTheRunningEntryWithItsProjectAndTaskAndPause",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "unknownAccountZoneHidesTheDayReportAndKeepsTimerControls",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "theChronometerCountsFromTheEntrysStart",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "dayReportMatchesTimerTotalsWithMappedRowsBillableTimeAndNoProject",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "totalsAndProjectRowsUseTheAccountDurationFormat",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "aFailedSaveKeepsFollowing",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "aNewStateWithTheSameClockDoesNotRedrawTheWidget",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "dayDurationsUseElapsedInstantsAcrossBothDstTransitions",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "aProjectOrTaskTheCacheLacksShowsNone",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "theKeyChangesWithWhatTheWidgetShows",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "aNewProcessUpdatesTheWidgetWhenThePhoneChangedSinceItWasDrawn",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "favoritesAreHiddenWithoutTheCapability",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "theSyncUpdatesTheWidgetOnlyWhenWhatItShowsChanged",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "favoritesComeInTheUsersOrderWithWhatATapStarts",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "withoutAWorkspaceTheWidgetOpensTheApp",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "aMappedRunningRowKeepsTheLocalContributionAndUnassignedRunningMarker",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "theChronometerAddsWhatTheServersChainStored",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "aPausedTimerShowsTheServersFrozenTotalAndWhatResumeStarts",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "aTickingReportKeyStaysStableUntilTheDayOrCacheChanges",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "resumedDayCountsActualSegmentsWithoutAddingThePauseChainAgain",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "noRunningEntryShowsStart",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "pauseIsHiddenWithoutTheTimerApiAndDuringAPomodoroSession",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "aResumedCloneCountsOnFromTheChainsSecondsOnTheServersClock",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetStateTest",
+    "name": "dayRolloverUsesTheAccountStartDayWithoutSplittingOvernightEntries",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportRangeTest",
+    "name": "weekPresetsStartOnTheAccountsWeekStart",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportRangeTest",
+    "name": "dayMonthAndYearPresets",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportRangeTest",
+    "name": "theResolutionFollowsTheRangesLength",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportRangeTest",
+    "name": "shiftMovesWholeMonthsByMonthsAndOtherRangesByTheirLength",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportRangeTest",
+    "name": "aRangeNamesThePresetItMatches",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "signedOutSendsNothing",
+    "time": "0.192",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "onlyAConnectionThatFailedAfterTheRequestLeftThePhoneIsWorthAnotherTryAtOnce",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a400HoldsTheChangeWithTheServersMessage",
+    "time": "0.105",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "undoOfAnUnsentDeleteTakesItOutOfTheQueueWithNoRequest",
+    "time": "0.368",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "undoOfASentDeleteOfAnEntryMadeOnThePhoneRestoresItUnderTheServerId",
+    "time": "0.467",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "undoOfAnEntryMadeOnThePhoneThatNeitherQueueNorServerHasFails",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a404LookupPreservesAnAuthenticationFailureOrARetryableFailure",
+    "time": "0.042",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "undoOfASentDeleteNeedsTheServerOfflineAndSignedOut",
+    "time": "0.055",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a404DiscardsEveryChangeToTheMissingEntryAndContinues",
+    "time": "0.056",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aCreateAnswered5xxOrUnreadableStaysMarked",
+    "time": "0.116",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aLostDuplicateTakesTheCopyItsPostMadeBesideItsSource",
+    "time": "0.076",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aNetworkFailureStopsTheDrainAndKeepsTheChangeForTheNextDrain",
+    "time": "0.249",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aLostCreateMatchesTheStartWhereTheServerSnappedIt",
+    "time": "0.062",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a429WaitsForRetryAfterBeforeTheNextTry",
+    "time": "0.188",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aRestoreAnsweredWithAnUnreadableBodyStillCountsAsRestored",
+    "time": "0.046",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aLostCreateIsPostedWhenNoUnmappedEntryMatchesIt",
+    "time": "0.102",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aQueuedStartGoesStoppedWhereALaterRunningTimerStartsAndThatTimerStaysInTheCache",
+    "time": "0.083",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aLegacyQueuedStopStillSendsEveryFieldAfterMigration",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aRefusedCreateIsNotMarkedAndGoesWithoutALookupNextTime",
+    "time": "0.169",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aQueuedStartAndItsLaterChangesEndOnTheGridWhereTheLaterTimersStartSnaps",
+    "time": "0.206",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a400BlocksOnlyItsEntryAndAReleasedChangeCanGoAgain",
+    "time": "0.199",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aChangeQueuedDuringADrainIsSentByThatDrain",
+    "time": "0.18",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "sendAndWaitWhenSignedOutSendsNothing",
+    "time": "0.151",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "anUncertainCapturedStopReadsTheMatchingRowInsteadOfReplayingPatch",
+    "time": "0.048",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aLostDuplicateIsPostedInsteadOfTakingItsSource",
+    "time": "0.135",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "laterChangesThatWouldRunOrStopTheEntryAfterTheLaterTimerStopItWhereThatTimerStarts",
+    "time": "0.205",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aCapturedStopUsesTheFrozenTapInstantAfterTheClockMoves",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "onSentRunsOncePerDrainJobAfterItsLastPass",
+    "time": "0.325",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aDeleteThatUndoTookBackBeforeItsMarkNeverGoesOut",
+    "time": "0.14",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a429WithoutRetryAfterWaitsTheDefault",
+    "time": "0.037",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a403PausesAllRequestsUntilSignInResumesTheQueue",
+    "time": "0.138",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a5xxStopsTheDrainAndTheNextDrainResumesInOrder",
+    "time": "0.256",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aFailedReadOfTheRunningEntryKeepsTheStartQueuedAndSendsNothing",
+    "time": "0.145",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "theServersAnswerReachesTheStore",
+    "time": "0.075",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aQueuedStopBeforeTheLaterTimerEndsTheStartInstead",
+    "time": "0.213",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "onlyRefusalsAndRequestsThatNeverLeftThePhoneLeaveNothingOnTheServer",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aStartWhoseAnswerWasLostIsLookedUpBeforeTheRunningEntry",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aSendDuringQueueCleanupJoinsTheDrainUntilCancellationFinishes",
+    "time": "0.104",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a404ForAValueDoesNotDiscardAnEntryTheServerStillHas",
+    "time": "0.075",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aRunningCreateSendsTheTapTimeAsItsStartAndTagsByName",
+    "time": "0.069",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "anAlreadyStoppedConflictWithDifferentSpanIsHeld",
+    "time": "0.09",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aQueuedStartGoesAsQueuedWhenTheRunningTimerStartedEarlierOrAtTheSameSecond",
+    "time": "0.168",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aDeleteSendsNoBody",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "anUncertainShortStopRequiresTheExactTrashRow",
+    "time": "0.096",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "undoOfAnUnsentDeleteOfAnEntryMadeOnThePhoneLeavesItsCreateQueued",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "a409OnAStopLeavesTheQueueSilently",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aCreateWhoseAnswerIsLostIsLookedUpInTheSameDrainInsteadOfPostedAgain",
+    "time": "0.131",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "sendAndWaitReturnsHowTheDrainEnded",
+    "time": "0.151",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aConnectionThatDropsAfterTheServerAnsweredLeadsToOneMoreTryAtMost",
+    "time": "0.121",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aRestoreTheServerRefusesFailsWithItsStatus",
+    "time": "0.108",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "onEmptiedRunsOnceWhenADrainSendsTheQueueEmpty",
+    "time": "0.329",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aDeleteThatFailedWithoutReachingTheServerStaysUnmarkedSoUndoNeedsNoRequest",
+    "time": "0.054",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "sendAndWaitDuringADrainReturnsItsLastPass",
+    "time": "0.385",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aQueuedStartGoesAsQueuedWhenNothingRuns",
+    "time": "0.092",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "theNextDrainTakesTheEntryALostCreateMadeAndSendsLaterChangesToIt",
+    "time": "0.14",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "undoOfASentDeleteRestoresTheEntryThroughTokklsRestoreEndpoint",
+    "time": "0.077",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aRestoreRefreshesTheAccountOnceAndACancelledDeleteDoesNot",
+    "time": "0.083",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "sendTriesAgainByItselfOnceRetryAfterHasPassed",
+    "time": "1.193",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aDrainThatSendsNothingDoesNotRunOnSent",
+    "time": "0.03",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "undoOfADeleteWhoseAnswerWasLostAsksTheServerAndTakesItOutOfTheQueue",
+    "time": "0.163",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aStoppedCreateReadsNoRunningEntry",
+    "time": "0.018",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aChangeWhosePooledConnectionTheServerClosedGoesOutOnANewOneInTheSameDrain",
+    "time": "0.473",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "sendsCreateEditStopAndDeleteOfAnOfflineEntryInOrderUnderTheServerId",
+    "time": "0.274",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeSenderTest",
+    "name": "aCreateWhoseAnswerIsLostStaysMarkedAndOkHttpDoesNotPostItAgain",
+    "time": "0.237",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.FormatTimeTest",
+    "name": "secondsAreDroppedNotRounded",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.FormatTimeTest",
+    "name": "theClockIsTheZones",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.FormatTimeTest",
+    "name": "theTwelveHourClockWritesTwelveAtMidnightAndNoonAndNoLeadingZero",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.FormatTimeTest",
+    "name": "theTwentyFourHourClockPadsTheHour",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.FormatTimeTest",
+    "name": "anAInEitherCaseAsksForTheTwelveHourClock",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "theFavoritesGiveShortcutsInTheirOrderNamedAsTheTimerPageNamesThem",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "theSyncSetsOnlyAListTheLauncherLacks",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "theIdChangesWithEveryFieldAndHoldsNoName",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "aTapStartsTheFavoriteTheIdNamesInTheDefaultWorkspace",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "theLauncherLimitCutsTheList",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "theIdFollowsTheFavoriteNotItsPlace",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "aTapOnAShortcutWhoseFavoriteIsGoneStartsNothing",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "aServerWithoutFavoritesGivesNoShortcuts",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsTest",
+    "name": "twoFavoritesWithTheSameFieldsGiveOneShortcut",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "anotherAccountReplacesTheStreamAndTheOldOnesLateCallbacksChangeNothing",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "signOutOrCapabilityLossCancelsTheStreamAndEveryReconnect",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "aRefusedCredentialStopsReconnectingAndAsksToSignInAgain",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "aReturningNetworkReconnectsAtOnceWithoutASecondCall",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "theDelayStaysAtTheCapHoweverManyFailuresCameBefore",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "heartbeatsKeepAStreamOpenAndAboutAMinuteOfSilenceClosesIt",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "aStreamThatNeverAnswersIsClosedByTheSameWatchdog",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "aStreamWithNoAccountStopsWithoutAskingToSignIn",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerSyncLifecycleTest",
+    "name": "failedReconnectsBackOffExponentiallyUpToACapAndAHealthyStreamStartsOver",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryResponseTest",
+    "name": "groupBucketAndCurrencyAdditionsKeepTheirOwnAssociations",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryResponseTest",
+    "name": "absentNullAndEmptyAmountsStayAbsentWhileZeroIsPresent",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryResponseTest",
+    "name": "additiveValuesAreGenericAndKeepTheirOwnerAndLiteralUnits",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryResponseTest",
+    "name": "unsafeFormattingCharactersAndMarkupStayPlainText",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryResponseTest",
+    "name": "additiveProjectionBoundsDepthWidthAndTextAcrossTheWholeReport",
+    "time": "0.405",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryResponseTest",
+    "name": "serverValuesAndAllOrdersAreAuthoritative",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryResponseTest",
+    "name": "incompatibleRecognizedValuesFailInsteadOfBecomingEmptyReports",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.SharedHttpClientTest",
+    "name": "aQueueRequestGoesOutOnceWhenItsPooledConnectionDropsBeforeTheAnswer",
+    "time": "0.789",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.SharedHttpClientTest",
+    "name": "sendingOnceKeepsThePoolDispatcherInterceptorsAndTrustOfTheSharedClient",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.SharedHttpClientTest",
+    "name": "otherRequestsGoOutAgainOnANewConnectionWhenAPooledOneDrops",
+    "time": "0.48",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.SharedHttpClientTest",
+    "name": "aQueueRequestStillMeetsTheGuardAndTheCleartextCheck",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapStopTest",
+    "name": "a positive typed span and the existing Stop agree on the nearest endpoint",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapStopTest",
+    "name": "without a time resolution a tap before the start stops the entry on its start",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapStopTest",
+    "name": "a value that is not a time resolution leaves the tap time",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapStopTest",
+    "name": "with a time resolution the entry stops like stopSpan",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ServerReaderTest",
+    "name": "entriesAreAskedForTheWindowInTheAccountZoneAndParsed",
+    "time": "0.121",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ServerReaderTest",
+    "name": "preferencesWithoutFavoritesMeanNoFavorites",
+    "time": "0.024",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ServerReaderTest",
+    "name": "anUnknownZoneReadsNoEntries",
+    "time": "0.034",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ServerReaderTest",
+    "name": "aTokklRefreshAsksForThePreferencesOnce",
+    "time": "0.295",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ServerReaderTest",
+    "name": "withoutFavoritesNoneAreKept",
+    "time": "0.034",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ServerReaderTest",
+    "name": "failedRequestsLeaveTheirListsUnread",
+    "time": "0.102",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ServerReaderTest",
+    "name": "favoritesThatDoNotDecodeAreUnreadAlone",
+    "time": "0.1",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aNewProcessPostsNothingForTheEntryTheNotificationFollowed",
+    "time": "0.059",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "idleControlsShowNothing",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "theKeyStaysWhenTheServerStoresTheEntryAsItDoes",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "theKeyStaysWhenTheServerGivesTheEntryItsId",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "twoStartsWithinOneSecondPostTheSecondForItsStop",
+    "time": "0.026",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "theServersIdForTheFollowedEntryPostsNothingAndIsKept",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aGrantAfterSignOutCannotRepostThePreviousAccountsEntry",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aProjectOrTaskTheCacheLacksShowsNone",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "theKeyHoldsNoTextOfTheEntry",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "anotherServerEntryWithTheSameKeyPosts",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aResumedCloneCountsFromItsStartOnTheServersClockAfterTheChainsSeconds",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aRunningEntryOffersPauseOnlyWhereTheServersTimerDoes",
+    "time": "0.036",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aNewStateWithTheSameEntryPostsNothingAgain",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "eachPauseAndResumePostsTheNotificationAgain",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "grantingPermissionRepostsTheLatestEntryEvenIfItsStartWasAlreadyFollowed",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "forgettingRemovesTheNotificationAndTheKey",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aKeyKeptWithoutAnIdPostsNothingAndKeepsTheId",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "valuesThatRunTogetherGiveDifferentKeys",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aFailedWriteKeepsFollowingAndMakesTheChangeAgainLater",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aPausedChainShowsTheServersFrozenTotalAndWhatResumeStarts",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aPausedNotificationSwipedAwayStaysAwayInANewProcessUntilThePausedTimerChanges",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "theKeyChangesWithEveryFieldAStartOrEditSets",
+    "time": "0.025",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "aNewProcessRemovesTheNotificationOfAnEntryStoppedMeanwhile",
+    "time": "0.058",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "theSyncPostsOnStartAndEditAndRemovesOnStop",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "noRunningEntryShowsNothing",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationTest",
+    "name": "showsTheDescriptionProjectTaskAndStartOfTheRunningEntry",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "endpointSegmentsCannotAddPathOrQuery",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "hostRootWithAndWithoutTrailingSlash",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "deeperPathPortAndPlainHttp",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "rejectsWhatIsNotAnHttpBaseUrl",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "emptySegmentsInsideTheBasePathAreDropped",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "basePathWithAndWithoutTrailingSlash",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "encodedBasePathIsKept",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "noEndpointSegmentsGivesTheApiRoot",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "sameServerWithOrWithoutTrailingSlash",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerUrlTest",
+    "name": "dropsTheQueryAndTheFragment",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CatalogModelTest",
+    "name": "theTripLoadsOnceAndKeepsTheFormOverTheList",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CatalogModelTest",
+    "name": "aClosedPageLoadsNothingOnTheWayBack",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CatalogModelTest",
+    "name": "aTripToTheBackgroundLoadsTheListAgainOnTheWayBack",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CatalogModelTest",
+    "name": "aStartWithoutATripLoadsNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CatalogModelTest",
+    "name": "backOfflineTheListStaysWithEveryActionOffUntilTheNetworkReturns",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "opensOnThisWeekInTheAccountsTimezoneAndWeekStart",
+    "time": "0.126",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "presetsAndShiftsStartFromTheAccountsToday",
+    "time": "0.277",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "widgetTodayReplacesARetainedWeeklyTabAndItsFiltersWithTheAccountDay",
+    "time": "0.272",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "aStartWithoutTheServerShowsWhyAndNoNumbers",
+    "time": "0.136",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "aStartAfterAStopAsksOnceForTheRangeOnScreen",
+    "time": "0.193",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "theNetworksReturnAsksNothingForAShownOrClosedReport",
+    "time": "0.093",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "theNetworksReturnAsksAgainForAReportThatGotNoAnswer",
+    "time": "0.09",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "theStartReplayedWhenTheScreenOpensAsksNothing",
+    "time": "0.102",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "aStopWhileTheScreenIsClosedAsksNothing",
+    "time": "0.095",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsModelTest",
+    "name": "closingForgetsAStop",
+    "time": "0.228",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "anEditSentJustBeforeEndGoesFirstToo",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "aSecondTapWhileTheFirstWaitsForTheServerSendsNothing",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "theClockCountsDownOnTheServersTimeAndThenCountsOvertime",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "aRefusalAndNoConnectionLeaveTheShownPhaseAsItWasAndSayWhy",
+    "time": "0.031",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "nothingGoesOutWithoutASessionOnScreen",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "endSendsTheDisplayedRevisionAndTheFormComesBack",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "aTapDrawnBeforeAnotherDeviceAdvancedTheTimerCannotAdvanceItAgain",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "anEditSentJustBeforeNextPhaseReachesTheServerFirstAndNextSendsTheRevisionItProduced",
+    "time": "0.045",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "withoutAnEditTheQueueIsNotSentAndTheStateIsNotRead",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "nextPhaseSendsTheDisplayedRevisionAndTheServersAnswerIsTheNewPhase",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "theShownValuesCarryTheServersNumberAndCycleLength",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPagePhaseActionsTest",
+    "name": "ifAnotherDeviceMovedThePhaseWhileTheEditWasSentNothingAdvances",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.PickerOptionsTest",
+    "name": "searchMatchesProjectClientAndTaskNamesIgnoringCase",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.PickerOptionsTest",
+    "name": "pickingATaskPicksItsProjectAndPickingAProjectDropsTheTask",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.PickerOptionsTest",
+    "name": "archivedItemsTheEntryUsesStaySelectedWithTheirLabelAndNoOtherArchivedItemShows",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.PickerOptionsTest",
+    "name": "anExistingTagIsNotOfferedAgainInAnotherCase",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.PickerOptionsTest",
+    "name": "aTagTypedByNameIsOfferedAsNewAndKeptByName",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.PickerOptionsTest",
+    "name": "projectColoursParseAsHex",
+    "time": "0.135",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.PickerOptionsTest",
+    "name": "anArchivedProjectStaysOnOfferAfterTheUserPicksAnotherOne",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeOfDayTest",
+    "name": "an explicit suffix on an end time is never guessed",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeOfDayTest",
+    "name": "parseTimeOfDay handles 24-hour input",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeOfDayTest",
+    "name": "24-hour input ignores the end-time guess",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeOfDayTest",
+    "name": "parseTimeOfDay handles suffixes and 12-hour guessing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.TimeOfDayTest",
+    "name": "an unsuffixed 12-hour end is the first occurrence after the start",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "theFormStartsFromTheDefaultsAndEditingItLeavesThemAlone",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "aDefaultChangeReachesTheFormUntilTheUserEditsIt",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "startSendsTheFormToTheServerAndCreatesNothingOnThePhone",
+    "time": "0.031",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "nothingStartsUntilTheHeldStateAndTheCacheHaveBeenRead",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "withoutACachedRowTheOpenPomodorosFieldsComeFromTheServersState",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "aSecondTapWhileTheFirstIsOnItsWayStartsNothing",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "theOpenPomodorosFieldsComeFromTheCacheAndNeverStartASession",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "anEditFromAPageDrawnForAnotherPomodoroChangesNothing",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "theStartFormKeepsTheLastPomodorosFieldsAfterTheSessionEnds",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "aTypedDescriptionShowsAtOnceAndGoesToTheQueueWhenTheFieldIsDone",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "aStartThatDoesNotGoThroughKeepsTheFormAndSaysWhy",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "rangesMatchWhatTheServerAcceptsAndAnyOtherLengthBlocksStart",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "permissionGuidanceStaysIndependentAndTheQueueCountsStayVisible",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "anEditTheQueueRefusesDoesNotStayOnScreen",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "withoutAWorkspaceOrWhileLoadingNothingStarts",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "aDescriptionTypedBackToTheOriginalSendsNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "aPickOrBillableEditGoesToTheQueuedRunningEntryEditOfThePomodorosEntry",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModelTest",
+    "name": "theLengthsOfAnEndedSessionGiveWayToTheDefaultsAgain",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.NetworkWatchStateTest",
+    "name": "aRouteThatBecomesValidatedReportsOnlineAgain",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.NetworkWatchStateTest",
+    "name": "aNewDefaultReportsOnlineAndIgnoresTheOldNetworksLateLoss",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.NetworkWatchStateTest",
+    "name": "initialAndUnchangedReportsAskNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "timerEventsReachTheHolderAndEveryEventOrCommentCountsAsAlive",
+    "time": "0.034",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "theStreamUsesTheAccountsServerPathAndCredentialWithNoReadTimeout",
+    "time": "1.108",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "readsCutAnywhereGiveTheSameEventsAsOneRead",
+    "time": "0.164",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "aDroppedConnectionKeepsTheLastStateForTheOfflinePhone",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "crAndCrlfEndLinesAsLfDoesEvenWhenAReadEndsBetweenThem",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "aCancelledLinkTakesNoFurtherStateAndARetiredAccountTakesNone",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "anEventDispatchesOnlyAtTheBlankLineThatEndsItsBlock",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "aMalformedOrTruncatedStateNeverReplacesTheHeldOne",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerEventStreamTest",
+    "name": "aRefusedCredentialEndsTheStreamBeforeAnyEventAndOtherFailuresRetry",
+    "time": "0.161",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "aTimerStartedElsewhereReplacesTheCachedOneAndAsksForItsStop",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "anEditSentDuringTheReadIsNotUndoneByAStaleState",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "theCountdownAndOvertimeRunOnTheCorrectedClock",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "aNoticeNotShownBeforeARestartIsShownOnceAfterIt",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "anIncomingNullCurrentEntryKeepsAPendingLocalStart",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "aFreshProcessReadsTheStateAndItsClockWithoutARequest",
+    "time": "0.028",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "theServersTimerStateReadsFieldForField",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "aRetiredAccountsLateAnswerRestoresNothing",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "aNewerStateUpdatesTheCacheAfterAnOlderOneWroteDuringItsRead",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "aDiscardedPomodoroGivesOneNoticeAcrossReplaysAndRestarts",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "aPausedChainIsFrozenAndARunningCloneAddsItsTimeSinceItsStart",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "anEqualRevisionRefreshesTheArrivalTimeAndClockOffset",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerStateSourceTest",
+    "name": "aSlowerAnswerWithALowerRevisionNeverReplacesTheNewerState",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.NoTrustAllTest",
+    "name": "sharedClientUsesThePinningTrustManagerAndOkHttpsHostNameCheck",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.NoTrustAllTest",
+    "name": "noSourceOrScriptBuildsAnotherTrustPath",
+    "time": "5.482",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.NoTrustAllTest",
+    "name": "noCompiledAppClassButThePinningTrustManagerIsATrustManagerOrHostnameVerifier",
+    "time": "2.329",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.ThemeSettingsModelTest",
+    "name": "aFailedWriteGoesBackToTheStoredSettings",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.ThemeSettingsModelTest",
+    "name": "eachChangeShowsAndIsSaved",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.ThemeSettingsModelTest",
+    "name": "choosingWhatIsStoredWritesNothing",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.ThemeSettingsModelTest",
+    "name": "startsWithTheStoredSettings",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "pauseSegmentsCountOnceAndNotAgainAsTheChainTotal",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "accountMidnightUsesElapsedTimeAcrossTheSpringForward",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "theNextReadIsASecondWhileRunningAndAccountMidnightWhileIdle",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "tokyoTodayIsNotTheUtcDay",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "daylightSavingUsesElapsedTime",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "anUnresolvedAccountZoneHasNoTotals",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "aRunningEntryCountsOnceUpToNowAndKeepsTicking",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "aRemappedEntryCountsOnceAndKeepsTheLocalRow",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "midnightAndTheWeekRollWithTheAccountClock",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "secondsFloorAtWholeSecondsAndABackwardSpanCountsAsZero",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "aLaterStartDayIsOutsideTodayAndThisWeek",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "anOvernightEntryStaysOnItsStartDayIncludingWhileItRuns",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "anEmptyDayFormatsZeroInTheAccountDurationFormat",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "anOlderWeekDoesNotMoveTheReferenceOffToday",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsTest",
+    "name": "aSundayStartIncludesTheSundayAMondayStartLeavesOut",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendRunsTest",
+    "name": "aFailedWorkManagerOperationStillCoversANewChange",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendRunsTest",
+    "name": "aChangeQueuedDuringCancellationIsCoveredAgain",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendRunsTest",
+    "name": "aWorkerJoiningAfterTheWaitingReadCannotBeCancelled",
+    "time": "0.309",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendRunsTest",
+    "name": "aWorkerCancelledBeforeRegistrationNeverJoins",
+    "time": "0.056",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsTest",
+    "name": "otherFailuresKeepTheAppsErrorsAndChangeNothing",
+    "time": "1.044",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsTest",
+    "name": "actionsNeverGoThroughTheChangeQueue",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsTest",
+    "name": "pauseAndSessionStartSendTheBodiesTheReleaseDefines",
+    "time": "0.06",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsTest",
+    "name": "revisionedActionsSendTheRevisionTheyWereShownAtNotTheNewerHeldOne",
+    "time": "0.284",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsTest",
+    "name": "aLostAnswerSaysTheServerIsUnreachableChangesNothingAndIsNotSentAgain",
+    "time": "0.148",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsTest",
+    "name": "anAnswerOrARefusalPutsTheServersStateInTheHolder",
+    "time": "0.102",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsTest",
+    "name": "anAnswerOlderThanTheHeldStateDoesNotReplaceIt",
+    "time": "0.222",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionsTest",
+    "name": "timerAndPomodoroShareOneDurableQuestionIncludingAfterRecreationAndRegrant",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionsTest",
+    "name": "allGrantedAndNotificationSettingsDisabledPathsUseActualGrants",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionsTest",
+    "name": "sdkThresholdsQueryOnlyAvailablePlatformGrants",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionsTest",
+    "name": "timerFirstAndAlreadyGrantedStartsConsumeTheSharedQuestion",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase1",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase2",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase3",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase4",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase5",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase6",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase7",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase8",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase9",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase10",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase11",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase12",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase13",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase14",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase15",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase16",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase17",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase18",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase19",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase20",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase21",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase22",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase23",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase24",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase25",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase26",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase27",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase28",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase29",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase30",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase31",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase32",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase33",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase34",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase35",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase36",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase37",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase38",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase39",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapJsDateRangeTest",
+    "name": "dateRangeCase40",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "onlyDefinitiveAppEndpointAbsenceUsesRoundedDetailedFallback",
+    "time": "0.154",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "authQuotaAndServerFailuresNeverFallBack",
+    "time": "0.062",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "appPostPreservesPrefixFiltersAndInclusiveDatesButDoesNotOverrideCurrentRounding",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "malformedSuccessfulResponsesStayErrorsAndDoNotSearch",
+    "time": "0.155",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "detailedWeeklyAndCsvKeepTheirExistingContractsForTokklCandidates",
+    "time": "0.1",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "allFilterVariantsAreForwardedWithoutChangingTheirMeaning",
+    "time": "0.05",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "unreachableServerStaysANetworkFailure",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "defaultWorkspaceAndRoleMakeACandidateWithoutHostnameOrVersionChecks",
+    "time": "0.077",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryServerTest",
+    "name": "nonCandidateUsesExistingDetailedSearchWithoutAnAppProbe",
+    "time": "0.024",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "aTimerTheServerNoLongerRunsLeavesTheCache",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "aDeleteSentDuringTheRequestIsNotAddedBack",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "aRowWrittenAfterTheRequestStays",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "anOlderAnswerDoesNotAddASecondTimerAfterANewStartReachedTheCache",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "anEntryWithUnsentChangesStaysAsItIs",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "theServersValuesReplaceTheRunningEntrysRow",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "theServersEntryWithUnsentChangesIsNotWritten",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "aReplyFromBeforeSignOutCannotRefillTheCache",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "aChangeQueuedWhenTheRequestBeganStaysAfterItWasSent",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "aStopOnThePhoneAfterTheRequestIsNotUndone",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "aTimerStartedElsewhereReplacesTheOneItStopped",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "anEntryDeletedOnThePhoneAfterTheRequestIsNotAddedBack",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "aTimerTheCacheDidNotHoldIsAdded",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckTest",
+    "name": "theServersEntryIsNotAddedWhileAnUnsentTimerRunsOnThePhone",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "aNegatedFilterSendsItsExcludeField",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "aToggleAddsOrRemovesOneIdAndKeepsTheOrderPicked",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "aSearchKeepsTheNamesHoldingItAndThePickedOnes",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "theOptionsAreTheWorkspacesWithActiveProjectsFirst",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "theFieldsAreTheWebAppsAndOnlyForFiltersInUse",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.SignOutTest",
+    "name": "aSecondSignOutRunsEveryStepAgain",
+    "time": "0.141",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.SignOutTest",
+    "name": "runsEveryStepInOrderAndCountsTheSignOut",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.SignOutTest",
+    "name": "aFailedStepDoesNotStopTheOthersButTheSignOutDoesNotCount",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetSyncTest",
+    "name": "eachProviderKeepsItsOwnKeyAcrossChangesAndProcessRestart",
+    "time": "0.02",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetSyncTest",
+    "name": "failedStorageStillAllowsTheNextPhaseToDraw",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetSyncTest",
+    "name": "aFailedDrawDoesNotRememberAKeyThatWasNeverDrawn",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationTest",
+    "name": "parseDuration accepts the formats people type",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationTest",
+    "name": "formatDurationWithoutSeconds drops the seconds in each duration format",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.DurationTest",
+    "name": "formatDuration renders each Toggl duration format",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase1",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase2",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase3",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase4",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase5",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase6",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase7",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase8",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase9",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase10",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase11",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase12",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase13",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase14",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase15",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase16",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase17",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase18",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase19",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase20",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase21",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase22",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase23",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase24",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase25",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase26",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase27",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase28",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase29",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase30",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase31",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase32",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase33",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase34",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase35",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapTest",
+    "name": "goldenCase36",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TopLevelPageTest",
+    "name": "moreKeepsReportsAndTemplatesBeforeTheOtherPages",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TopLevelPageTest",
+    "name": "theBarAndRailUseTheOwnerOrder",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest",
+    "name": "moreThanFiveProjectsFoldIntoOtherWithoutLosingTimeOrRunningMarker",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest",
+    "name": "largeTextDropsProjectRowsBeforeTemplates",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest",
+    "name": "sizesRequireBothDimensionsAndKeepTemplatesOnlyOnLargeCards",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "withNoneRunningTheTileContinuesTheStoppedEntryThatStartedLast",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "aPausedTileTappedAfterTheChainResumedElsewhereSendsNothing",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "withNothingToContinueTheTileDoesNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "tiedSnappedStartsContinueTheNewestLocalEntryBeforeServerEntries",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "tiedServerStartsContinueTheNewestServerId",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "aPausedTimerMakesTheTileResumeTheChainOnTheServerAtTheShownRevision",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "aRunningEntryMakesTheTileStopIt",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "aResumedCloneStopsThroughTheQueue",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileContentTest",
+    "name": "aTapActsOnWhatTheTileShowsNotOnWhatTheCacheHoldsByNow",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trust.SessionTrustModelTest",
+    "name": "changedCertificatePromptsWithTheNewOneAndAcceptingPinsIt",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trust.SessionTrustModelTest",
+    "name": "anAnswerFromTheServerClearsTheRefusal",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trust.SessionTrustModelTest",
+    "name": "aFailedWriteKeepsTheRefusalAndTheWayBack",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trust.SessionTrustModelTest",
+    "name": "cancellingKeepsRequestsRefusedAndTheSameRefusalLeavesThePromptClosed",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trust.SessionTrustModelTest",
+    "name": "otherNetworkFailuresShowNoPrompt",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trust.SessionTrustModelTest",
+    "name": "anotherRefusalOpensThePromptAgain",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.trust.SessionTrustModelTest",
+    "name": "unconfirmedHttpSessionPromptsAndSendsNothingUntilTheUserConfirms",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "requestToAnotherPortFailsWithTheOriginAndSendsNothing",
+    "time": "2.826",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "refusalCarriesNoCredentials",
+    "time": "0.05",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "redirectsAfterAPostKeepOkHttpsMethodRules",
+    "time": "0.534",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "httpsServerNeedsNoConfirmation",
+    "time": "0.963",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "signInMakesTheUrlBeingTriedTheConfiguredServerUntilItReturns",
+    "time": "0.072",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "redirectToTheSameOriginIsFollowedWithTheCredentials",
+    "time": "0.094",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "plainHttpServerGetsNoRequestUntilTheUserConfirmsIt",
+    "time": "0.089",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "requestToAnotherHostFailsWithTheHostName",
+    "time": "0.035",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "redirectToAnotherHostIsRefused",
+    "time": "0.022",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "withoutAConfiguredServerEveryRequestIsRefused",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "requestToTheConfiguredServerPasses",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "confirmationCoversOnlyTheUrlTheUserConfirmed",
+    "time": "0.033",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ConfiguredServerGuardTest",
+    "name": "requestWithAnotherSchemeFails",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarTimeZoneTest",
+    "name": "theWeekAndItsBlocksFollowTheAccountTimezone",
+    "time": "0.19",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportTabsModelTest",
+    "name": "theWeeklyTabAsksForTheAccountsWeekAndSortsAsTheWebApp",
+    "time": "0.62",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportTabsModelTest",
+    "name": "theFiltersGoWithEveryTabsRequest",
+    "time": "0.699",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportTabsModelTest",
+    "name": "aWeeklyRowWithoutSevenDaysIsAnUnexpectedAnswer",
+    "time": "0.103",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportTabsModelTest",
+    "name": "aRangesWeekStartsOnTheAccountsFirstDay",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportTabsModelTest",
+    "name": "weeklyRowsWithTheSameTimeSortByTitleIgnoringCase",
+    "time": "0.039",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportTabsModelTest",
+    "name": "aFailedNextPageShowsWhyAndTryAgainLoadsTheFirstPage",
+    "time": "0.194",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportTabsModelTest",
+    "name": "theDetailedTabPagesAsTheServerSays",
+    "time": "0.207",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsServerTest",
+    "name": "aNextRowThatDoesNotMoveForwardIsRefused",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsServerTest",
+    "name": "aDetailedPageWhoseNextRowDoesNotMoveForwardIsRefused",
+    "time": "0.092",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsServerTest",
+    "name": "aRowWithSeveralEntriesCountsItsAmountOnce",
+    "time": "0.327",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsServerTest",
+    "name": "theSearchAsksForTheRangeWithTheWorkspacesRoundingAndFollowsTheNextRow",
+    "time": "0.06",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsServerTest",
+    "name": "theWorkspaceIsTheDefaultOneWithItsRounding",
+    "time": "0.055",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsServerTest",
+    "name": "aStartThatIsNotADateAndTimeIsAnInvalidResponse",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.MergedPermissionsTest",
+    "name": "exactAlarmsUseThePermissionEachApiAllows",
+    "time": "0.04",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.MergedPermissionsTest",
+    "name": "thePhaseAlarmReceiversAreDeclared",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.MergedPermissionsTest",
+    "name": "theMergedManifestAsksForThePermissionsTheAppUsesOnly",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.MergedPermissionsTest",
+    "name": "pomodoroAlarmHasAnUnexportedLockScreenTask",
+    "time": "0.018",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.MergedPermissionsTest",
+    "name": "onlyTheRingingAndTimerSyncServicesMayRunInTheForeground",
+    "time": "0.142",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsStoreTest",
+    "name": "theDefaultWorkspaceReadsBackAsSavedAndGoesWhenNull",
+    "time": "0.113",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsStoreTest",
+    "name": "clearRemovesTheDurationFormat",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsStoreTest",
+    "name": "theGroupingReadsBackAsSavedAndSettingsWithoutItGroup",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsStoreTest",
+    "name": "eachDurationFormatReadsBackAsSaved",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsStoreTest",
+    "name": "settingsStoredWithoutADurationFormatReadAsImproved",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsStoreTest",
+    "name": "theClockFormatReadsBackAsSaved",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsStoreTest",
+    "name": "theAccountIdReadsBackAsSavedAndIsClearedWithTheAccount",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsModelTest",
+    "name": "anEditPreservesEveryOtherCurrentDefault",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsModelTest",
+    "name": "invalidAndOutOfRangeDraftsNeverReachTheRepository",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsModelTest",
+    "name": "everyFieldAcceptsBothInclusiveBounds",
+    "time": "0.028",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewSettingTest",
+    "name": "withoutTokklsPreferencesTheChoiceStaysOnThePhone",
+    "time": "0.114",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewSettingTest",
+    "name": "eachRefreshOpensTheServersViewAndListWhenItIsMissingOrUnknown",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewSettingTest",
+    "name": "aStoredUnsentChoiceGoesWithTheFirstRefreshAfterAColdStart",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewSettingTest",
+    "name": "aTapPostsTheViewAndTheRefreshRightAfterItKeepsTheTap",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewSettingTest",
+    "name": "aColdStartOpensTheStoredViewBeforeAnyRefresh",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewSettingTest",
+    "name": "aFailedPreferencesReadKeepsTheView",
+    "time": "0.018",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewSettingTest",
+    "name": "anOfflineTapStaysUnsentAndTheNextRefreshSendsItInsteadOfReadingTheServers",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.TextureTokensTest",
+    "name": "lightMixesMatchTheirFormulas",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.TextureTokensTest",
+    "name": "darkMixesMatchTheirFormulas",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aWeekBehindADownProxyIsUnreachableAndLoadsOnTheNextTry",
+    "time": "0.678",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "anOfflineForegroundKeepsTheLoadedWeekWithNoError",
+    "time": "0.047",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aChosenDayShowsWithItsWeekAndAStepCrossesIntoTheNext",
+    "time": "0.029",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aMovedLegacyShortEntryIsRejectedBeforeQueueing",
+    "time": "0.034",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "theForegroundLoadsTheShownWeekAgainAndTheOthersWhenTheyShow",
+    "time": "0.283",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "theFirstCachedWeekGetsTheEntryFromTheEveningBeforeTheCache",
+    "time": "0.036",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aFailedWeekSaysWhyAndLoadsOnTheNextTry",
+    "time": "0.092",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "theRunningEntryAndAnAccountWithoutAWorkspaceQueueNothing",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aMovedEntryOfAWeekFromTheServerKeepsItsTimesOnceTheCacheDropsIt",
+    "time": "0.118",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aRejectedPendingSpanKeepsItsActualTimesAndUnsentState",
+    "time": "0.02",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aWeekOutsideTheCacheAsksFromTheLongestEntryBeforeItAndKeepsWhatRunsIntoIt",
+    "time": "0.025",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "theNetworksReturnLoadsTheShownWeekOnlyWhenItGotNoAnswer",
+    "time": "0.098",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aCreateDragQueuesAnEntryInTheDefaultWorkspace",
+    "time": "0.075",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aCachedWeekShowsTheCacheOfflineWithNoError",
+    "time": "0.022",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aMoveInAWeekFromTheServerQueuesTheServersEntry",
+    "time": "0.03",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarModelTest",
+    "name": "aMoveAndAResizeQueueTheCachedEntry",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.SingleHttpClientTest",
+    "name": "noAppClassButSharedHttpClientBuildsAnHttpClient",
+    "time": "1.508",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryRowsTest",
+    "name": "alikeEntriesOfADayFormOneGroupAndOtherDaysAndDescriptionsStayApart",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryRowsTest",
+    "name": "withoutTheCollapsePreferenceEveryEntryHasItsOwnRow",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryRowsTest",
+    "name": "tagsMatchInAnyOrderAndJoinWithCommasAsInJavaScript",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryRowsTest",
+    "name": "theKeyWritesFieldsAsJavaScriptJoinDoes",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryRowsTest",
+    "name": "theStartTheStopAndTheProjectsNameDoNotCount",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryRowsTest",
+    "name": "eachFieldOfTheKeyKeepsEntriesApart",
+    "time": "0.127",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryRowsTest",
+    "name": "tagsSortByUtf16CodeUnits",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.ZonedTimeTest",
+    "name": "addClockMinutes handles negative shifts, midnight crossings and milliseconds",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.ZonedTimeTest",
+    "name": "zonedToUtc and dateKey round-trip",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.ZonedTimeTest",
+    "name": "the next local day at a clock time spans DST nights correctly",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.ZonedTimeTest",
+    "name": "addClockMinutes shifts by local clock time across Madrid DST changes",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryDaysTest",
+    "name": "entriesGoUnderTheirAccountDayNewestFirstWithDayTotalsAndTheRunningOneStaysOut",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryDaysTest",
+    "name": "aRejectedPendingSpanStaysVisibleAtItsActualTimesForCorrection",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryDaysTest",
+    "name": "theSnappedStartDecidesTheDayOfAnUnsentEntry",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryDaysTest",
+    "name": "anUnsentEntryShowsTheTimesTheServerWillStore",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryDaysTest",
+    "name": "aCachedEntryFromBeforeTheWindowShowsAsNotCached",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryDaysTest",
+    "name": "anEntryInTheCacheShowsOnceAsCachedAndOneInTwoPagesAsTheLaterPageHasIt",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryDaysTest",
+    "name": "anEntryTheServerHasShowsTheServersTimes",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.DescriptionSuggestionsTest",
+    "name": "theQueryMatchesTheDescriptionProjectOrClientInAnyCase",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.DescriptionSuggestionsTest",
+    "name": "atMostEightShow",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.DescriptionSuggestionsTest",
+    "name": "anEmptyQuerySuggestsTheNewestDistinctEntries",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "snappedInstantFollowsTheWallClockOfTheTimeZone",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "snappedSplitKeepsHalvesMeetingAcrossAHalfHourClockChange",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "snappedSplitCutsAnEntrySavedUnderAnotherResolutionFromItsSnappedWhole",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "snappedInstantPicksTheNearestGridPointAndATieGoesUp",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "anOvernightSplitUsesTheNextDaysClockTimeOnTheNightsTheClocksChange",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "halvesSplitAtSnappedInstantAddUpToTheSnappedWhole",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "snappedSplitReturnsTheHalvesTheServerStoresMeetingAtTheSplit",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "aSplitTimeOnTheEntrysDayMovesToTheGridAndOneOutsideOrUnreadableIsRefused",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "snappedSplitRefusesASplitOnOrOutsideTheSnappedStartAndStop",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.SplitEntryTest",
+    "name": "forTwelveHourUsersATimeWithoutAmOrPmIsTheOneNearerTheStart",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "starting a second timer stops the first one at the new start, snapped to the resolution",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "the stop endpoint stores the grid point nearest the stop when that is later than the start",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "a stop before the start stops on the start, and the stop endpoint one step after it",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "a timer left running past 999 hours stops at the cap",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "a switch between timers is stored back to back on either side of a half step",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "a switch within half a step of the old start stores a zero-length entry",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "the stop endpoint stores one step when the nearest grid point is the start",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "latest typed prediction keeps positive Stop spans but rejects legacy zero switches",
+    "time": "0.116",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "the grid follows the wall clock of the zone",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.StopSpanTest",
+    "name": "a value that is not a time resolution throws, as snapSpan does",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "anOfflineOrRefusedPauseKeepsTheReminderAndSaysWhy",
+    "time": "0.095",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "anOldThresholdCannotDeliverAfterTheHoursIncrease",
+    "time": "0.033",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "oncePerTimerAcrossRestartDescriptionEditAndPreferenceChanges",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "pauseGoesToTheServerAfterTheBroadcastEndsAndResumeRemindsFromTheNewSegmentsStart",
+    "time": "0.078",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "oneDelayAtStartPlusHoursAndNoDelayWhenIdleOrDisabled",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "futureTimerWaitsAndChangingHoursReplacesTheDelay",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "aPauseNotOfferedNowOrForAnotherTimerSendsNothing",
+    "time": "0.032",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "startCorrectionInvalidatesTheOldStopAction",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "stopBeforeDueAndStaleActionsNeverStopAnotherTimer",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "keepRunningConfirmsAndCorrectingStartResetsIt",
+    "time": "0.031",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderSyncTest",
+    "name": "serverIdMappingKeepsConfirmationAndResolvesStop",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsModelTest",
+    "name": "aNewClientGoesWithItsNameTrimmedAndBlankNotesAsNone",
+    "time": "0.145",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsModelTest",
+    "name": "archivingAsksFirstThenArchivesTheClientAndRefreshesTheCache",
+    "time": "0.095",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsModelTest",
+    "name": "restoringBringsTheProjectsBack",
+    "time": "0.101",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "aColdStartHasTheStoredValuesOrTokklsDefaultsBeforeAnyRefresh",
+    "time": "0.024",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "anOfflineChangeStaysUnsentAndTheNextRefreshSendsItInsteadOfReadingTheServers",
+    "time": "0.049",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "aMalformedKeyFallsBackToItsOwnDefaultAlone",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "storedUnsentValuesGoWithTheFirstRefreshAfterAColdStart",
+    "time": "0.027",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "aChangePostsOnlyTheFourKeysAndTheRefreshRightAfterItKeepsTheChange",
+    "time": "0.031",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "eachRefreshTakesTheServersValues",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "withoutTokklsPreferencesTheValuesStayOnThePhoneFromTokklsDefaults",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "outOfRangeValuesAreClampedBeforeSending",
+    "time": "0.262",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "aFailedPreferencesReadKeepsTheValues",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSettingTest",
+    "name": "forgetGoesBackToTokklsDefaultsWithNothingUnsent",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapUnsentTest",
+    "name": "a value that is not a time resolution leaves the span unchanged",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapUnsentTest",
+    "name": "both ends are cut to whole seconds before snapping, as the server does",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapUnsentTest",
+    "name": "a stop before the start is refused once there is a resolution to snap to",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.SnapUnsentTest",
+    "name": "with a time resolution the span snaps like snapSpan",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "stopShowsTheIdleTimerAtOnceAndTakesTheDescriptionBeingTyped",
+    "time": "0.151",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aFavoriteStartsAtOnceAndTheDraftGoes",
+    "time": "0.028",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "startWaitsForTheAccountsWorkspace",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aSecondContinueBeforeTheCacheShowsTheFirstIsIgnored",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "picksAndBillableGoToTheQueueAtOnceWithEveryField",
+    "time": "0.031",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "pickingABillableProjectMakesTheEntryBillableAndTagsAloneDoNot",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aRefreshCannotTakeBackWhatIsBeingTypedButShowsOnceItIsSent",
+    "time": "0.308",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "startShowsTheDraftRunningAtOnceAndQueuesItAtTheTapTime",
+    "time": "0.018",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aFavoriteWaitsForTheWorkspace",
+    "time": "0.308",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "eachStartMadeHereIsAnnouncedAfterTheQueueHasIt",
+    "time": "0.686",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "startAndStopTapsAreTracedUntilTheScreenShowsWhatTheyDid",
+    "time": "0.074",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "continueKeepsTheDescriptionBeingTypedForTheRunningEntry",
+    "time": "0.027",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aSuggestionFillsEveryFieldOfTheDraftAndOfTheRunningEntry",
+    "time": "0.023",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "continueBringsTheDraftBackWhenNothingStarts",
+    "time": "0.051",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aTapTheScreenNeverShowedEndsAtTheNextTap",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aSecondStartBeforeTheCacheShowsTheFirstIsIgnored",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "continueStartsThePastEntrysFieldsInItsWorkspaceAndStopsTheRunningOne",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aFavoriteStartsWhileAnEntryRunsAfterItsTypedDescription",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "theTimerFollowsTheCachesRunningEntry",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "theClockCountsWholeSecondsFromTheStart",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aDescriptionGoesToTheQueueOnceTypingEnds",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aStartMadeElsewhereDoesNotAnnounceAnInAppStart",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerModelTest",
+    "name": "aStartWaitsForACollectorWithoutHoldingUpTheTimer",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "resumeSendsTheRevisionTheControlWasDrawnAt",
+    "time": "0.117",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "pauseOfAPhoneMadeEntryFollowsItsServerId",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "stopOfAnEntryTheQueueNoLongerRunsDoesNothing",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "stopOfARunningEntryIsQueuedAlsoForAResumedClone",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "pauseOfAnEntryThatNoLongerRunsSendsNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "aControlDrawnForAnotherAccountDoesNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "pauseOfAnUnsentEntrySendsTheQueueFirst",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "resumeOfATimerNoLongerPausedSendsNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "stopWhilePausedOfATimerNoLongerPausedSendsNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "aTapWhileAServerActionIsOnItsWaySendsNothingButStopStillQueues",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "stopWhilePausedDiscardsAtTheDrawnRevision",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "pauseOfTheShownEntryGoesToTheServerAndQueuesNothing",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerSurfaceActionsTest",
+    "name": "pauseIsNotSentWhereTheControlsNoLongerOfferIt",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.NotificationPermissionAskTest",
+    "name": "aQuestionThatHasNotLaunchedCanStillAskAfterTheScreenReturns",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.NotificationPermissionAskTest",
+    "name": "notificationsAlreadyAllowedAskNothingAndCountAsTheQuestion",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.NotificationPermissionAskTest",
+    "name": "theFirstStartOnAndroid13AndLaterAsksAndLaterStartsDoNot",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.NotificationPermissionAskTest",
+    "name": "belowAndroid13NothingIsAskedOrRecorded",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.NotificationPermissionAskTest",
+    "name": "theRecordOutlivesTheModel",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutModelTest",
+    "name": "confirmingSignsOut",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutModelTest",
+    "name": "unsentChangesAskFirstWithTheirCount",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutModelTest",
+    "name": "tapsWhileSigningOutStartNoSecondSignOut",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutModelTest",
+    "name": "aQueueThatCannotBeReadSignsNothingOut",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutModelTest",
+    "name": "confirmAndCancelDoNothingWithoutTheWarning",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutModelTest",
+    "name": "aFailedClearSaysSoAndATapTriesAgain",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutModelTest",
+    "name": "cancelKeepsEverything",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutModelTest",
+    "name": "anEmptyQueueSignsOutWithoutAsking",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "opensTheHeldPhaseItsIntentNamesWithTheServersTransitionNumberAndOvertime",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "aConfirmOnAnotherDeviceOrAnEndedSessionClosesIt",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "aRefusalWithinTheSamePhaseStaysOpenAtTheServersRevision",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "duplicateAndStaleIntentsLeaveTheAlarmOnScreen",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "aMissingOrStaleIdentityOrAnEndNotYetReachedCannotOpen",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "withoutTheTimerApiOrASessionNothingOpens",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "aNewRevisionOfItsPhaseKeepsItOpenWithThatRevision",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "recreationSendsNothing",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "theOvertimeIsCorrectedByTheStatesClockOffset",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "nextSendsTheShownRevisionOnceAndTheServersAnswerClosesIt",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "itOpensOnceTheStoredStateHasLoaded",
+    "time": "0.064",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "endSendsTheShownRevisionAndClosesWhenTheSessionIsGone",
+    "time": "0.08",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest",
+    "name": "offlineLeavesTheAlarmOpenWithTheStandardMessageAndTheUserCanRetry",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "withoutTheTimerApiOrAHeldStateNothingIsArmed",
+    "time": "0.038",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "aDeliveryForAnotherPhaseRingsNothing",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "aMissedEndIsArmedInThePastAndItsDeliveryRingsWithoutMovingThePhaseOn",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "noSessionCancelsTheAlarmAndStopsTheRing",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "aDeniedPermissionArmsNothingRingsAPastEndAtOnceAndAGrantArmsAgain",
+    "time": "0.036",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "releaseCancelsTheAlarmAndStopsTheRing",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "theAlarmEndFollowsAnOffsetOfEitherSign",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "aNewPhaseCancelsTheOldRingAndArmsTheNewPhase",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "aRevisionWithinTheRingingPhaseKeepsItsRingAndArmsNothing",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "armsOneAlarmAtThePlannedEndLessTheClockOffsetKeyedByThePhaseStart",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "rearmingArmsTheStoredPhaseAgainAndAPastEndOnlyThroughTheAlarm",
+    "time": "0.011",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "anEarlyDeliveryArmsThePlannedEndAgain",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmTest",
+    "name": "eachStateRecomputesTheAlarmAndAnUnchangedOneArmsNothingMore",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "theClonesTimeIsTheChainsSecondsPlusItsOwnOnTheServersClock",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "withNoTimerAndNoChainTheControlsAreIdle",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "aPausedChainShowsTheServersFrozenSecondsAndWhatResumeStarts",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "aRunningEntryThatIsNotTheCloneWinsAndAddsNothing",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "theClockNeverCountsBackBeforeTheClonesStart",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "aChainWhoseCloneNoLongerRunsInTheCacheShowsNothing",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "aPausedTargetFollowsTheRevisionSoAnOlderOneActsOnNothing",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "aPomodoroSessionHidesPause",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "aRunningEntryOutsideAChainShowsItsOwnTimeAndOffersPause",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.TimerControlsTest",
+    "name": "withoutTheTimerApiNoChainShowsAndPauseIsNotOffered",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendTest",
+    "name": "anEmptyQueueOrASignedOutPhoneEndsTheWork",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendTest",
+    "name": "aRefusalWaitsForTheUserInsteadOfRetrying",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendTest",
+    "name": "noNetworkA5xxA429AndTheDiskRetry",
+    "time": "0.128",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.BackupRulesTest",
+    "name": "mergedManifestTurnsBackupOff",
+    "time": "0.754",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.BackupRulesTest",
+    "name": "dataExtractionRulesExcludeEveryDomainFromEveryTransferMode",
+    "time": "0.161",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.NetworkSecurityConfigTest",
+    "name": "configHoldsNoPinOrCertificate",
+    "time": "0.035",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.NetworkSecurityConfigTest",
+    "name": "manifestReferencesTheNetworkSecurityConfig",
+    "time": "0.021",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.NetworkSecurityConfigTest",
+    "name": "baseConfigPermitsCleartextAndTrustsSystemAndUserCas",
+    "time": "0.028",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFormatTest",
+    "name": "aProjectWithoutAColourMixesTheFallback",
+    "time": "0.006",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFormatTest",
+    "name": "percentOfNothingIsZero",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFormatTest",
+    "name": "anUnknownCurrencyCodeFollowsTheAmount",
+    "time": "0.041",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFormatTest",
+    "name": "percentHasOneDecimal",
+    "time": "0.016",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFormatTest",
+    "name": "percentMatchesTheWebAppInNode",
+    "time": "0.775",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFormatTest",
+    "name": "moneyUsesTheCurrencysOwnDecimals",
+    "time": "0.105",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFormatTest",
+    "name": "projectMarkMixesTheProjectColourSixtyPercentWithTheMix",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "fitMoveInDayPullsAMoveBackSoTheEntryEndsAtMidnightOnTheMadridAutumnClockChange",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "clampDayMoveStopsABlockWithSecondsInsideTheDay",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "aMoveKeepsTheDurationAndLandsTheStartOnTheGrid",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "clampDayMovePinsTheEdgesOfBlocksCutOffAtMidnight",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "aResizeMovesOneEndAndKeepsAStep",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "snapToStepRoundsToWholeStepsOnTheDay",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "aCreateDragMakesAnEntryOfAtLeastAStepOnTheDay",
+    "time": "0.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "fitMoveInDayLeavesAnEntryThatAlreadyRanPastMidnightAlone",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "anEndResizeSendsAnOffGridStartOnTheGrid",
+    "time": "0.01",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "clampDayMoveKeepsAMovedBlockInsideTheSelectedDay",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "fitMoveInDayLeavesAMoveAloneWhenTheEntryStillEndsOnTheShownDay",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "aDayModeMoveEndsByMidnightOnTheAutumnClockChange",
+    "time": "0.003",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "dragStepIsTheSmallestMultipleOfTheResolutionThatIsAtLeast15Minutes",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "droppedMinuteShowsTheClockMinuteThatSnappedInstantDropsTheBoundaryOn",
+    "time": "0.072",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "droppedMinuteKeepsAnOnGridBoundaryOnTheGridAndLandsAnOffGridOneOnIt",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarDragTest",
+    "name": "clampDayMoveNeverPushesABlockAgainstTheDrag",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "activeKeepsServerCycleRevisionAndEntryFieldsAndCorrectsBothBoundaries",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "keysDistinguishTagNamesContainingSeparators",
+    "time": "0.039",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "missingOrWrongEntryDoesNotLeakAnotherTimersFields",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "noAccountAndUnsupportedNeverExposeHeldFields",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "rememberedFieldsRoundTripOnlyForTheirAccountAndInvalidDataIsIgnored",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "onlyTheSessionsMatchingRunningEntryIsRemembered",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "keyFollowsEverythingDrawnAndControlsButNotTheTickingClock",
+    "time": "0.052",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "plannedEndAndMatchingRingRedrawWithoutAdvancingThePhase",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "idleUsesAllStoredDefaultsAndLastFieldsInTheirWorkspace",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "catalogLabelsAreScopedToTheEntryWorkspace",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "firstUseAndAnotherAccountStartWithEmptyFields",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "acceptedStatesRememberFieldsBeforeIdleAndRejectStaleAndRetiredResponses",
+    "time": "0.018",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest",
+    "name": "bothRestKindsRetainTheServersCompletedWorkAndUpcomingTransition",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileRefreshThrottleTest",
+    "name": "aHungReadStaysSingleEvenAfterTheMinuteElapses",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileRefreshThrottleTest",
+    "name": "anOldOpeningCannotResetTheNewAccountsThrottle",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileRefreshThrottleTest",
+    "name": "failuresAlsoRespectTheMinuteRequestCap",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileRefreshThrottleTest",
+    "name": "anOfflineOpeningDoesNotSpendTheNextOnlineAttempt",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileRefreshThrottleTest",
+    "name": "aNewAccountCanRefreshWhileTheOldAccountsReadStillHangs",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileRefreshThrottleTest",
+    "name": "simultaneousOpeningsStartOnlyOneRead",
+    "time": "0.151",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.TileRefreshThrottleTest",
+    "name": "successfulReadsWaitAFullMinuteAfterTheAnswer",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.AccountTimeTest",
+    "name": "withoutATimeResolutionAStopKeepsTheTapTime",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.AccountTimeTest",
+    "name": "capturedStopPredictsTheReleasedShortTrashAndLongSpan",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.AccountTimeTest",
+    "name": "snapsUnsentEntriesOnTheAccountZonesGrid",
+    "time": "0.001",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.AccountTimeTest",
+    "name": "aTimezoneThePhoneCannotResolveGivesNoTimesAndNoFallback",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.AccountTimeTest",
+    "name": "withoutATimeResolutionUnsentEntriesKeepTheirTimes",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.AccountTimeTest",
+    "name": "showsTimesInTheAccountZoneAndNotTheDevicesZone",
+    "time": "0.004",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.AccountTimeTest",
+    "name": "stopsOnTheAccountZonesGrid",
+    "time": "0.0",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.time.NoDeviceZoneTest",
+    "name": "noAppClassReadsTheDeviceZone",
+    "time": "0.104",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinningTrustManagerTest",
+    "name": "thePinnedCertificateIsAccepted",
+    "time": "0.202",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinningTrustManagerTest",
+    "name": "aPinCoversOnlyItsHostAndPort",
+    "time": "0.019",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinningTrustManagerTest",
+    "name": "anUnpinnedCertificateFailsWithTheFingerprintAndSubjectForThePrompt",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinningTrustManagerTest",
+    "name": "aDifferentCertificateWithTheSameSubjectIsRejected",
+    "time": "0.017",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinningTrustManagerTest",
+    "name": "theFingerprintIsTheOneOpensslPrints",
+    "time": "0.005",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinningTrustManagerTest",
+    "name": "aCertificateThePlatformTrustsNeverReachesThePin",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinningTrustManagerTest",
+    "name": "withoutTheServersHostThePlatformAloneDecides",
+    "time": "0.007",
+    "failure": []
+  }
+]

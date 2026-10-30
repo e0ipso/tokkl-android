@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.timer.TimerTotalsTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:44.806Z" hostname="punta-des-patro" time="0.004">
+  <properties/>
+  <testcase name="pauseSegmentsCountOnceAndNotAgainAsTheChainTotal" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.001"/>
+  <testcase name="accountMidnightUsesElapsedTimeAcrossTheSpringForward" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="theNextReadIsASecondWhileRunningAndAccountMidnightWhileIdle" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.001"/>
+  <testcase name="tokyoTodayIsNotTheUtcDay" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="daylightSavingUsesElapsedTime" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="anUnresolvedAccountZoneHasNoTotals" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="aRunningEntryCountsOnceUpToNowAndKeepsTicking" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="aRemappedEntryCountsOnceAndKeepsTheLocalRow" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.001"/>
+  <testcase name="midnightAndTheWeekRollWithTheAccountClock" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="secondsFloorAtWholeSecondsAndABackwardSpanCountsAsZero" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="aLaterStartDayIsOutsideTodayAndThisWeek" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="anOvernightEntryStaysOnItsStartDayIncludingWhileItRuns" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="anEmptyDayFormatsZeroInTheAccountDurationFormat" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="anOlderWeekDoesNotMoveTheReferenceOffToday" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.0"/>
+  <testcase name="aSundayStartIncludesTheSundayAMondayStartLeavesOut" classname="com.github.e0ipso.tokkl.timer.TimerTotalsTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

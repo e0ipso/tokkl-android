@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.timer.TimerModelTest" tests="23" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:41.823Z" hostname="punta-des-patro" time="1.727">
+  <properties/>
+  <testcase name="stopShowsTheIdleTimerAtOnceAndTakesTheDescriptionBeingTyped" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.036"/>
+  <testcase name="aFavoriteStartsAtOnceAndTheDraftGoes" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.015"/>
+  <testcase name="startWaitsForTheAccountsWorkspace" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.009"/>
+  <testcase name="aSecondContinueBeforeTheCacheShowsTheFirstIsIgnored" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.011"/>
+  <testcase name="picksAndBillableGoToTheQueueAtOnceWithEveryField" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.021"/>
+  <testcase name="pickingABillableProjectMakesTheEntryBillableAndTagsAloneDoNot" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.012"/>
+  <testcase name="aRefreshCannotTakeBackWhatIsBeingTypedButShowsOnceItIsSent" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.316"/>
+  <testcase name="startShowsTheDraftRunningAtOnceAndQueuesItAtTheTapTime" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.013"/>
+  <testcase name="aFavoriteWaitsForTheWorkspace" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.308"/>
+  <testcase name="eachStartMadeHereIsAnnouncedAfterTheQueueHasIt" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.647"/>
+  <testcase name="startAndStopTapsAreTracedUntilTheScreenShowsWhatTheyDid" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.037"/>
+  <testcase name="continueKeepsTheDescriptionBeingTypedForTheRunningEntry" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.02"/>
+  <testcase name="aSuggestionFillsEveryFieldOfTheDraftAndOfTheRunningEntry" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.019"/>
+  <testcase name="continueBringsTheDraftBackWhenNothingStarts" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.037"/>
+  <testcase name="aTapTheScreenNeverShowedEndsAtTheNextTap" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.025"/>
+  <testcase name="aSecondStartBeforeTheCacheShowsTheFirstIsIgnored" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.014"/>
+  <testcase name="continueStartsThePastEntrysFieldsInItsWorkspaceAndStopsTheRunningOne" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.017"/>
+  <testcase name="aFavoriteStartsWhileAnEntryRunsAfterItsTypedDescription" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.016"/>
+  <testcase name="theTimerFollowsTheCachesRunningEntry" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.019"/>
+  <testcase name="theClockCountsWholeSecondsFromTheStart" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.036"/>
+  <testcase name="aDescriptionGoesToTheQueueOnceTypingEnds" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.058"/>
+  <testcase name="aStartMadeElsewhereDoesNotAnnounceAnInAppStart" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.018"/>
+  <testcase name="aStartWaitsForACollectorWithoutHoldingUpTheTimer" classname="com.github.e0ipso.tokkl.timer.TimerModelTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Exception in thread "pool-95-thread-1 @coroutine#3831" java.lang.IllegalStateException: the database refused the start
+	at com.github.e0ipso.tokkl.timer.TimerModelTest$FakeChanges.start(TimerModelTest.kt:586)
+	at com.github.e0ipso.tokkl.timer.TimerModel$startWith$2.invokeSuspend(TimerModel.kt:336)
+	at com.github.e0ipso.tokkl.timer.TimerModel$startWith$2.invoke(TimerModel.kt)
+	at com.github.e0ipso.tokkl.timer.TimerModel$startWith$2.invoke(TimerModel.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startCoroutineUndispatched(Undispatched.kt:20)
+	at kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:360)
+	at kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:124)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.launch(Builders.common.kt:52)
+	at kotlinx.coroutines.BuildersKt.launch(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.launch$default(Builders.common.kt:43)
+	at kotlinx.coroutines.BuildersKt.launch$default(Unknown Source)
+	at com.github.e0ipso.tokkl.timer.TimerModel.startWith(TimerModel.kt:332)
+	at com.github.e0ipso.tokkl.timer.TimerModel.continueEntry(TimerModel.kt:296)
+	at com.github.e0ipso.tokkl.timer.TimerModelTest.eachStartMadeHereIsAnnouncedAfterTheQueueHasIt$lambda$5(TimerModelTest.kt:482)
+	at com.github.e0ipso.tokkl.timer.TimerModelTest$onMain$1.invokeSuspend(TimerModelTest.kt:542)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:101)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [CoroutineId(3832), "coroutine#3832":StandaloneCoroutine{Cancelling}@6e5156a, java.util.concurrent.Executors$AutoShutdownDelegatedExecutorService@3a87de00]
+Exception in thread "pool-99-thread-1 @coroutine#4023" java.lang.IllegalStateException: the database refused the start
+	at com.github.e0ipso.tokkl.timer.TimerModelTest$FakeChanges.start(TimerModelTest.kt:586)
+	at com.github.e0ipso.tokkl.timer.TimerModel$startWith$2.invokeSuspend(TimerModel.kt:336)
+	at com.github.e0ipso.tokkl.timer.TimerModel$startWith$2.invoke(TimerModel.kt)
+	at com.github.e0ipso.tokkl.timer.TimerModel$startWith$2.invoke(TimerModel.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startCoroutineUndispatched(Undispatched.kt:20)
+	at kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:360)
+	at kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:124)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.launch(Builders.common.kt:52)
+	at kotlinx.coroutines.BuildersKt.launch(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.launch$default(Builders.common.kt:43)
+	at kotlinx.coroutines.BuildersKt.launch$default(Unknown Source)
+	at com.github.e0ipso.tokkl.timer.TimerModel.startWith(TimerModel.kt:332)
+	at com.github.e0ipso.tokkl.timer.TimerModel.continueEntry(TimerModel.kt:296)
+	at com.github.e0ipso.tokkl.timer.TimerModelTest.continueBringsTheDraftBackWhenNothingStarts$lambda$1(TimerModelTest.kt:447)
+	at com.github.e0ipso.tokkl.timer.TimerModelTest$onMain$1.invokeSuspend(TimerModelTest.kt:542)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:101)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [CoroutineId(4024), "coroutine#4024":StandaloneCoroutine{Cancelling}@26556dc, java.util.concurrent.Executors$AutoShutdownDelegatedExecutorService@4767c8f4]
+]]></system-err>
+</testsuite>

@@ -1,0 +1,112 @@
+[
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest",
+    "name": "theRetryAfterTheBackoffSendsTheQueue",
+    "time": "32.972",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest",
+    "name": "callsThatQueueNothingScheduleNoWork",
+    "time": "2.119",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest",
+    "name": "restoringTheNetworkSendsTheQueueWithTheAppClosed",
+    "time": "2.157",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckServerTest",
+    "name": "startingATimerSchedulesOneCheckAndStoppingItCancelsIt",
+    "time": "3.077",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "reminderSwitchAndHoursValidateAndApply",
+    "time": "6.199",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest",
+    "name": "suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField",
+    "time": "68.193",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest",
+    "name": "signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard",
+    "time": "17.181",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest",
+    "name": "focusedSignInFieldStaysAboveTheKeyboard",
+    "time": "15.507",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest",
+    "name": "signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard",
+    "time": "15.628",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest",
+    "name": "signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard",
+    "time": "15.460",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  }
+]

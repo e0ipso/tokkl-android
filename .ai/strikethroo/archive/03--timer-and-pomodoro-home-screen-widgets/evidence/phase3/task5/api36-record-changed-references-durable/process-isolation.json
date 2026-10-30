@@ -1,0 +1,58 @@
+[
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest-allSizesStatesAndControlsFitAndMatchReferences.txt",
+    "test_runner_lines": [
+      "10-30 10:21:58.013  3174  3213 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest)",
+      "10-30 10:22:23.922  3174  3213 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest-allSizesStatesAndControlsFitAndMatchReferences.txt",
+    "test_runner_lines": [
+      "10-30 10:21:03.742  2933  2975 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest)",
+      "10-30 10:21:29.286  2933  2975 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest-allSizesAndStatesFitAndMatchReferences.txt",
+    "test_runner_lines": [
+      "10-30 10:20:04.689  2429  2464 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest)",
+      "10-30 10:20:18.539  2429  2464 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest-allSizesAndStatesFitAndMatchReferences.txt",
+    "test_runner_lines": [
+      "10-30 10:20:49.448  2812  2852 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest)",
+      "10-30 10:21:02.322  2812  2852 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest-allSizesAndStatesFitAndMatchReferences.txt",
+    "test_runner_lines": [
+      "10-30 10:20:19.776  2573  2615 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest)",
+      "10-30 10:20:33.322  2573  2615 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest-allSizesStatesAndControlsFitAndMatchReferences.txt",
+    "test_runner_lines": [
+      "10-30 10:21:30.700  3050  3092 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest)",
+      "10-30 10:21:56.669  3050  3092 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest-allSizesAndStatesFitAndMatchReferences.txt",
+    "test_runner_lines": [
+      "10-30 10:20:34.478  2687  2728 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest)",
+      "10-30 10:20:47.863  2687  2728 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.DarkLargestPomodoroWidgetScreenshotTest-allSizesStatesAndControlsFitAndMatchReferences.txt",
+    "test_runner_lines": [
+      "10-30 10:22:25.416  3300  3347 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestPomodoroWidgetScreenshotTest)",
+      "10-30 10:22:50.161  3300  3347 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestPomodoroWidgetScreenshotTest)"
+    ]
+  }
+]

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.navigation.UnavailablePagesTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:34.083Z" hostname="punta-des-patro" time="0.011">
+  <properties/>
+  <testcase name="withoutTheTimerApiThePomodoroPageIsGone" classname="com.github.e0ipso.tokkl.navigation.UnavailablePagesTest" time="0.009"/>
+  <testcase name="aServerWithEveryFeatureOffersEveryPage" classname="com.github.e0ipso.tokkl.navigation.UnavailablePagesTest" time="0.0"/>
+  <testcase name="trashAndTemplatesStillFollowTheirOwnCapabilities" classname="com.github.e0ipso.tokkl.navigation.UnavailablePagesTest" time="0.001"/>
+  <testcase name="aRestoredOrDirectOpenOfAnUnavailablePageShowsTimerAndOtherPagesStay" classname="com.github.e0ipso.tokkl.navigation.UnavailablePagesTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

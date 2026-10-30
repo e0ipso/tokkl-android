@@ -1,0 +1,155 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="2" failures="2" errors="0" skipped="0" time="0.000" timestamp="2026-10-29T22:47:25" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest" tests="1" failures="1" errors="0" skipped="0" time="13.740" timestamp="2026-10-29T22:47:25" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesAndStatesFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest" time="13.740">
+      <failure>java.lang.AssertionError: 16 Timer widget references need review
+	at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:72)
+	... 38 trimmed
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_196x100_paused.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_196x100_paused.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_196x100_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_196x100_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_196x100_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_196x100_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_298x222_running.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_298x222_running.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_298x222_paused.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_298x222_paused.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_298x222_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_298x222_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_298x222_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_298x222_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_375x338_running.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_375x338_running.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_375x338_paused.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_375x338_paused.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_375x338_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_375x338_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_375x338_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_375x338_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_110x40_running.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_110x40_running.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_110x40_paused.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_110x40_paused.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_110x40_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_110x40_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_110x40_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_110x40_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+Caused by: java.lang.AssertionError: no reference image screenshots/timer_widget_light_normal_196x100_running.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_normal_196x100_running.png.
+	at org.junit.Assert.fail(Assert.java:89)
+	at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+	at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	... 39 more
+</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest" tests="1" failures="1" errors="0" skipped="0" time="13.135" timestamp="2026-10-29T22:47:25" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesAndStatesFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest" time="13.135">
+      <failure>java.lang.AssertionError: 16 Timer widget references need review
+	at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:72)
+	... 38 trimmed
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_196x100_paused.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_196x100_paused.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_196x100_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_196x100_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_196x100_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_196x100_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_298x222_running.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_298x222_running.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_298x222_paused.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_298x222_paused.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_298x222_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_298x222_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_298x222_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_298x222_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_375x338_running.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_375x338_running.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_375x338_paused.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_375x338_paused.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_375x338_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_375x338_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_375x338_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_375x338_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_110x40_running.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_110x40_running.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_110x40_paused.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_110x40_paused.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_110x40_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_110x40_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_110x40_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_110x40_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+Caused by: java.lang.AssertionError: no reference image screenshots/timer_widget_light_largest_196x100_running.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_light_largest_196x100_running.png.
+	at org.junit.Assert.fail(Assert.java:89)
+	at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+	at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+	... 39 more
+</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

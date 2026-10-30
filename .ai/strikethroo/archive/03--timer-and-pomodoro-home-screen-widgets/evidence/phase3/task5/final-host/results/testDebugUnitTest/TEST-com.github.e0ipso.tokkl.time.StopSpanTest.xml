@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.time.StopSpanTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:45.248Z" hostname="punta-des-patro" time="0.023">
+  <properties/>
+  <testcase name="starting a second timer stops the first one at the new start, snapped to the resolution" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.0"/>
+  <testcase name="the stop endpoint stores the grid point nearest the stop when that is later than the start" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.0"/>
+  <testcase name="a stop before the start stops on the start, and the stop endpoint one step after it" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.0"/>
+  <testcase name="a timer left running past 999 hours stops at the cap" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.0"/>
+  <testcase name="a switch between timers is stored back to back on either side of a half step" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.003"/>
+  <testcase name="a switch within half a step of the old start stores a zero-length entry" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.0"/>
+  <testcase name="the stop endpoint stores one step when the nearest grid point is the start" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.0"/>
+  <testcase name="latest typed prediction keeps positive Stop spans but rejects legacy zero switches" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.014"/>
+  <testcase name="the grid follows the wall clock of the zone" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.001"/>
+  <testcase name="a value that is not a time resolution throws, as snapSpan does" classname="com.github.e0ipso.tokkl.time.StopSpanTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

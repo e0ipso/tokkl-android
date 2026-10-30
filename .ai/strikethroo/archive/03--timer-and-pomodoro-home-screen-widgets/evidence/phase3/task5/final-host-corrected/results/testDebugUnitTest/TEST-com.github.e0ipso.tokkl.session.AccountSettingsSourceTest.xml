@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" tests="19" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:34.792Z" hostname="punta-des-patro" time="3.705">
+  <properties/>
+  <testcase name="aRefreshStoresTheDefaultWorkspace" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.28"/>
+  <testcase name="failedPreferencesKeepTheStoredGrouping" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.252"/>
+  <testcase name="aReconnectWithNoRefreshRunningRefreshesOnce" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.05"/>
+  <testcase name="aReconnectDuringARefreshThatAnswersSendsNothingMore" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.099"/>
+  <testcase name="aReconnectDuringARefreshThatFailsRefreshesOnceMore" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.142"/>
+  <testcase name="aMeWithoutTheDefaultWorkspaceKeepsTheStoredOne" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.169"/>
+  <testcase name="theDurationFormatComesFromThePreferences" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.065"/>
+  <testcase name="aRefreshWhileOneRunsJoinsItAndSendsNoSecondRequest" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.178"/>
+  <testcase name="meWithoutTimeResolutionRefreshesWithNoSnapping" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.147"/>
+  <testcase name="theClockFormatComesFromThePreferences" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.684"/>
+  <testcase name="preferencesWithoutClassicOrDecimalReadAsImproved" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.423"/>
+  <testcase name="aFailedMeKeepsTheStoredDefaultWorkspace" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.01"/>
+  <testcase name="theGroupingOfSimilarEntriesComesFromThePreferences" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.777"/>
+  <testcase name="aNewDefaultWorkspaceReplacesTheStoredOne" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.076"/>
+  <testcase name="failedPreferencesBeforeAnyAreStoredReadAsImproved" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.141"/>
+  <testcase name="settingsStoredWhileARefreshRunsAreNotReplacedByItsOlderAnswer" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.096"/>
+  <testcase name="aRefreshThatAnswersAfterForgetStoresNothingAndRefreshesNothingElse" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.096"/>
+  <testcase name="failedPreferencesKeepTheStoredDurationFormat" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.007"/>
+  <testcase name="failedPreferencesKeepTheStoredClockFormat" classname="com.github.e0ipso.tokkl.session.AccountSettingsSourceTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

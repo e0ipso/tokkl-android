@@ -19,14 +19,17 @@ kk_relates_to:
   - map-ordered-entry-sending-and-refusals
   - map-offline-entry-mutations-and-local-id-mapping
   - practice-refresh-on-events-no-polling
+  - map-pomodoro-home-screen-widget
 kk_depends_on: []
 kk_confidence: high
 ---
-`app/src/main/java/com/github/e0ipso/tokkl/widget/` owns `TokklWidget`, its receiver, state and actions. The widget reads the running entry and ordered favorites from the phone. Start, favorite taps and Stop use `ChangeQueue`, so they work offline without opening the app. Stop targets the entry the widget displayed. Pause, and Resume while the server's chain is paused, go to the server through `WidgetActions` and need a connection; a failure shows a toast and the widget keeps its state. They appear only with the `timerState` capability, and Pause not during a Pomodoro session. A paused widget shows the paused total from the held timer state, and its Stop is the server's Discard. Each button carries the revision and account it was drawn for.
+`widget/` owns the Timer provider, state and actions. It draws a strip below 260 × 200 dp, a medium card below 340 × 310 dp, and a large card above those thresholds. The medium card adds Today’s total and a stacked project bar; the large card adds Total, Billable and Entries, project rows, Reports/Today and template chips. The number of chips adapts to width and font scale. Both providers can resize to 110 × 40 dp.
 
-`WidgetSync` starts from `TokklApplication` and redraws placed widgets when their state key changes. `WidgetStore` persists a SHA-256 key rather than descriptions or names. `TokklWidget` embeds the native Chronometer from `app/src/main/res/layout/widget_chronometer.xml` as RemoteViews; the launcher ticks it. `app/src/main/res/xml/tokkl_widget_info.xml` sets `updatePeriodMillis` to zero. There is no app timer or periodic widget work.
+Day totals use the Timer page’s `countedTimerEntries`: an entry belongs to its account-local start day and pause segments count once. Project groups include No project, sorted by stopped seconds; over five groups become four plus Other. Account midnight is reread on app-open, cache and RunningCheck events, including an unchanged current-entry response. There is no midnight job.
 
-Favorites fill only the rows that fit the current height and font scale. The minimum resize is 240 by 152 dp; the minimum initial height is 168 dp. Signed out, the widget opens sign-in. Missing favorites capability hides favorites.
+Start, ordinary Stop and template starts use `ChangeQueue` offline. Pause, Resume and Stop while paused go to the server and need a connection; controls carry the account and revision they were drawn for. Pause is hidden during a session. Signed out opens sign-in.
+
+`WidgetSync` follows state changes and stores separate redraw keys for each provider. Native Chronometers tick elapsed time and applicable totals in the launcher; `updatePeriodMillis` is zero, with no periodic widget work.
 
 <!-- kk:related:start -->
 # Related
@@ -36,6 +39,7 @@ Favorites fill only the rows that fit the current height and font scale. The min
 - Related: [map-ordered-entry-sending-and-refusals](../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md)
 - Related: [map-offline-entry-mutations-and-local-id-mapping](../data-and-offline/change-queue/map-offline-entry-mutations-and-local-id-mapping.md)
 - Related: [practice-refresh-on-events-no-polling](../api-and-security/practice-refresh-on-events-no-polling.md)
+- Related: [map-pomodoro-home-screen-widget](map-pomodoro-home-screen-widget.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

@@ -1,0 +1,31 @@
+--------- beginning of main
+I/ImeAcceptance( 2781): {stage=reminder before Back, showImeWithHardKeyboard=1, currentIme=com.callstack.agentdevice.imehelper/.TestInputMethodService, orientation=1, keyboard=2, keyboardHidden=1, hardKeyboardHidden=1, densityDpi=420, rotation=0, immFullscreen=false, immActive=true, immAcceptingText=true, windows=[{root=com.android.internal.policy.DecorView, hasWindowFocus=false, focusClass=null, focusAttached=null, tokenPresent=false, width=1080, height=2400, rotation=0, imeVisible=false, imeHeight=0, softInputMode=16}, {root=com.android.internal.policy.DecorView, hasWindowFocus=true, focusClass=androidx.compose.ui.platform.AndroidComposeView, focusAttached=true, tokenPresent=true, width=840, height=841, rotation=0, imeVisible=false, imeHeight=0, softInputMode=32}]}
+I/ImeAcceptance( 2781): reminder before Back native mFullscreenMode=false
+I/ImeAcceptance( 2781): reminder before Back native mInputStarted=true mInputViewStarted=false mCandidatesViewStarted=false
+I/ImeAcceptance( 2781): reminder before Back native mShowInputRequested=false mLastShowInputRequested=false mShowInputFlags=0x0
+I/ImeAcceptance( 2781): reminder before Back native mIsInputViewShown=false mStatusIcon=0
+I/ImeAcceptance( 2781): reminder before Back native mSettingsObserver=SettingsObserver{mShowImeWithHardKeyboard=2}
+I/ImeAcceptance( 2781): {stage=reminder after Back, showImeWithHardKeyboard=1, currentIme=com.callstack.agentdevice.imehelper/.TestInputMethodService, orientation=1, keyboard=2, keyboardHidden=1, hardKeyboardHidden=1, densityDpi=420, rotation=0, immFullscreen=false, immActive=true, immAcceptingText=true, windows=[{root=com.android.internal.policy.DecorView, hasWindowFocus=false, focusClass=null, focusAttached=null, tokenPresent=false, width=1080, height=2400, rotation=0, imeVisible=false, imeHeight=0, softInputMode=16}, {root=com.android.internal.policy.DecorView, hasWindowFocus=true, focusClass=androidx.compose.ui.platform.AndroidComposeView, focusAttached=true, tokenPresent=true, width=840, height=841, rotation=0, imeVisible=false, imeHeight=0, softInputMode=32}]}
+I/ImeAcceptance( 2781): reminder after Back native mFullscreenMode=false
+I/ImeAcceptance( 2781): reminder after Back native mInputStarted=true mInputViewStarted=false mCandidatesViewStarted=false
+I/ImeAcceptance( 2781): reminder after Back native mShowInputRequested=false mLastShowInputRequested=false mShowInputFlags=0x0
+I/ImeAcceptance( 2781): reminder after Back native mIsInputViewShown=false mStatusIcon=0
+I/ImeAcceptance( 2781): reminder after Back native mSettingsObserver=SettingsObserver{mShowImeWithHardKeyboard=2}
+I/ImeAcceptance( 2908): {stage=description waiting for keyboard, showImeWithHardKeyboard=1, currentIme=com.callstack.agentdevice.imehelper/.TestInputMethodService, orientation=1, keyboard=2, keyboardHidden=1, hardKeyboardHidden=1, densityDpi=420, rotation=0, immFullscreen=false, immActive=true, immAcceptingText=true, windows=[{root=com.android.internal.policy.DecorView, hasWindowFocus=true, focusClass=androidx.compose.ui.platform.AndroidComposeView, focusAttached=true, tokenPresent=true, width=1080, height=2400, rotation=0, imeVisible=false, imeHeight=0, softInputMode=16}]}
+I/ImeAcceptance( 2908): description waiting for keyboard native mFullscreenMode=false
+I/ImeAcceptance( 2908): description waiting for keyboard native mInputStarted=true mInputViewStarted=false mCandidatesViewStarted=false
+I/ImeAcceptance( 2908): description waiting for keyboard native mShowInputRequested=false mLastShowInputRequested=false mShowInputFlags=0x0
+I/ImeAcceptance( 2908): description waiting for keyboard native mIsInputViewShown=false mStatusIcon=0
+I/ImeAcceptance( 2908): description waiting for keyboard native mSettingsObserver=SettingsObserver{mShowImeWithHardKeyboard=2}
+I/ImeAcceptance( 3226): {stage=sign-in waiting for keyboard, showImeWithHardKeyboard=1, currentIme=com.callstack.agentdevice.imehelper/.TestInputMethodService, orientation=1, keyboard=2, keyboardHidden=1, hardKeyboardHidden=1, densityDpi=540, rotation=0, immFullscreen=false, immActive=true, immAcceptingText=true, windows=[{root=com.android.internal.policy.DecorView, hasWindowFocus=true, focusClass=androidx.compose.ui.platform.AndroidComposeView, focusAttached=true, tokenPresent=true, width=1080, height=2400, rotation=0, imeVisible=false, imeHeight=0, softInputMode=16}]}
+I/ImeAcceptance( 3226): sign-in waiting for keyboard native mFullscreenMode=false
+I/ImeAcceptance( 3226): sign-in waiting for keyboard native mInputStarted=true mInputViewStarted=false mCandidatesViewStarted=false
+I/ImeAcceptance( 3226): sign-in waiting for keyboard native mShowInputRequested=false mLastShowInputRequested=false mShowInputFlags=0x0
+I/ImeAcceptance( 3226): sign-in waiting for keyboard native mIsInputViewShown=false mStatusIcon=0
+I/ImeAcceptance( 3226): sign-in waiting for keyboard native mSettingsObserver=SettingsObserver{mShowImeWithHardKeyboard=2}
+I/ImeAcceptance( 3430): {stage=sign-in waiting for keyboard, showImeWithHardKeyboard=1, currentIme=com.callstack.agentdevice.imehelper/.TestInputMethodService, orientation=1, keyboard=2, keyboardHidden=1, hardKeyboardHidden=1, densityDpi=540, rotation=0, immFullscreen=false, immActive=true, immAcceptingText=true, windows=[{root=com.android.internal.policy.DecorView, hasWindowFocus=true, focusClass=androidx.compose.ui.platform.AndroidComposeView, focusAttached=true, tokenPresent=true, width=1080, height=2400, rotation=0, imeVisible=false, imeHeight=0, softInputMode=16}]}
+I/ImeAcceptance( 3430): sign-in waiting for keyboard native mFullscreenMode=false
+I/ImeAcceptance( 3430): sign-in waiting for keyboard native mInputStarted=true mInputViewStarted=false mCandidatesViewStarted=false
+I/ImeAcceptance( 3430): sign-in waiting for keyboard native mShowInputRequested=false mLastShowInputRequested=false mShowInputFlags=0x0
+I/ImeAcceptance( 3430): sign-in waiting for keyboard native mIsInputViewShown=false mStatusIcon=0
+I/ImeAcceptance( 3430): sign-in waiting for keyboard native mSettingsObserver=SettingsObserver{mShowImeWithHardKeyboard=2}

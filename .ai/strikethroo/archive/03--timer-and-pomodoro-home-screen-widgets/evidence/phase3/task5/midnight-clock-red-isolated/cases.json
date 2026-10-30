@@ -1,0 +1,13 @@
+[
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest",
+    "name": "unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork",
+    "time": "8.696",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  }
+]

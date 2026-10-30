@@ -1,0 +1,8 @@
+{
+  "sample_count": 17,
+  "maximum_recorded_emulator_peak_bytes": 4660465664,
+  "maximum_observed_emulator_current_bytes": 4618539008,
+  "maximum_observed_emulator_swap_bytes": 0,
+  "minimum_sampled_host_available_mb": 1551,
+  "note": "Measured samples; final scope journal retained separately. No invented unloaded statistics."
+}

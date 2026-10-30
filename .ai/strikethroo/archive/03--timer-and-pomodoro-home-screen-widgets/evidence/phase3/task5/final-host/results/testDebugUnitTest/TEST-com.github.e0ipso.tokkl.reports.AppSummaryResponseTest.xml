@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.AppSummaryResponseTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:36.645Z" hostname="punta-des-patro" time="0.087">
+  <properties/>
+  <testcase name="groupBucketAndCurrencyAdditionsKeepTheirOwnAssociations" classname="com.github.e0ipso.tokkl.reports.AppSummaryResponseTest" time="0.004"/>
+  <testcase name="absentNullAndEmptyAmountsStayAbsentWhileZeroIsPresent" classname="com.github.e0ipso.tokkl.reports.AppSummaryResponseTest" time="0.001"/>
+  <testcase name="additiveValuesAreGenericAndKeepTheirOwnerAndLiteralUnits" classname="com.github.e0ipso.tokkl.reports.AppSummaryResponseTest" time="0.005"/>
+  <testcase name="unsafeFormattingCharactersAndMarkupStayPlainText" classname="com.github.e0ipso.tokkl.reports.AppSummaryResponseTest" time="0.0"/>
+  <testcase name="additiveProjectionBoundsDepthWidthAndTextAcrossTheWholeReport" classname="com.github.e0ipso.tokkl.reports.AppSummaryResponseTest" time="0.072"/>
+  <testcase name="serverValuesAndAllOrdersAreAuthoritative" classname="com.github.e0ipso.tokkl.reports.AppSummaryResponseTest" time="0.001"/>
+  <testcase name="incompatibleRecognizedValuesFailInsteadOfBecomingEmptyReports" classname="com.github.e0ipso.tokkl.reports.AppSummaryResponseTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

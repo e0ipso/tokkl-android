@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:34.844Z" hostname="punta-des-patro" time="0.043">
+  <properties/>
+  <testcase name="aFailedDisplayWriteDoesNotRepostAndTheNextEmissionPersistsIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.016"/>
+  <testcase name="eachRevisionReplacesTheNotificationAndADenialCanBeRepostedOnGrant" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.004"/>
+  <testcase name="aNewAccountRejectsAnOldIdentityEvenForTheSamePhase" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.002"/>
+  <testcase name="withoutTheTimerApiOrSignedOutNothingIsPostedAndNothingIsSent" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.001"/>
+  <testcase name="buttonsSendTheirShownRevisionOnlyForTheirAccountAndTheHeldPhase" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.002"/>
+  <testcase name="aPhasePastItsPlannedEndLeavesTheSharedIdToItsAlarm" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.002"/>
+  <testcase name="idleRemovesAndASessionPostsOnceIncludingAfterObserverRecreation" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.001"/>
+  <testcase name="contentShowsTheServersPhaseNumberAndUpcomingPhaseWithTheCorrectedPlannedEnd" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.001"/>
+  <testcase name="forgetCancelsARefreshWaitingForTheAlarmBeforeErasingTheDisplay" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.003"/>
+  <testcase name="theRingOwnsTheSharedIdUntilTheServiceHasStopped" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.006"/>
+  <testcase name="aStaleRevisionGetsTheServersRefusalAndOfflineChangesNothing" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

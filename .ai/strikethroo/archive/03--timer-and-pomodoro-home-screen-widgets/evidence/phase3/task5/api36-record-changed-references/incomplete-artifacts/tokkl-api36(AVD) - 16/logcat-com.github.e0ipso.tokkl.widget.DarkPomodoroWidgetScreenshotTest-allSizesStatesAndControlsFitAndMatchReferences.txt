@@ -1,0 +1,780 @@
+10-30 10:16:45.660  3249  3291 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest)
+10-30 10:16:45.671  3249  3291 D WM-ForceStopRunnable: The default process name was not specified.
+10-30 10:16:45.671  3249  3291 D WM-ForceStopRunnable: Performing cleanup operations.
+10-30 10:16:45.685  3249  3291 D WM-ForceStopRunnable: Application was force-stopped, rescheduling.
+10-30 10:16:45.695  3249  3281 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/database/sqlite/SQLiteDatabase;->getThreadSession()Landroid/database/sqlite/SQLiteSession; (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/sqlite/db/framework/FrameworkSQLiteDatabase; (domain=app) using reflection: allowed
+10-30 10:16:45.695  3249  3281 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/database/sqlite/SQLiteSession;->beginTransaction(ILandroid/database/sqlite/SQLiteTransactionListener;ILandroid/os/CancellationSignal;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/sqlite/db/framework/FrameworkSQLiteDatabase; (domain=app) using reflection: allowed
+10-30 10:16:45.701  3249  3291 D WM-PackageManagerHelper: androidx.work.impl.background.systemalarm.RescheduleReceiver disabled
+10-30 10:16:45.722  3249  3291 I UiAutomation: Initialized for user 0 on display 0
+10-30 10:16:45.727  3249  3295 V UiAutomation: Init UiAutomation@807a534[id=6, displayId=0, flags=0]
+10-30 10:16:45.727   668   668 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:16:45.727   668   668 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:16:45.728   668   668 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:16:45.728   668   668 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:16:45.728   668   668 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:16:45.729   668   668 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:16:45.826  3249  3291 I TokklAccessibility: font scale=1.0; largest display=false
+10-30 10:16:45.827  3249  3291 I npicasoft.tokkl: AssetManager2(0x70f89a2ddf18) locale list changing from [] to [en-US]
+10-30 10:16:45.836  3249  3291 W Settings: Setting always_finish_activities has moved from android.provider.Settings.System to android.provider.Settings.Global, returning read-only value.
+10-30 10:16:45.843   668  1601 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10157, packageName = null, attributionTag = null, token = android.os.Binder@6fc3094, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-30 10:16:45.847   905  1077 I ndroid.systemui: AssetManager2(0x70f89a2ea3f8) locale list changing from [] to [en-US]
+10-30 10:16:45.850   905  1078 D SplashScreenView: Build android.window.SplashScreenView{667f935 V.E...... ......ID 0,0-0,0}
+10-30 10:16:45.850   905  1078 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-30 10:16:45.850   905  1078 D SplashScreenView: Branding: view: android.view.View{c3171ca G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-30 10:16:45.854  1194  1194 W SplitSelectStateCtor: Missing session instanceIds
+10-30 10:16:45.854  1194  1194 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+10-30 10:16:45.855   532   532 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+10-30 10:16:45.882  3249  3322 W libc    : Access denied finding property "vendor.mesa.log"
+10-30 10:16:45.884  3249  3322 W libc    : Access denied finding property "vendor.mesa.log.file"
+10-30 10:16:45.884  3249  3322 E MESA    : Failed to open rendernode: No such file or directory
+10-30 10:16:45.903  3249  3322 D vulkan  : searching for layers in '/data/app/~~JJCgPt2zZ9_lYVsTTmXkmw==/com.canpicasoft.tokkl-h89b7_CE49sNvB5jdNM0Fg==/lib/x86_64'
+10-30 10:16:45.904  3249  3322 D vulkan  : searching for layers in '/data/app/~~sEZV3j0i5bCugAmeqeZS7w==/com.canpicasoft.tokkl.test-S6i_vWXoKmbZBIh82EDiJw==/base.apk!/lib/x86_64'
+10-30 10:16:45.904  3249  3322 D vulkan  : searching for layers in '/data/app/~~JJCgPt2zZ9_lYVsTTmXkmw==/com.canpicasoft.tokkl-h89b7_CE49sNvB5jdNM0Fg==/base.apk!/lib/x86_64'
+10-30 10:16:45.920  3249  3322 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-30 10:16:45.920  3249  3322 W libc    : Access denied finding property "vendor.mesa.gallium.print.optio"
+10-30 10:16:45.921  3249  3322 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-30 10:16:45.926  3249  3249 I npicasoft.tokkl: AssetManager2(0x70f89a2e71f8) locale list changing from [] to [en-US]
+10-30 10:16:45.928  3249  3322 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-30 10:16:45.934  3249  3275 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=6c76e0f9-9de3-4719-bf33-b3cb53c88859, generation=0)
+10-30 10:16:45.964  3249  3249 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@15562df in: PRE_ON_CREATE
+10-30 10:16:45.965  3249  3249 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-30 10:16:45.974  3249  3275 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 10:16:45.978  3249  3275 D WM-PackageManagerHelper: androidx.work.impl.background.systemalarm.RescheduleReceiver enabled
+10-30 10:16:45.980  3249  3249 D CompatChangeReporter: Compat change id reported: 377864165; UID 10157; state: ENABLED
+10-30 10:16:45.982  3249  3249 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+10-30 10:16:45.986   668   740 W HWUI    : Image decoding logging dropped!
+10-30 10:16:45.992  3249  3249 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@15562df in: CREATED
+10-30 10:16:45.993  3249  3249 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=androidx.activity.ComponentActivity@15562df
+10-30 10:16:45.996  3249  3249 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@15562df in: STARTED
+10-30 10:16:45.996  3249  3249 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=androidx.activity.ComponentActivity@15562df
+10-30 10:16:46.002  3249  3249 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@15562df in: RESUMED
+10-30 10:16:46.003  3249  3249 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=androidx.activity.ComponentActivity@15562df
+10-30 10:16:46.032  3249  3249 W HWUI    : Unknown dataspace 0
+10-30 10:16:46.281  1194  1194 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 10:16:46.299   668   693 I ActivityTaskManager: Displayed com.canpicasoft.tokkl/androidx.activity.ComponentActivity for user 0: +452ms
+10-30 10:16:46.387   668   784 I ImeTracker: com.canpicasoft.tokkl:6f63051b: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-30 10:16:46.390  3249  3249 D InsetsController: hide(ime(), fromIme=false)
+10-30 10:16:46.391  1194  1194 D BaseDepthController: setSurface:
+10-30 10:16:46.391  1194  1194 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 10:16:46.391  1194  1194 D BaseDepthController: 	mBaseSurface: null
+10-30 10:16:46.392  1194  1194 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+10-30 10:16:46.392  3249  3249 I ImeTracker: com.canpicasoft.tokkl:6f63051b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-30 10:16:46.392  1194  1194 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+10-30 10:16:46.392  1194  1194 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:463)
+10-30 10:16:46.392  1194  1194 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:454)
+10-30 10:16:46.392  1194  1194 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(StatefulActivity.java:120)
+10-30 10:16:46.393  1194  1194 D StatsLog: LAUNCHER_ONSTOP
+10-30 10:16:46.402   668  2549 I ImeTracker: system_server:5a76232: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 10:16:46.403   668   696 I ImeTracker: system_server:5a76232: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed App frame:UNKNOWN: 3, 17468, 181028528, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17468, 181028528, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed App frame:UNKNOWN: 3, 17489, 260338205, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17489, 260338205, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed App frame:UNKNOWN: 3, 17504, 333341026, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17504, 333341026, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed App frame:UNKNOWN: 3, 17548, 283490294, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17548, 283490294, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed App frame:UNKNOWN: 3, 17578, 278987531, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17578, 278987531, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed App frame:UNKNOWN: 3, 17593, 338510076, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1194 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17593, 338510076, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:16:46.442  1194  1214 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-78 - not enough time since last trigger
+10-30 10:16:46.664  3249  3253 I npicasoft.tokkl: Compiler allocated 5042KB to compile void android.view.ViewRootImpl.performTraversals()
+10-30 10:16:46.704   668   696 I system_server: AssetManager2(0x70f89a2f3d18) locale list changing from [] to [en-US]
+10-30 10:16:46.712   668   693 I ServiceWatcher: [TrustManagerService] chose new implementation null
+10-30 10:16:46.722   668   785 I system_server: AssetManager2(0x70f89a2f7eb8) locale list changing from [] to [en-US]
+10-30 10:16:46.722  1194  1194 D b/267448330: provider: ComponentInfo{com.android.quicksearchbox/com.android.quicksearchbox.SearchWidgetProvider}, paddedSizes: [382.09525x136.38095, 382.09525x136.38095, 732.5714x62.095238, 732.5714x62.095238], getMinMaxSizes: Rect(382, 62 - 732, 136)
+10-30 10:16:46.723   668   785 I system_server: AssetManager2(0x70f89a2ec338) locale list changing from [] to [en-US]
+10-30 10:16:46.731  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.731  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.731   668   788 I system_server: AssetManager2(0x70f89a30b418) locale list changing from [] to [en-US]
+10-30 10:16:46.732  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.737   668   668 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:16:46.745  1194  1220 I droid.launcher3: AssetManager2(0x70f89a2e4958) locale list changing from [] to [en-US]
+10-30 10:16:46.761  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.764  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.770  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.774  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.776  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.783  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-30 10:16:46.783  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-30 10:16:46.784  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-30 10:16:46.784  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 10:16:46.784  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-30 10:16:46.787  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-30 10:16:46.787  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-30 10:16:46.788  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-30 10:16:46.788  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-30 10:16:46.788  1194  1220 D PackageUpdatedTask: Package updated: mOp=UPDATE packages=[com.canpicasoft.tokkl], user=UserHandle{0}
+10-30 10:16:46.794   459   522 I netd    : tetherGetStats() -> {[]} <0.41ms>
+10-30 10:16:46.795  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.796  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.796  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.797  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.797  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.797  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.815  3249  3284 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=6a29d1ad-2a9c-4374-a04c-483d6f28907c, generation=0)
+10-30 10:16:46.824  3249  3284 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 10:16:46.835  1119  3337 I PermissionControllerServiceImpl: Updating user sensitive for uid 10157
+10-30 10:16:46.838  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.856  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.860  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.876  3249  3249 I npicasoft.tokkl: AssetManager2(0x70f89a2e87d8) locale list changing from [] to [en-US]
+10-30 10:16:46.879  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.885  3249  3285 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=02385140-9eab-4905-b81e-78407bf570bc, generation=0)
+10-30 10:16:46.891  3249  3285 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 10:16:46.892  3249  3249 W System  : ClassLoader referenced unknown path: 
+10-30 10:16:46.893  3249  3249 D nativeloader: Configuring clns-10 for other apk . target_sdk_version=36, uses_libraries=, library_path=/data/app/~~sEZV3j0i5bCugAmeqeZS7w==/com.canpicasoft.tokkl.test-S6i_vWXoKmbZBIh82EDiJw==/lib/x86_64:/data/app/~~JJCgPt2zZ9_lYVsTTmXkmw==/com.canpicasoft.tokkl-h89b7_CE49sNvB5jdNM0Fg==/lib/x86_64:/data/app/~~sEZV3j0i5bCugAmeqeZS7w==/com.canpicasoft.tokkl.test-S6i_vWXoKmbZBIh82EDiJw==/base.apk!/lib/x86_64:/data/app/~~JJCgPt2zZ9_lYVsTTmXkmw==/com.canpicasoft.tokkl-h89b7_CE49sNvB5jdNM0Fg==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.canpicasoft.tokkl
+10-30 10:16:46.906  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.936  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:16:46.937  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 10:16:46.938  1194  1194 D AllAppsStore: setApps: apps.length=13
+10-30 10:16:46.938  1194  1194 D AllAppsStore: notifyUpdate: notifying listeners
+10-30 10:16:46.938  1194  1194 D ActivityAllAppsContainerView: onAppsUpdated; number of apps: 13
+10-30 10:16:46.938  1194  1194 D ActivityAllAppsContainerView: rebindAdapters: force: false
+10-30 10:16:46.938  1194  1194 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+10-30 10:16:46.938  1194  1194 D StatsLog: LAUNCHER_ALLAPPS_COUNT
+10-30 10:16:46.938  1194  1194 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 10:16:46.939  1194  1194 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 10:16:46.939  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 10:16:46.939  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 10:16:46.939  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 10:16:46.939  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 10:16:46.939  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 10:16:46.939  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 10:16:46.939  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 10:16:46.940  1194  1194 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 10:16:46.973  1031  1250 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-30 10:16:47.233   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-30 10:16:47.233   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:16:47.233   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:16:47.233   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:16:47.233   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:47.233   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:47.233   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:47.233   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:47.234   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:47.234   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:47.234   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:47.234   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:47.234   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:16:47.235   668   812 D WifiScoreCard: txRate: 1 txSpeed: 1
+10-30 10:16:47.235   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:16:47.235   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3004] from screen [on:0 period:-1944522493] score=60
+10-30 10:16:48.818  3249  3249 I npicasoft.tokkl: AssetManager2(0x70f89a2ed918) locale list changing from [] to [en-US]
+10-30 10:16:48.855  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:49.079  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:49.081  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296416, res-name=glance_view_id_004, desc=Time remaining, visibility=VISIBLE, width=310, height=88, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=49.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:49.087  3249  3291 I Tracing : Tracer added: class androidx.test.platform.tracing.AndroidXTracer
+10-30 10:16:49.103  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@97acfac' assertion on view view.getRootView() to equal view
+10-30 10:16:49.119  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@2043557' assertion on view view.getRootView() to equal view
+10-30 10:16:49.133   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:16:49.134   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:16:49.134   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={10158} in 1ms
+10-30 10:16:49.135   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:16:49.135   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:16:49.135   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={20158} in 1ms
+10-30 10:16:49.217  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:49.267  1395  1575 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:49.268  1395  1575 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:49.271  1395  1575 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:49.277  1395  1574 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:49.278  1395  1574 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:49.279  1395  1574 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:49.739  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:49.851  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:49.852  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296416, res-name=glance_view_id_004, desc=Overtime, visibility=VISIBLE, width=310, height=88, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=49.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:49.854  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@50b96d2' assertion on view view.getRootView() to equal view
+10-30 10:16:49.859  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@64f63a3' assertion on view view.getRootView() to equal view
+10-30 10:16:49.890  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:50.239   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-30 10:16:50.239   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:16:50.239   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:16:50.239   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:16:50.239   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:50.239   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:50.239   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:50.239   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:50.239   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:50.239   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:50.240   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:50.240   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:50.240   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:16:50.240   668   812 D WifiScoreCard: txRate: 1 txSpeed: 1
+10-30 10:16:50.240   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:16:50.240   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3005] from screen [on:0 period:-1944519488] score=60
+10-30 10:16:50.389  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:50.498  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:50.499  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296416, res-name=glance_view_id_004, desc=Time remaining, visibility=VISIBLE, width=310, height=88, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=49.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:50.502  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@df79490' assertion on view view.getRootView() to equal view
+10-30 10:16:50.508  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@90e5189' assertion on view view.getRootView() to equal view
+10-30 10:16:50.518  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:50.539  1395  1574 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:50.540  1395  1574 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:50.541  1395  1574 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:50.547  1395  1575 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:50.548  1395  1575 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:50.550  1395  1575 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:50.783  3249  3349 D ProfileInstaller: Installing profile for com.canpicasoft.tokkl
+10-30 10:16:51.022  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:51.091  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:51.092  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296416, res-name=glance_view_id_004, desc=Overtime, visibility=VISIBLE, width=310, height=88, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=49.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:51.094  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@674570a' assertion on view view.getRootView() to equal view
+10-30 10:16:51.099  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@dca4b7b' assertion on view view.getRootView() to equal view
+10-30 10:16:51.117  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:51.588  3249  3254 W npicasoft.tokkl: Cleared Reference was only reachable from finalizer (only reported once)
+10-30 10:16:51.589  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:51.679  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:51.680  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296416, res-name=glance_view_id_004, desc=Time remaining, visibility=VISIBLE, width=310, height=88, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=49.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:51.682  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@dbfc721' assertion on view view.getRootView() to equal view
+10-30 10:16:51.687  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@dda0746' assertion on view view.getRootView() to equal view
+10-30 10:16:51.696  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:51.701  1395  1574 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:51.702  1395  1574 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:51.703  1395  1574 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:51.710  1395  1575 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:51.711  1395  1575 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:51.712  1395  1575 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:52.205  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:52.308  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:52.309  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296416, res-name=glance_view_id_004, desc=Overtime, visibility=VISIBLE, width=310, height=88, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=49.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:52.311  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@bf2d223' assertion on view view.getRootView() to equal view
+10-30 10:16:52.317  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@c7c5320' assertion on view view.getRootView() to equal view
+10-30 10:16:52.329  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:52.789  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:52.849  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:52.851  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@1154110' assertion on view view.getRootView() to equal view
+10-30 10:16:52.863  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:53.244   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-30 10:16:53.244   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:16:53.244   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:16:53.244   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:16:53.244   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:53.244   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:53.244   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:53.244   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:53.245   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:53.245   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:53.245   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:53.245   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:53.245   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:16:53.245   668   812 D WifiScoreCard: txRate: 1 txSpeed: 1
+10-30 10:16:53.245   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:16:53.246   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3005] from screen [on:0 period:-1944516482] score=60
+10-30 10:16:53.322  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:53.386  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:53.400  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:53.568   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:16:53.568   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:16:53.569   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={10062} in 2ms
+10-30 10:16:53.889  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:53.931   668   712 I WifiService: isFeatureSupported uid=1000 returns [WIFI_FEATURE_INFRA, WIFI_FEATURE_P2P, WIFI_FEATURE_MOBILE_HOTSPOT, WIFI_FEATURE_WPA3_SAE, WIFI_FEATURE_WPA3_SUITE_B, WIFI_FEATURE_OWE, WIFI_FEATURE_DPP, WIFI_FEATURE_AP_RAND_MAC, WIFI_FEATURE_MBO, WIFI_FEATURE_FILS_SHA256, WIFI_FEATURE_FILS_SHA384, WIFI_FEATURE_SAE_PK, WIFI_FEATURE_DPP_ENROLLEE_RESPONDER, WIFI_FEATURE_PASSPOINT_TERMS_AND_CONDITIONS, WIFI_FEATURE_WFD_R2, WIFI_FEATURE_DECORATED_IDENTITY, WIFI_FEATURE_TRUST_ON_FIRST_USE, WIFI_FEATURE_SET_TLS_MINIMUM_VERSION, WIFI_FEATURE_TLS_V1_3, WIFI_FEATURE_WEP, WIFI_FEATURE_WPA_PERSONAL]
+10-30 10:16:53.965  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:53.976  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:54.437   905  1045 E FrameTracker: force finish cuj, time out: J<DEFAULT_TASK_TO_TASK_ANIMATION>
+10-30 10:16:54.558  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:54.724  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=555, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:54.725  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296456, res-name=glance_view_id_044, visibility=VISIBLE, width=144, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=576.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:54.726  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:54.727  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Time remaining, visibility=VISIBLE, width=720, height=129, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=68.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:54.729  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@50540a3' assertion on view view.getRootView() to equal view
+10-30 10:16:54.735  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@e005fa0' assertion on view view.getRootView() to equal view
+10-30 10:16:54.741  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@90ba759' assertion on view view.getRootView() to equal view
+10-30 10:16:54.768  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:54.795  1395  1574 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:54.795  1395  1574 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:54.796  1395  1574 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:54.803  1395  1575 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:54.804  1395  1575 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:54.805  1395  1575 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:54.819   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:16:54.819   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:16:54.819   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={10158} in 1ms
+10-30 10:16:55.034   905  1077 E FrameTracker: force finish cuj, time out: J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:55.034   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 17248, 154526753, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:55.034   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17248, 154526753, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:55.034   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 17284, 364366313, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:55.034   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17284, 364366313, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:55.034   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 17379, 423261865, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:55.034   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 17379, 423261865, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:55.034   905  1029 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-39 - not enough time since last trigger
+10-30 10:16:55.339  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:55.465  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=555, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:55.465  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296456, res-name=glance_view_id_044, visibility=VISIBLE, width=144, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=576.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:55.466  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:55.467  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Overtime, visibility=VISIBLE, width=720, height=129, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=68.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:55.472  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@a51a7ba' assertion on view view.getRootView() to equal view
+10-30 10:16:55.477  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@9bb466b' assertion on view view.getRootView() to equal view
+10-30 10:16:55.481  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@5f3c5c8' assertion on view view.getRootView() to equal view
+10-30 10:16:55.509  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:56.055  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:56.245  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=555, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:56.246  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296456, res-name=glance_view_id_044, visibility=VISIBLE, width=144, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=576.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:56.248  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:56.248   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-30 10:16:56.248   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:16:56.248   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:16:56.248   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:16:56.248   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:56.248   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:56.248   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:56.248   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:56.249   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:56.249  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Time remaining, visibility=VISIBLE, width=720, height=129, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=68.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:56.249   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:56.249   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:56.249   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:56.249   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:16:56.249   668   812 D WifiScoreCard: txRate: 1 txSpeed: 1
+10-30 10:16:56.249   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:16:56.249   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3003] from screen [on:0 period:-1944513479] score=60
+10-30 10:16:56.253  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@ce56684' assertion on view view.getRootView() to equal view
+10-30 10:16:56.261  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@1010e6d' assertion on view view.getRootView() to equal view
+10-30 10:16:56.267  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@5268aa2' assertion on view view.getRootView() to equal view
+10-30 10:16:56.299  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:56.330  1395  1575 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:56.331  1395  1575 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:56.333  1395  1575 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:56.342  1395  1574 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:56.343  1395  1574 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:56.345  1395  1574 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:56.855  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:56.880   905  1077 E FrameTracker: force finish cuj, time out: J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:56.880   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 18213, 134907109, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:56.880   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 18213, 134907109, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:56.880   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 18242, 193173565, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:56.880   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 18242, 193173565, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:56.880   905  1077 W FrameTracker: Missed App frame:JANK_APPLICATION, 18266, 187377459, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:56.881   905  1077 W FrameTracker: Missed App frame:JANK_APPLICATION, 18298, 161303001, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:16:56.881   905  1029 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-39 - not enough time since last trigger
+10-30 10:16:56.930   459   522 I netd    : tetherGetStats() -> {[]} <0.45ms>
+10-30 10:16:56.970  1031  1250 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-30 10:16:56.973  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=555, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:56.974  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296456, res-name=glance_view_id_044, visibility=VISIBLE, width=144, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=576.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:56.975  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:56.975  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Overtime, visibility=VISIBLE, width=720, height=129, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=111.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:56.989  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@71e9400' assertion on view view.getRootView() to equal view
+10-30 10:16:56.996  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@11d3439' assertion on view view.getRootView() to equal view
+10-30 10:16:57.002  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@c6eca7e' assertion on view view.getRootView() to equal view
+10-30 10:16:57.021  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:57.556  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:57.712  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=555, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:57.714  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296456, res-name=glance_view_id_044, visibility=VISIBLE, width=144, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=576.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:57.714  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:57.715  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Time remaining, visibility=VISIBLE, width=720, height=129, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=68.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:57.723  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@637411a' assertion on view view.getRootView() to equal view
+10-30 10:16:57.729  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@f78d44b' assertion on view view.getRootView() to equal view
+10-30 10:16:57.733  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@4236e28' assertion on view view.getRootView() to equal view
+10-30 10:16:57.766  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:57.780  1395  2285 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:57.781  1395  2285 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:57.783  1395  2285 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:57.794  1395  1575 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:16:57.795  1395  1575 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:16:57.797  1395  1575 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:16:58.322  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:58.439  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=555, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:58.441  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296456, res-name=glance_view_id_044, visibility=VISIBLE, width=144, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=576.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:58.441  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:58.442  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Overtime, visibility=VISIBLE, width=720, height=129, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=111.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:58.456  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@7ecaa76' assertion on view view.getRootView() to equal view
+10-30 10:16:58.464  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@8f8b877' assertion on view view.getRootView() to equal view
+10-30 10:16:58.469  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@d24fce4' assertion on view view.getRootView() to equal view
+10-30 10:16:58.489  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:59.006  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:59.111  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296434, res-name=glance_view_id_022, visibility=VISIBLE, width=554, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:59.112  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296439, res-name=glance_view_id_027, visibility=VISIBLE, width=145, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=575.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:59.113  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:59.115  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@872a7ce' assertion on view view.getRootView() to equal view
+10-30 10:16:59.121  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@f4666ef' assertion on view view.getRootView() to equal view
+10-30 10:16:59.142  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:16:59.253   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-30 10:16:59.253   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:16:59.253   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:16:59.254   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:16:59.254   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:59.254   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:59.254   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:59.254   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:59.254   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:59.254   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:59.254   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:16:59.254   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:16:59.255   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:16:59.255   668   812 D WifiScoreCard: txRate: 1 txSpeed: 1
+10-30 10:16:59.255   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:16:59.255   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3006] from screen [on:0 period:-1944510473] score=60
+10-30 10:16:59.606  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:16:59.659  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:16:59.688  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:00.173  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:00.241  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:00.275  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:00.670  1695  1893 I Dialer  : OmtpVvmCarrierCfgHlpr - OmtpEvent:CONFIG_STATUS_SMS_TIME_OUT
+10-30 10:17:00.671  1695  1695 I Dialer  : RetryPolicy - discarding deferred status: configuration_state=4
+10-30 10:17:00.672  1695  1695 I Dialer  : VvmTaskExecutor - no more tasks, stopping service if no task are added in 5000 millis
+10-30 10:17:00.673  1695  1695 I Dialer  : VvmTaskReceiver - task received
+10-30 10:17:00.673  1695  1695 I Dialer  : VvmTaskReceiver - TaskExecutor already running
+10-30 10:17:00.673  1695  1695 I Dialer  : Task.createTask - create task:com.android.voicemail.impl.ActivationTask
+10-30 10:17:00.673  1695  1695 I Dialer  : RetryPolicy - retry #2 for com.android.voicemail.impl.ActivationTask@8fd860a queued, executing in 5000
+10-30 10:17:00.674  1695  1695 I Dialer  : VvmTaskExecutor - com.android.voicemail.impl.ActivationTask@8fd860a added
+10-30 10:17:00.674  1695  1695 I Dialer  : VvmTaskExecutor - minimal wait time:5000
+10-30 10:17:00.674  1695  1695 I Dialer  : VvmTaskExecutor - sleep for 5000 millis
+10-30 10:17:00.840  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:00.967  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296464, res-name=glance_view_id_052, visibility=VISIBLE, width=600, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:00.968  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296469, res-name=glance_view_id_057, visibility=VISIBLE, width=279, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=621.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:00.969  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:00.970  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Time remaining, visibility=VISIBLE, width=900, height=165, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=74.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:00.972  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@522d9c0' assertion on view view.getRootView() to equal view
+10-30 10:17:00.977  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@8af66f9' assertion on view view.getRootView() to equal view
+10-30 10:17:00.982  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@1a4e63e' assertion on view view.getRootView() to equal view
+10-30 10:17:01.015  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:01.051  1395  1574 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:17:01.052  1395  1574 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:17:01.053  1395  1574 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:17:01.062  1395  2285 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:17:01.062  1395  2285 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:17:01.065  1395  2285 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:17:01.624  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:01.770  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296464, res-name=glance_view_id_052, visibility=VISIBLE, width=600, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:01.771  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296469, res-name=glance_view_id_057, visibility=VISIBLE, width=279, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=621.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:01.773  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:01.774  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Overtime, visibility=VISIBLE, width=900, height=165, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=74.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:01.777  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@3c3c206' assertion on view view.getRootView() to equal view
+10-30 10:17:01.786  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@61ba0c7' assertion on view view.getRootView() to equal view
+10-30 10:17:01.795  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@5aa46f4' assertion on view view.getRootView() to equal view
+10-30 10:17:01.849  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:02.259   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-30 10:17:02.259   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:17:02.259   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:17:02.259   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:17:02.259   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:02.259   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:02.260   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:02.260   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:02.260   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:02.260   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:02.260   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:02.260   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:02.260   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:17:02.260   668   812 D WifiScoreCard: txRate: 1 txSpeed: 1
+10-30 10:17:02.260   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:17:02.260   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3005] from screen [on:0 period:-1944507468] score=60
+10-30 10:17:02.447  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:02.656  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296464, res-name=glance_view_id_052, visibility=VISIBLE, width=600, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:02.657  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296469, res-name=glance_view_id_057, visibility=VISIBLE, width=279, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=621.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:02.658  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:02.659  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Time remaining, visibility=VISIBLE, width=900, height=165, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=74.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:02.661  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@744d9c9' assertion on view view.getRootView() to equal view
+10-30 10:17:02.668  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@d2228ce' assertion on view view.getRootView() to equal view
+10-30 10:17:02.675  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@d4e53ef' assertion on view view.getRootView() to equal view
+10-30 10:17:02.724  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:02.761  1395  1575 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:17:02.762  1395  1575 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:17:02.763  1395  1575 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:17:02.774  1395  2285 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:17:02.775  1395  2285 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:17:02.776  1395  2285 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:17:03.306  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:03.465  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296464, res-name=glance_view_id_052, visibility=VISIBLE, width=600, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:03.466  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296469, res-name=glance_view_id_057, visibility=VISIBLE, width=279, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=621.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:03.467  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:03.468  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Overtime, visibility=VISIBLE, width=900, height=165, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=111.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:03.470  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@8c49058' assertion on view view.getRootView() to equal view
+10-30 10:17:03.476  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@bbc75b1' assertion on view view.getRootView() to equal view
+10-30 10:17:03.481  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@3003a96' assertion on view view.getRootView() to equal view
+10-30 10:17:03.520  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:04.072  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:04.233  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296464, res-name=glance_view_id_052, visibility=VISIBLE, width=600, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:04.234  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296469, res-name=glance_view_id_057, visibility=VISIBLE, width=279, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=621.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:04.234  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:04.235  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Time remaining, visibility=VISIBLE, width=900, height=165, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=74.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:04.238  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@4d50fe3' assertion on view view.getRootView() to equal view
+10-30 10:17:04.243  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@6211de0' assertion on view view.getRootView() to equal view
+10-30 10:17:04.248  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@e742899' assertion on view view.getRootView() to equal view
+10-30 10:17:04.286  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:04.324  1395  1574 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:17:04.325  1395  1574 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:17:04.327  1395  1574 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:17:04.341  1395  2285 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:17:04.342  1395  2285 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:17:04.344  1395  2285 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:17:04.872  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:05.033  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296464, res-name=glance_view_id_052, visibility=VISIBLE, width=600, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:05.034  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296469, res-name=glance_view_id_057, visibility=VISIBLE, width=279, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=621.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:05.034  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:05.035  3249  3249 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, desc=Overtime, visibility=VISIBLE, width=900, height=165, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=111.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:05.038  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda2@c86a75a' assertion on view view.getRootView() to equal view
+10-30 10:17:05.043  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@5eedd8b' assertion on view view.getRootView() to equal view
+10-30 10:17:05.048  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@2b6de68' assertion on view view.getRootView() to equal view
+10-30 10:17:05.087  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:05.263   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=54 freq=2437 RxLinkSpeed=2
+10-30 10:17:05.264   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:17:05.264   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:17:05.264   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:17:05.264   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:05.264   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:05.264   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:05.264   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:05.264   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:05.264   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:05.264   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:05.264   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:05.264   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 54Mbps, Tx Link speed: 54Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:17:05.264   668   812 D WifiScoreCard: txRate: 1 txSpeed: 54
+10-30 10:17:05.265   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:17:05.265   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=54 tx=0.8, 0.0, 0.0 rx=0.4 bcn=0 [on:0 tx:0 rx:0 period:3005] from screen [on:0 period:-1944504463] score=60
+10-30 10:17:05.607  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:05.679  1695  1893 I Dialer  : VvmTaskExecutor - executing task com.android.voicemail.impl.ActivationTask@8fd860a
+10-30 10:17:05.680  1695  1893 I Dialer  : PreOMigrationHandler - ComponentInfo{com.android.phone/com.android.services.telephony.TelephonyConnectionService}, 1, UserHandle{0} already migrated
+10-30 10:17:05.689  1508  1523 I VoicemailNotifier: receivers for android.intent.action.PROVIDER_CHANGED :[]
+10-30 10:17:05.690  1695  1893 I Dialer  : VvmActivationTask - VVM content provider configured - vvm_type_cvvm
+10-30 10:17:05.690  1695  1893 I Dialer  : OmtpVvmCarrierCfgHlpr - OmtpEvent:CONFIG_ACTIVATING
+10-30 10:17:05.692  1508  1523 I VoicemailNotifier: receivers for android.intent.action.PROVIDER_CHANGED :[]
+10-30 10:17:05.694  1031  1246 I RemoteVvmTaskManager: getRemotePackage: found package null
+10-30 10:17:05.696  1031  1246 I RemoteVvmTaskManager: getRemotePackage: found package null
+10-30 10:17:05.697  1031  1246 D SmsNumberUtils: enter filterDestAddr. destAddr="[BajqU4K5_YhSYbs-7QUn0dOwcmI]"
+10-30 10:17:05.697  1031  1246 D SmsNumberUtils: destAddr is not formatted.
+10-30 10:17:05.697  1031  1246 D SmsNumberUtils: leave filterDestAddr, new destAddr="[BajqU4K5_YhSYbs-7QUn0dOwcmI]"
+10-30 10:17:05.698   459   522 I netd    : tetherGetStats() -> {[]} <0.35ms>
+10-30 10:17:05.706  1031  1031 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-30 10:17:05.708  1031  1031 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-30 10:17:05.735  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296446, res-name=glance_view_id_034, visibility=VISIBLE, width=734, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:05.736  3249  3249 I AccessibilityValidator: FrameLayout{id=2131296451, res-name=glance_view_id_039, visibility=VISIBLE, width=145, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=755.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:05.737  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:05.740  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@2bfee06' assertion on view view.getRootView() to equal view
+10-30 10:17:05.744  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@4e25cc7' assertion on view view.getRootView() to equal view
+10-30 10:17:05.785  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:06.255  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:06.333  3249  3249 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:06.390  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:06.872  3249  3249 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:17:06.912   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:17:06.912   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:17:06.912   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={10148} in 1ms
+10-30 10:17:06.921  3249  3249 W AccessibilityValidator: AppWidgetHostView{id=-1, desc=Pomodoro, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:17:06.970  1031  1250 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-30 10:17:06.976  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:07.475  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@b8068ff' assertion on view view.getRootView() to equal view
+10-30 10:17:07.488  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:07.978  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@21bafb6' assertion on view view.getRootView() to equal view
+10-30 10:17:08.008  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:08.269   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=54 freq=2437 RxLinkSpeed=2
+10-30 10:17:08.269   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:17:08.269   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:17:08.269   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:17:08.269   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:08.269   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:08.269   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:08.269   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:08.269   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:08.269   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:08.269   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:08.269   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:08.270   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 54Mbps, Tx Link speed: 54Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:17:08.270   668   812 D WifiScoreCard: txRate: 1 txSpeed: 54
+10-30 10:17:08.270   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:17:08.270   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=54 tx=0.3, 0.0, 0.0 rx=0.1 bcn=0 [on:0 tx:0 rx:0 period:3005] from screen [on:0 period:-1944501458] score=60
+10-30 10:17:08.475  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@d6b149' assertion on view view.getRootView() to equal view
+10-30 10:17:08.491  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:08.776  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@7515622' assertion on view view.getRootView() to equal view
+10-30 10:17:08.792  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:09.259  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@1237165' assertion on view view.getRootView() to equal view
+10-30 10:17:09.270  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:09.761  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@bbd19b4' assertion on view view.getRootView() to equal view
+10-30 10:17:09.775  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:10.258  3249  3249 I ViewInteraction: Checking 'com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest$$ExternalSyntheticLambda0@7b23812' assertion on view view.getRootView() to equal view
+10-30 10:17:10.263  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:10.727  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:11.193  3249  3291 W HWUI    : Image decoding logging dropped!
+10-30 10:17:11.206   668  2549 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10158, packageName = null, attributionTag = null, token = android.os.Binder@6fc3094, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-30 10:17:11.234   905  1078 D SplashScreenView: Build android.window.SplashScreenView{fe84451 V.E...... ......ID 0,0-0,0}
+10-30 10:17:11.234   905  1078 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-30 10:17:11.234   905  1078 D SplashScreenView: Branding: view: android.view.View{25bf4b6 G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-30 10:17:11.248   459   522 I netd    : tetherGetStats() -> {[]} <0.56ms>
+10-30 10:17:11.255   532   532 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+10-30 10:17:11.272   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=54 freq=2437 RxLinkSpeed=2
+10-30 10:17:11.272   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:17:11.272   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:17:11.272   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:17:11.273   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:11.273   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:11.273   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:11.273   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:11.273   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:11.273   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:11.273   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:17:11.273   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:17:11.273   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 54Mbps, Tx Link speed: 54Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:17:11.273   668   812 D WifiScoreCard: txRate: 1 txSpeed: 54
+10-30 10:17:11.273   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:17:11.274   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=54 tx=0.1, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3003] from screen [on:0 period:-1944498455] score=60
+10-30 10:17:11.283  3249  3249 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@15562df in: PAUSED
+10-30 10:17:11.283  3249  3249 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=androidx.activity.ComponentActivity@15562df
+10-30 10:17:11.286   668  2549 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.310  3249  3249 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=6c76e0f9-9de3-4719-bf33-b3cb53c88859, class=androidx.glance.session.SessionWorker, tags={ androidx.glance.session.SessionWorker } ]
+10-30 10:17:11.314  3249  3249 D WM-Processor: Processor 6c76e0f9-9de3-4719-bf33-b3cb53c88859 executed; reschedule = false
+10-30 10:17:11.323  3249  3249 D WM-StopWorkRunnable: StopWorkRunnable for 6c76e0f9-9de3-4719-bf33-b3cb53c88859; Processor.stopWork = false, reason: -512
+10-30 10:17:11.334   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.334   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.335   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.336   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.336   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.337   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.337   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.337   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.337   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.337   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.338   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.338   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.338   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.338   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.339   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.340   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.340   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.340   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.340   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:17:11.352  2509  2509 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-30 10:17:11.357  2509  2523 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-30 10:17:11.358  2509  2523 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-30 10:17:11.364  2509  2523 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-30 10:17:11.368   905   975 I ndroid.systemui: AssetManager2(0x70f89a2eeef8) locale list changing from [] to [en-US]
+10-30 10:17:11.400   905   975 I ndroid.systemui: AssetManager2(0x70f89a302138) locale list changing from [] to [en-US]
+10-30 10:17:11.540   668   693 I ActivityTaskManager: Displayed com.canpicasoft.tokkl.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity for user 0: +331ms
+10-30 10:17:11.542  1194  1194 D ViewRootImpl: Skipping stats log for color mode
+10-30 10:17:11.543  1194  1194 D StatsLog: LAUNCHER_ONRESUME
+10-30 10:17:11.561  1194  1194 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=false newVisibility=true
+10-30 10:17:11.578  1194  1194 D BaseDepthController: setSurface:
+10-30 10:17:11.578  1194  1194 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 10:17:11.578  1194  1194 D BaseDepthController: 	mBaseSurface: Surface(name=com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher)/@0xca482d3
+10-30 10:17:11.748  3249  3249 D VRI[ComponentActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 10:17:11.761  1194  1194 D StateManager: createAtomicAnimation - fromState: Background, toState: Normal, partial trace:
+10-30 10:17:11.761  1194  1194 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.prepareToAnimate(WorkspaceRevealAnim.java:146)
+10-30 10:17:11.761  1194  1194 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.<init>(WorkspaceRevealAnim.java:69)
+10-30 10:17:11.761  1194  1194 D StateManager: 	at com.android.launcher3.QuickstepTransitionManager.createWallpaperOpenAnimations(QuickstepTransitionManager.java:1844)
+10-30 10:17:11.761  1194  1194 D b/311077782: LauncherAnimationRunner.setAnimation
+10-30 10:17:11.780  3249  3249 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@15562df in: STOPPED
+10-30 10:17:11.781  3249  3249 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=androidx.activity.ComponentActivity@15562df
+10-30 10:17:11.787  3249  3249 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@a45bf8c
+10-30 10:17:11.790  3249  3249 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@15562df in: DESTROYED
+10-30 10:17:11.790  3249  3249 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-30 10:17:11.805  3249  3249 D ViewRootImpl: Skipping stats log for color mode
+10-30 10:17:11.807   668   739 I ImeTracker: system_server:502984ec: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 10:17:11.815   668   696 I ImeTracker: system_server:502984ec: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 10:17:11.832   668   784 I ImeTracker: com.android.launcher3:abfe0703: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-30 10:17:11.840   668   739 I ImeTracker: system_server:bb6880e6: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 10:17:11.854   668   696 I ImeTracker: system_server:bb6880e6: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 10:17:11.901  3249  3291 I TokklAccessibility: font scale restored to 1.0
+10-30 10:17:11.901  3249  3291 E TestRunner: failed: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest)
+10-30 10:17:11.904  3249  3291 E TestRunner: ----- begin exception -----
+10-30 10:17:11.904  3249  3291 E TestRunner: java.lang.AssertionError: 9 Pomodoro widget captures/checks need review
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:89)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at java.lang.reflect.Method.invoke(Native Method)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.ui.theme.SystemFontScale$apply$font$1.evaluate$lambda$4(SystemFontScale.kt:49)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.ui.theme.SystemFontScale$apply$font$1$$ExternalSyntheticLambda6.invoke(D8$$SyntheticClass:0)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.ui.theme.SystemDisplaySizeKt.withConfigurationRestored(SystemDisplaySize.kt:109)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.ui.theme.SystemFontScale$apply$font$1.evaluate(SystemFontScale.kt:28)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.SessionRule$apply$1.evaluate(SessionRule.kt:50)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.rules.RunRules.evaluate(RunRules.java:20)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.Suite.runChild(Suite.java:128)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.Suite.runChild(Suite.java:27)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at org.junit.runner.JUnitCore.run(JUnitCore.java:115)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:467)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.accessibility.AccessibilityTestRunner.onStart(AccessibilityTestRunner.kt:31)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2597)
+10-30 10:17:11.904  3249  3291 E TestRunner: 	Suppressed: java.lang.AssertionError: pomodoro_widget_dark_normal_196x100_short_rest differs from its reference in 492 pixels, more than 20, within x 32..113, y 63..68 of 171x87. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_short_rest.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_196x100_short_rest.png.
+10-30 10:17:11.904  3249  3291 E TestRunner: 		at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.904  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.904  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.904  3249  3291 E TestRunner: 		... 39 more
+10-30 10:17:11.906  3249  3291 E TestRunner: 	Suppressed: java.lang.AssertionError: pomodoro_widget_dark_normal_196x100_long_rest differs from its reference in 582 pixels, more than 20, within x 17..113, y 63..68 of 171x87. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_long_rest.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_196x100_long_rest.png.
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		... 39 more
+10-30 10:17:11.906  3249  3291 E TestRunner: 	Suppressed: java.lang.AssertionError: pomodoro_widget_dark_normal_298x222_work differs from its reference in 1386 pixels, more than 20, within x 20..250, y 95..100 of 260x194. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_work.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_298x222_work.png.
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		... 39 more
+10-30 10:17:11.906  3249  3291 E TestRunner: 	Suppressed: java.lang.AssertionError: pomodoro_widget_dark_normal_298x222_short_rest differs from its reference in 1134 pixels, more than 20, within x 62..250, y 95..100 of 260x194. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_short_rest.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_298x222_short_rest.png.
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		... 39 more
+10-30 10:17:11.906  3249  3291 E TestRunner: 	Suppressed: java.lang.AssertionError: pomodoro_widget_dark_normal_298x222_long_rest differs from its reference in 1344 pixels, more than 20, within x 27..250, y 95..100 of 260x194. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_long_rest.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_298x222_long_rest.png.
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		... 39 more
+10-30 10:17:11.906  3249  3291 E TestRunner: 	Suppressed: java.lang.AssertionError: pomodoro_widget_dark_normal_375x338_work differs from its reference in 1722 pixels, more than 20, within x 27..313, y 113..118 of 328x295. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_work.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_375x338_work.png.
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.906  3249  3291 E TestRunner: 		... 39 more
+10-30 10:17:11.908  3249  3291 E TestRunner: 	Suppressed: java.lang.AssertionError: pomodoro_widget_dark_normal_375x338_short_rest differs from its reference in 1410 pixels, more than 20, within x 79..313, y 113..118 of 328x295. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_short_rest.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_375x338_short_rest.png.
+10-30 10:17:11.908  3249  3291 E TestRunner: 		at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.908  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.908  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.908  3249  3291 E TestRunner: 		... 39 more
+10-30 10:17:11.908  3249  3291 E TestRunner: 	Suppressed: java.lang.AssertionError: pomodoro_widget_dark_normal_375x338_long_rest differs from its reference in 1674 pixels, more than 20, within x 35..313, y 113..118 of 328x295. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_long_rest.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_375x338_long_rest.png.
+10-30 10:17:11.908  3249  3291 E TestRunner: 		at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.908  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.908  3249  3291 E TestRunner: 		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.908  3249  3291 E TestRunner: 		... 39 more
+10-30 10:17:11.908  3249  3291 E TestRunner: Caused by: java.lang.AssertionError: pomodoro_widget_dark_normal_196x100_work differs from its reference in 600 pixels, more than 20, within x 14..113, y 63..68 of 171x87. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_work.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/pomodoro_widget_dark_normal_196x100_work.png.
+10-30 10:17:11.908  3249  3291 E TestRunner: 	at org.junit.Assert.fail(Assert.java:89)
+10-30 10:17:11.908  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:17:11.908  3249  3291 E TestRunner: 	at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+10-30 10:17:11.908  3249  3291 E TestRunner: 	... 39 more
+10-30 10:17:11.908  3249  3291 E TestRunner: ----- end exception -----
+10-30 10:17:11.919  3249  3291 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest)

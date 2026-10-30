@@ -45,6 +45,8 @@ import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.trash.TrashViewModel
+import com.github.e0ipso.tokkl.widget.WidgetPage
+import com.github.e0ipso.tokkl.widget.takeWidgetPage
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -76,6 +78,7 @@ class MainActivity : ComponentActivity() {
 
     private val notificationPermission by lazy { NotificationPermissionAsk.forApp(this) }
     private var notificationsAllowed = false
+    private var openWidgetPage by mutableStateOf<WidgetPage?>(null)
     private var openReminderTimer by mutableIntStateOf(0)
     private var openPomodoro by mutableStateOf<PomodoroNotificationTap?>(null)
 
@@ -95,6 +98,9 @@ class MainActivity : ComponentActivity() {
             openReminderTimer++
             intent.removeExtra(ReminderNotifier.OPEN_TIMER)
         }
+        openWidgetPage = savedInstanceState?.getString("pending-widget-page")?.let { name ->
+            WidgetPage.entries.firstOrNull { it.name == name }
+        } ?: intent?.takeWidgetPage()
         notificationsAllowed = allowsNotifications()
         val themeSettings = (application as TokklApplication).themeSettings
         // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
@@ -115,6 +121,8 @@ class MainActivity : ComponentActivity() {
                         themeSettings = themeSettings,
                         reminderSettings = (application as TokklApplication).reminderSettings,
                         openReminderTimer = openReminderTimer,
+                        openWidgetPage = openWidgetPage,
+                        onWidgetPageOpened = { handled -> if (openWidgetPage == handled) openWidgetPage = null },
                         openPomodoro = openPomodoro,
                         onPomodoroOpened = { handled -> if (openPomodoro == handled) openPomodoro = null },
                         signOut = (application as TokklApplication).signOutModel,
@@ -152,6 +160,7 @@ class MainActivity : ComponentActivity() {
         openPomodoro?.let { pending ->
             outState.putParcelable("pending-pomodoro-notification", pomodoroSessionOpenIntent(this, pending.account, pending.phase))
         }
+        openWidgetPage?.let { outState.putString("pending-widget-page", it.name) }
         super.onSaveInstanceState(outState)
     }
 
@@ -162,6 +171,7 @@ class MainActivity : ComponentActivity() {
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        intent.takeWidgetPage()?.let { openWidgetPage = it }
         intent.takePomodoroNotificationTap()?.let { openPomodoro = it }
         if (intent.getBooleanExtra(ReminderNotifier.OPEN_TIMER, false)) {
             openReminderTimer++
@@ -182,7 +192,10 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             signOuts.collect { finished ->
                 dropViewModelsBefore(finished)
-                if (shownSignOuts.value != finished) openPomodoro = null
+                if (shownSignOuts.value != finished) {
+                    openPomodoro = null
+                    openWidgetPage = null
+                }
                 shownSignOuts.value = finished
             }
         }

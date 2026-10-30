@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.clients.ClientsModelTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:16.903Z" hostname="punta-des-patro" time="0.342">
+  <properties/>
+  <testcase name="aNewClientGoesWithItsNameTrimmedAndBlankNotesAsNone" classname="com.github.e0ipso.tokkl.clients.ClientsModelTest" time="0.145"/>
+  <testcase name="archivingAsksFirstThenArchivesTheClientAndRefreshesTheCache" classname="com.github.e0ipso.tokkl.clients.ClientsModelTest" time="0.095"/>
+  <testcase name="restoringBringsTheProjectsBack" classname="com.github.e0ipso.tokkl.clients.ClientsModelTest" time="0.101"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

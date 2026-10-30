@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.licences.LicenceReflowTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:21.811Z" hostname="punta-des-patro" time="0.146">
+  <properties/>
+  <testcase name="joinsWithOneSpaceAndKeepsNoTrailingSpace" classname="com.github.e0ipso.tokkl.licences.LicenceReflowTest" time="0.011"/>
+  <testcase name="joinsTheLinesOfEachParagraph" classname="com.github.e0ipso.tokkl.licences.LicenceReflowTest" time="0.001"/>
+  <testcase name="startsEachNumberedConditionOnItsOwnLine" classname="com.github.e0ipso.tokkl.licences.LicenceReflowTest" time="0.001"/>
+  <testcase name="breaksALineOnlyAtAParagraphEndAHeadingOrACondition" classname="com.github.e0ipso.tokkl.licences.LicenceReflowTest" time="0.007"/>
+  <testcase name="keepsEveryWordInOrder" classname="com.github.e0ipso.tokkl.licences.LicenceReflowTest" time="0.015"/>
+  <testcase name="keepsTheHeadingsOnTheirOwnLines" classname="com.github.e0ipso.tokkl.licences.LicenceReflowTest" time="0.002"/>
+  <testcase name="keepsTheThreeBlocksBetweenTheRules" classname="com.github.e0ipso.tokkl.licences.LicenceReflowTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

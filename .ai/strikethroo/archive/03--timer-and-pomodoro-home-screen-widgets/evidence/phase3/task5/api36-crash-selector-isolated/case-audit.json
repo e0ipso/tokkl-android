@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "exit": 0,
+    "cases": 1,
+    "failures": 0,
+    "skipped": 0,
+    "inputs_unchanged": true
+  },
+  "cases": [
+    {
+      "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest",
+      "name": "sessionStartNextAndEndFailOfflineOnThePageTheNotificationsAndTheAlarm",
+      "time": "83.282",
+      "failure": []
+    }
+  ],
+  "actual_started": 1,
+  "actual_finished": 1,
+  "inputs_match_final_host_npm": true,
+  "device_panel_capture_succeeded": true,
+  "manual_ui_actions": 0
+}

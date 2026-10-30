@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.catalog.CreateOnceTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:16.869Z" hostname="punta-des-patro" time="0.006">
+  <properties/>
+  <testcase name="theSecondCreateIsLookedForTooAndThenItsFailureStands" classname="com.github.e0ipso.tokkl.catalog.CreateOnceTest" time="0.002"/>
+  <testcase name="whenTheListLacksTheItemTheCreateGoesOnceMore" classname="com.github.e0ipso.tokkl.catalog.CreateOnceTest" time="0.001"/>
+  <testcase name="whenTheListDoesNotLoadTheCreatesFailureStands" classname="com.github.e0ipso.tokkl.catalog.CreateOnceTest" time="0.0"/>
+  <testcase name="anItemThePageAlreadyListedIsNotTakenForTheOneTheCreateMade" classname="com.github.e0ipso.tokkl.catalog.CreateOnceTest" time="0.0"/>
+  <testcase name="anAnsweredCreateReadsNothingMore" classname="com.github.e0ipso.tokkl.catalog.CreateOnceTest" time="0.0"/>
+  <testcase name="aRefusalStandsWithTheServersReasonAndReadsNothingMore" classname="com.github.e0ipso.tokkl.catalog.CreateOnceTest" time="0.001"/>
+  <testcase name="aLostAnswerTakesTheItemTheListThenHasUnderTheName" classname="com.github.e0ipso.tokkl.catalog.CreateOnceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

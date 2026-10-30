@@ -3,3 +3,7 @@
 /gradlew        text eol=lf
 *.bat           text eol=crlf
 *.jar           binary
+
+# Preserve raw test output in plan evidence, including archived plans.
+.ai/strikethroo/**/evidence/**/*.log -whitespace
+.ai/strikethroo/**/evidence/**/logcat-*.txt -whitespace

@@ -150,6 +150,15 @@ class ReportsModel(
         if (state.value == ReportsState.Closed) select(RangePreset.THIS_WEEK)
     }
 
+    /** Opens the widget day report. */
+    fun openToday() {
+        // Weekly expands a one-day range to a week. Widget totals always describe one day.
+        mutableTab.value = ReportTab.SUMMARY
+        mutableFilters.value = ReportFilters()
+        backgrounded = false
+        select(RangePreset.TODAY)
+    }
+
     /** Loads [preset]'s range around today in the account's timezone. */
     fun select(preset: RangePreset) {
         val time = accountTime() ?: return showNoAccountTime()

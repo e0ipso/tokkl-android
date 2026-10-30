@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.session.SignOutTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:38.651Z" hostname="punta-des-patro" time="0.149">
+  <properties/>
+  <testcase name="aSecondSignOutRunsEveryStepAgain" classname="com.github.e0ipso.tokkl.session.SignOutTest" time="0.141"/>
+  <testcase name="runsEveryStepInOrderAndCountsTheSignOut" classname="com.github.e0ipso.tokkl.session.SignOutTest" time="0.003"/>
+  <testcase name="aFailedStepDoesNotStopTheOthersButTheSignOutDoesNotCount" classname="com.github.e0ipso.tokkl.session.SignOutTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

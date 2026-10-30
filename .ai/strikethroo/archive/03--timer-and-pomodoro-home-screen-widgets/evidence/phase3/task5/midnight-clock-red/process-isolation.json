@@ -1,0 +1,9 @@
+[
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest-unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork.txt",
+    "test_runner_lines": [
+      "10-30 10:04:09.097  2520  2559 I TestRunner: started: unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork(com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest)",
+      "10-30 10:04:14.334  2520  2559 I TestRunner: finished: unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork(com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest)"
+    ]
+  }
+]

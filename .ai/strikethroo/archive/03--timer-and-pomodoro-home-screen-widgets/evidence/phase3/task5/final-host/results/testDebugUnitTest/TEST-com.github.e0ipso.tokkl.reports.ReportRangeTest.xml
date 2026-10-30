@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.ReportRangeTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:37.494Z" hostname="punta-des-patro" time="0.007">
+  <properties/>
+  <testcase name="weekPresetsStartOnTheAccountsWeekStart" classname="com.github.e0ipso.tokkl.reports.ReportRangeTest" time="0.0"/>
+  <testcase name="dayMonthAndYearPresets" classname="com.github.e0ipso.tokkl.reports.ReportRangeTest" time="0.0"/>
+  <testcase name="theResolutionFollowsTheRangesLength" classname="com.github.e0ipso.tokkl.reports.ReportRangeTest" time="0.0"/>
+  <testcase name="shiftMovesWholeMonthsByMonthsAndOtherRangesByTheirLength" classname="com.github.e0ipso.tokkl.reports.ReportRangeTest" time="0.004"/>
+  <testcase name="aRangeNamesThePresetItMatches" classname="com.github.e0ipso.tokkl.reports.ReportRangeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

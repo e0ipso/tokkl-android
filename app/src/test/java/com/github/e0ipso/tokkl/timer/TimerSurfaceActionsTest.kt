@@ -180,6 +180,52 @@ class TimerSurfaceActionsTest {
         assertTrue("the next tap goes out again", actions.tap(TimerSurfaceAction.Pause, target) is SurfaceTap.Request)
     }
 
+    @Test
+    fun aTapOnThePublishedNextStateWaitsForThePreviousRequestToReturn() = runBlocking {
+        now = running(id = 42)
+        val gate = CompletableDeferred<Unit>()
+        held = gate
+        val first = actions.tap(TimerSurfaceAction.Pause, running(id = 42).target) as SurfaceTap.Request
+        val sending = async(start = CoroutineStart.UNDISPATCHED) { first.send() }
+        try {
+            // TimerActions publishes the server response before returning to the caller.
+            // A notification can already show Resume while the Pause call is unwinding.
+            now = paused(revision = 9)
+            val next = actions.tap(TimerSurfaceAction.Resume, paused(revision = 9).target)
+            assertTrue("the newly drawn control accepts a tap", next is SurfaceTap.Request)
+            val resuming = async(start = CoroutineStart.UNDISPATCHED) { (next as SurfaceTap.Request).send() }
+            assertEquals("server calls stay serialized", listOf("pause"), calls)
+            gate.complete(Unit)
+            assertEquals(TimerActionResult.Done, sending.await())
+            assertEquals(TimerActionResult.Done, resuming.await())
+            assertEquals(listOf("pause", "resume 9"), calls)
+        } finally {
+            gate.complete(Unit)
+        }
+    }
+
+    @Test
+    fun aWaitingActionDoesNothingIfItsStateChangesAgain() = runBlocking {
+        now = running(id = 42)
+        val gate = CompletableDeferred<Unit>()
+        held = gate
+        val first = actions.tap(TimerSurfaceAction.Pause, running(id = 42).target) as SurfaceTap.Request
+        val sending = async(start = CoroutineStart.UNDISPATCHED) { first.send() }
+        try {
+            now = paused(revision = 9)
+            val next = actions.tap(TimerSurfaceAction.Resume, paused(revision = 9).target) as SurfaceTap.Request
+            val resuming = async(start = CoroutineStart.UNDISPATCHED) { next.send() }
+            assertNull("a duplicate of the waiting action", actions.tap(TimerSurfaceAction.Resume, paused(revision = 9).target))
+            now = running(id = 43)
+            gate.complete(Unit)
+            sending.await()
+            assertNull("the waiting control is now stale", resuming.await())
+            assertEquals("only the original action reached the server", listOf("pause"), calls)
+        } finally {
+            gate.complete(Unit)
+        }
+    }
+
     private fun tap(action: TimerSurfaceAction, target: TimerTarget): SurfaceTap? = runBlocking { actions.tap(action, target) }
 
     private fun running(id: Long, pausable: Boolean = true, unsent: Boolean = false, accumulatedSeconds: Long = 0) = TimerControls.Running(

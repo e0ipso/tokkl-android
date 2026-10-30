@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="5" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-29T23:04:30" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest" tests="1" failures="0" errors="0" skipped="0" time="19.563" timestamp="2026-10-29T23:04:30" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesAndStatesFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest" time="19.563" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest" tests="1" failures="0" errors="0" skipped="0" time="18.665" timestamp="2026-10-29T23:04:30" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesAndStatesFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest" time="18.665" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest" tests="1" failures="0" errors="0" skipped="0" time="19.814" timestamp="2026-10-29T23:04:30" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesAndStatesFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest" time="19.814" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest" tests="1" failures="0" errors="0" skipped="0" time="19.579" timestamp="2026-10-29T23:04:30" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesAndStatesFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest" time="19.579" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.widget.WidgetServerTest" tests="1" failures="0" errors="0" skipped="0" time="8.279" timestamp="2026-10-29T23:04:30" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="startAndStopWorkOfflineThroughTheNativeControls" classname="com.github.e0ipso.tokkl.widget.WidgetServerTest" time="8.279" />
+  </testsuite>
+</testsuites>

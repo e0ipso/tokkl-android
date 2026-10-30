@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.ReportFormatTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:37.163Z" hostname="punta-des-patro" time="0.326">
+  <properties/>
+  <testcase name="aProjectWithoutAColourMixesTheFallback" classname="com.github.e0ipso.tokkl.reports.ReportFormatTest" time="0.011"/>
+  <testcase name="percentOfNothingIsZero" classname="com.github.e0ipso.tokkl.reports.ReportFormatTest" time="0.003"/>
+  <testcase name="anUnknownCurrencyCodeFollowsTheAmount" classname="com.github.e0ipso.tokkl.reports.ReportFormatTest" time="0.006"/>
+  <testcase name="percentHasOneDecimal" classname="com.github.e0ipso.tokkl.reports.ReportFormatTest" time="0.008"/>
+  <testcase name="percentMatchesTheWebAppInNode" classname="com.github.e0ipso.tokkl.reports.ReportFormatTest" time="0.282"/>
+  <testcase name="moneyUsesTheCurrencysOwnDecimals" classname="com.github.e0ipso.tokkl.reports.ReportFormatTest" time="0.013"/>
+  <testcase name="projectMarkMixesTheProjectColourSixtyPercentWithTheMix" classname="com.github.e0ipso.tokkl.reports.ReportFormatTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

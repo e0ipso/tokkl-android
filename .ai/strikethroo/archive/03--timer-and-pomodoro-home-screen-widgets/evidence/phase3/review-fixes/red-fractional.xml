@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-10-30T07:31:00.244Z" hostname="punta-des-patro" time="1.129">
+  <properties/>
+  <testcase name="aFractionalMillisecondCannotRedrawBeforeThePhaseEnds" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest" time="1.125">
+    <failure message="kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1000 ms" type="kotlinx.coroutines.TimeoutCancellationException">kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1000 ms
+	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt:42)
+	at com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest$aFractionalMillisecondCannotRedrawBeforeThePhaseEnds$1$pending$1.invokeSuspend(PomodoroWidgetDeadlineTest.kt:27)
+	at com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest$aFractionalMillisecondCannotRedrawBeforeThePhaseEnds$1.invokeSuspend(PomodoroWidgetDeadlineTest.kt:27)
+Caused by: kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 1000 ms
+	at kotlinx.coroutines.TimeoutKt.TimeoutCancellationException(Timeout.kt:188)
+	at kotlinx.coroutines.TimeoutCoroutine.run(Timeout.kt:156)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedRunnableTask.run(EventLoop.common.kt:505)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.DefaultExecutor.run(DefaultExecutor.kt:105)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

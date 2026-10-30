@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.ReportsModelTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:34.975Z" hostname="punta-des-patro" time="1.554">
+  <properties/>
+  <testcase name="opensOnThisWeekInTheAccountsTimezoneAndWeekStart" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.116"/>
+  <testcase name="presetsAndShiftsStartFromTheAccountsToday" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.269"/>
+  <testcase name="widgetTodayReplacesARetainedWeeklyTabAndItsFiltersWithTheAccountDay" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.284"/>
+  <testcase name="aStartWithoutTheServerShowsWhyAndNoNumbers" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.106"/>
+  <testcase name="aStartAfterAStopAsksOnceForTheRangeOnScreen" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.181"/>
+  <testcase name="theNetworksReturnAsksNothingForAShownOrClosedReport" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.097"/>
+  <testcase name="theNetworksReturnAsksAgainForAReportThatGotNoAnswer" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.092"/>
+  <testcase name="theStartReplayedWhenTheScreenOpensAsksNothing" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.093"/>
+  <testcase name="aStopWhileTheScreenIsClosedAsksNothing" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.095"/>
+  <testcase name="closingForgetsAStop" classname="com.github.e0ipso.tokkl.reports.ReportsModelTest" time="0.219"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

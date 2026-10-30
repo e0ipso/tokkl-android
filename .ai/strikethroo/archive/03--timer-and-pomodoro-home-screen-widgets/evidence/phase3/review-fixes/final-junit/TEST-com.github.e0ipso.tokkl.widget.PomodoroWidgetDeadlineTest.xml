@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:32:11.873Z" hostname="punta-des-patro" time="0.218">
+  <properties/>
+  <testcase name="phaseEndRedrawDoesNotDependOnAnAlarmOrAnotherServerEvent" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest" time="0.178"/>
+  <testcase name="aNewPhaseCancelsThePreviousDeadline" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest" time="0.014"/>
+  <testcase name="sessionEndCancelsTheDeadlineAndPastEndsNeedNoFutureWork" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest" time="0.008"/>
+  <testcase name="aFractionalMillisecondCannotRedrawBeforeThePhaseEnds" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetDeadlineTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

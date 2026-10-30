@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "env",
+    "TOKKL_TEST_AVD=tokkl-api36",
+    "scripts/instrumented-tests.sh",
+    "--no-daemon",
+    "-Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.cache.BackgroundSendServerTest#theRetryAfterTheBackoffSendsTheQueue,com.github.e0ipso.tokkl.cache.BackgroundSendServerTest#callsThatQueueNothingScheduleNoWork,com.github.e0ipso.tokkl.cache.BackgroundSendServerTest#restoringTheNetworkSendsTheQueueWithTheAppClosed,com.github.e0ipso.tokkl.cache.RunningCheckServerTest#startingATimerSchedulesOneCheckAndStoppingItCancelsIt,com.github.e0ipso.tokkl.settings.SettingsScreenTest#reminderSwitchAndHoursValidateAndApply,com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest#suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField,com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest#signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard,com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest#focusedSignInFieldStaysAboveTheKeyboard,com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest#signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard,com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest#signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard"
+  ],
+  "outer": "flock --close /tmp/tokkl-plan3-gradle.lock systemd-run --user --scope --quiet -p OOMPolicy=continue -- choom -n 1000 -- python3 /home/e0ipso/workspace/apps/tokkl-android/.ai/strikethroo/plans/03--timer-and-pomodoro-home-screen-widgets/evidence/phase3/task5/run-evidence.py ...",
+  "started": 1793358793.3159566
+}
