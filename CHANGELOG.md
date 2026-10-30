@@ -1,3 +1,9 @@
+## [0.7.0](https://github.com/e0ipso/tokkl-android/compare/v0.6.0...v0.7.0) (2026-10-30)
+
+### Features
+
+* **widget:** add Timer and Pomodoro widgets ([#19](https://github.com/e0ipso/tokkl-android/issues/19)) ([9a2b564](https://github.com/e0ipso/tokkl-android/commit/9a2b5646b26b751e3f8782f733bae0acff77c366))
+
 ## [0.6.0](https://github.com/e0ipso/tokkl-android/compare/v0.5.1...v0.6.0) (2026-10-29)
 
 ### Features
