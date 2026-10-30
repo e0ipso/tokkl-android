@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='UTF-8' ?>
-<testsuites tests="1" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-30T19:34:10" hostname="localhost">
-  <testsuite name="com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest" tests="1" failures="0" errors="0" skipped="0" time="11.261" timestamp="2026-10-30T19:34:10" hostname="localhost">
-    <properties>
-      <property name="device" value="emulator-5554" />
-    </properties>
-    <testcase name="unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork" classname="com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest" time="11.261" />
-  </testsuite>
-</testsuites>

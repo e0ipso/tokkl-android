@@ -1,9 +1,0 @@
-[
-  {
-    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-capturedNextAndEndRevisionsAreRefusedAfterRemoteEditsAndAdoptConflictState.txt",
-    "test_runner_lines": [
-      "10-30 10:14:05.291  2384  2426 I TestRunner: started: capturedNextAndEndRevisionsAreRefusedAfterRemoteEditsAndAdoptConflictState(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
-      "10-30 10:14:18.884  2384  2426 I TestRunner: finished: capturedNextAndEndRevisionsAreRefusedAfterRemoteEditsAndAdoptConflictState(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
-    ]
-  }
-]

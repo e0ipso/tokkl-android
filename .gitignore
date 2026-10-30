@@ -18,3 +18,7 @@ captures/
 .DS_Store
 node_modules/
 __pycache__/
+
+# Local Strikethroo plans and execution artifacts.
+/.ai/strikethroo/plans/
+/.ai/strikethroo/archive/

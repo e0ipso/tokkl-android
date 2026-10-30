@@ -1,7 +1,0 @@
-Booting tokkl-api36 as emulator-5554 in tokkl-emulator-5554-19cf42cd.scope with the lavapipe renderer, -read-only
-Traceback (most recent call last):
-  File "/home/e0ipso/workspace/apps/tokkl-android/scripts/emulator-discovery.py", line 77, in <module>
-    publish(args.work_dir, args.runtime_dir, args.serial)
-  File "/home/e0ipso/workspace/apps/tokkl-android/scripts/emulator-discovery.py", line 45, in publish
-    raise ValueError("No live discovery record matches this run's emulator")
-ValueError: No live discovery record matches this run's emulator

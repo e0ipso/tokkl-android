@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.github.e0ipso.tokkl.time.DurationTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:41.444Z" hostname="punta-des-patro" time="0.006">
-  <properties/>
-  <testcase name="parseDuration accepts the formats people type" classname="com.github.e0ipso.tokkl.time.DurationTest" time="0.003"/>
-  <testcase name="formatDurationWithoutSeconds drops the seconds in each duration format" classname="com.github.e0ipso.tokkl.time.DurationTest" time="0.001"/>
-  <testcase name="formatDuration renders each Toggl duration format" classname="com.github.e0ipso.tokkl.time.DurationTest" time="0.001"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

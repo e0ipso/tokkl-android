@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.github.e0ipso.tokkl.ui.theme.PrimaryFillTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:50.147Z" hostname="punta-des-patro" time="0.009">
-  <properties/>
-  <testcase name="lightTakesTheWallpaperPrimaryAndKeepsTokklsOtherColours" classname="com.github.e0ipso.tokkl.ui.theme.PrimaryFillTest" time="0.005"/>
-  <testcase name="darkTakesTheWallpaperPrimaryAndKeepsTokklsOtherColours" classname="com.github.e0ipso.tokkl.ui.theme.PrimaryFillTest" time="0.002"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

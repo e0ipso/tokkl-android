@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.github.e0ipso.tokkl.BackupRulesTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:29:42.158Z" hostname="punta-des-patro" time="0.94">
-  <properties/>
-  <testcase name="mergedManifestTurnsBackupOff" classname="com.github.e0ipso.tokkl.BackupRulesTest" time="0.754"/>
-  <testcase name="dataExtractionRulesExcludeEveryDomainFromEveryTransferMode" classname="com.github.e0ipso.tokkl.BackupRulesTest" time="0.161"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

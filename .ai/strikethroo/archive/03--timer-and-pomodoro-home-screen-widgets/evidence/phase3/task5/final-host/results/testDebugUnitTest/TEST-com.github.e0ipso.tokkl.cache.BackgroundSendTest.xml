@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.github.e0ipso.tokkl.cache.BackgroundSendTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:23.359Z" hostname="punta-des-patro" time="0.009">
-  <properties/>
-  <testcase name="anEmptyQueueOrASignedOutPhoneEndsTheWork" classname="com.github.e0ipso.tokkl.cache.BackgroundSendTest" time="0.0"/>
-  <testcase name="aRefusalWaitsForTheUserInsteadOfRetrying" classname="com.github.e0ipso.tokkl.cache.BackgroundSendTest" time="0.003"/>
-  <testcase name="noNetworkA5xxA429AndTheDiskRetry" classname="com.github.e0ipso.tokkl.cache.BackgroundSendTest" time="0.005"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

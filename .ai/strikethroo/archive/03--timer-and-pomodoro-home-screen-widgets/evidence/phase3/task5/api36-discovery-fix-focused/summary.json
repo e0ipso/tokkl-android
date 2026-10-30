@@ -1,9 +1,0 @@
-{
-  "exit": 1,
-  "cases": 0,
-  "failures": 0,
-  "skipped": 0,
-  "inputs_unchanged": true,
-  "setup_failed": true,
-  "note": "Runner stopped before Gradle/test execution: no live discovery record before gRPC activation. Initial copied XML was stale, excluded and retained separately."
-}
