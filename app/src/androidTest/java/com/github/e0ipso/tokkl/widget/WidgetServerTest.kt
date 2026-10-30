@@ -264,7 +264,10 @@ class WidgetServerTest {
 
     @Test
     fun billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively() {
-        val start = Instant.now().minusSeconds(3_600).truncatedTo(ChronoUnit.SECONDS)
+        // An hour ago belongs to yesterday just after account midnight. These stopped
+        // segments must belong to the same account day as the timer started below.
+        val time = checkNotNull(app.accountSettings.state.value?.time())
+        val start = time.instantAt(time.today(), 0)
         for ((billable, seconds) in listOf(true to 600L, false to 300L)) {
             web.send("POST", web.server.api("workspaces", "$workspace", "time_entries"), buildJsonObject {
                 put("workspace_id", workspace); put("created_with", "tokkl-android tests")
