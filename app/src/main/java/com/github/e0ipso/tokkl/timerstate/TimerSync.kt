@@ -70,9 +70,12 @@ class TimerSync<A : Any>(
      * Holds the stream for [account]. A stream held for another account is cancelled first. While
      * it already holds or waits to reconnect the stream for [account], or the server refused
      * [account]'s credential, it does nothing, so a repeated start never opens a second call.
+     * [canRun] checks the caller's ownership under the stream lock. A service startup delayed
+     * by account I/O cannot reopen or replace a stream after its service has stopped.
      */
-    fun run(account: A) {
+    fun run(account: A, canRun: () -> Boolean = { true }) {
         val opened = synchronized(lock) {
+            if (!canRun()) return
             if (account == this.account || account == refused) return
             dropLocked()
             this.account = account

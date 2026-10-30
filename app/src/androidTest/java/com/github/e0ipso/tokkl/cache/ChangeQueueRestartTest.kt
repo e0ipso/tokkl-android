@@ -90,8 +90,11 @@ class ChangeQueueRestartTest {
 
             signIn(TokklTestServer.url, account.apiToken)
             runBlocking { app.accountSettings.refresh().join() }
-            while (runBlocking { app.changes.unsentCount.first() } > 0) {
+            while (true) {
+                // The refresh and WorkManager can drain concurrently. Use the same
+                // observation for the loop guard and its strict progress assertion.
                 val before = runBlocking { app.changes.unsentCount.first() }
+                if (before == 0) break
                 runBlocking { app.sender.send().join() }
                 assertTrue("the drain sent nothing", runBlocking { app.changes.unsentCount.first() } < before)
             }

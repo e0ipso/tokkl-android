@@ -478,11 +478,14 @@ class TokklApplication : Application() {
      */
     fun followTimerSync() {
         alarmClock.watchTimerSync()
+        val service = timerSyncService
         if (!timerSyncWanted()) {
             timerSync.stop()
             stopTimerSyncService()
-        } else if (timerSyncService != null) {
-            timerSync.run(timerState)
+        } else if (service != null) {
+            timerSync.run(timerState) {
+                timerSyncService === service && capabilities.state.value.timerState && !sender.signInNeeded.value
+            }
         } else {
             TimerSyncService.start(this)
         }

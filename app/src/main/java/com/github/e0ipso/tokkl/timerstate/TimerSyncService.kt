@@ -69,7 +69,12 @@ class TimerSyncService : Service() {
         if (network == null) network = followDefaultNetwork()
         scope.launch {
             val running = withContext(Dispatchers.IO) {
-                app.timerSyncWanted().also { wanted -> if (wanted) app.timerSync.run(app.timerState) }
+                app.timerSyncWanted().also { wanted ->
+                    if (wanted) app.timerSync.run(app.timerState) {
+                        app.timerSyncService === this@TimerSyncService &&
+                            app.capabilities.state.value.timerState && !app.sender.signInNeeded.value
+                    }
+                }
             }
             if (!running) stopSelf(startId)
         }
