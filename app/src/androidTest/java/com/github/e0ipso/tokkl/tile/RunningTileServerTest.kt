@@ -120,6 +120,7 @@ class RunningTileServerTest {
 
     @Test
     fun openingTheShadeFindsATimerStartedOnTheServer() {
+        app.followNoTimerEvents()
         val remote = account.createEntry("Started on the laptop", Instant.now().minusSeconds(7_200))
         assertEquals("the app has not fetched the remote start", null, runBlocking { app.cache.running.first() })
 
@@ -132,6 +133,9 @@ class RunningTileServerTest {
 
     @Test
     fun openingTheShadeTwiceWithinAMinuteFetchesOnlyOnce() {
+        // Isolate the tile's current-entry read from the independent server event stream.
+        // Otherwise the stream can satisfy awaitText before any counted request starts.
+        app.followNoTimerEvents()
         account.createEntry("One shade refresh", Instant.now().minusSeconds(7_200))
         RequestCounter(TokklTestServer.url, CURRENT_REQUEST).use { requests ->
             signIn(requests.url, account.apiToken)
