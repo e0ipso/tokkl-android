@@ -219,6 +219,9 @@ class WidgetServerTest {
         native.awaitText("Favorite 3")
         signIn(NO_ROUTE, account.apiToken)
         for (index in 1..3) {
+            // Resizing and the preceding Start can enqueue redraws after text first appears.
+            // Settle that fixture work before the next tap's one-second deadline starts.
+            native.awaitUpdatesSettled()
             val queued = unsentCount()
             native.click("Start Favorite $index, Widget project · Widget task")
             val running = runBlocking { withTimeout(1_000) { app.cache.running.filterNotNull().first { it.entry.description == "Favorite $index" }.entry } }
