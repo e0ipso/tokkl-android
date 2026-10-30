@@ -23,10 +23,11 @@ import kotlin.concurrent.thread
 /**
  * Waits until a node with [text] exists. The first screen appears only after
  * the app has read the stored session off the main thread, which the compose
- * rule's idle check does not wait for.
+ * rule's idle check does not wait for. Cold starts and recreation can temporarily leave
+ * no Compose root, which these wait predicates treat as not ready.
  */
 fun ComposeTestRule.awaitText(text: String, timeoutMillis: Long = START_TIMEOUT_MS) {
-    waitUntil("\"$text\" shows", timeoutMillis) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+    waitUntil("\"$text\" shows", timeoutMillis) { onAllNodesWithText(text).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
 }
 
 /**
@@ -36,7 +37,7 @@ fun ComposeTestRule.awaitText(text: String, timeoutMillis: Long = START_TIMEOUT_
 fun ComposeTestRule.awaitTimerPage(timeoutMillis: Long = START_TIMEOUT_MS) {
     val timer = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.nav_timer)
     waitUntil("the Timer page shows", timeoutMillis) {
-        onAllNodes(hasText(timer) and isSelected()).fetchSemanticsNodes().isNotEmpty()
+        onAllNodes(hasText(timer) and isSelected()).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
     }
 }
 
@@ -46,7 +47,7 @@ fun ComposeTestRule.awaitTimerPage(timeoutMillis: Long = START_TIMEOUT_MS) {
  */
 fun ComposeTestRule.awaitPomodoroOffered(timeoutMillis: Long = START_TIMEOUT_MS) {
     waitUntil("the bar offers Pomodoro", timeoutMillis) {
-        onAllNodes(bottomBarItem(R.string.pomodoro_title)).fetchSemanticsNodes().isNotEmpty()
+        onAllNodes(bottomBarItem(R.string.pomodoro_title)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
     }
 }
 
@@ -66,7 +67,7 @@ fun ComposeTestRule.openBarPage(@StringRes label: Int, timeoutMillis: Long = STA
         return
     }
     val item = bottomBarItem(label)
-    waitUntil("the bar item shows", timeoutMillis) { onAllNodes(item).fetchSemanticsNodes().isNotEmpty() }
+    waitUntil("the bar item shows", timeoutMillis) { onAllNodes(item).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
     onNode(item).performClick()
 }
 
@@ -75,10 +76,10 @@ fun ComposeTestRule.openMorePage(@StringRes label: Int, timeoutMillis: Long = ST
     openBarPage(R.string.nav_more, timeoutMillis)
     val context = InstrumentationRegistry.getInstrumentation().targetContext
     val choice = hasText(context.getString(label)) and isSelectable()
-    waitUntil("the More choice shows", timeoutMillis) { onAllNodes(choice).fetchSemanticsNodes().isNotEmpty() }
+    waitUntil("the More choice shows", timeoutMillis) { onAllNodes(choice).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
     onNode(choice).performScrollTo().performClick()
     val sheet = hasText(context.getString(R.string.nav_more)) and isHeading()
-    waitUntil("the More sheet closes", timeoutMillis) { onAllNodes(sheet).fetchSemanticsNodes().isEmpty() }
+    waitUntil("the More sheet closes", timeoutMillis) { onAllNodes(sheet).fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty() }
 }
 
 /**

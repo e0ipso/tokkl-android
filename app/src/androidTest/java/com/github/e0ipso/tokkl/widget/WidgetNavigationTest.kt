@@ -84,7 +84,7 @@ class WidgetNavigationTest {
         val heading = hasText("Pomodoro") and isHeading()
         // The widget route reads the stored session on IO, beyond Compose's idle boundary.
         compose.waitUntil("the widget opens the Pomodoro page", 5_000) {
-            compose.onAllNodes(heading).fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodes(heading).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
         }
         compose.onNode(heading).assertIsDisplayed()
     }

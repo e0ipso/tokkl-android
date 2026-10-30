@@ -201,6 +201,30 @@ class TimerSyncLifecycleTest {
         assertTrue("the old stream's end did not touch the new one", current.active)
     }
 
+    @Test
+    fun aStartupThatOutlivesItsServiceCannotReopenTheStoppedStream() {
+        var ownsStream = true
+        sync.run(ANA) { ownsStream }
+        val original = opens.single().link
+        // The service stops while another startup is still reading its account on IO.
+        ownsStream = false
+        sync.stop()
+        sync.run(ANA) { ownsStream }
+        sync.networkAvailable()
+        clock.advanceBy(10 * TimerSync.MAX_DELAY_MILLIS)
+        assertFalse(original.active)
+        assertEquals("a late startup opens no orphan stream or reconnect", 1, opens.size)
+    }
+
+    @Test
+    fun aStartupFromAnOldOwnerCannotReplaceTheNewOwnersStream() {
+        sync.run(BEN)
+        val current = opens.single().link
+        sync.run(ANA) { false }
+        assertTrue("the current owner's stream stays open", current.active)
+        assertEquals("the old owner sends no request", listOf(BEN), opens.map { it.account })
+    }
+
     /** Advances the clock until the next call opens, and returns how long that took. */
     private fun waitForOpen(): Long {
         val from = clock.time

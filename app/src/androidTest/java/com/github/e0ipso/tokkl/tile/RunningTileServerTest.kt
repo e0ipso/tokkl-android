@@ -122,6 +122,9 @@ class RunningTileServerTest {
     fun openingTheShadeFindsATimerStartedOnTheServer() {
         app.followNoTimerEvents()
         val remote = account.createEntry("Started on the laptop", Instant.now().minusSeconds(7_200))
+        // Installing the tile can bind it and consume a refresh before this fixture exists.
+        // Begin the measured listening interval with its own account generation.
+        signIn(TokklTestServer.url, account.apiToken)
         assertEquals("the app has not fetched the remote start", null, runBlocking { app.cache.running.first() })
 
         QuickSettingsTile.expand()
