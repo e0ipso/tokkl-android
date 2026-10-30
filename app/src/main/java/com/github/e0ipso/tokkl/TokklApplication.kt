@@ -82,6 +82,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncService
 import com.github.e0ipso.tokkl.timerstate.holdTimerEvents
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.widget.PomodoroWidget
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetFieldsStore
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import com.github.e0ipso.tokkl.widget.TokklWidget
@@ -883,6 +884,7 @@ class TokklApplication : Application() {
             MainScope(), Dispatchers.IO,
         )
         widgetSync.start()
+        pomodoroWidgetSync { PomodoroWidget().updateAll(this) }.start()
         favoriteShortcuts.start()
         // Check every 15 minutes while the cache holds a running entry.
         RunningCheck.follow(this, cache.running.map { it != null }, MainScope(), Dispatchers.IO)

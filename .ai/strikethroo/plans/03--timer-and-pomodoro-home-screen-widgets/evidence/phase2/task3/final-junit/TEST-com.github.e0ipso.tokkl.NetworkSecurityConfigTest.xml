@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.NetworkSecurityConfigTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:11.014Z" hostname="punta-des-patro" time="0.049">
+  <properties/>
+  <testcase name="configHoldsNoPinOrCertificate" classname="com.github.e0ipso.tokkl.NetworkSecurityConfigTest" time="0.019"/>
+  <testcase name="manifestReferencesTheNetworkSecurityConfig" classname="com.github.e0ipso.tokkl.NetworkSecurityConfigTest" time="0.012"/>
+  <testcase name="baseConfigPermitsCleartextAndTrustsSystemAndUserCas" classname="com.github.e0ipso.tokkl.NetworkSecurityConfigTest" time="0.015"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

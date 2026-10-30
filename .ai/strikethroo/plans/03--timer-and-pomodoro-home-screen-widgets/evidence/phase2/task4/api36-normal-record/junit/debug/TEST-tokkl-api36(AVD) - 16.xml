@@ -1,0 +1,246 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="2" failures="2" errors="0" skipped="0" time="0.000" timestamp="2026-10-29T23:01:18" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest" tests="1" failures="1" errors="0" skipped="0" time="31.708" timestamp="2026-10-29T23:01:18" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesStatesAndControlsFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest" time="31.708">
+      <failure>java.lang.AssertionError: 36 Pomodoro widget captures/checks need review
+	at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:89)
+	... 38 trimmed
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_196x100_work_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_196x100_work_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_196x100_short_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_196x100_short_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_196x100_short_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_196x100_short_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_196x100_long_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_196x100_long_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_196x100_long_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_196x100_long_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_196x100_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_196x100_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_196x100_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_196x100_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_196x100_unsupported.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_196x100_unsupported.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_work.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_work.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_work_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_work_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_short_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_short_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_short_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_short_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_long_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_long_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_long_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_long_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_298x222_unsupported.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_298x222_unsupported.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_work.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_work.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_work_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_work_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_short_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_short_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_short_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_short_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_long_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_long_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_long_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_long_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_375x338_unsupported.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_375x338_unsupported.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_110x40_work.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_110x40_work.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_light_normal_110x40_work_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_light_normal_110x40_work_done.png.
+		at org.junit.Assert.fail(A
+</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest" tests="1" failures="1" errors="0" skipped="0" time="33.940" timestamp="2026-10-29T23:01:18" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="allSizesStatesAndControlsFitAndMatchReferences" classname="com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest" time="33.940">
+      <failure>java.lang.AssertionError: 36 Pomodoro widget captures/checks need review
+	at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:89)
+	... 38 trimmed
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_196x100_work_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_work_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_196x100_short_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_short_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_196x100_short_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_short_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_196x100_long_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_long_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_196x100_long_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_long_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_196x100_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_196x100_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_196x100_unsupported.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_196x100_unsupported.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_work.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_work.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_work_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_work_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_short_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_short_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_short_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_short_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_long_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_long_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_long_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_long_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_298x222_unsupported.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_298x222_unsupported.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_work.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_work.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_work_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_work_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_short_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_short_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_short_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_short_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_long_rest.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_long_rest.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_long_rest_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_long_rest_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_idle.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_idle.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_signed_out.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_signed_out.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_375x338_unsupported.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_375x338_unsupported.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_110x40_work.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_110x40_work.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:35)
+		at com.github.e0ipso.tokkl.widget.PomodoroWidgetScreenshotTest.allSizesStatesAndControlsFitAndMatchReferences(PomodoroWidgetScreenshotTest.kt:85)
+	Suppressed: java.lang.AssertionError: no reference image screenshots/pomodoro_widget_dark_normal_110x40_work_done.png in the test assets. This capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/pomodoro_widget_dark_normal_110x40_work_done.png.
+		at org.junit.Assert.fail(Assert.java:89)
+		at com.github.e0ipso.tokkl.ui.screensho
+</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

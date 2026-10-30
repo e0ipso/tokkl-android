@@ -1,0 +1,475 @@
+10-30 00:28:36.199  2853  2899 I TestRunner: started: pauseResumeAndStopWhilePausedGoToTheServerFromTheNativeControls(com.github.e0ipso.tokkl.widget.WidgetServerTest)
+10-30 00:28:36.257  2853  2899 D WM-ForceStopRunnable: The default process name was not specified.
+10-30 00:28:36.257  2853  2899 D WM-ForceStopRunnable: Performing cleanup operations.
+10-30 00:28:36.271  2853  2899 D WM-ForceStopRunnable: Application was force-stopped, rescheduling.
+10-30 00:28:36.376  2853  2899 I UiAutomation: Initialized for user 0 on display 0
+10-30 00:28:36.379   660   660 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:28:36.379   660   660 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:28:36.380   660   660 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:28:36.380   660   660 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:28:36.380   660   660 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:28:36.380   660   660 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:28:36.381  2853  2908 V UiAutomation: Init UiAutomation@41a4e1c[id=2, displayId=0, flags=0]
+10-30 00:28:36.427   579  2869 I GenericSource: start
+10-30 00:28:36.427  1375  1375 D MediaRouter: onRestoreRoute() : route=RouteInfo{ name=Phone, description=null, status=null, category=RouteCategory{ name=System types=ROUTE_TYPE_LIVE_AUDIO ROUTE_TYPE_LIVE_VIDEO  groupable=false }, supportedTypes=ROUTE_TYPE_LIVE_AUDIO ROUTE_TYPE_LIVE_VIDEO , presentationDisplay=null }
+10-30 00:28:36.427  1375  1375 V MediaRouter: Selecting route: RouteInfo{ name=Phone, description=null, status=null, category=RouteCategory{ name=System types=ROUTE_TYPE_LIVE_AUDIO ROUTE_TYPE_LIVE_VIDEO  groupable=false }, supportedTypes=ROUTE_TYPE_LIVE_AUDIO ROUTE_TYPE_LIVE_VIDEO , presentationDisplay=null }
+10-30 00:28:36.427  1375  2867 D RingtonePlayer: player.start piid:79
+10-30 00:28:36.432   579  2916 D CCodec  : allocate(c2.android.vorbis.decoder)
+10-30 00:28:36.433   579  2916 I CCodec  : setting up 'default' as default (vendor) store
+10-30 00:28:36.435  1375  1701 D BufferPoolAccessor2.0: bufferpool2 0x7eb0a1cfc6f8 : 0(0 size) total buffers - 0(0 size) used buffers - 2/7 (recycle/alloc) - 6/38 (fetch/transfer)
+10-30 00:28:36.435  1375  1701 D BufferPoolAccessor2.0: Destruction - bufferpool2 0x7eb0a1cfc6f8 cached: 0/0M, 0/0% in use; allocs: 7, 29% recycled; transfers: 38, 84% unfetched
+10-30 00:28:36.435  1375  1701 D BufferPoolAccessor2.0: bufferpool2 0x7eb0a1cf91c8 : 0(0 size) total buffers - 0(0 size) used buffers - 2/7 (recycle/alloc) - 5/36 (fetch/transfer)
+10-30 00:28:36.436  1375  1701 D BufferPoolAccessor2.0: Destruction - bufferpool2 0x7eb0a1cf91c8 cached: 0/0M, 0/0% in use; allocs: 7, 29% recycled; transfers: 36, 86% unfetched
+10-30 00:28:36.436  1375  1701 D BufferPoolAccessor2.0: bufferpool2 0x7eb0a1d035f8 : 0(0 size) total buffers - 0(0 size) used buffers - 2/7 (recycle/alloc) - 5/18 (fetch/transfer)
+10-30 00:28:36.437   579  2916 I CCodec  : Created component [c2.android.vorbis.decoder] for [c2.android.vorbis.decoder]
+10-30 00:28:36.437   579  2916 D CCodecConfig: read media type: audio/vorbis
+10-30 00:28:36.437  1375  1701 D BufferPoolAccessor2.0: Destruction - bufferpool2 0x7eb0a1d035f8 cached: 0/0M, 0/0% in use; allocs: 7, 29% recycled; transfers: 18, 72% unfetched
+10-30 00:28:36.438   579  2916 D ReflectedParamUpdater: extent() != 1 for single value type: algo.buffers.max-count.values
+10-30 00:28:36.438   579  2916 D ReflectedParamUpdater: extent() != 1 for single value type: output.subscribed-indices.values
+10-30 00:28:36.438   579  2916 D ReflectedParamUpdater: extent() != 1 for single value type: input.buffers.allocator-ids.values
+10-30 00:28:36.438   579  2916 D ReflectedParamUpdater: extent() != 1 for single value type: output.buffers.allocator-ids.values
+10-30 00:28:36.438   579  2916 D ReflectedParamUpdater: extent() != 1 for single value type: algo.buffers.allocator-ids.values
+10-30 00:28:36.438   579  2916 D ReflectedParamUpdater: extent() != 1 for single value type: output.buffers.pool-ids.values
+10-30 00:28:36.438   579  2916 D ReflectedParamUpdater: extent() != 1 for single value type: algo.buffers.pool-ids.values
+10-30 00:28:36.439   579  2916 I CCodecConfig: query failed after returning 8 values (BAD_INDEX)
+10-30 00:28:36.439   579  2916 D CCodecConfig: c2 config diff is Dict {
+10-30 00:28:36.439   579  2916 D CCodecConfig:   c2::u32 coded.bitrate.value = 64000
+10-30 00:28:36.439   579  2916 D CCodecConfig:   c2::u32 input.buffers.max-size.value = 32768
+10-30 00:28:36.439   579  2916 D CCodecConfig:   c2::u32 input.delay.value = 0
+10-30 00:28:36.439   579  2916 D CCodecConfig:   string input.media-type.value = "audio/vorbis"
+10-30 00:28:36.439   579  2916 D CCodecConfig:   c2::u32 output.large-frame.max-size = 0
+10-30 00:28:36.439   579  2916 D CCodecConfig:   c2::u32 output.large-frame.threshold-size = 0
+10-30 00:28:36.439   579  2916 D CCodecConfig:   string output.media-type.value = "audio/raw"
+10-30 00:28:36.439   579  2916 D CCodecConfig:   c2::u32 raw.channel-count.value = 1
+10-30 00:28:36.439   579  2916 D CCodecConfig:   c2::u32 raw.sample-rate.value = 48000
+10-30 00:28:36.439   579  2916 D CCodecConfig: }
+10-30 00:28:36.443   579  2915 W ServiceManagerCppClient: Failed to get isDeclared for media_quality: Status(-1, EX_SECURITY): 'SELinux denied for service.'
+10-30 00:28:36.443   579  2915 E MediaCodec: Media Quality Service not found.
+10-30 00:28:36.443   579  2916 D CCodec  : [c2.android.vorbis.decoder] buffers are bound to CCodec for this session
+10-30 00:28:36.443   579  2916 D CCodecConfig: no c2 equivalents for durationUs
+10-30 00:28:36.443   579  2916 D CCodecConfig: no c2 equivalents for csd-1
+10-30 00:28:36.443   579  2916 D CCodecConfig: no c2 equivalents for flags
+10-30 00:28:36.444   579  2916 D CCodecConfig: c2 config diff is   c2::u32 coded.bitrate.value = 70000
+10-30 00:28:36.444   579  2916 W Codec2Client: query -- param skipped: index = 1107298332.
+10-30 00:28:36.444   579  2916 D CCodec  : encoding statistics level = 0
+10-30 00:28:36.444   579  2916 D CCodec  : setup formats input: AMessage(what = 0x00000000) = {
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t bitrate = 70000
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t channel-count = 1
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t max-input-size = 32768
+10-30 00:28:36.444   579  2916 D CCodec  :   string mime = "audio/vorbis"
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t sample-rate = 48000
+10-30 00:28:36.444   579  2916 D CCodec  : }
+10-30 00:28:36.444   579  2916 D CCodec  : setup formats output: AMessage(what = 0x00000000) = {
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t buffer-batch-max-output-size = 0
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t buffer-batch-threshold-output-size = 0
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t channel-count = 1
+10-30 00:28:36.444   579  2916 D CCodec  :   string mime = "audio/raw"
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t sample-rate = 48000
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t channel-mask = 1
+10-30 00:28:36.444   579  2916 D CCodec  :   int32_t android._config-pcm-encoding = 2
+10-30 00:28:36.444   579  2916 D CCodec  : }
+10-30 00:28:36.444   579  2916 I CCodecConfig: query failed after returning 8 values (BAD_INDEX)
+10-30 00:28:36.444   579  2916 E mediaserver: Failed to query component interface for required system resources: 6
+10-30 00:28:36.444   579  2916 I MediaCodec: MediaCodec will operate in async mode
+10-30 00:28:36.444   579  2915 D MediaCodec: keep callback message for reclaim
+10-30 00:28:36.446   579  2916 W Codec2Client: query -- param skipped: index = 1342179345.
+10-30 00:28:36.446   579  2916 W Codec2Client: query -- param skipped: index = 2415921170.
+10-30 00:28:36.446   579  2916 D C2Store : Using DMABUF Heaps
+10-30 00:28:36.446   579  2916 D CCodecBufferChannel: [c2.android.vorbis.decoder#15] Created input block pool with allocatorID 16 => poolID 17 - OK (0)
+10-30 00:28:36.447   579  2916 I CCodecBufferChannel: [c2.android.vorbis.decoder#15] Created output block pool with allocatorID 16 => poolID 36 - OK
+10-30 00:28:36.447   579  2916 D CCodecBufferChannel: [c2.android.vorbis.decoder#15] Configured output block pool ids 36 => OK
+10-30 00:28:36.447   582   897 E Codec2-ComponentInterface: We have a failed config
+10-30 00:28:36.447   579  2916 I DMABUFHEAPS: Using DMA-BUF heap named: system
+10-30 00:28:36.448   582  2920 D SimpleC2Component: Using output block pool with poolID 36 => got 36 - 0
+10-30 00:28:36.450   579  2914 D AudioSystem: onNewServiceWithAdapter: media.audio_flinger service obtained 0x7b675373d540
+10-30 00:28:36.451   579  2914 D AudioSystem: getService: checking for service media.audio_flinger: 0x7b67437445f0
+10-30 00:28:36.452   536   536 D AudioFlinger: Client defaulted notificationFrames to 12512 for frameCount 25024
+10-30 00:28:36.452   536   536 I AF::PthrPatchRecord: creating track with enforcement level 0
+10-30 00:28:36.459   579  1846 D MediaPlayerService: onAudioDeviceUpdate deviceIds: 2
+10-30 00:28:36.460  2853  2899 I Tracing : Tracer added: class androidx.test.platform.tracing.AndroidXTracer
+10-30 00:28:36.460   471  2924 W libprocessgroup: A JoinCgroup action in the SystemMemoryProcess profile is used for controller memory in the cgroup v2 hierarchy and will be ignored
+10-30 00:28:36.469  2853  2899 D IdlingRegistry: Registering idling resources: [androidx.compose.ui.test.EspressoLink@eef820]
+10-30 00:28:36.474  1375  2867 D AudioSystem: onNewService: media.audio_policy service obtained 0x7eaff1d2c9f0
+10-30 00:28:36.475  1375  2867 D AudioSystem: getService: checking for service media.audio_policy: 0x7eaff1d2c9f0
+10-30 00:28:36.525   536   636 D AudioFlinger: mixer(0x744c6be6d770) throttle end: throttle time(32)
+10-30 00:28:37.001  1029  1219 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-30 00:28:37.802   579  2914 D AudioTrack: stop(15): called with 82980 frames delivered
+10-30 00:28:37.805   579  2914 W libprocessgroup: A JoinCgroup action in the SystemMemoryProcess profile is used for controller memory in the cgroup v2 hierarchy and will be ignored
+10-30 00:28:38.232  1375  2867 D RingtonePlayer: onCompletion() abandoning AudioFocus
+10-30 00:28:38.232   660   727 I MediaFocusControl: abandonAudioFocus() from uid/pid 10124/1375 clientId=android.media.AudioManager@dc76880 callingPack=com.android.systemui
+10-30 00:28:38.232  1375  2867 D RingtonePlayer: onCompletion queue size=0
+10-30 00:28:38.232  1375  2867 D RingtonePlayer: in onCompletion quitting looper Looper (Thread-3, tid 94) {daba9a7}
+10-30 00:28:38.232  1375  2867 I NotificationPlayer: About to release MediaPlayer piid:79 due to onCompletion
+10-30 00:28:38.233  1375  2867 V MediaPlayer: resetDrmState:  mDrmInfo=null mDrmProvisioningThread=null mPrepareDrmInProgress=false mActiveDrmScheme=false
+10-30 00:28:38.233  1375  2867 V MediaPlayer: cleanDrmObj: mDrmObj=null mDrmSessionId=null
+10-30 00:28:38.233   579  1846 D NuPlayerDriver: reset(0x7b66e3734810) at state 6
+10-30 00:28:38.235   579  2916 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
+10-30 00:28:38.235   582   897 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
+10-30 00:28:38.235   582   897 I hw-BpHwBinder: onLastStrongRef automatically unlinking death recipients
+10-30 00:28:38.235   582   897 D BufferPoolAccessor2.0: Destruction - bufferpool2 0x75196629d3a8 cached: 0/0M, 0/0% in use; allocs: 0, 0% recycled; transfers: 0, 0% unfetched
+10-30 00:28:38.236   579  2869 D NuPlayerDriver: notifyResetComplete(0x7b66e3734810)
+10-30 00:28:38.237   579  1846 W AMessage: failed to post message as target looper for handler 0 is gone.
+10-30 00:28:38.567   660   727 D ConnectivityService: requestNetwork for uid/pid:10153/2853 activeRequest: null callbackRequest: 85 [NetworkRequest [ REQUEST id=86, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10153 RequestorUid: 10153 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST
+10-30 00:28:38.568   660   796 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=86, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10153 RequestorUid: 10153 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-30 00:28:38.568   660   796 V WifiNetworkFactory: Accepted network request NetworkRequest [ REQUEST id=86, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10153 RequestorUid: 10153 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-30 00:28:38.568   660   796 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=86, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10153 RequestorUid: 10153 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-30 00:28:38.568   660   796 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=86, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10153 RequestorUid: 10153 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-30 00:28:38.568   660   796 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=86, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10153 RequestorUid: 10153 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-30 00:28:38.568   660   808 D ConnectivityService: NetReassign [86 : null → 101] [c 0] [a 1] [i 0]
+10-30 00:28:38.569  2853  2899 W Settings: Setting always_finish_activities has moved from android.provider.Settings.System to android.provider.Settings.Global, returning read-only value.
+10-30 00:28:38.581   660   727 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10153, packageName = null, attributionTag = null, token = android.os.Binder@57ab268, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-30 00:28:38.589  1427  1427 W SplitSelectStateCtor: Missing session instanceIds
+10-30 00:28:38.589  1427  1427 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+10-30 00:28:38.593  1375  1396 D SplashScreenView: Build android.window.SplashScreenView{813c3a2 V.E...... ......ID 0,0-0,0}
+10-30 00:28:38.593  1375  1396 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-30 00:28:38.593  1375  1396 D SplashScreenView: Branding: view: android.view.View{751d833 G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-30 00:28:38.603  2853  2853 I npicasoft.tokkl: AssetManager2(0x7eb141ce2018) locale list changing from [] to [en-US]
+10-30 00:28:38.607   540   540 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-30 00:28:38.614  2853  2853 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@4b972e9 in: PRE_ON_CREATE
+10-30 00:28:38.614  2853  2853 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-30 00:28:38.619  2853  2853 D CompatChangeReporter: Compat change id reported: 377864165; UID 10153; state: ENABLED
+10-30 00:28:38.620  2853  2853 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+10-30 00:28:38.628  2853  2853 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@4b972e9 in: CREATED
+10-30 00:28:38.629  2853  2853 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=androidx.activity.ComponentActivity@4b972e9
+10-30 00:28:38.629   465   516 I netd    : tetherGetStats() -> {[]} <6.11ms>
+10-30 00:28:38.630  2853  2853 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@4b972e9 in: STARTED
+10-30 00:28:38.631  2853  2853 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=androidx.activity.ComponentActivity@4b972e9
+10-30 00:28:38.666  2853  2853 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@4b972e9 in: RESUMED
+10-30 00:28:38.666  2853  2853 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=androidx.activity.ComponentActivity@4b972e9
+10-30 00:28:38.711  2853  2853 W HWUI    : Unknown dataspace 0
+10-30 00:28:38.712  2853  2935 I EGL_emulation: Opening libGLESv1_CM_emulation.so
+10-30 00:28:38.712  2853  2935 I EGL_emulation: Opening libGLESv2_emulation.so
+10-30 00:28:38.719  2853  2893 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=d96ce9fa-1164-4d91-b989-8152df519c88, generation=0)
+10-30 00:28:38.726  2853  2935 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-30 00:28:38.741  2853  2893 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 00:28:38.745   660  2842 W HWUI    : Image decoding logging dropped!
+10-30 00:28:38.768   660  2942 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-30 00:28:38.780  2853  2893 D WM-PackageManagerHelper: androidx.work.impl.background.systemalarm.RescheduleReceiver enabled
+10-30 00:28:38.797  1465  1465 I id.ext.services: AssetManager2(0x7eb141cdd518) locale list changing from [] to [en-US]
+10-30 00:28:38.870  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:38.902  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:39.007   660   796 D WifiClientModeImpl[11592:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=11 freq=2437 RxLinkSpeed=2
+10-30 00:28:39.007   660   796 D WifiDataStall: tx tput in kbps: 37000
+10-30 00:28:39.007   660   796 D WifiDataStall: rx tput in kbps: 37000
+10-30 00:28:39.007   660   796 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 00:28:39.007   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:39.007   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:39.007   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:39.007   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:39.007   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:39.007   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:39.007   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:39.007   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:39.008   660   796 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 11Mbps, Tx Link speed: 11Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 00:28:39.008   660   796 D WifiScoreCard: txRate: 6 txSpeed: 11
+10-30 00:28:39.008   660   796 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed 11
+10-30 00:28:39.008   660   796 D WifiClientModeImpl[11592:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=11 tx=5.5, 0.0, 0.0 rx=4.9 bcn=0 [on:0 tx:0 rx:0 period:3003] from screen [on:0 period:-1979810720] score=60
+10-30 00:28:39.138   660   681 I ActivityTaskManager: Displayed com.canpicasoft.tokkl/androidx.activity.ComponentActivity for user 0: +558ms
+10-30 00:28:39.156  1427  1427 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 00:28:39.185   660   773 I ImeTracker: com.canpicasoft.tokkl:4a865345: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-30 00:28:39.187  2853  2853 D InsetsController: hide(ime(), fromIme=false)
+10-30 00:28:39.188  2853  2853 I ImeTracker: com.canpicasoft.tokkl:4a865345: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-30 00:28:39.193   660   869 I ImeTracker: system_server:4dd339fa: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 00:28:39.194   660   684 I ImeTracker: system_server:4dd339fa: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 00:28:39.201  1427  1427 D BaseDepthController: setSurface:
+10-30 00:28:39.201  1427  1427 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 00:28:39.201  1427  1427 D BaseDepthController: 	mBaseSurface: null
+10-30 00:28:39.201  1427  1427 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+10-30 00:28:39.202  1427  1427 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+10-30 00:28:39.202  1427  1427 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:463)
+10-30 00:28:39.202  1427  1427 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:454)
+10-30 00:28:39.202  1427  1427 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(StatefulActivity.java:120)
+10-30 00:28:39.203  1427  1427 D StatsLog: LAUNCHER_ONSTOP
+10-30 00:28:39.285  2853  2857 I npicasoft.tokkl: Compiler allocated 5042KB to compile void android.view.ViewRootImpl.performTraversals()
+10-30 00:28:39.439   660   808 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 00:28:39.439   660   808 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 00:28:39.446   660   808 D InetDiagMessage: Destroyed live tcp sockets for uids={10154} in 8ms
+10-30 00:28:39.447   660   808 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 00:28:39.447   660   808 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 00:28:39.447   660   808 D InetDiagMessage: Destroyed live tcp sockets for uids={20154} in 1ms
+10-30 00:28:39.725  2853  2853 I npicasoft.tokkl: AssetManager2(0x7eb141cefad8) locale list changing from [] to [en-US]
+10-30 00:28:39.727  2853  2853 W System  : ClassLoader referenced unknown path:
+10-30 00:28:39.728  2853  2853 D nativeloader: Configuring clns-10 for other apk . target_sdk_version=36, uses_libraries=, library_path=/data/app/~~T7TNQPlHFS5Tw3dXp6v7Iw==/com.canpicasoft.tokkl.test-8nm8Vf7RCMPwq2qioY7UPA==/lib/x86_64:/data/app/~~Ji2ucVAhkflmkPKuSUypxw==/com.canpicasoft.tokkl-Mp8hcF5I4FKOQU-8unIDAA==/lib/x86_64:/data/app/~~T7TNQPlHFS5Tw3dXp6v7Iw==/com.canpicasoft.tokkl.test-8nm8Vf7RCMPwq2qioY7UPA==/base.apk!/lib/x86_64:/data/app/~~Ji2ucVAhkflmkPKuSUypxw==/com.canpicasoft.tokkl-Mp8hcF5I4FKOQU-8unIDAA==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.canpicasoft.tokkl
+10-30 00:28:39.767   465   516 I netd    : tetherGetStats() -> {[]} <0.38ms>
+10-30 00:28:39.785   660   757 I RoleService: Granting default roles...
+10-30 00:28:39.789   660   681 I ServiceWatcher: [TrustManagerService] chose new implementation null
+10-30 00:28:39.790   660   684 I system_server: AssetManager2(0x7eb141dc9738) locale list changing from [] to [en-US]
+10-30 00:28:39.791  1103  1331 I PermissionControllerServiceImpl: Updating user sensitive for uid 10153
+10-30 00:28:39.796   660   774 I system_server: AssetManager2(0x7eb141dce238) locale list changing from [] to [en-US]
+10-30 00:28:39.796  1427  1469 D PackageUpdatedTask: Package updated: mOp=UPDATE packages=[com.canpicasoft.tokkl], user=UserHandle{0}
+10-30 00:28:39.797   660   774 I system_server: AssetManager2(0x7eb141dceeb8) locale list changing from [] to [en-US]
+10-30 00:28:39.798   660   777 I system_server: AssetManager2(0x7eb141dcb678) locale list changing from [] to [en-US]
+10-30 00:28:39.807  1427  1427 D b/267448330: provider: ComponentInfo{com.android.quicksearchbox/com.android.quicksearchbox.SearchWidgetProvider}, paddedSizes: [382.09525x136.38095, 382.09525x136.38095, 732.5714x62.095238, 732.5714x62.095238], getMinMaxSizes: Rect(382, 62 - 732, 136)
+10-30 00:28:39.823  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.825  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.826  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.826  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.827  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.833  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.833  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.841  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.842  1427  1427 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.848   660  2292 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.android.devicelockcontroller, role: android.app.role.SYSTEM_FINANCED_DEVICE_CONTROLLER
+10-30 00:28:39.853   660   660 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:28:39.854   660   660 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 00:28:39.875  1427  1469 I droid.launcher3: AssetManager2(0x7eb141d04c58) locale list changing from [] to [en-US]
+10-30 00:28:39.879  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.881  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.897  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.897  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 00:28:39.897  1427  1427 D AllAppsStore: setApps: apps.length=13
+10-30 00:28:39.897  1427  1427 D AllAppsStore: notifyUpdate: notifying listeners
+10-30 00:28:39.897  1427  1427 D ActivityAllAppsContainerView: onAppsUpdated; number of apps: 13
+10-30 00:28:39.897  1427  1427 D ActivityAllAppsContainerView: rebindAdapters: force: false
+10-30 00:28:39.898  1427  1427 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+10-30 00:28:39.898  1427  1427 D StatsLog: LAUNCHER_ALLAPPS_COUNT
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 00:28:39.898  1427  1427 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 00:28:39.905  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.907  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.912  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.915  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.922  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.924  1427  1469 W HWUI    : Image decoding logging dropped!
+10-30 00:28:39.934  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-30 00:28:39.934  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-30 00:28:39.935  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-30 00:28:39.935  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 00:28:39.935  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-30 00:28:39.935  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-30 00:28:39.936  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-30 00:28:39.936  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-30 00:28:39.936  1427  1469 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-30 00:28:40.206  1375  1395 E FrameTracker: force finish cuj, time out: J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:40.206  1375  1395 W FrameTracker: Missed App frame:UNKNOWN: 3, 11157, 209426032, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:40.206  1375  1395 W FrameTracker: Missed SF frame:UNKNOWN: 3, 11157, 209426032, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:40.206  1375  1395 W FrameTracker: Missed App frame:UNKNOWN: 3, 11172, 409545893, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:40.206  1375  1395 W FrameTracker: Missed SF frame:UNKNOWN: 3, 11172, 409545893, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:40.206  1375  1395 W FrameTracker: Missed App frame:UNKNOWN: 3, 11202, 367258249, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:40.206  1375  1395 W FrameTracker: Missed SF frame:UNKNOWN: 3, 11202, 367258249, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:40.207  1375  1392 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-39 - not enough time since last trigger
+10-30 00:28:40.673   536   738 W AudioFlinger: createTrack_l(): mismatch between requested flags (00000004) and output flags (00000002)
+10-30 00:28:40.673   536   738 I AF::PthrPatchRecord: creating track with enforcement level 0
+10-30 00:28:40.674   536   738 W AF::TrackHandle: OpPlayAudio: not muting track:56 usage:13 for service UID 1000
+10-30 00:28:40.676   660   729 W AS.PlaybackActivityMon: No piid assigned for invalid/internal port id 16
+10-30 00:28:40.813  2853  2902 D WM-Processor: Processor cancelling 5cdba419-7be0-49c8-bf74-7b542997413c
+10-30 00:28:40.813  2853  2902 D WM-Processor: WorkerWrapper could not be found for 5cdba419-7be0-49c8-bf74-7b542997413c
+10-30 00:28:40.842  2853  2890 D WM-Processor: Processor cancelling 96ec87a1-d4c0-400e-b975-dc18e7dfdb31
+10-30 00:28:40.843  2853  2890 D WM-Processor: WorkerWrapper could not be found for 96ec87a1-d4c0-400e-b975-dc18e7dfdb31
+10-30 00:28:40.927  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:40.933  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:41.329  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:41.338  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:41.340  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:41.341  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:41.346  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:41.352  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:41.356  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:41.413  1375  1375 W NotifRow: cancelAppearDrawing childKey: 0|com.canpicasoft.tokkl|1|null|10153 wasDrawing:false
+10-30 00:28:41.416  1375  1375 W NotifRow: cancelAppearDrawing childKey: 0|com.canpicasoft.tokkl|4|null|10153 wasDrawing:false
+10-30 00:28:41.436  1375  1700 D BufferPoolAccessor2.0: evictor expired: 2, evicted: 0
+10-30 00:28:41.543   660   796 D WifiNetworkSelector: Current connected network: 0
+10-30 00:28:41.543   660   796 V WifiConnectivityManager: No full band scan because current network is sufficient
+10-30 00:28:41.543   660   796 V WifiConnectivityManager: schedulePeriodicScanTimer intervalMs 160000
+10-30 00:28:41.544   660   806 I WifiScanningService: Registering listener= com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@fe5f9b8 uid=1000 packageName=null workSource=WorkSource{1000}
+10-30 00:28:41.544   660   806 I WifiScanningService: start scan: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@fe5f9b8] package null AttributionTag null
+10-30 00:28:41.544   660   806 I WifiScanningService: addSingleScanRequest: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@fe5f9b8],WorkSource{1010}, ScanSettings {  type:HIGH ACCURACY band:unspecified ignoreLocationSettings:false period:0 reportEvents:3 numBssidsPerScan:0 maxScansToCache:0 rnrSetting:2 6GhzPscOnlyEnabled:false channels:[ 2437  ]  }
+10-30 00:28:41.545   660   806 D WifiScanningService: replySucceeded onSuccess
+10-30 00:28:41.549   883   883 D wpa_supplicant: nl80211: Drv Event 33 (NL80211_CMD_TRIGGER_SCAN) received for wlan0
+10-30 00:28:41.549   883   883 D wpa_supplicant: wlan0: nl80211: Scan trigger
+10-30 00:28:41.549   883   883 D wpa_supplicant: wlan0: Event SCAN_STARTED (47) received
+10-30 00:28:41.549   883   883 D wpa_supplicant: wlan0: External program started a scan
+10-30 00:28:41.601   883   883 D wpa_supplicant: nl80211: Drv Event 34 (NL80211_CMD_NEW_SCAN_RESULTS) received for wlan0
+10-30 00:28:41.601   883   883 D wpa_supplicant: wlan0: nl80211: New scan results available
+10-30 00:28:41.601   883   883 D wpa_supplicant: nl80211: Scan probed for SSID ''
+10-30 00:28:41.601   883   883 D wpa_supplicant: nl80211: Scan included frequencies: 2437
+10-30 00:28:41.601   883   883 D wpa_supplicant: wlan0: Event SCAN_RESULTS (3) received
+10-30 00:28:41.601   883   883 D wpa_supplicant: nl80211: Received scan results (1 BSSes)
+10-30 00:28:41.601   883   883 D wpa_supplicant: nl80211: Scan results indicate BSS status with 02:15:b2:00:00:01 as associated
+10-30 00:28:41.601   883   883 D wpa_supplicant: wlan0: BSS: Start scan result update 5
+10-30 00:28:41.601   883   883 D wpa_supplicant: BSS: last_scan_res_used=1/32
+10-30 00:28:41.601   883   883 D wpa_supplicant: wlan0: New scan results available (own=0 ext=1)
+10-30 00:28:41.601   883   883 D wpa_supplicant: wlan0: Do not use results from externally requested scan operation for network selection
+10-30 00:28:41.602   883   883 D wpa_supplicant: p2p-dev-wlan0: Updating scan results from sibling
+10-30 00:28:41.602   883   883 D wpa_supplicant: nl80211: Received scan results (1 BSSes)
+10-30 00:28:41.602   883   883 D wpa_supplicant: p2p-dev-wlan0: BSS: Start scan result update 5
+10-30 00:28:41.602   883   883 D wpa_supplicant: BSS: last_scan_res_used=1/32
+10-30 00:28:41.602   883   883 D wpa_supplicant: p2p-dev-wlan0: New scan results available (own=0 ext=1)
+10-30 00:28:41.602   883   883 D wpa_supplicant: p2p-dev-wlan0: Do not use results from externally requested scan operation for network selection
+10-30 00:28:41.602   660  1370 D WifiNl80211Manager: Scan result ready event
+10-30 00:28:41.602   660  1370 D WifiNative: Scan result ready event
+10-30 00:28:41.603   660   806 D WifiNl80211Manager: get 1 scan results from wificond
+10-30 00:28:41.604   660   806 D WifiNative: get 1 scan results from wificond
+10-30 00:28:41.604   660   806 I WifiScanningService: singleScanResults: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@fe5f9b8],results=1
+10-30 00:28:41.604   660   806 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@4c11236],results=1
+10-30 00:28:41.604   660   806 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@f94eade],results=1
+10-30 00:28:41.604   660   806 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@42b317e],results=1
+10-30 00:28:41.604   660   796 D WifiScanRequestProxy: Scan results received
+10-30 00:28:41.604   660   806 I WifiScanningService: Unregistering listener= com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@fe5f9b8 uid=1000 packageName=null workSource=WorkSource{1000}
+10-30 00:28:41.604   660   796 D WifiScanRequestProxy: Received 1 scan results
+10-30 00:28:41.605   660   796 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-30 00:28:41.605   660   796 V WifiConnectivityManager: AllSingleScanListener onResults: start network selection
+10-30 00:28:41.605   660   796 V WifiConfigManager: getSavedNetworkFromScanResult Found "AndroidWifi"NONE for AndroidWifi[[ESS]]
+10-30 00:28:41.605   660   796 D WifiNetworkSelector: Current connected network: 0
+10-30 00:28:41.605   660   796 D WifiNetworkSelector: wlan0: Current connected network already sufficient. Skip network selection.
+10-30 00:28:41.605   660   796 V WifiLastResortWatchdog: updateAvailableNetworks: size = 0
+10-30 00:28:41.605   660   796 V WifiLastResortWatchdog: mWatchdogFeatureEnabled: true
+10-30 00:28:41.605   660   796 V WifiLastResortWatchdog: mWatchdogAllowedToTrigger: true
+10-30 00:28:41.605   660   796 V WifiLastResortWatchdog: mRecentAvailableNetworks: 1
+10-30 00:28:41.605   660   796 V WifiLastResortWatchdog:  02:15:b2:00:00:01: "AndroidWifi" HasEverConnected: true, Failures: {Assoc: 0, Auth: 0, Dhcp: 0}, Age: 4
+10-30 00:28:41.605   660   796 V WifiLastResortWatchdog: mSsidFailureCount:
+10-30 00:28:41.605   660   796 V WifiLastResortWatchdog: "AndroidWifi": 1, HasEverConnected: true, Failures: {Assoc: 0, Auth: 0, Dhcp: 0}
+10-30 00:28:41.605   660   796 V WifiConnectivityManager: AllSingleScanListener:  No candidates
+10-30 00:28:41.629   660   727 W AS.PlaybackActivityMon: No piid assigned for invalid/internal port id 16
+10-30 00:28:41.741  2853  2953 D ProfileInstaller: Installing profile for com.canpicasoft.tokkl
+10-30 00:28:41.867   660  1370 W AS.PlaybackActivityMon: No piid assigned for invalid/internal port id 16
+10-30 00:28:41.967  1375  1375 W NotifRow: cancelAppearDrawing childKey: 0|com.canpicasoft.tokkl|4|null|10153 wasDrawing:false
+10-30 00:28:42.016   660   796 D WifiClientModeImpl[11592:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-30 00:28:42.016   660   796 D WifiDataStall: tx tput in kbps: 37000
+10-30 00:28:42.016   660   796 D WifiDataStall: rx tput in kbps: 37000
+10-30 00:28:42.017   660   796 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 00:28:42.017   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:42.017   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:42.017   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:42.017   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:42.017   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:42.017   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:42.017   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:42.017   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:42.018   660   796 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 00:28:42.018   660   796 D WifiScoreCard: txRate: 8 txSpeed: 1
+10-30 00:28:42.018   660   796 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed 1
+10-30 00:28:42.018   660   796 D WifiClientModeImpl[11592:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=7.0, 0.0, 0.0 rx=6.6 bcn=0 [on:0 tx:0 rx:0 period:3010] from screen [on:0 period:-1979807710] score=60
+10-30 00:28:42.052  2853  2876 D WM-Processor: Processor cancelling d54eb0b7-4ae7-458a-ac08-93368a8f6c34
+10-30 00:28:42.052  2853  2876 D WM-Processor: WorkerWrapper could not be found for d54eb0b7-4ae7-458a-ac08-93368a8f6c34
+10-30 00:28:42.068  2853  2882 D WM-Processor: Processor cancelling 20506eca-5acd-4bf3-a041-4d0e8f28585f
+10-30 00:28:42.069  2853  2882 D WM-Processor: WorkerWrapper could not be found for 20506eca-5acd-4bf3-a041-4d0e8f28585f
+10-30 00:28:42.175  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:42.175  1375  1568 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+10-30 00:28:42.201   660   729 W AS.PlaybackActivityMon: No piid assigned for invalid/internal port id 16
+10-30 00:28:42.257  1375  1375 W NotifRow: cancelAppearDrawing childKey: 0|com.canpicasoft.tokkl|1|null|10153 wasDrawing:false
+10-30 00:28:42.437  1375  1700 D BufferPoolAccessor2.0: evictor expired: 1, evicted: 0
+10-30 00:28:42.989   578   593 D AudioAnalytics: expiring previous audio state after 3600 seconds.
+10-30 00:28:43.058   660  1370 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10154, packageName = null, attributionTag = null, token = android.os.Binder@57ab268, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-30 00:28:43.073  1375  1396 D SplashScreenView: Build android.window.SplashScreenView{898b796 V.E...... ......ID 0,0-0,0}
+10-30 00:28:43.073  1375  1396 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-30 00:28:43.073  1375  1396 D SplashScreenView: Branding: view: android.view.View{4fa0f17 G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-30 00:28:43.074   540   540 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-30 00:28:43.083  2853  2853 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@4b972e9 in: PAUSED
+10-30 00:28:43.083  2853  2853 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=androidx.activity.ComponentActivity@4b972e9
+10-30 00:28:43.100   465   516 I netd    : tetherGetStats() -> {[]} <0.73ms>
+10-30 00:28:43.105  2816  2830 I EGL_emulation: Opening libGLESv1_CM_emulation.so
+10-30 00:28:43.105  2816  2830 I EGL_emulation: Opening libGLESv2_emulation.so
+10-30 00:28:43.120  2816  2830 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+10-30 00:28:43.123  1375  1388 I ndroid.systemui: AssetManager2(0x7eb141cfbfb8) locale list changing from [] to [en-US]
+10-30 00:28:43.142  2853  2853 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=d96ce9fa-1164-4d91-b989-8152df519c88, class=androidx.glance.session.SessionWorker, tags={ androidx.glance.session.SessionWorker } ]
+10-30 00:28:43.148  2853  2853 D WM-Processor: Processor d96ce9fa-1164-4d91-b989-8152df519c88 executed; reschedule = false
+10-30 00:28:43.150  1375  1388 I ndroid.systemui: AssetManager2(0x7eb141cf6b58) locale list changing from [] to [en-US]
+10-30 00:28:43.153  2816  2816 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-30 00:28:43.155  2853  2853 D WM-StopWorkRunnable: StopWorkRunnable for d96ce9fa-1164-4d91-b989-8152df519c88; Processor.stopWork = false, reason: -512
+10-30 00:28:43.441   582   899 D BufferPoolAccessor2.0: bufferpool2 0x75196629eac8 : 0(0 size) total buffers - 0(0 size) used buffers - 93/97 (recycle/alloc) - 4/96 (fetch/transfer)
+10-30 00:28:43.441   582   899 D BufferPoolAccessor2.0: evictor expired: 2, evicted: 1
+10-30 00:28:43.445  1427  1427 D ViewRootImpl: Skipping stats log for color mode
+10-30 00:28:43.446  1427  1427 D StatsLog: LAUNCHER_ONRESUME
+10-30 00:28:43.450   660   681 I ActivityTaskManager: Displayed com.canpicasoft.tokkl.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity for user 0: +386ms
+10-30 00:28:43.454   579  2919 D BufferPoolAccessor2.0: bufferpool2 0x7b6703732ed8 : 0(0 size) total buffers - 0(0 size) used buffers - 93/101 (recycle/alloc) - 8/198 (fetch/transfer)
+10-30 00:28:43.455   579  2919 D BufferPoolAccessor2.0: evictor expired: 1, evicted: 1
+10-30 00:28:43.463  1427  1427 D BaseDepthController: setSurface:
+10-30 00:28:43.463  1427  1427 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 00:28:43.463  1427  1427 D BaseDepthController: 	mBaseSurface: Surface(name=com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher)/@0x4c83d3e
+10-30 00:28:43.557  2853  2853 D VRI[ComponentActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 00:28:43.575  2853  2853 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@4b972e9 in: STOPPED
+10-30 00:28:43.581  1427  1427 D StateManager: createAtomicAnimation - fromState: Background, toState: Normal, partial trace:
+10-30 00:28:43.581  1427  1427 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.prepareToAnimate(WorkspaceRevealAnim.java:146)
+10-30 00:28:43.581  1427  1427 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.<init>(WorkspaceRevealAnim.java:69)
+10-30 00:28:43.581  1427  1427 D StateManager: 	at com.android.launcher3.QuickstepTransitionManager.createWallpaperOpenAnimations(QuickstepTransitionManager.java:1844)
+10-30 00:28:43.582  1427  1427 D b/311077782: LauncherAnimationRunner.setAnimation
+10-30 00:28:43.589  2853  2853 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=androidx.activity.ComponentActivity@4b972e9
+10-30 00:28:43.591  2853  2853 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@a7a000b
+10-30 00:28:43.593  2853  2853 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@4b972e9 in: DESTROYED
+10-30 00:28:43.593  2853  2853 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-30 00:28:43.606  2853  2853 D ViewRootImpl: Skipping stats log for color mode
+10-30 00:28:43.611   660  1372 I ImeTracker: system_server:52324d2b: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 00:28:43.615   660   684 I ImeTracker: system_server:52324d2b: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 00:28:43.700   660   773 I ImeTracker: com.android.launcher3:ef88ec22: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-30 00:28:43.712   660  1372 I ImeTracker: system_server:d68531c4: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 00:28:43.713   660   684 I ImeTracker: system_server:d68531c4: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 00:28:43.846  1427  1427 D RecentsView: onTaskRemoved: 20, not handling task stack changes
+10-30 00:28:43.847  1427  1427 D RecentsView: onTaskRemoved: 20, not handling task stack changes
+10-30 00:28:43.847  1427  1427 D InsetsController: hide(ime(), fromIme=false)
+10-30 00:28:43.847  1427  1427 I ImeTracker: com.android.launcher3:ef88ec22: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-30 00:28:43.994  1427  1427 D WorkspaceRevealAnim: onAnimationEnd: workspace alpha = 1.0
+10-30 00:28:44.009  2816  2816 D VRI[InstrumentationActivityInvoker$EmptyActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 00:28:44.140  2816  2816 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@d3bc56e
+10-30 00:28:44.146  2816  2816 D ViewRootImpl: Skipping stats log for color mode
+10-30 00:28:44.151  1427  1427 D RecentsView: onTaskRemoved: 21, not handling task stack changes
+10-30 00:28:44.151  1427  1427 D RecentsView: onTaskRemoved: 21, not handling task stack changes
+10-30 00:28:44.167   465   516 I netd    : tetherGetStats() -> {[]} <0.40ms>
+10-30 00:28:44.195  1427  1427 W FrameTracker: Missed App frame:UNKNOWN: 3, 15134, 266067290, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 00:28:44.195  1427  1427 W FrameTracker: Missed SF frame:UNKNOWN: 3, 15134, 266067290, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 00:28:44.195  1427  1427 W FrameTracker: Missed App frame:UNKNOWN: 3, 15156, 381374205, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 00:28:44.195  1427  1427 W FrameTracker: Missed SF frame:UNKNOWN: 3, 15156, 381374205, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 00:28:44.195  1427  1427 W FrameTracker: Missed App frame:UNKNOWN: 3, 15210, 393410507, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 00:28:44.195  1427  1427 W FrameTracker: Missed SF frame:UNKNOWN: 3, 15210, 393410507, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 00:28:44.196  1427  1427 W FrameTracker: Missed SF frame:JANK_COMPOSER, 15240, 284290193, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 00:28:44.196  1427  1454 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-78 - not enough time since last trigger
+10-30 00:28:44.353  2853  2950 D SharedPreferencesImpl: Time required to fsync /data/user/0/com.canpicasoft.tokkl/shared_prefs/server_config.xml: [<1: 0, <2: 1, <4: 0, <8: 1, <16: 0, <32: 0, <64: 2, <128: 0, <256: 0, <512: 0, <1024: 1, <2048: 0, <4096: 0, <8192: 0, <16384: 0, >=16384: 0]
+10-30 00:28:44.559   660   671 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-30 00:28:44.794  1375  1393 E FrameTracker: force finish cuj, time out: J<DEFAULT_TASK_TO_TASK_ANIMATION>
+10-30 00:28:45.020   660   796 D WifiClientModeImpl[11592:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-30 00:28:45.021   660   796 D WifiDataStall: tx tput in kbps: 37000
+10-30 00:28:45.021   660   796 D WifiDataStall: rx tput in kbps: 37000
+10-30 00:28:45.021   660   796 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 00:28:45.021   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:45.021   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:45.021   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:45.021   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:45.021   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:45.021   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:45.021   660   796 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 00:28:45.021   660   796 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 00:28:45.021   660   796 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 00:28:45.022   660   796 D WifiScoreCard: txRate: 8 txSpeed: 1
+10-30 00:28:45.022   660   796 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed 1
+10-30 00:28:45.022   660   796 D WifiClientModeImpl[11592:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=7.8, 0.0, 0.0 rx=7.7 bcn=0 [on:0 tx:0 rx:0 period:3004] from screen [on:0 period:-1979804706] score=60
+10-30 00:28:45.297   471  2924 D android.hardware.audio@7.1-impl.ranchu: threadLoop: entering standby, frames: 426496
+10-30 00:28:45.298   471  2924 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: joining consumeThread
+10-30 00:28:45.313   471  2926 D android.hardware.audio@7.1-impl.ranchu: consumeThread: exiting
+10-30 00:28:45.313   471  2924 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+10-30 00:28:45.443  1375  1395 E FrameTracker: force finish cuj, time out: J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.443  1375  1395 W FrameTracker: Missed App frame:UNKNOWN: 3, 12236, 35161275, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1395 W FrameTracker: Missed SF frame:UNKNOWN: 3, 12236, 35161275, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1395 W FrameTracker: Missed App frame:UNKNOWN: 3, 12264, 133438576, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1395 W FrameTracker: Missed SF frame:UNKNOWN: 3, 12264, 133438576, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1395 W FrameTracker: Missed App frame:UNKNOWN: 3, 12286, 200957667, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1395 W FrameTracker: Missed SF frame:UNKNOWN: 3, 12286, 200957667, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1395 W FrameTracker: Missed App frame:JANK_APPLICATION, 12303, 353013287, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1395 W FrameTracker: Missed App frame:UNKNOWN: 3, 12312, 401841062, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1395 W FrameTracker: Missed SF frame:UNKNOWN: 3, 12312, 401841062, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 00:28:45.444  1375  1392 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-39 - not enough time since last trigger
+10-30 00:28:46.278  2853  2899 D WM-ForceStopRunnable: The default process name was not specified.
+10-30 00:28:46.278  2853  2899 D WM-ForceStopRunnable: Performing cleanup operations.
+10-30 00:28:46.291  2853  2899 D WM-ForceStopRunnable: Application was force-stopped, rescheduling.
+10-30 00:28:46.301  2853  2899 D WM-PackageManagerHelper: androidx.work.impl.background.systemalarm.RescheduleReceiver disabled
+10-30 00:28:46.314  2853  2899 D IdlingRegistry: Unregistering idling resources: [androidx.compose.ui.test.EspressoLink@eef820]
+10-30 00:28:46.316  2853  2899 I TestRunner: finished: pauseResumeAndStopWhilePausedGoToTheServerFromTheNativeControls(com.github.e0ipso.tokkl.widget.WidgetServerTest)

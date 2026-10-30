@@ -236,11 +236,11 @@ graph TD
 
 Task 1 owns Timer state and shared total helpers. Task 2 owns Pomodoro state and sync generalization. TokklApplication edits are limited to each task's respective block. Verify focused JVM tests and Android test compilation before the phase commit.
 
-### Phase 2: Responsive providers and navigation
-**Status:** pending
+### ✅ Phase 2: Responsive providers and navigation
+**Status:** completed
 **Parallel Tasks:**
-- Task 003: Build Timer widget layouts and Today navigation (depends on: 001)
-- Task 004: Add Pomodoro provider layouts and server actions (depends on: 002)
+- ✔️ Task 003: Build Timer widget layouts and Today navigation (depends on: 001)
+- ✔️ Task 004: Add Pomodoro provider layouts and server actions (depends on: 002)
 
 Verify focused JVM/build/lint and focused device layout checks. Record API36 screenshot references before the commit changing appearance; task 5 expands behavioral proof and validates those references.
 
@@ -270,3 +270,47 @@ Apply POST_PHASE after each verified phase, create its Conventional Commit and m
 Parent verification on 2026-10-29 ran `:app:testDebugUnitTest` for `widget.*`, `pomodoro.*` and `timer.TimerTotalsTest`, plus `:app:compileDebugAndroidTestKotlin :app:lintDebug`, with `./gradlew --no-daemon` in the OOM-safe scope under `/tmp/tokkl-plan3-gradle.lock`. Exit 0, BUILD SUCCESSFUL; 154 tests, zero failures/errors/skips. Android test compilation and lint passed. Log: `evidence/phase1/parent-combined-check.log`; per-suite JUnit: `evidence/phase1/combined-junit/`. `git diff --check` passed. Parent read the state, total-helper, sync and account-lifecycle changes before accepting the phase.
 
 The plan's assumed Room write on every RunningCheck is not guaranteed: an equal current row is suppressed. The widget observes existing WorkManager state events as well as cache/app-open events to redraw the day without adding work or idle wakeups.
+
+
+## Phase 2 parent verification
+
+The first combined API36 widget package run returned exit 1: 24 tests, 2 failures, 0 errors/skips. Complete inventory: `evidence/phase2/parent/failure-inventory.txt`; JUnit: `evidence/phase2/parent/api36-results/`. Both rendering matrices and native clocks passed. The failures were the retired combined Pause text assertion and an immediate Pomodoro heading assertion that did not wait for asynchronous stored-session routing.
+
+The exact two-method focused reproduction (`focused-before`) ran 2 tests with 1 failure, confirming the stale Pause expectation; the navigation timing failure did not recur in that selection. The parent changed the Pause assertion to check the new paused header and separate clock, and made navigation wait on its page heading before checking display. `focused-after` then returned 0: 2 tests, 0 failures/errors/skips. Assertions of server state, captured revisions and navigation fallback remain in place. Full widget package validation follows before phase completion.
+
+One earlier `focused-after` attempt was interrupted at the turn boundary before results. Its remaining adb server inherited the build lock. Read-only process inspection identified that exact owned server, with no test process remaining; stopping it released the lock. The attempt is preserved under `focused-after-interrupted` and supplies no passing evidence. Later tests run on the Device panel emulator via the maintained project runner.
+
+Parent JVM/lint verification returned 0: 81 selected tests, no failures/errors/skips, Android test Kotlin compilation successful, lint 0 errors/fatal issues with 15 warnings. Evidence: `evidence/phase2/parent/jvm-results/`, `jvm-lint.log`, `lint.xml`.
+
+
+## Previous execution attempt
+
+**Status**: Halted in phase 2; not archived
+**Completed Date**: Not completed; halted on 2026-10-30
+
+### Results
+
+Phase 1 is verified and committed as `a27d347991109e6094963288b070d641d929a1dc`. Tasks 3 and 4 supplied both providers, three layouts, navigation, guarded online session actions and 208 reference images. Their work remains uncommitted pending parent phase verification. Parent JVM selection passed 81 tests with no failures/errors/skips, Android test compilation succeeded, and lint has no errors. Parent found and corrected two test issues; the exact two-method focused rerun passed 2/2. Phase 2 has not passed its final integrated device gate. Tasks 5 and 6, POST_EXECUTION, code review and archival have not run.
+
+**Code Review**: Failed — Review was not run: phase 2 device verification halted because device support repeatedly failed after refresh.
+
+### Noteworthy Events
+
+- The first combined API36 package produced 24 tests with 2 failures. Both screenshot matrices and native clock tests passed. The parent isolated the failure set, corrected the retired Pause-text expectation and the navigation assertion's missing asynchronous wait, and verified 2 focused tests passed. Full evidence and failure inventory are under `evidence/phase2/parent`.
+- The final widget-package rerun lost reliable device connectivity. The device tool reported exactly `Device list failed: Could not communicate with device support. Try refreshing devices.` An initial refresh recovered, but the later screenshot operation failed with `Device screenshot failed: Could not communicate with device support. Try refreshing devices.` Its advised refresh and screenshot retry both failed with the same communication error. The current device-tool instructions require stopping after that failed retry, without bypassing the tools. This is an infrastructure halt, not a clean device-test result.
+- The parent requested shutdown of only its own active test scope, `run-r85fd913d0ea1451ba7fd414354b11d97.scope`, after deciding to halt. The incomplete `api36-final` run supplies no success evidence. The Device panel emulator remains managed by the device tools; no adb/SSH fallback was used to control or shut it down.
+- Review gate JSON: no result was produced because the gate was not reached. Findings acted on: the two parent-observed test issues above. No review findings were ignored because code review did not run.
+- Kenkeep lint and freshness ran again, returning 0 with existing orphan/redirected-edge findings and 28 stale nodes. Curation is still pending; widget knowledge updates belong to task 6.
+
+### Necessary follow-ups
+
+Restore local Device panel/device-support connectivity. Resume plan 3 at the final phase 2 package check, inspecting any unfinished runner reports before retrying. Once phase 2 is verified, commit it with its references, execute task 5's API31/API36 real-server and complete-suite acceptance plus dead-layout cleanup, then task 6 documentation. Run POST_EXECUTION and the code review gate once before summary and archival. Do not rerun branch creation or base capture; both already ran once. No push or PR has been authorized by the plan hooks.
+
+
+## Resume and acceptance scope — 2026-10-30
+
+The user directed: "address the issues and try device acceptance again. We only test for API36 locally, and defer 31 for CI." This overrides the plan's local two-API run requirements: all local device acceptance runs use tokkl-api36; API31 remains supported and is deferred to CI. No API31 local run is required for local completion or archival, and no passing API31 result is claimed.
+
+The advisory Opus 5.5 review identified the denied-alarm phase-end update, stale phase progress/percentage, static running Billable tile and retired layout helpers/strings. The implementer addresses these within task 5. The progress display becomes a phase-colour band with words, avoiding a falsely current percentage without periodic widget wakeups. Billable uses a native clock while a billable segment runs.
+
+Phase 2 is accepted from the initial parent's 24-method device run (22 passed, all 208 references and native clocks passed), the corrected 2/2 focused run, and exact content verification now. `evidence/phase2/parent/resume-input-audit.json` compares 85 Timer inputs and 180 Pomodoro inputs with the recorded successful manifests. The only mismatches are precisely WidgetNavigationTest.kt and WidgetServerTest.kt, whose two failures were fixed and passed in the focused rerun. Production code and reference images match the previously tested inputs. The unfinished full rerun remains excluded. Phase 2 is committed before review fixes change appearance; task 5 records references for those further changes in its own commit.

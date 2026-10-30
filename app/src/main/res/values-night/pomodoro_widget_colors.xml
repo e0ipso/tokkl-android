@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pomodoro_widget_surface">#14112E</color>
+    <color name="pomodoro_widget_outline">#8C86C0</color>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pomodoro_widget_name">Pomodoro</string>
+    <string name="pomodoro_widget_description">Your Pomodoro session, countdown and next phase, with saved defaults for Start.</string>
+    <string name="pomodoro_widget_unsupported">This server does not support Pomodoro sessions</string>
+    <string name="pomodoro_widget_idle">No session</string>
+    <string name="pomodoro_widget_defaults">%1$d / %2$d / %3$d, every %4$d</string>
+    <string name="pomodoro_widget_defaults_description">Work %1$d minutes, short rest %2$d minutes, long rest %3$d minutes, every %4$d pomodoros</string>
+    <string name="pomodoro_widget_work_done">Work done</string>
+    <string name="pomodoro_widget_short_done">Short rest done</string>
+    <string name="pomodoro_widget_long_done">Long rest done</string>
+    <string name="pomodoro_widget_left_of">left of %1$s</string>
+    <string name="pomodoro_widget_end">End</string>
+    <string name="pomodoro_widget_edit">Edit</string>
+    <string name="pomodoro_widget_edit_description">Edit Pomodoro session defaults and fields</string>
+    <string name="pomodoro_widget_this">THIS POMODORO</string>
+    <string name="pomodoro_widget_last">Last: %1$s</string>
+    <string name="pomodoro_widget_work">WORK</string>
+    <string name="pomodoro_widget_short">SHORT</string>
+    <string name="pomodoro_widget_long">LONG</string>
+    <string name="pomodoro_widget_every">EVERY</string>
+    <string name="pomodoro_widget_progress">%1$s, %2$d percent elapsed</string>
+    <string name="pomodoro_widget_cycle">Pomodoro %1$d of %2$d, %3$d work phases completed</string>
+    <string name="pomodoro_widget_phase_number">%1$s · %2$d/%3$d</string>
+    <string name="pomodoro_widget_entry_project">%1$s · %2$s</string>
+    <string name="pomodoro_widget_open">Open Pomodoro</string>
+</resources>

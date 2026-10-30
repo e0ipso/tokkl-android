@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.history.HistoryRowsTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:29.819Z" hostname="punta-des-patro" time="0.031">
+  <properties/>
+  <testcase name="alikeEntriesOfADayFormOneGroupAndOtherDaysAndDescriptionsStayApart" classname="com.github.e0ipso.tokkl.history.HistoryRowsTest" time="0.001"/>
+  <testcase name="withoutTheCollapsePreferenceEveryEntryHasItsOwnRow" classname="com.github.e0ipso.tokkl.history.HistoryRowsTest" time="0.0"/>
+  <testcase name="tagsMatchInAnyOrderAndJoinWithCommasAsInJavaScript" classname="com.github.e0ipso.tokkl.history.HistoryRowsTest" time="0.001"/>
+  <testcase name="theKeyWritesFieldsAsJavaScriptJoinDoes" classname="com.github.e0ipso.tokkl.history.HistoryRowsTest" time="0.0"/>
+  <testcase name="theStartTheStopAndTheProjectsNameDoNotCount" classname="com.github.e0ipso.tokkl.history.HistoryRowsTest" time="0.001"/>
+  <testcase name="eachFieldOfTheKeyKeepsEntriesApart" classname="com.github.e0ipso.tokkl.history.HistoryRowsTest" time="0.026"/>
+  <testcase name="tagsSortByUtf16CodeUnits" classname="com.github.e0ipso.tokkl.history.HistoryRowsTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

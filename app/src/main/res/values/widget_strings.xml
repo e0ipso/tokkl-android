@@ -3,7 +3,7 @@
 <resources>
     <!-- The widget's name and description in the launcher's widget picker. -->
     <string name="widget_name">Timer</string>
-    <string name="widget_description">The running timer with Start, Stop and your timer templates.</string>
+    <string name="widget_description">Your timer and today’s report, with timer templates in the large widget.</string>
     <!-- Without an account the whole widget is one button, which opens the app. -->
     <string name="widget_sign_in">Open Tokkl to sign in</string>
     <!-- The state when no timer runs, said in words so colour is not the only sign. -->
@@ -21,4 +21,18 @@
     <string name="widget_start_favorite">Start %1$s</string>
     <!-- The same with the template's project: Start Writing the PRD, Tokkl for Android -->
     <string name="widget_start_favorite_project">Start %1$s, %2$s</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_today_total">Today total</string>
+    <string name="widget_elapsed">Elapsed time</string>
+    <string name="widget_open_report_description">Open Today report</string>
+    <string name="widget_open_report">Open report ›</string>
+    <string name="widget_total">Total</string>
+    <string name="widget_billable">Billable</string>
+    <string name="widget_entries">Entries</string>
+    <string name="widget_billable_total">Billable %1$s</string>
+    <string name="widget_no_project">No project</string>
+    <string name="widget_other">Other</string>
+    <string name="widget_paused_label">Paused</string>
+    <string name="widget_paused_entry">Paused · %1$s</string>
+    <string name="widget_project_running">%1$s, %2$s, running</string>
 </resources>

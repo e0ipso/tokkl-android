@@ -76,7 +76,7 @@ class WidgetLargeTextTest {
                     assertTrue("the minimum widget width fits this display", width >= 240)
                     widget.resize(width, 320)
                 }
-                widget.awaitText("Read")
+                if (!combinedSizes) { widget.resize(375, 338); widget.awaitText("Read") }
                 runBlocking { app.changes.start(workspace, EntryFields("Work", projectId = project)) }
                 widget.awaitText("Work")
                 widget.awaitDescription("Stop the timer")

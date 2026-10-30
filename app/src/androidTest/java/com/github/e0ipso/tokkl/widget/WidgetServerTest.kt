@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TimerActionToasts
+import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.timerState
@@ -146,7 +147,8 @@ class WidgetServerTest {
         native.click(pauseLabel)
         val paused = app.awaitControls<TimerControls.Paused>("the widget's Pause reached the server")
         native.awaitDescription(context.getString(R.string.widget_resume_description))
-        native.awaitText(context.getString(R.string.widget_paused, formatDuration(paused.seconds)))
+        native.awaitText(context.getString(R.string.widget_paused_entry, "Paused on the widget"))
+        native.awaitText(formatDuration(paused.seconds))
         val chain = checkNotNull(web.timerState().pause)
         assertTrue("the server holds the chain paused", chain.paused)
         assertEquals("the widget shows the server's frozen total", chain.seconds, paused.seconds)
@@ -206,11 +208,14 @@ class WidgetServerTest {
         }).orFail("save favorites")
         runBlocking { app.accountSettings.refresh().join() }
         native.awaitText("Favorite 3")
-        native.awaitText("Widget project · Widget task")
+
 
         native.resize(360, 152)
-        native.await("the compact widget fits only its first favorite") { native.hasText("Favorite 1") && !native.hasText("Favorite 2") }
-        native.resize(360, 320)
+        native.await("the strip leaves templates out") { (1..3).none { native.hasText("Favorite $it") } }
+        native.resize(298, 222)
+        native.awaitText("Today")
+        native.await("the medium widget leaves templates out") { (1..3).none { native.hasText("Favorite $it") } }
+        native.resize(375, 338)
         native.awaitText("Favorite 3")
         signIn(NO_ROUTE, account.apiToken)
         for (index in 1..3) {
@@ -251,6 +256,15 @@ class WidgetServerTest {
         native.await("WidgetSync has queued the running state") { store.load() == expected }
         native.awaitUpdatesSettled()
         native.assertClockTicksWithoutUpdates()
+        native.assertClockTicksWithoutUpdates(clockIndex = 1)
+    }
+
+    @Test
+    fun todayReportTapOpensReportsOnToday() {
+        native.awaitDescription(context.getString(R.string.widget_open_report_description))
+        native.click(context.getString(R.string.widget_open_report_description))
+        compose.awaitText(context.getString(R.string.reports))
+        compose.awaitText("Today")
     }
 
     @Test

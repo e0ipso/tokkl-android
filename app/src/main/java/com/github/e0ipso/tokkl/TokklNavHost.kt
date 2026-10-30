@@ -77,6 +77,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
+import com.github.e0ipso.tokkl.widget.WidgetPage
 import com.github.e0ipso.tokkl.reports.ReportsModel
 import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -193,6 +194,8 @@ fun TokklNavHost(
     onNotificationsAllowed: () -> Unit = {},
     reminderSettings: ReminderSetting? = null,
     openReminderTimer: Int = 0,
+    openWidgetPage: WidgetPage? = null,
+    onWidgetPageOpened: (WidgetPage) -> Unit = {},
     openPomodoro: PomodoroNotificationTap? = null,
     onPomodoroOpened: (PomodoroNotificationTap) -> Unit = {},
 ) {
@@ -237,6 +240,25 @@ fun TokklNavHost(
     val capabilityFlags = capabilities.collectAsState().value
     val unavailable = unavailablePages(capabilityFlags, hasFavorites = favorites != null)
     val openPage: (TopLevelPage) -> Unit = { page -> backStack.open(if (page in unavailable) TopLevelPage.TIMER else page) }
+    LaunchedEffect(openWidgetPage) {
+        val page = openWidgetPage ?: return@LaunchedEffect
+        val signedIn = withContext(Dispatchers.IO) { Session(appContext).isSignedIn() }
+        if (!signedIn) {
+            backStack.clear()
+            backStack.add(Destination.SIGN_IN)
+        } else {
+            entryForm.close()
+            when (page) {
+                WidgetPage.TIMER -> openPage(TopLevelPage.TIMER)
+                WidgetPage.TODAY -> {
+                    reports.openToday()
+                    openPage(TopLevelPage.REPORTS)
+                }
+                WidgetPage.POMODORO -> openPage(TopLevelPage.POMODORO)
+            }
+        }
+        onWidgetPageOpened(page)
+    }
     LaunchedEffect(openPomodoro) {
         val request = openPomodoro ?: return@LaunchedEffect
         val accepted = withContext(Dispatchers.IO) {

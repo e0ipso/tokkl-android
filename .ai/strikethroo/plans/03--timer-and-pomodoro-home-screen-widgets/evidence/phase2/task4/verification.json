@@ -1,0 +1,88 @@
+{
+  "base_commit": "a27d347991109e6094963288b070d641d929a1dc",
+  "unit": {
+    "exit_code": 0,
+    "counts": {
+      "tests": 56,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "classes": {
+      "com.github.e0ipso.tokkl.widget.PomodoroWidgetActionsTest": 9,
+      "com.github.e0ipso.tokkl.widget.WidgetStateTest": 28,
+      "com.github.e0ipso.tokkl.widget.PomodoroWidgetSyncTest": 3,
+      "com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest": 3,
+      "com.github.e0ipso.tokkl.widget.PomodoroWidgetStateTest": 13
+    }
+  },
+  "android_compile": {
+    "exit_code": 0,
+    "command": ":app:compileDebugAndroidTestKotlin"
+  },
+  "lint": {
+    "exit_code": 0,
+    "errors": 0
+  },
+  "api36": {
+    "exit_code": 0,
+    "counts": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cases": [
+      {
+        "name": "allSizesStatesAndControlsFitAndMatchReferences",
+        "classname": "com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest",
+        "time": "32.987"
+      },
+      {
+        "name": "allSizesStatesAndControlsFitAndMatchReferences",
+        "classname": "com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest",
+        "time": "32.239"
+      },
+      {
+        "name": "allSizesStatesAndControlsFitAndMatchReferences",
+        "classname": "com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest",
+        "time": "32.859"
+      },
+      {
+        "name": "allSizesStatesAndControlsFitAndMatchReferences",
+        "classname": "com.github.e0ipso.tokkl.widget.DarkLargestPomodoroWidgetScreenshotTest",
+        "time": "31.983"
+      },
+      {
+        "name": "nativeCountdownAndOvertimeTickWithoutProviderUpdates",
+        "classname": "com.github.e0ipso.tokkl.widget.PomodoroWidgetClockTest",
+        "time": "8.502"
+      }
+    ],
+    "reference_images": 144,
+    "states": 9,
+    "sizes": [
+      "196x100",
+      "298x222",
+      "375x338",
+      "110x40"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "font_scales": [
+      1.0,
+      2.0
+    ]
+  },
+  "inputs_unchanged": {
+    "unit": true,
+    "api36": true
+  },
+  "interrupted_attempts": [
+    "api36-layout-fix: deliberately stopped obsolete focused run, exit 143",
+    "api36-bounds: unexpected exit 143, no completed report; cause unknown"
+  ],
+  "accepted_inputs_match_current": true
+}

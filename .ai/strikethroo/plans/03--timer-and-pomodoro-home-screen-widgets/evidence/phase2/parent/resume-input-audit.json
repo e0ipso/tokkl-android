@@ -1,0 +1,18 @@
+[
+  {
+    "manifest": ".ai/strikethroo/plans/03--timer-and-pomodoro-home-screen-widgets/evidence/phase2/task3/verified-timer-inputs.sha256",
+    "count": 85,
+    "mismatches": [
+      "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetNavigationTest.kt",
+      "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetServerTest.kt"
+    ]
+  },
+  {
+    "manifest": ".ai/strikethroo/plans/03--timer-and-pomodoro-home-screen-widgets/evidence/phase2/task4/api36-reference-comparison/inputs-after.sha256",
+    "count": 180,
+    "mismatches": [
+      "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetNavigationTest.kt",
+      "app/src/androidTest/java/com/github/e0ipso/tokkl/widget/WidgetServerTest.kt"
+    ]
+  }
+]

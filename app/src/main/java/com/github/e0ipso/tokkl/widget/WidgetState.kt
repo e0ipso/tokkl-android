@@ -238,6 +238,18 @@ fun WidgetState.key(): String {
 
 /** The widget's sizes, in dp, which [favoritesThatFit] and the layout share. */
 object WidgetLayout {
+    // Approved 298×222 and 375×338 cards, with room for launcher padding.
+    const val MEDIUM_WIDTH_DP = 260f
+    const val MEDIUM_HEIGHT_DP = 200f
+    const val LARGE_WIDTH_DP = 340f
+    const val LARGE_HEIGHT_DP = 310f
+    const val MAX_SEGMENTS = 5
+
+    fun clockRowHeight(large: Boolean, scale: Float): Float =
+        if (large) 46f + 18f * (scale.coerceAtLeast(1f) - 1f) else 28f + 20f * (scale.coerceAtLeast(1f) - 1f)
+    fun reportHeadingHeight(scale: Float): Float = 22f + 8f * (scale.coerceAtLeast(1f) - 1f)
+    fun statsHeight(scale: Float): Float = 44f + 20f * (scale.coerceAtLeast(1f) - 1f)
+    fun todayRowHeight(scale: Float): Float = 26f + 14f * (scale.coerceAtLeast(1f) - 1f)
     const val PADDING_DP = 12f
     const val TIMER_ROW_DP = 80f
     const val FAVORITE_ROW_DP = 48f

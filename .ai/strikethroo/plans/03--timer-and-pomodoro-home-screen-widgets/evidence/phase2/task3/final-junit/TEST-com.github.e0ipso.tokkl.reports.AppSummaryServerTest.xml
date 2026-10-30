@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:32.707Z" hostname="punta-des-patro" time="0.449">
+  <properties/>
+  <testcase name="onlyDefinitiveAppEndpointAbsenceUsesRoundedDetailedFallback" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.099"/>
+  <testcase name="authQuotaAndServerFailuresNeverFallBack" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.014"/>
+  <testcase name="appPostPreservesPrefixFiltersAndInclusiveDatesButDoesNotOverrideCurrentRounding" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.009"/>
+  <testcase name="malformedSuccessfulResponsesStayErrorsAndDoNotSearch" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.144"/>
+  <testcase name="detailedWeeklyAndCsvKeepTheirExistingContractsForTokklCandidates" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.054"/>
+  <testcase name="allFilterVariantsAreForwardedWithoutChangingTheirMeaning" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.057"/>
+  <testcase name="unreachableServerStaysANetworkFailure" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.005"/>
+  <testcase name="defaultWorkspaceAndRoleMakeACandidateWithoutHostnameOrVersionChecks" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.053"/>
+  <testcase name="nonCandidateUsesExistingDetailedSearchWithoutAnAppProbe" classname="com.github.e0ipso.tokkl.reports.AppSummaryServerTest" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.ReportTabsModelTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:33.581Z" hostname="punta-des-patro" time="1.39">
+  <properties/>
+  <testcase name="theWeeklyTabAsksForTheAccountsWeekAndSortsAsTheWebApp" classname="com.github.e0ipso.tokkl.reports.ReportTabsModelTest" time="0.404"/>
+  <testcase name="theFiltersGoWithEveryTabsRequest" classname="com.github.e0ipso.tokkl.reports.ReportTabsModelTest" time="0.498"/>
+  <testcase name="aWeeklyRowWithoutSevenDaysIsAnUnexpectedAnswer" classname="com.github.e0ipso.tokkl.reports.ReportTabsModelTest" time="0.097"/>
+  <testcase name="aRangesWeekStartsOnTheAccountsFirstDay" classname="com.github.e0ipso.tokkl.reports.ReportTabsModelTest" time="0.01"/>
+  <testcase name="weeklyRowsWithTheSameTimeSortByTitleIgnoringCase" classname="com.github.e0ipso.tokkl.reports.ReportTabsModelTest" time="0.007"/>
+  <testcase name="aFailedNextPageShowsWhyAndTryAgainLoadsTheFirstPage" classname="com.github.e0ipso.tokkl.reports.ReportTabsModelTest" time="0.189"/>
+  <testcase name="theDetailedTabPagesAsTheServerSays" classname="com.github.e0ipso.tokkl.reports.ReportTabsModelTest" time="0.184"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,574 @@
+10-29 23:51:31.779  2606  2641 I TestRunner: started: widgetRoutesWithoutAnAccountOpenSignInAndConsumeTheExtras(com.github.e0ipso.tokkl.widget.WidgetNavigationTest)
+10-29 23:51:31.797  2606  2643 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/database/sqlite/SQLiteDatabase;->getThreadSession()Landroid/database/sqlite/SQLiteSession; (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/sqlite/db/framework/FrameworkSQLiteDatabase; (domain=app) using reflection: allowed
+10-29 23:51:31.797  2606  2643 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/database/sqlite/SQLiteSession;->beginTransaction(ILandroid/database/sqlite/SQLiteTransactionListener;ILandroid/os/CancellationSignal;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/sqlite/db/framework/FrameworkSQLiteDatabase; (domain=app) using reflection: allowed
+10-29 23:51:31.804  2606  2641 D WM-ForceStopRunnable: The default process name was not specified.
+10-29 23:51:31.804  2606  2641 D WM-ForceStopRunnable: Performing cleanup operations.
+10-29 23:51:31.813  2606  2641 D WM-ForceStopRunnable: Application was force-stopped, rescheduling.
+10-29 23:51:31.856  2606  2641 I Tracing : Tracer added: class androidx.test.platform.tracing.AndroidXTracer
+10-29 23:51:31.863  2606  2641 D IdlingRegistry: Registering idling resources: [androidx.compose.ui.test.EspressoLink@ded0dbe]
+10-29 23:51:31.869  2606  2641 W Settings: Setting always_finish_activities has moved from android.provider.Settings.System to android.provider.Settings.Global, returning read-only value.
+10-29 23:51:31.873   676  1240 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10151, packageName = null, attributionTag = null, token = android.os.Binder@3580f7f, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-29 23:51:31.877   922  1075 I ndroid.systemui: AssetManager2(0x7be1b3c483b8) locale list changing from [] to [en-US]
+10-29 23:51:31.880  1216  1216 W SplitSelectStateCtor: Missing session instanceIds
+10-29 23:51:31.880  1216  1216 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+10-29 23:51:31.882   922  1080 W HWUI    : Image decoding logging dropped!
+10-29 23:51:31.883   922  1080 D SplashScreenView: Build android.window.SplashScreenView{2bc16b V.E...... ......ID 0,0-0,0}
+10-29 23:51:31.883   922  1080 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-29 23:51:31.883   922  1080 D SplashScreenView: Branding: view: android.view.View{b5224c8 G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-29 23:51:31.887  2606  2606 I npicasoft.tokkl: AssetManager2(0x7be1b3c3cb58) locale list changing from [] to [en-US]
+10-29 23:51:31.890   523   523 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-29 23:51:31.908  2606  2648 W libc    : Access denied finding property "vendor.mesa.log"
+10-29 23:51:31.908  2606  2648 W libc    : Access denied finding property "vendor.mesa.log.file"
+10-29 23:51:31.908  2606  2648 E MESA    : Failed to open rendernode: No such file or directory
+10-29 23:51:31.914  2606  2648 D vulkan  : searching for layers in '/data/app/~~O-GGB5GRfOuOAzQBgWWWEQ==/com.canpicasoft.tokkl-vWVRMlrCFeFZVopmYFGE9A==/lib/x86_64'
+10-29 23:51:31.915  2606  2648 D vulkan  : searching for layers in '/data/app/~~-pc4s8VV6bmpVzFUZtZVpA==/com.canpicasoft.tokkl.test-1Nvl6gqnj4Sz_QSp_GZCMQ==/base.apk!/lib/x86_64'
+10-29 23:51:31.915  2606  2648 D vulkan  : searching for layers in '/data/app/~~O-GGB5GRfOuOAzQBgWWWEQ==/com.canpicasoft.tokkl-vWVRMlrCFeFZVopmYFGE9A==/base.apk!/lib/x86_64'
+10-29 23:51:31.918  2606  2648 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-29 23:51:31.918  2606  2648 W libc    : Access denied finding property "vendor.mesa.gallium.print.optio"
+10-29 23:51:31.918  2606  2648 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-29 23:51:31.919  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@71ca19c in: PRE_ON_CREATE
+10-29 23:51:31.920  2606  2606 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-29 23:51:31.921  2606  2648 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-29 23:51:31.928  2606  2606 D CompatChangeReporter: Compat change id reported: 377864165; UID 10151; state: ENABLED
+10-29 23:51:31.939  2606  2606 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+10-29 23:51:31.966   676   822 D WifiClientModeImpl[10973:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=6 freq=2437 RxLinkSpeed=2
+10-29 23:51:31.966   676   822 D WifiDataStall: tx tput in kbps: 37000
+10-29 23:51:31.966   676   822 D WifiDataStall: rx tput in kbps: 37000
+10-29 23:51:31.966   676   822 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-29 23:51:31.966   676   822 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-29 23:51:31.966   676   822 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-29 23:51:31.966   676   822 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-29 23:51:31.966   676   822 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-29 23:51:31.966   676   822 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-29 23:51:31.966   676   822 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-29 23:51:31.966   676   822 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-29 23:51:31.966   676   822 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-29 23:51:31.967   676   822 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 6Mbps, Tx Link speed: 6Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-29 23:51:31.967   676   822 D WifiScoreCard: txRate: 1 txSpeed: 6
+10-29 23:51:31.967   676   822 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-29 23:51:31.967   676   822 D WifiClientModeImpl[10973:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=6 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3011] from screen [on:0 period:-1982037761] score=60
+10-29 23:51:31.997   676  1591 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.225   469  2062 I resolv  :  SSL_connect returned -1 with mark 0xf0065
+10-29 23:51:32.225   469  2062 W resolv  : SSL_connect ssl error =5, mark 0xf0065: Connection refused
+10-29 23:51:32.225   469  2062 W resolv  : TLS Handshake failed
+10-29 23:51:32.225   469  2062 W resolv  : query failed
+10-29 23:51:32.225   469  2062 W resolv  : validateDnsTlsServer returned 0 for {10.0.2.3/}
+10-29 23:51:32.225   469  2062 W resolv  : Validation failed
+10-29 23:51:32.293  1216  1216 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=true newVisibility=false
+10-29 23:51:32.369  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@71ca19c in: CREATED
+10-29 23:51:32.369  2606  2606 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.github.e0ipso.tokkl.MainActivity@71ca19c
+10-29 23:51:32.374   676  1591 D ConnectivityService: requestNetwork for uid/pid:10151/2606 activeRequest: null callbackRequest: 63 [NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST|NC
+10-29 23:51:32.375   676   834 D ConnectivityService: NetReassign [64 : null → 101] [c 0] [a 0] [i 0]
+10-29 23:51:32.379   676   822 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:32.380   676   822 V WifiNetworkFactory: Accepted network request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:32.380   676   822 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:32.380   676   822 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:32.380   676   822 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:32.383  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@71ca19c in: STARTED
+10-29 23:51:32.383  2606  2606 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.github.e0ipso.tokkl.MainActivity@71ca19c
+10-29 23:51:32.395  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@71ca19c in: RESUMED
+10-29 23:51:32.395  2606  2606 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.github.e0ipso.tokkl.MainActivity@71ca19c
+10-29 23:51:32.402  2606  2606 W HWUI    : Unknown dataspace 0
+10-29 23:51:32.409   676  1591 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10151, packageName = null, attributionTag = null, token = android.os.Binder@3580f7f, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-29 23:51:32.410   676  1591 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10151, packageName = null, attributionTag = null, token = android.os.Binder@3580f7f, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-29 23:51:32.569  2606  2611 I npicasoft.tokkl: Compiler allocated 5042KB to compile void android.view.ViewRootImpl.performTraversals()
+10-29 23:51:32.696   676   800 I system_server: AssetManager2(0x7be1b3c55518) locale list changing from [] to [en-US]
+10-29 23:51:32.697   676   800 I system_server: AssetManager2(0x7be1b3c4db38) locale list changing from [] to [en-US]
+10-29 23:51:32.699  1053  1053 D CarrierSvcBindHelper: onPackageModified: com.canpicasoft.tokkl
+10-29 23:51:32.700  1053  1053 D CarrierSvcBindHelper: No carrier app for: 0
+10-29 23:51:32.700  1053  1263 I SatelliteAppTracker: onPackageModified : com.canpicasoft.tokkl
+10-29 23:51:32.700   676   705 I ServiceWatcher: [TrustManagerService] chose new implementation null
+10-29 23:51:32.701   676   708 I system_server: AssetManager2(0x7be1b3c46ab8) locale list changing from [] to [en-US]
+10-29 23:51:32.708  1053  1053 E SmsApplication: com.android.messaging lost android:receive_wap_push:  (fixing)
+10-29 23:51:32.708  1216  1216 D b/267448330: provider: ComponentInfo{com.android.quicksearchbox/com.android.quicksearchbox.SearchWidgetProvider}, paddedSizes: [382.09525x136.38095, 382.09525x136.38095, 732.5714x62.095238, 732.5714x62.095238], getMinMaxSizes: Rect(382, 62 - 732, 136)
+10-29 23:51:32.708   676   782 I RoleService: Granting default roles...
+10-29 23:51:32.708  1053  1053 E SmsApplication: com.android.messaging lost android:read_cell_broadcasts:  (fixing)
+10-29 23:51:32.710  1146  1154 I PermissionControllerServiceImpl: Updating user sensitive for uid 10151
+10-29 23:51:32.712   922   922 D ControlsListingControllerImpl: ServiceConfig reloaded, count: 0
+10-29 23:51:32.713  1146  1154 I PermissionControllerServiceImpl: Updating user sensitive for uid 10151
+10-29 23:51:32.713  1216  1253 D PackageUpdatedTask: Package updated: mOp=UPDATE packages=[com.canpicasoft.tokkl], user=UserHandle{0}
+10-29 23:51:32.718  2606  2606 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/os/SystemProperties;->addChangeCallback(Ljava/lang/Runnable;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/compose/ui/platform/AndroidComposeView$Companion; (domain=app) using reflection: allowed
+10-29 23:51:32.723   676   803 I system_server: AssetManager2(0x7be1b3c4c238) locale list changing from [] to [en-US]
+10-29 23:51:32.731   676   705 I ActivityTaskManager: Displayed com.canpicasoft.tokkl/com.github.e0ipso.tokkl.MainActivity for user 0: +850ms
+10-29 23:51:32.732  1216  1216 D b/267448330: provider: ComponentInfo{com.android.quicksearchbox/com.android.quicksearchbox.SearchWidgetProvider}, paddedSizes: [382.09525x136.38095, 382.09525x136.38095, 732.5714x62.095238, 732.5714x62.095238], getMinMaxSizes: Rect(382, 62 - 732, 136)
+10-29 23:51:32.735  1053  1261 D ImsResolver: maybeAddedImsService, packageName: com.canpicasoft.tokkl
+10-29 23:51:32.737  1053  1261 V ImsResolver: searchForImsServices: package=com.canpicasoft.tokkl, users=[UserHandle{0}]
+10-29 23:51:32.739  1053  1261 V ImsResolver: searchForImsServices: package=com.canpicasoft.tokkl, users=[UserHandle{0}]
+10-29 23:51:32.742  1053  1053 D SatelliteController: packageStateChanged: package:com.canpicasoft.tokkl DefaultSmsPackageName:com.android.messaging
+10-29 23:51:32.742  1053  1053 V SatelliteController: Neither SMS or SatelliteGateway package
+10-29 23:51:32.745   676   676 W IPCThreadState: Sending oneway calls to frozen process.
+10-29 23:51:32.746   676   799 I ImeTracker: com.canpicasoft.tokkl:da298d45: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-29 23:51:32.746  1216  1216 D BaseDepthController: setSurface:
+10-29 23:51:32.746  1216  1216 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-29 23:51:32.746  1216  1216 D BaseDepthController: 	mBaseSurface: null
+10-29 23:51:32.747  1216  1216 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+10-29 23:51:32.747  1216  1253 I droid.launcher3: AssetManager2(0x7be1b3c49fd8) locale list changing from [] to [en-US]
+10-29 23:51:32.748  1216  1216 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+10-29 23:51:32.748  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:463)
+10-29 23:51:32.748  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:454)
+10-29 23:51:32.748  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(StatefulActivity.java:120)
+10-29 23:51:32.748  1053  1053 E SmsApplication: com.android.messaging lost android:receive_wap_push:  (fixing)
+10-29 23:51:32.748  1216  1216 D StatsLog: LAUNCHER_ONSTOP
+10-29 23:51:32.748  1053  1053 E SmsApplication: com.android.messaging lost android:read_cell_broadcasts:  (fixing)
+10-29 23:51:32.750  1053  1053 D SatelliteAccessController: Current default SMS app:ComponentInfo{com.android.messaging/com.android.messaging.receiver.SmsDeliverReceiver}
+10-29 23:51:32.750  1053  1053 D SatelliteController: getSelectedSatelliteSubId: subId=-1
+10-29 23:51:32.750  1053  1053 D SatelliteAccessController: supportedMsgApps:com.google.android.apps.messaging
+10-29 23:51:32.756   676  1240 I ImeTracker: system_server:c7b07c88: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-29 23:51:32.757   676   708 I ImeTracker: system_server:c7b07c88: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-29 23:51:32.768  2606  2606 D InsetsController: hide(ime(), fromIme=false)
+10-29 23:51:32.769  2606  2606 I ImeTracker: com.canpicasoft.tokkl:da298d45: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-29 23:51:32.769  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.781  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.790   676  2186 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.android.devicelockcontroller, role: android.app.role.SYSTEM_FINANCED_DEVICE_CONTROLLER
+10-29 23:51:32.945  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.946  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-29 23:51:32.947  1216  1216 D AllAppsStore: setApps: apps.length=13
+10-29 23:51:32.947  1216  1216 D AllAppsStore: notifyUpdate: notifying listeners
+10-29 23:51:32.947  1216  1216 D ActivityAllAppsContainerView: onAppsUpdated; number of apps: 13
+10-29 23:51:32.947  1216  1216 D ActivityAllAppsContainerView: rebindAdapters: force: false
+10-29 23:51:32.947  1216  1216 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+10-29 23:51:32.947  1216  1216 D StatsLog: LAUNCHER_ALLAPPS_COUNT
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-29 23:51:32.948  1216  1216 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-29 23:51:32.959  1216  1253 I droid.launcher3: AssetManager2(0x7be1b3c5f478) locale list changing from [] to [en-US]
+10-29 23:51:32.964  1216  1253 I droid.launcher3: AssetManager2(0x7be1b3c51698) locale list changing from [] to [en-US]
+10-29 23:51:32.968  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.970  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.977  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.980  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.987   676   822 D WifiNetworkSelector: Current connected network: 0
+10-29 23:51:32.987   676   822 V WifiConnectivityManager: No full band scan because current network is sufficient
+10-29 23:51:32.987   676   822 V WifiConnectivityManager: schedulePeriodicScanTimer intervalMs 80000
+10-29 23:51:32.987   676   832 I WifiScanningService: Registering listener= com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@47261a6 uid=1000 packageName=null workSource=WorkSource{1000}
+10-29 23:51:32.987   676   832 I WifiScanningService: start scan: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@47261a6] package null AttributionTag null
+10-29 23:51:32.987   676   832 I WifiScanningService: addSingleScanRequest: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@47261a6],WorkSource{1010}, ScanSettings {  type:HIGH ACCURACY band:unspecified ignoreLocationSettings:false period:0 reportEvents:3 numBssidsPerScan:0 maxScansToCache:0 rnrSetting:2 6GhzPscOnlyEnabled:false channels:[ 2437  ]  }
+10-29 23:51:32.987   676   832 D WifiScanningService: replySucceeded onSuccess
+10-29 23:51:32.990  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:32.991   911   911 D wpa_supplicant: nl80211: Drv Event 33 (NL80211_CMD_TRIGGER_SCAN) received for wlan0
+10-29 23:51:32.991   911   911 D wpa_supplicant: wlan0: nl80211: Scan trigger
+10-29 23:51:32.991   911   911 D wpa_supplicant: wlan0: Event SCAN_STARTED (47) received
+10-29 23:51:32.991   911   911 D wpa_supplicant: wlan0: External program started a scan
+10-29 23:51:32.993  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:33.018  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-29 23:51:33.018  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-29 23:51:33.019  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-29 23:51:33.019  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-29 23:51:33.019  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-29 23:51:33.020  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-29 23:51:33.020  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-29 23:51:33.020  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-29 23:51:33.021  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-29 23:51:33.027  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:33.029  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:33.035  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:33.037  1216  1253 W HWUI    : Image decoding logging dropped!
+10-29 23:51:33.045  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-29 23:51:33.046  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-29 23:51:33.046  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-29 23:51:33.047  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-29 23:51:33.047  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-29 23:51:33.047  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-29 23:51:33.048  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-29 23:51:33.048  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-29 23:51:33.048  1216  1253 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-29 23:51:33.053   911   911 D wpa_supplicant: nl80211: Drv Event 34 (NL80211_CMD_NEW_SCAN_RESULTS) received for wlan0
+10-29 23:51:33.054   911   911 D wpa_supplicant: wlan0: nl80211: New scan results available
+10-29 23:51:33.054   911   911 D wpa_supplicant: nl80211: Scan probed for SSID ''
+10-29 23:51:33.054   911   911 D wpa_supplicant: nl80211: Scan included frequencies: 2437
+10-29 23:51:33.054   911   911 D wpa_supplicant: wlan0: Event SCAN_RESULTS (3) received
+10-29 23:51:33.054   911   911 D wpa_supplicant: nl80211: Received scan results (1 BSSes)
+10-29 23:51:33.054   911   911 D wpa_supplicant: nl80211: Scan results indicate BSS status with 02:15:b2:00:00:01 as associated
+10-29 23:51:33.054   911   911 D wpa_supplicant: wlan0: BSS: Start scan result update 4
+10-29 23:51:33.054   911   911 D wpa_supplicant: BSS: last_scan_res_used=1/32
+10-29 23:51:33.054   911   911 D wpa_supplicant: wlan0: New scan results available (own=0 ext=1)
+10-29 23:51:33.054   911   911 D wpa_supplicant: wlan0: Do not use results from externally requested scan operation for network selection
+10-29 23:51:33.054   911   911 D wpa_supplicant: p2p-dev-wlan0: Updating scan results from sibling
+10-29 23:51:33.054   911   911 D wpa_supplicant: nl80211: Received scan results (1 BSSes)
+10-29 23:51:33.054   911   911 D wpa_supplicant: p2p-dev-wlan0: BSS: Start scan result update 4
+10-29 23:51:33.054   911   911 D wpa_supplicant: BSS: last_scan_res_used=1/32
+10-29 23:51:33.054   911   911 D wpa_supplicant: p2p-dev-wlan0: New scan results available (own=0 ext=1)
+10-29 23:51:33.054   911   911 D wpa_supplicant: p2p-dev-wlan0: Do not use results from externally requested scan operation for network selection
+10-29 23:51:33.054   676   991 D WifiNl80211Manager: Scan result ready event
+10-29 23:51:33.054   676   991 D WifiNative: Scan result ready event
+10-29 23:51:33.054   676   832 D WifiNl80211Manager: get 1 scan results from wificond
+10-29 23:51:33.055   676   832 D WifiNative: get 1 scan results from wificond
+10-29 23:51:33.055   676   832 I WifiScanningService: singleScanResults: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@47261a6],results=1
+10-29 23:51:33.055   676   832 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@366ce85],results=1
+10-29 23:51:33.055   676   822 D WifiScanRequestProxy: Scan results received
+10-29 23:51:33.055   676   832 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@b4ffbad],results=1
+10-29 23:51:33.055   676   822 D WifiScanRequestProxy: Received 1 scan results
+10-29 23:51:33.055   676   832 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@43fec7a],results=1
+10-29 23:51:33.055   676   832 I WifiScanningService: Unregistering listener= com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@47261a6 uid=1000 packageName=null workSource=WorkSource{1000}
+10-29 23:51:33.056   676   822 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-29 23:51:33.056   676   822 V WifiConnectivityManager: AllSingleScanListener onResults: start network selection
+10-29 23:51:33.056   676   822 V WifiConfigManager: getSavedNetworkFromScanResult Found "AndroidWifi"NONE for AndroidWifi[[ESS]]
+10-29 23:51:33.058   676   822 D WifiNetworkSelector: Current connected network: 0
+10-29 23:51:33.058   676   822 D WifiNetworkSelector: wlan0: Current connected network already sufficient. Skip network selection.
+10-29 23:51:33.058   676   822 V WifiLastResortWatchdog: updateAvailableNetworks: size = 0
+10-29 23:51:33.058   676   822 V WifiLastResortWatchdog: mWatchdogFeatureEnabled: true
+10-29 23:51:33.058   676   822 V WifiLastResortWatchdog: mWatchdogAllowedToTrigger: true
+10-29 23:51:33.058   676   822 V WifiLastResortWatchdog: mRecentAvailableNetworks: 1
+10-29 23:51:33.058   676   822 V WifiLastResortWatchdog:  02:15:b2:00:00:01: "AndroidWifi" HasEverConnected: true, Failures: {Assoc: 0, Auth: 0, Dhcp: 0}, Age: 3
+10-29 23:51:33.058   676   822 V WifiLastResortWatchdog: mSsidFailureCount:
+10-29 23:51:33.058   676   822 V WifiLastResortWatchdog: "AndroidWifi": 1, HasEverConnected: true, Failures: {Assoc: 0, Auth: 0, Dhcp: 0}
+10-29 23:51:33.058   676   822 V WifiConnectivityManager: AllSingleScanListener:  No candidates
+10-29 23:51:33.072   469   550 I netd    : tetherGetStats() -> {[]} <1.62ms>
+10-29 23:51:33.199  1411  1411 I MediaProvider: Invalidating LocalCallingIdentity cache for package com.canpicasoft.tokkl. Reason: package android.intent.action.PACKAGE_CHANGED
+10-29 23:51:33.371  2606  2606 W HWUI    : Image decoding logging dropped!
+10-29 23:51:33.732  2606  2606 I ActivityThread: Schedule relaunch activity: com.github.e0ipso.tokkl.MainActivity
+10-29 23:51:33.734  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@71ca19c in: PAUSED
+10-29 23:51:33.734  2606  2606 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.github.e0ipso.tokkl.MainActivity@71ca19c
+10-29 23:51:33.736  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@71ca19c in: STOPPED
+10-29 23:51:33.736  2606  2606 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.github.e0ipso.tokkl.MainActivity@71ca19c
+10-29 23:51:33.770  2606  2606 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@df543db
+10-29 23:51:33.770  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@71ca19c in: DESTROYED
+10-29 23:51:33.770  2606  2606 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-29 23:51:33.775  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@b30287b in: PRE_ON_CREATE
+10-29 23:51:33.776  2606  2606 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-29 23:51:33.806  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@b30287b in: CREATED
+10-29 23:51:33.806  2606  2606 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.github.e0ipso.tokkl.MainActivity@b30287b
+10-29 23:51:33.810   676  1240 D ConnectivityService: requestNetwork for uid/pid:10151/2606 activeRequest: null callbackRequest: 65 [NetworkRequest [ REQUEST id=66, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST|NC
+10-29 23:51:33.811  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@b30287b in: STARTED
+10-29 23:51:33.811  2606  2606 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.github.e0ipso.tokkl.MainActivity@b30287b
+10-29 23:51:33.812   676   822 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=66, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:33.812   676   822 V WifiNetworkFactory: Accepted network request NetworkRequest [ REQUEST id=66, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:33.812   676   822 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=66, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:33.812   676   834 D ConnectivityService: NetReassign [66 : null → 101] [c 1] [a 0] [i 1]
+10-29 23:51:33.812   676   822 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=66, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:33.812   676   822 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=66, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:33.813  2606  2606 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-29 23:51:33.813  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@b30287b in: RESUMED
+10-29 23:51:33.813  2606  2606 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.github.e0ipso.tokkl.MainActivity@b30287b
+10-29 23:51:34.015   676  1240 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10153, packageName = null, attributionTag = null, token = android.os.Binder@3580f7f, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-29 23:51:34.020  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@b30287b in: PAUSED
+10-29 23:51:34.020  2606  2606 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.github.e0ipso.tokkl.MainActivity@b30287b
+10-29 23:51:34.021   922  1080 D SplashScreenView: Build android.window.SplashScreenView{4e8d673 V.E...... ......ID 0,0-0,0}
+10-29 23:51:34.021   922  1080 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-29 23:51:34.021   922  1080 D SplashScreenView: Branding: view: android.view.View{86c8930 G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-29 23:51:34.023   523   523 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-29 23:51:34.027  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-29 23:51:34.027  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-29 23:51:34.036  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-29 23:51:34.039  2428  2428 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-29 23:51:34.089   922   981 I ndroid.systemui: AssetManager2(0x7be1b3c52f98) locale list changing from [] to [en-US]
+10-29 23:51:34.094   469   550 I netd    : tetherGetStats() -> {[]} <0.35ms>
+10-29 23:51:34.108   922   981 I ndroid.systemui: AssetManager2(0x7be1b3c4a2f8) locale list changing from [] to [en-US]
+10-29 23:51:34.144  1216  1216 D ViewRootImpl: Skipping stats log for color mode
+10-29 23:51:34.146  1216  1216 D StatsLog: LAUNCHER_ONRESUME
+10-29 23:51:34.167  1216  1216 D BaseDepthController: setSurface:
+10-29 23:51:34.167  1216  1216 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-29 23:51:34.167  1216  1216 D BaseDepthController: 	mBaseSurface: Surface(name=com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher)/@0xb0b6a73
+10-29 23:51:34.245  2606  2606 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-29 23:51:34.253  1216  1216 D StateManager: createAtomicAnimation - fromState: Background, toState: Normal, partial trace:
+10-29 23:51:34.253  1216  1216 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.prepareToAnimate(WorkspaceRevealAnim.java:146)
+10-29 23:51:34.253  1216  1216 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.<init>(WorkspaceRevealAnim.java:69)
+10-29 23:51:34.253  1216  1216 D StateManager: 	at com.android.launcher3.QuickstepTransitionManager.createWallpaperOpenAnimations(QuickstepTransitionManager.java:1844)
+10-29 23:51:34.253  1216  1216 D b/311077782: LauncherAnimationRunner.setAnimation
+10-29 23:51:34.280  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@b30287b in: STOPPED
+10-29 23:51:34.281  2606  2606 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.github.e0ipso.tokkl.MainActivity@b30287b
+10-29 23:51:34.337  2606  2606 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@9f8e698
+10-29 23:51:34.338  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@b30287b in: DESTROYED
+10-29 23:51:34.338  2606  2606 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-29 23:51:34.339  2606  2641 W Settings: Setting always_finish_activities has moved from android.provider.Settings.System to android.provider.Settings.Global, returning read-only value.
+10-29 23:51:34.347  2606  2606 D ViewRootImpl: Skipping stats log for color mode
+10-29 23:51:34.349   676  1240 I ImeTracker: system_server:1540383c: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-29 23:51:34.349   676   708 I ImeTracker: system_server:1540383c: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-29 23:51:34.356   676  2588 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10151, packageName = null, attributionTag = null, token = android.os.Binder@3580f7f, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-29 23:51:34.446   676   799 I ImeTracker: com.android.launcher3:ec937ee4: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-29 23:51:34.450   676  2588 I ImeTracker: system_server:2af19422: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-29 23:51:34.458   676   708 I ImeTracker: system_server:2af19422: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-29 23:51:34.481  1216  1216 D RecentsView: onTaskRemoved: 11, not handling task stack changes
+10-29 23:51:34.481  1216  1216 D RecentsView: onTaskRemoved: 11, not handling task stack changes
+10-29 23:51:34.484  1216  1216 W SplitSelectStateCtor: Missing session instanceIds
+10-29 23:51:34.484  1216  1216 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+10-29 23:51:34.488  1216  1216 D InsetsController: hide(ime(), fromIme=false)
+10-29 23:51:34.489  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@dc3571f in: PRE_ON_CREATE
+10-29 23:51:34.489  2606  2606 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-29 23:51:34.490  1216  1216 I ImeTracker: com.android.launcher3:ec937ee4: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-29 23:51:34.499  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@dc3571f in: CREATED
+10-29 23:51:34.499  2606  2606 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.github.e0ipso.tokkl.MainActivity@dc3571f
+10-29 23:51:34.501   676  2588 D ConnectivityService: requestNetwork for uid/pid:10151/2606 activeRequest: null callbackRequest: 67 [NetworkRequest [ REQUEST id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST|NC
+10-29 23:51:34.503  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@dc3571f in: STARTED
+10-29 23:51:34.503  2606  2606 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.github.e0ipso.tokkl.MainActivity@dc3571f
+10-29 23:51:34.503  2606  2606 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-29 23:51:34.504   676   822 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:34.504   676   822 V WifiNetworkFactory: Accepted network request NetworkRequest [ REQUEST id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:34.504  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@dc3571f in: RESUMED
+10-29 23:51:34.508  2606  2606 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.github.e0ipso.tokkl.MainActivity@dc3571f
+10-29 23:51:34.508   676   822 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:34.509   676   834 D ConnectivityService: NetReassign [68 : null → 101] [c 0] [a 3] [i 5]
+10-29 23:51:34.509   676   822 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:34.509   676   822 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=68, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:34.610  1216  1216 D WorkspaceRevealAnim: onAnimationEnd: workspace alpha = 1.0
+10-29 23:51:34.623  2428  2428 D VRI[InstrumentationActivityInvoker$EmptyActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-29 23:51:34.627   922  1080 D SplashScreenView: Build android.window.SplashScreenView{68feb9f V.E...... ......ID 0,0-0,0}
+10-29 23:51:34.627   922  1080 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-29 23:51:34.627   922  1080 D SplashScreenView: Branding: view: android.view.View{10bf4ec G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-29 23:51:34.707   676   705 I ActivityTaskManager: Displayed com.canpicasoft.tokkl/com.github.e0ipso.tokkl.MainActivity for user 0: +349ms
+10-29 23:51:34.709   922  1075 E WindowManager: Couldn't add view: android.widget.FrameLayout{d2daf97 V.E...... ......I. 0,0-0,0}
+10-29 23:51:34.709   922  1075 E WindowManager: android.view.WindowManager$BadTokenException: Unable to add window -- window android.view.ViewRootImpl$W@5cc8a16 has already been added
+10-29 23:51:34.709   922  1075 E WindowManager: 	at android.view.ViewRootImpl.setView(ViewRootImpl.java:1701)
+10-29 23:51:34.709   922  1075 E WindowManager: 	at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:490)
+10-29 23:51:34.709   922  1075 E WindowManager: 	at com.android.wm.shell.startingsurface.SplashscreenWindowCreator.addWindow(go/retraceme fe51eb207a6d1c27cb384dabe9ec68583f750fe1a4c7ff9898dee0c1a7d208e0:37)
+10-29 23:51:34.709   922  1075 E WindowManager: 	at com.android.wm.shell.startingsurface.StartingWindowController$$ExternalSyntheticLambda3.run(go/retraceme fe51eb207a6d1c27cb384dabe9ec68583f750fe1a4c7ff9898dee0c1a7d208e0:1257)
+10-29 23:51:34.709   922  1075 E WindowManager: 	at android.os.Handler.handleCallback(Handler.java:995)
+10-29 23:51:34.709   922  1075 E WindowManager: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-29 23:51:34.709   922  1075 E WindowManager: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-29 23:51:34.709   922  1075 E WindowManager: 	at android.os.Looper.loop(Looper.java:338)
+10-29 23:51:34.709   922  1075 E WindowManager: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+10-29 23:51:34.725  2428  2428 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@bcf2657
+10-29 23:51:34.736  2428  2428 D ViewRootImpl: Skipping stats log for color mode
+10-29 23:51:34.762  1216  1216 D RecentsView: onTaskRemoved: 12, not handling task stack changes
+10-29 23:51:34.762  1216  1216 D RecentsView: onTaskRemoved: 12, not handling task stack changes
+10-29 23:51:34.769   676   799 I ImeTracker: com.canpicasoft.tokkl:709cceac: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-29 23:51:34.770  2606  2606 D InsetsController: hide(ime(), fromIme=false)
+10-29 23:51:34.770  2606  2606 I ImeTracker: com.canpicasoft.tokkl:709cceac: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-29 23:51:34.772   676  1515 I ImeTracker: system_server:61e9b13d: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-29 23:51:34.772   676   708 I ImeTracker: system_server:61e9b13d: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-29 23:51:34.778  1216  1216 W FrameTracker: Missed App frame:JANK_APPLICATION, 9112, 86384553, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:34.778  1216  1216 W FrameTracker: Missed App frame:UNKNOWN: 3, 9141, 219861164, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:34.778  1216  1216 W FrameTracker: Missed SF frame:UNKNOWN: 3, 9141, 219861164, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:34.778  1216  1216 W FrameTracker: Missed App frame:UNKNOWN: 3, 9156, 259520533, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:34.778  1216  1216 W FrameTracker: Missed SF frame:UNKNOWN: 3, 9156, 259520533, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:34.778  1216  1216 W FrameTracker: Missed App frame:UNKNOWN: 3, 9218, 221480531, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:34.778  1216  1216 W FrameTracker: Missed SF frame:UNKNOWN: 3, 9218, 221480531, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:34.778  1216  1216 W FrameTracker: Missed App frame:JANK_APPLICATION, 9268, 210178896, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:34.778  1216  1237 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-78 - not enough time since last trigger
+10-29 23:51:34.968   676   822 D WifiClientModeImpl[10973:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=1 freq=2437 RxLinkSpeed=2
+10-29 23:51:34.968   676   822 D WifiDataStall: tx tput in kbps: 37000
+10-29 23:51:34.968   676   822 D WifiDataStall: rx tput in kbps: 37000
+10-29 23:51:34.968   676   822 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-29 23:51:34.968   676   822 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-29 23:51:34.968   676   822 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-29 23:51:34.968   676   822 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-29 23:51:34.968   676   822 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-29 23:51:34.968   676   822 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-29 23:51:34.968   676   822 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-29 23:51:34.968   676   822 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-29 23:51:34.968   676   822 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-29 23:51:34.969   676   822 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 1Mbps, Tx Link speed: 1Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-29 23:51:34.969   676   822 D WifiScoreCard: txRate: 1 txSpeed: 1
+10-29 23:51:34.969   676   822 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-29 23:51:34.969   676   822 D WifiClientModeImpl[10973:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=1 tx=0.0, 0.0, 0.0 rx=0.1 bcn=0 [on:0 tx:0 rx:0 period:3002] from screen [on:0 period:-1982034759] score=60
+10-29 23:51:35.008  1216  1216 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=true newVisibility=false
+10-29 23:51:35.036  1216  1216 D BaseDepthController: setSurface:
+10-29 23:51:35.036  1216  1216 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-29 23:51:35.036  1216  1216 D BaseDepthController: 	mBaseSurface: null
+10-29 23:51:35.036  1216  1216 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+10-29 23:51:35.037  1216  1216 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+10-29 23:51:35.037  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:463)
+10-29 23:51:35.037  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:454)
+10-29 23:51:35.037  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(StatefulActivity.java:120)
+10-29 23:51:35.037  1216  1216 D StatsLog: LAUNCHER_ONSTOP
+10-29 23:51:35.323  2606  2606 I ActivityThread: Schedule relaunch activity: com.github.e0ipso.tokkl.MainActivity
+10-29 23:51:35.324  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@dc3571f in: PAUSED
+10-29 23:51:35.324  2606  2606 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.github.e0ipso.tokkl.MainActivity@dc3571f
+10-29 23:51:35.325  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@dc3571f in: STOPPED
+10-29 23:51:35.325  2606  2606 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.github.e0ipso.tokkl.MainActivity@dc3571f
+10-29 23:51:35.353  2606  2606 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@329b370
+10-29 23:51:35.353  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@dc3571f in: DESTROYED
+10-29 23:51:35.353  2606  2606 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-29 23:51:35.356  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@d66c1c4 in: PRE_ON_CREATE
+10-29 23:51:35.356  2606  2606 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-29 23:51:35.361   676   695 I system_server: NativeAlloc concurrent mark compact GC freed 6077KB AllocSpace bytes, 14(312KB) LOS objects, 49% free, 21MB/42MB, paused 1.254ms,1.587ms total 102.739ms
+10-29 23:51:35.374  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@d66c1c4 in: CREATED
+10-29 23:51:35.374  2606  2606 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.github.e0ipso.tokkl.MainActivity@d66c1c4
+10-29 23:51:35.377   676   991 D ConnectivityService: requestNetwork for uid/pid:10151/2606 activeRequest: null callbackRequest: 69 [NetworkRequest [ REQUEST id=70, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST|NC
+10-29 23:51:35.379   676   834 D ConnectivityService: NetReassign [70 : null → 101] [c 0] [a 1] [i 0]
+10-29 23:51:35.379   676   822 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=70, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:35.379   676   822 V WifiNetworkFactory: Accepted network request NetworkRequest [ REQUEST id=70, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:35.379   676   822 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=70, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:35.379   676   822 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=70, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:35.379   676   822 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=70, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:35.381  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@d66c1c4 in: STARTED
+10-29 23:51:35.381  2606  2606 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.github.e0ipso.tokkl.MainActivity@d66c1c4
+10-29 23:51:35.382  2606  2606 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-29 23:51:35.382  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@d66c1c4 in: RESUMED
+10-29 23:51:35.382  2606  2606 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.github.e0ipso.tokkl.MainActivity@d66c1c4
+10-29 23:51:35.602   676  1515 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10153, packageName = null, attributionTag = null, token = android.os.Binder@3580f7f, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-29 23:51:35.608  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@d66c1c4 in: PAUSED
+10-29 23:51:35.608  2606  2606 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.github.e0ipso.tokkl.MainActivity@d66c1c4
+10-29 23:51:35.609   922  1080 D SplashScreenView: Build android.window.SplashScreenView{ad50fdd V.E...... ......ID 0,0-0,0}
+10-29 23:51:35.609   922  1080 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-29 23:51:35.609   922  1080 D SplashScreenView: Branding: view: android.view.View{97b4752 G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-29 23:51:35.623  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-29 23:51:35.623  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-29 23:51:35.625  2428  2428 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-29 23:51:35.626   469   550 I netd    : tetherGetStats() -> {[]} <0.48ms>
+10-29 23:51:35.628  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-29 23:51:35.640   523   523 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-29 23:51:35.762  1216  1216 D ViewRootImpl: Skipping stats log for color mode
+10-29 23:51:35.763  1216  1216 D StatsLog: LAUNCHER_ONRESUME
+10-29 23:51:35.777  1216  1216 D BaseDepthController: setSurface:
+10-29 23:51:35.777  1216  1216 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-29 23:51:35.777  1216  1216 D BaseDepthController: 	mBaseSurface: Surface(name=com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher)/@0xb0b6a73
+10-29 23:51:35.838  2606  2606 D VRI[MainActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-29 23:51:35.842  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@d66c1c4 in: STOPPED
+10-29 23:51:35.842  2606  2606 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.github.e0ipso.tokkl.MainActivity@d66c1c4
+10-29 23:51:35.843  1216  1216 D StateManager: createAtomicAnimation - fromState: Background, toState: Normal, partial trace:
+10-29 23:51:35.843  1216  1216 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.prepareToAnimate(WorkspaceRevealAnim.java:146)
+10-29 23:51:35.843  1216  1216 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.<init>(WorkspaceRevealAnim.java:69)
+10-29 23:51:35.843  1216  1216 D StateManager: 	at com.android.launcher3.QuickstepTransitionManager.createWallpaperOpenAnimations(QuickstepTransitionManager.java:1844)
+10-29 23:51:35.843  1216  1216 D b/311077782: LauncherAnimationRunner.setAnimation
+10-29 23:51:35.916  2606  2606 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@56268ad
+10-29 23:51:35.917  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@d66c1c4 in: DESTROYED
+10-29 23:51:35.917  2606  2606 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-29 23:51:35.944  2606  2641 W Settings: Setting always_finish_activities has moved from android.provider.Settings.System to android.provider.Settings.Global, returning read-only value.
+10-29 23:51:35.954  2606  2606 D ViewRootImpl: Skipping stats log for color mode
+10-29 23:51:35.958   676  1591 I ImeTracker: system_server:ed259d62: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-29 23:51:35.961   676   708 I ImeTracker: system_server:ed259d62: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-29 23:51:35.966   676  1591 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10151, packageName = null, attributionTag = null, token = android.os.Binder@3580f7f, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-29 23:51:35.974   676   799 I ImeTracker: com.android.launcher3:1554d0e7: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-29 23:51:35.980   676  2588 I ImeTracker: system_server:faa58c29: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-29 23:51:35.981   676   708 I ImeTracker: system_server:faa58c29: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-29 23:51:36.004  1216  1216 D RecentsView: onTaskRemoved: 13, not handling task stack changes
+10-29 23:51:36.005  1216  1216 D RecentsView: onTaskRemoved: 13, not handling task stack changes
+10-29 23:51:36.006  1216  1216 W SplitSelectStateCtor: Missing session instanceIds
+10-29 23:51:36.006  1216  1216 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+10-29 23:51:36.028  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@2ccad33 in: PRE_ON_CREATE
+10-29 23:51:36.029  2606  2606 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-29 23:51:36.036  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@2ccad33 in: CREATED
+10-29 23:51:36.036  2606  2606 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.github.e0ipso.tokkl.MainActivity@2ccad33
+10-29 23:51:36.038   676  1240 D ConnectivityService: requestNetwork for uid/pid:10151/2606 activeRequest: null callbackRequest: 71 [NetworkRequest [ REQUEST id=72, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST|NC
+10-29 23:51:36.041   676   834 D ConnectivityService: NetReassign [72 : null → 101] [c 0] [a 1] [i 0]
+10-29 23:51:36.046  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@2ccad33 in: STARTED
+10-29 23:51:36.046  2606  2606 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.github.e0ipso.tokkl.MainActivity@2ccad33
+10-29 23:51:36.047  2606  2606 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-29 23:51:36.047  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@2ccad33 in: RESUMED
+10-29 23:51:36.047  2606  2606 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.github.e0ipso.tokkl.MainActivity@2ccad33
+10-29 23:51:36.051   676   822 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=72, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.051   676   822 V WifiNetworkFactory: Accepted network request NetworkRequest [ REQUEST id=72, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.051   676   822 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=72, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.051   676   822 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=72, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.051   676   822 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=72, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.168  1216  1216 D InsetsController: hide(ime(), fromIme=false)
+10-29 23:51:36.169  1216  1216 I ImeTracker: com.android.launcher3:1554d0e7: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-29 23:51:36.176   922  1080 W HWUI    : Image decoding logging dropped!
+10-29 23:51:36.176   922  1080 D SplashScreenView: Build android.window.SplashScreenView{c50e859 V.E...... ......ID 0,0-0,0}
+10-29 23:51:36.176   922  1080 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-29 23:51:36.176   922  1080 D SplashScreenView: Branding: view: android.view.View{3143c1e G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-29 23:51:36.268  2428  2428 D VRI[InstrumentationActivityInvoker$EmptyActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-29 23:51:36.273   676   705 I ActivityTaskManager: Displayed com.canpicasoft.tokkl/com.github.e0ipso.tokkl.MainActivity for user 0: +295ms
+10-29 23:51:36.290  2428  2428 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@ed13d99
+10-29 23:51:36.290   922  1075 E WindowManager: Couldn't add view: android.widget.FrameLayout{aef99c9 V.E...... ......I. 0,0-0,0}
+10-29 23:51:36.290   922  1075 E WindowManager: android.view.WindowManager$BadTokenException: Unable to add window -- window android.view.ViewRootImpl$W@f6bd5d0 has already been added
+10-29 23:51:36.290   922  1075 E WindowManager: 	at android.view.ViewRootImpl.setView(ViewRootImpl.java:1701)
+10-29 23:51:36.290   922  1075 E WindowManager: 	at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:490)
+10-29 23:51:36.290   922  1075 E WindowManager: 	at com.android.wm.shell.startingsurface.SplashscreenWindowCreator.addWindow(go/retraceme fe51eb207a6d1c27cb384dabe9ec68583f750fe1a4c7ff9898dee0c1a7d208e0:37)
+10-29 23:51:36.290   922  1075 E WindowManager: 	at com.android.wm.shell.startingsurface.StartingWindowController$$ExternalSyntheticLambda3.run(go/retraceme fe51eb207a6d1c27cb384dabe9ec68583f750fe1a4c7ff9898dee0c1a7d208e0:1257)
+10-29 23:51:36.290   922  1075 E WindowManager: 	at android.os.Handler.handleCallback(Handler.java:995)
+10-29 23:51:36.290   922  1075 E WindowManager: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-29 23:51:36.290   922  1075 E WindowManager: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-29 23:51:36.290   922  1075 E WindowManager: 	at android.os.Looper.loop(Looper.java:338)
+10-29 23:51:36.290   922  1075 E WindowManager: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+10-29 23:51:36.291  2428  2428 D ViewRootImpl: Skipping stats log for color mode
+10-29 23:51:36.294  1216  1216 D WorkspaceRevealAnim: onAnimationEnd: workspace alpha = 1.0
+10-29 23:51:36.311  1216  1216 D RecentsView: onTaskRemoved: 14, not handling task stack changes
+10-29 23:51:36.311  1216  1216 D RecentsView: onTaskRemoved: 14, not handling task stack changes
+10-29 23:51:36.372   676   799 I ImeTracker: com.canpicasoft.tokkl:d94bd087: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-29 23:51:36.374   676  2466 I ImeTracker: system_server:a4433198: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-29 23:51:36.375  2606  2606 D InsetsController: hide(ime(), fromIme=false)
+10-29 23:51:36.375  2606  2606 I ImeTracker: com.canpicasoft.tokkl:d94bd087: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-29 23:51:36.375   676   708 I ImeTracker: system_server:a4433198: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed App frame:UNKNOWN: 3, 10085, 152152847, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed SF frame:UNKNOWN: 3, 10085, 152152847, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed App frame:UNKNOWN: 3, 10100, 211685665, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed SF frame:UNKNOWN: 3, 10100, 211685665, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed App frame:UNKNOWN: 3, 10138, 279862663, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed SF frame:UNKNOWN: 3, 10138, 279862663, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed App frame:UNKNOWN: 3, 10182, 307898088, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed SF frame:UNKNOWN: 3, 10182, 307898088, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.463  1216  1216 W FrameTracker: Missed App frame:UNKNOWN: 3, 10278, 217595297, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.464  1216  1216 W FrameTracker: Missed SF frame:UNKNOWN: 3, 10278, 217595297, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-29 23:51:36.464  1216  1237 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-78 - not enough time since last trigger
+10-29 23:51:36.560  1216  1216 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=true newVisibility=false
+10-29 23:51:36.597  1216  1216 D BaseDepthController: setSurface:
+10-29 23:51:36.597  1216  1216 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-29 23:51:36.597  1216  1216 D BaseDepthController: 	mBaseSurface: null
+10-29 23:51:36.597  1216  1216 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+10-29 23:51:36.598  1216  1216 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+10-29 23:51:36.598  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:463)
+10-29 23:51:36.598  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:454)
+10-29 23:51:36.598  1216  1216 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(StatefulActivity.java:120)
+10-29 23:51:36.598  1216  1216 D StatsLog: LAUNCHER_ONSTOP
+10-29 23:51:36.661  2606  2606 W HWUI    : Image decoding logging dropped!
+10-29 23:51:36.682   469   550 I netd    : tetherGetStats() -> {[]} <0.33ms>
+10-29 23:51:36.814  2606  2606 I ActivityThread: Schedule relaunch activity: com.github.e0ipso.tokkl.MainActivity
+10-29 23:51:36.815  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@2ccad33 in: PAUSED
+10-29 23:51:36.815  2606  2606 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.github.e0ipso.tokkl.MainActivity@2ccad33
+10-29 23:51:36.817  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@2ccad33 in: STOPPED
+10-29 23:51:36.817  2606  2606 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.github.e0ipso.tokkl.MainActivity@2ccad33
+10-29 23:51:36.839  2606  2606 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@91b919e
+10-29 23:51:36.839  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@2ccad33 in: DESTROYED
+10-29 23:51:36.839  2606  2606 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-29 23:51:36.843  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@a3330e0 in: PRE_ON_CREATE
+10-29 23:51:36.843  2606  2606 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-29 23:51:36.864  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@a3330e0 in: CREATED
+10-29 23:51:36.864  2606  2606 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.github.e0ipso.tokkl.MainActivity@a3330e0
+10-29 23:51:36.867   676   991 D ConnectivityService: requestNetwork for uid/pid:10151/2606 activeRequest: null callbackRequest: 73 [NetworkRequest [ REQUEST id=74, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647 isUidTracked: false declaredMethods: AVAIL|LOST|NC
+10-29 23:51:36.867  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@a3330e0 in: STARTED
+10-29 23:51:36.867  2606  2606 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.github.e0ipso.tokkl.MainActivity@a3330e0
+10-29 23:51:36.867   676   822 D WifiNetworkFactory: got request NetworkRequest [ REQUEST id=74, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.868   676   834 D ConnectivityService: NetReassign [74 : null → 101] [c 0] [a 0] [i 1]
+10-29 23:51:36.868   676   822 V WifiNetworkFactory: Accepted network request NetworkRequest [ REQUEST id=74, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.868   676   822 D UntrustedWifiNetworkFactory: got request NetworkRequest [ REQUEST id=74, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.868   676   822 D OemPaidWifiNetworkFactory: got request NetworkRequest [ REQUEST id=74, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.868   676   822 D MultiInternetWifiNetworkFactory: got request NetworkRequest [ REQUEST id=74, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED Uid: 10151 RequestorUid: 10151 RequestorPkg: com.canpicasoft.tokkl UnderlyingNetworks: Null] ]
+10-29 23:51:36.868  2606  2606 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-29 23:51:36.869  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@a3330e0 in: RESUMED
+10-29 23:51:36.869  2606  2606 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.github.e0ipso.tokkl.MainActivity@a3330e0
+10-29 23:51:37.051   676  1240 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10153, packageName = null, attributionTag = null, token = android.os.Binder@3580f7f, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-29 23:51:37.056   922  1080 D SplashScreenView: Build android.window.SplashScreenView{e8791e7 V.E...... ......ID 0,0-0,0}
+10-29 23:51:37.056   922  1080 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-29 23:51:37.056   922  1080 D SplashScreenView: Branding: view: android.view.View{dd7b194 G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-29 23:51:37.061  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@a3330e0 in: PAUSED
+10-29 23:51:37.061  2606  2606 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.github.e0ipso.tokkl.MainActivity@a3330e0
+10-29 23:51:37.072  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-29 23:51:37.072  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-29 23:51:37.078  2428  2428 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-29 23:51:37.087  2428  2442 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-29 23:51:37.090   523   523 I BpBinder: onLastStrongRef automatically unlinking death recipients:
+10-29 23:51:37.126   922   981 I ndroid.systemui: AssetManager2(0x7be1b3c62cb8) locale list changing from [] to [en-US]
+10-29 23:51:37.166  2606  2674 D ProfileInstaller: Installing profile for com.canpicasoft.tokkl
+10-29 23:51:37.177   922   981 I ndroid.systemui: AssetManager2(0x7be1b3c596b8) locale list changing from [] to [en-US]
+10-29 23:51:37.217  1216  1216 D ViewRootImpl: Skipping stats log for color mode
+10-29 23:51:37.217  1216  1216 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=false newVisibility=true
+10-29 23:51:37.217  1216  1216 D StatsLog: LAUNCHER_ONRESUME
+10-29 23:51:37.227  1216  1216 D BaseDepthController: setSurface:
+10-29 23:51:37.227  1216  1216 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-29 23:51:37.227  1216  1216 D BaseDepthController: 	mBaseSurface: Surface(name=com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher)/@0xb0b6a73
+10-29 23:51:37.297  1216  1216 D StateManager: createAtomicAnimation - fromState: Background, toState: Normal, partial trace:
+10-29 23:51:37.297  1216  1216 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.prepareToAnimate(WorkspaceRevealAnim.java:146)
+10-29 23:51:37.297  1216  1216 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.<init>(WorkspaceRevealAnim.java:69)
+10-29 23:51:37.297  1216  1216 D StateManager: 	at com.android.launcher3.QuickstepTransitionManager.createWallpaperOpenAnimations(QuickstepTransitionManager.java:1844)
+10-29 23:51:37.298  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@a3330e0 in: STOPPED
+10-29 23:51:37.298  2606  2606 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.github.e0ipso.tokkl.MainActivity@a3330e0
+10-29 23:51:37.298  1216  1216 D b/311077782: LauncherAnimationRunner.setAnimation
+10-29 23:51:37.350  2606  2606 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@df03f99
+10-29 23:51:37.351  2606  2606 D LifecycleMonitor: Lifecycle status change: com.github.e0ipso.tokkl.MainActivity@a3330e0 in: DESTROYED
+10-29 23:51:37.351  2606  2606 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-29 23:51:37.380  2606  2606 D ViewRootImpl: Skipping stats log for color mode
+10-29 23:51:37.384   676   991 I ImeTracker: system_server:b9af616f: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-29 23:51:37.386   676   708 I ImeTracker: system_server:b9af616f: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-29 23:51:37.409  2606  2641 D IdlingRegistry: Unregistering idling resources: [androidx.compose.ui.test.EspressoLink@ded0dbe]
+10-29 23:51:37.411  2606  2641 I TestRunner: finished: widgetRoutesWithoutAnAccountOpenSignInAndConsumeTheExtras(com.github.e0ipso.tokkl.widget.WidgetNavigationTest)

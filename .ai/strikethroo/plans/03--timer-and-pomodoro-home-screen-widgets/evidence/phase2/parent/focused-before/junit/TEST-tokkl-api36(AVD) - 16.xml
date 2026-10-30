@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="2" failures="1" errors="0" skipped="0" time="0.000" timestamp="2026-10-29T23:25:32" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.widget.WidgetNavigationTest" tests="1" failures="0" errors="0" skipped="0" time="9.081" timestamp="2026-10-29T23:25:32" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="pomodoroPageRouteWorksOnColdAndRetainedActivityAndFallsBackWithoutCapability" classname="com.github.e0ipso.tokkl.widget.WidgetNavigationTest" time="9.081" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.widget.WidgetServerTest" tests="1" failures="1" errors="0" skipped="0" time="21.509" timestamp="2026-10-29T23:25:32" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="pauseResumeAndStopWhilePausedGoToTheServerFromTheNativeControls" classname="com.github.e0ipso.tokkl.widget.WidgetServerTest" time="21.509">
+      <failure>java.lang.AssertionError: widget text Paused · 0:10:00; native text: [Paused · Paused on the widget, No project, 0:10:00, Today, Fri 30 Oct, Open report ›, Total, 0:10:00, Billable, 0:00:00, Entries, 1, No project, 0:10]
+	at com.github.e0ipso.tokkl.widget.NativeWidget.await(NativeWidget.kt:260)
+	at com.github.e0ipso.tokkl.widget.NativeWidget.awaitText(NativeWidget.kt:126)
+	at com.github.e0ipso.tokkl.widget.NativeWidget.awaitText$default(NativeWidget.kt:126)
+	at com.github.e0ipso.tokkl.widget.WidgetServerTest.pauseResumeAndStopWhilePausedGoToTheServerFromTheNativeControls(WidgetServerTest.kt:150)
+</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

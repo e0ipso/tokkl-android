@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
+import androidx.compose.ui.graphics.asImageBitmap
 import android.Manifest
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetHostView
@@ -25,9 +26,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertTrue
 
 /** A real platform widget host. Glance renders RemoteViews and its real PendingIntents handle taps. */
-class NativeWidget : AutoCloseable {
+class NativeWidget(
+    receiver: Class<out androidx.glance.appwidget.GlanceAppWidgetReceiver> = TokklWidgetReceiver::class.java,
+) : AutoCloseable {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
+    private val component = ComponentName(context, receiver)
     private val manager = AppWidgetManager.getInstance(context)
     private val host = object : AppWidgetHost(context, 6000) {
         override fun onCreateView(context: Context, id: Int, info: AppWidgetProviderInfo): AppWidgetHostView =
@@ -57,8 +61,7 @@ class NativeWidget : AutoCloseable {
         instrumentation.uiAutomation.adoptShellPermissionIdentity(Manifest.permission.BIND_APPWIDGET)
         try {
             id = host.allocateAppWidgetId()
-            val component = ComponentName(context, TokklWidgetReceiver::class.java)
-            assertTrue("the installed provider can be bound", manager.bindAppWidgetIdIfAllowed(id, component, options(360, 320)))
+            assertTrue("the installed provider can be bound", manager.bindAppWidgetIdIfAllowed(id, component, options(375, 338)))
             provider = checkNotNull(manager.getAppWidgetInfo(id))
         } finally {
             instrumentation.uiAutomation.dropShellPermissionIdentity()
@@ -69,7 +72,43 @@ class NativeWidget : AutoCloseable {
             view = host.createView(activity, id, provider)
             activity.setContentView(FrameLayout(activity).apply { addView(view) })
         }
-        resize(360, 320)
+        resize(375, 338)
+    }
+
+    /** Apply a composed fixture through the same native host used for real provider tests. */
+    fun show(views: RemoteViews) { onMain { view.updateAppWidget(views) } }
+
+    /** Reinflate fixture views with the launcher's light/dark configuration. */
+    fun showInConfiguration(views: RemoteViews, configuration: android.content.res.Configuration) {
+        scenario.onActivity { activity ->
+            val width = view.layoutParams.width
+            val height = view.layoutParams.height
+            view = AppWidgetHostView(activity.createConfigurationContext(configuration)).apply {
+                setAppWidget(id, provider)
+                setPadding(0, 0, 0, 0)
+                updateAppWidget(views)
+            }
+            activity.setContentView(FrameLayout(activity).apply { addView(view, FrameLayout.LayoutParams(width, height)) })
+        }
+    }
+
+    private fun clockDescription(clock: Chronometer): String = generateSequence<View>(clock) { it.parent as? View }
+        .mapNotNull { it.contentDescription?.toString() }.firstOrNull().orEmpty()
+
+    fun clockBaseValues(): List<Long> = onMain { descendants().filterIsInstance<Chronometer>().map { it.base } }
+
+    fun clockBases(): Map<String, Long> = onMain {
+        descendants().filterIsInstance<Chronometer>().associate { clockDescription(it) to it.base }
+    }
+
+    /** Capture only the widget; stop clock text at known values to keep references deterministic. */
+    fun capture(clockText: Map<String, String> = emptyMap(), clockTexts: List<String> = emptyList()): androidx.compose.ui.graphics.ImageBitmap = onMain {
+        descendants().filterIsInstance<Chronometer>().forEachIndexed { index, clock ->
+            (clockTexts.getOrNull(index) ?: clockText[clockDescription(clock)])?.let { text -> clock.stop(); clock.text = text }
+        }
+        val bitmap = android.graphics.Bitmap.createBitmap(view.width, view.height, android.graphics.Bitmap.Config.ARGB_8888)
+        view.draw(android.graphics.Canvas(bitmap))
+        bitmap.asImageBitmap()
     }
 
     /** Explicit ATF check for the RemoteViews host; performClick alone does not invoke Espresso. */
@@ -144,14 +183,14 @@ class NativeWidget : AutoCloseable {
      * RescheduleReceiver about a second after Glance's first enqueue. A window such a reset
      * cut short starts again on the redrawn clock; a clock that stops without one fails.
      */
-    fun assertClockTicksWithoutUpdates() {
-        var window = observeClock()
+    fun assertClockTicksWithoutUpdates(clockIndex: Int = 0) {
+        var window = observeClock(clockIndex)
         var restarts = 0
         while (!window.ticked && window.resets > 0 && restarts++ < MAX_RESET_RESTARTS) {
             android.util.Log.i("NativeWidget", "a provider reset ended the clock window, observing again: $window")
             await("the clock is redrawn after a provider reset") { descendants().any { it is Chronometer } }
             awaitUpdatesSettled()
-            window = observeClock()
+            window = observeClock(clockIndex)
         }
         assertTrue("the launcher ticks the clock: $window", window.ticked)
         assertTrue("elapsed time changed", window.first != window.last)
@@ -169,7 +208,7 @@ class NativeWidget : AutoCloseable {
         val attached: Boolean,
     )
 
-    private fun observeClock(): ClockWindow {
+    private fun observeClock(clockIndex: Int): ClockWindow {
         val done = CountDownLatch(1)
         var ticks = 0
         var first: String? = null
@@ -178,7 +217,7 @@ class NativeWidget : AutoCloseable {
         var after = -1
         var resetsBefore = -1
         val clock = onMain {
-            val observed = descendants().filterIsInstance<Chronometer>().single()
+            val observed = descendants().filterIsInstance<Chronometer>()[clockIndex]
             // Counter reads and ticks share the main thread. An update before the listener
             // is installed, or after its last tick, is outside the interval under test.
             before = updates.get()
@@ -229,7 +268,7 @@ class NativeWidget : AutoCloseable {
             host.deleteHost()
         }
         scenario.close()
-        org.junit.Assert.assertEquals("the disposable host has no widgets", 0, manager.getAppWidgetIds(ComponentName(context, TokklWidgetReceiver::class.java)).size)
+        org.junit.Assert.assertEquals("the disposable host has no widgets", 0, manager.getAppWidgetIds(component).size)
     }
 
     private fun descendants(): List<View> {

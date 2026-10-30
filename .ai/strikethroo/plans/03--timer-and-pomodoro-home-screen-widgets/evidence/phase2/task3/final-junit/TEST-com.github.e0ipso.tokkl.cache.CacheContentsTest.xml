@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.cache.CacheContentsTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-10-29T23:05:18.469Z" hostname="punta-des-patro" time="0.066">
+  <properties/>
+  <testcase name="anArchivedProjectGoesOnceItsLastEntryIsPruned" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.015"/>
+  <testcase name="historyStartsThirteenDaysBeforeTodayAtMidnightInTheAccountZone" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.017"/>
+  <testcase name="queuedChangesStayAppliedOverTheRefreshedEntriesUntilSent" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.002"/>
+  <testcase name="theSameMomentGivesAnotherWindowInAnotherZone" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.001"/>
+  <testcase name="entriesBeforeTheWindowArePrunedAndTheFirstInstantIsKept" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.001"/>
+  <testcase name="withoutAKnownZoneNothingIsPruned" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.0"/>
+  <testcase name="aRefreshReadBeforeRemovalWasSentCannotRestoreTheEntry" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.003"/>
+  <testcase name="aQueuedChangeToAnEntryBeforeTheWindowStaysAndKeepsItsArchivedProject" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.001"/>
+  <testcase name="cachedEntriesArePrunedEvenWhenTheEntriesRequestFailed" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.002"/>
+  <testcase name="doneTasksStayWhileAnEntryUsesThem" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.001"/>
+  <testcase name="aRefreshReadBeforeStopWasSentCannotRestartTheTimer" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.001"/>
+  <testcase name="rowsTheServerNoLongerSendsStayWhileACachedEntryUsesThem" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.001"/>
+  <testcase name="aRefreshReadBeforeStartWasSentKeepsTheRemappedEntryUntilTheNextRefresh" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.002"/>
+  <testcase name="archivedProjectsStayWhileAnEntryOrFavoriteUsesThem" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.001"/>
+  <testcase name="aRefreshReplacesStaleRowsWithTheServersValues" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.002"/>
+  <testcase name="listsTheRefreshDidNotReadStayAsTheyWere" classname="com.github.e0ipso.tokkl.cache.CacheContentsTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

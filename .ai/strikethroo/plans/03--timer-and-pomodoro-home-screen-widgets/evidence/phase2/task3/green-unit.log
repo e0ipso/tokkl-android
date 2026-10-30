@@ -1,0 +1,102 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+Calculating task graph as no cached configuration is available for tasks: :app:testDebugUnitTest --tests com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest --tests com.github.e0ipso.tokkl.reports.ReportsModelTest.widgetTodayReplacesARetainedWeeklyTabAndItsFiltersWithTheAccountDay :app:compileDebugAndroidTestKotlin
+> Task :app:preBuild UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:generateDebugAndroidTestResources UP-TO-DATE
+> Task :app:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :app:packageDebugAndroidTestResources UP-TO-DATE
+> Task :app:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :app:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:processDebugNavigationResources
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:packageDebugResources
+> Task :app:processDebugMainManifest
+
+> Task :app:mergeDebugUnitTestManifest
+/home/e0ipso/workspace/apps/tokkl-android/app/src/main/AndroidManifest.xml:154:9-156:35 Warning:
+	service#androidx.work.impl.foreground.SystemForegroundService was tagged at AndroidManifest.xml:154 to remove other declarations but no other declaration present
+
+> Task :app:processDebugUnitTestManifest
+> Task :app:processDebugManifest
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugManifestForPackage
+> Task :app:generateDebugRFile
+> Task :app:mergeDebugResources
+> Task :app:processDebugResources
+> Task :app:packageDebugUnitTestForUnitTest
+> Task :app:generateDebugUnitTestConfig
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin
+e: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/TokklApplication.kt:85:39 Unresolved reference 'PomodoroWidget'.
+e: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/TokklApplication.kt:887:30 Unresolved reference 'PomodoroWidget'.
+e: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/widget/TokklWidget.kt:77:25 None of the following candidates is applicable:
+
+fun ColorProvider(color: Color): ColorProvider:
+  Too many arguments for 'fun ColorProvider(color: Color): ColorProvider'.
+
+fun ColorProvider(resId: Int): ColorProvider:
+  Too many arguments for 'fun ColorProvider(resId: Int): ColorProvider'.
+  Argument type mismatch: actual type is 'Color', but 'Int' was expected.
+e: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/widget/TokklWidget.kt:78:28 None of the following candidates is applicable:
+
+fun ColorProvider(color: Color): ColorProvider:
+  Too many arguments for 'fun ColorProvider(color: Color): ColorProvider'.
+
+fun ColorProvider(resId: Int): ColorProvider:
+  Too many arguments for 'fun ColorProvider(resId: Int): ColorProvider'.
+  Argument type mismatch: actual type is 'Color', but 'Int' was expected.
+e: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/widget/TokklWidget.kt:79:29 None of the following candidates is applicable:
+
+fun ColorProvider(color: Color): ColorProvider:
+  Too many arguments for 'fun ColorProvider(color: Color): ColorProvider'.
+
+fun ColorProvider(resId: Int): ColorProvider:
+  Too many arguments for 'fun ColorProvider(resId: Int): ColorProvider'.
+  Argument type mismatch: actual type is 'Color', but 'Int' was expected.
+e: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/widget/TokklWidget.kt:91:44 Argument type mismatch: actual type is 'Intent', but 'ComponentName' was expected.
+e: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/widget/TokklWidget.kt:168:44 Argument type mismatch: actual type is 'Intent', but 'ComponentName' was expected.
+e: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/widget/TokklWidget.kt:212:31 Unresolved reference 'defaultWeight'.
+
+> Task :app:compileDebugKotlin FAILED
+> Task :app:copyRoomSchemas NO-SOURCE
+
+[Incubating] Problems report is available at: file:///home/e0ipso/workspace/apps/tokkl-android/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Kotlin compiler: UNRESOLVED_IMPORT
+       Kotlin compiler error
+         Unresolved reference 'PomodoroWidget'.
+         Location: /home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/TokklApplication.kt:85
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 25s
+29 actionable tasks: 17 executed, 12 up-to-date
+Configuration cache entry stored.
