@@ -1,1 +1,0 @@
-The root turn was interrupted after emulator launch and before the runner produced a result. No tests or successful result accepted. Read-only process inspection found only its adb server remaining in the run scope and holding the inherited Gradle lock. Stopped that exact owned adb PID to release the lock, then restarted focused proof on the Device panel emulator.

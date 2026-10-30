@@ -1,9 +1,0 @@
-[
-  {
-    "file": "logcat-com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest-sessionStartNextAndEndFailOfflineOnThePageTheNotificationsAndTheAlarm.txt",
-    "test_runner_lines": [
-      "10-30 14:34:53.888  2400  2443 I TestRunner: started: sessionStartNextAndEndFailOfflineOnThePageTheNotificationsAndTheAlarm(com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest)",
-      "10-30 14:36:17.234  2400  2443 I TestRunner: finished: sessionStartNextAndEndFailOfflineOnThePageTheNotificationsAndTheAlarm(com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest)"
-    ]
-  }
-]

@@ -1,8 +1,0 @@
-{
-  "argv": [
-    "npm",
-    "test"
-  ],
-  "outer": "flock --close /tmp/tokkl-plan3-gradle.lock systemd-run --user --scope --quiet -p OOMPolicy=continue -- choom -n 1000 -- python3 /tmp/tokkl-task5-run.py ...",
-  "started": 1793346598.8378334
-}

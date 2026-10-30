@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.github.e0ipso.tokkl.sync.DiscardedChangesTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:43.660Z" hostname="punta-des-patro" time="0.002">
-  <properties/>
-  <testcase name="discardsAggregateUntilDismissedAndAreSavedForTheNextProcess" classname="com.github.e0ipso.tokkl.sync.DiscardedChangesTest" time="0.001"/>
-  <testcase name="nonpositiveCountsLeaveTheNoticeAlone" classname="com.github.e0ipso.tokkl.sync.DiscardedChangesTest" time="0.001"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
