@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.ReportsServerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:33.969Z" hostname="punta-des-patro" time="0.569">
+  <properties/>
+  <testcase name="aNextRowThatDoesNotMoveForwardIsRefused" classname="com.github.e0ipso.tokkl.reports.ReportsServerTest" time="0.021"/>
+  <testcase name="aDetailedPageWhoseNextRowDoesNotMoveForwardIsRefused" classname="com.github.e0ipso.tokkl.reports.ReportsServerTest" time="0.092"/>
+  <testcase name="aRowWithSeveralEntriesCountsItsAmountOnce" classname="com.github.e0ipso.tokkl.reports.ReportsServerTest" time="0.327"/>
+  <testcase name="theSearchAsksForTheRangeWithTheWorkspacesRoundingAndFollowsTheNextRow" classname="com.github.e0ipso.tokkl.reports.ReportsServerTest" time="0.06"/>
+  <testcase name="theWorkspaceIsTheDefaultOneWithItsRounding" classname="com.github.e0ipso.tokkl.reports.ReportsServerTest" time="0.055"/>
+  <testcase name="aStartThatIsNotADateAndTimeIsAnInvalidResponse" classname="com.github.e0ipso.tokkl.reports.ReportsServerTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

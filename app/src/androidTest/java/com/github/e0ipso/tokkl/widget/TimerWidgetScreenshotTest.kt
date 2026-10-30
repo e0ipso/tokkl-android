@@ -64,7 +64,7 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
                             assertTrue("the day clock adds stopped time, excluding the pause-chain accumulation: $bases", kotlin.math.abs(bases[0] - bases[1] - 3600_000L) <= 150L)
                         }
                     }.exceptionOrNull()?.let { errors += AssertionError("$file layout: ${it.message}", it) }
-                    val capture = host.capture(clockTexts = listOf("1:12:34", "2:12:34"))
+                    val capture = host.capture(clockTexts = listOf("1:12:34", "2:12:34", "1:12:34"))
                     runCatching { ReferenceImages.assertMatches(file, capture) }.exceptionOrNull()?.let(errors::add)
                 }
             }
@@ -90,7 +90,7 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
             WidgetDayProject(3, "Admin", "#d94182", 900, "0:15", false),
             WidgetDayProject(null, null, null, 900, "0:15", false),
         )
-        val day = WidgetDayReport(LocalDate.of(2026, 10, 28), 7200, 3600, 7, projects, WidgetDayRunning(42, start, false), DurationFormat.IMPROVED)
+        val day = WidgetDayReport(LocalDate.of(2026, 10, 28), 7200, 3600, 7, projects, WidgetDayRunning(42, start, true), DurationFormat.IMPROVED)
         val favorites = listOf("Standup", "Code review", "Client call").map { WidgetFavorite(EntryFields(it), null, null) }
         val running = WidgetRunning(42, "Widget mock-ups", "Tokkl for Android", "Design", start, 3600, target, true, "#0b83d9")
         val ready = WidgetState.Ready(running, favorites, day = day)

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="2" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-30T09:01:49" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest" tests="2" failures="0" errors="0" skipped="0" time="20.906" timestamp="2026-10-30T09:01:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest" time="10.370" />
+    <testcase name="remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields" classname="com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest" time="10.536" />
+  </testsuite>
+</testsuites>

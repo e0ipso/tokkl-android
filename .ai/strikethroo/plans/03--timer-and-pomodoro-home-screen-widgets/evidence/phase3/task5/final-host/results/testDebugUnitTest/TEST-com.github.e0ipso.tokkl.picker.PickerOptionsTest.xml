@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.picker.PickerOptionsTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:34.229Z" hostname="punta-des-patro" time="0.038">
+  <properties/>
+  <testcase name="searchMatchesProjectClientAndTaskNamesIgnoringCase" classname="com.github.e0ipso.tokkl.picker.PickerOptionsTest" time="0.008"/>
+  <testcase name="pickingATaskPicksItsProjectAndPickingAProjectDropsTheTask" classname="com.github.e0ipso.tokkl.picker.PickerOptionsTest" time="0.0"/>
+  <testcase name="archivedItemsTheEntryUsesStaySelectedWithTheirLabelAndNoOtherArchivedItemShows" classname="com.github.e0ipso.tokkl.picker.PickerOptionsTest" time="0.0"/>
+  <testcase name="anExistingTagIsNotOfferedAgainInAnotherCase" classname="com.github.e0ipso.tokkl.picker.PickerOptionsTest" time="0.001"/>
+  <testcase name="aTagTypedByNameIsOfferedAsNewAndKeptByName" classname="com.github.e0ipso.tokkl.picker.PickerOptionsTest" time="0.0"/>
+  <testcase name="projectColoursParseAsHex" classname="com.github.e0ipso.tokkl.picker.PickerOptionsTest" time="0.028"/>
+  <testcase name="anArchivedProjectStaysOnOfferAfterTheUserPicksAnotherOne" classname="com.github.e0ipso.tokkl.picker.PickerOptionsTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

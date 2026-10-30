@@ -1,0 +1,72 @@
+[
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.BackgroundSendServerTest-theRetryAfterTheBackoffSendsTheQueue.txt",
+    "test_runner_lines": [
+      "10-30 12:14:43.480  2454  2489 I TestRunner: started: theRetryAfterTheBackoffSendsTheQueue(com.github.e0ipso.tokkl.cache.BackgroundSendServerTest)",
+      "10-30 12:15:16.548  2454  2489 I TestRunner: finished: theRetryAfterTheBackoffSendsTheQueue(com.github.e0ipso.tokkl.cache.BackgroundSendServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard.txt",
+    "test_runner_lines": [
+      "10-30 12:16:44.752  3226  3265 I TestRunner: started: signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 12:17:01.936  3226  3265 I TestRunner: finished: signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard.txt",
+    "test_runner_lines": [
+      "10-30 12:17:21.033  3623  3660 I TestRunner: started: signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 12:17:36.660  3623  3660 I TestRunner: finished: signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.RunningCheckServerTest-startingATimerSchedulesOneCheckAndStoppingItCancelsIt.txt",
+    "test_runner_lines": [
+      "10-30 12:15:23.541  2707  2745 I TestRunner: started: startingATimerSchedulesOneCheckAndStoppingItCancelsIt(com.github.e0ipso.tokkl.cache.RunningCheckServerTest)",
+      "10-30 12:15:26.622  2707  2745 I TestRunner: finished: startingATimerSchedulesOneCheckAndStoppingItCancelsIt(com.github.e0ipso.tokkl.cache.RunningCheckServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest-suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField.txt",
+    "test_runner_lines": [
+      "10-30 12:15:34.911  2908  2950 I TestRunner: started: suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField(com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest)",
+      "10-30 12:16:43.105  2908  2950 I TestRunner: finished: suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField(com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-focusedSignInFieldStaysAboveTheKeyboard.txt",
+    "test_runner_lines": [
+      "10-30 12:17:03.918  3430  3468 I TestRunner: started: focusedSignInFieldStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 12:17:19.424  3430  3468 I TestRunner: finished: focusedSignInFieldStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.settings.SettingsScreenTest-reminderSwitchAndHoursValidateAndApply.txt",
+    "test_runner_lines": [
+      "10-30 12:15:27.556  2781  2814 I TestRunner: started: reminderSwitchAndHoursValidateAndApply(com.github.e0ipso.tokkl.settings.SettingsScreenTest)",
+      "10-30 12:15:33.753  2781  2814 I TestRunner: finished: reminderSwitchAndHoursValidateAndApply(com.github.e0ipso.tokkl.settings.SettingsScreenTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.BackgroundSendServerTest-callsThatQueueNothingScheduleNoWork.txt",
+    "test_runner_lines": [
+      "10-30 12:15:17.462  2543  2583 I TestRunner: started: callsThatQueueNothingScheduleNoWork(com.github.e0ipso.tokkl.cache.BackgroundSendServerTest)",
+      "10-30 12:15:19.583  2543  2583 I TestRunner: finished: callsThatQueueNothingScheduleNoWork(com.github.e0ipso.tokkl.cache.BackgroundSendServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest-signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard.txt",
+    "test_runner_lines": [
+      "10-30 12:17:38.208  3799  3842 I TestRunner: started: signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)",
+      "10-30 12:17:53.666  3799  3842 I TestRunner: finished: signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard(com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.cache.BackgroundSendServerTest-restoringTheNetworkSendsTheQueueWithTheAppClosed.txt",
+    "test_runner_lines": [
+      "10-30 12:15:20.500  2620  2658 I TestRunner: started: restoringTheNetworkSendsTheQueueWithTheAppClosed(com.github.e0ipso.tokkl.cache.BackgroundSendServerTest)",
+      "10-30 12:15:22.658  2620  2658 I TestRunner: finished: restoringTheNetworkSendsTheQueueWithTheAppClosed(com.github.e0ipso.tokkl.cache.BackgroundSendServerTest)"
+    ]
+  }
+]

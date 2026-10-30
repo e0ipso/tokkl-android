@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.reports.ReportFiltersTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:29.431Z" hostname="punta-des-patro" time="0.003">
+  <properties/>
+  <testcase name="aNegatedFilterSendsItsExcludeField" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="0.001"/>
+  <testcase name="aToggleAddsOrRemovesOneIdAndKeepsTheOrderPicked" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="0.0"/>
+  <testcase name="aSearchKeepsTheNamesHoldingItAndThePickedOnes" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="0.0"/>
+  <testcase name="theOptionsAreTheWorkspacesWithActiveProjectsFirst" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="0.002"/>
+  <testcase name="theFieldsAreTheWebAppsAndOnlyForFiltersInUse" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

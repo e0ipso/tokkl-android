@@ -13,7 +13,6 @@
     <!-- A project and one of its tasks: Tokkl for Android · Design -->
     <string name="widget_project_task">%1$s · %2$s</string>
     <!-- The buttons' text, and what TalkBack reads for them, which says what starts or stops. -->
-    <string name="widget_start">Start</string>
     <string name="widget_start_description">Start a timer</string>
     <string name="widget_stop">Stop</string>
     <string name="widget_stop_description">Stop the timer</string>

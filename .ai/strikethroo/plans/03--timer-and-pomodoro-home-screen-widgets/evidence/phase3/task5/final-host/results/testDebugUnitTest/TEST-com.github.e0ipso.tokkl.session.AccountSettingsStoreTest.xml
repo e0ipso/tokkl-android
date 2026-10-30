@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.session.AccountSettingsStoreTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:43.010Z" hostname="punta-des-patro" time="0.017">
+  <properties/>
+  <testcase name="theDefaultWorkspaceReadsBackAsSavedAndGoesWhenNull" classname="com.github.e0ipso.tokkl.session.AccountSettingsStoreTest" time="0.01"/>
+  <testcase name="clearRemovesTheDurationFormat" classname="com.github.e0ipso.tokkl.session.AccountSettingsStoreTest" time="0.001"/>
+  <testcase name="theGroupingReadsBackAsSavedAndSettingsWithoutItGroup" classname="com.github.e0ipso.tokkl.session.AccountSettingsStoreTest" time="0.0"/>
+  <testcase name="eachDurationFormatReadsBackAsSaved" classname="com.github.e0ipso.tokkl.session.AccountSettingsStoreTest" time="0.0"/>
+  <testcase name="settingsStoredWithoutADurationFormatReadAsImproved" classname="com.github.e0ipso.tokkl.session.AccountSettingsStoreTest" time="0.0"/>
+  <testcase name="theClockFormatReadsBackAsSaved" classname="com.github.e0ipso.tokkl.session.AccountSettingsStoreTest" time="0.006"/>
+  <testcase name="theAccountIdReadsBackAsSavedAndIsClearedWithTheAccount" classname="com.github.e0ipso.tokkl.session.AccountSettingsStoreTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

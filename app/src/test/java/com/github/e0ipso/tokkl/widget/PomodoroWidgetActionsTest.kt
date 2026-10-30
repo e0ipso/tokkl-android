@@ -24,20 +24,12 @@ class PomodoroWidgetActionsTest {
         val clock = pomodoroWidgetClock(active, at, 200_000)
         assertEquals(1_580_000L, clock.base)
         assertTrue(clock.countDown)
-        assertEquals(0.08f, clock.progress, 0.0001f)
     }
 
-    @Test fun endedPhaseCountsUpFromCorrectedEndWithAFullBar() {
+    @Test fun endedPhaseCountsUpFromCorrectedEnd() {
         val clock = pomodoroWidgetClock(active.copy(ended = true), active.end.plusSeconds(65), 5_000_000)
         assertEquals(4_935_000L, clock.base)
         assertFalse(clock.countDown)
-        assertEquals(1f, clock.progress)
-    }
-
-    @Test fun progressIsBoundedWhenTheDeviceClockMovesOrPhaseHasZeroLength() {
-        assertEquals(0f, pomodoroWidgetClock(active, active.start.minusSeconds(50), 0).progress)
-        assertEquals(1f, pomodoroWidgetClock(active, active.end.plusSeconds(50), 0).progress)
-        assertEquals(1f, pomodoroWidgetClock(active.copy(start = active.end), at, 0).progress)
     }
 
     @Test fun anotherAccountOrUnavailableSurfaceSendsNothing() = runBlocking {

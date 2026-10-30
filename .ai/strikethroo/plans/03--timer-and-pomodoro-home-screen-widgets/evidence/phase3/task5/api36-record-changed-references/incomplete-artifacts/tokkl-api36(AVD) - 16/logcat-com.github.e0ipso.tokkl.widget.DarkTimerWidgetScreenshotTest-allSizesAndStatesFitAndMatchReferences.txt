@@ -1,0 +1,1021 @@
+10-30 10:15:31.760  2561  2596 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest)
+10-30 10:15:31.763  2561  2582 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/database/sqlite/SQLiteDatabase;->getThreadSession()Landroid/database/sqlite/SQLiteSession; (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/sqlite/db/framework/FrameworkSQLiteDatabase; (domain=app) using reflection: allowed
+10-30 10:15:31.764  2561  2582 I npicasoft.tokkl: hiddenapi: Accessing hidden method Landroid/database/sqlite/SQLiteSession;->beginTransaction(ILandroid/database/sqlite/SQLiteTransactionListener;ILandroid/os/CancellationSignal;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/sqlite/db/framework/FrameworkSQLiteDatabase; (domain=app) using reflection: allowed
+10-30 10:15:31.770  2561  2596 D WM-ForceStopRunnable: The default process name was not specified.
+10-30 10:15:31.770  2561  2596 D WM-ForceStopRunnable: Performing cleanup operations.
+10-30 10:15:31.780  2561  2596 D WM-ForceStopRunnable: Application was force-stopped, rescheduling.
+10-30 10:15:31.796  2561  2596 D WM-PackageManagerHelper: androidx.work.impl.background.systemalarm.RescheduleReceiver disabled
+10-30 10:15:31.824   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:15:31.824   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:15:31.824   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={10062} in 1ms
+10-30 10:15:31.829  2561  2596 I UiAutomation: Initialized for user 0 on display 0
+10-30 10:15:31.833  2561  2606 V UiAutomation: Init UiAutomation@b1a4240[id=2, displayId=0, flags=0]
+10-30 10:15:31.909  2561  2596 I TokklAccessibility: font scale=1.0; largest display=false
+10-30 10:15:31.910  2561  2596 I npicasoft.tokkl: AssetManager2(0x70f89a2e7b58) locale list changing from [] to [en-US]
+10-30 10:15:31.917  2561  2596 W Settings: Setting always_finish_activities has moved from android.provider.Settings.System to android.provider.Settings.Global, returning read-only value.
+10-30 10:15:31.924   668   740 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10157, packageName = null, attributionTag = null, token = android.os.Binder@6fc3094, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-30 10:15:31.932  1194  1194 W SplitSelectStateCtor: Missing session instanceIds
+10-30 10:15:31.932  1194  1194 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+10-30 10:15:31.935   905  1078 D SplashScreenView: Build android.window.SplashScreenView{313f342 V.E...... ......ID 0,0-0,0}
+10-30 10:15:31.935   905  1078 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-30 10:15:31.935   905  1078 D SplashScreenView: Branding: view: android.view.View{aa8df53 G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-30 10:15:31.944   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:31.957  2561  2561 I npicasoft.tokkl: AssetManager2(0x70f89a2e87d8) locale list changing from [] to [en-US]
+10-30 10:15:31.961  2561  2631 W libc    : Access denied finding property "vendor.mesa.log"
+10-30 10:15:31.961  2561  2631 W libc    : Access denied finding property "vendor.mesa.log.file"
+10-30 10:15:31.972   532   532 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+10-30 10:15:31.974  2561  2631 E MESA    : Failed to open rendernode: No such file or directory
+10-30 10:15:31.985  2561  2561 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9cf5f5d in: PRE_ON_CREATE
+10-30 10:15:31.987  2561  2561 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-30 10:15:31.988   459   522 I netd    : tetherGetStats() -> {[]} <1.76ms>
+10-30 10:15:31.995  2561  2631 D vulkan  : searching for layers in '/data/app/~~JJCgPt2zZ9_lYVsTTmXkmw==/com.canpicasoft.tokkl-h89b7_CE49sNvB5jdNM0Fg==/lib/x86_64'
+10-30 10:15:31.999  2561  2631 D vulkan  : searching for layers in '/data/app/~~sEZV3j0i5bCugAmeqeZS7w==/com.canpicasoft.tokkl.test-S6i_vWXoKmbZBIh82EDiJw==/base.apk!/lib/x86_64'
+10-30 10:15:32.001  2561  2631 D vulkan  : searching for layers in '/data/app/~~JJCgPt2zZ9_lYVsTTmXkmw==/com.canpicasoft.tokkl-h89b7_CE49sNvB5jdNM0Fg==/base.apk!/lib/x86_64'
+10-30 10:15:32.004  2561  2581 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=ac9c84a5-525f-4431-8d1f-4750c6e305e2, generation=0)
+10-30 10:15:32.005  2561  2561 D CompatChangeReporter: Compat change id reported: 377864165; UID 10157; state: ENABLED
+10-30 10:15:32.009  2561  2631 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-30 10:15:32.010  2561  2631 W libc    : Access denied finding property "vendor.mesa.gallium.print.optio"
+10-30 10:15:32.010  2561  2631 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-30 10:15:32.010  2561  2561 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+10-30 10:15:32.017  2561  2561 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9cf5f5d in: CREATED
+10-30 10:15:32.018  2561  2561 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=androidx.activity.ComponentActivity@9cf5f5d
+10-30 10:15:32.020  2561  2561 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9cf5f5d in: STARTED
+10-30 10:15:32.021  2561  2561 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=androidx.activity.ComponentActivity@9cf5f5d
+10-30 10:15:32.032  2561  2631 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-30 10:15:32.042  2561  2561 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9cf5f5d in: RESUMED
+10-30 10:15:32.042  2561  2561 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=androidx.activity.ComponentActivity@9cf5f5d
+10-30 10:15:32.059  2561  2561 W HWUI    : Unknown dataspace 0
+10-30 10:15:32.060  2561  2581 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 10:15:32.064  2561  2581 D WM-PackageManagerHelper: androidx.work.impl.background.systemalarm.RescheduleReceiver enabled
+10-30 10:15:32.065   668  1601 W HWUI    : Image decoding logging dropped!
+10-30 10:15:32.100   668   812 D WifiNetworkSelector: Current connected network: 0
+10-30 10:15:32.100   668   812 V WifiConnectivityManager: No full band scan because current network is sufficient
+10-30 10:15:32.100   668   812 V WifiConnectivityManager: schedulePeriodicScanTimer intervalMs 40000
+10-30 10:15:32.106   668   818 I WifiScanningService: Registering listener= com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@97352a8 uid=1000 packageName=null workSource=WorkSource{1000}
+10-30 10:15:32.106   668   818 I WifiScanningService: start scan: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@97352a8] package null AttributionTag null
+10-30 10:15:32.107   668   818 I WifiScanningService: addSingleScanRequest: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@97352a8],WorkSource{1010}, ScanSettings {  type:HIGH ACCURACY band:unspecified ignoreLocationSettings:false period:0 reportEvents:3 numBssidsPerScan:0 maxScansToCache:0 rnrSetting:2 6GhzPscOnlyEnabled:false channels:[ 2437  ]  } 
+10-30 10:15:32.112   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=2 freq=2437 RxLinkSpeed=2
+10-30 10:15:32.112   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:15:32.112   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:15:32.112   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:15:32.112   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:32.112   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:32.112   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:32.112   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:32.113   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:32.113   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:32.113   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:32.113   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:32.113   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 2Mbps, Tx Link speed: 2Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:15:32.113   668   812 D WifiScoreCard: txRate: 1 txSpeed: 2
+10-30 10:15:32.113   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:15:32.113   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=2 tx=0.5, 0.0, 0.0 rx=0.1 bcn=0 [on:0 tx:0 rx:0 period:3002] from screen [on:0 period:-1944597615] score=60
+10-30 10:15:32.116   668   818 D WifiScanningService: replySucceeded onSuccess
+10-30 10:15:32.121   891   891 D wpa_supplicant: nl80211: Drv Event 33 (NL80211_CMD_TRIGGER_SCAN) received for wlan0
+10-30 10:15:32.121   891   891 D wpa_supplicant: wlan0: nl80211: Scan trigger
+10-30 10:15:32.121   891   891 D wpa_supplicant: wlan0: Event SCAN_STARTED (47) received
+10-30 10:15:32.121   891   891 D wpa_supplicant: wlan0: External program started a scan
+10-30 10:15:32.177   891   891 D wpa_supplicant: nl80211: Drv Event 34 (NL80211_CMD_NEW_SCAN_RESULTS) received for wlan0
+10-30 10:15:32.177   891   891 D wpa_supplicant: wlan0: nl80211: New scan results available
+10-30 10:15:32.177   891   891 D wpa_supplicant: nl80211: Scan probed for SSID ''
+10-30 10:15:32.177   891   891 D wpa_supplicant: nl80211: Scan included frequencies: 2437
+10-30 10:15:32.177   891   891 D wpa_supplicant: wlan0: Event SCAN_RESULTS (3) received
+10-30 10:15:32.177   891   891 D wpa_supplicant: nl80211: Received scan results (1 BSSes)
+10-30 10:15:32.177   891   891 D wpa_supplicant: nl80211: Scan results indicate BSS status with 02:15:b2:00:00:01 as associated
+10-30 10:15:32.177   891   891 D wpa_supplicant: wlan0: BSS: Start scan result update 3
+10-30 10:15:32.177   891   891 D wpa_supplicant: BSS: last_scan_res_used=1/32
+10-30 10:15:32.177   891   891 D wpa_supplicant: wlan0: New scan results available (own=0 ext=1)
+10-30 10:15:32.177   891   891 D wpa_supplicant: wlan0: Do not use results from externally requested scan operation for network selection
+10-30 10:15:32.177   891   891 D wpa_supplicant: p2p-dev-wlan0: Updating scan results from sibling
+10-30 10:15:32.177   891   891 D wpa_supplicant: nl80211: Received scan results (1 BSSes)
+10-30 10:15:32.177   891   891 D wpa_supplicant: p2p-dev-wlan0: BSS: Start scan result update 3
+10-30 10:15:32.177   891   891 D wpa_supplicant: BSS: last_scan_res_used=1/32
+10-30 10:15:32.177   891   891 D wpa_supplicant: p2p-dev-wlan0: New scan results available (own=0 ext=1)
+10-30 10:15:32.177   891   891 D wpa_supplicant: p2p-dev-wlan0: Do not use results from externally requested scan operation for network selection
+10-30 10:15:32.179   668   979 D WifiNl80211Manager: Scan result ready event
+10-30 10:15:32.180   668   979 D WifiNative: Scan result ready event
+10-30 10:15:32.182   668   818 D WifiNl80211Manager: get 1 scan results from wificond
+10-30 10:15:32.183   668   818 D WifiNative: get 1 scan results from wificond
+10-30 10:15:32.183   668   818 I WifiScanningService: singleScanResults: ClientInfo[uid=1000, package=null, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@97352a8],results=1
+10-30 10:15:32.183   668   818 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@ac5307d],results=1
+10-30 10:15:32.183   668   818 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@9795779],results=1
+10-30 10:15:32.183   668   818 I WifiScanningService: singleScanResults listener: ClientInfo[uid=1000, package=android, attributionTag=null, com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@68ba184],results=1
+10-30 10:15:32.183   668   818 I WifiScanningService: Unregistering listener= com.android.server.wifi.scanner.WifiScannerInternal$ScanListener@97352a8 uid=1000 packageName=null workSource=WorkSource{1000}
+10-30 10:15:32.185   668   812 D WifiScanRequestProxy: Scan results received
+10-30 10:15:32.185   668   812 D WifiScanRequestProxy: Received 1 scan results
+10-30 10:15:32.187   668   812 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-30 10:15:32.187   668   812 V WifiConnectivityManager: AllSingleScanListener onResults: start network selection
+10-30 10:15:32.187   668   812 V WifiConfigManager: getSavedNetworkFromScanResult Found "AndroidWifi"NONE for AndroidWifi[[ESS]]
+10-30 10:15:32.187   668   812 D WifiNetworkSelector: Current connected network: 0
+10-30 10:15:32.187   668   812 D WifiNetworkSelector: wlan0: Current connected network already sufficient. Skip network selection.
+10-30 10:15:32.188   668   812 V WifiLastResortWatchdog: updateAvailableNetworks: size = 0
+10-30 10:15:32.188   668   812 V WifiLastResortWatchdog: mWatchdogFeatureEnabled: true
+10-30 10:15:32.188   668   812 V WifiLastResortWatchdog: mWatchdogAllowedToTrigger: true
+10-30 10:15:32.188   668   812 V WifiLastResortWatchdog: mRecentAvailableNetworks: 1
+10-30 10:15:32.188   668   812 V WifiLastResortWatchdog:  02:15:b2:00:00:01: "AndroidWifi" HasEverConnected: true, Failures: {Assoc: 0, Auth: 0, Dhcp: 0}, Age: 2
+10-30 10:15:32.188   668   812 V WifiLastResortWatchdog: mSsidFailureCount:
+10-30 10:15:32.188   668   812 V WifiLastResortWatchdog: "AndroidWifi": 1, HasEverConnected: true, Failures: {Assoc: 0, Auth: 0, Dhcp: 0}
+10-30 10:15:32.188   668   812 V WifiConnectivityManager: AllSingleScanListener:  No candidates
+10-30 10:15:32.277   668   693 I ActivityTaskManager: Displayed com.canpicasoft.tokkl/androidx.activity.ComponentActivity for user 0: +349ms
+10-30 10:15:32.349   668   784 I ImeTracker: com.canpicasoft.tokkl:67906f1f: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-30 10:15:32.359  2561  2561 D InsetsController: hide(ime(), fromIme=false)
+10-30 10:15:32.359  2561  2561 I ImeTracker: com.canpicasoft.tokkl:67906f1f: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-30 10:15:32.363   668  1601 I ImeTracker: system_server:6db954a5: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 10:15:32.365   668   696 I ImeTracker: system_server:6db954a5: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 10:15:32.386  1194  1194 D VRI[QuickstepLauncher]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 10:15:32.393  1194  1194 D BaseDepthController: setSurface:
+10-30 10:15:32.393  1194  1194 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 10:15:32.393  1194  1194 D BaseDepthController: 	mBaseSurface: null
+10-30 10:15:32.393  1194  1194 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+10-30 10:15:32.394  1194  1194 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+10-30 10:15:32.394  1194  1194 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:463)
+10-30 10:15:32.394  1194  1194 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(StateManager.java:454)
+10-30 10:15:32.394  1194  1194 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(StatefulActivity.java:120)
+10-30 10:15:32.394  1194  1194 D StatsLog: LAUNCHER_ONSTOP
+10-30 10:15:32.410  1194  1194 W FrameTracker: Missed App frame:UNKNOWN: 3, 4544, 696656708, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:15:32.411  1194  1194 W FrameTracker: Missed SF frame:UNKNOWN: 3, 4544, 696656708, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:15:32.411  1194  1194 W FrameTracker: Missed App frame:UNKNOWN: 3, 4573, 738298162, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:15:32.411  1194  1194 W FrameTracker: Missed SF frame:UNKNOWN: 3, 4573, 738298162, CUJ=J<LAUNCHER_APP_CLOSE_TO_HOME_FALLBACK>
+10-30 10:15:32.412  1194  1214 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-78 - not enough time since last trigger
+10-30 10:15:32.688  2561  2565 I npicasoft.tokkl: Compiler allocated 5042KB to compile void android.view.ViewRootImpl.performTraversals()
+10-30 10:15:32.868  2561  2561 I npicasoft.tokkl: AssetManager2(0x70f89a2e8af8) locale list changing from [] to [en-US]
+10-30 10:15:33.570  2199  2201 I AidlLazyServiceRegistrar: Process has 0 (of 1 available) client(s) in use after notification artd has clients: 0
+10-30 10:15:33.570  2199  2201 I AidlLazyServiceRegistrar: Trying to shut down the service. No clients in use for any service in process.
+10-30 10:15:33.572  2199  2201 I AidlLazyServiceRegistrar: Unregistered all clients and exiting
+10-30 10:15:34.588  2561  2561 I npicasoft.tokkl: AssetManager2(0x70f89a2efe98) locale list changing from [] to [en-US]
+10-30 10:15:34.645  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:34.881  2561  2561 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:34.882  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296420, res-name=glance_view_id_008, desc=Elapsed time, visibility=VISIBLE, width=220, height=82, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=88.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:34.970  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:35.082   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:15:35.082   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:15:35.082   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={10158} in 1ms
+10-30 10:15:35.083   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:15:35.083   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:15:35.083   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={20158} in 1ms
+10-30 10:15:35.117   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=11 freq=2437 RxLinkSpeed=2
+10-30 10:15:35.117   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:15:35.117   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:15:35.117   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:15:35.117   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:35.117   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:35.117   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:35.117   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:35.117   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:35.117   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:35.117   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:35.117   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:35.118   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 11Mbps, Tx Link speed: 11Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:15:35.118   668   812 D WifiScoreCard: txRate: 1 txSpeed: 11
+10-30 10:15:35.118   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:15:35.118   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=11 tx=0.1, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3005] from screen [on:0 period:-1944594610] score=60
+10-30 10:15:35.489  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:35.569  2561  2561 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:35.570  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296420, res-name=glance_view_id_008, visibility=VISIBLE, width=188, height=82, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=88.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:35.599  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:35.819   668   812 D WifiHealthMonitor: Run post-boot detection
+10-30 10:15:35.819   668   812 E WifiHealthMonitor:  Hit PackageManager exception
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: android.content.pm.PackageManager$NameNotFoundException: No module info for package: com.android.wifi
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at android.app.ApplicationPackageManager.getModuleInfo(ApplicationPackageManager.java:1256)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.getWifiStackVersion(WifiHealthMonitor.java:369)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.extractCurrentSoftwareBuildInfo(WifiHealthMonitor.java:590)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.postBootSwBuildCheck(WifiHealthMonitor.java:525)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.postBootDetectionHandler(WifiHealthMonitor.java:516)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor.-$$Nest$mpostBootDetectionHandler(WifiHealthMonitor.java:0)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at com.android.server.wifi.WifiHealthMonitor$2.onAlarm(WifiHealthMonitor.java:192)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at android.app.AlarmManager$ListenerWrapper.run(AlarmManager.java:375)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at android.os.Handler.handleCallback(Handler.java:995)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at com.android.server.wifi.RunnerHandler.dispatchMessage(RunnerHandler.java:131)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at android.os.Looper.loopOnce(Looper.java:248)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at android.os.Looper.loop(Looper.java:338)
+10-30 10:15:35.819   668   812 E WifiHealthMonitor: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+10-30 10:15:35.819   668   812 D WifiHealthMonitor: OS build version: sdk_phone64_x86_64-userdebug 16 BE2A.250530.026.D1 13818094 test-keys Wifi stack version: 0 Wifi driver version: 1.0 Wifi firmware version: 1.0
+10-30 10:15:35.820   668   812 D WifiHealthMonitor:  from Memory: OS build version: sdk_phone64_x86_64-userdebug 16 BE2A.250530.026.D1 13818094 test-keys Wifi stack version: 0 Wifi driver version: 1.0 Wifi firmware version: 1.0
+10-30 10:15:35.820   668   812 D WifiHealthMonitor:  from SW: OS build version: sdk_phone64_x86_64-userdebug 16 BE2A.250530.026.D1 13818094 test-keys Wifi stack version: 0 Wifi driver version: 1.0 Wifi firmware version: 1.0
+10-30 10:15:35.820   668   812 D WifiHealthMonitor: Detect no SW build change
+10-30 10:15:35.820   668   812 D WifiHealthMonitor:  preBootScanTimeMs: 1793334557071
+10-30 10:15:35.820   668   812 D WifiHealthMonitor:  postBootScanTimeMs: 1793351695925
+10-30 10:15:35.820   668   812 D WifiHealthMonitor:  preBootScan 2G count: 1, Above2G count: 0
+10-30 10:15:35.820   668   812 D WifiHealthMonitor:  postBootScan 2G count: 1, Above2G count: 0
+10-30 10:15:35.820   668   812 D WifiHealthMonitor:  postBootAbnormalScanDetection: 0
+10-30 10:15:36.090  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:36.163  2561  2561 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:36.164  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296417, res-name=glance_view_id_005, visibility=VISIBLE, width=188, height=82, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=85.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:36.174  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:36.518   459   522 I netd    : tetherGetStats() -> {[]} <0.44ms>
+10-30 10:15:36.657  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:36.713  2561  2561 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=514, height=262, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:36.725  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:36.797  2561  2646 D ProfileInstaller: Installing profile for com.canpicasoft.tokkl
+10-30 10:15:36.963  1031  1250 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-30 10:15:37.279  2561  2566 W npicasoft.tokkl: Cleared Reference was only reachable from finalizer (only reported once)
+10-30 10:15:37.301  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:37.487  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=Widget mock-ups, Tokkl for Android · Design, visibility=VISIBLE, width=720, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.488  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296428, res-name=glance_view_id_016, visibility=VISIBLE, width=720, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=157.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.489  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296441, res-name=glance_view_id_029, desc=Open Today report, visibility=VISIBLE, width=720, height=68, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.490  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296429, res-name=glance_view_id_017, desc=Elapsed time, visibility=VISIBLE, width=200, height=76, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=-1.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.491  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296444, res-name=glance_view_id_032, desc=Today total, visibility=VISIBLE, width=166, height=64, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=554.0, y=2.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.491  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296451, res-name=glance_view_id_039, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=105.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.492  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296460, res-name=glance_view_id_048, desc=Client site, 0:30, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=152.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.493  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296467, res-name=glance_view_id_055, desc=Admin, 0:15, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=199.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.493  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296474, res-name=glance_view_id_062, desc=No project, 0:15, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=246.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:37.521  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:38.074  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:38.121   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=11 freq=2437 RxLinkSpeed=2
+10-30 10:15:38.121   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:15:38.121   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:15:38.121   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:15:38.121   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:38.121   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:38.121   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:38.121   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:38.121   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:38.121   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:38.121   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:38.121   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:38.122   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 11Mbps, Tx Link speed: 11Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:15:38.122   668   812 D WifiScoreCard: txRate: 1 txSpeed: 11
+10-30 10:15:38.122   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:15:38.122   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=11 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3004] from screen [on:0 period:-1944591606] score=60
+10-30 10:15:38.241  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=Widget mock-ups, Tokkl for Android · Design, Paused, visibility=VISIBLE, width=720, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.242  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296428, res-name=glance_view_id_016, visibility=VISIBLE, width=720, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=157.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.242  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296441, res-name=glance_view_id_029, desc=Open Today report, visibility=VISIBLE, width=720, height=68, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.243  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296429, res-name=glance_view_id_017, visibility=VISIBLE, width=171, height=76, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=-1.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.243  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296444, res-name=glance_view_id_032, visibility=VISIBLE, width=142, height=64, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=578.0, y=2.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.244  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296451, res-name=glance_view_id_039, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=105.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.245  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296460, res-name=glance_view_id_048, desc=Client site, 0:30, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=152.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.245  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296467, res-name=glance_view_id_055, desc=Admin, 0:15, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=199.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.246  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296474, res-name=glance_view_id_062, desc=No project, 0:15, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=246.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:38.268  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:38.619  1695  1695 W JobService: onNetworkChanged() not implemented in com.android.voicemail.impl.scheduling.TaskSchedulerJobService. Must override in a subclass.
+10-30 10:15:38.620  1039  1039 D BatteryUsageBroadcastReceiver: onReceive:android.intent.action.BATTERY_LEVEL_CHANGED
+10-30 10:15:38.620  1039  1039 D BatteryUsageBroadcastReceiver: fetch data because of event: ACTION_BATTERY_LEVEL_CHANGED
+10-30 10:15:38.621  1039  1039 D BatteryUsageBroadcastReceiver: cancel sendBroadcastToFetchUsageData when broadcastDelay is 2339997ms.
+10-30 10:15:38.825  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:39.017  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=No timer running, visibility=VISIBLE, width=720, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.018  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296427, res-name=glance_view_id_015, desc=Open Today report, visibility=VISIBLE, width=720, height=68, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.019  2561  2561 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.021  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296430, res-name=glance_view_id_018, visibility=VISIBLE, width=142, height=64, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=578.0, y=2.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.022  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296437, res-name=glance_view_id_025, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=105.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.023  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296446, res-name=glance_view_id_034, desc=Client site, 0:30, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=152.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.024  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296453, res-name=glance_view_id_041, desc=Admin, 0:15, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=199.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.026  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296460, res-name=glance_view_id_048, desc=No project, 0:15, visibility=VISIBLE, width=720, height=47, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=246.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.077  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:39.556  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:39.606  2561  2561 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=782, height=582, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:39.631  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:40.313  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:40.386   905  1045 E FrameTracker: force finish cuj, time out: J<DEFAULT_TASK_TO_TASK_ANIMATION>
+10-30 10:15:40.650  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296439, res-name=glance_view_id_027, desc=Open Today report, visibility=VISIBLE, width=922, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.652  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296445, res-name=glance_view_id_033, visibility=VISIBLE, width=922, height=116, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=58.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.653  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296458, res-name=glance_view_id_046, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=174.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.654  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296467, res-name=glance_view_id_055, desc=Client site, 0:30, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=248.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.655  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296474, res-name=glance_view_id_062, desc=Admin, 0:15, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=322.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.656  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296484, res-name=glance_view_id_072, visibility=VISIBLE, width=296, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.658  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296492, res-name=glance_view_id_080, visibility=VISIBLE, width=297, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=312.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.659  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296500, res-name=glance_view_id_088, visibility=VISIBLE, width=297, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=625.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.660  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=Widget mock-ups, Tokkl for Android · Design, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.661  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296433, res-name=glance_view_id_021, desc=Elapsed time, visibility=VISIBLE, width=310, height=111, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=5.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.662  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296448, res-name=glance_view_id_036, desc=Today total, visibility=VISIBLE, width=146, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.663  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296454, res-name=glance_view_id_042, desc=Billable, visibility=VISIBLE, width=146, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.664  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296457, res-name=glance_view_id_045, visibility=VISIBLE, width=25, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:40.767  2561  2566 I npicasoft.tokkl: Background concurrent mark compact GC freed 5420KB AllocSpace bytes, 27(6900KB) LOS objects, 49% free, 11MB/23MB, paused 191us,5.248ms total 50.122ms
+10-30 10:15:40.770  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:40.793  1395  2285 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:15:40.794  1395  2285 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:15:40.796  1395  2285 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:15:40.809  1395  1575 V MediaProvider: calling app has PERMISSION_READ_IMAGES? false
+10-30 10:15:40.810  1395  1575 W MediaProvider: Forgot to handle a top level directory in getContentUriForFile?
+10-30 10:15:40.812  1395  1575 W MediaProvider: isAppCloneUserPair for user 0: false
+10-30 10:15:40.847   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+10-30 10:15:40.847   668   820 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+10-30 10:15:40.847   668   820 D InetDiagMessage: Destroyed live tcp sockets for uids={10158} in 1ms
+10-30 10:15:41.126   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=11 freq=2437 RxLinkSpeed=2
+10-30 10:15:41.126   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:15:41.126   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:15:41.126   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:15:41.126   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:41.126   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:41.126   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:41.126   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:41.126   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:41.126   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:41.126   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:41.126   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:41.127   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 11Mbps, Tx Link speed: 11Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:15:41.127   668   812 D WifiScoreCard: txRate: 1 txSpeed: 11
+10-30 10:15:41.127   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:15:41.127   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=11 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3005] from screen [on:0 period:-1944588601] score=60
+10-30 10:15:41.205   905  1077 E FrameTracker: force finish cuj, time out: J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:41.205   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 4537, 208506953, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:41.205   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 4537, 208506953, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:41.205   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 4559, 363346309, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:41.205   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 4559, 363346309, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:41.205   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 4620, 482062884, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:41.205   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 4620, 482062884, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:41.205   905  1029 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-39 - not enough time since last trigger
+10-30 10:15:41.426  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:41.689  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296439, res-name=glance_view_id_027, desc=Open Today report, visibility=VISIBLE, width=922, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.690  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296445, res-name=glance_view_id_033, visibility=VISIBLE, width=922, height=116, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=58.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.691  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296458, res-name=glance_view_id_046, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=174.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.692  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296467, res-name=glance_view_id_055, desc=Client site, 0:30, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=248.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.693  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296474, res-name=glance_view_id_062, desc=Admin, 0:15, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=322.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.694  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296484, res-name=glance_view_id_072, visibility=VISIBLE, width=296, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.695  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296492, res-name=glance_view_id_080, visibility=VISIBLE, width=297, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=312.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.696  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296500, res-name=glance_view_id_088, visibility=VISIBLE, width=297, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=625.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.697  2561  2561 W AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=Widget mock-ups, Tokkl for Android · Design, Paused, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.698  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296433, res-name=glance_view_id_021, visibility=VISIBLE, width=265, height=111, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=5.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.699  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296448, res-name=glance_view_id_036, visibility=VISIBLE, width=125, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.700  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296454, res-name=glance_view_id_042, visibility=VISIBLE, width=125, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.701  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296457, res-name=glance_view_id_045, visibility=VISIBLE, width=25, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:41.759  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.799   668   693 I ServiceWatcher: [TrustManagerService] chose new implementation null
+10-30 10:15:41.802   668   785 I system_server: AssetManager2(0x70f89a2f7b98) locale list changing from [] to [en-US]
+10-30 10:15:41.803   668   785 I system_server: AssetManager2(0x70f89a2f33b8) locale list changing from [] to [en-US]
+10-30 10:15:41.805  1194  1220 D PackageUpdatedTask: Package updated: mOp=UPDATE packages=[com.canpicasoft.tokkl], user=UserHandle{0}
+10-30 10:15:41.807   668   788 I system_server: AssetManager2(0x70f89a2f5938) locale list changing from [] to [en-US]
+10-30 10:15:41.810   668   696 I system_server: AssetManager2(0x70f89a2eb9d8) locale list changing from [] to [en-US]
+10-30 10:15:41.814  1119  1129 I PermissionControllerServiceImpl: Updating user sensitive for uid 10157
+10-30 10:15:41.817  2561  2561 W System  : ClassLoader referenced unknown path: 
+10-30 10:15:41.817  2561  2561 D nativeloader: Configuring clns-10 for other apk . target_sdk_version=36, uses_libraries=, library_path=/data/app/~~sEZV3j0i5bCugAmeqeZS7w==/com.canpicasoft.tokkl.test-S6i_vWXoKmbZBIh82EDiJw==/lib/x86_64:/data/app/~~JJCgPt2zZ9_lYVsTTmXkmw==/com.canpicasoft.tokkl-h89b7_CE49sNvB5jdNM0Fg==/lib/x86_64:/data/app/~~sEZV3j0i5bCugAmeqeZS7w==/com.canpicasoft.tokkl.test-S6i_vWXoKmbZBIh82EDiJw==/base.apk!/lib/x86_64:/data/app/~~JJCgPt2zZ9_lYVsTTmXkmw==/com.canpicasoft.tokkl-h89b7_CE49sNvB5jdNM0Fg==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.canpicasoft.tokkl
+10-30 10:15:41.818   668   668 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:41.821  1194  1194 D b/267448330: provider: ComponentInfo{com.android.quicksearchbox/com.android.quicksearchbox.SearchWidgetProvider}, paddedSizes: [382.09525x136.38095, 382.09525x136.38095, 732.5714x62.095238, 732.5714x62.095238], getMinMaxSizes: Rect(382, 62 - 732, 136)
+10-30 10:15:41.824  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.824  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.825  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.825  1194  1220 I droid.launcher3: AssetManager2(0x70f89a318258) locale list changing from [] to [en-US]
+10-30 10:15:41.825  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.826  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.826  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.826  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.827  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.827  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.827  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.828  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.828  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.829  1194  1194 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.834  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.836  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.850   459   522 I netd    : tetherGetStats() -> {[]} <3.72ms>
+10-30 10:15:41.855  2561  2600 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=cefeddeb-6d53-4e90-a008-a580d49a48fc, generation=0)
+10-30 10:15:41.862  2561  2600 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 10:15:41.865  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.865  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 10:15:41.866  1194  1194 D AllAppsStore: setApps: apps.length=13
+10-30 10:15:41.866  1194  1194 D AllAppsStore: notifyUpdate: notifying listeners
+10-30 10:15:41.866  1194  1194 D ActivityAllAppsContainerView: onAppsUpdated; number of apps: 13
+10-30 10:15:41.866  1194  1194 D ActivityAllAppsContainerView: rebindAdapters: force: false
+10-30 10:15:41.866  1194  1194 D ActivityAllAppsContainerView: rebindAdapters: Not needed.
+10-30 10:15:41.866  1194  1194 D StatsLog: LAUNCHER_ALLAPPS_COUNT
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 10:15:41.866  1194  1194 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: Clearing FastScrollerSections.
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: Adding apps with sections. HasPrivateApps: false
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: C with appInfoTitle: Calendar
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: F with appInfoTitle: Files
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: G with appInfoTitle: Gallery
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: M with appInfoTitle: Messaging
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: P with appInfoTitle: Phone
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: S with appInfoTitle: Search
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: T with appInfoTitle: TMoble
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: addAppsWithSections: adding sectionName: W with appInfoTitle: WebView Browser Tester
+10-30 10:15:41.867  1194  1194 D AlphabeticalAppsList: Adding FastScrollSection duplicate to scroll to the bottom.
+10-30 10:15:41.873  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.876  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.882  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.884  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.892  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.895  1194  1220 W HWUI    : Image decoding logging dropped!
+10-30 10:15:41.905  2561  2601 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=988ff7d9-707e-401c-9130-12308d77e8b4, generation=0)
+10-30 10:15:41.907  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Settings sectionName: S
+10-30 10:15:41.907  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Contacts sectionName: C
+10-30 10:15:41.908  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Gallery sectionName: G
+10-30 10:15:41.908  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Tokkl sectionName: T
+10-30 10:15:41.908  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Search sectionName: S
+10-30 10:15:41.909  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Clock sectionName: C
+10-30 10:15:41.909  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Messaging sectionName: M
+10-30 10:15:41.909  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Calendar sectionName: C
+10-30 10:15:41.910  1194  1220 D AlphabeticIndexCompat: computeSectionName: cs: Conversations sectionName: C
+10-30 10:15:41.910  2561  2601 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 10:15:42.362  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:42.531  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296413, res-name=glance_view_id_001, desc=No timer running, visibility=VISIBLE, width=922, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=31.0, y=31.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.532  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296427, res-name=glance_view_id_015, desc=Open Today report, visibility=VISIBLE, width=922, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=5}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.533  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296433, res-name=glance_view_id_021, visibility=VISIBLE, width=922, height=116, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=58.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.534  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296446, res-name=glance_view_id_034, desc=Tokkl for Android, 1:00, running, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=174.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.534  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296455, res-name=glance_view_id_043, desc=Client site, 0:30, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=248.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.535  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296462, res-name=glance_view_id_050, desc=Admin, 0:15, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=322.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.536  2561  2561 I AccessibilityValidator: LinearLayout{id=2131296469, res-name=glance_view_id_057, desc=No project, 0:15, visibility=VISIBLE, width=922, height=74, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=396.0, child-count=2}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.536  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296479, res-name=glance_view_id_067, visibility=VISIBLE, width=296, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.537  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296487, res-name=glance_view_id_075, visibility=VISIBLE, width=297, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=312.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.538  2561  2561 I AccessibilityValidator: FrameLayout{id=2131296495, res-name=glance_view_id_083, visibility=VISIBLE, width=297, height=126, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=true, is-enabled=true, is-focused=false, is-focusable=true, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=625.0, y=0.0, child-count=3}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.538  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296436, res-name=glance_view_id_024, visibility=VISIBLE, width=125, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.539  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296442, res-name=glance_view_id_030, visibility=VISIBLE, width=125, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.540  2561  2561 W AccessibilityValidator: FrameLayout{id=2131296445, res-name=glance_view_id_033, visibility=VISIBLE, width=25, height=58, has-focus=false, has-focusable=false, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.LinearLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=36.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:42.577  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:42.892   905  1077 E FrameTracker: force finish cuj, time out: J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:42.892   905  1077 W FrameTracker: Missed App frame:JANK_APPLICATION, 5139, 179669682, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:42.892   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 5167, 252575921, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:42.892   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 5167, 252575921, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:42.892   905  1077 W FrameTracker: Missed App frame:UNKNOWN: 3, 5272, 190888202, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:42.892   905  1077 W FrameTracker: Missed SF frame:UNKNOWN: 3, 5272, 190888202, CUJ=J<SPLASHSCREEN_EXIT_ANIM>
+10-30 10:15:42.892   905  1029 V PerfettoTrigger: Not triggering com.android.telemetry.interaction-jank-monitor-39 - not enough time since last trigger
+10-30 10:15:43.056  2561  2561 W AccessibilityChecks: Accessibility checks already enabled.
+10-30 10:15:43.114  2561  2561 I AccessibilityValidator: AppWidgetHostView{id=-1, desc=Timer, visibility=VISIBLE, width=984, height=887, has-focus=false, has-focusable=true, has-window-focus=true, is-clickable=false, is-enabled=true, is-focused=false, is-focusable=false, is-layout-requested=false, is-selected=false, layout-params=android.widget.FrameLayout$LayoutParams@YYYYYY, tag=null, root-is-layout-requested=false, has-input-connection=false, x=0.0, y=0.0, child-count=1}: Consider modifying the LayoutParams to allow for text expansion. Reported by com.google.android.apps.common.testing.accessibility.framework.checks.TextSizeCheck
+10-30 10:15:43.159  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:43.543  2561  2561 D WM-DelayedWorkTracker: Scheduling work ab28b141-44e8-4c34-8a6f-b2eacf310933
+10-30 10:15:43.543  2561  2561 D WM-GreedyScheduler: Starting work for ab28b141-44e8-4c34-8a6f-b2eacf310933
+10-30 10:15:43.546  2561  2585 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=ab28b141-44e8-4c34-8a6f-b2eacf310933, generation=0)
+10-30 10:15:43.550  2561  2561 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 10:15:43.609  2561  2561 D WM-DelayedWorkTracker: Scheduling work 21da6e6c-8f35-4126-a067-ffae80aa365e
+10-30 10:15:43.609  2561  2561 D WM-GreedyScheduler: Starting work for 21da6e6c-8f35-4126-a067-ffae80aa365e
+10-30 10:15:43.612  2561  2595 D WM-Processor: Processor: processing WorkGenerationalId(workSpecId=21da6e6c-8f35-4126-a067-ffae80aa365e, generation=0)
+10-30 10:15:43.624  2561  2561 D WM-WorkerWrapper: Starting work for androidx.glance.session.SessionWorker
+10-30 10:15:43.672  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:44.130   668   812 D WifiClientModeImpl[12005:wlan0]: updateLinkLayerStatsRssiSpeedFrequencyCapabilities rssi=-50 TxLinkspeed=11 freq=2437 RxLinkSpeed=2
+10-30 10:15:44.130   668   812 D WifiDataStall: tx tput in kbps: 37000
+10-30 10:15:44.130   668   812 D WifiDataStall: rx tput in kbps: 37000
+10-30 10:15:44.130   668   812 V WifiConfigManager: Updating scan detail cache freq=2437 BSSID=02:15:b2:00:00:01 RSSI=-50 for "AndroidWifi"NONE
+10-30 10:15:44.130   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:44.130   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:44.130   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:44.130   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:44.131   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:44.131   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:44.131   668   812 D WifiThroughputPredictor:  utilization (LLS) 80 isBluetoothConnected: false final utilization: 80
+10-30 10:15:44.131   668   812 D WifiThroughputPredictor:  BW: 0 RSSI: -50 Nss: 1 Mode: 1 symDur: 4000 snrDb 30 bitPerTone: 4500 rate: 54 throughput: 37
+10-30 10:15:44.131   668   812 D WifiScoreCard: BSSID update SIGNAL_POLL ID: 1633650488 SSID: "AndroidWifi", BSSID: 02:15:b2:00:00:01, MAC: 02:15:b2:00:00:00, IP: /10.0.2.16, Security type: 0, Supplicant state: COMPLETED, Wi-Fi standard: legacy, RSSI: -50, Link speed: 11Mbps, Tx Link speed: 11Mbps, Max Supported Tx Link speed: 54Mbps, Rx Link speed: 2Mbps, Max Supported Rx Link speed: 54Mbps, Frequency: 2437MHz, Net ID: 0, Metered hint: false, score: 60, isUsable: true, CarrierMerged: false, SubscriptionId: -1, IsPrimary: 1, Trusted: true, Restricted: false, Ephemeral: false, OEM paid: false, OEM private: false, OSU AP: false, FQDN: <none>, Provider friendly name: <none>, Requesting package name: <none>"AndroidWifi"openMLO Information: , Is TID-To-Link negotiation supported by the AP: false, AP MLD Address: <none>, AP MLO Link Id: <none>, AP MLO Affiliated links: <none>, Vendor Data: <none>
+10-30 10:15:44.131   668   812 D WifiScoreCard: txRate: 1 txSpeed: 11
+10-30 10:15:44.131   668   812 D WifiScoreCard: network update SIGNAL_POLL "AndroidWifi" ID: 1110761394 RSSI -50 txSpeed -1
+10-30 10:15:44.131   668   812 D WifiClientModeImpl[12005:wlan0]:  ClientModeImpl$L2ConnectedState screen=on 1 0 "AndroidWifi" 02:15:b2:00:00:01 rssi=-50 f=2437 sc=60 link=11 tx=0.0, 0.0, 0.0 rx=0.0 bcn=0 [on:0 tx:0 rx:0 period:3004] from screen [on:0 period:-1944585597] score=60
+10-30 10:15:44.159  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:44.338  2660  2660 W dumpsys : Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: power
+10-30 10:15:44.454  2666  2666 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-30 10:15:44.459  2666  2666 I AndroidRuntime: Using default boot image
+10-30 10:15:44.459  2666  2666 I AndroidRuntime: Leaving lock profiling enabled
+10-30 10:15:44.462  2666  2666 I app_process: Core platform API reporting enabled, enforcing=false
+10-30 10:15:44.462  2666  2666 I app_process: Using CollectorTypeCMC GC.
+10-30 10:15:44.533  2666  2666 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+10-30 10:15:44.543  2666  2666 D nativeloader: Load libicu_jni.so using APEX ns com_android_art for caller /apex/com.android.art/javalib/core-oj.jar: ok
+10-30 10:15:44.543  2666  2666 D app_process: u_setTimeZoneFilesDirectory("/apex/com.android.tzdata/etc/tz/versioned/9/icu") succeeded. 
+10-30 10:15:44.543  2666  2666 D app_process: I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt76l.dat
+10-30 10:15:44.543  2666  2666 D nativeloader: Load libjavacore.so using APEX ns com_android_art for caller /apex/com.android.art/javalib/core-oj.jar: ok
+10-30 10:15:44.544  2666  2666 D nativeloader: Load libopenjdk.so using APEX ns com_android_art for caller /apex/com.android.art/javalib/core-oj.jar: ok
+10-30 10:15:44.546  2666  2666 W app_process: Unexpected CPU variant for x86: x86_64.
+10-30 10:15:44.546  2666  2666 W app_process: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, goldmont-without-sha-xsaves, tremont, kabylake, alderlake, default
+10-30 10:15:44.583  2666  2666 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+10-30 10:15:44.584  2666  2666 D AndroidRuntime: Calling main entry com.genymobile.scrcpy.Server
+10-30 10:15:44.586  2666  2666 I scrcpy  : Device: [unknown] Android Android SDK built for x86_64 (Android 16)
+10-30 10:15:44.597  2666  2666 D nativeloader: Load libjavacrypto.so using APEX ns com_android_conscrypt for caller /apex/com.android.conscrypt/javalib/conscrypt.jar: ok
+10-30 10:15:44.605  2666  2666 W OverlayConfig: partition_order.xml does not exist.
+10-30 10:15:44.623  2666  2666 W app_process: unable to execute idmap2: Permission denied
+10-30 10:15:44.623  2666  2666 W OverlayConfig: 'idmap2 create-multiple' failed: no mutable="false" overlays targeting "android" will be loaded
+10-30 10:15:44.624  2666  2666 I app_process: AssetManager2(0x72288304a878) locale list changing from [] to [en-US]
+10-30 10:15:44.620  2666  2666 W main    : type=1400 audit(0.0:39): avc:  denied  { execute } for  name="idmap2" dev="dm-5" ino=374 scontext=u:r:shell:s0 tcontext=u:object_r:idmap_exec:s0 tclass=file permissive=0
+10-30 10:15:44.631  2666  2666 I AconfigPackage: android.media.swcodec.flags is mapped to com.android.media.swcodec
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.settings.keyboard is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.systemui.accessibility.accessibilitymenu is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.server.policy.feature.flags is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.settings.factory_reset is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.settings.media_drm is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.launcher3 is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.settings.accessibility is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.wallpaper is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.settings.flags is mapped to system_ext
+10-30 10:15:44.631  2666  2666 I AconfigPackage: com.android.permission.flags is mapped to com.android.permission
+10-30 10:15:44.632  2666  2666 I AconfigPackage: com.android.icu is mapped to com.android.i18n
+10-30 10:15:44.632  2666  2666 I AconfigPackage: com.android.appsearch.flags is mapped to com.android.appsearch
+10-30 10:15:44.632  2666  2666 I AconfigPackage: android.uprobestats.mainline.flags is mapped to com.android.uprobestats
+10-30 10:15:44.632  2666  2666 I AconfigPackage: android.provider.flags is mapped to com.android.configinfrastructure
+10-30 10:15:44.632  2666  2666 I AconfigPackage: com.android.server.deviceconfig is mapped to com.android.configinfrastructure
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.nfc.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.app.admin.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.database.sqlite is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.providers.calendar is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.server.power.feature.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.media.performance.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.app.contextualsearch.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.app.ondeviceintelligence.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.media.projection.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.companion is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.service.controls.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.text.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.providers.contactkeys.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.intentresolver is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.companion.virtualdevice.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.uprobestats.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.net.thread.platform.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.view.contentprotection.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.server.dreams is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.graphics.surfaceflinger.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.hardware.input is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.sdk is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.input.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.tracing is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.server.biometrics is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.view.contentcapture.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.app.job is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.content.res is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.net.platform.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.aconfig.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.graphics.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.server.app is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.speech.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.server.stats is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.hardware.biometrics is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.car.feature is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.adpf is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.location.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.settingslib.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.managedprovisioning.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.app.assist.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.server.net is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.settingslib.widget.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.internal.camera.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.hardware.libsensor.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.internal.jank is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.providers.settings is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.multiuser is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.server.power.optimization is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.calllogbackup is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.media.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.server.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.graphics.libvulkan.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.app.appfunctions.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: android.app.smartspace.flags is mapped to system
+10-30 10:15:44.633  2666  2666 I AconfigPackage: com.android.providers.contacts.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.shell.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.media.aaudio is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.hardware.radio is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.google.wear.services.infra.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: suspend_service.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.media.midi is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.libcore.readonly is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.settingslib.widget.selectorwithwidgetpreference.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.service.notification is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.systemui.shared is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.app.jank is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.app.wearable is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.media.audio is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.service.chooser is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.compat is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.alarm is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.apex.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.app.usage is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.accessibility is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.app.supervision.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.utils is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.chre.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.content.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.media.codec is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.internal.os is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.nfc.nci.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.app is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.security.keystore2 is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.crashrecovery.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.tradeinmode.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.hardware.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.telecom.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.settingslib.media.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.policy is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.media.audiopolicy is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.egg.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.internal.compat.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.security is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.service.autofill is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.example.android.aconfig.demo.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.view.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.companion.virtual.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.aconfig_new_storage is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.feature.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.systemui is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.power.batterysaver is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.widget.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.media.editing.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.media.codec.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.powerstats is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.graphics.egl.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.media.audioserver is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.deviceidle is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.nfc is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.permission.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.service.voice.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.content.pm is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.power.hint is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.os is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.service.dreams is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.graphics.libgui.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.hardware.usb.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.provider is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.job is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.internal.foldables.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.internal.telephony.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.webkit is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.credentials.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.display.feature.flags is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: com.android.server.notification is mapped to system
+10-30 10:15:44.634  2666  2666 I AconfigPackage: android.appwidget.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.frameworks.sensorservice.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.printspooler.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.window.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.adaptiveauth is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.net.wifi.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.media.tv.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.server.usb.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.os.vibrator is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.hardware.devicestate.feature.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.server.usage is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.server is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.wm.shell is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.view.inputmethod is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.graphics.hwui.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.server.backup is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.internal.pm.pkg.component.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.view.accessibility is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.google.wear.sdk is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: android.media.audio is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.server.am is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.media.playback.flags is mapped to system
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.art.flags is mapped to com.android.art
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.libcore is mapped to com.android.art
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.media.extractor.flags is mapped to com.android.media
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.media.mainline.flags is mapped to com.android.media
+10-30 10:15:44.635  2666  2666 I AconfigPackage: com.android.wifi.flags is mapped to com.android.wifi
+10-30 10:15:44.636  2666  2666 I AconfigPackage: com.android.org.conscrypt.flags is mapped to com.android.conscrypt
+10-30 10:15:44.636  2666  2666 I AconfigPackage: com.android.healthfitness.flags is mapped to com.android.healthfitness
+10-30 10:15:44.636  2666  2666 I AconfigPackage: libgooglecamerahal.flags is mapped to vendor
+10-30 10:15:44.636  2666  2666 I AconfigPackage: com.android.ipsec.flags is mapped to com.android.ipsec
+10-30 10:15:44.637  2666  2666 I AconfigPackage: com.android.nfc.module.flags is mapped to com.android.nfcservices
+10-30 10:15:44.637  2666  2666 I AconfigPackage: com.android.adservices.ondevicepersonalization.flags is mapped to com.android.ondevicepersonalization
+10-30 10:15:44.637  2666  2666 I AconfigPackage: com.android.bluetooth.flags is mapped to com.android.bt
+10-30 10:15:44.637  2666  2666 I AconfigPackage: com.android.devicelock.flags is mapped to com.android.devicelock
+10-30 10:15:44.638  2666  2666 I AconfigPackage: android.os.profiling is mapped to com.android.profiling
+10-30 10:15:44.638  2666  2666 I AconfigPackage: com.android.os.statsd.flags is mapped to com.android.os.statsd
+10-30 10:15:44.639  2666  2666 I AconfigPackage: com.android.cellbroadcastreceiver.flags is mapped to com.android.cellbroadcast
+10-30 10:15:44.639  2666  2666 I AconfigPackage: com.android.adservices.flags is mapped to com.android.adservices
+10-30 10:15:44.639  2666  2666 I AconfigPackage: com.android.sdksandbox.flags is mapped to com.android.adservices
+10-30 10:15:44.639  2666  2666 I AconfigPackage: com.android.uwb.flags is mapped to com.android.uwb
+10-30 10:15:44.639  2666  2666 I AconfigPackage: com.android.ranging.flags is mapped to com.android.uwb
+10-30 10:15:44.639  2666  2666 I AconfigPackage: android.graphics.pdf.flags is mapped to com.android.mediaprovider
+10-30 10:15:44.639  2666  2666 I AconfigPackage: com.android.providers.media.flags is mapped to com.android.mediaprovider
+10-30 10:15:44.639  2666  2666 I AconfigPackage: android.graphics.pdf.flags.readonly is mapped to com.android.mediaprovider
+10-30 10:15:44.640  2666  2666 I AconfigPackage: com.android.net.ct.flags is mapped to com.android.tethering
+10-30 10:15:44.640  2666  2666 I AconfigPackage: com.android.net.flags is mapped to com.android.tethering
+10-30 10:15:44.640  2666  2666 I AconfigPackage: android.net.vcn is mapped to com.android.tethering
+10-30 10:15:44.640  2666  2666 I AconfigPackage: com.android.nearby.flags is mapped to com.android.tethering
+10-30 10:15:44.640  2666  2666 I AconfigPackage: android.net.http is mapped to com.android.tethering
+10-30 10:15:44.640  2666  2666 I AconfigPackage: com.android.net.thread.flags is mapped to com.android.tethering
+10-30 10:15:44.640  2666  2666 I AconfigPackage: com.android.system.virtualmachine.flags is mapped to com.android.virt
+10-30 10:15:44.643  2666  2666 E FeatureFlagsImplExport: android.os.flagging.AconfigStorageReadException: ERROR_PACKAGE_NOT_FOUND: package android.xr cannot be found on the device
+10-30 10:15:44.643  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:44.686  2680  2680 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-30 10:15:44.695  2680  2680 I AndroidRuntime: Using default boot image
+10-30 10:15:44.695  2680  2680 I AndroidRuntime: Leaving lock profiling enabled
+10-30 10:15:44.698  2680  2680 I app_process: Core platform API reporting enabled, enforcing=false
+10-30 10:15:44.699  2680  2680 I app_process: Using CollectorTypeCMC GC.
+10-30 10:15:44.800  2680  2680 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+10-30 10:15:44.810  2680  2680 D nativeloader: Load libicu_jni.so using APEX ns com_android_art for caller /apex/com.android.art/javalib/core-oj.jar: ok
+10-30 10:15:44.810  2680  2680 D app_process: u_setTimeZoneFilesDirectory("/apex/com.android.tzdata/etc/tz/versioned/9/icu") succeeded. 
+10-30 10:15:44.810  2680  2680 D app_process: I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt76l.dat
+10-30 10:15:44.811  2680  2680 D nativeloader: Load libjavacore.so using APEX ns com_android_art for caller /apex/com.android.art/javalib/core-oj.jar: ok
+10-30 10:15:44.812  2680  2680 D nativeloader: Load libopenjdk.so using APEX ns com_android_art for caller /apex/com.android.art/javalib/core-oj.jar: ok
+10-30 10:15:44.814  2680  2680 W app_process: Unexpected CPU variant for x86: x86_64.
+10-30 10:15:44.814  2680  2680 W app_process: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, goldmont-without-sha-xsaves, tremont, kabylake, alderlake, default
+10-30 10:15:44.851  2680  2680 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+10-30 10:15:44.851  2680  2680 D AndroidRuntime: Calling main entry com.genymobile.scrcpy.CleanUp
+10-30 10:15:44.860  2680  2680 D nativeloader: Load libjavacrypto.so using APEX ns com_android_conscrypt for caller /apex/com.android.conscrypt/javalib/conscrypt.jar: ok
+10-30 10:15:44.867  2680  2680 W OverlayConfig: partition_order.xml does not exist.
+10-30 10:15:44.880  2680  2680 W app_process: unable to execute idmap2: Permission denied
+10-30 10:15:44.880  2680  2680 W OverlayConfig: 'idmap2 create-multiple' failed: no mutable="false" overlays targeting "android" will be loaded
+10-30 10:15:44.880  2680  2680 I app_process: AssetManager2(0x7cf7acf937b8) locale list changing from [] to [en-US]
+10-30 10:15:44.876  2680  2680 W main    : type=1400 audit(0.0:40): avc:  denied  { execute } for  name="idmap2" dev="dm-5" ino=374 scontext=u:r:shell:s0 tcontext=u:object_r:idmap_exec:s0 tclass=file permissive=0
+10-30 10:15:44.884  2680  2680 I AconfigPackage: android.media.swcodec.flags is mapped to com.android.media.swcodec
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.settings.keyboard is mapped to system_ext
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.systemui.accessibility.accessibilitymenu is mapped to system_ext
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.server.policy.feature.flags is mapped to system_ext
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.settings.factory_reset is mapped to system_ext
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.settings.media_drm is mapped to system_ext
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.launcher3 is mapped to system_ext
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.settings.accessibility is mapped to system_ext
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.wallpaper is mapped to system_ext
+10-30 10:15:44.884  2680  2680 I AconfigPackage: com.android.settings.flags is mapped to system_ext
+10-30 10:15:44.885  2680  2680 I AconfigPackage: com.android.permission.flags is mapped to com.android.permission
+10-30 10:15:44.885  2680  2680 I AconfigPackage: com.android.icu is mapped to com.android.i18n
+10-30 10:15:44.885  2680  2680 I AconfigPackage: com.android.appsearch.flags is mapped to com.android.appsearch
+10-30 10:15:44.885  2680  2680 I AconfigPackage: android.uprobestats.mainline.flags is mapped to com.android.uprobestats
+10-30 10:15:44.885  2680  2680 I AconfigPackage: android.provider.flags is mapped to com.android.configinfrastructure
+10-30 10:15:44.885  2680  2680 I AconfigPackage: com.android.server.deviceconfig is mapped to com.android.configinfrastructure
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.nfc.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.admin.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.database.sqlite is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.providers.calendar is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.power.feature.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.media.performance.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.contextualsearch.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.ondeviceintelligence.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.media.projection.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.companion is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.service.controls.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.text.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.providers.contactkeys.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.intentresolver is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.companion.virtualdevice.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.uprobestats.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.net.thread.platform.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.view.contentprotection.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.dreams is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.graphics.surfaceflinger.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.hardware.input is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.sdk is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.input.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.tracing is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.biometrics is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.view.contentcapture.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.job is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.content.res is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.net.platform.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.aconfig.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.graphics.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.server.app is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.speech.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.stats is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.hardware.biometrics is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.car.feature is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.adpf is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.location.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.settingslib.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.managedprovisioning.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.assist.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.net is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.settingslib.widget.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.internal.camera.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.hardware.libsensor.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.internal.jank is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.providers.settings is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.multiuser is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.power.optimization is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.calllogbackup is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.media.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.graphics.libvulkan.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.appfunctions.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.smartspace.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.providers.contacts.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.shell.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.media.aaudio is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.hardware.radio is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.google.wear.services.infra.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: suspend_service.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.media.midi is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.libcore.readonly is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.settingslib.widget.selectorwithwidgetpreference.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.service.notification is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.systemui.shared is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.jank is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.wearable is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.media.audio is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.service.chooser is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.compat is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.alarm is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.apex.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.usage is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.accessibility is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app.supervision.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.server.utils is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.chre.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.content.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.media.codec is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.internal.os is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: com.android.nfc.nci.flags is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.app is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.security.keystore2 is mapped to system
+10-30 10:15:44.886  2680  2680 I AconfigPackage: android.crashrecovery.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.tradeinmode.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.hardware.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.telecom.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.settingslib.media.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.policy is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.media.audiopolicy is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.egg.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.internal.compat.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.security is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.service.autofill is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.example.android.aconfig.demo.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.view.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.companion.virtual.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.aconfig_new_storage is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.feature.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.systemui is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.power.batterysaver is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.widget.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.media.editing.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.media.codec.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.powerstats is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.graphics.egl.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.media.audioserver is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.deviceidle is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.nfc is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.permission.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.service.voice.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.content.pm is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.power.hint is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.os is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.service.dreams is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.graphics.libgui.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.hardware.usb.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.provider is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.job is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.internal.foldables.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.internal.telephony.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.webkit is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.credentials.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.display.feature.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.notification is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.appwidget.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.frameworks.sensorservice.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.printspooler.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.window.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.adaptiveauth is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.net.wifi.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.media.tv.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.usb.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.os.vibrator is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.hardware.devicestate.feature.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.usage is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.server is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.wm.shell is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.view.inputmethod is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.graphics.hwui.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.backup is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.internal.pm.pkg.component.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.view.accessibility is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.google.wear.sdk is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: android.media.audio is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.server.am is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.media.playback.flags is mapped to system
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.art.flags is mapped to com.android.art
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.libcore is mapped to com.android.art
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.media.extractor.flags is mapped to com.android.media
+10-30 10:15:44.887  2680  2680 I AconfigPackage: com.android.media.mainline.flags is mapped to com.android.media
+10-30 10:15:44.888  2680  2680 I AconfigPackage: com.android.wifi.flags is mapped to com.android.wifi
+10-30 10:15:44.888  2680  2680 I AconfigPackage: com.android.org.conscrypt.flags is mapped to com.android.conscrypt
+10-30 10:15:44.888  2680  2680 I AconfigPackage: com.android.healthfitness.flags is mapped to com.android.healthfitness
+10-30 10:15:44.888  2680  2680 I AconfigPackage: libgooglecamerahal.flags is mapped to vendor
+10-30 10:15:44.888  2680  2680 I AconfigPackage: com.android.ipsec.flags is mapped to com.android.ipsec
+10-30 10:15:44.888  2680  2680 I AconfigPackage: com.android.nfc.module.flags is mapped to com.android.nfcservices
+10-30 10:15:44.889  2680  2680 I AconfigPackage: com.android.adservices.ondevicepersonalization.flags is mapped to com.android.ondevicepersonalization
+10-30 10:15:44.889  2680  2680 I AconfigPackage: com.android.bluetooth.flags is mapped to com.android.bt
+10-30 10:15:44.889  2680  2680 I AconfigPackage: com.android.devicelock.flags is mapped to com.android.devicelock
+10-30 10:15:44.889  2680  2680 I AconfigPackage: android.os.profiling is mapped to com.android.profiling
+10-30 10:15:44.890  2680  2680 I AconfigPackage: com.android.os.statsd.flags is mapped to com.android.os.statsd
+10-30 10:15:44.890  2680  2680 I AconfigPackage: com.android.cellbroadcastreceiver.flags is mapped to com.android.cellbroadcast
+10-30 10:15:44.890  2680  2680 I AconfigPackage: com.android.adservices.flags is mapped to com.android.adservices
+10-30 10:15:44.890  2680  2680 I AconfigPackage: com.android.sdksandbox.flags is mapped to com.android.adservices
+10-30 10:15:44.891  2680  2680 I AconfigPackage: com.android.uwb.flags is mapped to com.android.uwb
+10-30 10:15:44.891  2680  2680 I AconfigPackage: com.android.ranging.flags is mapped to com.android.uwb
+10-30 10:15:44.891  2680  2680 I AconfigPackage: android.graphics.pdf.flags is mapped to com.android.mediaprovider
+10-30 10:15:44.891  2680  2680 I AconfigPackage: com.android.providers.media.flags is mapped to com.android.mediaprovider
+10-30 10:15:44.891  2680  2680 I AconfigPackage: android.graphics.pdf.flags.readonly is mapped to com.android.mediaprovider
+10-30 10:15:44.891  2680  2680 I AconfigPackage: com.android.net.ct.flags is mapped to com.android.tethering
+10-30 10:15:44.891  2680  2680 I AconfigPackage: com.android.net.flags is mapped to com.android.tethering
+10-30 10:15:44.891  2680  2680 I AconfigPackage: android.net.vcn is mapped to com.android.tethering
+10-30 10:15:44.891  2680  2680 I AconfigPackage: com.android.nearby.flags is mapped to com.android.tethering
+10-30 10:15:44.891  2680  2680 I AconfigPackage: android.net.http is mapped to com.android.tethering
+10-30 10:15:44.891  2680  2680 I AconfigPackage: com.android.net.thread.flags is mapped to com.android.tethering
+10-30 10:15:44.891  2680  2680 I AconfigPackage: com.android.system.virtualmachine.flags is mapped to com.android.virt
+10-30 10:15:44.894  2680  2680 E FeatureFlagsImplExport: android.os.flagging.AconfigStorageReadException: ERROR_PACKAGE_NOT_FOUND: package android.xr cannot be found on the device
+10-30 10:15:44.994  2699  2699 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+10-30 10:15:44.994  2699  2699 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+10-30 10:15:44.994  2699  2699 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+10-30 10:15:44.996   532   726 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+10-30 10:15:44.996   532   726 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+10-30 10:15:45.115  2561  2596 W HWUI    : Image decoding logging dropped!
+10-30 10:15:45.239  2561  2561 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=ac9c84a5-525f-4431-8d1f-4750c6e305e2, class=androidx.glance.session.SessionWorker, tags={ androidx.glance.session.SessionWorker } ]
+10-30 10:15:45.241  2561  2561 D WM-Processor: Processor ac9c84a5-525f-4431-8d1f-4750c6e305e2 executed; reschedule = false
+10-30 10:15:45.253  2561  2561 D WM-StopWorkRunnable: StopWorkRunnable for ac9c84a5-525f-4431-8d1f-4750c6e305e2; Processor.stopWork = false, reason: -512
+10-30 10:15:45.259   668  1600 V GrammaticalInflectionUtils: AttributionSource: AttributionSource { uid = 10158, packageName = null, attributionTag = null, token = android.os.Binder@6fc3094, deviceId = 0, next = null } does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+10-30 10:15:45.298   532   532 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+10-30 10:15:45.299   905  1078 D SplashScreenView: Build android.window.SplashScreenView{4e87bfa V.E...... ......ID 0,0-0,0}
+10-30 10:15:45.299   905  1078 D SplashScreenView: Icon: view: null drawable: null size: 0
+10-30 10:15:45.299   905  1078 D SplashScreenView: Branding: view: android.view.View{a1f25ab G.ED..... ......I. 0,0-0,0 #1020541 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-30 10:15:45.302  2561  2561 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9cf5f5d in: PAUSED
+10-30 10:15:45.302  2561  2561 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=androidx.activity.ComponentActivity@9cf5f5d
+10-30 10:15:45.319   668  1600 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.388   459   522 I netd    : tetherGetStats() -> {[]} <0.58ms>
+10-30 10:15:45.401  2509  2523 W libc    : Access denied finding property "vendor.mesa.vk.trace.per.submit"
+10-30 10:15:45.401  2509  2523 W libc    : Access denied finding property "vendor.mesa.vk.trace.frame"
+10-30 10:15:45.405  2509  2523 W libc    : Access denied finding property "vendor.mesa.vk.wsi.headless.swa"
+10-30 10:15:45.409   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.411   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.411   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.411   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.411   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.411   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.411   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.412   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.412   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.412   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.412   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.412   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.412   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.413   668   696 W IPCThreadState: Sending oneway calls to frozen process.
+10-30 10:15:45.437  2509  2509 D AutofillManager: Fill dialog is enabled:false, hints=[]
+10-30 10:15:45.652   668   693 I ActivityTaskManager: Displayed com.canpicasoft.tokkl.test/androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity for user 0: +380ms
+10-30 10:15:45.690  1194  1194 D ViewRootImpl: Skipping stats log for color mode
+10-30 10:15:45.691  1194  1194 D StatsLog: LAUNCHER_ONRESUME
+10-30 10:15:45.738  1194  1194 D BaseDepthController: setSurface:
+10-30 10:15:45.738  1194  1194 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+10-30 10:15:45.738  1194  1194 D BaseDepthController: 	mBaseSurface: Surface(name=com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher)/@0x9a10b49
+10-30 10:15:45.905   905   913 I ndroid.systemui: NativeAlloc concurrent mark compact GC freed 3773KB AllocSpace bytes, 3(60KB) LOS objects, 49% free, 17MB/35MB, paused 1.178ms,1.223ms total 287.274ms
+10-30 10:15:45.991   530   540 W GpuWork : Failed to attach bpf program to power/gpu_work_period tracepoint [2(No such file or directory)]
+10-30 10:15:46.042  2561  2561 D VRI[ComponentActivity]: visibilityChanged oldVisibility=true newVisibility=false
+10-30 10:15:46.055  1194  1194 D StateManager: createAtomicAnimation - fromState: Background, toState: Normal, partial trace:
+10-30 10:15:46.055  1194  1194 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.prepareToAnimate(WorkspaceRevealAnim.java:146)
+10-30 10:15:46.055  1194  1194 D StateManager: 	at com.android.quickstep.util.WorkspaceRevealAnim.<init>(WorkspaceRevealAnim.java:69)
+10-30 10:15:46.055  1194  1194 D StateManager: 	at com.android.launcher3.QuickstepTransitionManager.createWallpaperOpenAnimations(QuickstepTransitionManager.java:1844)
+10-30 10:15:46.056  2561  2561 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9cf5f5d in: STOPPED
+10-30 10:15:46.056  2561  2561 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=androidx.activity.ComponentActivity@9cf5f5d
+10-30 10:15:46.057  2561  2561 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.app.Activity$$ExternalSyntheticLambda0@445cd94
+10-30 10:15:46.057  2561  2561 D LifecycleMonitor: Lifecycle status change: androidx.activity.ComponentActivity@9cf5f5d in: DESTROYED
+10-30 10:15:46.057  2561  2561 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-30 10:15:46.058  1194  1194 D b/311077782: LauncherAnimationRunner.setAnimation
+10-30 10:15:46.072   668   784 I ImeTracker: com.android.launcher3:f469bc85: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-30 10:15:46.075   668   979 I ImeTracker: system_server:8388e753: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+10-30 10:15:46.076  2561  2561 D ViewRootImpl: Skipping stats log for color mode
+10-30 10:15:46.082   668   696 I ImeTracker: system_server:8388e753: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-30 10:15:46.134  1194  1194 D InsetsController: hide(ime(), fromIme=false)
+10-30 10:15:46.134  1194  1194 I ImeTracker: com.android.launcher3:f469bc85: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+10-30 10:15:46.134  1194  1194 D RecentsView: onTaskRemoved: 37, not handling task stack changes
+10-30 10:15:46.134  1194  1194 D RecentsView: onTaskRemoved: 37, not handling task stack changes
+10-30 10:15:46.206  2561  2596 I TokklAccessibility: font scale restored to 1.0
+10-30 10:15:46.210  2561  2596 E TestRunner: failed: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest)
+10-30 10:15:46.212  2561  2596 E TestRunner: ----- begin exception -----
+10-30 10:15:46.212  2561  2596 E TestRunner: java.lang.AssertionError: 1 Timer widget references need review
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:72)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at java.lang.reflect.Method.invoke(Native Method)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.ui.theme.SystemFontScale$apply$font$1.evaluate$lambda$4(SystemFontScale.kt:49)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.ui.theme.SystemFontScale$apply$font$1$$ExternalSyntheticLambda6.invoke(D8$$SyntheticClass:0)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.ui.theme.SystemDisplaySizeKt.withConfigurationRestored(SystemDisplaySize.kt:109)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.ui.theme.SystemFontScale$apply$font$1.evaluate(SystemFontScale.kt:28)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.SessionRule$apply$1.evaluate(SessionRule.kt:50)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.rules.RunRules.evaluate(RunRules.java:20)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.Suite.runChild(Suite.java:128)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.Suite.runChild(Suite.java:27)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.runner.JUnitCore.run(JUnitCore.java:115)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:68)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:59)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:467)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.accessibility.AccessibilityTestRunner.onStart(AccessibilityTestRunner.kt:31)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:2597)
+10-30 10:15:46.212  2561  2596 E TestRunner: Caused by: java.lang.AssertionError: timer_widget_dark_normal_375x338_running differs from its reference in 202 pixels, more than 20, within x 123..152, y 134..144 of 328x295. The capture is in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/actual/timer_widget_dark_normal_375x338_running.png and the diff in /sdcard/Android/media/com.canpicasoft.tokkl/additional_test_output/screenshots/diff/timer_widget_dark_normal_375x338_running.png.
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at org.junit.Assert.fail(Assert.java:89)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages.assertMatches(ReferenceImages.kt:50)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	at com.github.e0ipso.tokkl.widget.TimerWidgetScreenshotTest.allSizesAndStatesFitAndMatchReferences(TimerWidgetScreenshotTest.kt:68)
+10-30 10:15:46.212  2561  2596 E TestRunner: 	... 39 more
+10-30 10:15:46.212  2561  2596 E TestRunner: ----- end exception -----
+10-30 10:15:46.222  2561  2596 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest)

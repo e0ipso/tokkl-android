@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:28:39.290Z" hostname="punta-des-patro" time="0.014">
+  <properties/>
+  <testcase name="moreThanFiveProjectsFoldIntoOtherWithoutLosingTimeOrRunningMarker" classname="com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest" time="0.013"/>
+  <testcase name="largeTextDropsProjectRowsBeforeTemplates" classname="com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest" time="0.001"/>
+  <testcase name="sizesRequireBothDimensionsAndKeepTemplatesOnlyOnLargeCards" classname="com.github.e0ipso.tokkl.widget.TimerWidgetLayoutTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

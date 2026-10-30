@@ -1,0 +1,19 @@
+{
+  "index": 0,
+  "run": "api36-final-shard-0",
+  "summary": {
+    "exit": 0,
+    "cases": 134,
+    "failures": 0,
+    "skipped": 0,
+    "inputs_unchanged": true
+  },
+  "case_count": 134,
+  "actual_started": 134,
+  "actual_matching_finished": 134,
+  "case_multiset_matches_real_pairs": true,
+  "inputs_match_final": true,
+  "ci_shard_arguments": true,
+  "no_class_batch_filter": true,
+  "owned_boot_scope": "tokkl-emulator-5554-88346fc3.scope"
+}

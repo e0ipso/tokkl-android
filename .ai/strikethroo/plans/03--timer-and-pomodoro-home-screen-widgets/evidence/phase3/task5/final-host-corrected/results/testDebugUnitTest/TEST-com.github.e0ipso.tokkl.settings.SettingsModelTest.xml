@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.settings.SettingsModelTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:38.804Z" hostname="punta-des-patro" time="0.032">
+  <properties/>
+  <testcase name="anEditPreservesEveryOtherCurrentDefault" classname="com.github.e0ipso.tokkl.settings.SettingsModelTest" time="0.004"/>
+  <testcase name="invalidAndOutOfRangeDraftsNeverReachTheRepository" classname="com.github.e0ipso.tokkl.settings.SettingsModelTest" time="0.0"/>
+  <testcase name="everyFieldAcceptsBothInclusiveBounds" classname="com.github.e0ipso.tokkl.settings.SettingsModelTest" time="0.028"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

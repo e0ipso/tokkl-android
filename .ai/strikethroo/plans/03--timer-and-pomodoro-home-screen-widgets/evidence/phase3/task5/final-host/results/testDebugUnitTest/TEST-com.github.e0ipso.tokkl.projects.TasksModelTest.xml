@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.projects.TasksModelTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:34.889Z" hostname="punta-des-patro" time="0.265">
+  <properties/>
+  <testcase name="openTasksComeBeforeDoneOnesEachByName" classname="com.github.e0ipso.tokkl.projects.TasksModelTest" time="0.023"/>
+  <testcase name="deletingAsksFirstAndCancellingKeepsTheTask" classname="com.github.e0ipso.tokkl.projects.TasksModelTest" time="0.013"/>
+  <testcase name="aRefusalKeepsTheListWithTheServersReason" classname="com.github.e0ipso.tokkl.projects.TasksModelTest" time="0.056"/>
+  <testcase name="aNewTaskGoesWithItsNameTrimmedAndRefreshesTheCache" classname="com.github.e0ipso.tokkl.projects.TasksModelTest" time="0.06"/>
+  <testcase name="theFormRenamesTheTaskAndMarksItDone" classname="com.github.e0ipso.tokkl.projects.TasksModelTest" time="0.058"/>
+  <testcase name="anotherProjectsFormLoadsItsOwnTasks" classname="com.github.e0ipso.tokkl.projects.TasksModelTest" time="0.055"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

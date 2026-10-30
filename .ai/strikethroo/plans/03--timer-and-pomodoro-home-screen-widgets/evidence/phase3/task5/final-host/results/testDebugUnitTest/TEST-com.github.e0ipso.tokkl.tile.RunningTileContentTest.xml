@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.tile.RunningTileContentTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:45.008Z" hostname="punta-des-patro" time="0.018">
+  <properties/>
+  <testcase name="withNoneRunningTheTileContinuesTheStoppedEntryThatStartedLast" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.004"/>
+  <testcase name="aPausedTileTappedAfterTheChainResumedElsewhereSendsNothing" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.001"/>
+  <testcase name="withNothingToContinueTheTileDoesNothing" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.001"/>
+  <testcase name="tiedSnappedStartsContinueTheNewestLocalEntryBeforeServerEntries" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.001"/>
+  <testcase name="tiedServerStartsContinueTheNewestServerId" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.001"/>
+  <testcase name="aPausedTimerMakesTheTileResumeTheChainOnTheServerAtTheShownRevision" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.002"/>
+  <testcase name="aRunningEntryMakesTheTileStopIt" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.002"/>
+  <testcase name="aResumedCloneStopsThroughTheQueue" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.0"/>
+  <testcase name="aTapActsOnWhatTheTileShowsNotOnWhatTheCacheHoldsByNow" classname="com.github.e0ipso.tokkl.tile.RunningTileContentTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

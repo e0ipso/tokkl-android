@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Duration
@@ -245,7 +246,10 @@ class RunningCheckServerTest {
         Session(context).save(server, token)
     }
 
-    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(WorkQuery.fromStates(WorkInfo.State.entries)).get()
+    /** Keep idle checks broad across Tokkl's work without counting Glance's widget sessions. */
+    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(WorkQuery.fromTags(listOf(
+        BackgroundSendWorker::class.java.name, RunningCheckWorker::class.java.name, ReminderWorker::class.java.name,
+    ))).get()
 
     private fun checkWork(): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(RunningCheck.WORK_NAME).get()
 

@@ -169,6 +169,7 @@ readonly PROXY_IMAGE='haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c6
 readonly AVD="${TOKKL_TEST_AVD:-tokkl-api36}"
 readonly EMAIL='instrumented-tests@example.com'
 readonly RUNNER_ARGS='android.testInstrumentationRunnerArguments'
+readonly DISCOVERY_HELPER="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/emulator-discovery.py"
 # Where each run puts its credentials file on a test device, named with this
 # prefix, a random part and .properties.
 readonly CREDENTIALS_DIR='/data/local/tmp'
@@ -535,6 +536,9 @@ remove_run_directory() {
             return 1
         fi
     fi
+    if [ -d "$dir/runtime" ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+        python3 "$DISCOVERY_HELPER" remove "$dir" "$XDG_RUNTIME_DIR" || return 1
+    fi
     rm -rf -- "$dir"
 }
 
@@ -627,6 +631,7 @@ wait_for_memory() {
 boot_emulator() {
     command -v emulator >/dev/null || { echo "$0: no device attached and emulator is not on PATH" >&2; exit 1; }
     local port=5554 log="$work_dir/emulator.log" deadline caller emulator_sdk gpu=lavapipe level waited_from=$SECONDS
+    local stock_ime=com.android.inputmethod.latin/.LatinIME available_imes selected_ime
     local -a launch=() instance_args=() emulator_env=()
     # One run boots at a time, so the next one sees this one's emulator in adb
     # and in the memory it takes.
@@ -652,6 +657,19 @@ boot_emulator() {
         instance_args=(-read-only)
         mkdir -m 700 "$work_dir/runtime"
         emulator_env=("XDG_RUNTIME_DIR=$work_dir/runtime")
+        if [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+            # Start authenticated gRPC before publishing its discovery record.
+            # Otherwise the hub's first attempt activates it without finding its token.
+            local grpc_port
+            grpc_port=$(python3 - <<'PY'
+import socket
+with socket.socket() as listener:
+    listener.bind(("127.0.0.1", 0))
+    print(listener.getsockname()[1])
+PY
+            )
+            instance_args+=(-grpc "$grpc_port" -grpc-use-token)
+        fi
     fi
     if command -v systemd-run >/dev/null && systemctl --user show --property=Version >/dev/null 2>&1; then
         emulator_unit="tokkl-emulator-$port-$(random_hex 4).scope"
@@ -701,6 +719,12 @@ boot_emulator() {
         fi
         sleep 2
     done
+    # Device hubs search the user's standard discovery directory. Keep netsimd
+    # isolated, but let them find this emulator's existing authenticated record.
+    # remove_run_directory removes only links into the run it is cleaning up.
+    if [ -d "$work_dir/runtime" ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+        python3 "$DISCOVERY_HELPER" publish "$work_dir" "$XDG_RUNTIME_DIR" "$emulator_serial"
+    fi
     # A fresh headless boot often leaves "System UI isn't responding" holding
     # window focus, so keys the tests inject go to that dialog. This emulator
     # is the script's own, so it may change its settings: hide error dialogs
@@ -711,6 +735,22 @@ boot_emulator() {
     # whatever it read before a test. Start every run at the default size, so a
     # test that sets no scale of its own does not run at a scale left behind.
     adb -s "$emulator_serial" shell settings put system font_scale 1.0
+    # Device automation can leave its nonvisual text-input helper selected in
+    # the AVD. These tests need the real keyboard and its window insets. This
+    # setup runs only for an emulator this script booted, never an attached one.
+    available_imes=$(adb -s "$emulator_serial" shell ime list -a -s | tr -d '\r')
+    if ! printf '%s\n' "$available_imes" | grep -Fxq "$stock_ime"; then
+        echo "$0: $AVD does not have the required stock AOSP keyboard $stock_ime installed." >&2
+        exit 1
+    fi
+    adb -s "$emulator_serial" shell ime enable "$stock_ime" >/dev/null
+    adb -s "$emulator_serial" shell ime set "$stock_ime" >/dev/null
+    selected_ime=$(adb -s "$emulator_serial" shell settings get secure default_input_method | tr -d '\r')
+    if [ "$selected_ime" != "$stock_ime" ]; then
+        echo "$0: $AVD did not select the required stock AOSP keyboard." >&2
+        exit 1
+    fi
+    echo "Selected stock AOSP keyboard $stock_ime on owned emulator $emulator_serial"
     # Focusing a text field never opened the soft keyboard on the headless
     # emulator, so no test saw a screen with the keyboard open. With this
     # setting, which shows it alongside a hardware keyboard, it opens.

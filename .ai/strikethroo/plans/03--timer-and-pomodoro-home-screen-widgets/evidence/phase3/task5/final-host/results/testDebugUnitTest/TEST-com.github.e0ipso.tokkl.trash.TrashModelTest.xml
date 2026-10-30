@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.trash.TrashModelTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:49.821Z" hostname="punta-des-patro" time="0.274">
+  <properties/>
+  <testcase name="purgeDeletesOneEntryAtOnce" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.052"/>
+  <testcase name="anUnreachableServerTurnsEveryActionOff" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.004"/>
+  <testcase name="aPurgeOfAnEntryNoLongerInTheTrashLoadsTheListAgain" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.088"/>
+  <testcase name="aServerWithoutTheTrashHidesItInsteadOfFailing" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.003"/>
+  <testcase name="anEmptyTrashAsksNothing" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.004"/>
+  <testcase name="openingListsTheDeletedEntries" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.011"/>
+  <testcase name="anAnswerThatIsNotAListHidesTheTrashToo" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.008"/>
+  <testcase name="restoreTakesTheEntryOutOfTheTrashAndRefreshesTheCache" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.047"/>
+  <testcase name="cancellingTheQuestionKeepsTheTrash" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.006"/>
+  <testcase name="emptyingSendsNothingUntilTheQuestionIsAnswered" classname="com.github.e0ipso.tokkl.trash.TrashModelTest" time="0.046"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

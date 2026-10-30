@@ -24,7 +24,6 @@
     <string name="widget_pause_description">Pause the timer</string>
     <string name="widget_resume_description">Resume the timer</string>
     <!-- The widget's state while paused, with the frozen time: Paused · 1:05:00 -->
-    <string name="widget_paused">Paused · %1$s</string>
     <!--
         The tile's second line while paused. It keeps the state and says to hold, which opens
         Resume and Stop. The tap still resumes, and TalkBack says the state, the tap and the hint.

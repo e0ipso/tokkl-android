@@ -196,7 +196,12 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
                         Spacer(GlanceModifier.width(4.dp))
                         Label(context.getString(R.string.widget_billable), 10f, muted = true)
                     }
-                    StaticDuration(context, day?.formattedBillable(Instant.now()) ?: formatDuration(0), 16f, width / 3 - 6)
+                    if (day?.running?.billable == true) {
+                        Elapsed(context, day.running.start, day.stoppedBillableSeconds, 16f, width / 3 - 6,
+                            context.getString(R.string.widget_billable))
+                    } else {
+                        StaticDuration(context, day?.formattedBillable(Instant.now()) ?: formatDuration(0), 16f, width / 3 - 6)
+                    }
                 }
                 Column(GlanceModifier.defaultWeight()) {
                     Label(context.getString(R.string.widget_entries), 10f, muted = true)

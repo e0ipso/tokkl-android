@@ -1,0 +1,20 @@
+[
+  {
+    "file": "app/src/androidTest/java/com/github/e0ipso/tokkl/settings/SettingsScreenTest.kt",
+    "original_sha256": "5b2a6f5098d629f5f1388172233e8ad8ca661f944339e1d1c3effe9c222f2f77",
+    "current_sha256": "5b2a6f5098d629f5f1388172233e8ad8ca661f944339e1d1c3effe9c222f2f77",
+    "unchanged": true
+  },
+  {
+    "file": "app/src/androidTest/java/com/github/e0ipso/tokkl/timer/DescriptionSuggestionsServerTest.kt",
+    "original_sha256": "f282f8ff3ccf684d27a1dc35e61aedcc1787b261f921f70580458fbdcd242950",
+    "current_sha256": "f282f8ff3ccf684d27a1dc35e61aedcc1787b261f921f70580458fbdcd242950",
+    "unchanged": true
+  },
+  {
+    "file": "app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/LargestFontScaleTest.kt",
+    "original_sha256": "d4c01e5be05acfee8a3c04d006abb343e66dc1da2679a827e034454cfe9196c0",
+    "current_sha256": "d4c01e5be05acfee8a3c04d006abb343e66dc1da2679a827e034454cfe9196c0",
+    "unchanged": true
+  }
+]

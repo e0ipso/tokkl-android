@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:22.654Z" hostname="punta-des-patro" time="0.202">
+  <properties/>
+  <testcase name="opensTheHeldPhaseItsIntentNamesWithTheServersTransitionNumberAndOvertime" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.004"/>
+  <testcase name="aConfirmOnAnotherDeviceOrAnEndedSessionClosesIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.0"/>
+  <testcase name="aRefusalWithinTheSamePhaseStaysOpenAtTheServersRevision" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.015"/>
+  <testcase name="duplicateAndStaleIntentsLeaveTheAlarmOnScreen" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.001"/>
+  <testcase name="aMissingOrStaleIdentityOrAnEndNotYetReachedCannotOpen" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.003"/>
+  <testcase name="withoutTheTimerApiOrASessionNothingOpens" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.002"/>
+  <testcase name="aNewRevisionOfItsPhaseKeepsItOpenWithThatRevision" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.005"/>
+  <testcase name="recreationSendsNothing" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.002"/>
+  <testcase name="theOvertimeIsCorrectedByTheStatesClockOffset" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.002"/>
+  <testcase name="nextSendsTheShownRevisionOnceAndTheServersAnswerClosesIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.008"/>
+  <testcase name="itOpensOnceTheStoredStateHasLoaded" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.064"/>
+  <testcase name="endSendsTheShownRevisionAndClosesWhenTheSessionIsGone" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.08"/>
+  <testcase name="offlineLeavesTheAlarmOpenWithTheStandardMessageAndTheUserCanRetry" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModelTest" time="0.014"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

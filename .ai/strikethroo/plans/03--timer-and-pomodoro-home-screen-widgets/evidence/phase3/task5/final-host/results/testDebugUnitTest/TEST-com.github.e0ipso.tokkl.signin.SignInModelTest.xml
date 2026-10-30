@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.signin.SignInModelTest" tests="36" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:43.116Z" hostname="punta-des-patro" time="0.522">
+  <properties/>
+  <testcase name="anotherUrlAsksAgain" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.009"/>
+  <testcase name="aUserNameOrPasswordInTheServerUrlIsRefused" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.003"/>
+  <testcase name="onlyTheServerOriginAndTheDeadlineAreStored" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.019"/>
+  <testcase name="signingInAgainRefusesAnotherAccountAndKeepsTheExistingSession" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.011"/>
+  <testcase name="aRestoredFormStillChecksThePersistedAccountBeforeStoringCredentials" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.009"/>
+  <testcase name="apiTokenSignInKeepsTheBasePathAndStoresServerAndToken" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.009"/>
+  <testcase name="recreatedModelWithinTheCooldownStillBlocksSignIn" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.007"/>
+  <testcase name="aQueryAndAFragmentInTheServerUrlAreDropped" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.014"/>
+  <testcase name="meWithoutAnApiTokenFailsEmailAndPasswordSignIn" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.012"/>
+  <testcase name="confirmationThatCannotBeStoredSendsNothing" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.004"/>
+  <testcase name="emailAndPasswordSignInStoresOnlyTheTokenFromMe" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.012"/>
+  <testcase name="untrustedCertificatePromptsAndTrustingItPinsThatCertificateThenSends" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.01"/>
+  <testcase name="meWithoutTimeResolutionSignsInWithNoSnapping" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.007"/>
+  <testcase name="passwordIsSentExactlyAsTyped" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.005"/>
+  <testcase name="aPassedDeadlineIsGoneFromThePhone" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.006"/>
+  <testcase name="forbiddenIsABadCredentialsFailureAndStoresNothing" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.007"/>
+  <testcase name="storageFailureIsReported" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.01"/>
+  <testcase name="httpsServerNeverShowsTheWarning" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.02"/>
+  <testcase name="handshakeFailureFromThePinningTrustManagerCarriesTheCertificate" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.002"/>
+  <testcase name="redirectToAnotherHostIsRefusedAndStoresNothing" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.018"/>
+  <testcase name="aDeadlineBlocksOnlyItsOwnServer" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.006"/>
+  <testcase name="signingInAgainAcceptsTheSameAccountWithItsNewToken" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.006"/>
+  <testcase name="changedCertificatePromptsAgainAndCancelKeepsTheOldPin" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.005"/>
+  <testcase name="aFormOpenedBeforeSettingsLoadStillChecksThePersistedIdentity" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.026"/>
+  <testcase name="tooManyRequestsBlocksSubmitUntilRetryAfterPassesAndNeverRetriesAlone" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.062"/>
+  <testcase name="aStoredDeadlineThatHasPassedIsDroppedWhenTheModelStarts" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.006"/>
+  <testcase name="incompleteFormSendsNothing" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.005"/>
+  <testcase name="signingInAgainRefusesAnotherServerWithoutSendingTheToken" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.002"/>
+  <testcase name="meWithoutTimezoneOrWeekStartIsNotTokklAndStoresNothing" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.098"/>
+  <testcase name="aSuccessfulSignInForgetsTheDeadline" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.051"/>
+  <testcase name="tooManyRequestsWithoutRetryAfterWaitsAMinute" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.012"/>
+  <testcase name="plainHttpServerShowsTheWarningAndSendsNothingUntilTheUserConfirms" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.008"/>
+  <testcase name="answerThatIsNotAUserIsNotTokkl" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.005"/>
+  <testcase name="notFoundKeepsItsStatus" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.013"/>
+  <testcase name="dismissingTheWarningSendsAndStoresNothingAndTheNextSubmitAsksAgain" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.006"/>
+  <testcase name="stateAndCredentialsNeverPrintSecrets" classname="com.github.e0ipso.tokkl.signin.SignInModelTest" time="0.011"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

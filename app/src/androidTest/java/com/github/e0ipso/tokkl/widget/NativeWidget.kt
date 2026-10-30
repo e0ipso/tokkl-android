@@ -20,6 +20,8 @@ import androidx.activity.ComponentActivity
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.accessibility.AccessibilityChecks
 import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
+import java.io.RandomAccessFile
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -33,7 +35,7 @@ class NativeWidget(
     private val context = instrumentation.targetContext
     private val component = ComponentName(context, receiver)
     private val manager = AppWidgetManager.getInstance(context)
-    private val host = object : AppWidgetHost(context, 6000) {
+    private val host = object : AppWidgetHost(context, reserveHostId(context)) {
         override fun onCreateView(context: Context, id: Int, info: AppWidgetProviderInfo): AppWidgetHostView =
             object : AppWidgetHostView(context) {
                 override fun updateAppWidget(views: RemoteViews?) {
@@ -52,27 +54,33 @@ class NativeWidget(
     /** Provider resets the host has applied, on the main thread like [updates]. */
     val resets = AtomicInteger()
     val updates = AtomicInteger()
-    val provider: AppWidgetProviderInfo
-    private val id: Int
-    private val scenario: ActivityScenario<ComponentActivity>
+    lateinit var provider: AppWidgetProviderInfo
+        private set
+    private var id = AppWidgetManager.INVALID_APPWIDGET_ID
+    private lateinit var scenario: ActivityScenario<ComponentActivity>
     private lateinit var view: AppWidgetHostView
 
     init {
-        instrumentation.uiAutomation.adoptShellPermissionIdentity(Manifest.permission.BIND_APPWIDGET)
         try {
-            id = host.allocateAppWidgetId()
-            assertTrue("the installed provider can be bound", manager.bindAppWidgetIdIfAllowed(id, component, options(375, 338)))
-            provider = checkNotNull(manager.getAppWidgetInfo(id))
-        } finally {
-            instrumentation.uiAutomation.dropShellPermissionIdentity()
+            instrumentation.uiAutomation.adoptShellPermissionIdentity(Manifest.permission.BIND_APPWIDGET)
+            try {
+                id = host.allocateAppWidgetId()
+                assertTrue("the installed provider can be bound", manager.bindAppWidgetIdIfAllowed(id, component, options(375, 338)))
+                provider = checkNotNull(manager.getAppWidgetInfo(id))
+            } finally {
+                instrumentation.uiAutomation.dropShellPermissionIdentity()
+            }
+            scenario = ActivityScenario.launch(ComponentActivity::class.java)
+            scenario.onActivity { activity ->
+                host.startListening()
+                view = host.createView(activity, id, provider)
+                activity.setContentView(FrameLayout(activity).apply { addView(view) })
+            }
+            resize(375, 338)
+        } catch (failure: Throwable) {
+            try { close() } catch (cleanup: Throwable) { failure.addSuppressed(cleanup) }
+            throw failure
         }
-        scenario = ActivityScenario.launch(ComponentActivity::class.java)
-        scenario.onActivity { activity ->
-            host.startListening()
-            view = host.createView(activity, id, provider)
-            activity.setContentView(FrameLayout(activity).apply { addView(view) })
-        }
-        resize(375, 338)
     }
 
     /** Apply a composed fixture through the same native host used for real provider tests. */
@@ -154,6 +162,16 @@ class NativeWidget(
             assertTrue("the native widget control handles the tap", button.performClick())
             true
         }
+    }
+
+    /** Capture the rendered native action before a later provider redraw replaces its revision. */
+    fun captureTap(label: String): () -> Unit {
+        awaitDescription(label)
+        val target = onMain {
+            val child = descendants().first { it.contentDescription?.toString() == label }
+            generateSequence(child) { it.parent as? View }.first { it.isClickable }
+        }
+        return { onMain { assertTrue("the captured native action handles the tap", target.performClick()) } }
     }
 
     /** Text must fit vertically even when Android enlarges the font. Ellipsis may shorten names. */
@@ -263,12 +281,15 @@ class NativeWidget(
     }
 
     override fun close() {
-        onMain {
-            host.stopListening()
-            host.deleteHost()
+        try {
+            onMain {
+                try { host.stopListening() } finally { host.deleteHost() }
+            }
+        } finally {
+            if (::scenario.isInitialized) scenario.close()
         }
-        scenario.close()
-        org.junit.Assert.assertEquals("the disposable host has no widgets", 0, manager.getAppWidgetIds(component).size)
+        org.junit.Assert.assertEquals("the disposable host has no widgets", 0, host.appWidgetIds.size)
+        assertTrue("the disposable widget is no longer bound", id !in manager.getAppWidgetIds(component))
     }
 
     private fun descendants(): List<View> {
@@ -295,6 +316,26 @@ class NativeWidget(
     }
 
     private companion object {
+        private val hostIdLock = Any()
+
+        /** Orchestrated tests restart the process but retain Android's hosts and the app's data. */
+        fun reserveHostId(context: Context): Int = synchronized(hostIdLock) {
+            RandomAccessFile(File(context.noBackupFilesDir, "native-widget-host-id"), "rw").use { counter ->
+                counter.channel.lock().use {
+                    var candidate = if (counter.length() == Int.SIZE_BYTES.toLong()) counter.readInt() else 6000
+                    do {
+                        check(candidate < Int.MAX_VALUE) { "native widget host IDs exhausted" }
+                        candidate++
+                        // Hosts left by older fixtures have no persisted reservation. Leave them
+                        // alone and reserve an unused ID instead of sharing their ownership.
+                    } while (AppWidgetHost(context, candidate).appWidgetIds.isNotEmpty())
+                    counter.seek(0)
+                    counter.writeInt(candidate)
+                    candidate
+                }
+            }
+        }
+
         /** A test's fresh WorkManager flips its receiver once; a second reset leaves margin. */
         const val MAX_RESET_RESTARTS = 2
     }

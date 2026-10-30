@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.time.SnapTest" tests="36" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:45.222Z" hostname="punta-des-patro" time="0.015">
+  <properties/>
+  <testcase name="goldenCase1" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.001"/>
+  <testcase name="goldenCase2" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase3" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase4" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase5" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase6" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase7" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase8" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase9" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.001"/>
+  <testcase name="goldenCase10" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase11" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase12" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase13" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase14" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase15" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase16" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase17" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase18" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase19" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase20" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase21" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase22" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase23" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.004"/>
+  <testcase name="goldenCase24" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.001"/>
+  <testcase name="goldenCase25" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase26" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase27" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase28" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase29" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase30" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase31" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.001"/>
+  <testcase name="goldenCase32" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase33" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.004"/>
+  <testcase name="goldenCase34" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.001"/>
+  <testcase name="goldenCase35" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.0"/>
+  <testcase name="goldenCase36" classname="com.github.e0ipso.tokkl.time.SnapTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -209,16 +209,6 @@ fun widgetState(
 }
 
 /**
- * How many of [count] favorites fit in a widget [heightDp] tall, under the timer row. Each takes
- * a row of [WidgetLayout.FAVORITE_ROW_DP], the size of a touch target.
- */
-fun favoritesThatFit(heightDp: Float, count: Int, fontScale: Float = 1f): Int {
-    val room = heightDp - 2 * WidgetLayout.PADDING_DP - WidgetLayout.timerRowHeight(fontScale)
-    if (room <= 0f) return 0
-    return (room / WidgetLayout.favoriteRowHeight(fontScale)).toInt().coerceIn(0, count)
-}
-
-/**
  * The base of a Chronometer that counts from [start], after [accumulatedSeconds] a pause chain
  * stored before it: the `SystemClock.elapsedRealtime()` at which it read zero, given that [now]
  * on the wall clock is [elapsedRealtime] on that clock. A start after [now], from a clock that
@@ -236,7 +226,7 @@ fun WidgetState.key(): String {
     return digest.joinToString("") { "%02x".format(it) }
 }
 
-/** The widget's sizes, in dp, which [favoritesThatFit] and the layout share. */
+/** Sizes shared by responsive fitting and the widget layout, in dp. */
 object WidgetLayout {
     // Approved 298×222 and 375×338 cards, with room for launcher padding.
     const val MEDIUM_WIDTH_DP = 260f
@@ -251,12 +241,4 @@ object WidgetLayout {
     fun statsHeight(scale: Float): Float = 44f + 20f * (scale.coerceAtLeast(1f) - 1f)
     fun todayRowHeight(scale: Float): Float = 26f + 14f * (scale.coerceAtLeast(1f) - 1f)
     const val PADDING_DP = 12f
-    const val TIMER_ROW_DP = 80f
-    const val FAVORITE_ROW_DP = 48f
-
-    fun buttonHeight(fontScale: Float): Float = 48f + 16f * (fontScale.coerceAtLeast(1f) - 1f)
-
-    fun timerRowHeight(fontScale: Float): Float = buttonHeight(fontScale) + (TIMER_ROW_DP - 48f) * fontScale.coerceAtLeast(1f)
-
-    fun favoriteRowHeight(fontScale: Float): Float = FAVORITE_ROW_DP * fontScale.coerceAtLeast(1f)
 }

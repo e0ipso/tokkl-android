@@ -244,12 +244,12 @@ Task 1 owns Timer state and shared total helpers. Task 2 owns Pomodoro state and
 
 Verify focused JVM/build/lint and focused device layout checks. Record API36 screenshot references before the commit changing appearance; task 5 expands behavioral proof and validates those references.
 
-### Phase 3: Device workflow proof
-**Status:** pending
+### ✅ Phase 3: Device workflow proof
+**Status:** completed
 **Parallel Tasks:**
-- Task 005: Prove widget workflows on API 31 and 36 (depends on: 003, 004)
+- ✔️ Task 005: Prove widget workflows on API36; defer API31 to CI (depends on: 003, 004)
 
-Inventory and isolate all failing tests, then run full suites on both APIs and record JUnit counts and all seven Self Validation steps.
+Inventory and isolate all failing tests, then run full local suites on API36 and record JUnit counts and all seven Self Validation steps. API31 remains deferred to the existing CI matrix under the user's explicit scope override.
 
 ### Phase 4: Documentation of verified behavior
 **Status:** pending
@@ -314,3 +314,54 @@ The user directed: "address the issues and try device acceptance again. We only 
 The advisory Opus 5.5 review identified the denied-alarm phase-end update, stale phase progress/percentage, static running Billable tile and retired layout helpers/strings. The implementer addresses these within task 5. The progress display becomes a phase-colour band with words, avoiding a falsely current percentage without periodic widget wakeups. Billable uses a native clock while a billable segment runs.
 
 Phase 2 is accepted from the initial parent's 24-method device run (22 passed, all 208 references and native clocks passed), the corrected 2/2 focused run, and exact content verification now. `evidence/phase2/parent/resume-input-audit.json` compares 85 Timer inputs and 180 Pomodoro inputs with the recorded successful manifests. The only mismatches are precisely WidgetNavigationTest.kt and WidgetServerTest.kt, whose two failures were fixed and passed in the focused rerun. Production code and reference images match the previously tested inputs. The unfinished full rerun remains excluded. Phase 2 is committed before review fixes change appearance; task 5 records references for those further changes in its own commit.
+
+
+### Review fix implementation
+
+Parent implemented all four advisory fixes; see `evidence/phase3/review-fixes/README.md`. Focused verification passed 70 tests with no failures/errors/skips, Android test compilation and lint with zero errors. Native acceptance and updated visual references remain with task 5. Inexact fallback delivery is best effort; exact-alarm denial remains visible, and no new idle work or periodic widget redraw is added. API31 is deferred to CI.
+
+
+## Execution Summary — second device acceptance attempt
+
+**Status**: Halted in phase 3; not archived
+**Completed Date**: Not completed; attempt halted on 2026-10-30
+
+### Results
+
+Phase 2 is committed as `cf0af4a`. All four advisory findings have implementation fixes, and task 5 added real-server Pomodoro native-action/account/defaults/offline/conflict/live-deadline tests, denied-alarm native scheduling tests, the Billable clock test and real-worker midnight coverage with a narrow default-UTC Clock seam. These changes remain uncommitted because the required refreshed appearance references and device acceptance have not completed.
+
+The parent independently parsed the saved JUnit and npm output, checked exit codes/build/lint receipts, and compared all 1,006 recorded input hashes with the current tree: 1,069 JVM tests with 0 failures/errors/skips, 10 npm tests passed, Android test compilation successful, lint 0 errors/fatal issues. Receipt: `evidence/phase3/parent-host-audit.json`. No device acceptance is inferred from those host results. Task 5 is failed/incomplete; task 6 remains pending.
+
+**Code Review**: Failed — terminal review was not run because task 5's API36 runtime/visual acceptance remains incomplete. The separate advisory Opus 5.5 review ran, and its four findings have been addressed in code; runtime proof remains pending.
+
+### Noteworthy Events
+
+- Device panel attached to the runner's bounded lavapipe/read-only API36 instance. Its screenshot operation failed with `Device screenshot failed: Could not communicate with device support. Try refreshing devices.` The advised refresh succeeded, but the one screenshot retry failed with the same error. The tool instructions require stopping device work after that retry. The worker stopped only its own run scope and emulator; the parent verified the owned run scope is inactive/dead. The device run exited 143, has no terminal JUnit or complete liveness receipt, and supplies no accepted runtime result.
+- Before interruption, two fixture failures were observed and corrected, without weakening their account/revision assertions. They still need a focused rerun. Exact selectors and observed events are saved in `evidence/phase3/task5/known-failure-selectors.txt` and the initial-run directory. The missing terminal report is not represented as a complete failure inventory.
+- Changed phase-band and running-Billable references remain unrecorded/unreviewed. The phase cannot be committed as visually verified. Seven Self Validation steps and all plan success criteria have an explicit evidence/gap map in `evidence/phase3/task5/README.md`.
+- API31 was not booted or run locally. It remains deferred to the existing CI [36,31] matrix per the user override; no passing API31 result is claimed.
+- Review gate JSON: no result produced; the gate was not reached. The advisory review's four findings were acted on; none were ignored. The terminal review remains pending after POST_EXECUTION.
+
+### Necessary follow-ups
+
+User direction is required under the execute-blueprint failure rule before continuing the failed phase. Diagnose/restore Device panel screenshot support, or explicitly change the remaining acceptance workflow. Once device support is available, run the two corrected fixture selectors first, then finish native/alarm/midnight runtime proof, review only changed references, and run the required final API36 instrumented/Compose suite. Complete task 6 and final gates only with accurate verification claims. No API31 local run, push or PR is implied by this halted attempt.
+
+### Device-support diagnosis follow-up — 2026-10-30
+
+The user selected diagnosis. The Device hub returns gRPC status 16, missing authorization credentials: it cannot find the authenticated emulator discovery record inside the runner's isolated runtime directory. Discovery itself works. [Diagnosis and scoped repair design](evidence/phase3/device-support-diagnosis.md) records the source/runtime evidence and a proposed ownership-safe discovery link; no repair or successful screenshot is claimed. No global service restart or authentication bypass was attempted.
+
+The completed API36 focused run executed both known failure selectors, with two failures and unchanged inputs. Replacement-account setup throws a null-value error; native widget cleanup still sees one widget. These results replace the previous “corrected but not rerun” status. The runner naturally cleaned up its emulator, the owned scope is inactive/dead, and this thread's Device panel attachment was closed. No reference changes, acceptance, commit or push occurred. Phase 3 remains halted pending user direction, with API31 deferred to CI.
+
+### Resumed phase 3 validation strategy
+
+After the user authorized repair and renewed acceptance, authenticated discovery and Device panel capture recovered. The original two failing selectors passed. All 208 widget references were exercised and 40 changed captures were visually reviewed and replaced. The first complete API36 suite ran 736 cases: all 33 widget cases passed, while ten broader test failures were isolated. Four counted independent Glance jobs as Tokkl work; six used the nonvisual automation IME retained by the AVD. A positive union of Tokkl Worker tags and runner-owned stock-keyboard setup fixed all ten without changing the original keyboard test files. Exact ten-case and surrounding 41-case runs passed with unchanged inputs.
+
+The next unfiltered run was interrupted by QEMU's hang detector under actual shared-host memory pressure: 535 cases passed, one was unfinished, 200 did not execute. It supplies no full-suite acceptance. Competing processes were not terminated. Host checks continue independently in the required protected scope.
+
+The next complete local API36 validation uses the existing CI configuration: six sequential invocations of the maintained runner with `numShards=6` and `shardIndex=0..5`, one fresh bounded emulator per invocation. The shipped `StepAwareShardingFilter` keeps ordered restart-test classes together. Each invocation runs its whole shard; no custom class batching, source change, skipped test or API31 local run is introduced. Acceptance requires all six terminal runs to pass on matching source/resource/build/runner inputs, with an exact disjoint union of the original 736 case identities, all 33 widget methods and all eight reference classes. The interrupted 535-case subset is not substituted for any shard. API31 remains deferred to CI.
+
+### Phase 3 parent acceptance
+
+The six final API36 shards passed 134/108/108/132/127/127 cases. The parent independently parsed all terminal XML, required zero failures/errors/skips, compared the exact 736 identities with the complete inventory, checked all 33 widget methods and eight reference classes, and verified all 1,011 current input hashes against every accepted run. Receipt: `evidence/phase3/task5/parent-shard-xml-audit.json`. The worker's independent union audit additionally proves all eight ordered restart groups stayed whole, all 736 actual start/finish receipts match, and six distinct owned boots were used. All 208 widget reference comparisons passed; 40 changed captures were reviewed and copied, with 168 preserved.
+
+Fresh host verification passed 1,069 JVM tests with zero failures/errors/skips, executed Android test compilation, and produced lint with zero Error/Fatal issues (12 warnings and one hint). All 11 npm tests passed, including the five-case Python lifecycle suite wrapper. The parent checked saved XML/exit codes/npm counts and fresh `git diff --check`. Accepted source/resource/build/runner/npm manifests match the current tree. All owned final units are inactive and the Device panel is closed. Task 5 is completed within the explicit API36 local/API31 CI scope. Task 6 still owns the documentation updates and final Self Validation 7 doc-match; whole-plan completion and the terminal review gate are not yet claimed.

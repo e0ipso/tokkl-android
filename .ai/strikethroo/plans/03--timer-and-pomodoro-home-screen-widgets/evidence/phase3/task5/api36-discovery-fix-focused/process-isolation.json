@@ -1,0 +1,16 @@
+[
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields.txt",
+    "test_runner_lines": [
+      "10-30 09:46:30.023  2468  2511 I TestRunner: started: signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 09:46:35.910  2468  2511 I TestRunner: finished: signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields.txt",
+    "test_runner_lines": [
+      "10-30 09:46:37.043  2603  2640 I TestRunner: started: remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 09:46:45.682  2603  2640 I TestRunner: finished: remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
+    ]
+  }
+]

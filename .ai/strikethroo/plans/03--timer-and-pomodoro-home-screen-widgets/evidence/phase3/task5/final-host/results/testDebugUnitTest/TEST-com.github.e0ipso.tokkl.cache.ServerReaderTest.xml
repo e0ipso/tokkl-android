@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.cache.ServerReaderTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:29.065Z" hostname="punta-des-patro" time="0.198">
+  <properties/>
+  <testcase name="entriesAreAskedForTheWindowInTheAccountZoneAndParsed" classname="com.github.e0ipso.tokkl.cache.ServerReaderTest" time="0.017"/>
+  <testcase name="preferencesWithoutFavoritesMeanNoFavorites" classname="com.github.e0ipso.tokkl.cache.ServerReaderTest" time="0.006"/>
+  <testcase name="anUnknownZoneReadsNoEntries" classname="com.github.e0ipso.tokkl.cache.ServerReaderTest" time="0.002"/>
+  <testcase name="aTokklRefreshAsksForThePreferencesOnce" classname="com.github.e0ipso.tokkl.cache.ServerReaderTest" time="0.113"/>
+  <testcase name="withoutFavoritesNoneAreKept" classname="com.github.e0ipso.tokkl.cache.ServerReaderTest" time="0.037"/>
+  <testcase name="failedRequestsLeaveTheirListsUnread" classname="com.github.e0ipso.tokkl.cache.ServerReaderTest" time="0.011"/>
+  <testcase name="favoritesThatDoNotDecodeAreUnreadAlone" classname="com.github.e0ipso.tokkl.cache.ServerReaderTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

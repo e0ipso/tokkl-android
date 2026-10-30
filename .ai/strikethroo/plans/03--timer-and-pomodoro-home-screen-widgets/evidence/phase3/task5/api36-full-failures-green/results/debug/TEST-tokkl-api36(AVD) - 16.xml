@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="10" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-30T11:23:58" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" tests="3" failures="0" errors="0" skipped="0" time="40.787" timestamp="2026-10-30T11:23:58" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theRetryAfterTheBackoffSendsTheQueue" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="32.911" />
+    <testcase name="callsThatQueueNothingScheduleNoWork" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="2.202" />
+    <testcase name="restoringTheNetworkSendsTheQueueWithTheAppClosed" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="5.674" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" tests="1" failures="0" errors="0" skipped="0" time="3.273" timestamp="2026-10-30T11:23:58" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="startingATimerSchedulesOneCheckAndStoppingItCancelsIt" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="3.273" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.settings.SettingsScreenTest" tests="1" failures="0" errors="0" skipped="0" time="7.658" timestamp="2026-10-30T11:23:58" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="reminderSwitchAndHoursValidateAndApply" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="7.658" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest" tests="1" failures="0" errors="0" skipped="0" time="12.045" timestamp="2026-10-30T11:23:58" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField" classname="com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest" time="12.045" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" tests="4" failures="0" errors="0" skipped="0" time="30.366" timestamp="2026-10-30T11:23:58" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="signInFieldEndingAtTheFormsEdgeStaysAboveTheKeyboard" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="7.697" />
+    <testcase name="focusedSignInFieldStaysAboveTheKeyboard" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="7.783" />
+    <testcase name="signInFieldEndingAPixelAboveTheFormsEdgeStaysAboveTheKeyboard" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="7.381" />
+    <testcase name="signInFieldEndingTwoPixelsAboveTheFormsEdgeStaysAboveTheKeyboard" classname="com.github.e0ipso.tokkl.ui.theme.LargestFontScaleTest" time="7.505" />
+  </testsuite>
+</testsuites>

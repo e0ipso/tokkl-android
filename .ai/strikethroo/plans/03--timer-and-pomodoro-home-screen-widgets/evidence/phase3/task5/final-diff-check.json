@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "exit": 0,
+  "stdout": "",
+  "stderr": "",
+  "observed_epoch": 1793375397.0392458
+}

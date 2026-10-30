@@ -39,7 +39,6 @@ import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
 import java.time.Duration
 import java.time.Instant
-import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.first
 
 /** Server-owned session controls. Only the launcher's Chronometer ticks between state changes. */
@@ -126,7 +125,7 @@ private fun SessionStrip(context: Context, state: PomodoroWidgetState.Active, wi
             Label(heading, if (tiny) 6f else if (scale > 1.5f && state.ended) 8f else if (scale > 1.5f) 11f else 14f, color = phaseColor(state),
                 description = "$phase, ${number(context, state)}")
             Clock(context, state, width - button - 6f, if (tiny) 9f else 26f, now, ticking)
-            if (!tiny) Progress(context, state, width - button - 6f, now)
+            if (!tiny) PhaseBand(context, state)
         }
         Spacer(GlanceModifier.width(6.dp))
         Icon(nextLabel(context, state), R.drawable.ic_widget_next, phasePomodoroWidget(state), button, if (state.ended) Running else PrimaryFill)
@@ -190,7 +189,7 @@ private fun ColumnScope.SessionCard(context: Context, state: PomodoroWidgetState
                 context.getString(R.string.pomodoro_widget_left_of, formatDuration(Duration.between(state.start, state.end).seconds).removePrefix("0:")), 12f, muted = true)
         }
         Spacer(GlanceModifier.height(6.dp))
-        Progress(context, state, width, now)
+        PhaseBand(context, state)
         Column(GlanceModifier.fillMaxWidth()) {
             if (large) {
                 Spacer(GlanceModifier.height(10.dp))
@@ -242,12 +241,13 @@ private fun Icon(label: String, icon: Int, action: Action, size: Float, backgrou
 }
 
 @Composable
-private fun Progress(context: Context, state: PomodoroWidgetState.Active, width: Float, now: Instant) {
-    val progress = pomodoroWidgetClock(state, now, 0).progress
-    val description = context.getString(R.string.pomodoro_widget_progress, phaseLabel(context, state), (progress * 100).roundToInt())
+private fun PhaseBand(context: Context, state: PomodoroWidgetState.Active) {
+    // The launcher ticks the native clock, but cannot tick a Glance progress bar. Use the
+    // phase colour without a frozen elapsed percentage or a periodic redraw job.
+    val description = phaseLabel(context, state)
     Box(GlanceModifier.fillMaxWidth().height(6.dp).cornerRadius(3.dp).background(GlanceTheme.colors.surfaceVariant)
         .semantics { contentDescription = description }) {
-        if (progress > 0) Box(GlanceModifier.width((width * progress).dp).height(6.dp).cornerRadius(3.dp)
+        Box(GlanceModifier.fillMaxWidth().height(6.dp).cornerRadius(3.dp)
             .background(if (state.ended) Running else if (state.session.phase.kind == PhaseKind.WORK) PrimaryFill else GlanceTheme.colors.secondary)) {}
     }
 }

@@ -260,6 +260,28 @@ class WidgetServerTest {
     }
 
     @Test
+    fun billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively() {
+        val start = Instant.now().minusSeconds(3_600).truncatedTo(ChronoUnit.SECONDS)
+        for ((billable, seconds) in listOf(true to 600L, false to 300L)) {
+            web.send("POST", web.server.api("workspaces", "$workspace", "time_entries"), buildJsonObject {
+                put("workspace_id", workspace); put("created_with", "tokkl-android tests")
+                put("description", "Stopped $billable"); put("billable", billable)
+                put("start", start.toString()); put("stop", start.plusSeconds(seconds).toString())
+            }, JsonObject.serializer()).orFail("seed stopped segment")
+        }
+        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        signIn(NO_ROUTE, account.apiToken)
+        runBlocking { app.changes.start(workspace, EntryFields("Billable ticking", billable = true)) }
+        native.awaitText("Billable ticking")
+        native.await("three native clocks are drawn") { native.clockBaseValues().size == 3 }
+        val bases = native.clockBaseValues()
+        assertEquals("day total adds both stopped segments", 900_000.0, (bases[0] - bases[1]).toDouble(), 150.0)
+        assertEquals("Billable adds only stopped billable segments", 600_000.0, (bases[0] - bases[2]).toDouble(), 150.0)
+        native.awaitUpdatesSettled()
+        native.assertClockTicksWithoutUpdates(clockIndex = 2)
+    }
+
+    @Test
     fun todayReportTapOpensReportsOnToday() {
         native.awaitDescription(context.getString(R.string.widget_open_report_description))
         native.click(context.getString(R.string.widget_open_report_description))

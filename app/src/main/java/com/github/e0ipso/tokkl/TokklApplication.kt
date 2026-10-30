@@ -91,6 +91,7 @@ import com.github.e0ipso.tokkl.widget.WidgetStore
 import com.github.e0ipso.tokkl.widget.WidgetSync
 import com.github.e0ipso.tokkl.widget.key
 import com.github.e0ipso.tokkl.widget.pomodoroWidgetState
+import com.github.e0ipso.tokkl.widget.pomodoroWidgetDeadlineChanges
 import com.github.e0ipso.tokkl.widget.widgetState
 import java.io.IOException
 import java.security.GeneralSecurityException
@@ -648,8 +649,10 @@ class TokklApplication : Application() {
      * page's day rule. App opens and the existing running check reread the day even offline or
      * when an unchanged current entry produces no Room write. No widget work is scheduled.
      */
+    /** Clock read on widget events; injectable for account-midnight integration tests. */
+    @Volatile internal var widgetClock: Clock = Clock.systemUTC()
+
     val widgetState: Flow<WidgetState> by lazy {
-        val clock = Clock.systemUTC()
         val openings = callbackFlow {
             val callbacks = object : ActivityLifecycleCallbacks {
                 override fun onActivityStarted(activity: Activity) { trySend(Unit) }
@@ -684,7 +687,7 @@ class TokklApplication : Application() {
             val (entries, mappings) = history
             widgetState(
                 settings?.defaultWorkspaceId, controls, favorites, flags.favorites, projects, tasks,
-                entries = entries, settings = settings, now = clock.instant(), serverIdOf = mappings,
+                entries = entries, settings = settings, now = widgetClock.instant(), serverIdOf = mappings,
             )
         }.flowOn(Dispatchers.IO).distinctUntilChanged()
     }
@@ -708,11 +711,15 @@ class TokklApplication : Application() {
     /**
      * The Pomodoro widget's held session and idle defaults. Read the current account under its
      * holder lock, rather than combining a previous account's emitted state with new settings.
-     * The existing ringing service emits at phase end; no extra alarm or ticking job is added.
+     * The ringing service and a single in-process phase-end wait trigger redraws. The latter
+     * also works with denied exact alarms. No ticking job or idle work is added.
      */
     val pomodoroWidgetState: Flow<PomodoroWidgetState> by lazy {
         val store = PomodoroWidgetFieldsStore(this)
-        val catalog = combine(cache.projects, cache.tasks, pomodoroRinging.state) { projects, tasks, ring ->
+        val deadlines = pomodoroWidgetDeadlineChanges(heldTimerState.map { held ->
+            held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
+        })
+        val catalog = combine(cache.projects, cache.tasks, pomodoroRinging.state, deadlines) { projects, tasks, ring, _ ->
             Triple(projects, tasks, ring.ring?.phase)
         }
         combine(

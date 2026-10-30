@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:34.770Z" hostname="punta-des-patro" time="0.035">
+  <properties/>
+  <testcase name="everyServerTransitionSelectsItsOwnSound" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.002"/>
+  <testcase name="stopAttemptsVibrationCleanupEvenWhenAudioCleanupFails" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.0"/>
+  <testcase name="thePhaseEndStartsBothOutputsWithTheTransitionsSoundAndNeverMovesThePhaseOn" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.005"/>
+  <testcase name="duplicateDeliveriesDoNotRestartOrMultiplyTheOutput" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.005"/>
+  <testcase name="daysOfOvertimeHaveNoSilenceOrDurationCap" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.001"/>
+  <testcase name="oldPhaseDeliveriesButtonsRepostsAndServiceStartsCannotTouchTheNewPhase" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.006"/>
+  <testcase name="aConfirmOnAnyDeviceStopsBothOutputs" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.003"/>
+  <testcase name="anOfflineButtonLeavesTheRingAndTheStateAsTheyWere" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.001"/>
+  <testcase name="aRestartedServiceRingsOnlyTheHeldPhasePastItsPlannedEnd" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.005"/>
+  <testcase name="aNewRevisionOfTheRingingPhaseKeepsPlayingAndShowsThatRevision" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.001"/>
+  <testcase name="aSwipeRepostsWithoutStoppingEitherOutput" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.001"/>
+  <testcase name="theServiceCheckAndAConfirmElsewhereCannotRace" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.005"/>
+  <testcase name="aRingOfAnotherPhaseStopsTheOldOutputFirst" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

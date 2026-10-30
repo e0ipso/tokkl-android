@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.timer.TimerPauseTest" tests="17" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:45.648Z" hostname="punta-des-patro" time="1.601">
+  <properties/>
+  <testcase name="continueWhilePausedQueuesANewEntryAndNotTheChain" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.03"/>
+  <testcase name="aFocusedStopWhilePausedIsNotAuthoritativeUntilTheServerEndsTheChain" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.015"/>
+  <testcase name="focusedCallbacksCannotPauseStopOrEditAReplacement" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.007"/>
+  <testcase name="resumeSendsTheShownRevisionAndTheCloneCountsOnTheServersClock" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.021"/>
+  <testcase name="anOfflinePauseSaysSoAndLeavesTheTimerRunning" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.038"/>
+  <testcase name="focusedStopExitsOnlyAfterAuthoritativeIdleAndCannotRepeat" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.017"/>
+  <testcase name="pauseSendsADescriptionStillBeingTypedBeforeItself" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.023"/>
+  <testcase name="aTooShortPomodoroIsNoticedOnceEvenWhenItsStateArrivesAgain" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.52"/>
+  <testcase name="aRefusedPauseShowsTheServersStateAndSaysAnotherDeviceChangedIt" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.006"/>
+  <testcase name="aPausedTimersFieldsAreReadOnly" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.318"/>
+  <testcase name="stopOfTheRunningCloneIsAQueuedStop" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.009"/>
+  <testcase name="pauseWaitsForTheServerAndThenShowsItsFrozenSeconds" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.02"/>
+  <testcase name="focusedPauseAndResumeKeepTheChainsSecondsAndFenceAnOlderRevision" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.076"/>
+  <testcase name="anOfflineResumeOrStopLeavesThePausedTimerAsItWas" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.029"/>
+  <testcase name="stopWhilePausedDiscardsTheShownRevisionOnTheServer" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.017"/>
+  <testcase name="theRunningEditorDoesNotOpenWhilePausedOrWhileAPauseIsOnItsWay" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.041"/>
+  <testcase name="pauseIsNotOfferedWithoutTheTimerApiOrDuringASession" classname="com.github.e0ipso.tokkl.timer.TimerPauseTest" time="0.409"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

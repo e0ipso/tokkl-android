@@ -1,0 +1,10 @@
+{
+  "exit": 0,
+  "cases": 10,
+  "failures": 0,
+  "skipped": 0,
+  "inputs_unchanged": true,
+  "format": "Node test runner",
+  "passed": 10,
+  "cancelled": 0
+}

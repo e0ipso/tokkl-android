@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.calendar.CalendarModelTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:13.027Z" hostname="punta-des-patro" time="1.619">
+  <properties/>
+  <testcase name="aWeekBehindADownProxyIsUnreachableAndLoadsOnTheNextTry" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.678"/>
+  <testcase name="anOfflineForegroundKeepsTheLoadedWeekWithNoError" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.047"/>
+  <testcase name="aChosenDayShowsWithItsWeekAndAStepCrossesIntoTheNext" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.029"/>
+  <testcase name="aMovedLegacyShortEntryIsRejectedBeforeQueueing" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.034"/>
+  <testcase name="theForegroundLoadsTheShownWeekAgainAndTheOthersWhenTheyShow" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.283"/>
+  <testcase name="theFirstCachedWeekGetsTheEntryFromTheEveningBeforeTheCache" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.036"/>
+  <testcase name="aFailedWeekSaysWhyAndLoadsOnTheNextTry" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.092"/>
+  <testcase name="theRunningEntryAndAnAccountWithoutAWorkspaceQueueNothing" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.017"/>
+  <testcase name="aMovedEntryOfAWeekFromTheServerKeepsItsTimesOnceTheCacheDropsIt" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.118"/>
+  <testcase name="aRejectedPendingSpanKeepsItsActualTimesAndUnsentState" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.02"/>
+  <testcase name="aWeekOutsideTheCacheAsksFromTheLongestEntryBeforeItAndKeepsWhatRunsIntoIt" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.025"/>
+  <testcase name="theNetworksReturnLoadsTheShownWeekOnlyWhenItGotNoAnswer" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.098"/>
+  <testcase name="aCreateDragQueuesAnEntryInTheDefaultWorkspace" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.075"/>
+  <testcase name="aCachedWeekShowsTheCacheOfflineWithNoError" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.022"/>
+  <testcase name="aMoveInAWeekFromTheServerQueuesTheServersEntry" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.03"/>
+  <testcase name="aMoveAndAResizeQueueTheCachedEntry" classname="com.github.e0ipso.tokkl.calendar.CalendarModelTest" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

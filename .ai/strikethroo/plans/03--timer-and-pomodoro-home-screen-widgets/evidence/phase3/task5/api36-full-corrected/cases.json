@@ -1,0 +1,3223 @@
+[
+  {
+    "class": "com.github.e0ipso.tokkl.LaunchScreenTest",
+    "name": "theTitleIsOneTalkBackHeadingAndNoWordmarkShows",
+    "time": "12.741",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.LaunchScreenTest",
+    "name": "opensOnTheTimerPageWithTheBottomBar",
+    "time": "11.616",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.LaunchSplashTest",
+    "name": "inLightTheSplashIsTheWordmarkOnTheWindowBackground",
+    "time": "1.166",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.LaunchSplashTest",
+    "name": "mainActivityStartsInTheThemeWithTheSplash",
+    "time": "0.621",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.LaunchSplashTest",
+    "name": "inDarkTheSplashIsTheWordmarkOnTheWindowBackground",
+    "time": "0.566",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.LaunchSplashTest",
+    "name": "theSplashIconFitsTheWordmarkInTheCircle",
+    "time": "1.070",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.LaunchSplashTest",
+    "name": "inDarkTheHaloTracesTheWordmark",
+    "time": "1.098",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.LauncherIconTest",
+    "name": "launcherGetsAnAdaptiveIconForMainActivity",
+    "time": "0.027",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.accessibility.DarkAdditionalAccessibilityTest",
+    "name": "everyMoreChoiceIsReachableAtMaximumSizes",
+    "time": "35.465",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.accessibility.DarkAdditionalAccessibilityTest",
+    "name": "pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes",
+    "time": "8.916",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.accessibility.DarkAdditionalAccessibilityTest",
+    "name": "refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes",
+    "time": "32.976",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.accessibility.LightAdditionalAccessibilityTest",
+    "name": "everyMoreChoiceIsReachableAtMaximumSizes",
+    "time": "41.972",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.accessibility.LightAdditionalAccessibilityTest",
+    "name": "pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes",
+    "time": "5.349",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.accessibility.LightAdditionalAccessibilityTest",
+    "name": "refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes",
+    "time": "18.111",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinnedCertificateTest",
+    "name": "anotherPinnedCertificateFailsAsAChangedCertificate",
+    "time": "0.903",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinnedCertificateTest",
+    "name": "unpinnedCertificateFailsTheHandshakeWithItsFingerprint",
+    "time": "0.828",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.PinnedCertificateTest",
+    "name": "pinnedCertificateReachesTokkl",
+    "time": "0.865",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerSmokeTest",
+    "name": "deleteWithAnEmptyResponseBodySucceeds",
+    "time": "0.816",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerSmokeTest",
+    "name": "withNoStoredServerTheGuardRefusesTheRequest",
+    "time": "0.335",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerSmokeTest",
+    "name": "wrongApiTokenGets403",
+    "time": "0.852",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerSmokeTest",
+    "name": "aRequestSentOnceAfterTheServerClosedItsIdleConnectionGetsItsAnswer",
+    "time": "9.471",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerSmokeTest",
+    "name": "emailAndPasswordAuthenticateWithGetMe",
+    "time": "1.232",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.api.ServerSmokeTest",
+    "name": "unconfirmedHttpServerGetsNoRequest",
+    "time": "0.835",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.AccountCacheServerTest",
+    "name": "afterOneRefreshEveryCachedKindReadsInAirplaneMode",
+    "time": "6.626",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest",
+    "name": "anAppDrainThatEmptiesTheQueueCancelsTheWaitingRetry",
+    "time": "4.727",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest",
+    "name": "aRunningWorkerThatJoinedTheAppsDrainSucceeds",
+    "time": "2.997",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest",
+    "name": "theRetryAfterTheBackoffSendsTheQueue",
+    "time": "33.990",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest",
+    "name": "callsThatQueueNothingScheduleNoWork",
+    "time": "2.706",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.BackgroundSendServerTest",
+    "name": "restoringTheNetworkSendsTheQueueWithTheAppClosed",
+    "time": "5.948",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest",
+    "name": "version4MigratesAndHeldChangesSurviveAReopen",
+    "time": "0.630",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest",
+    "name": "version7KeepsTheQueueAndLeavesNoLocalTimerTables",
+    "time": "0.413",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest",
+    "name": "version3MigratesKeepsTheMarkedQueueAndRecordsTheServersEntriesOnANewCreate",
+    "time": "0.414",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest",
+    "name": "version8DropsTheLocalTimerTablesAndItsQueueStillSends",
+    "time": "2.072",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest",
+    "name": "version1MigratesAndKeepsTheCachedRows",
+    "time": "0.431",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest",
+    "name": "version2MigratesAndKeepsTheQueue",
+    "time": "0.366",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest",
+    "name": "version5KeepsAnAlreadyQueuedStopAndAddsUndoStorage",
+    "time": "0.511",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest",
+    "name": "version6KeepsARunningTimerAndItsQueueAndStopsItAfterTheUpdate",
+    "time": "0.458",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest",
+    "name": "step1SendsACreateAndDiesBeforeTheAnswer",
+    "time": "2.268",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest",
+    "name": "step2SendsTheQueueWithoutASecondCopy",
+    "time": "2.639",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueRestartTest",
+    "name": "step1QueuesStartEditAndStopWithNoRouteToTheServer",
+    "time": "3.250",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueRestartTest",
+    "name": "step2SendsTheQueueInANewProcess",
+    "time": "2.702",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "createEditStopAndDeleteOfAnOfflineEntryReachTheServerInOrder",
+    "time": "6.179",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aRefreshThatReadTheTimerBeforeItsStopWasSentDoesNotLeaveItRunning",
+    "time": "6.038",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aCreateWhoseAnswerWasLostIsStoredOnceAndLaterChangesApplyToIt",
+    "time": "5.355",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aCreateThatNeverReachedTheServerIsPostedOnce",
+    "time": "25.796",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aQueuedStartRunsWhenNoTimerRunsOnTheServer",
+    "time": "4.215",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "startAndStopShowAtOnceWhileTheNetworkHangsAndTheServerGetsTheTapTimes",
+    "time": "5.410",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aQueuedStartRunsAndTheServerStopsAnEarlierTimer",
+    "time": "4.282",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aCreateWhoseAnswerWasLostIsStoredOnceWhenTheServerHasItsTagInAnotherCase",
+    "time": "25.229",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aQueuedStartEndsWhereALaterTimerOnTheServerStartsAndThatTimerKeepsRunning",
+    "time": "4.292",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "theChangeThatReachesTheServerLastWinsWithoutAMerge",
+    "time": "4.652",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aDuplicateThatNeverReachedTheServerIsPostedBesideItsSource",
+    "time": "25.821",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aStopTappedOnThePhoneIsStoredAsTheWebAppStoresAStopAtTheSameMoment",
+    "time": "4.285",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aTimerStartedOnThePhoneEndsTheRunningOneWhereItsOwnStartSnaps",
+    "time": "3.863",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeQueueServerTest",
+    "name": "aCreateThatNeverReachedTheServerIsNotTakenForAnEntryWithOtherTags",
+    "time": "24.757",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest",
+    "name": "a400HoldsItsEntryWhileOthersSendAndAFixResendsIt",
+    "time": "1.748",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest",
+    "name": "resetToken403PausesEverythingUntilTheSameAccountSignsInAgain",
+    "time": "1.718",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest",
+    "name": "a404DropsChangesToTheDeletedEntryAndAggregatesTheNotice",
+    "time": "1.663",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest",
+    "name": "editingAHeldCreateKeepsExistingEntriesOutOfALostPostLookup",
+    "time": "1.552",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest",
+    "name": "aHeldChangeCanBeSentAgainOrDiscardedWithItsCachedDraft",
+    "time": "1.642",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckServerTest",
+    "name": "aTimerStartedOnTheServerTakesThePlaceOfTheOneItStopped",
+    "time": "2.565",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckServerTest",
+    "name": "startingATimerSchedulesOneCheckAndStoppingItCancelsIt",
+    "time": "3.303",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckServerTest",
+    "name": "aTimerStoppedOnTheServerLeavesTheCacheAndTheNotificationAtTheNextCheck",
+    "time": "3.794",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningCheckServerTest",
+    "name": "theCheckLeavesAnEntryWithUnsentChangesAsItIs",
+    "time": "2.836",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "correctingTheServersResumedCloneChangesOnlyItsOwnElapsedTime",
+    "time": "0.175",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "aRunningEntryAnswerKeepsAStartAndAnEditSentDuringItsRead",
+    "time": "0.232",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "shortStopAndItsUndoCannotReviveTheRunningEditor",
+    "time": "0.247",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "workspaceMismatchCannotWrite",
+    "time": "0.203",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "runningUpdateQueuesExactUnsnappedStartAndNullStop",
+    "time": "0.249",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "competingStartCorrectionInvalidatesAnOlderEditor",
+    "time": "0.315",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "sameInstantReplacementRejectsTheOriginalIdentity",
+    "time": "0.282",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "originalLocalIdentityResolvesAfterRemapAndDatabaseReopen",
+    "time": "0.359",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.cache.RunningEntryQueueTest",
+    "name": "stoppedEntryRejectsStaleSaveWithoutAnotherQueuedChange",
+    "time": "0.234",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest",
+    "name": "theWeekViewCreatesAndMovesEntriesToo",
+    "time": "3.549",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest",
+    "name": "aDragOnABlockMovesIt",
+    "time": "3.220",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest",
+    "name": "aDragOnEmptySpaceCreatesAnEntryAndOpensIt",
+    "time": "3.639",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest",
+    "name": "aTapOrTalkBacksClickOpensTheBlockInTheForm",
+    "time": "3.451",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest",
+    "name": "theWeekViewsDayHeadsOfferTheActionToo",
+    "time": "3.355",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest",
+    "name": "aHeldBlockDraggedSidewaysStaysOnItsDay",
+    "time": "3.213",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest",
+    "name": "eachDaysHeadOffersTalkBackAnActionThatAddsAnEntry",
+    "time": "2.751",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarGesturesTest",
+    "name": "aDragOnABlocksEdgesMovesThatEnd",
+    "time": "3.159",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "offlineTheForegroundKeepsAnOlderWeek",
+    "time": "12.813",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "swipesMoveBetweenDays",
+    "time": "7.632",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "offlineADragMovesACachedEntryThroughTheQueue",
+    "time": "9.825",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "anEntryFromTwoDaysBeforeAnOlderWeekShowsInIt",
+    "time": "7.888",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline",
+    "time": "12.590",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "offlineADragOnEmptySpaceCreatesAnEntryAndOpensTheForm",
+    "time": "9.818",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "aBlockReadsItsEntry",
+    "time": "6.394",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "anEntryDeletedElsewhereGoesFromAnOlderWeekAfterTheForeground",
+    "time": "8.282",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "theArrowsAndTheStripCrossIntoAWeekOnlyTheServerHas",
+    "time": "8.095",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "anUnsentBlockSaysNotSentUntilTheServerHasIt",
+    "time": "9.028",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "offlineLastWeekShowsAndAnOlderWeekLoadsWhenTheNetworkReturns",
+    "time": "9.199",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "aDragOnAnOlderWeekKeepsItsTimesAfterTheSend",
+    "time": "10.774",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.CalendarServerTest",
+    "name": "anEntryFromTheEveningBeforeTheCacheShowsInLastWeek",
+    "time": "8.857",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "theNextDaySlidesIn",
+    "time": "6.117",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "aWindowOfMediumWidthShowsTheWeekWithItsDayHeads",
+    "time": "5.575",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "theArrowsAndSwipesCrossIntoTheWeekBeforeAndTheWeekAfter",
+    "time": "5.728",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "theChosenDayIsFramed",
+    "time": "6.343",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "aTapOnADayOfTheStripShowsIt",
+    "time": "5.397",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "darkWeekDayHeadsUseTheCurrentSectionHue",
+    "time": "5.408",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "lightWeekDayHeadsUseTheCurrentSectionHue",
+    "time": "6.266",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "anUprightPhoneShowsTheChosenDayUnderTheStripOfItsWeek",
+    "time": "4.076",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.DayCalendarTest",
+    "name": "reducedMotionChangesTheDayAtOnce",
+    "time": "4.000",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.LargestFontLandscapeCalendarTest",
+    "name": "theGridGetsTheRoom",
+    "time": "11.793",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.LargestFontUprightCalendarTest",
+    "name": "theGridGetsTheRoom",
+    "time": "18.867",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.UsualFontLandscapeCalendarTest",
+    "name": "theGridGetsTheRoom",
+    "time": "17.185",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.UsualFontUprightCalendarTest",
+    "name": "theGridGetsTheRoom",
+    "time": "10.851",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.WeekStripFitTest",
+    "name": "everyDayShowsItsWeekdayDateAndTotalWhole",
+    "time": "9.392",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.calendar.WeekStripFitTest",
+    "name": "theDaysFitAndTheChosenDayStaysMarked",
+    "time": "14.178",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesServerTest",
+    "name": "step1RefreshTurnsEveryCapabilityOnForAFreshTokklAccount",
+    "time": "1.555",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.capabilities.CapabilitiesServerTest",
+    "name": "step2TheFlagsSurviveARestart",
+    "time": "0.147",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CatalogForegroundTest",
+    "name": "aProjectRenamedElsewhereShowsAfterTheForegroundAndARotationLoadsNothing",
+    "time": "16.310",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.CatalogForegroundTest",
+    "name": "aClientAndATagRenamedElsewhereShowAfterTheForeground",
+    "time": "17.368",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "taskDeleteQuestion",
+    "time": "10.207",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "projectsOffline",
+    "time": "6.528",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "clientsOffline",
+    "time": "6.321",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "projectForm",
+    "time": "8.464",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "tagsList",
+    "time": "6.955",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "taskForm",
+    "time": "10.195",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "clientsList",
+    "time": "6.490",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "clientArchiveQuestion",
+    "time": "7.424",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "projectFormWithTasksOffline",
+    "time": "6.705",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "tagRenameForm",
+    "time": "8.596",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "tagDeleteQuestion",
+    "time": "6.198",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "projectFormWithTasks",
+    "time": "5.223",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "projectsList",
+    "time": "4.627",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "clientForm",
+    "time": "4.118",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "tagsOffline",
+    "time": "4.666",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest",
+    "name": "newProjectFormWithMistakes",
+    "time": "6.943",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "taskDeleteQuestion",
+    "time": "5.227",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "projectsOffline",
+    "time": "3.521",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "clientsOffline",
+    "time": "2.875",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "projectForm",
+    "time": "4.037",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "tagsList",
+    "time": "2.647",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "taskForm",
+    "time": "4.937",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "clientsList",
+    "time": "3.160",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "clientArchiveQuestion",
+    "time": "3.622",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "projectFormWithTasksOffline",
+    "time": "4.287",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "tagRenameForm",
+    "time": "5.731",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "tagDeleteQuestion",
+    "time": "4.223",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "projectFormWithTasks",
+    "time": "4.961",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "projectsList",
+    "time": "3.772",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "clientForm",
+    "time": "3.541",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "tagsOffline",
+    "time": "2.730",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest",
+    "name": "newProjectFormWithMistakes",
+    "time": "5.326",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsServerTest",
+    "name": "theServerOutOfReachListsThePhonesClientsWithTheArchivedOnesMarked",
+    "time": "7.183",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsServerTest",
+    "name": "aRefusedCreateShowsTheServersReasonAndKeepsTheForm",
+    "time": "7.543",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsServerTest",
+    "name": "aClientWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy",
+    "time": "8.305",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsServerTest",
+    "name": "cancellingTheArchiveQuestionKeepsTheClient",
+    "time": "6.354",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsServerTest",
+    "name": "createEditArchiveAndRestoreAClientAndTheCacheFollowsEachChange",
+    "time": "13.907",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsServerTest",
+    "name": "everyControlHasALabel",
+    "time": "5.652",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.clients.ClientsServerTest",
+    "name": "offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer",
+    "time": "9.079",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest",
+    "name": "ciphertextWithoutItsKeyLoadsNull",
+    "time": "0.048",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest",
+    "name": "loadsNullWhenNothingIsStored",
+    "time": "0.051",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest",
+    "name": "keyIsANonExportableAesGcmKeyInTheKeystore",
+    "time": "0.113",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest",
+    "name": "storedBytesNeverContainThePlainToken",
+    "time": "0.983",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest",
+    "name": "changedCiphertextLoadsNull",
+    "time": "0.070",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest",
+    "name": "savedTokenLoadsBack",
+    "time": "0.104",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest",
+    "name": "savingReplacesTheStoredToken",
+    "time": "0.090",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest",
+    "name": "clearDeletesTheKeyAndTheCiphertext",
+    "time": "0.107",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "anotherEntryOpenedBesideTheHistoryDropsTheOpenFormsUnsavedEdits",
+    "time": "15.980",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "pastEntriesByDurationAndAcrossMidnightReachTheServer",
+    "time": "25.850",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "anEditMadeInAirplaneModeReachesTheServerWhenTheNetworkReturns",
+    "time": "20.312",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "backOnAPhoneClosesTheFormAndDropsItsUnsavedEdits",
+    "time": "16.324",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "anEntryFromAnOlderDayOpensAndTheHistoryShowsItsEditAfterTheRefresh",
+    "time": "15.701",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "shortTypedSpansShowValidationAndCreateNoPendingChange",
+    "time": "15.453",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "typedCreateAndEditPredictionsMatchLatestServerAcrossAccountZonesAndDst",
+    "time": "6.864",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "timesThatCannotBeReadShowAMessageAndQueueNothing",
+    "time": "17.642",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "anOlderEntryReopenedBeforeItsEditWasSentSavesAfterTheRefreshDropsIt",
+    "time": "25.825",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "aPastEntrySavedInAirplaneModeReachesTheServerWhenTheNetworkReturns",
+    "time": "20.414",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "everyFieldAndControlHasALabel",
+    "time": "11.186",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "anOfflineEditOfAnOlderEntryShowsAsNotSentAndReachesTheServerWhenTheNetworkReturns",
+    "time": "19.328",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "everyFieldOfAnEntryChangesAndReachesTheServer",
+    "time": "33.922",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.EntryFormServerTest",
+    "name": "aLegacyZeroLengthEntryKeepsItsTimesOnADescriptionEdit",
+    "time": "6.728",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "mediumListAndCalendarClocksOpenTheRunningEditor",
+    "time": "21.872",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "cancelBackAndActualRotationsKeepOrDiscardTheRightDraft",
+    "time": "50.661",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "compactListAndCalendarClocksOpenTheRunningEditor",
+    "time": "22.804",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "metadataSaveKeepsSecondsAndInvalidStartFlushesNothing",
+    "time": "37.722",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "expandedListAndCalendarClocksKeepTheirExistingPaneRoutes",
+    "time": "16.775",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "aServerPauseWhileTheEditorIsOpenCannotBeRevivedBySave",
+    "time": "17.470",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "offlineMidnightCorrectionPersistsOnDiskAndRemapsOneRunningEntry",
+    "time": "29.317",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "clockWaitsForInitialStartAndPendingDescriptionWrites",
+    "time": "21.391",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "aSameStartReplacementCannotReceiveTheOpenEditorsStaleSave",
+    "time": "19.128",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest",
+    "name": "aStopWhileTheEditorIsOpenCannotBeRevivedBySave",
+    "time": "16.063",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesServerTest",
+    "name": "editingOfflineSaysItNeedsTheServer",
+    "time": "14.744",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesServerTest",
+    "name": "pinningAHistoryEntryWithNineFavoritesSaysTheListIsFull",
+    "time": "14.222",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesServerTest",
+    "name": "pinningAHistoryEntryReachesTheWebInItsFormat",
+    "time": "21.548",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesServerTest",
+    "name": "theWebAppsFavoritesShowAndOneTapStartsOneOffline",
+    "time": "23.961",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesServerTest",
+    "name": "aFavoriteTappedWhileADescriptionIsTypedRunsWithItsOwnDescription",
+    "time": "23.504",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesServerTest",
+    "name": "pinningAHistoryEntryOfflineSaysItNeedsTheServer",
+    "time": "21.593",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.FavoritesServerTest",
+    "name": "favoritesEditedOnThePhoneReachTheWebInItsFormat",
+    "time": "17.098",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "saveKeepsThePopupOpen",
+    "time": "5.581",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "cancelLeavesTheListAndSaveStoresANewTemplate",
+    "time": "8.257",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "offlineDisablesManagement",
+    "time": "4.678",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "editingSavesInPlaceAndCancelLeavesTheRow",
+    "time": "7.844",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "theRailListsTemplatesFirstAndHidesThemWithoutTheCapability",
+    "time": "6.791",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "thePopupHidesWithoutTheCapabilityThenStartsInSavedOrder",
+    "time": "4.064",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "aFullListDisablesSave",
+    "time": "4.684",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "anEmptyPopupOffersSaveAndManage",
+    "time": "4.076",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.favorites.TemplatesUiTest",
+    "name": "theBarListsTemplatesFirstAndHidesThemWithoutTheCapability",
+    "time": "5.235",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.ContinueServerTest",
+    "name": "continueWhileADescriptionIsTypedKeepsTheContinuedEntrysDescription",
+    "time": "10.643",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.ContinueServerTest",
+    "name": "continueLastInAirplaneModeStartsTheLatestStoppedEntryAndReachesTheServer",
+    "time": "6.067",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.ContinueServerTest",
+    "name": "continueFromTheHistoryInAirplaneModeStartsTheEntryAgainAndReachesTheServer",
+    "time": "9.267",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.DeleteUndoServerTest",
+    "name": "undoOfAnUnsentDeleteTakesItOutOfTheQueueWithNoRequest",
+    "time": "2.816",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.DeleteUndoServerTest",
+    "name": "undoOfASentDeleteRestoresTheEntryThroughTheRestoreEndpoint",
+    "time": "2.721",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.DeleteUndoServerTest",
+    "name": "undoOfADeleteWhoseConnectionDroppedAfterTheAnswerRestoresTheEntry",
+    "time": "4.399",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.DeleteUndoServerTest",
+    "name": "theEntrysMenuDeletesItAndUndoBringsItBack",
+    "time": "9.621",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.DeleteUndoServerTest",
+    "name": "undoOfADeleteWhoseAnswerWasLostRestoresTheEntryThroughTheRestoreEndpoint",
+    "time": "25.492",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.DuplicateServerTest",
+    "name": "aDuplicateMadeInAirplaneModeReachesTheServerWhenTheNetworkReturns",
+    "time": "11.842",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest",
+    "name": "duplicateHasATalkBackLabelAndCopiesTheEntry",
+    "time": "6.680",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest",
+    "name": "splitAndItsTimeFieldHaveTalkBackLabelsAndSplitCutsTheEntry",
+    "time": "10.961",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest",
+    "name": "withoutRestoreDeleteAsksFirstAndTheMessageOffersNoUndo",
+    "time": "4.988",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest",
+    "name": "withoutTheFavoritesCapabilityTheMenuHasNoPin",
+    "time": "4.067",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest",
+    "name": "pinAsFavoriteHasATalkBackLabelAndPinsTheEntry",
+    "time": "3.599",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest",
+    "name": "undoOfflineSaysItNeedsTheServerAndOffersUndoAgain",
+    "time": "3.539",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest",
+    "name": "cancellingTheQuestionDeletesNothing",
+    "time": "3.570",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.EntryActionsUiTest",
+    "name": "theMenuAndDeleteHaveTalkBackLabelsAndTalkBackAnnouncesUndo",
+    "time": "3.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryFitTest",
+    "name": "theSplitDialogFitsWithItsPreviewAndItsLongestMessage",
+    "time": "7.089",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryFitTest",
+    "name": "theRowMenuFits",
+    "time": "7.141",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryFitTest",
+    "name": "aGroupFitsCollapsedAndExpanded",
+    "time": "24.210",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryFitTest",
+    "name": "theUndoMessagesFit",
+    "time": "5.514",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryGroupUiTest",
+    "name": "noItemOfTheEntryMenuIsCutOffAtTheLargestFontScale",
+    "time": "4.427",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryGroupUiTest",
+    "name": "aGroupShowsItsCountAndTotalAndExpandsToItsMembersWithTheStateForTalkBack",
+    "time": "3.478",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryServerTest",
+    "name": "offlineOlderDaysLoadOnceTheNetworkComesBack",
+    "time": "6.944",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryServerTest",
+    "name": "anUnsentEntryShowsTheTimesTheServerWillStore",
+    "time": "7.036",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryServerTest",
+    "name": "serverTimesShowAsStoredAndOlderDaysLoadOnScroll",
+    "time": "6.455",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.HistoryServerTest",
+    "name": "unreachableOlderDaysNeedTheServerAndTryAgainLoadsThem",
+    "time": "7.030",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.history.SplitServerTest",
+    "name": "aSplitMadeInAirplaneModeReachesTheServerAndTheHalvesAddUpToTheWhole",
+    "time": "9.761",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicencesScreenTest",
+    "name": "aboutEntryReachesTokklSoundCreditWithTheFullMitNotice",
+    "time": "6.385",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicencesScreenTest",
+    "name": "aboutEntryOpensTheFullOflText",
+    "time": "6.809",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicencesScreenTest",
+    "name": "theBarStaysWhileTheTextScrolls",
+    "time": "8.519",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicencesScreenTest",
+    "name": "backButtonReturnsToSettings",
+    "time": "13.383",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.licences.LicencesScreenTest",
+    "name": "systemBackReturnsToSettingsThenTimer",
+    "time": "12.420",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.AdaptiveRotationTest",
+    "name": "aRotationKeepsTheEntryBeingAdded",
+    "time": "10.756",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.AdaptiveStateTest",
+    "name": "aFoldKeepsTheFormAndThePageBesideIt",
+    "time": "4.523",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.BottomBarTest",
+    "name": "thePomodoroItemFollowsTheServersSessionAndBackReturnsToTimer",
+    "time": "11.968",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.BottomBarTest",
+    "name": "thePageTheStackTheViewAndTheSheetSurviveRecreation",
+    "time": "19.851",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.BottomBarTest",
+    "name": "theTimerItemSaysWhenATimerRuns",
+    "time": "7.191",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.BottomBarTest",
+    "name": "theMoreSheetListsReportsTemplatesClientsTagsAndTrashAndOpensEach",
+    "time": "12.215",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.BottomBarTest",
+    "name": "eachBarItemOpensItsPageAndBackGoesToTimer",
+    "time": "6.353",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.BottomBarTest",
+    "name": "theMoreSheetClosesOnCloseAndOnBack",
+    "time": "6.689",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.BottomBarTest",
+    "name": "backFromTimerLeavesTheApp",
+    "time": "4.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.BottomBarTest",
+    "name": "aPageOpenedFromAnotherGoesBackToTimer",
+    "time": "6.998",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest",
+    "name": "theCalendarTakesTheExtraWidthOnlyWhenExpanded",
+    "time": "4.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest",
+    "name": "thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail",
+    "time": "2.491",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest",
+    "name": "theEntryFormShowsBesideTheHistoryOnlyWhenExpanded",
+    "time": "3.293",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest",
+    "name": "everyScreenFits",
+    "time": "7.750",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest",
+    "name": "theNavigationFollowsTheWidth",
+    "time": "2.205",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest",
+    "name": "theRailScrollsWhereTheWindowIsShort",
+    "time": "1.468",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest",
+    "name": "theCalendarTakesTheExtraWidthOnlyWhenExpanded",
+    "time": "4.366",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest",
+    "name": "thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail",
+    "time": "2.166",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest",
+    "name": "theEntryFormShowsBesideTheHistoryOnlyWhenExpanded",
+    "time": "3.345",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest",
+    "name": "everyScreenFits",
+    "time": "7.155",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest",
+    "name": "theNavigationFollowsTheWidth",
+    "time": "1.926",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest",
+    "name": "theRailScrollsWhereTheWindowIsShort",
+    "time": "2.828",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest",
+    "name": "theCalendarTakesTheExtraWidthOnlyWhenExpanded",
+    "time": "3.751",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest",
+    "name": "thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail",
+    "time": "2.131",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest",
+    "name": "theEntryFormShowsBesideTheHistoryOnlyWhenExpanded",
+    "time": "2.459",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest",
+    "name": "everyScreenFits",
+    "time": "7.290",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest",
+    "name": "theNavigationFollowsTheWidth",
+    "time": "1.983",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest",
+    "name": "theRailScrollsWhereTheWindowIsShort",
+    "time": "2.578",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.PageTopBarTest",
+    "name": "theEntryFormHasTheBarWithABackButton",
+    "time": "3.498",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.PageTopBarTest",
+    "name": "licencesHasTheBarWithABackButton",
+    "time": "4.058",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.PageTopBarTest",
+    "name": "thePagesOfTheBarAndTheSheetHaveTheBarWithoutABackButton",
+    "time": "9.782",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.PageTopBarTest",
+    "name": "theProjectAndClientFormsHaveTheBarWithABackButton",
+    "time": "6.439",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest",
+    "name": "theBarOffersPomodoroOnlyWhileTheServerHasTheTimerApi",
+    "time": "4.226",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest",
+    "name": "theRailOffersPomodoroOnlyWhileTheServerHasTheTimerApi",
+    "time": "3.960",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest",
+    "name": "withoutTheTimerApiThereIsNoPomodoroItemAtAnyWidth",
+    "time": "4.220",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.RestoredBackStackTest",
+    "name": "aStackRestoredWithoutASessionOpensSignIn",
+    "time": "4.219",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inLightTheActiveMorePageTakesMoresHue",
+    "time": "4.476",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inLightTheRailKeepsTheRunningDotVisible",
+    "time": "4.861",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inDarkTheActiveMorePageTakesMoresHue",
+    "time": "3.915",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inDarkTheRailKeepsTheRunningDotVisible",
+    "time": "4.451",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inLightEachBarTabTakesItsPagesHue",
+    "time": "6.148",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inDarkTheBarKeepsTheRunningDotVisible",
+    "time": "4.370",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inLightTheBarKeepsTheRunningDotVisible",
+    "time": "4.522",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inDarkEachRailTabTakesItsPagesHue",
+    "time": "6.122",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inLightEachRailTabTakesItsPagesHue",
+    "time": "6.065",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.navigation.TabHueTest",
+    "name": "inDarkEachBarTabTakesItsPagesHue",
+    "time": "6.536",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.NotificationPermissionPromptTest",
+    "name": "theFirstStartAsksAndARefusalSaysWhatIsLostAndOffersTheSettings",
+    "time": "3.946",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.NotificationPermissionPromptTest",
+    "name": "theSettingsActionOpensAScreenTheDeviceHas",
+    "time": "2.097",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.NotificationPermissionPromptTest",
+    "name": "anAllowShowsNoMessage",
+    "time": "3.360",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest",
+    "name": "aTimerWithoutPauseOffersStopAlone",
+    "time": "0.100",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest",
+    "name": "aDeclinedRequestStillPostsTheRegularNotificationWithItsClockAndStop",
+    "time": "0.163",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest",
+    "name": "thePostedRequestChecksTheSystemsPermissionAndKeepsTheNotificationWhenDeclined",
+    "time": "0.270",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest",
+    "name": "aResumedTimersClockCountsOnFromTheChainsStoredTime",
+    "time": "0.114",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest",
+    "name": "aPausedTimerIsQuietDismissibleAndAsksForNoPromotion",
+    "time": "0.116",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest",
+    "name": "theRequestMeetsEveryPromotionRequirement",
+    "time": "0.195",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationRestartTest",
+    "name": "step1StartsATimerAndDismissesItsNotification",
+    "time": "0.345",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationRestartTest",
+    "name": "step2OpensTheAppInANewProcessAndAnEditPostsTheNotificationAgain",
+    "time": "7.266",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "stopFromTheNotificationWorksOfflineAndTheQueueSendsItWhenTheNetworkReturns",
+    "time": "6.183",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "pauseResumeAndStopWhilePausedFromTheNotificationGoToTheServer",
+    "time": "3.269",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "anOfflineStartShowsTheEntryWithAClockTheSystemTicks",
+    "time": "7.101",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "stopFromTheNotificationDoesNotWaitForANetworkThatNeverAnswers",
+    "time": "1.473",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry",
+    "time": "11.685",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "aStopRemovesTheNotification",
+    "time": "2.440",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "anOfflineStartCorrectionMovesTheNotificationsChronometerToTheCachedStart",
+    "time": "5.843",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "anOfflinePauseFromTheNotificationSaysWhyAndChangesNothing",
+    "time": "6.398",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "aDismissedNotificationStaysGoneWhenTheServerAnswersAnOfflineStart",
+    "time": "9.135",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "aDismissedNotificationStaysGoneWhenTheAppOpensAndTheNextEditOrStartPostsItAgain",
+    "time": "9.873",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.notification.RunningNotificationServerTest",
+    "name": "aStartStopsTheRunningEntryAndShowsTheNewOne",
+    "time": "2.374",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.EntityPickerFontScaleTest",
+    "name": "everyKindOfOptionCanBeReachedAndTappedAtTheLargestFontScale",
+    "time": "8.038",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.EntityPickerServerTest",
+    "name": "searchAndSelectionWorkInAirplaneModeAndThePickerSaysCreatingNeedsAConnection",
+    "time": "7.916",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.EntityPickerServerTest",
+    "name": "aTagTypedInAirplaneModeJoinsTheEntryByNameAndTheServerHasItOnceTheQueueSendsIt",
+    "time": "7.755",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.picker.EntityPickerServerTest",
+    "name": "theOldEntrysArchivedItemsStaySelectedWithALabelAndNoOtherArchivedItemIsOffered",
+    "time": "6.981",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest",
+    "name": "withoutTheTimerApiTheAlarmStopsAndItsIntentShowsNothing",
+    "time": "7.224",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest",
+    "name": "lockedScreenPhaseEndLaunchesAlarmTurnsScreenOnAndKeepsItAwake",
+    "time": "13.065",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest",
+    "name": "deniedAccessKeepsRingingAndNotificationActionsWithoutOpeningTheLockScreenActivity",
+    "time": "7.194",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest",
+    "name": "alarmPendingIntentsAreImmutableAndKeepDistinctPhaseIdentities",
+    "time": "1.384",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest",
+    "name": "recreationDuplicateAndStaleIntentsCannotReplaceTheAlarmAndAConfirmElsewhereClosesIt",
+    "time": "12.671",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest",
+    "name": "deniedAndGrantedFullScreenPermissionFollowSystemAccessAndUsePerAppSettings",
+    "time": "1.275",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest",
+    "name": "backAndHomeLeaveTheSameAlarmSoundAndDurablePhaseRunning",
+    "time": "15.501",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest",
+    "name": "nextAndEndGoToTheServerWithTheShownRevisionAndItsAnswerClosesTheAlarm",
+    "time": "131.701",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest",
+    "name": "unavailableSystemSettingsHasReadableFallbackInstructions",
+    "time": "3.792",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest",
+    "name": "largestTextShowsEveryServerTransitionItsNumberAndExactlyTwoLargeLabelledActions",
+    "time": "4.095",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest",
+    "name": "aFailedActionShowsTheStandardMessageAndKeepsBothActions",
+    "time": "2.772",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest",
+    "name": "clockTicksLocallyAcrossTheDeadlineAndExposesOvertimeOnDemand",
+    "time": "2.521",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest",
+    "name": "bothPermissionDenialsCoexistAndGrantRemovesOnlyTheFullscreenNotice",
+    "time": "3.803",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsServerTest",
+    "name": "settingsEditsReadAndWriteReleasedPreferencesAndPopulateTheNextSessionForm",
+    "time": "18.524",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsServerTest",
+    "name": "theValuesComeFromTheServerAndAChangePostsOnlyTheFourKeys",
+    "time": "2.824",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsServerTest",
+    "name": "anOfflineChangeStaysOnThePhoneUntilTheNextRefreshSendsIt",
+    "time": "1.862",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStoreTest",
+    "name": "storedValuesAndTheUnsentFlagSurviveReloadAndClear",
+    "time": "0.076",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStoreTest",
+    "name": "everyStoreWriteClampsAllFourValues",
+    "time": "0.077",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroDeniedAlarmWidgetTest",
+    "name": "deniedExactAccessArmsOneNativeRedrawAndExactReplacementAndCancelRemoveIt",
+    "time": "0.306",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroFullScreenPageTest",
+    "name": "deniedNoticeOpensAppSettingsAndDisappearsOnResumeAfterGrant",
+    "time": "5.379",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest",
+    "name": "alarmDenialAndTheNoConnectionMessageAreReadableAndDoNotHideStart",
+    "time": "2.913",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest",
+    "name": "runningOvertimeHasASpokenClockAndBothActionsFitAtTheLargestFontScale",
+    "time": "2.790",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest",
+    "name": "allFourLabelledLengthInputsAndEntryControlsAreReachableWithTheKeyboard",
+    "time": "6.720",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest",
+    "name": "aTapDrawnBeforeAnotherDeviceMovedTheTimerOnIsRefusedAndTheServersStateShows",
+    "time": "6.323",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest",
+    "name": "withoutAConnectionStartKeepsTheFormAndSaysSo",
+    "time": "8.090",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest",
+    "name": "billableChangedOnThePageUpdatesTheServersRunningEntry",
+    "time": "5.496",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest",
+    "name": "aDescriptionTypedJustBeforeNextPhaseReachesTheServerAndCarriesToTheNextPhase",
+    "time": "9.485",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest",
+    "name": "theFormSendsItsLengthsAndFieldsAndNextPhaseAndEndFollowTheServer",
+    "time": "11.278",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest",
+    "name": "diskRecordSurvivesFreshStoreAndCoordinatorInstances",
+    "time": "0.046",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest",
+    "name": "signOutKeepsTheDevicePermissionHistoryForTheNextAccount",
+    "time": "0.091",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest",
+    "name": "firstStartIsImmediateAndOutstandingRequestsCannotCauseDuplicateAutomaticDialogs",
+    "time": "3.672",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest",
+    "name": "exactAndFullScreenSettingsNeverDisableStartAndNoticesRemainUntilGrant",
+    "time": "3.426",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest",
+    "name": "explicitRetryBeforeAnyStartRequestsAndGrantRemovesThePersistentNotice",
+    "time": "2.944",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmRearmTest",
+    "name": "bootBroadcastArmsTheHeldPhaseAgainWithoutTheServer",
+    "time": "4.497",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "offlineButtonsKeepTheRingAndAConfirmElsewhereStopsBothOutputs",
+    "time": "8.029",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "phaseAlarmStartsForegroundPlaybackWithScreenOffAndLeavesThePhaseAwaitingAction",
+    "time": "10.324",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "everyTransitionUsesItsBundledWavWithAlarmAttributesAndRepeatingVibration",
+    "time": "23.449",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "staleButtonsCannotAdvanceEndOrRepostThePhaseThatReplacedThem",
+    "time": "12.002",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "alarmsAllowedDndKeepsTheAlarmPlayerLoopingAndVibrationRequested",
+    "time": "11.073",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "physicalSwipeRepostsTheNotificationAndKeepsTheSamePlayer",
+    "time": "18.740",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "swipedNotificationRepostsWithoutRestartingOrStoppingTheSound",
+    "time": "10.739",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "silentModeKeepsTheAlarmPlayerLoopingAndVibrationRequested",
+    "time": "13.292",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest",
+    "name": "duplicateDeliveryAndStaleServiceIntentsCannotReplaceTheCurrentRing",
+    "time": "12.113",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest",
+    "name": "step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess",
+    "time": "1.810",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest",
+    "name": "step2TheStoredStateKeepsTheNotificationAndItsTapOpensPomodoroThenSignOutErasesIt",
+    "time": "4.598",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest",
+    "name": "aPostedWarmTapUsesOnNewIntentAndIsNotReplayedAfterOpeningAnotherPage",
+    "time": "14.169",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest",
+    "name": "signOutRemovesDisplayStateAndOldButtonsAndTapCannotAffectTheLaterAccount",
+    "time": "15.128",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest",
+    "name": "aColdNotificationLaunchOpensPomodoroAndRotationPreservesItsDestination",
+    "time": "15.989",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest",
+    "name": "aSessionTapLeavesTheFocusedTimerRoute",
+    "time": "11.495",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest",
+    "name": "theRingingNotificationReplacesTheActiveOneAndNextRestoresOnlyOneActiveNotification",
+    "time": "63.860",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest",
+    "name": "nextAndEndGoToTheServerWithTheShownRevisionAndOfflineChangesNothing",
+    "time": "10.157",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest",
+    "name": "tapCarriesTheGuardedPhaseAndIsConsumedOnlyOnceWithoutAffectingLauncherIntents",
+    "time": "0.015",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest",
+    "name": "postedIntentsKeepDistinctActionPhaseRevisionAndAccountIdentities",
+    "time": "0.014",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest",
+    "name": "aDeniedNotificationPermissionDoesNotPostOrThrow",
+    "time": "0.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest",
+    "name": "shownIdentitySurvivesReopenAndForgetErasesAllPersistedDisplayData",
+    "time": "0.013",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest",
+    "name": "nativeClockHasOneFixedPlannedEndAndShowsTheServersPhaseNumberUpcomingPhaseAndDescription",
+    "time": "0.007",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest",
+    "name": "restPhaseLabelsAndBlankDescriptionUseResources",
+    "time": "0.010",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest",
+    "name": "signingOutDuringEitherRestRemovesItsAlarmAndAllAccountStateOffline",
+    "time": "3.195",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest",
+    "name": "aNonRingingSharedNotificationIsRemovedEvenWithoutACurrentSession",
+    "time": "2.463",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest",
+    "name": "warningCountsOnlyQueuedChangesWhileTheServerHoldsASessionAndConfirmClearsOffline",
+    "time": "8.028",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest",
+    "name": "ringingSignOutRejectsLateButtonsAlarmsAndServiceChecksUnderTheNextAccount",
+    "time": "8.135",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "anEmptyNameIsAMistakeUnderTheField",
+    "time": "7.427",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "aProjectWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy",
+    "time": "7.208",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "theServerOutOfReachListsThePhonesProjectsWithEveryActionOff",
+    "time": "6.361",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "offlineEveryTaskActionIsOffAndTheListSaysTheyNeedTheServer",
+    "time": "8.657",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "everyControlHasALabel",
+    "time": "5.134",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "aRefusedChangeShowsTheServersReasonAndKeepsTheForm",
+    "time": "6.556",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "createEditAndDeleteATaskAndTheCacheFollowsEachChange",
+    "time": "18.412",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer",
+    "time": "7.364",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "createEditArchiveAndRestoreAProjectAndTheCacheFollowsEachChange",
+    "time": "30.754",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.projects.ProjectsServerTest",
+    "name": "aTaskWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy",
+    "time": "9.747",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderServerTest",
+    "name": "reminderPauseGoesToTheServerAndOfflineKeepsTheReminder",
+    "time": "2.958",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderServerTest",
+    "name": "preferenceRoundtripAndOfflineRetryPreserveOtherKeys",
+    "time": "2.292",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderServerTest",
+    "name": "preferenceStoreRoundtripClampsAndClearsAccountData",
+    "time": "1.568",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderServerTest",
+    "name": "oneWakeupAndKeepRunningConfirmsUntilStartCorrection",
+    "time": "2.038",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderServerTest",
+    "name": "reminderStopQueuesOfflineAndSendsAfterReconnect",
+    "time": "2.554",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderServerTest",
+    "name": "withoutTheTimerApiTheReminderOffersNoPause",
+    "time": "2.438",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reminder.ReminderServerTest",
+    "name": "stopBeforeDelayCancelsAndDisableEnableKeepsOnlyOneRequest",
+    "time": "2.508",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest",
+    "name": "ordinaryNewCurrenciesKeepMoneyFormattingAndMixedGroupsAreNotMislabelled",
+    "time": "2.176",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest",
+    "name": "omittedAdditionsHaveAnExplicitDisplayLimitNotice",
+    "time": "2.281",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest",
+    "name": "explicitZeroIsVisibleAndMissingGroupMoneyIsAbsent",
+    "time": "2.092",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest",
+    "name": "unknownScalarListObjectAndRateDataShowUnderTheirOwnersWithoutInventedUnits",
+    "time": "3.035",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.DetailedReportServerTest",
+    "name": "rowsMatchTheWebAppAndTheEndLoadsTheNextPage",
+    "time": "10.120",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.DetailedReportServerTest",
+    "name": "rowsFitAtTheLargestFontScale",
+    "time": "9.969",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.DetailedReportServerTest",
+    "name": "offlineShowsTheSummarysMessageAndNoRows",
+    "time": "14.461",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportCsvServerTest",
+    "name": "summarySharesTheFilteredServerBytesAndSignOutRevokesThePublishedFile",
+    "time": "0.731",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportCsvServerTest",
+    "name": "detailedSharesTheFilteredServerBytesAndSignOutRevokesThePublishedFile",
+    "time": "1.972",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersFitTest",
+    "name": "theFilterSheetFits",
+    "time": "26.643",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersFitTest",
+    "name": "theActiveFiltersFitOnTheReportsScreen",
+    "time": "6.125",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "theSheetOffersTheCachedChoicesAndAsksNothing",
+    "time": "15.449",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "theSheetOffersNoIsNotWhereTheServerCannotNegate",
+    "time": "12.123",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "theSearchNarrowsTheChoicesAndAsksNothing",
+    "time": "17.849",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "eachFilterNarrowsEveryReportAsTheWebAppDoes",
+    "time": "26.271",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportFiltersTest",
+    "name": "isNotDropsWhatTheWebAppDrops",
+    "time": "26.527",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsForegroundTest",
+    "name": "theForegroundAsksOnceAndARotationAsksNothing",
+    "time": "14.875",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsForegroundTest",
+    "name": "offlineAfterTheBackgroundShowsTheMessageAndNoNumbers",
+    "time": "10.734",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsScreenTest",
+    "name": "seededPerEntryCentsAndAnAdditionalCurrencyReachTheUi",
+    "time": "10.233",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsScreenTest",
+    "name": "offlineTheScreenSaysSoAndShowsNoNumbers",
+    "time": "13.132",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsScreenTest",
+    "name": "summaryUsesCurrentServerRoundingEvenWithAnAlreadyReadWorkspace",
+    "time": "1.106",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsScreenTest",
+    "name": "theSummaryMatchesTheWebAppsReportInTheAccountsTime",
+    "time": "10.301",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsScreenTest",
+    "name": "theScreenItsRangeDialogsAndTheFilterSheetFitAtTheLargestFontScale",
+    "time": "19.474",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.ReportsScreenTest",
+    "name": "theChartTellsTalkBackEveryDaysTime",
+    "time": "9.797",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.SharePercentOnDeviceTest",
+    "name": "shortestDecimalsMatchJavaScript",
+    "time": "0.023",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.SharePercentOnDeviceTest",
+    "name": "sharesMatchTheWebAppInNode",
+    "time": "0.186",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.WeeklyReportServerTest",
+    "name": "aLongerRangeShowsTodaysWeekAndOnlyWeekPresets",
+    "time": "13.472",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.WeeklyReportServerTest",
+    "name": "theGridMatchesTheWebAppInTheAccountsWeek",
+    "time": "14.461",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.WeeklyReportServerTest",
+    "name": "offlineShowsTheSummarysMessageAndNoNumbers",
+    "time": "12.095",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.reports.WeeklyReportServerTest",
+    "name": "theGridFitsAndScrollsSidewaysAtTheLargestFontScale",
+    "time": "10.477",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsRestartTest",
+    "name": "step1StoresSettingsWithATimeResolution",
+    "time": "0.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsRestartTest",
+    "name": "step2KeepsThemAndStoresSettingsWithout",
+    "time": "0.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsRestartTest",
+    "name": "step3KeepsTheSettingsWithoutATimeResolution",
+    "time": "0.010",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.AccountSettingsServerTest",
+    "name": "refreshReadsTheSettingsFromTheServerAndKeepsThem",
+    "time": "0.915",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.DefaultWorkspaceRestartTest",
+    "name": "step1OneRefreshStoresTheDefaultWorkspace",
+    "time": "1.489",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.DefaultWorkspaceRestartTest",
+    "name": "step2OfflineAfterARestartATimerStartsInTheStoredWorkspace",
+    "time": "0.689",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.DefaultWorkspaceRestartTest",
+    "name": "step3TheSentTimerRunsInTheDefaultWorkspace",
+    "time": "1.834",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest",
+    "name": "theAppReadsTheServerOnOpenForegroundAndReconnectOnly",
+    "time": "84.600",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest",
+    "name": "aFailedSignOut",
+    "time": "3.629",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest",
+    "name": "theWarningAboutUnsentChanges",
+    "time": "3.811",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=1, display=false, dark=false]",
+    "time": "14.167",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=1, display=false, dark=false]",
+    "time": "6.744",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=1, display=false, dark=false]",
+    "time": "36.852",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=1, display=false, dark=true]",
+    "time": "12.473",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=1, display=false, dark=true]",
+    "time": "5.360",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=1, display=false, dark=true]",
+    "time": "37.557",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=2, display=true, dark=false]",
+    "time": "14.213",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=2, display=true, dark=false]",
+    "time": "5.983",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=2, display=true, dark=false]",
+    "time": "35.950",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=2, display=true, dark=true]",
+    "time": "15.162",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=2, display=true, dark=true]",
+    "time": "6.679",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest",
+    "name": "eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=2, display=true, dark=true]",
+    "time": "38.494",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "eachThemeModeAppliesAtOnce",
+    "time": "6.370",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "everyControlHasATalkBackLabelAndRole",
+    "time": "4.112",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "followsTheSystemWithTokklsPaletteByDefault",
+    "time": "4.305",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "licencesRowOpensLicencesAndBackReturnsToSettings",
+    "time": "5.078",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "wallpaperColoursReplaceTokklsPaletteUntilTurnedOff",
+    "time": "5.517",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "tappingTheReminderOpensTimerFromSettings",
+    "time": "5.800",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "everyTextComesFromStringResources",
+    "time": "5.954",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "reminderSwitchAndHoursValidateAndApply",
+    "time": "8.184",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SettingsScreenTest",
+    "name": "signOutWithAnEmptyQueueGoesStraightToSignIn",
+    "time": "6.705",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.SignOutServerTest",
+    "name": "withUnsentChangesItWarnsAndCancelKeepsEverythingThenConfirmingClearsEveryStore",
+    "time": "11.459",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest",
+    "name": "step1ChoosesLight",
+    "time": "6.487",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest",
+    "name": "step2KeepsLightAndChoosesDark",
+    "time": "8.795",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest",
+    "name": "step3KeepsDarkAndChoosesTheSystem",
+    "time": "8.101",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest",
+    "name": "step4KeepsFollowingTheSystem",
+    "time": "7.727",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest",
+    "name": "aFailedSignOut",
+    "time": "4.903",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest",
+    "name": "theWarningAboutUnsentChanges",
+    "time": "6.172",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest",
+    "name": "aTapStartsTheFavoriteOfflineAndShowsAToastInsteadOfTheApp",
+    "time": "6.114",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest",
+    "name": "aShortcutWhoseFavoriteIsGoneStartsNothing",
+    "time": "3.568",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest",
+    "name": "aLongPressOnTheAppIconListsTheFavoritesAndATapStartsOne",
+    "time": "11.112",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest",
+    "name": "theLauncherPublishesFavoritesUpToItsLimit",
+    "time": "0.910",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest",
+    "name": "theFavoritesBecomeShortcutsInOrderAndFollowEveryChange",
+    "time": "3.832",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest",
+    "name": "theShortcutUpdatesTheNativeWidgetOffline",
+    "time": "8.008",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest",
+    "name": "losingTheFavoritesCapabilityRemovesShortcutsAndRefusesAnOldTap",
+    "time": "2.225",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest",
+    "name": "signingOutRemovesTheShortcuts",
+    "time": "2.816",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest",
+    "name": "anUnpinnedCertificateIsNeverOffered",
+    "time": "9.397",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest",
+    "name": "aPinnedCertificateStillFailsTheHostNameCheck",
+    "time": "7.657",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.CertificatePromptTest",
+    "name": "neitherATapOutsideNorBackClosesThePrompt",
+    "time": "8.076",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.CertificatePromptTest",
+    "name": "changedCertificatePromptsAgainAndCancelKeepsTheOldPin",
+    "time": "9.146",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.CertificatePromptTest",
+    "name": "untrustedCertificateShowsItsFingerprintAndSignsInOnceTrusted",
+    "time": "10.448",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInCooldownStoreTest",
+    "name": "keepsOneDeadlinePerOriginUntilCleared",
+    "time": "0.023",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInRateLimitTest",
+    "name": "tokklsRetryAfterDrivesACountdownThatOutlivesTheActivity",
+    "time": "13.218",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "wrongApiTokenShowsTheBadCredentialsMessageAndStoresNothing",
+    "time": "17.157",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "theServerUrlErrorFitsInTheHintsLines",
+    "time": "5.771",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "confirmedUrlSignsInWithoutTheWarning",
+    "time": "7.625",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "everyControlOfTheHttpWarningHasATalkBackLabel",
+    "time": "6.476",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "emailAndPasswordSignInKeepsTheTokenFromMeAndNeverThePassword",
+    "time": "11.143",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "emailErrorLeavesTheFieldsBelowInPlace",
+    "time": "7.966",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "httpServerWarnsAndSendsNothingUntilTheUserConfirmsTwice",
+    "time": "11.416",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "fieldErrorsLeaveTheFormInPlace",
+    "time": "14.429",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore",
+    "time": "18.970",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "everyFieldAndButtonHasATalkBackLabel",
+    "time": "3.398",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInScreenTest",
+    "name": "theBrandIsOneTalkBackNode",
+    "time": "3.087",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInUnderPathPrefixTest",
+    "name": "emailAndPasswordSignInReadsMeThroughThePrefix",
+    "time": "7.764",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInUnderPathPrefixTest",
+    "name": "aQueryAndAFragmentAfterThePrefixAreDropped",
+    "time": "6.385",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.signin.SignInUnderPathPrefixTest",
+    "name": "apiTokenSignInReadsMeThroughThePrefix",
+    "time": "6.441",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusFitTest",
+    "name": "theStatusFitsAboveTheBarAndOpensTheNeedsAttentionList",
+    "time": "4.245",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusServerTest",
+    "name": "theNeedsAttentionLinkOpensTheReasonAndItsEditResendAndDiscardActions",
+    "time": "9.455",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusServerTest",
+    "name": "aDeletedEntryShowsADiscardNoticeUntilItIsDismissed",
+    "time": "5.184",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusServerTest",
+    "name": "theStatusCountsOfflineChangesAndGoesOnceTheAppHasSentThem",
+    "time": "10.534",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusServerTest",
+    "name": "openingTheAppWithAnExpiredTokenAndSavedChangesAsksForSignIn",
+    "time": "7.650",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.sync.SyncStatusServerTest",
+    "name": "aResetTokenPromptsForSignInAndTheNewTokenSendsTheWaitingChanges",
+    "time": "9.706",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tags.TagsServerTest",
+    "name": "theServerOutOfReachListsThePhonesTags",
+    "time": "6.499",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tags.TagsServerTest",
+    "name": "aTagWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy",
+    "time": "6.117",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tags.TagsServerTest",
+    "name": "aRefusedCreateShowsTheServersReason",
+    "time": "6.330",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tags.TagsServerTest",
+    "name": "aRefusedRenameShowsTheServersReasonInTheForm",
+    "time": "7.997",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tags.TagsServerTest",
+    "name": "everyControlHasALabel",
+    "time": "6.812",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tags.TagsServerTest",
+    "name": "offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer",
+    "time": "9.203",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tags.TagsServerTest",
+    "name": "createRenameAndDeleteATagAndTheCacheAndHistoryFollow",
+    "time": "15.456",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tags.TagsServerTest",
+    "name": "cancellingTheDeleteQuestionKeepsTheTag",
+    "time": "7.416",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "theTileFollowsStartsAndStopsFromOtherSurfaces",
+    "time": "17.623",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "openingTheShadeTwiceWithinAMinuteFetchesOnlyOnce",
+    "time": "10.485",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "aTapDuringAHeldRefreshContinuesTheDisplayedEntryAtOnce",
+    "time": "6.988",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "aTapStopsTheRunningTimerWithTheNetworkDown",
+    "time": "6.131",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "longPressPausesResumesAndStopsWhilePausedOnTheServer",
+    "time": "10.368",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "openingTheShadeFindsATimerStartedOnTheServer",
+    "time": "4.406",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "stopAndContinueDoNotWaitForANetworkThatNeverAnswers",
+    "time": "5.609",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "anOfflineLongPressPauseSaysWhyAndStopStillQueues",
+    "time": "10.257",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "aTapContinuesTheLastEntryWithTheNetworkDown",
+    "time": "6.351",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "aTapOnThePausedTileResumesOnTheServerAndOfflineSaysWhy",
+    "time": "8.940",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "runningAndNotDifferInLabelAndIconNotOnlyInColour",
+    "time": "5.429",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.tile.RunningTileServerTest",
+    "name": "openingTheShadeOfflineAttemptsNoRequest",
+    "time": "6.255",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest",
+    "name": "suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField",
+    "time": "11.840",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest",
+    "name": "enterBackAndExitKeepBothViewPositionsAndIdentity",
+    "time": "14.508",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest",
+    "name": "actualRotationAndLargeTextKeepFocusedRunningAndPausedActionsReachable",
+    "time": "12.009",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest",
+    "name": "unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity",
+    "time": "9.732",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest",
+    "name": "offlineActionsAndSharedEditorsKeepCumulativeTimeAndFinalStopExits",
+    "time": "30.831",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest",
+    "name": "externalStopAlsoClosesTheFocusedRunningEditor",
+    "time": "7.724",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest",
+    "name": "focusedLocalTicksAndFrozenPauseAddNoRequests",
+    "time": "10.221",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest",
+    "name": "replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits",
+    "time": "8.667",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest",
+    "name": "enterBackAndExitKeepBothViewPositionsAndIdentity",
+    "time": "12.352",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest",
+    "name": "actualRotationAndLargeTextKeepFocusedRunningAndPausedActionsReachable",
+    "time": "13.240",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest",
+    "name": "unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity",
+    "time": "10.795",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest",
+    "name": "offlineActionsAndSharedEditorsKeepCumulativeTimeAndFinalStopExits",
+    "time": "28.881",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest",
+    "name": "externalStopAlsoClosesTheFocusedRunningEditor",
+    "time": "6.465",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest",
+    "name": "focusedLocalTicksAndFrozenPauseAddNoRequests",
+    "time": "9.063",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest",
+    "name": "replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits",
+    "time": "7.159",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerNoticeServerTest",
+    "name": "aTooShortPomodoroIsSaidOnceAndNotAgainWhenItsStateArrivesAgain",
+    "time": "12.781",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerServerTest",
+    "name": "startEditsAndStopShowAtOnceWhileTheNetworkHangsAndReachTheServer",
+    "time": "12.048",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerServerTest",
+    "name": "theClockTicksWithoutAnyRequest",
+    "time": "8.367",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerServerTest",
+    "name": "startingWhileAnotherEntryRunsLeavesOneRunning",
+    "time": "8.826",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerServerTest",
+    "name": "startEditsAndStopWorkInAirplaneModeAndReachTheServerAfterwards",
+    "time": "10.475",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsLargeTextTest",
+    "name": "listTotalsFitAndScrollAwayWithTheTimer",
+    "time": "3.267",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsServerTest",
+    "name": "localTicksSundayWeekStartMidnightLoadingUnknownZoneAndZeroUseOneCacheSubscription",
+    "time": "7.850",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsServerTest",
+    "name": "offlineStartStopEditDeleteAndUndoRemapExactlyOnceWithoutReportsOrPaging",
+    "time": "11.800",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerTotalsServerTest",
+    "name": "listAndOlderCalendarKeepTheSameAccountTotalsAboveTheSwitch",
+    "time": "7.071",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewServerTest",
+    "name": "aColdStartOpensTheServersCalendar",
+    "time": "4.777",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewServerTest",
+    "name": "aViewMissingOnTheServerOpensListOverTheStoredOne",
+    "time": "5.171",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewServerTest",
+    "name": "anOfflineTapGoesWithTheNextRefresh",
+    "time": "8.304",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timer.TimerViewServerTest",
+    "name": "aMissingViewOpensListAndTapsReachTheServer",
+    "time": "5.012",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest",
+    "name": "pauseResumeAndDiscardFailOfflineOnThePageTheNotificationAndTheWidget",
+    "time": "35.041",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest",
+    "name": "sessionStartNextAndEndFailOfflineOnThePageTheNotificationsAndTheAlarm",
+    "time": "285.721",
+    "failure": [
+      [
+        "failure",
+        ""
+      ]
+    ]
+  }
+]

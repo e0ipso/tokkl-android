@@ -1,0 +1,8 @@
+[
+  {
+    "class": "com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest",
+    "name": "capturedNextAndEndRevisionsAreRefusedAfterRemoteEditsAndAdoptConflictState",
+    "time": "13.467",
+    "failure": []
+  }
+]

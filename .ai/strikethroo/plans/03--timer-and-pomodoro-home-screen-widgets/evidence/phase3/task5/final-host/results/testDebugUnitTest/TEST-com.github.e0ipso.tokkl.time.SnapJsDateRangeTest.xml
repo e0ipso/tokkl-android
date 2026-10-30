@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" tests="40" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:45.176Z" hostname="punta-des-patro" time="0.032">
+  <properties/>
+  <testcase name="dateRangeCase1" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase2" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase3" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase4" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase5" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase6" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase7" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase8" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase9" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase10" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.002"/>
+  <testcase name="dateRangeCase11" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase12" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase13" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase14" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase15" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.005"/>
+  <testcase name="dateRangeCase16" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.005"/>
+  <testcase name="dateRangeCase17" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase18" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase19" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase20" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase21" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase22" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase23" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase24" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase25" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase26" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase27" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.005"/>
+  <testcase name="dateRangeCase28" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase29" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase30" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase31" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase32" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase33" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase34" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase35" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <testcase name="dateRangeCase36" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase37" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase38" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase39" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.0"/>
+  <testcase name="dateRangeCase40" classname="com.github.e0ipso.tokkl.time.SnapJsDateRangeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

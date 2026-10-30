@@ -147,27 +147,6 @@ class WidgetStateTest {
     }
 
     @Test
-    fun theWidgetShowsAsManyFavoritesAsItsHeightFits() {
-        val timerOnly = 2 * WidgetLayout.PADDING_DP + WidgetLayout.TIMER_ROW_DP
-        assertEquals(0, favoritesThatFit(40f, count = 5))
-        assertEquals(0, favoritesThatFit(timerOnly, count = 5))
-        assertEquals(0, favoritesThatFit(timerOnly + WidgetLayout.FAVORITE_ROW_DP - 1, count = 5))
-        assertEquals(1, favoritesThatFit(timerOnly + WidgetLayout.FAVORITE_ROW_DP, count = 5))
-        assertEquals(3, favoritesThatFit(timerOnly + 3.5f * WidgetLayout.FAVORITE_ROW_DP, count = 5))
-        assertEquals("never more than there are", 2, favoritesThatFit(1_000f, count = 2))
-    }
-
-    @Test
-    fun largerFontsReserveRoomForTheClockAndEachFavorite() {
-        assertEquals(128f, WidgetLayout.timerRowHeight(2f))
-        assertEquals(96f, WidgetLayout.favoriteRowHeight(2f))
-        assertEquals(0, favoritesThatFit(152f, count = 5, fontScale = 2f))
-        assertEquals(1, favoritesThatFit(248f, count = 5, fontScale = 2f))
-        assertEquals(1, favoritesThatFit(320f, count = 5, fontScale = 2f))
-        assertEquals(2, favoritesThatFit(344f, count = 5, fontScale = 2f))
-    }
-
-    @Test
     fun theChronometerCountsFromTheEntrysStart() {
         val now = start.plusSeconds(90)
 

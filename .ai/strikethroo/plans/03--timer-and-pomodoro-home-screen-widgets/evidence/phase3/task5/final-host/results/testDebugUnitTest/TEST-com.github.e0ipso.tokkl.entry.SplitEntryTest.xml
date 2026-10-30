@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.entry.SplitEntryTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-30T07:46:32.438Z" hostname="punta-des-patro" time="0.027">
+  <properties/>
+  <testcase name="snappedInstantFollowsTheWallClockOfTheTimeZone" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.009"/>
+  <testcase name="snappedSplitKeepsHalvesMeetingAcrossAHalfHourClockChange" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.003"/>
+  <testcase name="snappedSplitCutsAnEntrySavedUnderAnotherResolutionFromItsSnappedWhole" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.0"/>
+  <testcase name="snappedInstantPicksTheNearestGridPointAndATieGoesUp" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.001"/>
+  <testcase name="anOvernightSplitUsesTheNextDaysClockTimeOnTheNightsTheClocksChange" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.0"/>
+  <testcase name="halvesSplitAtSnappedInstantAddUpToTheSnappedWhole" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.001"/>
+  <testcase name="snappedSplitReturnsTheHalvesTheServerStoresMeetingAtTheSplit" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.0"/>
+  <testcase name="aSplitTimeOnTheEntrysDayMovesToTheGridAndOneOutsideOrUnreadableIsRefused" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.007"/>
+  <testcase name="snappedSplitRefusesASplitOnOrOutsideTheSnappedStartAndStop" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.005"/>
+  <testcase name="forTwelveHourUsersATimeWithoutAmOrPmIsTheOneNearerTheStart" classname="com.github.e0ipso.tokkl.entry.SplitEntryTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

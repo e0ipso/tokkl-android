@@ -47,14 +47,11 @@ internal suspend fun sendPomodoroWidgetAction(tap: PomodoroWidgetTap, current: P
     }
 }
 
-internal data class PomodoroWidgetClock(val base: Long, val countDown: Boolean, val progress: Float)
+internal data class PomodoroWidgetClock(val base: Long, val countDown: Boolean)
 internal fun pomodoroWidgetClock(state: PomodoroWidgetState.Active, now: Instant, elapsedRealtime: Long): PomodoroWidgetClock {
-    val duration = java.time.Duration.between(state.start, state.end).toMillis()
-    val elapsed = java.time.Duration.between(state.start, now).toMillis()
     return PomodoroWidgetClock(
         base = elapsedRealtime + java.time.Duration.between(now, state.end).toMillis(),
         countDown = !state.ended,
-        progress = if (state.ended || duration <= 0) 1f else (elapsed.toDouble() / duration).toFloat().coerceIn(0f, 1f),
     )
 }
 

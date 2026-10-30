@@ -1,0 +1,1121 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="536" failures="1" errors="0" skipped="0" time="0.000" timestamp="2026-10-30T13:13:49" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.LaunchScreenTest" tests="2" failures="0" errors="0" skipped="0" time="24.357" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theTitleIsOneTalkBackHeadingAndNoWordmarkShows" classname="com.github.e0ipso.tokkl.LaunchScreenTest" time="12.741" />
+    <testcase name="opensOnTheTimerPageWithTheBottomBar" classname="com.github.e0ipso.tokkl.LaunchScreenTest" time="11.616" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.LaunchSplashTest" tests="5" failures="0" errors="0" skipped="0" time="4.521" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="inLightTheSplashIsTheWordmarkOnTheWindowBackground" classname="com.github.e0ipso.tokkl.LaunchSplashTest" time="1.166" />
+    <testcase name="mainActivityStartsInTheThemeWithTheSplash" classname="com.github.e0ipso.tokkl.LaunchSplashTest" time="0.621" />
+    <testcase name="inDarkTheSplashIsTheWordmarkOnTheWindowBackground" classname="com.github.e0ipso.tokkl.LaunchSplashTest" time="0.566" />
+    <testcase name="theSplashIconFitsTheWordmarkInTheCircle" classname="com.github.e0ipso.tokkl.LaunchSplashTest" time="1.070" />
+    <testcase name="inDarkTheHaloTracesTheWordmark" classname="com.github.e0ipso.tokkl.LaunchSplashTest" time="1.098" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.LauncherIconTest" tests="1" failures="0" errors="0" skipped="0" time="0.027" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="launcherGetsAnAdaptiveIconForMainActivity" classname="com.github.e0ipso.tokkl.LauncherIconTest" time="0.027" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.accessibility.DarkAdditionalAccessibilityTest" tests="3" failures="0" errors="0" skipped="0" time="77.357" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="everyMoreChoiceIsReachableAtMaximumSizes" classname="com.github.e0ipso.tokkl.accessibility.DarkAdditionalAccessibilityTest" time="35.465" />
+    <testcase name="pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes" classname="com.github.e0ipso.tokkl.accessibility.DarkAdditionalAccessibilityTest" time="8.916" />
+    <testcase name="refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes" classname="com.github.e0ipso.tokkl.accessibility.DarkAdditionalAccessibilityTest" time="32.976" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.accessibility.LightAdditionalAccessibilityTest" tests="3" failures="0" errors="0" skipped="0" time="65.432" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="everyMoreChoiceIsReachableAtMaximumSizes" classname="com.github.e0ipso.tokkl.accessibility.LightAdditionalAccessibilityTest" time="41.972" />
+    <testcase name="pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes" classname="com.github.e0ipso.tokkl.accessibility.LightAdditionalAccessibilityTest" time="5.349" />
+    <testcase name="refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes" classname="com.github.e0ipso.tokkl.accessibility.LightAdditionalAccessibilityTest" time="18.111" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.api.PinnedCertificateTest" tests="3" failures="0" errors="0" skipped="0" time="2.596" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anotherPinnedCertificateFailsAsAChangedCertificate" classname="com.github.e0ipso.tokkl.api.PinnedCertificateTest" time="0.903" />
+    <testcase name="unpinnedCertificateFailsTheHandshakeWithItsFingerprint" classname="com.github.e0ipso.tokkl.api.PinnedCertificateTest" time="0.828" />
+    <testcase name="pinnedCertificateReachesTokkl" classname="com.github.e0ipso.tokkl.api.PinnedCertificateTest" time="0.865" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.api.ServerSmokeTest" tests="6" failures="0" errors="0" skipped="0" time="13.541" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="deleteWithAnEmptyResponseBodySucceeds" classname="com.github.e0ipso.tokkl.api.ServerSmokeTest" time="0.816" />
+    <testcase name="withNoStoredServerTheGuardRefusesTheRequest" classname="com.github.e0ipso.tokkl.api.ServerSmokeTest" time="0.335" />
+    <testcase name="wrongApiTokenGets403" classname="com.github.e0ipso.tokkl.api.ServerSmokeTest" time="0.852" />
+    <testcase name="aRequestSentOnceAfterTheServerClosedItsIdleConnectionGetsItsAnswer" classname="com.github.e0ipso.tokkl.api.ServerSmokeTest" time="9.471" />
+    <testcase name="emailAndPasswordAuthenticateWithGetMe" classname="com.github.e0ipso.tokkl.api.ServerSmokeTest" time="1.232" />
+    <testcase name="unconfirmedHttpServerGetsNoRequest" classname="com.github.e0ipso.tokkl.api.ServerSmokeTest" time="0.835" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.AccountCacheServerTest" tests="1" failures="0" errors="0" skipped="0" time="6.626" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="afterOneRefreshEveryCachedKindReadsInAirplaneMode" classname="com.github.e0ipso.tokkl.cache.AccountCacheServerTest" time="6.626" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" tests="5" failures="0" errors="0" skipped="0" time="50.368" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anAppDrainThatEmptiesTheQueueCancelsTheWaitingRetry" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="4.727" />
+    <testcase name="aRunningWorkerThatJoinedTheAppsDrainSucceeds" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="2.997" />
+    <testcase name="theRetryAfterTheBackoffSendsTheQueue" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="33.990" />
+    <testcase name="callsThatQueueNothingScheduleNoWork" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="2.706" />
+    <testcase name="restoringTheNetworkSendsTheQueueWithTheAppClosed" classname="com.github.e0ipso.tokkl.cache.BackgroundSendServerTest" time="5.948" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" tests="8" failures="0" errors="0" skipped="0" time="5.295" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="version4MigratesAndHeldChangesSurviveAReopen" classname="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" time="0.630" />
+    <testcase name="version7KeepsTheQueueAndLeavesNoLocalTimerTables" classname="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" time="0.413" />
+    <testcase name="version3MigratesKeepsTheMarkedQueueAndRecordsTheServersEntriesOnANewCreate" classname="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" time="0.414" />
+    <testcase name="version8DropsTheLocalTimerTablesAndItsQueueStillSends" classname="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" time="2.072" />
+    <testcase name="version1MigratesAndKeepsTheCachedRows" classname="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" time="0.431" />
+    <testcase name="version2MigratesAndKeepsTheQueue" classname="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" time="0.366" />
+    <testcase name="version5KeepsAnAlreadyQueuedStopAndAddsUndoStorage" classname="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" time="0.511" />
+    <testcase name="version6KeepsARunningTimerAndItsQueueAndStopsItAfterTheUpdate" classname="com.github.e0ipso.tokkl.cache.CacheDatabaseMigrationTest" time="0.458" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest" tests="2" failures="0" errors="0" skipped="0" time="4.907" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1SendsACreateAndDiesBeforeTheAnswer" classname="com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest" time="2.268" />
+    <testcase name="step2SendsTheQueueWithoutASecondCopy" classname="com.github.e0ipso.tokkl.cache.ChangeQueueLostAnswerRestartTest" time="2.639" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.ChangeQueueRestartTest" tests="2" failures="0" errors="0" skipped="0" time="5.952" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1QueuesStartEditAndStopWithNoRouteToTheServer" classname="com.github.e0ipso.tokkl.cache.ChangeQueueRestartTest" time="3.250" />
+    <testcase name="step2SendsTheQueueInANewProcess" classname="com.github.e0ipso.tokkl.cache.ChangeQueueRestartTest" time="2.702" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" tests="14" failures="0" errors="0" skipped="0" time="150.174" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="createEditStopAndDeleteOfAnOfflineEntryReachTheServerInOrder" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="6.179" />
+    <testcase name="aRefreshThatReadTheTimerBeforeItsStopWasSentDoesNotLeaveItRunning" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="6.038" />
+    <testcase name="aCreateWhoseAnswerWasLostIsStoredOnceAndLaterChangesApplyToIt" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="5.355" />
+    <testcase name="aCreateThatNeverReachedTheServerIsPostedOnce" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="25.796" />
+    <testcase name="aQueuedStartRunsWhenNoTimerRunsOnTheServer" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="4.215" />
+    <testcase name="startAndStopShowAtOnceWhileTheNetworkHangsAndTheServerGetsTheTapTimes" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="5.410" />
+    <testcase name="aQueuedStartRunsAndTheServerStopsAnEarlierTimer" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="4.282" />
+    <testcase name="aCreateWhoseAnswerWasLostIsStoredOnceWhenTheServerHasItsTagInAnotherCase" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="25.229" />
+    <testcase name="aQueuedStartEndsWhereALaterTimerOnTheServerStartsAndThatTimerKeepsRunning" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="4.292" />
+    <testcase name="theChangeThatReachesTheServerLastWinsWithoutAMerge" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="4.652" />
+    <testcase name="aDuplicateThatNeverReachedTheServerIsPostedBesideItsSource" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="25.821" />
+    <testcase name="aStopTappedOnThePhoneIsStoredAsTheWebAppStoresAStopAtTheSameMoment" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="4.285" />
+    <testcase name="aTimerStartedOnThePhoneEndsTheRunningOneWhereItsOwnStartSnaps" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="3.863" />
+    <testcase name="aCreateThatNeverReachedTheServerIsNotTakenForAnEntryWithOtherTags" classname="com.github.e0ipso.tokkl.cache.ChangeQueueServerTest" time="24.757" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest" tests="5" failures="0" errors="0" skipped="0" time="8.323" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="a400HoldsItsEntryWhileOthersSendAndAFixResendsIt" classname="com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest" time="1.748" />
+    <testcase name="resetToken403PausesEverythingUntilTheSameAccountSignsInAgain" classname="com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest" time="1.718" />
+    <testcase name="a404DropsChangesToTheDeletedEntryAndAggregatesTheNotice" classname="com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest" time="1.663" />
+    <testcase name="editingAHeldCreateKeepsExistingEntriesOutOfALostPostLookup" classname="com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest" time="1.552" />
+    <testcase name="aHeldChangeCanBeSentAgainOrDiscardedWithItsCachedDraft" classname="com.github.e0ipso.tokkl.cache.ChangeRejectionServerTest" time="1.642" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" tests="4" failures="0" errors="0" skipped="0" time="12.498" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aTimerStartedOnTheServerTakesThePlaceOfTheOneItStopped" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="2.565" />
+    <testcase name="startingATimerSchedulesOneCheckAndStoppingItCancelsIt" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="3.303" />
+    <testcase name="aTimerStoppedOnTheServerLeavesTheCacheAndTheNotificationAtTheNextCheck" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="3.794" />
+    <testcase name="theCheckLeavesAnEntryWithUnsentChangesAsItIs" classname="com.github.e0ipso.tokkl.cache.RunningCheckServerTest" time="2.836" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" tests="9" failures="0" errors="0" skipped="0" time="2.296" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="correctingTheServersResumedCloneChangesOnlyItsOwnElapsedTime" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.175" />
+    <testcase name="aRunningEntryAnswerKeepsAStartAndAnEditSentDuringItsRead" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.232" />
+    <testcase name="shortStopAndItsUndoCannotReviveTheRunningEditor" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.247" />
+    <testcase name="workspaceMismatchCannotWrite" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.203" />
+    <testcase name="runningUpdateQueuesExactUnsnappedStartAndNullStop" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.249" />
+    <testcase name="competingStartCorrectionInvalidatesAnOlderEditor" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.315" />
+    <testcase name="sameInstantReplacementRejectsTheOriginalIdentity" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.282" />
+    <testcase name="originalLocalIdentityResolvesAfterRemapAndDatabaseReopen" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.359" />
+    <testcase name="stoppedEntryRejectsStaleSaveWithoutAnotherQueuedChange" classname="com.github.e0ipso.tokkl.cache.RunningEntryQueueTest" time="0.234" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" tests="8" failures="0" errors="0" skipped="0" time="26.337" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theWeekViewCreatesAndMovesEntriesToo" classname="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" time="3.549" />
+    <testcase name="aDragOnABlockMovesIt" classname="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" time="3.220" />
+    <testcase name="aDragOnEmptySpaceCreatesAnEntryAndOpensIt" classname="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" time="3.639" />
+    <testcase name="aTapOrTalkBacksClickOpensTheBlockInTheForm" classname="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" time="3.451" />
+    <testcase name="theWeekViewsDayHeadsOfferTheActionToo" classname="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" time="3.355" />
+    <testcase name="aHeldBlockDraggedSidewaysStaysOnItsDay" classname="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" time="3.213" />
+    <testcase name="eachDaysHeadOffersTalkBackAnActionThatAddsAnEntry" classname="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" time="2.751" />
+    <testcase name="aDragOnABlocksEdgesMovesThatEnd" classname="com.github.e0ipso.tokkl.calendar.CalendarGesturesTest" time="3.159" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.calendar.CalendarServerTest" tests="13" failures="0" errors="0" skipped="0" time="121.195" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="offlineTheForegroundKeepsAnOlderWeek" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="12.813" />
+    <testcase name="swipesMoveBetweenDays" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="7.632" />
+    <testcase name="offlineADragMovesACachedEntryThroughTheQueue" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="9.825" />
+    <testcase name="anEntryFromTwoDaysBeforeAnOlderWeekShowsInIt" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="7.888" />
+    <testcase name="deletingFromTheCalendarEditorClosesItAndUndoRestoresTheBlockOffline" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="12.590" />
+    <testcase name="offlineADragOnEmptySpaceCreatesAnEntryAndOpensTheForm" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="9.818" />
+    <testcase name="aBlockReadsItsEntry" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="6.394" />
+    <testcase name="anEntryDeletedElsewhereGoesFromAnOlderWeekAfterTheForeground" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="8.282" />
+    <testcase name="theArrowsAndTheStripCrossIntoAWeekOnlyTheServerHas" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="8.095" />
+    <testcase name="anUnsentBlockSaysNotSentUntilTheServerHasIt" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="9.028" />
+    <testcase name="offlineLastWeekShowsAndAnOlderWeekLoadsWhenTheNetworkReturns" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="9.199" />
+    <testcase name="aDragOnAnOlderWeekKeepsItsTimesAfterTheSend" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="10.774" />
+    <testcase name="anEntryFromTheEveningBeforeTheCacheShowsInLastWeek" classname="com.github.e0ipso.tokkl.calendar.CalendarServerTest" time="8.857" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.calendar.DayCalendarTest" tests="9" failures="0" errors="0" skipped="0" time="48.910" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theNextDaySlidesIn" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="6.117" />
+    <testcase name="aWindowOfMediumWidthShowsTheWeekWithItsDayHeads" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="5.575" />
+    <testcase name="theArrowsAndSwipesCrossIntoTheWeekBeforeAndTheWeekAfter" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="5.728" />
+    <testcase name="theChosenDayIsFramed" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="6.343" />
+    <testcase name="aTapOnADayOfTheStripShowsIt" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="5.397" />
+    <testcase name="darkWeekDayHeadsUseTheCurrentSectionHue" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="5.408" />
+    <testcase name="lightWeekDayHeadsUseTheCurrentSectionHue" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="6.266" />
+    <testcase name="anUprightPhoneShowsTheChosenDayUnderTheStripOfItsWeek" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="4.076" />
+    <testcase name="reducedMotionChangesTheDayAtOnce" classname="com.github.e0ipso.tokkl.calendar.DayCalendarTest" time="4.000" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.calendar.LargestFontLandscapeCalendarTest" tests="1" failures="0" errors="0" skipped="0" time="11.793" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theGridGetsTheRoom" classname="com.github.e0ipso.tokkl.calendar.LargestFontLandscapeCalendarTest" time="11.793" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.calendar.LargestFontUprightCalendarTest" tests="1" failures="0" errors="0" skipped="0" time="18.867" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theGridGetsTheRoom" classname="com.github.e0ipso.tokkl.calendar.LargestFontUprightCalendarTest" time="18.867" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.calendar.UsualFontLandscapeCalendarTest" tests="1" failures="0" errors="0" skipped="0" time="17.185" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theGridGetsTheRoom" classname="com.github.e0ipso.tokkl.calendar.UsualFontLandscapeCalendarTest" time="17.185" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.calendar.UsualFontUprightCalendarTest" tests="1" failures="0" errors="0" skipped="0" time="10.851" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theGridGetsTheRoom" classname="com.github.e0ipso.tokkl.calendar.UsualFontUprightCalendarTest" time="10.851" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.calendar.WeekStripFitTest" tests="2" failures="0" errors="0" skipped="0" time="23.570" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="everyDayShowsItsWeekdayDateAndTotalWhole" classname="com.github.e0ipso.tokkl.calendar.WeekStripFitTest" time="9.392" />
+    <testcase name="theDaysFitAndTheChosenDayStaysMarked" classname="com.github.e0ipso.tokkl.calendar.WeekStripFitTest" time="14.178" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.capabilities.CapabilitiesServerTest" tests="2" failures="0" errors="0" skipped="0" time="1.702" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1RefreshTurnsEveryCapabilityOnForAFreshTokklAccount" classname="com.github.e0ipso.tokkl.capabilities.CapabilitiesServerTest" time="1.555" />
+    <testcase name="step2TheFlagsSurviveARestart" classname="com.github.e0ipso.tokkl.capabilities.CapabilitiesServerTest" time="0.147" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.catalog.CatalogForegroundTest" tests="2" failures="0" errors="0" skipped="0" time="33.678" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aProjectRenamedElsewhereShowsAfterTheForegroundAndARotationLoadsNothing" classname="com.github.e0ipso.tokkl.catalog.CatalogForegroundTest" time="16.310" />
+    <testcase name="aClientAndATagRenamedElsewhereShowAfterTheForeground" classname="com.github.e0ipso.tokkl.catalog.CatalogForegroundTest" time="17.368" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" tests="16" failures="0" errors="0" skipped="0" time="109.660" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="taskDeleteQuestion" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="10.207" />
+    <testcase name="projectsOffline" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="6.528" />
+    <testcase name="clientsOffline" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="6.321" />
+    <testcase name="projectForm" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="8.464" />
+    <testcase name="tagsList" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="6.955" />
+    <testcase name="taskForm" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="10.195" />
+    <testcase name="clientsList" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="6.490" />
+    <testcase name="clientArchiveQuestion" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="7.424" />
+    <testcase name="projectFormWithTasksOffline" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="6.705" />
+    <testcase name="tagRenameForm" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="8.596" />
+    <testcase name="tagDeleteQuestion" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="6.198" />
+    <testcase name="projectFormWithTasks" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="5.223" />
+    <testcase name="projectsList" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="4.627" />
+    <testcase name="clientForm" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="4.118" />
+    <testcase name="tagsOffline" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="4.666" />
+    <testcase name="newProjectFormWithMistakes" classname="com.github.e0ipso.tokkl.catalog.LargestFontCatalogFitTest" time="6.943" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" tests="16" failures="0" errors="0" skipped="0" time="64.597" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="taskDeleteQuestion" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="5.227" />
+    <testcase name="projectsOffline" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="3.521" />
+    <testcase name="clientsOffline" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="2.875" />
+    <testcase name="projectForm" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="4.037" />
+    <testcase name="tagsList" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="2.647" />
+    <testcase name="taskForm" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="4.937" />
+    <testcase name="clientsList" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="3.160" />
+    <testcase name="clientArchiveQuestion" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="3.622" />
+    <testcase name="projectFormWithTasksOffline" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="4.287" />
+    <testcase name="tagRenameForm" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="5.731" />
+    <testcase name="tagDeleteQuestion" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="4.223" />
+    <testcase name="projectFormWithTasks" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="4.961" />
+    <testcase name="projectsList" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="3.772" />
+    <testcase name="clientForm" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="3.541" />
+    <testcase name="tagsOffline" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="2.730" />
+    <testcase name="newProjectFormWithMistakes" classname="com.github.e0ipso.tokkl.catalog.UsualFontCatalogFitTest" time="5.326" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.clients.ClientsServerTest" tests="7" failures="0" errors="0" skipped="0" time="58.023" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theServerOutOfReachListsThePhonesClientsWithTheArchivedOnesMarked" classname="com.github.e0ipso.tokkl.clients.ClientsServerTest" time="7.183" />
+    <testcase name="aRefusedCreateShowsTheServersReasonAndKeepsTheForm" classname="com.github.e0ipso.tokkl.clients.ClientsServerTest" time="7.543" />
+    <testcase name="aClientWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy" classname="com.github.e0ipso.tokkl.clients.ClientsServerTest" time="8.305" />
+    <testcase name="cancellingTheArchiveQuestionKeepsTheClient" classname="com.github.e0ipso.tokkl.clients.ClientsServerTest" time="6.354" />
+    <testcase name="createEditArchiveAndRestoreAClientAndTheCacheFollowsEachChange" classname="com.github.e0ipso.tokkl.clients.ClientsServerTest" time="13.907" />
+    <testcase name="everyControlHasALabel" classname="com.github.e0ipso.tokkl.clients.ClientsServerTest" time="5.652" />
+    <testcase name="offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer" classname="com.github.e0ipso.tokkl.clients.ClientsServerTest" time="9.079" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" tests="8" failures="0" errors="0" skipped="0" time="1.566" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="ciphertextWithoutItsKeyLoadsNull" classname="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" time="0.048" />
+    <testcase name="loadsNullWhenNothingIsStored" classname="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" time="0.051" />
+    <testcase name="keyIsANonExportableAesGcmKeyInTheKeystore" classname="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" time="0.113" />
+    <testcase name="storedBytesNeverContainThePlainToken" classname="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" time="0.983" />
+    <testcase name="changedCiphertextLoadsNull" classname="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" time="0.070" />
+    <testcase name="savedTokenLoadsBack" classname="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" time="0.104" />
+    <testcase name="savingReplacesTheStoredToken" classname="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" time="0.090" />
+    <testcase name="clearDeletesTheKeyAndTheCiphertext" classname="com.github.e0ipso.tokkl.credentials.ApiTokenStoreTest" time="0.107" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.entry.EntryFormServerTest" tests="14" failures="0" errors="0" skipped="0" time="251.529" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anotherEntryOpenedBesideTheHistoryDropsTheOpenFormsUnsavedEdits" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="15.980" />
+    <testcase name="pastEntriesByDurationAndAcrossMidnightReachTheServer" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="25.850" />
+    <testcase name="anEditMadeInAirplaneModeReachesTheServerWhenTheNetworkReturns" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="20.312" />
+    <testcase name="backOnAPhoneClosesTheFormAndDropsItsUnsavedEdits" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="16.324" />
+    <testcase name="anEntryFromAnOlderDayOpensAndTheHistoryShowsItsEditAfterTheRefresh" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="15.701" />
+    <testcase name="shortTypedSpansShowValidationAndCreateNoPendingChange" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="15.453" />
+    <testcase name="typedCreateAndEditPredictionsMatchLatestServerAcrossAccountZonesAndDst" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="6.864" />
+    <testcase name="timesThatCannotBeReadShowAMessageAndQueueNothing" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="17.642" />
+    <testcase name="anOlderEntryReopenedBeforeItsEditWasSentSavesAfterTheRefreshDropsIt" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="25.825" />
+    <testcase name="aPastEntrySavedInAirplaneModeReachesTheServerWhenTheNetworkReturns" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="20.414" />
+    <testcase name="everyFieldAndControlHasALabel" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="11.186" />
+    <testcase name="anOfflineEditOfAnOlderEntryShowsAsNotSentAndReachesTheServerWhenTheNetworkReturns" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="19.328" />
+    <testcase name="everyFieldOfAnEntryChangesAndReachesTheServer" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="33.922" />
+    <testcase name="aLegacyZeroLengthEntryKeepsItsTimesOnADescriptionEdit" classname="com.github.e0ipso.tokkl.entry.EntryFormServerTest" time="6.728" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" tests="10" failures="0" errors="0" skipped="0" time="253.203" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="mediumListAndCalendarClocksOpenTheRunningEditor" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="21.872" />
+    <testcase name="cancelBackAndActualRotationsKeepOrDiscardTheRightDraft" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="50.661" />
+    <testcase name="compactListAndCalendarClocksOpenTheRunningEditor" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="22.804" />
+    <testcase name="metadataSaveKeepsSecondsAndInvalidStartFlushesNothing" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="37.722" />
+    <testcase name="expandedListAndCalendarClocksKeepTheirExistingPaneRoutes" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="16.775" />
+    <testcase name="aServerPauseWhileTheEditorIsOpenCannotBeRevivedBySave" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="17.470" />
+    <testcase name="offlineMidnightCorrectionPersistsOnDiskAndRemapsOneRunningEntry" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="29.317" />
+    <testcase name="clockWaitsForInitialStartAndPendingDescriptionWrites" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="21.391" />
+    <testcase name="aSameStartReplacementCannotReceiveTheOpenEditorsStaleSave" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="19.128" />
+    <testcase name="aStopWhileTheEditorIsOpenCannotBeRevivedBySave" classname="com.github.e0ipso.tokkl.entry.RunningEntryEditorServerTest" time="16.063" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.favorites.FavoritesServerTest" tests="7" failures="0" errors="0" skipped="0" time="136.670" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="editingOfflineSaysItNeedsTheServer" classname="com.github.e0ipso.tokkl.favorites.FavoritesServerTest" time="14.744" />
+    <testcase name="pinningAHistoryEntryWithNineFavoritesSaysTheListIsFull" classname="com.github.e0ipso.tokkl.favorites.FavoritesServerTest" time="14.222" />
+    <testcase name="pinningAHistoryEntryReachesTheWebInItsFormat" classname="com.github.e0ipso.tokkl.favorites.FavoritesServerTest" time="21.548" />
+    <testcase name="theWebAppsFavoritesShowAndOneTapStartsOneOffline" classname="com.github.e0ipso.tokkl.favorites.FavoritesServerTest" time="23.961" />
+    <testcase name="aFavoriteTappedWhileADescriptionIsTypedRunsWithItsOwnDescription" classname="com.github.e0ipso.tokkl.favorites.FavoritesServerTest" time="23.504" />
+    <testcase name="pinningAHistoryEntryOfflineSaysItNeedsTheServer" classname="com.github.e0ipso.tokkl.favorites.FavoritesServerTest" time="21.593" />
+    <testcase name="favoritesEditedOnThePhoneReachTheWebInItsFormat" classname="com.github.e0ipso.tokkl.favorites.FavoritesServerTest" time="17.098" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" tests="9" failures="0" errors="0" skipped="0" time="51.210" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="saveKeepsThePopupOpen" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="5.581" />
+    <testcase name="cancelLeavesTheListAndSaveStoresANewTemplate" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="8.257" />
+    <testcase name="offlineDisablesManagement" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="4.678" />
+    <testcase name="editingSavesInPlaceAndCancelLeavesTheRow" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="7.844" />
+    <testcase name="theRailListsTemplatesFirstAndHidesThemWithoutTheCapability" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="6.791" />
+    <testcase name="thePopupHidesWithoutTheCapabilityThenStartsInSavedOrder" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="4.064" />
+    <testcase name="aFullListDisablesSave" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="4.684" />
+    <testcase name="anEmptyPopupOffersSaveAndManage" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="4.076" />
+    <testcase name="theBarListsTemplatesFirstAndHidesThemWithoutTheCapability" classname="com.github.e0ipso.tokkl.favorites.TemplatesUiTest" time="5.235" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.history.ContinueServerTest" tests="3" failures="0" errors="0" skipped="0" time="25.977" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="continueWhileADescriptionIsTypedKeepsTheContinuedEntrysDescription" classname="com.github.e0ipso.tokkl.history.ContinueServerTest" time="10.643" />
+    <testcase name="continueLastInAirplaneModeStartsTheLatestStoppedEntryAndReachesTheServer" classname="com.github.e0ipso.tokkl.history.ContinueServerTest" time="6.067" />
+    <testcase name="continueFromTheHistoryInAirplaneModeStartsTheEntryAgainAndReachesTheServer" classname="com.github.e0ipso.tokkl.history.ContinueServerTest" time="9.267" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.history.DeleteUndoServerTest" tests="5" failures="0" errors="0" skipped="0" time="45.049" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="undoOfAnUnsentDeleteTakesItOutOfTheQueueWithNoRequest" classname="com.github.e0ipso.tokkl.history.DeleteUndoServerTest" time="2.816" />
+    <testcase name="undoOfASentDeleteRestoresTheEntryThroughTheRestoreEndpoint" classname="com.github.e0ipso.tokkl.history.DeleteUndoServerTest" time="2.721" />
+    <testcase name="undoOfADeleteWhoseConnectionDroppedAfterTheAnswerRestoresTheEntry" classname="com.github.e0ipso.tokkl.history.DeleteUndoServerTest" time="4.399" />
+    <testcase name="theEntrysMenuDeletesItAndUndoBringsItBack" classname="com.github.e0ipso.tokkl.history.DeleteUndoServerTest" time="9.621" />
+    <testcase name="undoOfADeleteWhoseAnswerWasLostRestoresTheEntryThroughTheRestoreEndpoint" classname="com.github.e0ipso.tokkl.history.DeleteUndoServerTest" time="25.492" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.history.DuplicateServerTest" tests="1" failures="0" errors="0" skipped="0" time="11.842" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aDuplicateMadeInAirplaneModeReachesTheServerWhenTheNetworkReturns" classname="com.github.e0ipso.tokkl.history.DuplicateServerTest" time="11.842" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.history.EntryActionsUiTest" tests="8" failures="0" errors="0" skipped="0" time="40.413" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="duplicateHasATalkBackLabelAndCopiesTheEntry" classname="com.github.e0ipso.tokkl.history.EntryActionsUiTest" time="6.680" />
+    <testcase name="splitAndItsTimeFieldHaveTalkBackLabelsAndSplitCutsTheEntry" classname="com.github.e0ipso.tokkl.history.EntryActionsUiTest" time="10.961" />
+    <testcase name="withoutRestoreDeleteAsksFirstAndTheMessageOffersNoUndo" classname="com.github.e0ipso.tokkl.history.EntryActionsUiTest" time="4.988" />
+    <testcase name="withoutTheFavoritesCapabilityTheMenuHasNoPin" classname="com.github.e0ipso.tokkl.history.EntryActionsUiTest" time="4.067" />
+    <testcase name="pinAsFavoriteHasATalkBackLabelAndPinsTheEntry" classname="com.github.e0ipso.tokkl.history.EntryActionsUiTest" time="3.599" />
+    <testcase name="undoOfflineSaysItNeedsTheServerAndOffersUndoAgain" classname="com.github.e0ipso.tokkl.history.EntryActionsUiTest" time="3.539" />
+    <testcase name="cancellingTheQuestionDeletesNothing" classname="com.github.e0ipso.tokkl.history.EntryActionsUiTest" time="3.570" />
+    <testcase name="theMenuAndDeleteHaveTalkBackLabelsAndTalkBackAnnouncesUndo" classname="com.github.e0ipso.tokkl.history.EntryActionsUiTest" time="3.009" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.history.HistoryFitTest" tests="4" failures="0" errors="0" skipped="0" time="43.954" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theSplitDialogFitsWithItsPreviewAndItsLongestMessage" classname="com.github.e0ipso.tokkl.history.HistoryFitTest" time="7.089" />
+    <testcase name="theRowMenuFits" classname="com.github.e0ipso.tokkl.history.HistoryFitTest" time="7.141" />
+    <testcase name="aGroupFitsCollapsedAndExpanded" classname="com.github.e0ipso.tokkl.history.HistoryFitTest" time="24.210" />
+    <testcase name="theUndoMessagesFit" classname="com.github.e0ipso.tokkl.history.HistoryFitTest" time="5.514" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.history.HistoryGroupUiTest" tests="2" failures="0" errors="0" skipped="0" time="7.905" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="noItemOfTheEntryMenuIsCutOffAtTheLargestFontScale" classname="com.github.e0ipso.tokkl.history.HistoryGroupUiTest" time="4.427" />
+    <testcase name="aGroupShowsItsCountAndTotalAndExpandsToItsMembersWithTheStateForTalkBack" classname="com.github.e0ipso.tokkl.history.HistoryGroupUiTest" time="3.478" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.history.HistoryServerTest" tests="4" failures="0" errors="0" skipped="0" time="27.465" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="offlineOlderDaysLoadOnceTheNetworkComesBack" classname="com.github.e0ipso.tokkl.history.HistoryServerTest" time="6.944" />
+    <testcase name="anUnsentEntryShowsTheTimesTheServerWillStore" classname="com.github.e0ipso.tokkl.history.HistoryServerTest" time="7.036" />
+    <testcase name="serverTimesShowAsStoredAndOlderDaysLoadOnScroll" classname="com.github.e0ipso.tokkl.history.HistoryServerTest" time="6.455" />
+    <testcase name="unreachableOlderDaysNeedTheServerAndTryAgainLoadsThem" classname="com.github.e0ipso.tokkl.history.HistoryServerTest" time="7.030" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.history.SplitServerTest" tests="1" failures="0" errors="0" skipped="0" time="9.761" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aSplitMadeInAirplaneModeReachesTheServerAndTheHalvesAddUpToTheWhole" classname="com.github.e0ipso.tokkl.history.SplitServerTest" time="9.761" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.licences.LicencesScreenTest" tests="5" failures="0" errors="0" skipped="0" time="47.516" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aboutEntryReachesTokklSoundCreditWithTheFullMitNotice" classname="com.github.e0ipso.tokkl.licences.LicencesScreenTest" time="6.385" />
+    <testcase name="aboutEntryOpensTheFullOflText" classname="com.github.e0ipso.tokkl.licences.LicencesScreenTest" time="6.809" />
+    <testcase name="theBarStaysWhileTheTextScrolls" classname="com.github.e0ipso.tokkl.licences.LicencesScreenTest" time="8.519" />
+    <testcase name="backButtonReturnsToSettings" classname="com.github.e0ipso.tokkl.licences.LicencesScreenTest" time="13.383" />
+    <testcase name="systemBackReturnsToSettingsThenTimer" classname="com.github.e0ipso.tokkl.licences.LicencesScreenTest" time="12.420" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.AdaptiveRotationTest" tests="1" failures="0" errors="0" skipped="0" time="10.756" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aRotationKeepsTheEntryBeingAdded" classname="com.github.e0ipso.tokkl.navigation.AdaptiveRotationTest" time="10.756" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.AdaptiveStateTest" tests="1" failures="0" errors="0" skipped="0" time="4.523" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aFoldKeepsTheFormAndThePageBesideIt" classname="com.github.e0ipso.tokkl.navigation.AdaptiveStateTest" time="4.523" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.BottomBarTest" tests="8" failures="0" errors="0" skipped="0" time="75.278" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="thePomodoroItemFollowsTheServersSessionAndBackReturnsToTimer" classname="com.github.e0ipso.tokkl.navigation.BottomBarTest" time="11.968" />
+    <testcase name="thePageTheStackTheViewAndTheSheetSurviveRecreation" classname="com.github.e0ipso.tokkl.navigation.BottomBarTest" time="19.851" />
+    <testcase name="theTimerItemSaysWhenATimerRuns" classname="com.github.e0ipso.tokkl.navigation.BottomBarTest" time="7.191" />
+    <testcase name="theMoreSheetListsReportsTemplatesClientsTagsAndTrashAndOpensEach" classname="com.github.e0ipso.tokkl.navigation.BottomBarTest" time="12.215" />
+    <testcase name="eachBarItemOpensItsPageAndBackGoesToTimer" classname="com.github.e0ipso.tokkl.navigation.BottomBarTest" time="6.353" />
+    <testcase name="theMoreSheetClosesOnCloseAndOnBack" classname="com.github.e0ipso.tokkl.navigation.BottomBarTest" time="6.689" />
+    <testcase name="backFromTimerLeavesTheApp" classname="com.github.e0ipso.tokkl.navigation.BottomBarTest" time="4.013" />
+    <testcase name="aPageOpenedFromAnotherGoesBackToTimer" classname="com.github.e0ipso.tokkl.navigation.BottomBarTest" time="6.998" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest" tests="6" failures="0" errors="0" skipped="0" time="21.215" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theCalendarTakesTheExtraWidthOnlyWhenExpanded" classname="com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest" time="4.008" />
+    <testcase name="thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail" classname="com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest" time="2.491" />
+    <testcase name="theEntryFormShowsBesideTheHistoryOnlyWhenExpanded" classname="com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest" time="3.293" />
+    <testcase name="everyScreenFits" classname="com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest" time="7.750" />
+    <testcase name="theNavigationFollowsTheWidth" classname="com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest" time="2.205" />
+    <testcase name="theRailScrollsWhereTheWindowIsShort" classname="com.github.e0ipso.tokkl.navigation.CompactAdaptiveLayoutTest" time="1.468" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest" tests="6" failures="0" errors="0" skipped="0" time="21.786" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theCalendarTakesTheExtraWidthOnlyWhenExpanded" classname="com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest" time="4.366" />
+    <testcase name="thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail" classname="com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest" time="2.166" />
+    <testcase name="theEntryFormShowsBesideTheHistoryOnlyWhenExpanded" classname="com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest" time="3.345" />
+    <testcase name="everyScreenFits" classname="com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest" time="7.155" />
+    <testcase name="theNavigationFollowsTheWidth" classname="com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest" time="1.926" />
+    <testcase name="theRailScrollsWhereTheWindowIsShort" classname="com.github.e0ipso.tokkl.navigation.ExpandedAdaptiveLayoutTest" time="2.828" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest" tests="6" failures="0" errors="0" skipped="0" time="20.192" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theCalendarTakesTheExtraWidthOnlyWhenExpanded" classname="com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest" time="3.751" />
+    <testcase name="thePomodoroAndTimerMarksFollowTheirOwnStateInBarAndRail" classname="com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest" time="2.131" />
+    <testcase name="theEntryFormShowsBesideTheHistoryOnlyWhenExpanded" classname="com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest" time="2.459" />
+    <testcase name="everyScreenFits" classname="com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest" time="7.290" />
+    <testcase name="theNavigationFollowsTheWidth" classname="com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest" time="1.983" />
+    <testcase name="theRailScrollsWhereTheWindowIsShort" classname="com.github.e0ipso.tokkl.navigation.MediumAdaptiveLayoutTest" time="2.578" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.PageTopBarTest" tests="4" failures="0" errors="0" skipped="0" time="23.777" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theEntryFormHasTheBarWithABackButton" classname="com.github.e0ipso.tokkl.navigation.PageTopBarTest" time="3.498" />
+    <testcase name="licencesHasTheBarWithABackButton" classname="com.github.e0ipso.tokkl.navigation.PageTopBarTest" time="4.058" />
+    <testcase name="thePagesOfTheBarAndTheSheetHaveTheBarWithoutABackButton" classname="com.github.e0ipso.tokkl.navigation.PageTopBarTest" time="9.782" />
+    <testcase name="theProjectAndClientFormsHaveTheBarWithABackButton" classname="com.github.e0ipso.tokkl.navigation.PageTopBarTest" time="6.439" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest" tests="3" failures="0" errors="0" skipped="0" time="12.406" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theBarOffersPomodoroOnlyWhileTheServerHasTheTimerApi" classname="com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest" time="4.226" />
+    <testcase name="theRailOffersPomodoroOnlyWhileTheServerHasTheTimerApi" classname="com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest" time="3.960" />
+    <testcase name="withoutTheTimerApiThereIsNoPomodoroItemAtAnyWidth" classname="com.github.e0ipso.tokkl.navigation.PomodoroAvailabilityTest" time="4.220" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.RestoredBackStackTest" tests="1" failures="0" errors="0" skipped="0" time="4.219" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aStackRestoredWithoutASessionOpensSignIn" classname="com.github.e0ipso.tokkl.navigation.RestoredBackStackTest" time="4.219" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.navigation.TabHueTest" tests="10" failures="0" errors="0" skipped="0" time="51.466" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="inLightTheActiveMorePageTakesMoresHue" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="4.476" />
+    <testcase name="inLightTheRailKeepsTheRunningDotVisible" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="4.861" />
+    <testcase name="inDarkTheActiveMorePageTakesMoresHue" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="3.915" />
+    <testcase name="inDarkTheRailKeepsTheRunningDotVisible" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="4.451" />
+    <testcase name="inLightEachBarTabTakesItsPagesHue" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="6.148" />
+    <testcase name="inDarkTheBarKeepsTheRunningDotVisible" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="4.370" />
+    <testcase name="inLightTheBarKeepsTheRunningDotVisible" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="4.522" />
+    <testcase name="inDarkEachRailTabTakesItsPagesHue" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="6.122" />
+    <testcase name="inLightEachRailTabTakesItsPagesHue" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="6.065" />
+    <testcase name="inDarkEachBarTabTakesItsPagesHue" classname="com.github.e0ipso.tokkl.navigation.TabHueTest" time="6.536" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.notification.NotificationPermissionPromptTest" tests="3" failures="0" errors="0" skipped="0" time="9.403" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theFirstStartAsksAndARefusalSaysWhatIsLostAndOffersTheSettings" classname="com.github.e0ipso.tokkl.notification.NotificationPermissionPromptTest" time="3.946" />
+    <testcase name="theSettingsActionOpensAScreenTheDeviceHas" classname="com.github.e0ipso.tokkl.notification.NotificationPermissionPromptTest" time="2.097" />
+    <testcase name="anAllowShowsNoMessage" classname="com.github.e0ipso.tokkl.notification.NotificationPermissionPromptTest" time="3.360" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest" tests="6" failures="0" errors="0" skipped="0" time="0.958" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aTimerWithoutPauseOffersStopAlone" classname="com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest" time="0.100" />
+    <testcase name="aDeclinedRequestStillPostsTheRegularNotificationWithItsClockAndStop" classname="com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest" time="0.163" />
+    <testcase name="thePostedRequestChecksTheSystemsPermissionAndKeepsTheNotificationWhenDeclined" classname="com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest" time="0.270" />
+    <testcase name="aResumedTimersClockCountsOnFromTheChainsStoredTime" classname="com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest" time="0.114" />
+    <testcase name="aPausedTimerIsQuietDismissibleAndAsksForNoPromotion" classname="com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest" time="0.116" />
+    <testcase name="theRequestMeetsEveryPromotionRequirement" classname="com.github.e0ipso.tokkl.notification.RunningLiveUpdateTest" time="0.195" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.notification.RunningNotificationRestartTest" tests="2" failures="0" errors="0" skipped="0" time="7.611" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1StartsATimerAndDismissesItsNotification" classname="com.github.e0ipso.tokkl.notification.RunningNotificationRestartTest" time="0.345" />
+    <testcase name="step2OpensTheAppInANewProcessAndAnEditPostsTheNotificationAgain" classname="com.github.e0ipso.tokkl.notification.RunningNotificationRestartTest" time="7.266" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" tests="11" failures="0" errors="0" skipped="0" time="65.774" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="stopFromTheNotificationWorksOfflineAndTheQueueSendsItWhenTheNetworkReturns" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="6.183" />
+    <testcase name="pauseResumeAndStopWhilePausedFromTheNotificationGoToTheServer" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="3.269" />
+    <testcase name="anOfflineStartShowsTheEntryWithAClockTheSystemTicks" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="7.101" />
+    <testcase name="stopFromTheNotificationDoesNotWaitForANetworkThatNeverAnswers" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="1.473" />
+    <testcase name="twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="11.685" />
+    <testcase name="aStopRemovesTheNotification" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="2.440" />
+    <testcase name="anOfflineStartCorrectionMovesTheNotificationsChronometerToTheCachedStart" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="5.843" />
+    <testcase name="anOfflinePauseFromTheNotificationSaysWhyAndChangesNothing" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="6.398" />
+    <testcase name="aDismissedNotificationStaysGoneWhenTheServerAnswersAnOfflineStart" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="9.135" />
+    <testcase name="aDismissedNotificationStaysGoneWhenTheAppOpensAndTheNextEditOrStartPostsItAgain" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="9.873" />
+    <testcase name="aStartStopsTheRunningEntryAndShowsTheNewOne" classname="com.github.e0ipso.tokkl.notification.RunningNotificationServerTest" time="2.374" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.picker.EntityPickerFontScaleTest" tests="1" failures="0" errors="0" skipped="0" time="8.038" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="everyKindOfOptionCanBeReachedAndTappedAtTheLargestFontScale" classname="com.github.e0ipso.tokkl.picker.EntityPickerFontScaleTest" time="8.038" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.picker.EntityPickerServerTest" tests="3" failures="0" errors="0" skipped="0" time="22.652" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="searchAndSelectionWorkInAirplaneModeAndThePickerSaysCreatingNeedsAConnection" classname="com.github.e0ipso.tokkl.picker.EntityPickerServerTest" time="7.916" />
+    <testcase name="aTagTypedInAirplaneModeJoinsTheEntryByNameAndTheServerHasItOnceTheQueueSendsIt" classname="com.github.e0ipso.tokkl.picker.EntityPickerServerTest" time="7.755" />
+    <testcase name="theOldEntrysArchivedItemsStaySelectedWithALabelAndNoOtherArchivedItemIsOffered" classname="com.github.e0ipso.tokkl.picker.EntityPickerServerTest" time="6.981" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" tests="8" failures="0" errors="0" skipped="0" time="190.015" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="withoutTheTimerApiTheAlarmStopsAndItsIntentShowsNothing" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="7.224" />
+    <testcase name="lockedScreenPhaseEndLaunchesAlarmTurnsScreenOnAndKeepsItAwake" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="13.065" />
+    <testcase name="deniedAccessKeepsRingingAndNotificationActionsWithoutOpeningTheLockScreenActivity" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="7.194" />
+    <testcase name="alarmPendingIntentsAreImmutableAndKeepDistinctPhaseIdentities" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="1.384" />
+    <testcase name="recreationDuplicateAndStaleIntentsCannotReplaceTheAlarmAndAConfirmElsewhereClosesIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="12.671" />
+    <testcase name="deniedAndGrantedFullScreenPermissionFollowSystemAccessAndUsePerAppSettings" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="1.275" />
+    <testcase name="backAndHomeLeaveTheSameAlarmSoundAndDurablePhaseRunning" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="15.501" />
+    <testcase name="nextAndEndGoToTheServerWithTheShownRevisionAndItsAnswerClosesTheAlarm" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivityTest" time="131.701" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest" tests="5" failures="0" errors="0" skipped="0" time="16.983" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="unavailableSystemSettingsHasReadableFallbackInstructions" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest" time="3.792" />
+    <testcase name="largestTextShowsEveryServerTransitionItsNumberAndExactlyTwoLargeLabelledActions" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest" time="4.095" />
+    <testcase name="aFailedActionShowsTheStandardMessageAndKeepsBothActions" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest" time="2.772" />
+    <testcase name="clockTicksLocallyAcrossTheDeadlineAndExposesOvertimeOnDemand" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest" time="2.521" />
+    <testcase name="bothPermissionDenialsCoexistAndGrantRemovesOnlyTheFullscreenNotice" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContentTest" time="3.803" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsServerTest" tests="3" failures="0" errors="0" skipped="0" time="23.210" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="settingsEditsReadAndWriteReleasedPreferencesAndPopulateTheNextSessionForm" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsServerTest" time="18.524" />
+    <testcase name="theValuesComeFromTheServerAndAChangePostsOnlyTheFourKeys" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsServerTest" time="2.824" />
+    <testcase name="anOfflineChangeStaysOnThePhoneUntilTheNextRefreshSendsIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsServerTest" time="1.862" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStoreTest" tests="2" failures="0" errors="0" skipped="0" time="0.153" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="storedValuesAndTheUnsentFlagSurviveReloadAndClear" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStoreTest" time="0.076" />
+    <testcase name="everyStoreWriteClampsAllFourValues" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStoreTest" time="0.077" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroDeniedAlarmWidgetTest" tests="1" failures="0" errors="0" skipped="0" time="0.306" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="deniedExactAccessArmsOneNativeRedrawAndExactReplacementAndCancelRemoveIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroDeniedAlarmWidgetTest" time="0.306" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroFullScreenPageTest" tests="1" failures="0" errors="0" skipped="0" time="5.379" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="deniedNoticeOpensAppSettingsAndDisappearsOnResumeAfterGrant" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroFullScreenPageTest" time="5.379" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest" tests="3" failures="0" errors="0" skipped="0" time="12.423" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="alarmDenialAndTheNoConnectionMessageAreReadableAndDoNotHideStart" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest" time="2.913" />
+    <testcase name="runningOvertimeHasASpokenClockAndBothActionsFitAtTheLargestFontScale" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest" time="2.790" />
+    <testcase name="allFourLabelledLengthInputsAndEntryControlsAreReachableWithTheKeyboard" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPageFontScaleTest" time="6.720" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest" tests="5" failures="0" errors="0" skipped="0" time="40.672" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aTapDrawnBeforeAnotherDeviceMovedTheTimerOnIsRefusedAndTheServersStateShows" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest" time="6.323" />
+    <testcase name="withoutAConnectionStartKeepsTheFormAndSaysSo" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest" time="8.090" />
+    <testcase name="billableChangedOnThePageUpdatesTheServersRunningEntry" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest" time="5.496" />
+    <testcase name="aDescriptionTypedJustBeforeNextPhaseReachesTheServerAndCarriesToTheNextPhase" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest" time="9.485" />
+    <testcase name="theFormSendsItsLengthsAndFieldsAndNextPhaseAndEndFollowTheServer" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPageServerTest" time="11.278" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest" tests="2" failures="0" errors="0" skipped="0" time="0.137" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="diskRecordSurvivesFreshStoreAndCoordinatorInstances" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest" time="0.046" />
+    <testcase name="signOutKeepsTheDevicePermissionHistoryForTheNextAccount" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPersistenceTest" time="0.091" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest" tests="3" failures="0" errors="0" skipped="0" time="10.042" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="firstStartIsImmediateAndOutstandingRequestsCannotCauseDuplicateAutomaticDialogs" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest" time="3.672" />
+    <testcase name="exactAndFullScreenSettingsNeverDisableStartAndNoticesRemainUntilGrant" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest" time="3.426" />
+    <testcase name="explicitRetryBeforeAnyStartRequestsAndGrantRemovesThePersistentNotice" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPermissionPromptTest" time="2.944" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmRearmTest" tests="1" failures="0" errors="0" skipped="0" time="4.497" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="bootBroadcastArmsTheHeldPhaseAgainWithoutTheServer" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmRearmTest" time="4.497" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" tests="9" failures="0" errors="0" skipped="0" time="119.761" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="offlineButtonsKeepTheRingAndAConfirmElsewhereStopsBothOutputs" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="8.029" />
+    <testcase name="phaseAlarmStartsForegroundPlaybackWithScreenOffAndLeavesThePhaseAwaitingAction" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="10.324" />
+    <testcase name="everyTransitionUsesItsBundledWavWithAlarmAttributesAndRepeatingVibration" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="23.449" />
+    <testcase name="staleButtonsCannotAdvanceEndOrRepostThePhaseThatReplacedThem" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="12.002" />
+    <testcase name="alarmsAllowedDndKeepsTheAlarmPlayerLoopingAndVibrationRequested" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="11.073" />
+    <testcase name="physicalSwipeRepostsTheNotificationAndKeepsTheSamePlayer" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="18.740" />
+    <testcase name="swipedNotificationRepostsWithoutRestartingOrStoppingTheSound" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="10.739" />
+    <testcase name="silentModeKeepsTheAlarmPlayerLoopingAndVibrationRequested" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="13.292" />
+    <testcase name="duplicateDeliveryAndStaleServiceIntentsCannotReplaceTheCurrentRing" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingServiceTest" time="12.113" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest" tests="2" failures="0" errors="0" skipped="0" time="6.408" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest" time="1.810" />
+    <testcase name="step2TheStoredStateKeepsTheNotificationAndItsTapOpensPomodoroThenSignOutErasesIt" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationRestartTest" time="4.598" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest" tests="6" failures="0" errors="0" skipped="0" time="130.798" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aPostedWarmTapUsesOnNewIntentAndIsNotReplayedAfterOpeningAnotherPage" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest" time="14.169" />
+    <testcase name="signOutRemovesDisplayStateAndOldButtonsAndTapCannotAffectTheLaterAccount" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest" time="15.128" />
+    <testcase name="aColdNotificationLaunchOpensPomodoroAndRotationPreservesItsDestination" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest" time="15.989" />
+    <testcase name="aSessionTapLeavesTheFocusedTimerRoute" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest" time="11.495" />
+    <testcase name="theRingingNotificationReplacesTheActiveOneAndNextRestoresOnlyOneActiveNotification" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest" time="63.860" />
+    <testcase name="nextAndEndGoToTheServerWithTheShownRevisionAndOfflineChangesNothing" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationServerTest" time="10.157" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest" tests="6" failures="0" errors="0" skipped="0" time="0.067" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="tapCarriesTheGuardedPhaseAndIsConsumedOnlyOnceWithoutAffectingLauncherIntents" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest" time="0.015" />
+    <testcase name="postedIntentsKeepDistinctActionPhaseRevisionAndAccountIdentities" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest" time="0.014" />
+    <testcase name="aDeniedNotificationPermissionDoesNotPostOrThrow" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest" time="0.008" />
+    <testcase name="shownIdentitySurvivesReopenAndForgetErasesAllPersistedDisplayData" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest" time="0.013" />
+    <testcase name="nativeClockHasOneFixedPlannedEndAndShowsTheServersPhaseNumberUpcomingPhaseAndDescription" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest" time="0.007" />
+    <testcase name="restPhaseLabelsAndBlankDescriptionUseResources" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifierTest" time="0.010" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest" tests="4" failures="0" errors="0" skipped="0" time="21.821" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="signingOutDuringEitherRestRemovesItsAlarmAndAllAccountStateOffline" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest" time="3.195" />
+    <testcase name="aNonRingingSharedNotificationIsRemovedEvenWithoutACurrentSession" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest" time="2.463" />
+    <testcase name="warningCountsOnlyQueuedChangesWhileTheServerHoldsASessionAndConfirmClearsOffline" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest" time="8.028" />
+    <testcase name="ringingSignOutRejectsLateButtonsAlarmsAndServiceChecksUnderTheNextAccount" classname="com.github.e0ipso.tokkl.pomodoro.PomodoroSignOutServerTest" time="8.135" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.projects.ProjectsServerTest" tests="10" failures="0" errors="0" skipped="0" time="107.620" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anEmptyNameIsAMistakeUnderTheField" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="7.427" />
+    <testcase name="aProjectWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="7.208" />
+    <testcase name="theServerOutOfReachListsThePhonesProjectsWithEveryActionOff" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="6.361" />
+    <testcase name="offlineEveryTaskActionIsOffAndTheListSaysTheyNeedTheServer" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="8.657" />
+    <testcase name="everyControlHasALabel" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="5.134" />
+    <testcase name="aRefusedChangeShowsTheServersReasonAndKeepsTheForm" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="6.556" />
+    <testcase name="createEditAndDeleteATaskAndTheCacheFollowsEachChange" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="18.412" />
+    <testcase name="offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="7.364" />
+    <testcase name="createEditArchiveAndRestoreAProjectAndTheCacheFollowsEachChange" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="30.754" />
+    <testcase name="aTaskWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy" classname="com.github.e0ipso.tokkl.projects.ProjectsServerTest" time="9.747" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reminder.ReminderServerTest" tests="7" failures="0" errors="0" skipped="0" time="16.356" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="reminderPauseGoesToTheServerAndOfflineKeepsTheReminder" classname="com.github.e0ipso.tokkl.reminder.ReminderServerTest" time="2.958" />
+    <testcase name="preferenceRoundtripAndOfflineRetryPreserveOtherKeys" classname="com.github.e0ipso.tokkl.reminder.ReminderServerTest" time="2.292" />
+    <testcase name="preferenceStoreRoundtripClampsAndClearsAccountData" classname="com.github.e0ipso.tokkl.reminder.ReminderServerTest" time="1.568" />
+    <testcase name="oneWakeupAndKeepRunningConfirmsUntilStartCorrection" classname="com.github.e0ipso.tokkl.reminder.ReminderServerTest" time="2.038" />
+    <testcase name="reminderStopQueuesOfflineAndSendsAfterReconnect" classname="com.github.e0ipso.tokkl.reminder.ReminderServerTest" time="2.554" />
+    <testcase name="withoutTheTimerApiTheReminderOffersNoPause" classname="com.github.e0ipso.tokkl.reminder.ReminderServerTest" time="2.438" />
+    <testcase name="stopBeforeDelayCancelsAndDisableEnableKeepsOnlyOneRequest" classname="com.github.e0ipso.tokkl.reminder.ReminderServerTest" time="2.508" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest" tests="4" failures="0" errors="0" skipped="0" time="9.584" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="ordinaryNewCurrenciesKeepMoneyFormattingAndMixedGroupsAreNotMislabelled" classname="com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest" time="2.176" />
+    <testcase name="omittedAdditionsHaveAnExplicitDisplayLimitNotice" classname="com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest" time="2.281" />
+    <testcase name="explicitZeroIsVisibleAndMissingGroupMoneyIsAbsent" classname="com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest" time="2.092" />
+    <testcase name="unknownScalarListObjectAndRateDataShowUnderTheirOwnersWithoutInventedUnits" classname="com.github.e0ipso.tokkl.reports.AppSummaryPresentationTest" time="3.035" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.DetailedReportServerTest" tests="3" failures="0" errors="0" skipped="0" time="34.550" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="rowsMatchTheWebAppAndTheEndLoadsTheNextPage" classname="com.github.e0ipso.tokkl.reports.DetailedReportServerTest" time="10.120" />
+    <testcase name="rowsFitAtTheLargestFontScale" classname="com.github.e0ipso.tokkl.reports.DetailedReportServerTest" time="9.969" />
+    <testcase name="offlineShowsTheSummarysMessageAndNoRows" classname="com.github.e0ipso.tokkl.reports.DetailedReportServerTest" time="14.461" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.ReportCsvServerTest" tests="2" failures="0" errors="0" skipped="0" time="2.703" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="summarySharesTheFilteredServerBytesAndSignOutRevokesThePublishedFile" classname="com.github.e0ipso.tokkl.reports.ReportCsvServerTest" time="0.731" />
+    <testcase name="detailedSharesTheFilteredServerBytesAndSignOutRevokesThePublishedFile" classname="com.github.e0ipso.tokkl.reports.ReportCsvServerTest" time="1.972" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.ReportFiltersFitTest" tests="2" failures="0" errors="0" skipped="0" time="32.768" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theFilterSheetFits" classname="com.github.e0ipso.tokkl.reports.ReportFiltersFitTest" time="26.643" />
+    <testcase name="theActiveFiltersFitOnTheReportsScreen" classname="com.github.e0ipso.tokkl.reports.ReportFiltersFitTest" time="6.125" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.ReportFiltersTest" tests="5" failures="0" errors="0" skipped="0" time="98.219" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theSheetOffersTheCachedChoicesAndAsksNothing" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="15.449" />
+    <testcase name="theSheetOffersNoIsNotWhereTheServerCannotNegate" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="12.123" />
+    <testcase name="theSearchNarrowsTheChoicesAndAsksNothing" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="17.849" />
+    <testcase name="eachFilterNarrowsEveryReportAsTheWebAppDoes" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="26.271" />
+    <testcase name="isNotDropsWhatTheWebAppDrops" classname="com.github.e0ipso.tokkl.reports.ReportFiltersTest" time="26.527" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.ReportsForegroundTest" tests="2" failures="0" errors="0" skipped="0" time="25.609" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theForegroundAsksOnceAndARotationAsksNothing" classname="com.github.e0ipso.tokkl.reports.ReportsForegroundTest" time="14.875" />
+    <testcase name="offlineAfterTheBackgroundShowsTheMessageAndNoNumbers" classname="com.github.e0ipso.tokkl.reports.ReportsForegroundTest" time="10.734" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.ReportsScreenTest" tests="6" failures="0" errors="0" skipped="0" time="64.043" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="seededPerEntryCentsAndAnAdditionalCurrencyReachTheUi" classname="com.github.e0ipso.tokkl.reports.ReportsScreenTest" time="10.233" />
+    <testcase name="offlineTheScreenSaysSoAndShowsNoNumbers" classname="com.github.e0ipso.tokkl.reports.ReportsScreenTest" time="13.132" />
+    <testcase name="summaryUsesCurrentServerRoundingEvenWithAnAlreadyReadWorkspace" classname="com.github.e0ipso.tokkl.reports.ReportsScreenTest" time="1.106" />
+    <testcase name="theSummaryMatchesTheWebAppsReportInTheAccountsTime" classname="com.github.e0ipso.tokkl.reports.ReportsScreenTest" time="10.301" />
+    <testcase name="theScreenItsRangeDialogsAndTheFilterSheetFitAtTheLargestFontScale" classname="com.github.e0ipso.tokkl.reports.ReportsScreenTest" time="19.474" />
+    <testcase name="theChartTellsTalkBackEveryDaysTime" classname="com.github.e0ipso.tokkl.reports.ReportsScreenTest" time="9.797" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.SharePercentOnDeviceTest" tests="2" failures="0" errors="0" skipped="0" time="0.209" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="shortestDecimalsMatchJavaScript" classname="com.github.e0ipso.tokkl.reports.SharePercentOnDeviceTest" time="0.023" />
+    <testcase name="sharesMatchTheWebAppInNode" classname="com.github.e0ipso.tokkl.reports.SharePercentOnDeviceTest" time="0.186" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.reports.WeeklyReportServerTest" tests="4" failures="0" errors="0" skipped="0" time="50.505" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aLongerRangeShowsTodaysWeekAndOnlyWeekPresets" classname="com.github.e0ipso.tokkl.reports.WeeklyReportServerTest" time="13.472" />
+    <testcase name="theGridMatchesTheWebAppInTheAccountsWeek" classname="com.github.e0ipso.tokkl.reports.WeeklyReportServerTest" time="14.461" />
+    <testcase name="offlineShowsTheSummarysMessageAndNoNumbers" classname="com.github.e0ipso.tokkl.reports.WeeklyReportServerTest" time="12.095" />
+    <testcase name="theGridFitsAndScrollsSidewaysAtTheLargestFontScale" classname="com.github.e0ipso.tokkl.reports.WeeklyReportServerTest" time="10.477" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.session.AccountSettingsRestartTest" tests="3" failures="0" errors="0" skipped="0" time="0.031" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1StoresSettingsWithATimeResolution" classname="com.github.e0ipso.tokkl.session.AccountSettingsRestartTest" time="0.009" />
+    <testcase name="step2KeepsThemAndStoresSettingsWithout" classname="com.github.e0ipso.tokkl.session.AccountSettingsRestartTest" time="0.012" />
+    <testcase name="step3KeepsTheSettingsWithoutATimeResolution" classname="com.github.e0ipso.tokkl.session.AccountSettingsRestartTest" time="0.010" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.session.AccountSettingsServerTest" tests="1" failures="0" errors="0" skipped="0" time="0.915" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="refreshReadsTheSettingsFromTheServerAndKeepsThem" classname="com.github.e0ipso.tokkl.session.AccountSettingsServerTest" time="0.915" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.session.DefaultWorkspaceRestartTest" tests="3" failures="0" errors="0" skipped="0" time="4.012" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1OneRefreshStoresTheDefaultWorkspace" classname="com.github.e0ipso.tokkl.session.DefaultWorkspaceRestartTest" time="1.489" />
+    <testcase name="step2OfflineAfterARestartATimerStartsInTheStoredWorkspace" classname="com.github.e0ipso.tokkl.session.DefaultWorkspaceRestartTest" time="0.689" />
+    <testcase name="step3TheSentTimerRunsInTheDefaultWorkspace" classname="com.github.e0ipso.tokkl.session.DefaultWorkspaceRestartTest" time="1.834" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest" tests="1" failures="0" errors="0" skipped="0" time="84.600" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theAppReadsTheServerOnOpenForegroundAndReconnectOnly" classname="com.github.e0ipso.tokkl.session.ForegroundRefreshServerTest" time="84.600" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest" tests="2" failures="0" errors="0" skipped="0" time="7.440" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aFailedSignOut" classname="com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest" time="3.629" />
+    <testcase name="theWarningAboutUnsentChanges" classname="com.github.e0ipso.tokkl.settings.LargestFontSignOutFitTest" time="3.811" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" tests="12" failures="0" errors="0" skipped="0" time="229.634" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=1, display=false, dark=false]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="14.167" />
+    <testcase name="savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=1, display=false, dark=false]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="6.744" />
+    <testcase name="eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=1, display=false, dark=false]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="36.852" />
+    <testcase name="cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=1, display=false, dark=true]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="12.473" />
+    <testcase name="savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=1, display=false, dark=true]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="5.360" />
+    <testcase name="eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=1, display=false, dark=true]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="37.557" />
+    <testcase name="cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=2, display=true, dark=false]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="14.213" />
+    <testcase name="savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=2, display=true, dark=false]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="5.983" />
+    <testcase name="eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=2, display=true, dark=false]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="35.950" />
+    <testcase name="cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept[font=2, display=true, dark=true]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="15.162" />
+    <testcase name="savingOneDefaultKeepsARefreshOfTheOtherDefaults[font=2, display=true, dark=true]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="6.679" />
+    <testcase name="eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds[font=2, display=true, dark=true]" classname="com.github.e0ipso.tokkl.settings.PomodoroDefaultsUiTest" time="38.494" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.settings.SettingsScreenTest" tests="9" failures="0" errors="0" skipped="0" time="52.025" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="eachThemeModeAppliesAtOnce" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="6.370" />
+    <testcase name="everyControlHasATalkBackLabelAndRole" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="4.112" />
+    <testcase name="followsTheSystemWithTokklsPaletteByDefault" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="4.305" />
+    <testcase name="licencesRowOpensLicencesAndBackReturnsToSettings" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="5.078" />
+    <testcase name="wallpaperColoursReplaceTokklsPaletteUntilTurnedOff" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="5.517" />
+    <testcase name="tappingTheReminderOpensTimerFromSettings" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="5.800" />
+    <testcase name="everyTextComesFromStringResources" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="5.954" />
+    <testcase name="reminderSwitchAndHoursValidateAndApply" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="8.184" />
+    <testcase name="signOutWithAnEmptyQueueGoesStraightToSignIn" classname="com.github.e0ipso.tokkl.settings.SettingsScreenTest" time="6.705" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.settings.SignOutServerTest" tests="1" failures="0" errors="0" skipped="0" time="11.459" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="withUnsentChangesItWarnsAndCancelKeepsEverythingThenConfirmingClearsEveryStore" classname="com.github.e0ipso.tokkl.settings.SignOutServerTest" time="11.459" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest" tests="4" failures="0" errors="0" skipped="0" time="31.110" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="step1ChoosesLight" classname="com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest" time="6.487" />
+    <testcase name="step2KeepsLightAndChoosesDark" classname="com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest" time="8.795" />
+    <testcase name="step3KeepsDarkAndChoosesTheSystem" classname="com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest" time="8.101" />
+    <testcase name="step4KeepsFollowingTheSystem" classname="com.github.e0ipso.tokkl.settings.ThemeSettingsRestartTest" time="7.727" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest" tests="2" failures="0" errors="0" skipped="0" time="11.075" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aFailedSignOut" classname="com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest" time="4.903" />
+    <testcase name="theWarningAboutUnsentChanges" classname="com.github.e0ipso.tokkl.settings.UsualFontSignOutFitTest" time="6.172" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" tests="8" failures="0" errors="0" skipped="0" time="38.585" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aTapStartsTheFavoriteOfflineAndShowsAToastInsteadOfTheApp" classname="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" time="6.114" />
+    <testcase name="aShortcutWhoseFavoriteIsGoneStartsNothing" classname="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" time="3.568" />
+    <testcase name="aLongPressOnTheAppIconListsTheFavoritesAndATapStartsOne" classname="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" time="11.112" />
+    <testcase name="theLauncherPublishesFavoritesUpToItsLimit" classname="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" time="0.910" />
+    <testcase name="theFavoritesBecomeShortcutsInOrderAndFollowEveryChange" classname="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" time="3.832" />
+    <testcase name="theShortcutUpdatesTheNativeWidgetOffline" classname="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" time="8.008" />
+    <testcase name="losingTheFavoritesCapabilityRemovesShortcutsAndRefusesAnOldTap" classname="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" time="2.225" />
+    <testcase name="signingOutRemovesTheShortcuts" classname="com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutsServerTest" time="2.816" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest" tests="2" failures="0" errors="0" skipped="0" time="17.054" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="anUnpinnedCertificateIsNeverOffered" classname="com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest" time="9.397" />
+    <testcase name="aPinnedCertificateStillFailsTheHostNameCheck" classname="com.github.e0ipso.tokkl.signin.CertificateHostMismatchTest" time="7.657" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.signin.CertificatePromptTest" tests="3" failures="0" errors="0" skipped="0" time="27.670" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="neitherATapOutsideNorBackClosesThePrompt" classname="com.github.e0ipso.tokkl.signin.CertificatePromptTest" time="8.076" />
+    <testcase name="changedCertificatePromptsAgainAndCancelKeepsTheOldPin" classname="com.github.e0ipso.tokkl.signin.CertificatePromptTest" time="9.146" />
+    <testcase name="untrustedCertificateShowsItsFingerprintAndSignsInOnceTrusted" classname="com.github.e0ipso.tokkl.signin.CertificatePromptTest" time="10.448" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.signin.SignInCooldownStoreTest" tests="1" failures="0" errors="0" skipped="0" time="0.023" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="keepsOneDeadlinePerOriginUntilCleared" classname="com.github.e0ipso.tokkl.signin.SignInCooldownStoreTest" time="0.023" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.signin.SignInRateLimitTest" tests="1" failures="0" errors="0" skipped="0" time="13.218" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="tokklsRetryAfterDrivesACountdownThatOutlivesTheActivity" classname="com.github.e0ipso.tokkl.signin.SignInRateLimitTest" time="13.218" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.signin.SignInScreenTest" tests="11" failures="0" errors="0" skipped="0" time="107.438" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="wrongApiTokenShowsTheBadCredentialsMessageAndStoresNothing" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="17.157" />
+    <testcase name="theServerUrlErrorFitsInTheHintsLines" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="5.771" />
+    <testcase name="confirmedUrlSignsInWithoutTheWarning" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="7.625" />
+    <testcase name="everyControlOfTheHttpWarningHasATalkBackLabel" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="6.476" />
+    <testcase name="emailAndPasswordSignInKeepsTheTokenFromMeAndNeverThePassword" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="11.143" />
+    <testcase name="emailErrorLeavesTheFieldsBelowInPlace" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="7.966" />
+    <testcase name="httpServerWarnsAndSendsNothingUntilTheUserConfirmsTwice" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="11.416" />
+    <testcase name="fieldErrorsLeaveTheFormInPlace" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="14.429" />
+    <testcase name="apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="18.970" />
+    <testcase name="everyFieldAndButtonHasATalkBackLabel" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="3.398" />
+    <testcase name="theBrandIsOneTalkBackNode" classname="com.github.e0ipso.tokkl.signin.SignInScreenTest" time="3.087" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.signin.SignInUnderPathPrefixTest" tests="3" failures="0" errors="0" skipped="0" time="20.590" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="emailAndPasswordSignInReadsMeThroughThePrefix" classname="com.github.e0ipso.tokkl.signin.SignInUnderPathPrefixTest" time="7.764" />
+    <testcase name="aQueryAndAFragmentAfterThePrefixAreDropped" classname="com.github.e0ipso.tokkl.signin.SignInUnderPathPrefixTest" time="6.385" />
+    <testcase name="apiTokenSignInReadsMeThroughThePrefix" classname="com.github.e0ipso.tokkl.signin.SignInUnderPathPrefixTest" time="6.441" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.sync.SyncStatusFitTest" tests="1" failures="0" errors="0" skipped="0" time="4.245" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theStatusFitsAboveTheBarAndOpensTheNeedsAttentionList" classname="com.github.e0ipso.tokkl.sync.SyncStatusFitTest" time="4.245" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.sync.SyncStatusServerTest" tests="5" failures="0" errors="0" skipped="0" time="42.529" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theNeedsAttentionLinkOpensTheReasonAndItsEditResendAndDiscardActions" classname="com.github.e0ipso.tokkl.sync.SyncStatusServerTest" time="9.455" />
+    <testcase name="aDeletedEntryShowsADiscardNoticeUntilItIsDismissed" classname="com.github.e0ipso.tokkl.sync.SyncStatusServerTest" time="5.184" />
+    <testcase name="theStatusCountsOfflineChangesAndGoesOnceTheAppHasSentThem" classname="com.github.e0ipso.tokkl.sync.SyncStatusServerTest" time="10.534" />
+    <testcase name="openingTheAppWithAnExpiredTokenAndSavedChangesAsksForSignIn" classname="com.github.e0ipso.tokkl.sync.SyncStatusServerTest" time="7.650" />
+    <testcase name="aResetTokenPromptsForSignInAndTheNewTokenSendsTheWaitingChanges" classname="com.github.e0ipso.tokkl.sync.SyncStatusServerTest" time="9.706" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.tags.TagsServerTest" tests="8" failures="0" errors="0" skipped="0" time="65.830" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theServerOutOfReachListsThePhonesTags" classname="com.github.e0ipso.tokkl.tags.TagsServerTest" time="6.499" />
+    <testcase name="aTagWhoseAnswerWasLostShowsAsCreatedAndTheServerHoldsOneCopy" classname="com.github.e0ipso.tokkl.tags.TagsServerTest" time="6.117" />
+    <testcase name="aRefusedCreateShowsTheServersReason" classname="com.github.e0ipso.tokkl.tags.TagsServerTest" time="6.330" />
+    <testcase name="aRefusedRenameShowsTheServersReasonInTheForm" classname="com.github.e0ipso.tokkl.tags.TagsServerTest" time="7.997" />
+    <testcase name="everyControlHasALabel" classname="com.github.e0ipso.tokkl.tags.TagsServerTest" time="6.812" />
+    <testcase name="offlineEveryActionIsOffAndThePageSaysTheyNeedTheServer" classname="com.github.e0ipso.tokkl.tags.TagsServerTest" time="9.203" />
+    <testcase name="createRenameAndDeleteATagAndTheCacheAndHistoryFollow" classname="com.github.e0ipso.tokkl.tags.TagsServerTest" time="15.456" />
+    <testcase name="cancellingTheDeleteQuestionKeepsTheTag" classname="com.github.e0ipso.tokkl.tags.TagsServerTest" time="7.416" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.tile.RunningTileServerTest" tests="12" failures="0" errors="0" skipped="0" time="98.842" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="theTileFollowsStartsAndStopsFromOtherSurfaces" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="17.623" />
+    <testcase name="openingTheShadeTwiceWithinAMinuteFetchesOnlyOnce" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="10.485" />
+    <testcase name="aTapDuringAHeldRefreshContinuesTheDisplayedEntryAtOnce" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="6.988" />
+    <testcase name="aTapStopsTheRunningTimerWithTheNetworkDown" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="6.131" />
+    <testcase name="longPressPausesResumesAndStopsWhilePausedOnTheServer" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="10.368" />
+    <testcase name="openingTheShadeFindsATimerStartedOnTheServer" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="4.406" />
+    <testcase name="stopAndContinueDoNotWaitForANetworkThatNeverAnswers" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="5.609" />
+    <testcase name="anOfflineLongPressPauseSaysWhyAndStopStillQueues" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="10.257" />
+    <testcase name="aTapContinuesTheLastEntryWithTheNetworkDown" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="6.351" />
+    <testcase name="aTapOnThePausedTileResumesOnTheServerAndOfflineSaysWhy" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="8.940" />
+    <testcase name="runningAndNotDifferInLabelAndIconNotOnlyInColour" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="5.429" />
+    <testcase name="openingTheShadeOfflineAttemptsNoRequest" classname="com.github.e0ipso.tokkl.tile.RunningTileServerTest" time="6.255" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest" tests="1" failures="0" errors="0" skipped="0" time="11.840" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField" classname="com.github.e0ipso.tokkl.timer.DescriptionSuggestionsServerTest" time="11.840" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" tests="7" failures="0" errors="0" skipped="0" time="93.692" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="enterBackAndExitKeepBothViewPositionsAndIdentity" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" time="14.508" />
+    <testcase name="actualRotationAndLargeTextKeepFocusedRunningAndPausedActionsReachable" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" time="12.009" />
+    <testcase name="unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" time="9.732" />
+    <testcase name="offlineActionsAndSharedEditorsKeepCumulativeTimeAndFinalStopExits" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" time="30.831" />
+    <testcase name="externalStopAlsoClosesTheFocusedRunningEditor" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" time="7.724" />
+    <testcase name="focusedLocalTicksAndFrozenPauseAddNoRequests" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" time="10.221" />
+    <testcase name="replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerLargeTextTest" time="8.667" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" tests="7" failures="0" errors="0" skipped="0" time="87.955" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="enterBackAndExitKeepBothViewPositionsAndIdentity" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" time="12.352" />
+    <testcase name="actualRotationAndLargeTextKeepFocusedRunningAndPausedActionsReachable" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" time="13.240" />
+    <testcase name="unsentRunningEditAndFocusedRecreationKeepTheLocalIdentity" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" time="10.795" />
+    <testcase name="offlineActionsAndSharedEditorsKeepCumulativeTimeAndFinalStopExits" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" time="28.881" />
+    <testcase name="externalStopAlsoClosesTheFocusedRunningEditor" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" time="6.465" />
+    <testcase name="focusedLocalTicksAndFrozenPauseAddNoRequests" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" time="9.063" />
+    <testcase name="replacementRefusesDelayedDisplayedActionsAndOldEditorThenExternalStopExits" classname="com.github.e0ipso.tokkl.timer.FullscreenTimerServerTest" time="7.159" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.TimerNoticeServerTest" tests="1" failures="0" errors="0" skipped="0" time="12.781" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aTooShortPomodoroIsSaidOnceAndNotAgainWhenItsStateArrivesAgain" classname="com.github.e0ipso.tokkl.timer.TimerNoticeServerTest" time="12.781" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.TimerServerTest" tests="4" failures="0" errors="0" skipped="0" time="39.716" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="startEditsAndStopShowAtOnceWhileTheNetworkHangsAndReachTheServer" classname="com.github.e0ipso.tokkl.timer.TimerServerTest" time="12.048" />
+    <testcase name="theClockTicksWithoutAnyRequest" classname="com.github.e0ipso.tokkl.timer.TimerServerTest" time="8.367" />
+    <testcase name="startingWhileAnotherEntryRunsLeavesOneRunning" classname="com.github.e0ipso.tokkl.timer.TimerServerTest" time="8.826" />
+    <testcase name="startEditsAndStopWorkInAirplaneModeAndReachTheServerAfterwards" classname="com.github.e0ipso.tokkl.timer.TimerServerTest" time="10.475" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.TimerTotalsLargeTextTest" tests="1" failures="0" errors="0" skipped="0" time="3.267" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="listTotalsFitAndScrollAwayWithTheTimer" classname="com.github.e0ipso.tokkl.timer.TimerTotalsLargeTextTest" time="3.267" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.TimerTotalsServerTest" tests="3" failures="0" errors="0" skipped="0" time="26.721" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="localTicksSundayWeekStartMidnightLoadingUnknownZoneAndZeroUseOneCacheSubscription" classname="com.github.e0ipso.tokkl.timer.TimerTotalsServerTest" time="7.850" />
+    <testcase name="offlineStartStopEditDeleteAndUndoRemapExactlyOnceWithoutReportsOrPaging" classname="com.github.e0ipso.tokkl.timer.TimerTotalsServerTest" time="11.800" />
+    <testcase name="listAndOlderCalendarKeepTheSameAccountTotalsAboveTheSwitch" classname="com.github.e0ipso.tokkl.timer.TimerTotalsServerTest" time="7.071" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timer.TimerViewServerTest" tests="4" failures="0" errors="0" skipped="0" time="23.264" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="aColdStartOpensTheServersCalendar" classname="com.github.e0ipso.tokkl.timer.TimerViewServerTest" time="4.777" />
+    <testcase name="aViewMissingOnTheServerOpensListOverTheStoredOne" classname="com.github.e0ipso.tokkl.timer.TimerViewServerTest" time="5.171" />
+    <testcase name="anOfflineTapGoesWithTheNextRefresh" classname="com.github.e0ipso.tokkl.timer.TimerViewServerTest" time="8.304" />
+    <testcase name="aMissingViewOpensListAndTapsReachTheServer" classname="com.github.e0ipso.tokkl.timer.TimerViewServerTest" time="5.012" />
+  </testsuite>
+  <testsuite name="com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest" tests="2" failures="1" errors="0" skipped="0" time="320.762" timestamp="2026-10-30T13:13:49" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="pauseResumeAndDiscardFailOfflineOnThePageTheNotificationAndTheWidget" classname="com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest" time="35.041" />
+    <testcase name="sessionStartNextAndEndFailOfflineOnThePageTheNotificationsAndTheAlarm" classname="com.github.e0ipso.tokkl.timerstate.TimerActionsOfflineServerTest" time="285.721">
+      <failure></failure>
+    </testcase>
+  </testsuite>
+</testsuites>

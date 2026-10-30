@@ -1,0 +1,126 @@
+{
+  "observed_epoch": 1793375233.8201556,
+  "owned_units": [
+    {
+      "unit": "tokkl-emulator-5554-88346fc3.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-0.service",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-0-inner.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-emulator-5554-b0491789.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-1.service",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-1-inner.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-emulator-5554-ffc8d69f.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-2.service",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-2-inner.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-emulator-5554-fe736391.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-3.service",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-3-inner.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-emulator-5554-889b23ba.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-4.service",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-4-inner.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-emulator-5554-48853423.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-5.service",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    {
+      "unit": "tokkl-plan3-task5-api36-shard-5-inner.scope",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    }
+  ],
+  "all_owned_final_units_inactive": true,
+  "panel_closed_without_shutdown": true,
+  "final_device_list": {
+    "api36_booted": false,
+    "api31_booted": false,
+    "open_panels": []
+  }
+}

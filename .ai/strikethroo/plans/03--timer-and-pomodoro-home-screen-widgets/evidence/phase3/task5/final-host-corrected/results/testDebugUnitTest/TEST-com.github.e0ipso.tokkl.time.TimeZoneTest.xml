@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.time.TimeZoneTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:43.658Z" hostname="punta-des-patro" time="0.022">
+  <properties/>
+  <testcase name="offsets past 18 hours return null, though Intl takes them up to 23-59" classname="com.github.e0ipso.tokkl.time.TimeZoneTest" time="0.001"/>
+  <testcase name="names Intl rejects return null, also where ZoneId of takes them" classname="com.github.e0ipso.tokkl.time.TimeZoneTest" time="0.0"/>
+  <testcase name="names only ICU knows map to the zone Intl resolves them to" classname="com.github.e0ipso.tokkl.time.TimeZoneTest" time="0.01"/>
+  <testcase name="canonical names resolve unchanged" classname="com.github.e0ipso.tokkl.time.TimeZoneTest" time="0.004"/>
+  <testcase name="offsets take a sign, two-digit hours and optional minutes" classname="com.github.e0ipso.tokkl.time.TimeZoneTest" time="0.0"/>
+  <testcase name="names match in any ASCII case, as in Intl" classname="com.github.e0ipso.tokkl.time.TimeZoneTest" time="0.007"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

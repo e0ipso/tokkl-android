@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-30T13:30:18.942Z" hostname="punta-des-patro" time="0.479">
+  <properties/>
+  <testcase name="addingPinsAtTheEndAndSavesTheWholeList" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.058"/>
+  <testcase name="anAddTellsItsCallerHowItWent" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.038"/>
+  <testcase name="movingAndRemovingSaveTheNewOrder" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.019"/>
+  <testcase name="theSavedBodyIsTheWebAppsFormat" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.006"/>
+  <testcase name="aChangeTheServerDoesNotStoreLeavesTheListAndSaysWhy" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.01"/>
+  <testcase name="nineFavoritesAreTheMost" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.01"/>
+  <testcase name="theCachedFavoritesShowInOrderWithTheirProjects" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.005"/>
+  <testcase name="withoutTheCapabilityNothingShowsAndNothingChanges" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.312"/>
+  <testcase name="replacingSavesTheEditedTemplateInPlace" classname="com.github.e0ipso.tokkl.favorites.FavoritesModelTest" time="0.018"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

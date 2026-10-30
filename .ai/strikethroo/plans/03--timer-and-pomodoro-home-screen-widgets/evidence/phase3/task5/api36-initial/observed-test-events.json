@@ -1,0 +1,123 @@
+[
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-defaultsRedrawPomodoroWithoutChangingTimerProviderKey.txt",
+    "events": [
+      "10-30 08:43:14.090  2486  2518 I TestRunner: started: defaultsRedrawPomodoroWithoutChangingTimerProviderKey(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 08:43:22.481  2486  2518 I TestRunner: finished: defaultsRedrawPomodoroWithoutChangingTimerProviderKey(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-liveDeadlineRedrawsOvertimeWithinASecondWithoutAnAlarmOrRing.txt",
+    "events": [
+      "10-30 08:43:23.566  2614  2648 I TestRunner: started: liveDeadlineRedrawsOvertimeWithinASecondWithoutAnAlarmOrRing(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 08:43:35.723  2614  2648 I TestRunner: finished: liveDeadlineRedrawsOvertimeWithinASecondWithoutAnAlarmOrRing(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest-allSizesStatesAndControlsFitAndMatchReferences.txt",
+    "events": [
+      "10-30 08:43:13.208  2427  2469 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest)",
+      "10-30 08:43:13.209  2427  2469 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestPomodoroWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.pomodoro.PomodoroDeniedAlarmWidgetTest-deniedExactAccessArmsOneNativeRedrawAndExactReplacementAndCancelRemoveIt.txt",
+    "events": [
+      "10-30 08:43:13.199  2427  2469 I TestRunner: started: deniedExactAccessArmsOneNativeRedrawAndExactReplacementAndCancelRemoveIt(com.github.e0ipso.tokkl.pomodoro.PomodoroDeniedAlarmWidgetTest)",
+      "10-30 08:43:13.199  2427  2469 I TestRunner: finished: deniedExactAccessArmsOneNativeRedrawAndExactReplacementAndCancelRemoveIt(com.github.e0ipso.tokkl.pomodoro.PomodoroDeniedAlarmWidgetTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetServerTest-billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively.txt",
+    "events": [
+      "10-30 08:43:13.197  2427  2469 I TestRunner: started: billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively(com.github.e0ipso.tokkl.widget.WidgetServerTest)",
+      "10-30 08:43:13.198  2427  2469 I TestRunner: finished: billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively(com.github.e0ipso.tokkl.widget.WidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest-unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork.txt",
+    "events": [
+      "10-30 08:43:13.196  2427  2469 I TestRunner: started: unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork(com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest)",
+      "10-30 08:43:13.196  2427  2469 I TestRunner: finished: unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork(com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields.txt",
+    "events": [
+      "10-30 08:43:36.731  2724  2763 I TestRunner: started: signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 08:43:41.476  2724  2763 E TestRunner: failed: signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 08:43:41.483  2724  2763 I TestRunner: finished: signedOutAndReplacementAccountRejectOldNativeSessionTapsAndForgetFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-capturedNextAndEndRevisionsAreRefusedAfterRemoteEditsAndAdoptConflictState.txt",
+    "events": [
+      "10-30 08:43:13.193  2427  2469 I TestRunner: started: capturedNextAndEndRevisionsAreRefusedAfterRemoteEditsAndAdoptConflictState(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 08:43:13.194  2427  2469 I TestRunner: finished: capturedNextAndEndRevisionsAreRefusedAfterRemoteEditsAndAdoptConflictState(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest-allSizesStatesAndControlsFitAndMatchReferences.txt",
+    "events": [
+      "10-30 08:43:13.205  2427  2469 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest)",
+      "10-30 08:43:13.206  2427  2469 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightPomodoroWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest-allSizesAndStatesFitAndMatchReferences.txt",
+    "events": [
+      "10-30 08:43:13.200  2427  2469 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest)",
+      "10-30 08:43:13.200  2427  2469 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightTimerWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest-allSizesAndStatesFitAndMatchReferences.txt",
+    "events": [
+      "10-30 08:43:13.204  2427  2469 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest)",
+      "10-30 08:43:13.204  2427  2469 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestTimerWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-offlineStartNextAndEndShowToastsAndLeaveStateAndQueueUntouched.txt",
+    "events": [
+      "10-30 08:43:13.195  2427  2469 I TestRunner: started: offlineStartNextAndEndShowToastsAndLeaveStateAndQueueUntouched(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 08:43:13.195  2427  2469 I TestRunner: finished: offlineStartNextAndEndShowToastsAndLeaveStateAndQueueUntouched(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest-allSizesAndStatesFitAndMatchReferences.txt",
+    "events": [
+      "10-30 08:43:13.201  2427  2469 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest)",
+      "10-30 08:43:13.202  2427  2469 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkTimerWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest-allSizesStatesAndControlsFitAndMatchReferences.txt",
+    "events": [
+      "10-30 08:43:13.207  2427  2469 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest)",
+      "10-30 08:43:13.207  2427  2469 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkPomodoroWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest-allSizesAndStatesFitAndMatchReferences.txt",
+    "events": [
+      "10-30 08:43:13.203  2427  2469 I TestRunner: started: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest)",
+      "10-30 08:43:13.203  2427  2469 I TestRunner: finished: allSizesAndStatesFitAndMatchReferences(com.github.e0ipso.tokkl.widget.LightLargestTimerWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.DarkLargestPomodoroWidgetScreenshotTest-allSizesStatesAndControlsFitAndMatchReferences.txt",
+    "events": [
+      "10-30 08:43:13.210  2427  2469 I TestRunner: started: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestPomodoroWidgetScreenshotTest)",
+      "10-30 08:43:13.210  2427  2469 I TestRunner: finished: allSizesStatesAndControlsFitAndMatchReferences(com.github.e0ipso.tokkl.widget.DarkLargestPomodoroWidgetScreenshotTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest-remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields.txt",
+    "events": [
+      "10-30 08:43:42.514  2824  2858 I TestRunner: started: remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 08:44:03.996  2824  2858 E TestRunner: failed: remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)",
+      "10-30 08:44:04.006  2824  2858 I TestRunner: finished: remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields(com.github.e0ipso.tokkl.widget.PomodoroWidgetServerTest)"
+    ]
+  }
+]

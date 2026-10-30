@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="1" failures="1" errors="0" skipped="0" time="0.000" timestamp="2026-10-30T09:06:31" hostname="localhost">
+  <testsuite name="com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest" tests="1" failures="1" errors="0" skipped="0" time="8.696" timestamp="2026-10-30T09:06:31" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork" classname="com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest" time="8.696">
+      <failure>java.lang.AssertionError: expected:&lt;2026-10-31&gt; but was:&lt;2026-10-30&gt;
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:120)
+	at org.junit.Assert.assertEquals(Assert.java:146)
+	at com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest.unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork(WidgetMidnightServerTest.kt:74)
+</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

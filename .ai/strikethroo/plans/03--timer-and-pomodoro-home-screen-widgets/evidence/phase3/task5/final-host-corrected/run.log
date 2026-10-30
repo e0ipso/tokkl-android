@@ -1,0 +1,115 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as configuration cache cannot be reused because environment variable 'ANDROID_SDK_ROOT' has changed.
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:extractDeepLinksDebug
+> Task :app:generateDebugAndroidTestResources
+> Task :app:javaPreCompileDebugUnitTest
+> Task :app:processDebugAndroidTestNavigationResources
+> Task :app:packageDebugAndroidTestResources
+> Task :app:processDebugNavigationResources
+> Task :app:javaPreCompileDebug
+> Task :app:extractProguardFiles
+> Task :app:mergeDebugAssets
+> Task :app:compileDebugNavigationResources
+> Task :app:packageDebugResources
+> Task :app:checkDebugAarMetadata
+> Task :app:parseDebugAndroidTestLocalResources
+> Task :app:parseDebugLocalResources
+> Task :app:generateDebugAndroidTestRFile
+> Task :app:generateDebugRFile
+> Task :app:processDebugMainManifest
+
+> Task :app:mergeDebugUnitTestManifest
+/home/e0ipso/workspace/apps/tokkl-android/app/src/main/AndroidManifest.xml:154:9-156:35 Warning:
+	service#androidx.work.impl.foreground.SystemForegroundService was tagged at AndroidManifest.xml:154 to remove other declarations but no other declaration present
+
+> Task :app:processDebugUnitTestManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeDebugResources
+> Task :app:processDebugResources
+> Task :app:packageDebugUnitTestForUnitTest
+> Task :app:generateDebugUnitTestConfig
+> Task :app:kspDebugKotlin
+w: [ksp] /home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/cache/PendingChange.kt:113: Indices defined in com.github.e0ipso.tokkl.cache.CachedTimeEntry will be dropped when it is merged into com.github.e0ipso.tokkl.cache.ShortStopUndo (entry). You can re-declare them in com.github.e0ipso.tokkl.cache.ShortStopUndo.
+w: [ksp] /home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/cache/PendingChange.kt:113: Primary key constraint on id is ignored when being merged into com.github.e0ipso.tokkl.cache.ShortStopUndo
+
+> Task :app:compileDebugKotlin
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/TokklApplication.kt:269:121 Expression is unused.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/TokklNavHost.kt:385:56 Cast is redundant.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/cache/TimerControls.kt:111:44 Unnecessary safe call on a non-null receiver of type 'HeldTimerState'.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/main/java/com/github/e0ipso/tokkl/cache/TimerControls.kt:120:57 Unnecessary safe call on a non-null receiver of type 'TimerState'.
+
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:kspDebugUnitTestKotlin
+> Task :app:kspDebugAndroidTestKotlin
+> Task :app:generateDebugUnitTestLintModel
+> Task :app:generateDebugLintReportModel
+> Task :app:generateDebugAndroidTestLintModel
+> Task :app:lintAnalyzeDebug
+> Task :app:lintAnalyzeDebugAndroidTest
+> Task :app:lintAnalyzeDebugUnitTest
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugAndroidTestKotlin
+
+> Task :app:compileDebugUnitTestKotlin
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/test/java/com/github/e0ipso/tokkl/cache/ServerReaderTest.kt:180:9 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/test/java/com/github/e0ipso/tokkl/capabilities/CapabilitiesTest.kt:272:40 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/test/java/com/github/e0ipso/tokkl/timer/TimerPauseTest.kt:325:39 Unnecessary non-null assertion (!!) on a non-null receiver of type 'TimerTarget'.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/test/java/com/github/e0ipso/tokkl/timer/TimerPauseTest.kt:383:47 Unnecessary non-null assertion (!!) on a non-null receiver of type 'TimerTarget'.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/test/java/com/github/e0ipso/tokkl/widget/WidgetStateTest.kt:145:41 Unnecessary non-null assertion (!!) on a non-null receiver of type 'WidgetRunning'.
+
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:copyRoomSchemas NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+
+> Task :app:compileDebugAndroidTestKotlin
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/accessibility/AdditionalAccessibilityTest.kt:156:67 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/clients/ClientsServerTest.kt:320:64 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/entry/EntryFormServerTest.kt:476:32 Redundant creation of Json format. Creating instances for each use can be slow.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/entry/EntryFormServerTest.kt:597:77 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/entry/RunningEntryEditorServerTest.kt:473:77 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/navigation/PomodoroAvailabilityTest.kt:112:73 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningLiveUpdateTest.kt:71:33 'field contentView: RemoteViews!' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningLiveUpdateTest.kt:72:33 'field bigContentView: RemoteViews!' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/notification/RunningLiveUpdateTest.kt:73:33 'field headsUpContentView: RemoteViews!' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPageFontScaleTest.kt:131:73 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroPageServerTest.kt:198:73 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/projects/ProjectsServerTest.kt:437:64 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/reports/AppSummaryPresentationTest.kt:84:81 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/settings/PomodoroDefaultsUiTest.kt:119:67 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/tags/TagsServerTest.kt:317:64 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/ui/theme/SystemDisplaySize.kt:90:22 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/widget/NativeWidget.kt:57:5 'lateinit' is unnecessary: definitely initialized in constructors.
+w: file:///home/e0ipso/workspace/apps/tokkl-android/app/src/androidTest/java/com/github/e0ipso/tokkl/widget/NativeWidget.kt:60:13 'lateinit' is unnecessary: definitely initialized in constructors.
+
+> Task :app:testDebugUnitTest
+
+> Task :app:lintReportDebug
+Wrote HTML report to file:///home/e0ipso/workspace/apps/tokkl-android/app/build/reports/lint-results-debug.html
+Wrote SARIF report to file:///home/e0ipso/workspace/apps/tokkl-android/app/build/reports/lint-results-debug.sarif
+
+> Task :app:lintDebug
+
+[Incubating] Problems report is available at: file:///home/e0ipso/workspace/apps/tokkl-android/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 12m 49s
+47 actionable tasks: 47 executed
+Configuration cache entry stored.

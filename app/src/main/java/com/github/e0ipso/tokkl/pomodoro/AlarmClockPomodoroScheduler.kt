@@ -9,11 +9,15 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.TokklApplication
+import androidx.glance.appwidget.updateAll
+import com.github.e0ipso.tokkl.widget.PomodoroWidget
+import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 /**
  * Arms one [AlarmManager.setAlarmClock] at a phase's planned end. That is the exact alarm the
@@ -23,7 +27,8 @@ import kotlinx.coroutines.launch
  * API 33 and later grant `USE_EXACT_ALARM` at install and the user cannot revoke it, so
  * [permissionDenied] stays false there. API 31 and 32 use the revocable `SCHEDULE_EXACT_ALARM`
  * permission, and [permissionDenied] follows [AlarmManager.canScheduleExactAlarms]. The Pomodoro
- * page reads [permissionDenied].
+ * page reads [permissionDenied]. When access is denied, one inexact alarm redraws the widget
+ * after the planned end as best-effort process recovery; it never starts the ringing service.
  *
  * [watchTimerSync] keeps [PomodoroAlarmRearmReceiver] enabled only while [timerSyncStarts] says
  * the account's server has the timer API. Only such a server has sessions, and its timer sync
@@ -37,27 +42,43 @@ import kotlinx.coroutines.launch
 class AlarmClockPomodoroScheduler(
     private val context: Context,
     private val timerSyncStarts: () -> Boolean = { false },
+    private val exactAlarmsAllowed: (() -> Boolean)? = null,
 ) : PomodoroAlarmScheduler {
     private val manager = context.getSystemService(AlarmManager::class.java)
 
     override val permissionDenied: Boolean
-        get() = !manager.canScheduleExactAlarms()
+        get() = !(exactAlarmsAllowed?.invoke() ?: manager.canScheduleExactAlarms())
 
     override fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean {
-        if (permissionDenied) return false
+        if (permissionDenied) return scheduleRedraw(triggerAt, phase)
         val pending = operation(create = true, phase) ?: return false
         return try {
+            operation(create = false, redraw = true)?.let(manager::cancel)
             manager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAt.toEpochMilli(), showPhase()), pending)
             true
         } catch (e: SecurityException) {
             // Revoked between the check and the call. The page reads permissionDenied.
-            false
+            scheduleRedraw(triggerAt, phase)
         }
     }
 
+    /**
+     * Best-effort recovery if the live sync process dies without exact-alarm access. This
+     * one-shot alarm only redraws the widget; it never starts audio or a foreground service.
+     * Android may delay it. The permission warning remains, and false still means no exact
+     * ringing alarm was armed. No session means cancel() removes this alarm too.
+     */
+    private fun scheduleRedraw(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean {
+        operation(create = false)?.let(manager::cancel)
+        operation(create = true, phase, redraw = true)?.let { pending ->
+            manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt.toEpochMilli(), pending)
+        }
+        return false
+    }
+
     override fun cancel() {
-        val pending = operation(create = false) ?: return
-        manager.cancel(pending)
+        operation(create = false)?.let(manager::cancel)
+        operation(create = false, redraw = true)?.let(manager::cancel)
     }
 
     /** Applies a change of [timerSyncStarts] to the receiver. */
@@ -79,11 +100,11 @@ class AlarmClockPomodoroScheduler(
     }
 
     /** The broadcast the alarm delivers. [create] false returns null when the intent is not armed. */
-    internal fun operation(create: Boolean, phase: PomodoroPhaseKey? = null): PendingIntent? {
+    internal fun operation(create: Boolean, phase: PomodoroPhaseKey? = null, redraw: Boolean = false): PendingIntent? {
         val flags = PendingIntent.FLAG_IMMUTABLE or
             if (create) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_NO_CREATE
         val intent = Intent(context, PomodoroPhaseAlarmReceiver::class.java)
-            .setAction(PomodoroPhaseAlarmReceiver.ACTION_PHASE_END)
+            .setAction(if (redraw) PomodoroPhaseAlarmReceiver.ACTION_WIDGET_REDRAW else PomodoroPhaseAlarmReceiver.ACTION_PHASE_END)
         if (phase != null) intent.putPhase(phase)
         return PendingIntent.getBroadcast(context, OPERATION_REQUEST, intent, flags)
     }
@@ -115,12 +136,21 @@ class AlarmClockPomodoroScheduler(
  */
 class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != ACTION_PHASE_END) return
+        if (intent.action != ACTION_PHASE_END && intent.action != ACTION_WIDGET_REDRAW) return
         val phase = intent.phaseKey() ?: return
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                (context.applicationContext as TokklApplication).pomodoroAlarm.onAlarm(phase)
+                val app = context.applicationContext as TokklApplication
+                if (intent.action == ACTION_PHASE_END) {
+                    app.pomodoroAlarm.onAlarm(phase)
+                } else {
+                    val state = app.pomodoroWidgetState.first() as? PomodoroWidgetState.Active
+                    if (state?.session?.phase?.start == phase.start) {
+                        if (state.ended) PomodoroWidget().updateAll(context)
+                        else app.pomodoroAlarms.schedule(state.end, phase)
+                    }
+                }
             } finally {
                 pending.finish()
             }
@@ -129,6 +159,7 @@ class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_PHASE_END = "com.github.e0ipso.tokkl.action.POMODORO_PHASE_END"
+        const val ACTION_WIDGET_REDRAW = "com.github.e0ipso.tokkl.action.POMODORO_WIDGET_REDRAW"
     }
 }
 

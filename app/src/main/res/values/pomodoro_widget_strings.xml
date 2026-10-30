@@ -19,9 +19,7 @@
     <string name="pomodoro_widget_short">SHORT</string>
     <string name="pomodoro_widget_long">LONG</string>
     <string name="pomodoro_widget_every">EVERY</string>
-    <string name="pomodoro_widget_progress">%1$s, %2$d percent elapsed</string>
     <string name="pomodoro_widget_cycle">Pomodoro %1$d of %2$d, %3$d work phases completed</string>
     <string name="pomodoro_widget_phase_number">%1$s · %2$d/%3$d</string>
     <string name="pomodoro_widget_entry_project">%1$s · %2$s</string>
-    <string name="pomodoro_widget_open">Open Pomodoro</string>
 </resources>
