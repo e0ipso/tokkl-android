@@ -127,7 +127,9 @@ class NativeWidget(
     fun resize(width: Int, height: Int) {
         scenario.onActivity {
             view.layoutParams = FrameLayout.LayoutParams(dp(width), dp(height))
-            manager.updateAppWidgetOptions(id, options(width, height))
+            // Like a launcher, report the full host size through the framework API so
+            // Android subtracts its default widget padding before notifying Glance.
+            view.updateAppWidgetSize(Bundle(), listOf(SizeF(width.toFloat(), height.toFloat())))
         }
     }
 
@@ -183,7 +185,10 @@ class NativeWidget(
         texts.forEach { text ->
             val visible = android.graphics.Rect()
             assertTrue("${text.text} is visible", text.getGlobalVisibleRect(visible))
-            assertTrue("${text.text} is not clipped by its row: ${visible.height()} / ${text.height}", visible.height() >= text.height - 1)
+            assertTrue("${text.text} is not clipped by its row: ${visible.height()} / ${text.height}; " +
+                generateSequence<View>(text) { it.parent as? View }.joinToString(" <- ") {
+                    "${it.javaClass.simpleName}[${it.width}x${it.height}, y=${it.y}, ${it.contentDescription}]"
+                }, visible.height() >= text.height - 1)
             assertTrue("${text.text} fits its TextView: layout ${text.layout?.height}, view ${text.height}, padding ${text.compoundPaddingTop + text.compoundPaddingBottom}", checkNotNull(text.layout).height <= text.height - text.compoundPaddingTop - text.compoundPaddingBottom)
             if (text is Chronometer) {
                 assertTrue("the elapsed clock is fully visible", visible.width() >= text.width - 1)

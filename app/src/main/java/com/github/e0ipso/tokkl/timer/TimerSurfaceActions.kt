@@ -3,9 +3,12 @@ package com.github.e0ipso.tokkl.timer
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.cache.target
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * A timer control on a surface outside the app's screens: the running timer's notification, the
@@ -21,8 +24,8 @@ sealed interface SurfaceTap {
 
     /**
      * A Pause, Resume or Stop while paused, which needs the server and is never queued. [send]
-     * sends it once and returns what it came to, or null when it was not sent because another
-     * one from these surfaces was still on its way, as after a second quick tap. A surface that
+     * sends it once and returns what it came to, or null for a duplicate tap or a target that
+     * changed while waiting for the previous call. A surface that
      * runs in a broadcast ends the broadcast first, so a slow server cannot hold it past its time
      * limit.
      */
@@ -43,8 +46,9 @@ sealed interface SurfaceTap {
  * revision the control was drawn at, also after a process restart, so the server refuses a tap on
  * a state it has moved past. Pause goes ahead only where the controls offer it now, which needs
  * the timer API and no Pomodoro session, so a control drawn before either changed sends nothing.
- * One server action goes out at a time: a tap while one is on its way sends nothing, as the
- * surface still shows the state the first tap acted on. A Stop of a running entry never waits.
+ * One server action goes out at a time. Duplicate taps on the same state send nothing. Once
+ * the server publishes the next state, a tap on its control waits for the previous call to
+ * return, then checks the state again before sending. A Stop of a running entry never waits.
  *
  * @param controls what the phone shows now, read at the tap.
  * @param account the signed-in account's name, as the targets of its controls carry it.
@@ -82,31 +86,38 @@ class TimerSurfaceActions(
 
     /** A request for [action] on the paused chain [target] showed, while a chain is paused. */
     private suspend fun whilePaused(target: TimerTarget, action: suspend () -> TimerActionResult): SurfaceTap? {
-        if (target.entryId != 0L || controls() !is TimerControls.Paused) return null
-        return request(action)
+        if (target.entryId != 0L) return null
+        val paused = controls() as? TimerControls.Paused ?: return null
+        return request(paused.target, action)
     }
 
     private suspend fun pause(target: TimerTarget): SurfaceTap? {
         val running = controls() as? TimerControls.Running ?: return null
         if (!running.pausable || target.entryId == 0L || changes.currentId(target.entryId) != running.entry.id) return null
-        return request {
+        return request(running.target) {
             if (running.unsent) sendQueued()
             server.pause()
         }
     }
 
-    /** A request that sends [action], or null while another is on its way. */
-    private fun request(action: suspend () -> TimerActionResult): SurfaceTap.Request? {
-        if (sending.get()) return null
+    /** Ignore duplicate taps; serialize actions on newly published states and recheck them. */
+    private fun request(expected: TimerTarget, action: suspend () -> TimerActionResult): SurfaceTap.Request? {
+        if (expected in sending) return null
         return SurfaceTap.Request {
-            if (!sending.compareAndSet(false, true)) return@Request null
+            if (!sending.add(expected)) return@Request null
             try {
-                action()
+                requests.withLock {
+                    val current = controls()
+                    if (expected.account != account() || current.target != expected ||
+                        (current is TimerControls.Running && !current.pausable)) return@withLock null
+                    action()
+                }
             } finally {
-                sending.set(false)
+                sending.remove(expected)
             }
         }
     }
 
-    private val sending = AtomicBoolean(false)
+    private val sending = ConcurrentHashMap.newKeySet<TimerTarget>()
+    private val requests = Mutex()
 }

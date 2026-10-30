@@ -140,6 +140,14 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
     val large = kind == TimerWidgetSize.LARGE
     val width = LocalSize.current.width.value - 2 * WidgetLayout.PADDING_DP
     val active = state.running != null || state.paused != null
+    // Android 12 scales sp linearly; newer Android versions enlarge big text less.
+    // Reserve the native font's actual height rather than assuming the newer curve.
+    val paint = clockPaint(context, if (large) 34f else 22f)
+    val clockHeight = maxOf(WidgetLayout.clockRowHeight(large, scale),
+        (paint.fontMetrics.bottom - paint.fontMetrics.top) / context.resources.displayMetrics.density + 4f)
+    val todayPaint = clockPaint(context, 18f)
+    val todayHeight = maxOf(WidgetLayout.todayRowHeight(scale),
+        (todayPaint.fontMetrics.bottom - todayPaint.fontMetrics.top) / context.resources.displayMetrics.density + 4f)
     Row(GlanceModifier.fillMaxWidth().height(48.dp).semantics {
         contentDescription = listOfNotNull(description(context, state), projectText(context, state), state.paused?.let { context.getString(R.string.widget_paused_label) }).joinToString(", ")
     }, verticalAlignment = Alignment.CenterVertically) {
@@ -158,7 +166,7 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
         PrimaryControl(context, state, 48f)
     }
     if (active) {
-        Row(GlanceModifier.fillMaxWidth().height(WidgetLayout.clockRowHeight(large, scale).dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(GlanceModifier.fillMaxWidth().height(clockHeight.dp), verticalAlignment = Alignment.CenterVertically) {
             TimerClock(context, state, if (large) 34f else 22f, if (large) width else width * .55f)
             if (!large) {
                 Spacer(GlanceModifier.width(8.dp))
@@ -172,7 +180,7 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
     val day = state.day
     val reportAction = actionStartActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY))
     val templates = large && state.favorites.isNotEmpty()
-    val count = timerWidgetProjectRows(LocalSize.current.height.value, kind, scale, active, templates)
+    val count = timerWidgetProjectRows(LocalSize.current.height.value, kind, scale, active, templates, clockHeight, todayHeight)
     val segments = timerWidgetSegments(day?.projects.orEmpty())
     Column(GlanceModifier.fillMaxWidth().clickable(reportAction)) {
         if (large) {
@@ -209,7 +217,7 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
                 }
             }
         } else {
-            Row(GlanceModifier.fillMaxWidth().height(WidgetLayout.todayRowHeight(scale).dp).semantics { contentDescription = context.getString(R.string.widget_open_report_description) }, verticalAlignment = Alignment.CenterVertically) {
+            Row(GlanceModifier.fillMaxWidth().height(todayHeight.dp).semantics { contentDescription = context.getString(R.string.widget_open_report_description) }, verticalAlignment = Alignment.CenterVertically) {
                 Label(context.getString(R.string.widget_today), 11f, muted = true)
                 Spacer(GlanceModifier.defaultWeight())
                 DayClock(context, day, 18f, width - 64 * scale)
