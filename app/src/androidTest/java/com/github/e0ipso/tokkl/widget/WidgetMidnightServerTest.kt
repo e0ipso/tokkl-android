@@ -40,7 +40,9 @@ class WidgetMidnightServerTest {
         val clock = AdvancingClock(midnight.minusSeconds(2))
         app.widgetClock = clock
         fixture.account.createEntry("Stopped today", day.atTime(10, 0).atZone(time.zone).toInstant(), day.atTime(11, 0).atZone(time.zone).toInstant())
-        fixture.account.createEntry("Crosses midnight", day.atTime(12, 0).atZone(time.zone).toInstant())
+        // Native Chronometers use real wall time. Keep the start in the past for both
+        // clocks, including CI runs before noon in the account's timezone.
+        fixture.account.createEntry("Crosses midnight", day.atStartOfDay(time.zone).toInstant())
         fixture.refresh()
         app.followNoTimerEvents()
         NativeWidget().use { host ->

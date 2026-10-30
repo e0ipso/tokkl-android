@@ -1,0 +1,23 @@
+[
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetServerTest-nativeClockTicksWithoutWidgetUpdatesAndProviderHasNoPeriod.txt",
+    "test_runner_lines": [
+      "10-30 20:35:27.317  2593  2634 I TestRunner: started: nativeClockTicksWithoutWidgetUpdatesAndProviderHasNoPeriod(com.github.e0ipso.tokkl.widget.WidgetServerTest)",
+      "10-30 20:35:37.317  2593  2634 I TestRunner: finished: nativeClockTicksWithoutWidgetUpdatesAndProviderHasNoPeriod(com.github.e0ipso.tokkl.widget.WidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetServerTest-billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively.txt",
+    "test_runner_lines": [
+      "10-30 20:35:38.366  2701  2749 I TestRunner: started: billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively(com.github.e0ipso.tokkl.widget.WidgetServerTest)",
+      "10-30 20:35:47.687  2701  2749 I TestRunner: finished: billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively(com.github.e0ipso.tokkl.widget.WidgetServerTest)"
+    ]
+  },
+  {
+    "file": "logcat-com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest-unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork.txt",
+    "test_runner_lines": [
+      "10-30 20:35:16.010  2454  2491 I TestRunner: started: unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork(com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest)",
+      "10-30 20:35:26.292  2454  2491 I TestRunner: finished: unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork(com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest)"
+    ]
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetMidnightServerTest",
+    "name": "unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork",
+    "time": "10.196",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetServerTest",
+    "name": "nativeClockTicksWithoutWidgetUpdatesAndProviderHasNoPeriod",
+    "time": "9.999",
+    "failure": []
+  },
+  {
+    "class": "com.github.e0ipso.tokkl.widget.WidgetServerTest",
+    "name": "billableDayClockAddsOnlyStoppedBillableTimeAndTicksNatively",
+    "time": "9.317",
+    "failure": []
+  }
+]

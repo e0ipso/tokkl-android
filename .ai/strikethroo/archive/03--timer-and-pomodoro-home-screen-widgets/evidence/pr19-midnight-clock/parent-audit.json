@@ -1,0 +1,22 @@
+{
+  "runtime_input_files": 1011,
+  "current_hashes_match": true,
+  "focused_red": {
+    "cases": 1,
+    "failures": 1,
+    "exit": 1
+  },
+  "focused_green": {
+    "cases": 1,
+    "failures": 0,
+    "exit": 0
+  },
+  "surrounding_green": {
+    "cases": 3,
+    "failures": 0,
+    "exit": 0
+  },
+  "api31": "CI only",
+  "product_code_changed": false,
+  "assertions_weakened": false
+}
