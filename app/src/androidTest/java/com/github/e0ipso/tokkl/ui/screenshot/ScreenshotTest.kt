@@ -11,10 +11,14 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.WindowSize
@@ -121,6 +125,7 @@ import java.time.ZonedDateTime
 import java.util.Locale
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
@@ -486,9 +491,21 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
      */
     private fun show(content: @Composable () -> Unit, steps: () -> Unit) {
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+            val systemBarsReady = AtomicBoolean(false)
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
-                activity.setContent { TokklTheme(darkTheme = dark) { content() } }
+                activity.setContent {
+                    val density = LocalDensity.current
+                    val bars = WindowInsets.systemBars
+                    val ready = bars.getTop(density) > 0 && bars.getBottom(density) > 0
+                    SideEffect { systemBarsReady.set(ready) }
+                    TokklTheme(darkTheme = dark) { content() }
+                }
+            }
+            // Text can be visible before Android delivers the first insets. Scrolling or
+            // capturing then records the transient layout without the system-bar padding.
+            composeRule.waitUntil("the fixture has composed the system-bar insets", TIMEOUT_MS) {
+                systemBarsReady.get()
             }
             steps()
         }

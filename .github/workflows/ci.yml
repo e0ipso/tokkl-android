@@ -166,6 +166,7 @@ jobs:
           path: |
             app/build/outputs/androidTest-results/connected/
             app/build/reports/androidTests/connected/
+            app/build/outputs/connected_android_test_additional_output/
           if-no-files-found: ignore
 
   # Lints the commit messages and runs the tests of the commitlint rules. The
