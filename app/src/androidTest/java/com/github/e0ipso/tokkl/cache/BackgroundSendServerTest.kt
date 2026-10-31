@@ -138,6 +138,9 @@ class BackgroundSendServerTest {
             assertEquals("Queued offline", sent.string("description"))
             assertTrue("the stop reached the server", sent["stop"] !is JsonNull)
         }
+        // The queue worker finishing does not join cancellation of the running check
+        // and reminder, which independently follow the cache's stopped state.
+        awaitCondition("the queue's related work finishes cancellation") { allWork().all { it.state.isFinished } }
         assertTrue("no work waits or runs once the queue is empty", allWork().all { it.state.isFinished })
     }
 

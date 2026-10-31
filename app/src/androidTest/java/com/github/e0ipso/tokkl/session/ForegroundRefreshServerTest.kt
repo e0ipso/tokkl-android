@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.session
 
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -59,6 +61,15 @@ class ForegroundRefreshServerTest {
 
     @Before
     fun signInThroughTheCounters() {
+        // A prior airplane-mode test can return on cellular before Wi-Fi takes over.
+        // That handoff is a refresh/reconnect event, so it must precede the idle measurement.
+        val connectivity = context.getSystemService(ConnectivityManager::class.java)
+        awaitCondition("the emulator has validated Wi-Fi as its default route") {
+            connectivity.getNetworkCapabilities(connectivity.activeNetwork)?.takeIf {
+                it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
+                    it.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            }
+        }
         account = TestAccounts.create(timezone = "Europe/Madrid")
         val all = RequestCounter(TokklTestServer.url, " HTTP/1.1\r\n").also { this.all = it }
         val me = RequestCounter(all.url, "GET /api/v9/me?with_related_data=true HTTP/1.1").also { this.me = it }
@@ -111,7 +122,7 @@ class ForegroundRefreshServerTest {
 
         val idleFrom = all.count
         Thread.sleep(IDLE_MS)
-        assertEquals("an idle Timer page with no timer sends nothing", idleFrom, all.count)
+        assertEquals("an idle Timer page with no timer sends nothing; requests: ${all.lines}", idleFrom, all.count)
 
         val activity = BackgroundTrip.leave()
         settle()

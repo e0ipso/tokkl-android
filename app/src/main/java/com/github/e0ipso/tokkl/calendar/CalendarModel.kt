@@ -250,6 +250,7 @@ class CalendarModel(
         loaded.update { it + (span to (before?.copy(stale = false) ?: ServerWeek(emptyList(), WeekSource.Loading))) }
         // The server has every edit that the cache no longer holds, so this load's copies replace them.
         val sent = edited.value.filterValues { !it.held }
+        val foregroundAtStart = foregroundCount.value
         scope.launch {
             val week = withContext(io) { fetch(span) }
             val kept = before?.takeIf { week.status == WeekSource.Unreachable }?.copy(stale = true)
@@ -258,6 +259,14 @@ class CalendarModel(
                 edited.update { edits -> edits.filterNot { (id, edit) -> id in ids && sent[id] == edit } }
             }
             loaded.update { it + (span to (kept ?: week)) }
+            // A reconnect or foreground event can arrive while this request is still pending.
+            // Its loadWeek call then does nothing. Retry the failed attempt once for that event,
+            // while this span is still shown, without starting a polling loop.
+            if (week.status == WeekSource.Unreachable && foregroundCount.value != foregroundAtStart && !backgrounded) {
+                val current = accountSettings.value?.time(clock) ?: return@launch
+                val currentWeek = current.startOfWeek(selected.value ?: current.today())
+                if (spanOf(current, currentWeek, current.today()) == span) loadWeek(currentWeek)
+            }
         }
     }
 

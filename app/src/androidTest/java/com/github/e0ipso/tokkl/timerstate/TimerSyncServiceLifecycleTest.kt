@@ -146,14 +146,20 @@ class TimerSyncServiceLifecycleTest {
                 app.timerState.state.value?.state?.runningEntry?.id?.takeIf { it == entry }
             }
             val session = checkNotNull(postTimer("pomodoro", body = sessionBody()).pomodoro)
-            val held = await("the backgrounded phone holds the session", AT_ONCE_MS) {
+            await("the backgrounded phone holds the session", AT_ONCE_MS) {
                 app.timerState.state.value?.takeIf { it.state.pomodoro?.phase?.start == session.phase.start }
             }
             await("the session notification", AT_ONCE_MS) {
                 notifications.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
             }
-            val end = session.phase.plannedEnd.minus(held.clockOffset).toEpochMilli()
-            await("the phase alarm at the corrected planned end", AT_ONCE_MS) { alarms.nextAlarmClock?.takeIf { it.triggerTime == end } }
+            // A later delivery of this phase can refresh its clock offset and rearm the alarm.
+            await("the phase alarm at the corrected planned end", AT_ONCE_MS) {
+                val latest = app.timerState.state.value
+                    ?.takeIf { it.state.pomodoro?.phase?.start == session.phase.start }
+                    ?: return@await null
+                val end = session.phase.plannedEnd.minus(latest.clockOffset).toEpochMilli()
+                alarms.nextAlarmClock?.takeIf { it.triggerTime == end }
+            }
             assertEquals(PackageManager.COMPONENT_ENABLED_STATE_ENABLED, rearmReceiverState())
             return session
         }

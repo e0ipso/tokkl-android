@@ -448,10 +448,13 @@ class CalendarServerTest {
             awaitBlock(block)
 
             val activity = BackgroundTrip.leave()
+            val foregroundsBeforeReturn = model.foregrounds.value
             AirplaneMode.set(true, account.client)
             BackgroundTrip.comeBack(activity)
 
-            composeRule.waitUntil("the calendar counts the trip", LOAD_TIMEOUT_MS) { model.foregrounds.value == 1 }
+            composeRule.waitUntil("the calendar counts the trip", LOAD_TIMEOUT_MS) {
+                model.foregrounds.value == foregroundsBeforeReturn + 1
+            }
             // The week loads again and fails. Nothing on screen may change meanwhile or after.
             val until = SystemClock.uptimeMillis() + STAYS_MS
             while (SystemClock.uptimeMillis() < until) {

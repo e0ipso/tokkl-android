@@ -16,7 +16,11 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +35,7 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -266,6 +271,42 @@ class CalendarModelTest {
         assertEquals("a week loaded since asks nothing", 2, requests.size)
     }
 
+    @Test
+    fun aReconnectDuringAnUnreachableLoadRetriesWhenThatLoadEnds() {
+        val started = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val attempts = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (attempts.incrementAndGet() == 1) {
+                    started.countDown()
+                    check(release.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                    return MockResponse.Builder().code(503).build()
+                }
+                return MockResponse.Builder().code(200).body(
+                    json(Triple(3L, "2026-09-29T10:00:00Z", "2026-09-29T11:00:00Z")),
+                ).addHeader("Content-Type", "application/json").build()
+            }
+        }
+        val model = model(cached = emptyList(), io = Dispatchers.IO)
+        model.step(-27)
+        model.loadWeek(SEPTEMBER_28)
+        try {
+            assertTrue("the first route's request is pending", started.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+            model.reconnected()
+            model.loadWeek(SEPTEMBER_28)
+        } finally {
+            release.countDown()
+        }
+
+        val week = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
+        assertEquals(listOf(3L), week.entries.map { it.id })
+        assertEquals("one pending reconnect retries once", 2, attempts.get())
+        model.reconnected()
+        model.loadWeek(SEPTEMBER_28)
+        assertEquals("a loaded week sends nothing on another route update", 2, attempts.get())
+    }
+
     /**
      * A day chosen in the strip shows with its week, and a step goes on from it: a day forward
      * from Sunday 4 October is Monday 5 October, in the next week, which the phone does not keep.
@@ -412,6 +453,7 @@ class CalendarModelTest {
         cached: List<CachedTimeEntry>,
         settings: AccountSettings = SETTINGS,
         cache: Flow<List<EntryWithSendState>> = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
+        io: CoroutineContext = Dispatchers.Unconfined,
     ) = CalendarModel(
         entries = cache,
         projects = flowOf(emptyList()),
@@ -420,7 +462,7 @@ class CalendarModelTest {
         changes = changes,
         client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
         scope = CoroutineScope(Dispatchers.Unconfined),
-        io = Dispatchers.Unconfined,
+        io = io,
         clock = CLOCK,
     )
 
