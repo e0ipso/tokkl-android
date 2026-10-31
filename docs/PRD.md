@@ -305,6 +305,8 @@ The repo is public at `github.com/e0ipso/tokkl-android` and copies Tokkl's setup
 - commitlint with Tokkl's rules: Conventional Commits, no AI or co-author trailers, no ticket IDs in the subject. A husky hook runs it locally, and a CI job lints the commits of each pull request and push.
 - CI jobs for the Gradle build with lint and the unit tests (`assembleDebug check`), for a release build made twice from clean and compared byte for byte (`scripts/reproducible-release.sh`), and for the instrumented tests on emulators at API 36 and 31. GitHub's Ubuntu runners need a udev rule before the emulator can use KVM ([android-emulator-runner](https://github.com/ReactiveCircus/android-emulator-runner)).
 
+Distributed release builds enable R8 code optimization and resource shrinking, using Android's standard optimized rules, dependency consumer rules and focused retention of widget names and callback constructors. Debug builds keep their development configuration. Validate the actual release APK on API 31 and 36, including runtime components and an in-place upgrade with retained account data and queued work. Debug instrumented tests exercise the debug artifact. Identify the tested release artifact and record any unavailable service coverage. The reproducible-release check builds the optimized release from committed source and compares clean unsigned APKs.
+
 Releases run in the same workflow after every CI check passes:
 
 - semantic-release on pushes to `main` with Tokkl's release rules and `v${version}` tags. It writes `CHANGELOG.md` and the version into the Gradle build, derives `versionCode` from the version, and attaches the signed release APK to the GitHub release, where F-Droid's `Binaries` can find it.

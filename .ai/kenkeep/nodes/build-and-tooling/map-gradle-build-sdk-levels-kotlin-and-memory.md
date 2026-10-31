@@ -32,7 +32,7 @@ Lint's analysis cannot be relocated between checkouts. It stores this module's f
 
 Room 2.8.5 generates its code through KSP 2.3.12, and the Room Gradle plugin writes each database version's schema to `app/schemas/`. Those JSON files are tracked. Room's auto-migrations read them, so commit the new schema file with every version bump of `CacheDatabase`.
 
-The wrapper is Gradle 9.8.1. `distributionSha256Sum` in `gradle/wrapper/gradle-wrapper.properties` pins its checksum, so change the sum whenever `distributionUrl` changes.
+The wrapper is Gradle 9.8.2. `distributionSha256Sum` in `gradle/wrapper/gradle-wrapper.properties` pins its checksum, so change the sum whenever `distributionUrl` changes.
 
 `.gitattributes` keeps `gradlew` at LF and `*.bat` at CRLF, as Gradle's init template does. A `gradlew` with CRLF does not run on Linux, whatever `core.autocrlf` says.
 
