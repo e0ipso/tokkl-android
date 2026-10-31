@@ -249,12 +249,12 @@ class MainActivity : ComponentActivity() {
         if (!online) SharedHttpClient.instance.connectionPool.evictAll()
         val returned = (application as TokklApplication).foregroundRefresh.networkChanged(online) {
             // A cellular route can appear before it works, followed by Wi-Fi without an
-            // offline interval. Retry failed older days on each online update, while keeping
-            // the account refresh and other foreground work debounced.
+            // offline interval. Retry failed history days and calendar weeks on each online
+            // update, while keeping the account refresh and other foreground work debounced.
             historyViewModel.model.reconnected()
+            calendarViewModel.model.reconnected()
         }
         if (!returned) return
-        calendarViewModel.model.reconnected()
         reportsViewModel.model.reconnected()
     }
 
