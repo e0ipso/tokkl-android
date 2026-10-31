@@ -72,7 +72,7 @@ class RequestCounter(server: ServerUrl, private val request: String) : Closeable
                 }
                 val text = line.toString().trimEnd('\r')
                 line.setLength(0)
-                if (text.contains(request)) REQUEST_LINE.find(text)?.let { requestLines += it.value }
+                if (text.contains(request.trimEnd('\r', '\n'))) REQUEST_LINE.find(text)?.let { requestLines += it.value }
             }
         }
 
