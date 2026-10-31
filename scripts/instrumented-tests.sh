@@ -735,6 +735,16 @@ PY
     # whatever it read before a test. Start every run at the default size, so a
     # test that sets no scale of its own does not run at a scale left behind.
     adb -s "$emulator_serial" shell settings put system font_scale 1.0
+    # An interrupted large-display test can leave its forced density in the AVD.
+    # Restore the normal display only on the emulator this run booted.
+    adb -s "$emulator_serial" shell wm density reset
+    local owned_density
+    owned_density=$(adb -s "$emulator_serial" shell wm density | tr -d '\r')
+    if grep -q '^Override density:' <<<"$owned_density"; then
+        echo "$0: $AVD did not restore its physical display density." >&2
+        exit 1
+    fi
+    echo "Restored physical display density on owned emulator $emulator_serial: $owned_density"
     # Device automation can leave its nonvisual text-input helper selected in
     # the AVD. These tests need the real keyboard and its window insets. This
     # setup runs only for an emulator this script booted, never an attached one.
