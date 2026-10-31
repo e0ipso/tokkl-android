@@ -1,3 +1,14 @@
+## [0.7.1](https://github.com/e0ipso/tokkl-android/compare/v0.7.0...v0.7.1) (2026-10-31)
+
+### Bug Fixes
+
+* prevent stale stream starts and UI races ([#20](https://github.com/e0ipso/tokkl-android/issues/20)) ([fb0694b](https://github.com/e0ipso/tokkl-android/commit/fb0694bc382e93e10f7dea5ac205902940fed042))
+* stabilize CI and calendar recovery ([#23](https://github.com/e0ipso/tokkl-android/issues/23)) ([362c1d4](https://github.com/e0ipso/tokkl-android/commit/362c1d4d9225e17d918cda07d76a61392e720133))
+
+### Performance Improvements
+
+* optimize release APKs with R8 ([#24](https://github.com/e0ipso/tokkl-android/issues/24)) ([7e00589](https://github.com/e0ipso/tokkl-android/commit/7e005891569df5ab719836abc10b82d0f6c927a8)), references [#22](https://github.com/e0ipso/tokkl-android/issues/22)
+
 ## [0.7.0](https://github.com/e0ipso/tokkl-android/compare/v0.6.0...v0.7.0) (2026-10-30)
 
 ### Features
