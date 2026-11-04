@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    A plus, for the button that adds one to a stepper card's number. It is Tokkl's "plus" icon
+    from packages/web/src/components/Icon.tsx at tokkl fc2381f (github.com/e0ipso/tokkl, MIT),
+    drawn the way that component draws it: a 2-unit stroke with round caps and joins, and no fill.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,5v14M5,12h14" />
+</vector>

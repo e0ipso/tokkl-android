@@ -6,6 +6,11 @@
     <string name="pomodoro_long_rest_minutes">Long rest minutes</string>
     <string name="pomodoro_long_rest_every">Long rest every N work phases</string>
     <string name="pomodoro_length_range">Enter a whole number from %1$d to %2$d.</string>
+    <!-- The short labels on the stepper cards of the four lengths. -->
+    <string name="pomodoro_card_work">Work</string>
+    <string name="pomodoro_card_short_rest">Short rest</string>
+    <string name="pomodoro_card_long_rest">Long rest</string>
+    <string name="pomodoro_card_long_rest_every">Long rest every</string>
     <string name="pomodoro_description_hint">What are you working on?</string>
     <string name="pomodoro_workspace_missing">Waiting for the account’s workspace. Refresh the account before starting a session.</string>
     <string name="pomodoro_start">Start session</string>

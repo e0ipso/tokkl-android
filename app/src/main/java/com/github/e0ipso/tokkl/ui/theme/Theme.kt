@@ -73,6 +73,9 @@ object TokklTheme {
     /** A day's total, 22sp Anybody 800 with tabular digits. */
     val dayTotalTextStyle: TextStyle get() = DayTotalTextStyle
 
+    /** The number on a stepper card, 44sp Anybody 900 with tabular digits. */
+    val stepperValueTextStyle: TextStyle get() = StepperValueTextStyle
+
     /** A day's header in the history, 17sp Anybody 900, uppercase. */
     val dayHeaderTextStyle: TextStyle get() = DayHeaderTextStyle
 

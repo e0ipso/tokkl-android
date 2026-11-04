@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The stepper card, ui/StepperCard.kt: the line under its number, and what TalkBack reads. -->
+<resources>
+    <!-- The unit on the line under the number. Its quantity is the number on the card. -->
+    <plurals name="stepper_unit_minutes">
+        <item quantity="one">min</item>
+        <item quantity="other">min</item>
+    </plurals>
+    <plurals name="stepper_unit_work_phases">
+        <item quantity="one">work phase</item>
+        <item quantity="other">work phases</item>
+    </plurals>
+    <!-- The line under a number in range: the unit, then the range. -->
+    <string name="stepper_unit_range">%1$s · %2$d–%3$d</string>
+    <!-- The line under a number out of range, or under no number, which names the limit. -->
+    <string name="stepper_limit_max">max %1$d</string>
+    <string name="stepper_limit_min">min %1$d</string>
+    <string name="stepper_limit_range">enter %1$d–%2$d</string>
+
+    <!-- The number and its unit as TalkBack reads them. %1$s is the number. -->
+    <plurals name="stepper_spoken_minutes">
+        <item quantity="one">%1$s minute</item>
+        <item quantity="other">%1$s minutes</item>
+    </plurals>
+    <plurals name="stepper_spoken_work_phases">
+        <item quantity="one">%1$s work phase</item>
+        <item quantity="other">%1$s work phases</item>
+    </plurals>
+    <!-- What TalkBack reads for the card. %1$s is its label, such as Work. -->
+    <string name="stepper_spoken_in_range">%1$s, %2$s, %3$d to %4$d</string>
+    <string name="stepper_spoken_above_max">%1$s, %2$s, over the maximum of %3$d</string>
+    <string name="stepper_spoken_below_min">%1$s, %2$s, under the minimum of %3$d</string>
+    <string name="stepper_spoken_empty">%1$s, empty, enter %2$d to %3$d</string>
+    <string name="stepper_spoken_not_a_number">%1$s, not a whole number, enter %2$d to %3$d</string>
+
+    <!-- TalkBack's actions on the card. Double-tap types; the others step by one. -->
+    <string name="stepper_type_action">Type a number</string>
+    <string name="stepper_increase">Increase</string>
+    <string name="stepper_decrease">Decrease</string>
+</resources>
