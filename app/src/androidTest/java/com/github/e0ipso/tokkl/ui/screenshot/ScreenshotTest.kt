@@ -77,9 +77,11 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContent
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmState
 import com.github.e0ipso.tokkl.pomodoro.PomodoroContent
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPageState
 import com.github.e0ipso.tokkl.pomodoro.heldSession
+import com.github.e0ipso.tokkl.pomodoro.lengthCardMatcher
 import com.github.e0ipso.tokkl.pomodoro.ring
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
@@ -143,6 +145,8 @@ import org.junit.rules.RuleChain
  * server's data, its port or its certificate. A capture holds the app's window, the dialog's or
  * the More sheet's, never the status bar. Two captures force a wider window: the List view beside
  * the navigation rail on a medium one, and the entry form beside the history on an expanded one.
+ * A third forces a narrow one, the Pomodoro form with its cards in one column. Every Pomodoro
+ * form and Settings dialog capture runs in all four classes; none is left out of a configuration.
  *
  * The references are in app/src/androidTest/assets/screenshots, recorded on tokkl-api36, since
  * density and system fonts change the pixels. They run only on its Android version, API 36: every
@@ -283,8 +287,49 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun pomodoroIdle() = showPomodoro(IDLE_POMODORO) {
-        composeRule.awaitText(string(R.string.pomodoro_work_minutes))
+        awaitLengthCards()
         assertScreen("pomodoro-idle")
+    }
+
+    /**
+     * A Work draft of 200, over the 180 limit: its card turns danger and says `max 180`, and Start
+     * stays off. The state carries the draft, so nothing is typed and no cursor shows.
+     */
+    @SignedOut
+    @Test
+    fun pomodoroLimitError() = showPomodoro(IDLE_POMODORO.copy(lengths = IDLE_POMODORO.lengths.copy(work = "200"))) {
+        awaitLengthCards()
+        composeRule.onNode(hasText(string(R.string.stepper_limit_max, PomodoroDefaults.WORK_MINUTES.last)), useUnmergedTree = true)
+            .assertIsDisplayed()
+        assertScreen("pomodoro-limit-error")
+    }
+
+    /**
+     * The start form in a 320dp window: the form is narrower than 360dp, so the four cards sit in
+     * one column. The phone's own window is wider, which gives the two columns of [pomodoroIdle].
+     */
+    @SignedOut
+    @Test
+    fun pomodoroNarrow() = showPomodoro(IDLE_POMODORO, window = NARROW_WINDOW) {
+        awaitLengthCards()
+        assertScreen("pomodoro-narrow")
+    }
+
+    /**
+     * The Work default's dialog in Settings, opened from its row. The dialog holds one stepper
+     * card, and the capture copies the dialog's own window.
+     */
+    @Test
+    fun pomodoroDefaultDialog() {
+        launchApp {
+            openSettings()
+            composeRule.onNode(hasText(string(R.string.pomodoro_work_minutes)) and hasClickAction())
+                .performScrollTo()
+                .performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.awaitText(string(R.string.settings_pomodoro_edit))
+            awaitLengthCards()
+            assertDialog("pomodoro-default-dialog")
+        }
     }
 
     /** The bottom of the form keeps its entry controls and Start visible at font scale 2.0. */
@@ -511,8 +556,17 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
-    private fun showPomodoro(state: PomodoroPageState, steps: () -> Unit) {
-        show({
+    /** Waits for the first stepper card, since the cards show a short label no other text repeats. */
+    private fun awaitLengthCards() {
+        val work = string(R.string.pomodoro_card_work)
+        composeRule.waitUntil("the $work stepper card shows", TIMEOUT_MS) {
+            composeRule.onAllNodes(lengthCardMatcher(work)).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    /** Shows [state] in a window of [window] when given, else in the device's own. */
+    private fun showPomodoro(state: PomodoroPageState, window: DpSize? = null, steps: () -> Unit) {
+        val page = @Composable {
             SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = state.pomodoro != null) {
                 PomodoroContent(
                     state = state,
@@ -520,6 +574,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                     clock = TODAY,
                 )
             }
+        }
+        show({
+            if (window == null) page() else DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(window)) { page() }
         }) {
             composeRule.awaitText(string(R.string.pomodoro_title))
             steps()
@@ -656,6 +713,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
         /** An unfolded foldable or a small tablet held upright, a medium width. */
         val MEDIUM_WINDOW = DpSize(700.dp, 1000.dp)
+
+        /** A small phone, narrow enough for a one-column Pomodoro form, tall enough for its four cards. */
+        val NARROW_WINDOW = DpSize(320.dp, 1000.dp)
 
         /** A tablet held sideways, an expanded width. */
         val EXPANDED_WINDOW = DpSize(1280.dp, 800.dp)

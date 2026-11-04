@@ -66,12 +66,15 @@ class PomodoroPageFontScaleTest {
         show()
         compose.onNode(hasText(context.getString(R.string.pomodoro_title)) and isHeading()).assertIsDisplayed()
         for ((label, value) in listOf(
-            R.string.pomodoro_work_minutes to "180", R.string.pomodoro_short_rest_minutes to "60",
-            R.string.pomodoro_long_rest_minutes to "60", R.string.pomodoro_long_rest_every to "12",
+            R.string.pomodoro_card_work to "180", R.string.pomodoro_card_short_rest to "60",
+            R.string.pomodoro_card_long_rest to "60", R.string.pomodoro_card_long_rest_every to "12",
         )) {
-            val field = compose.onNode(hasText(context.getString(label)) and hasSetTextAction())
-            field.performScrollTo().assertIsDisplayed().assertIsEnabled().performTextReplacement(value)
-            readable(compose.onNodeWithText(context.getString(label), useUnmergedTree = true))
+            val name = context.getString(label)
+            compose.lengthCard(name).performScrollTo().assertIsDisplayed().assertIsEnabled()
+            // Typing into the number opens the keyboard, as a tap on the card does.
+            compose.lengthValue(name).performTextReplacement(value)
+            readable(compose.lengthLabel(name))
+            readable(compose.lengthValue(name))
         }
         val description = compose.onNode(hasText(context.getString(R.string.entry_description)) and hasSetTextAction())
         description.performScrollTo().performTextReplacement("Accessible entry")

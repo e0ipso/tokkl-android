@@ -7,6 +7,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -80,14 +81,14 @@ class PomodoroPageServerTest {
     @Test
     fun theFormSendsItsLengthsAndFieldsAndNextPhaseAndEndFollowTheServer() {
         show()
-        field(R.string.pomodoro_work_minutes).assert(hasText("40"))
-        field(R.string.pomodoro_short_rest_minutes).assert(hasText("8"))
-        field(R.string.pomodoro_long_rest_minutes).assert(hasText("20"))
-        field(R.string.pomodoro_long_rest_every).assert(hasText("3"))
-        type(R.string.pomodoro_work_minutes, "30")
-        type(R.string.pomodoro_short_rest_minutes, "5")
-        type(R.string.pomodoro_long_rest_minutes, "12")
-        type(R.string.pomodoro_long_rest_every, "2")
+        assertLength(R.string.pomodoro_card_work, "40")
+        assertLength(R.string.pomodoro_card_short_rest, "8")
+        assertLength(R.string.pomodoro_card_long_rest, "20")
+        assertLength(R.string.pomodoro_card_long_rest_every, "3")
+        typeLength(R.string.pomodoro_card_work, "30")
+        typeLength(R.string.pomodoro_card_short_rest, "5")
+        typeLength(R.string.pomodoro_card_long_rest, "12")
+        typeLength(R.string.pomodoro_card_long_rest_every, "2")
         type(R.string.entry_description, "First work")
         tap(R.string.pomodoro_start)
         await { model.state.value.pomodoro != null && !model.state.value.busy }
@@ -112,7 +113,8 @@ class PomodoroPageServerTest {
         await { model.state.value.pomodoro == null && !model.state.value.busy }
         assertNull(serverTimer().pomodoro)
         // The form is back, on the account's defaults again.
-        field(R.string.pomodoro_work_minutes).performScrollTo().assert(hasText("40"))
+        compose.lengthCard(context.getString(R.string.pomodoro_card_work)).performScrollTo()
+        assertLength(R.string.pomodoro_card_work, "40")
     }
 
     @Test
@@ -213,6 +215,16 @@ class PomodoroPageServerTest {
     private fun field(label: Int) = compose.onNode(hasText(context.getString(label)) and hasSetTextAction())
     private fun button(label: Int) = compose.onNode(hasText(context.getString(label)) and hasClickAction())
     private fun type(label: Int, value: String) { field(label).performScrollTo().performTextReplacement(value) }
+
+    private fun typeLength(label: Int, value: String) {
+        val name = context.getString(label)
+        compose.lengthCard(name).performScrollTo()
+        compose.lengthValue(name).performTextReplacement(value)
+    }
+
+    private fun assertLength(label: Int, value: String) {
+        compose.lengthValue(context.getString(label)).assertTextEquals(value)
+    }
 
     /**
      * Taps the button once it has kept still, fully visible, for [STILL_MS]. Typing opens the

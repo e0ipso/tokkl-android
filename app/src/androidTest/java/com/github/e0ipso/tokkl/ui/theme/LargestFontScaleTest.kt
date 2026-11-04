@@ -52,6 +52,9 @@ import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.settings.PomodoroDefaultField
+import com.github.e0ipso.tokkl.settings.cardLabel
+import com.github.e0ipso.tokkl.settings.label
 import com.github.e0ipso.tokkl.signin.assertFieldErrorsLeaveTheFormInPlace
 import com.github.e0ipso.tokkl.signin.assertServerUrlErrorFitsTheHint
 import org.junit.Assert.assertEquals
@@ -199,11 +202,10 @@ class LargestFontScaleTest {
     fun allFourPomodoroDefaultDialogsFitAtLargestFont() {
         composeRule.awaitText(string(R.string.settings))
         composeRule.onNodeWithText(string(R.string.settings)).performClick()
-        for ((label, maximum) in listOf(
-            R.string.pomodoro_work_minutes to 180, R.string.pomodoro_short_rest_minutes to 60,
-            R.string.pomodoro_long_rest_minutes to 60, R.string.pomodoro_long_rest_every to 12,
-        )) {
-            button(label).performScrollTo().performClick()
+        for (field in PomodoroDefaultField.entries) {
+            button(field.label).performScrollTo().performClick()
+            // The line under the card's number, such as "min · 1–180", in the unmerged tree.
+            val range = string(R.string.stepper_unit_range, "", field.range.first, field.range.last).substringAfter(' ')
             assertDialogFits(
                 blocks = listOf(
                     "title" to composeRule.onNode(hasText(string(R.string.settings_pomodoro_edit)) and isHeading()),
@@ -212,8 +214,10 @@ class LargestFontScaleTest {
                     "save" to button(R.string.settings_pomodoro_save),
                 ),
                 texts = listOf(
-                    fieldLabel(label),
-                    "range" to composeRule.onNodeWithText(string(R.string.pomodoro_length_range, 1, maximum)),
+                    fieldLabel(field.cardLabel),
+                    "range" to composeRule.onNode(
+                        hasText(range, substring = true) and hasAnyAncestor(hasSetTextAction()), useUnmergedTree = true,
+                    ),
                     inside(R.string.settings_pomodoro_cancel, hasClickAction()),
                     inside(R.string.settings_pomodoro_save, hasClickAction()),
                 ),

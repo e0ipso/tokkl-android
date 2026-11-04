@@ -46,6 +46,9 @@ internal val TotalTextStyle = anybodyStyle(28, FontWeight.ExtraBold).copy(fontFe
 /** A day's total, 22sp Anybody 800 with tabular digits. */
 internal val DayTotalTextStyle = anybodyStyle(22, FontWeight.ExtraBold).copy(fontFeatureSettings = "tnum")
 
+/** The number on a stepper card, 44sp Anybody 900 with tabular digits, so stepping does not shift it. */
+internal val StepperValueTextStyle = anybodyStyle(44, FontWeight.Black).copy(fontFeatureSettings = "tnum")
+
 /** The header of a day in the history, 17sp Anybody 900. Uppercase the text where it is set. */
 internal val DayHeaderTextStyle = anybodyStyle(17, FontWeight.Black)
 
