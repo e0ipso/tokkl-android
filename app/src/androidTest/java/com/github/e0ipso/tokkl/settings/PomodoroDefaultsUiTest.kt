@@ -14,8 +14,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.onNodeWithText
@@ -32,6 +32,8 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.pomodoro.lengthCard
+import com.github.e0ipso.tokkl.pomodoro.lengthValue
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.After
@@ -63,22 +65,24 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
         compose.onNodeWithText(string(R.string.settings_pomodoro_shared)).performScrollTo().assertIsDisplayed()
         for (field in PomodoroDefaultField.entries) {
             open(field)
-            val input = compose.onNode(hasText(string(field.label)) and hasSetTextAction())
+            val card = string(field.cardLabel)
             for (bad in listOf("", "0", "-1", "1.5", "999999999999", (field.range.last + 1).toString())) {
                 val before = defaults
-                input.performScrollTo().performTextReplacement(bad)
+                compose.lengthCard(card).performScrollTo()
+                compose.lengthValue(card).performTextReplacement(bad)
                 button(R.string.settings_pomodoro_save).assertIsNotEnabled()
                 assertEquals(before, defaults)
                 assertEquals(0, changes)
             }
-            input.performTextReplacement(field.range.first.toString())
+            compose.lengthValue(card).performTextReplacement(field.range.first.toString())
             readableVisibleText()
             button(R.string.settings_pomodoro_save).assertIsEnabled().performTouchInput { click() }
             assertEquals(field.range.first, field.value(defaults))
             assertEquals(1, changes)
             changes = 0
             open(field)
-            compose.onNode(hasText(string(field.label)) and hasSetTextAction()).performScrollTo().performTextReplacement(field.range.last.toString())
+            compose.lengthCard(card).performScrollTo()
+            compose.lengthValue(card).performTextReplacement(field.range.last.toString())
             readableVisibleText()
             button(R.string.settings_pomodoro_save).assertIsDisplayed().assertIsEnabled().performTouchInput { click() }
             assertEquals(field.range.last, field.value(defaults))
@@ -95,7 +99,8 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
         assertEquals(0, compose.onAllNodes(hasText(string(R.string.settings_pomodoro_shared))).fetchSemanticsNodes().size)
         for (field in PomodoroDefaultField.entries) {
             open(field)
-            compose.onNode(hasText(string(field.label)) and hasSetTextAction()).performScrollTo().performTextReplacement("2")
+            compose.lengthCard(string(field.cardLabel)).performScrollTo()
+            compose.lengthValue(string(field.cardLabel)).performTextReplacement("2")
             button(R.string.settings_pomodoro_cancel).performClick()
             assertEquals(PomodoroDefaults.DEFAULT, defaults)
             assertEquals(0, changes)
@@ -106,7 +111,8 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
     fun savingOneDefaultKeepsARefreshOfTheOtherDefaults() {
         show(shared = true)
         open(PomodoroDefaultField.WORK)
-        compose.onNode(hasText(string(R.string.pomodoro_work_minutes)) and hasSetTextAction()).performScrollTo().performTextReplacement("45")
+        compose.lengthCard(string(R.string.pomodoro_card_work)).performScrollTo()
+        compose.lengthValue(string(R.string.pomodoro_card_work)).performTextReplacement("45")
         compose.runOnIdle { defaults = PomodoroDefaults(50, 10, 30, 3) }
         button(R.string.settings_pomodoro_save).performClick()
         assertEquals(PomodoroDefaults(45, 10, 30, 3), defaults)
@@ -132,7 +138,8 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
     private fun open(field: PomodoroDefaultField) {
         compose.onNode(hasText(string(field.label)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
             .performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
-        compose.onNode(hasText(string(field.label)) and hasSetTextAction()).assertIsDisplayed()
+        compose.lengthCard(string(field.cardLabel)).assertIsDisplayed()
+        compose.lengthValue(string(field.cardLabel)).assertTextEquals(field.value(defaults).toString())
         readableVisibleText()
     }
 
