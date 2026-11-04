@@ -3,11 +3,14 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.content.ActivityNotFoundException
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -28,7 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -49,6 +52,8 @@ import com.github.e0ipso.tokkl.timer.TimerNotice
 import com.github.e0ipso.tokkl.timer.timerNoticeText
 import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.ui.ErrorBanner
+import com.github.e0ipso.tokkl.ui.StepperCard
+import com.github.e0ipso.tokkl.ui.StepperUnit
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -257,30 +262,54 @@ fun PomodoroContent(
     }
 }
 
-@Composable
-private fun PomodoroLengthForm(lengths: PomodoroLengths, enabled: Boolean, onChange: (PomodoroLengths) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-        LengthInput(lengths.work, R.string.pomodoro_work_minutes, PomodoroDefaults.WORK_MINUTES, enabled) { onChange(lengths.copy(work = it)) }
-        LengthInput(lengths.shortRest, R.string.pomodoro_short_rest_minutes, PomodoroDefaults.SHORT_REST_MINUTES, enabled) { onChange(lengths.copy(shortRest = it)) }
-        LengthInput(lengths.longRest, R.string.pomodoro_long_rest_minutes, PomodoroDefaults.LONG_REST_MINUTES, enabled) { onChange(lengths.copy(longRest = it)) }
-        LengthInput(lengths.every, R.string.pomodoro_long_rest_every, PomodoroDefaults.LONG_REST_EVERY, enabled) { onChange(lengths.copy(every = it)) }
-    }
-}
+/** The form's width from which its cards sit two to a row, measured on the form and not the window. */
+private val TwoColumnFormWidth = 360.dp
 
+/** One stepper card of the length form: its short [label], [range], [unit], the raw draft and the change to it. */
+private class LengthCard(
+    @StringRes val label: Int,
+    val range: IntRange,
+    val unit: StepperUnit,
+    val value: String,
+    val onChange: (String) -> Unit,
+)
+
+/**
+ * The four lengths as stepper cards, in a grid of two columns once the form itself is
+ * [TwoColumnFormWidth] wide and of one below. The count follows the form's own constraints, so a
+ * pane beside another screen gets the layout its width needs. A row's cards share its height.
+ */
 @Composable
-private fun LengthInput(value: String, @StringRes label: Int, range: IntRange, enabled: Boolean, onChange: (String) -> Unit) {
-    val invalid = value.toIntOrNull()?.let { it !in range } ?: true
-    OutlinedTextField(
-        value = value,
-        onValueChange = onChange,
-        label = { Text(stringResource(label)) },
-        supportingText = { Text(stringResource(R.string.pomodoro_length_range, range.first, range.last)) },
-        isError = invalid,
-        enabled = enabled,
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth(),
+internal fun PomodoroLengthForm(lengths: PomodoroLengths, enabled: Boolean, onChange: (PomodoroLengths) -> Unit) {
+    val cards = listOf(
+        LengthCard(R.string.pomodoro_card_work, PomodoroDefaults.WORK_MINUTES, StepperUnit.MINUTES, lengths.work) { onChange(lengths.copy(work = it)) },
+        LengthCard(R.string.pomodoro_card_short_rest, PomodoroDefaults.SHORT_REST_MINUTES, StepperUnit.MINUTES, lengths.shortRest) { onChange(lengths.copy(shortRest = it)) },
+        LengthCard(R.string.pomodoro_card_long_rest, PomodoroDefaults.LONG_REST_MINUTES, StepperUnit.MINUTES, lengths.longRest) { onChange(lengths.copy(longRest = it)) },
+        LengthCard(R.string.pomodoro_card_long_rest_every, PomodoroDefaults.LONG_REST_EVERY, StepperUnit.WORK_PHASES, lengths.every) { onChange(lengths.copy(every = it)) },
     )
+    BoxWithConstraints {
+        val columns = if (maxWidth >= TwoColumnFormWidth) 2 else 1
+        Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+            for (row in cards.chunked(columns)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
+                    modifier = Modifier.height(IntrinsicSize.Min),
+                ) {
+                    for (card in row) {
+                        StepperCard(
+                            label = stringResource(card.label),
+                            value = card.value,
+                            range = card.range,
+                            unit = card.unit,
+                            onChange = card.onChange,
+                            enabled = enabled,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
