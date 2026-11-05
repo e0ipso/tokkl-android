@@ -229,4 +229,40 @@ class SnapTest {
         for (minutes in listOf(1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60)) assertEquals(minutes.toString(), true, isTimeResolution(minutes.toDouble()))
         for (minutes in listOf(0.0, -5.0, 7.0, 45.0, 90.0, 120.0, 2.5, Double.NaN)) assertEquals(minutes.toString(), false, isTimeResolution(minutes))
     }
+
+    // snapDuration, ported from ../tokkl/packages/common/snap.ts. The cases below are the app's own.
+
+    @Test
+    fun snapDurationRoundsATieUp() {
+        assertEquals(900L, snapDuration(450, 15.0))
+        assertEquals(1800L, snapDuration(1350, 15.0))
+        assertEquals(60L, snapDuration(30, 1.0))
+    }
+
+    @Test
+    fun snapDurationRoundsBelowHalfAStepDown() {
+        assertEquals(0L, snapDuration(449, 15.0))
+        assertEquals(0L, snapDuration(0, 15.0))
+        assertEquals(900L, snapDuration(1349, 15.0))
+        assertEquals(0L, snapDuration(29, 1.0))
+    }
+
+    @Test
+    fun snapDurationKeepsAMultipleOfTheStep() {
+        assertEquals(5400L, snapDuration(5400, 15.0))
+        assertEquals(5400L, snapDuration(5400, 1.0))
+        assertEquals(86_400L, snapDuration(86_400, 60.0))
+    }
+
+    @Test
+    fun snapDurationOnTheOneMinuteGridKeepsWholeMinutes() {
+        assertEquals(5460L, snapDuration(5431, 1.0))
+        assertEquals(5400L, snapDuration(5429, 1.0))
+    }
+
+    @Test
+    fun snapDurationLeavesTheValueWithoutAResolution() {
+        assertEquals(1234L, snapDuration(1234, null))
+        assertEquals(0L, snapDuration(0, null))
+    }
 }

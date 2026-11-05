@@ -30,6 +30,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -75,6 +76,9 @@ class RunningTileServerTest {
     private var workspace = 0L
     private var project = 0L
 
+    /** Whether a long press started the tile's activity, which leaves the shade listening. */
+    private var tileStartedAnActivity = false
+
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
         TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
@@ -104,7 +108,7 @@ class RunningTileServerTest {
                 ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
                     .filterIsInstance<TileControlsActivity>().forEach { it.finish() }
             }
-            QuickSettingsTile.collapse()
+            if (tileStartedAnActivity) QuickSettingsTile.closeAfterLaunch() else QuickSettingsTile.collapse()
             QuickSettingsTile.remove()
             // Waits for the network, which the account's deletion and the next test need.
             if (::account.isInitialized) AirplaneMode.set(false, web) else AirplaneMode.off()
@@ -334,6 +338,11 @@ class RunningTileServerTest {
 
     @Test
     fun aTapOnThePausedTileResumesOnTheServerAndOfflineSaysWhy() {
+        // A tap on the tile leaves the app in the background. The system drops a background app's
+        // toast while its notifications are off ("Suppressing toast ... by user request"), and on
+        // Android 13 and later they are off until the user allows them. Allow them, as the app
+        // asks on the first start, so this test does not rely on an earlier class having done so.
+        RunningNotifications.allow()
         account.createEntry("Paused on the laptop", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
         runBlocking { app.accountSettings.refresh().join() }
         assertEquals("the server pauses it", TimerActionResult.Done, runBlocking { app.timerActions.pause() })
@@ -474,6 +483,7 @@ class RunningTileServerTest {
         val tile = checkNotNull(device.wait(Until.findObject(By.res("com.android.systemui", "tile_label").text(description)), TIMEOUT_MS)) {
             "SystemUI did not expose the running tile"
         }
+        tileStartedAnActivity = true
         tile.longClick()
         return { label ->
             val button = awaitControl(label)

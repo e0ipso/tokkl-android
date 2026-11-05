@@ -89,6 +89,7 @@ internal fun ServerTimeEntry.toCached(): CachedTimeEntry? {
         billable = billable ?: false,
         tags = tags.orEmpty(),
         tagIds = tagIds.orEmpty(),
+        allDay = allDay == true,
     )
 }
 

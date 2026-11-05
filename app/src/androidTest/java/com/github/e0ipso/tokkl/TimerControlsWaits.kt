@@ -28,7 +28,7 @@ inline fun <reified T : TimerControls> TokklApplication.awaitControls(
 fun TogglApiClient.timerState(): TimerState = get(server.app("timer"), TimerState.serializer()).orFail("GET /api/app/timer")
 
 /**
- * Treats the server as one without the timer API, as Toggl Track or a Tokkl release before 1.10.0,
+ * Treats the server as one without the timer API, as Toggl Track or an older Tokkl release does,
  * and stops the timer event stream with its service. Tests of the paths such a server relies on,
  * the periodic running check and the tile's refresh on opening, then see no change arrive through
  * the stream first. The next account refresh learns the capability again. Blocks on disk I/O.

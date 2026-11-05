@@ -56,6 +56,18 @@ fun snapSpan(start: Instant, stop: Instant, minutes: Double, timeZone: ZoneId): 
     return if (snappedStop > snappedStart) SnappedSpan(jsDate(snappedStart), jsDate(snappedStop)) else null
 }
 
+/**
+ * A duration in whole seconds snapped to the nearest multiple of [minutes], a tie going up. Port of
+ * snapDuration in ../tokkl/packages/common/snap.ts, which is how the server rounds a no-time
+ * entry. Without a resolution ([minutes] null) the duration comes back unchanged. [minutes] must
+ * be a resolution (see [isTimeResolution]), so the step is a whole, even number of seconds.
+ */
+fun snapDuration(seconds: Long, minutes: Double?): Long {
+    if (minutes == null) return seconds
+    val step = (minutes * 60).toLong()
+    return Math.floorDiv(seconds + step / 2, step) * step
+}
+
 /** The nearest wall-clock grid point to [at], taking the later point on a tie. */
 fun snapInstant(at: Instant, minutes: Double, timeZone: ZoneId): Instant {
     require(isTimeResolution(minutes)) { "Invalid time resolution: $minutes" }
