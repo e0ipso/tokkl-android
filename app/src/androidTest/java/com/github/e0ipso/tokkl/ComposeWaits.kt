@@ -1,9 +1,12 @@
 package com.github.e0ipso.tokkl
 
+import android.os.SystemClock
 import androidx.annotation.StringRes
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.isSelectable
@@ -83,6 +86,35 @@ fun ComposeTestRule.openMorePage(@StringRes label: Int, timeoutMillis: Long = ST
 }
 
 /**
+ * Taps [node] with a real touch once it is wholly in view and has kept still for [STILL_MS].
+ * Typing opens the keyboard, and while it slides in, a scrolling screen shrinks above it frame by
+ * frame. A control scrolled into view before the slide ends can then lie under the keyboard, where
+ * a tap reaches nothing, or move, so a tap aimed at where it was lands beside it. A control the
+ * keyboard covers is scrolled into view again.
+ */
+fun ComposeTestRule.tapWhenStill(node: SemanticsNodeInteraction, timeoutMillis: Long = KEYBOARD_TIMEOUT_MS) {
+    node.performScrollTo()
+    var bounds: Rect? = null
+    var since = SystemClock.uptimeMillis()
+    waitUntil("the control is in view and keeps still", timeoutMillis) {
+        val semantics = node.fetchSemanticsNode()
+        val now = semantics.boundsInRoot
+        val wholly = now.width > 0 && now.height > 0 &&
+            now.width >= semantics.size.width && now.height >= semantics.size.height
+        if (!wholly) {
+            node.performScrollTo()
+            bounds = null
+            since = SystemClock.uptimeMillis()
+        } else if (now != bounds) {
+            bounds = now
+            since = SystemClock.uptimeMillis()
+        }
+        wholly && SystemClock.uptimeMillis() - since >= STILL_MS
+    }
+    node.performClick()
+}
+
+/**
  * Runs [block] on a thread of its own and fails when it has not returned after [timeoutMillis].
  * ActivityScenario's close() and onActivity() start with Instrumentation.waitForIdleSync(), which
  * has no timeout, so a main thread that never goes idle would hang the whole run instead of
@@ -101,6 +133,11 @@ fun <T> finishWithin(what: String, timeoutMillis: Long = SCENARIO_TIMEOUT_MS, bl
 }
 
 private const val START_TIMEOUT_MS = 5_000L
+
+private const val KEYBOARD_TIMEOUT_MS = 10_000L
+
+/** How long a control keeps still before [tapWhenStill] taps it, longer than the keyboard takes to slide. */
+private const val STILL_MS = 500L
 
 /** ActivityScenario's own limit for an activity to reach a lifecycle state. */
 private const val SCENARIO_TIMEOUT_MS = 45_000L
