@@ -661,6 +661,10 @@ private fun Screen(
                         entryForm.new(day)
                         onOpenEntry()
                     },
+                    onAddAllDay = { day ->
+                        entryForm.newAllDay(day)
+                        onOpenEntry()
+                    },
                 )
             },
         )

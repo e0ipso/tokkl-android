@@ -27,6 +27,9 @@ internal interface CalendarEditing {
 
     /** Opens the entry form for a new entry on [day], as a drag on empty space would make. */
     fun add(day: LocalDate)
+
+    /** Opens the entry form for a new no-time entry on [day], from the All day row. */
+    fun addAllDay(day: LocalDate)
 }
 
 /** What a drag in progress does to a block. */
