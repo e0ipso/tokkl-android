@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.history
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToKeyAction
@@ -29,6 +31,7 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Instant
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -239,6 +242,32 @@ class HistoryServerTest {
     }
 
     /**
+     * A no-time entry has no times to show, so its row holds its duration and no time range, where
+     * a timed entry's row has both.
+     */
+    @Test
+    fun aNoTimeRowShowsOnlyItsDuration() {
+        val day = LocalDate.now(zone).minusDays(1)
+        account.createNoTimeEntry("Offsite", day, 5_400)
+        val start = day.atTime(14, 0).atZone(zone).toInstant()
+        val stop = start.plusSeconds(2_700)
+        account.createEntry("Meeting", start, stop)
+        refresh()
+
+        ActivityScenario.launch(MainActivity::class.java).use {
+            composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
+            val settings = app.accountSettings.state.value!!
+            val range = context.getString(R.string.history_time_range, settings.formatTime(start, zone), settings.formatTime(stop, zone))
+
+            val meeting = awaitRow("Meeting")
+            assertTrue("a timed row has its range: $meeting", range in meeting)
+            val offsite = awaitRow("Offsite")
+            assertTrue("a no-time row has its duration: $offsite", settings.formatDuration(5_400) in offsite)
+            assertTrue("a no-time row has no range: $offsite", offsite.none { " – " in it })
+        }
+    }
+
+    /**
      * Tokkl writes times with an offset, such as +00:00. Instant.parse refused that on API 31 and
      * took only a Z, so the offset goes through OffsetDateTime, as in the app's ServerReader.
      */
@@ -258,6 +287,15 @@ class HistoryServerTest {
     private fun signIn(server: ServerUrl) {
         ServerTrustStore(context).confirmCleartext(server)
         Session(context).save(server, account.apiToken)
+    }
+
+    /** Waits for the list row of the entry described [description] and returns the texts it shows. */
+    private fun awaitRow(description: String): List<String> {
+        val row = hasText(description) and hasClickAction() and hasAnyAncestor(hasScrollToKeyAction())
+        composeRule.waitUntil("the row of $description shows", LOAD_TIMEOUT_MS) {
+            composeRule.onAllNodes(row).fetchSemanticsNodes().isNotEmpty()
+        }
+        return composeRule.onNode(row).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
     }
 
     private fun list() = composeRule.onNode(hasScrollToKeyAction())

@@ -25,6 +25,8 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
@@ -33,6 +35,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -41,6 +44,7 @@ import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -159,6 +163,48 @@ class DuplicateServerTest {
         assertEquals("the source's stop", stored.instant("stop"), copy.instant("stop"))
     }
 
+    /**
+     * A no-time entry duplicates as a no-time entry on its day, with its duration, and its menu has
+     * no Split, which needs a time to cut at.
+     */
+    @Test
+    fun aNoTimeEntryDuplicatesAsANoTimeEntryAndItsMenuHasNoSplit() {
+        val day = LocalDate.now(MADRID).minusDays(1)
+        val source = account.createNoTimeEntry("Team offsite", day, 7_200)
+        runBlocking { app.accountSettings.refresh().join() }
+
+        ActivityScenario.launch(MainActivity::class.java).use {
+            composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
+            composeRule.waitUntil("the entry shows", LOAD_TIMEOUT_MS) { rowsIn("Team offsite") == 1 }
+
+            composeRule.onNode(hasContentDescription(context.getString(R.string.history_more_actions, "Team offsite")) and hasClickAction())
+                .performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.waitUntil("the menu shows Duplicate", LOAD_TIMEOUT_MS) {
+                composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicate))).fetchSemanticsNodes().isNotEmpty()
+            }
+            assertTrue("a no-time entry cannot be split", composeRule.onAllNodes(hasText(context.getString(R.string.history_split))).fetchSemanticsNodes().isEmpty())
+            composeRule.onNode(hasText(context.getString(R.string.history_duplicate)) and hasClickAction())
+                .performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.waitUntil("the message says so", LOAD_TIMEOUT_MS) {
+                composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicated))).fetchSemanticsNodes().isNotEmpty()
+            }
+
+            sendTheQueue()
+        }
+
+        val url = web.server.api("me", "time_entries").newBuilder()
+            .addQueryParameter("start_date", day.minusDays(1).toString() + "T00:00:00Z")
+            .addQueryParameter("end_date", day.plusDays(2).toString() + "T00:00:00Z")
+            .build()
+        val entries = web.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+            .filter { it.string("description") == "Team offsite" }
+        assertEquals("the source and its copy", 2, entries.size)
+        val copy = entries.single { it.getValue("id").jsonPrimitive.long != source }
+        assertTrue("the copy is a no-time entry", copy.getValue("all_day").jsonPrimitive.boolean)
+        assertEquals(7_200L, copy.getValue("duration").jsonPrimitive.long)
+        assertEquals("the copy is on the source's day", day.atStartOfDay(MADRID).toInstant(), copy.instant("start"))
+    }
+
     /** The server's entries that start within a day of [start]. */
     private fun serverEntries(start: Instant): List<JsonObject> {
         val url = web.server.api("me", "time_entries").newBuilder()
@@ -193,5 +239,6 @@ class DuplicateServerTest {
 
     private companion object {
         const val LOAD_TIMEOUT_MS = 30_000L
+        val MADRID: ZoneId = ZoneId.of("Europe/Madrid")
     }
 }

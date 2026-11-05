@@ -117,6 +117,7 @@ The first release is feature complete: it ships every requirement below, so they
 | ID | Requirement |
 |---|---|
 | M1 | Add a past entry by start and end or by duration, with Tokkl's parsing: `9`, `930`, `9:30`, `4pm`, entries across midnight, and durations like `1h 30m`, `90`, `1,5h`. |
+| M2 | A No times switch on the entry form adds a no-time entry, as in the web app: a date and a duration, with no start or end. The duration field shows "e.g. 1:30 or 90m" while empty. Save snaps the duration to the account's time resolution, as the server does, and marks the field with one of three messages: "Enter a duration like 1:30 or 90m", "The duration rounds to zero at the 15-minute time resolution" (with the account's minutes) or "No-time entries can be at most 24 hours". Without a resolution, zero gets the first message. Switching it on keeps the date and the duration the form shows; switching it off brings the times back. A running entry never gets the switch. Without the `allDay` capability (section 8.3) the switch is hidden. |
 
 ### 5.4 History and editing
 
@@ -129,6 +130,7 @@ The first release is feature complete: it ships every requirement below, so they
 | H5 | Duplicate an entry. |
 | H6 | Split an entry. |
 | H7 | Trash: list deleted entries, restore them, purge one or all. Needs the server. |
+| H8 | A no-time entry opens the form with No times on and its day and duration, and shows in the list under its stored day with its duration and no clock times. A group of only no-time entries shows no time range; in a mixed group the range spans the timed entries and the total counts all of them. Duplicate makes a no-time copy on the same day. Split is hidden, because there is no time to cut at. Saving with the day and duration unchanged keeps the stored span, so renaming an entry never rounds it. Changed values round to the time resolution. A timezone change leaves the stored day where it was. |
 
 ### 5.5 Calendar
 
@@ -136,6 +138,7 @@ The first release is feature complete: it ships every requirement below, so they
 |---|---|
 | K1 | Calendar in the account timezone. Phones in portrait show one day at a time, swipe to the next day, and show the week with its daily totals in a strip on top. Landscape, tablets and unfolded foldables show the week. This differs from the web app, which squeezes seven columns of about 45 px into a phone (`../tokkl/packages/web/src/styles.css`, the 760 px media query). |
 | K2 | Create, move and resize entries by touch: long-press then drag, in both the day and the week view. |
+| K3 | With the `allDay` capability, an All day row sits above the hour grid, with one cell per day listing that day's no-time entries. Each cell has a + button, which TalkBack reads as "Add all-day entry on <day>", and an "Add all-day entry" action. Both open the form for a new no-time entry on that day. Tapping a listed entry edits it. No-time entries cannot be dragged or resized, and dragging never makes one. Without the capability the row is absent. |
 
 ### 5.6 Projects, clients, tags and tasks
 
@@ -185,6 +188,7 @@ The first release is feature complete: it ships every requirement below, so they
 | O4 | Send the queue in the background when the network comes back, with the app closed. |
 | O5 | Show how many changes are not sent and when the server last answered. |
 | O6 | When the server rejects a queued change: a 409 on a stop is dropped without a message, because the entry is stopped either way. A 404 is dropped, and the app says so ("1 change discarded: the entry was deleted elsewhere"). A 400 moves to a "needs attention" list with the server's message, where the user fixes and resends it or discards it; later changes to the same entry wait behind it, and the rest of the queue goes on. A 403 pauses the whole queue and asks the user to sign in again, discarding nothing. A 5xx or no network retries with backoff. |
+| O7 | A no-time entry is added, edited, duplicated and deleted offline like any other manual entry, through the same queue, and shows as not sent until the server takes it. Unsent, it shows its day's midnight plus the snapped duration, never a snapped start. The day it was stored on survives a timezone change on the phone. |
 
 ### 5.10 Settings
 
@@ -316,8 +320,9 @@ Releases run in the same workflow after every CI check passes:
 
 - F-Droid only. No Play Store listing is planned. The signed APK on each GitHub release (section 8.2) serves anyone who sideloads.
 - The app has its own version, independent of Tokkl's, with its own `v*` tags and changelog, starting at 0.1.0. semantic-release does not support a first release below 1.0.0 ([FAQ](https://semantic-release.gitbook.io/semantic-release/support/faq)), so the first release is a hand-made `v0.1.0` tag and semantic-release counts on from it. A commit marked as a breaking change then moves the app to 1.0.0.
-- Tokkl snapping follows the latest supported contract, the 1.6.1+ independent-endpoint rules, with Tokkl 1.10.0 pinned by digest in device tests (`ghcr.io/e0ipso/tokkl:1.10.0@sha256:207db4f2a6547fea35ad898570fef892f55ef3ab26b6f142bfc3e3e0e680ad2f`). The runner also starts Tokkl 1.8.1 (`@sha256:70106ba2a6bc5b23c11f443f33bf2c7fb76d3af75b0335461047c4d27bd52e9b`) as a server without the timer API. Older snapping contracts are unsupported; there is no server-version selector or compatibility probe. Missing `time_resolution_minutes`, as on Toggl Track, keeps the no-resolution behavior. Other capability checks still hide Tokkl-only features when their endpoints return 404.
-- Capability gate for the timer API. Each account refresh sends `GET /api/app/timer`, as it probes the trash. A body that parses as a timer state sets the `timerState` flag. A 404, or a body that is not a timer state, clears it. A request that gets no clear answer keeps the previous value. The flag is false on Toggl Track and on Tokkl before 1.10.0, and sign-out forgets it. Without it, the Pomodoro destination leaves the bar, the rail and the alarm entry points; Pause and Resume leave the Timer page, the full-screen timer, the notification, the widget, the tile's controls and the reminder; and the timer sync service does not run. Start, Stop and editing the running entry are unchanged. Tokkl 1.8.1 accepts a captured timestamp in PATCH Stop and moves a short Stop to Trash for Undo.
+- Tokkl snapping follows the latest supported contract, the 1.6.1+ independent-endpoint rules, with Tokkl 2.1.0 pinned by digest in device tests (`ghcr.io/e0ipso/tokkl:2.1.0@sha256:d26098693f9080d84671cf8e2f924af20cb4fd87ae47ae73dacee9e5173ef0e7`). That is the only server the runner starts. Older snapping contracts are unsupported; there is no server-version selector or compatibility probe. Missing `time_resolution_minutes`, as on Toggl Track, keeps the no-resolution behavior. Other capability checks still hide Tokkl-only features when their endpoints return 404.
+- Capability gate for the timer API. Each account refresh sends `GET /api/app/timer`, as it probes the trash. A body that parses as a timer state sets the `timerState` flag. A 404, or a body that is not a timer state, clears it. A request that gets no clear answer keeps the previous value. The flag is false on Toggl Track and on Tokkl before 1.10.0, and sign-out forgets it. Without it, the Pomodoro destination leaves the bar, the rail and the alarm entry points; Pause and Resume leave the Timer page, the full-screen timer, the notification, the widget, the tile's controls and the reminder; and the timer sync service does not run. Start, Stop and editing the running entry are unchanged.
+- Capability gate for no-time entries (`Capabilities.allDay`). The flag is true on Tokkl, which `/me` shows by carrying `role`, and false on Toggl Track. It turns false for good when a Tokkl time entry list lacks the `all_day` key, and stays false across later refreshes. Nothing probes an endpoint and nothing compares server versions. While the flag is off or not yet known, no request carries `all_day`, so Toggl Track never receives it. The All day row, the No times switch and every `all_day` field in a request follow the flag. Sign-out forgets it.
 
 ## 9. Risks and open questions
 
