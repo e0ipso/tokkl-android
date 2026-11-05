@@ -107,6 +107,8 @@ import okhttp3.HttpUrl
  *   stopped at `stop`: Tokkl puts both ends on the grid, the stop where the new timer's start
  *   snaps (`AccountTime.snapStop` without one step), and Toggl keeps them. A queued start ended
  *   before a later timer goes this way, so it does not overlap that timer.
+ * @param allDay whether the server stores no-time entries (`Capabilities.allDay`), read for each
+ *   request. While it is false no request carries `all_day`, as Toggl Track needs.
  */
 class ChangeSender(
     private val store: ChangeStore,
@@ -119,6 +121,7 @@ class ChangeSender(
     private val clock: Clock = Clock.systemUTC(),
     private val serverStart: (Instant) -> Instant = { it },
     private val switchSpan: (start: Instant, stop: Instant) -> SnappedSpan = ::SnappedSpan,
+    private val allDay: () -> Boolean = { false },
 ) {
 
     /** What one [drain] did. */
@@ -366,7 +369,7 @@ class ChangeSender(
         if (change.kind == ChangeKind.CREATE) return create(api, change)
         if (change.kind == ChangeKind.DELETE) return delete(api, change)
         if (change.kind == ChangeKind.STOP && change.capturedStop != null) return capturedStop(api, change)
-        val request = change.request(api.server)
+        val request = change.request(api.server, allDay())
         return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
             is ApiResult.Success -> ApiResult.Success(Sent(change, result.value.id, result.value.toCached()))
             is ApiResult.Failure -> result
@@ -382,7 +385,7 @@ class ChangeSender(
             }
         }
         store.maybeSent(change, true)
-        val request = change.request(api.server)
+        val request = change.request(api.server, allDay())
         return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
             is ApiResult.Success -> if (result.value.matchesStop(change)) {
                 ApiResult.Success(Sent(change, result.value.id, if (change.shortStop) null else result.value.toCached()))
@@ -432,7 +435,7 @@ class ChangeSender(
             queued
         }
         if (!change.maybeSent) store.maybeSent(change, true)
-        val request = change.request(api.server)
+        val request = change.request(api.server, allDay())
         return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
             is ApiResult.Success -> ApiResult.Success(Sent(change, result.value.id, result.value.toCached()))
             is ApiResult.Failure -> {
@@ -453,7 +456,7 @@ class ChangeSender(
     private fun delete(api: TogglApiClient, change: PendingChange): ApiResult<Sent>? =
         synchronized(deletes) {
             if (!store.maybeSent(change, true)) return null
-            val request = change.request(api.server)
+            val request = change.request(api.server, allDay())
             when (val result = api.sendNoContent(request.method, request.url, request.body, resend = false)) {
                 is ApiResult.Success -> ApiResult.Success(Sent(change, change.entryId, entry = null))
                 is ApiResult.Failure -> when {
@@ -574,9 +577,10 @@ class ChangeSender(
 
     /**
      * The entry an earlier post of [create] made, or null when the server has none: one that
-     * [couldHaveMade] it, among the entries that start within [LOOKUP_MARGIN] of it, that the
-     * server did not hold already when the create was queued ([PendingChange.existingIds]), such
-     * as a duplicate's source, and that no other create from the phone maps to already.
+     * [couldHaveMade] it, among the entries that start within [LOOKUP_MARGIN] of its start (for a
+     * no-time create, its stored local midnight), that the server did not hold already when the
+     * create was queued ([PendingChange.existingIds]), such as a duplicate's source, and that no
+     * other create from the phone maps to already.
      */
     private fun earlierCopy(api: TogglApiClient, create: PendingChange): ApiResult<ServerTimeEntry?> {
         val start = create.start.truncatedTo(ChronoUnit.SECONDS)
@@ -646,6 +650,11 @@ class ChangeSender(
  * where the server snaps it. Tokkl leaves `created_with` out of its answers, so that cannot tell
  * entries apart. Billable and the stop do not count, so the entry still matches after the server
  * or another client changed them.
+ *
+ * A no-time create also matches a no-time entry whose start lies within
+ * [ChangeSender.LOOKUP_MARGIN] of its own. Tokkl puts that entry at midnight of its day in the
+ * account's timezone as the server has it, which need not be the midnight the phone stored. One
+ * sent while no-time entries were off went with its times, so it still matches by its start.
  */
 internal fun PendingChange.couldHaveMade(entry: ServerTimeEntry, starts: Set<Instant>): Boolean {
     val made = entry.toCached() ?: return false
@@ -654,8 +663,12 @@ internal fun PendingChange.couldHaveMade(entry: ServerTimeEntry, starts: Set<Ins
         made.projectId == projectId &&
         made.taskId == taskId &&
         made.tags.mapTo(HashSet(), ::tagKey) == tags.mapTo(HashSet(), ::tagKey) &&
-        made.start in starts
+        (made.start in starts || allDay && made.allDay && made.start.near(start))
 }
+
+/** True when this instant lies within [ChangeSender.LOOKUP_MARGIN] of [start], in whole seconds. */
+private fun Instant.near(start: Instant): Boolean =
+    Duration.between(start.truncatedTo(ChronoUnit.SECONDS), this).abs() <= ChangeSender.LOOKUP_MARGIN
 
 /**
  * The tag [name] as Tokkl matches it to a tag it has: trimmed, with A to Z in lower case. Tokkl
@@ -702,15 +715,18 @@ internal const val CREATED_WITH = "Tokkl for Android"
  * legacy stop a PUT with every field; a new Stop sends its frozen tap instant as PATCH. A delete is
  * a DELETE and a short Stop's Undo is a POST restore. Times go in whole seconds, the precision
  * the server stores; a running entry sends `duration: -1`, and a stopped one the duration that
- * matches its start and stop. Tags go by name.
+ * matches its start and stop. Tags go by name. With [allDay], the server stores no-time entries,
+ * and a create or update says whether it is one, as [body] describes. Without it no request
+ * carries `all_day`.
  */
-internal fun PendingChange.request(server: ServerUrl): ChangeRequest {
+internal fun PendingChange.request(server: ServerUrl, allDay: Boolean = false): ChangeRequest {
     val collection = server.api("workspaces", workspaceId.toString(), "time_entries")
     val url = if (kind == ChangeKind.CREATE) collection else collection.newBuilder().addPathSegment(entryId.toString()).build()
     return when (kind) {
-        ChangeKind.CREATE -> ChangeRequest("POST", url, body())
-        ChangeKind.UPDATE -> ChangeRequest("PUT", url, body())
-        ChangeKind.STOP -> if (capturedStop == null) ChangeRequest("PUT", url, body()) else
+        ChangeKind.CREATE -> ChangeRequest("POST", url, body(allDay))
+        ChangeKind.UPDATE -> ChangeRequest("PUT", url, body(allDay))
+        // A legacy stop ends a running entry, which is never a no-time one.
+        ChangeKind.STOP -> if (capturedStop == null) ChangeRequest("PUT", url, body(allDay = false)) else
             ChangeRequest("PATCH", url.newBuilder().addPathSegment("stop").build(), buildJsonObject {
                 put("stop", capturedStop.truncatedTo(ChronoUnit.SECONDS).toString())
             })
@@ -731,9 +747,18 @@ private fun TrashEntry.matchesStop(change: PendingChange): Boolean =
         runCatching { OffsetDateTime.parse(start).toInstant() }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
         stop?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS)
 
-private fun PendingChange.body(): JsonObject {
+/**
+ * The entry's fields. With [allDay] on, a no-time change sends `all_day: true`, its day as
+ * `start_date` and its duration, and neither `start` nor `stop`: Tokkl refuses a start that is not
+ * local midnight and a stop that is not the one it anchors. Without a stored day it sends its
+ * local midnight as `start`, whose date Tokkl reads in the account's timezone. Every other change
+ * sends its times, and `all_day: false` when [allDay] is on, which turns a no-time entry back into
+ * a timed one.
+ */
+private fun PendingChange.body(allDay: Boolean): JsonObject {
     val start = start.truncatedTo(ChronoUnit.SECONDS)
     val stop = stop?.truncatedTo(ChronoUnit.SECONDS)
+    val noTime = allDay && this.allDay
     return buildJsonObject {
         put("workspace_id", workspaceId)
         if (kind == ChangeKind.CREATE) put("created_with", CREATED_WITH)
@@ -742,13 +767,20 @@ private fun PendingChange.body(): JsonObject {
         put("task_id", taskId)
         put("tags", JsonArray(tags.map(::JsonPrimitive)))
         put("billable", billable)
-        put("start", start.toString())
-        if (stop == null) {
-            put("stop", JsonNull)
-            put("duration", -1)
-        } else {
-            put("stop", stop.toString())
+        if (noTime && stop != null) {
+            put("all_day", true)
+            if (day != null) put("start_date", day.toString()) else put("start", start.toString())
             put("duration", stop.epochSecond - start.epochSecond)
+        } else {
+            put("start", start.toString())
+            if (stop == null) {
+                put("stop", JsonNull)
+                put("duration", -1)
+            } else {
+                put("stop", stop.toString())
+                put("duration", stop.epochSecond - start.epochSecond)
+            }
+            if (allDay) put("all_day", false)
         }
     }
 }

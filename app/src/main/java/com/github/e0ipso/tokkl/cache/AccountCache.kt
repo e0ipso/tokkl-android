@@ -49,9 +49,16 @@ class AccountCache(
      * [me] is the refresh's `GET /api/v9/me` with related data, [preferences] its
      * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
      * A server without favorites gets none cached. A failed request keeps its rows, and a failed
-     * write keeps the whole cache as it was. Blocks, so call it off the main thread.
+     * write keeps the whole cache as it was. [onAllDayMissing] runs when Tokkl lists an entry
+     * without `all_day`, as [readServerSnapshot] describes. Blocks, so call it off the main thread.
      */
-    fun refresh(api: TogglApiClient, me: Me, preferences: MePreferences?, capabilities: Capabilities) {
+    fun refresh(
+        api: TogglApiClient,
+        me: Me,
+        preferences: MePreferences?,
+        capabilities: Capabilities,
+        onAllDayMissing: () -> Unit = {},
+    ) {
         val changes = database.changes()
         val before = try {
             database.runInTransaction<EntryRefreshStart> { dao.entryRefreshStart() }
@@ -59,7 +66,9 @@ class AccountCache(
             // Without the before-read state, a stale answer could overwrite a completed send.
             return
         }
-        val snapshot = readServerSnapshot(api, me, preferences, clock, favorites = capabilities.favorites)
+        val snapshot = readServerSnapshot(
+            api, me, preferences, clock, favorites = capabilities.favorites, onAllDayMissing = onAllDayMissing,
+        )
         try {
             database.runInTransaction {
                 // A pending local entry may have been created and then removed during the read.

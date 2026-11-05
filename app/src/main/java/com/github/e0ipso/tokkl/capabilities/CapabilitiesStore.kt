@@ -24,14 +24,15 @@ class CapabilitiesStore(context: Context) {
             favorites = preferences.getBoolean(KEY_FAVORITES, false),
             timeResolution = preferences.getBoolean(KEY_TIME_RESOLUTION, false),
             negatedFilters = preferences.getBoolean(KEY_NEGATED_FILTERS, false),
-            summaryCsv = readCsv(KEY_SUMMARY_CSV),
-            detailedCsv = readCsv(KEY_DETAILED_CSV),
+            summaryCsv = readOptional(KEY_SUMMARY_CSV),
+            detailedCsv = readOptional(KEY_DETAILED_CSV),
             timerState = preferences.getBoolean(KEY_TIMER_STATE, false),
+            allDay = readOptional(KEY_ALL_DAY),
         )
     }
 
-    /** Missing keys are not-yet-known, so an older file does not count as endpoint absence. */
-    private fun readCsv(key: String): Boolean? =
+    /** Missing keys are not known yet, so an older file does not count as absence. */
+    private fun readOptional(key: String): Boolean? =
         if (preferences.contains(key)) preferences.getBoolean(key, false) else null
 
     /** Replaces the stored capabilities in one write. */
@@ -43,9 +44,10 @@ class CapabilitiesStore(context: Context) {
             putBoolean(KEY_FAVORITES, capabilities.favorites)
             putBoolean(KEY_TIME_RESOLUTION, capabilities.timeResolution)
             putBoolean(KEY_NEGATED_FILTERS, capabilities.negatedFilters)
-            putCsv(KEY_SUMMARY_CSV, capabilities.summaryCsv)
-            putCsv(KEY_DETAILED_CSV, capabilities.detailedCsv)
+            putOptional(KEY_SUMMARY_CSV, capabilities.summaryCsv)
+            putOptional(KEY_DETAILED_CSV, capabilities.detailedCsv)
             putBoolean(KEY_TIMER_STATE, capabilities.timerState)
+            putOptional(KEY_ALL_DAY, capabilities.allDay)
         }
     }
 
@@ -54,7 +56,7 @@ class CapabilitiesStore(context: Context) {
         commit { clear() }
     }
 
-    private fun SharedPreferences.Editor.putCsv(key: String, value: Boolean?) {
+    private fun SharedPreferences.Editor.putOptional(key: String, value: Boolean?) {
         if (value == null) remove(key) else putBoolean(key, value)
     }
 
@@ -72,5 +74,6 @@ class CapabilitiesStore(context: Context) {
         private const val KEY_SUMMARY_CSV = "summary_csv"
         private const val KEY_DETAILED_CSV = "detailed_csv"
         private const val KEY_TIMER_STATE = "timer_state"
+        private const val KEY_ALL_DAY = "all_day"
     }
 }

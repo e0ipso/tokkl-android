@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -128,8 +129,8 @@ internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) :
 
     override suspend fun start(workspaceId: Long, fields: EntryFields): Long = error("the page starts nothing on the phone")
     override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = error("the page stops nothing on the phone")
-    override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long = error("no create")
-    override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean = error("no update")
+    override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long = error("no create")
+    override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean = error("no update")
     override suspend fun delete(entryId: Long): Boolean = error("no delete")
 }
 

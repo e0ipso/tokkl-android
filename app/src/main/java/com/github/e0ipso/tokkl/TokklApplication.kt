@@ -154,7 +154,7 @@ class TokklApplication : Application() {
             io = Dispatchers.IO,
             onRefresh = { api, me, preferences ->
                 val flags = capabilities.refresh(api, me, timerState)
-                cache.refresh(api, me, preferences, flags)
+                cache.refresh(api, me, preferences, flags, onAllDayMissing = capabilities::allDayMissing)
                 timerView.refreshed(preferences, keepsTimerView = flags.favorites)
                 pomodoroDefaults.refreshed(preferences, keepsPreferences = flags.favorites)
                 reminderSettings.refreshed(preferences, tokkl = flags.favorites)
@@ -552,6 +552,7 @@ class TokklApplication : Application() {
             onDiscarded = { count -> discarded.add(count) },
             serverStart = { start -> accountSettings.state.value?.time()?.snapInstant(start) ?: start },
             switchSpan = { start, stop -> accountSettings.state.value?.time()?.snapStop(start, stop, oneStep = false) ?: SnappedSpan(start, stop) },
+            allDay = { capabilities.state.value.allDay == true },
         )
     }
 
