@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
+import com.github.e0ipso.tokkl.cache.noTimeDay
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.entry.TimeRange
 import com.github.e0ipso.tokkl.entry.fields
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -53,6 +55,8 @@ sealed interface CalendarState {
      * The week that holds [selected], from [weekStart], the account's first day of the week, as of
      * [today] in the account's timezone [zone]. [entries] are those that touch the week, from the
      * phone or the server as [week] says, with the running one, which ends at the current time.
+     * [allDayOffered] is whether the server stores no-time entries, so the calendar has an All day
+     * row. [allDay] lists the no-time entries of [entries] by day, for the days of the week.
      */
     data class Shown(
         val selected: LocalDate,
@@ -62,7 +66,10 @@ sealed interface CalendarState {
         val settings: AccountSettings,
         val entries: List<CalendarEntry>,
         val week: WeekSource,
+        val allDayOffered: Boolean = false,
     ) : CalendarState {
+        val allDay: Map<LocalDate, List<CalendarEntry>> = allDayEntries(entries, weekDays, zone)
+
         /** The seven days of the week, from [weekStart]. */
         val weekDays: List<LocalDate> get() = (0L until 7L).map(weekStart::plusDays)
     }
@@ -134,6 +141,8 @@ enum class ResizeEdge { START, END }
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
+ * @param allDayOffered whether the server stores no-time entries (`Capabilities.allDay == true`),
+ *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
  */
 class CalendarModel(
     private val entries: Flow<List<EntryWithSendState>>,
@@ -145,6 +154,7 @@ class CalendarModel(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),
+    allDayOffered: Flow<Boolean> = flowOf(false),
 ) {
 
     /** The chosen day, or null to follow today. */
@@ -172,7 +182,9 @@ class CalendarModel(
         reconciliation.value = overrides
     }
 
-    private val choice = combine(selected, loaded, reconciliation) { day, weeks, overrides -> Triple(day, weeks, overrides) }
+    private val choice = combine(selected, loaded, reconciliation, allDayOffered) { day, weeks, overrides, offered ->
+        Choice(day, weeks, overrides, offered)
+    }
 
     /** The app went to the background, and has not come back yet. */
     private var backgrounded = false
@@ -185,7 +197,7 @@ class CalendarModel(
      */
     val foregrounds: StateFlow<Int> = foregroundCount
 
-    val state: StateFlow<CalendarState> = combine(entries, projects, tasks, accountSettings, choice) { cached, projectRows, taskRows, settings, (day, weeks, overrides) ->
+    val state: StateFlow<CalendarState> = combine(entries, projects, tasks, accountSettings, choice) { cached, projectRows, taskRows, settings, (day, weeks, overrides, offered) ->
         val time = settings?.time(clock)
         when {
             settings == null -> CalendarState.Loading
@@ -209,6 +221,7 @@ class CalendarModel(
                     settings = settings,
                     entries = weekEntries(current, serverRows, projectRows, taskRows, time, weekStart),
                     week = if (isCached(weekStart, today)) WeekSource.Cached else server?.status ?: WeekSource.Loading,
+                    allDayOffered = offered,
                 )
             }
         }
@@ -360,6 +373,8 @@ class CalendarModel(
      * are the ones the server will store.
      */
     private fun change(entry: CalendarEntry, range: (stop: Instant, time: AccountTime, step: Int) -> TimeRange) {
+        // A no-time entry has no time to move or resize.
+        if (entry.allDay) return
         val stop = entry.stop ?: return
         val settings = accountSettings.value ?: return
         val time = settings.time(clock) ?: return
@@ -423,6 +438,14 @@ class CalendarModel(
      */
     private data class ServerWeek(val entries: List<CachedTimeEntry>, val status: WeekSource, val stale: Boolean = false)
 
+    /** What [state] reads besides the cache: the chosen day, the weeks from the server, the overrides and whether the All day row is offered. */
+    private data class Choice(
+        val day: LocalDate?,
+        val weeks: Map<Span, ServerWeek>,
+        val overrides: Map<Long, CachedTimeEntry?>,
+        val allDayOffered: Boolean,
+    )
+
     /** The copy of an entry changed on the phone, and whether the cache [held] it when last read. */
     private data class Edit(val entry: CachedTimeEntry, val held: Boolean)
 
@@ -465,17 +488,23 @@ internal fun weekEntries(
 ): List<CalendarEntry> {
     val from = weekStart.atStartOfDay(time.zone).toInstant()
     val to = weekStart.plusDays(7).atStartOfDay(time.zone).toInstant()
+    val days = weekStart..weekStart.plusDays(6)
     val cachedIds = cached.mapTo(HashSet()) { it.entry.id }
     val rows = cached.map { it.entry to it.unsent } + server.filter { it.id !in cachedIds }.map { it to false }
     val projectsById = projects.associateBy { it.id }
     val tasksById = tasks.associateBy { it.id }
     return rows
         .map { (entry, unsent) -> entry.shown(unsent, time, projectsById, tasksById) }
-        .filter { it.start < to && (it.stop == null || it.stop > from) }
+        // A no-time entry belongs to its stored day, not to the instant of a midnight that a timezone change left stale.
+        .filter { if (it.allDay) it.day in days else it.start < to && (it.stop == null || it.stop > from) }
 }
 
 /** The entry with the times the server stores once it gets it: a stopped entry's span snapped. */
 private fun CachedTimeEntry.stored(time: AccountTime): CachedTimeEntry {
+    if (allDay) {
+        val span = stop?.let { time.noTimeSpan(noTimeDay(time.zone), Duration.between(start, it).seconds) } ?: return this
+        return copy(start = span.start, stop = span.stop)
+    }
     val stop = stop?.takeIf { !it.isBefore(start) } ?: return this
     val span = time.snapUnsent(start, stop) ?: return this
     return copy(start = span.start, stop = span.stop)
@@ -487,9 +516,14 @@ private fun CachedTimeEntry.shown(
     projects: Map<Long, CachedProject>,
     tasks: Map<Long, CachedTask>,
 ): CalendarEntry {
+    // A no-time entry is on its stored day, from the midnight of the account's zone, with the
+    // duration the server will store. The instant it was stored at may be stale after a timezone change.
+    val noTimeDay = noTimeDay(time.zone).takeIf { allDay }
     // The server keeps a running entry's start as sent, so only a stopped one is snapped.
     // A rejected pending span keeps its actual times and unsent state for correction.
-    val span = stop?.takeIf { unsent }?.let { time.snapUnsent(start, it) }
+    val span = stop?.takeIf { unsent }?.let {
+        if (noTimeDay != null) time.noTimeSpan(noTimeDay, Duration.between(start, it).seconds) else time.snapUnsent(start, it)
+    }
     val project = projectId?.let(projects::get)
     return CalendarEntry(
         id = id,
@@ -500,5 +534,7 @@ private fun CachedTimeEntry.shown(
         start = span?.start ?: start,
         stop = span?.stop ?: stop,
         unsent = unsent,
+        allDay = allDay,
+        day = noTimeDay,
     )
 }

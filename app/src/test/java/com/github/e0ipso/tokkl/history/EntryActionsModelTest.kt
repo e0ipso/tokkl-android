@@ -216,6 +216,49 @@ class EntryActionsModelTest {
     }
 
     @Test
+    fun duplicateOfANoTimeEntryStaysNoTimeOnItsStoredDay() {
+        // The stored day is the 19th, though the start (22:00 UTC) is now midnight of the 20th in Madrid.
+        val noTime = NO_TIME.copy(day = LocalDate.of(2026, 10, 19), start = Instant.parse("2026-10-19T22:00:00Z"), stop = Instant.parse("2026-10-19T23:30:00Z"))
+        entries.value = listOf(EntryWithSendState(noTime, unsent = false))
+        val model = model(canRestore = true)
+
+        onMain { model.duplicate(noTime.id) }
+
+        awaitNotice(model) { it is EntryNotice.Duplicated }
+        val fields = EntryFields(description = "Code review", projectId = 3, taskId = 4, tags = listOf("review", "remote"), billable = true)
+        assertEquals(
+            listOf("create 10 $fields ${noTime.start} ${noTime.stop} noTimeDay=2026-10-19"),
+            calls,
+        )
+    }
+
+    @Test
+    fun duplicateOfANoTimeEntryWithoutAStoredDayTakesItsDayInTheAccountZone() {
+        // Madrid midnight of the 19th, which is the 18th in UTC.
+        val noTime = NO_TIME.copy(day = null)
+        entries.value = listOf(EntryWithSendState(noTime, unsent = false))
+        val model = model(canRestore = true)
+
+        onMain { model.duplicate(noTime.id) }
+
+        awaitNotice(model) { it is EntryNotice.Duplicated }
+        assertEquals(1, calls.size)
+        assertEquals(true, calls.single().endsWith(" noTimeDay=2026-10-19"))
+    }
+
+    @Test
+    fun splitOpensNothingForANoTimeEntry() {
+        entries.value = listOf(EntryWithSendState(NO_TIME, unsent = false))
+        val model = model(canRestore = true)
+
+        onMain { model.split(NO_TIME.id) }
+        onMain {}
+
+        assertEquals(EntryActionsState(), model.state.value)
+        assertEquals(emptyList<String>(), calls)
+    }
+
+    @Test
     fun splitCutsTheEntryInTwoThroughTheQueueAndTheHalvesAddUpToTheWhole() {
         val model = model(canRestore = true)
 
@@ -437,7 +480,7 @@ class EntryActionsModelTest {
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
 
         override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
-            calls += "create $workspaceId $fields $start $stop"
+            calls += "create $workspaceId $fields $start $stop" + (noTimeDay?.let { " noTimeDay=$it" } ?: "")
             return -1
         }
 
@@ -469,6 +512,15 @@ class EntryActionsModelTest {
         )
 
         val RUNNING = STOPPED.copy(id = 71, stop = null)
+
+        /** A no-time entry on 19 October in Madrid: its start is local midnight, 22:00 UTC the day before. */
+        val NO_TIME = STOPPED.copy(
+            id = 72,
+            start = Instant.parse("2026-10-18T22:00:00Z"),
+            stop = Instant.parse("2026-10-18T23:30:00Z"),
+            allDay = true,
+            day = LocalDate.of(2026, 10, 19),
+        )
 
         val PINNED = CachedFavorite(0, "Write the report", projectId = null, taskId = null, tags = emptyList(), billable = false)
 

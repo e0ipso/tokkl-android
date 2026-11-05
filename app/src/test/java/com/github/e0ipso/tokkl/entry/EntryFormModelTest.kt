@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.Clock
@@ -43,8 +44,11 @@ class EntryFormModelTest {
     private val main: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
-    private val entries = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = false)))
+    private val entries = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY, unsent = false)))
     private val settings = MutableStateFlow<AccountSettings?>(SETTINGS)
+
+    /** Whether the server stores no-time entries, as on Tokkl. */
+    private val allDay = MutableStateFlow(true)
     private val changes = FakeChanges()
     private lateinit var model: EntryFormModel
 
@@ -58,6 +62,7 @@ class EntryFormModelTest {
             changes = changes,
             scope = scope,
             clock = Clock.fixed(NOW, ZoneOffset.UTC),
+            allDay = allDay,
         )
         // The screen collects the state while it shows.
         scope.launch { model.state.collect {} }
@@ -87,6 +92,7 @@ class EntryFormModelTest {
                 mistakes = emptyMap(),
                 endsOn = null,
                 saving = false,
+                noTimesOffered = true,
             ),
             form,
         )
@@ -322,6 +328,7 @@ class EntryFormModelTest {
                 mistakes = emptyMap(),
                 endsOn = null,
                 saving = false,
+                noTimesOffered = true,
             ),
             openNew(),
         )
@@ -564,6 +571,279 @@ class EntryFormModelTest {
         }
     }
 
+    /** The calendar's All day row opens the form without times, on the day of its + button. */
+    @Test
+    fun anAllDayEntryOpensWithoutTimesOnTheDayItIsGiven() {
+        val day = LocalDate.of(2026, 9, 2)
+        onMain { model.newAllDay(day) }
+
+        assertEquals(
+            EntryFormState.Open(
+                editing = false,
+                workspaceId = WORKSPACE,
+                fields = EntryFields(),
+                labels = EntryLabels(),
+                original = Picked(),
+                date = day,
+                start = "",
+                end = "",
+                duration = "",
+                mistakes = emptyMap(),
+                endsOn = null,
+                saving = false,
+                noTimes = true,
+                noTimesOffered = true,
+            ),
+            awaitOpen("the form opens") { true },
+        )
+    }
+
+    @Test
+    fun anAllDayEntryWithoutTheAccountsTimezoneTakesNoDuration() {
+        settings.value = SETTINGS.copy(timeZone = "Mars/Olympus_Mons")
+        onMain { model.newAllDay(LocalDate.of(2026, 9, 2)) }
+
+        awaitState("the form names the zone") { it == EntryFormState.NoAccountTime("Mars/Olympus_Mons") }
+    }
+
+    /** The server stores the day's midnight in the account's timezone and the snapped duration. */
+    @Test
+    fun anAllDayEntrySavesItsDayAndTheDurationTheServerStores() {
+        settings.value = SETTINGS.copy(timeResolutionMinutes = 15.0)
+        onMain { model.newAllDay(LocalDate.of(2026, 9, 2)) }
+        awaitOpen("the form opens") { it.noTimes }
+        onMain {
+            model.setDuration("95m")
+            model.durationDone()
+        }
+        awaitOpen("the duration shows what the server stores") { it.duration == "1:30:00" }
+
+        save()
+
+        // Midnight in Madrid's summer time, then 95 minutes rounded to the 15-minute resolution.
+        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-09-01T22:00:00Z 2026-09-01T23:30:00Z on 2026-09-02"), changes.calls)
+    }
+
+    /** The messages of the web app's noTimeDuration.ts, each under the duration. */
+    @Test
+    fun aNoTimeDurationTheServerRefusesIsMarkedAndNothingIsQueued() {
+        settings.value = SETTINGS.copy(timeResolutionMinutes = 15.0)
+        onMain { model.newAllDay(LocalDate.of(2026, 9, 2)) }
+        awaitOpen("the form opens") { it.noTimes }
+        // No two cases in a row share a mistake, so each wait sees its own save.
+        for ((typed, mistake) in listOf(
+            "a while" to TimeMistake.NO_TIME_DURATION,
+            "5m" to TimeMistake.NoTimeRoundsToZero(minutes = 15),
+            "" to TimeMistake.NO_TIME_DURATION,
+            "24h 10m" to TimeMistake.NO_TIME_TOO_LONG,
+        )) {
+            onMain {
+                model.setDuration(typed)
+                model.save()
+            }
+            awaitOpen("\"$typed\" is marked") { it.mistakes == mapOf(TimeField.DURATION to mistake) }
+        }
+
+        // Without a resolution there is none to name, so a zero cannot be read as a duration.
+        settings.value = SETTINGS
+        onMain {
+            model.setDuration("0")
+            model.save()
+        }
+        awaitOpen("a zero is marked") { it.mistakes == mapOf(TimeField.DURATION to TimeMistake.NO_TIME_DURATION) }
+        assertEquals("nothing queued", emptyList<String>(), changes.calls)
+    }
+
+    /** As the web app's editor shows it: the day, and the duration snapped, with no times. */
+    @Test
+    fun aNoTimeEntryOpensOnItsDayWithTheDurationTheServerStores() {
+        settings.value = SETTINGS.copy(timeResolutionMinutes = 15.0)
+        val form = openEntry(ALL_DAY.id)
+
+        assertEquals(true, form.noTimes)
+        assertEquals(true, form.noTimesOffered)
+        assertEquals(LocalDate.of(2026, 10, 14), form.date)
+        assertEquals("" to "", form.start to form.end)
+        // 1:37 at the 15-minute resolution.
+        assertEquals("1:30:00", form.duration)
+        assertEquals(null, form.endsOn)
+
+        onMain { model.setDescription("Read the spec again") }
+        save()
+
+        // The day and the duration stay as they opened, so the stored 1:37 is kept, not rounded,
+        // as the web app's noTimeEdit.ts keeps it.
+        assertEquals(
+            listOf("update ${ALL_DAY.id} ${EntryFields("Read the spec again")} 2026-10-13T22:00:00Z 2026-10-13T23:37:00Z on 2026-10-14"),
+            changes.calls,
+        )
+    }
+
+    @Test
+    fun aNoTimeEntryWithAChangedDurationSavesItRounded() {
+        settings.value = SETTINGS.copy(timeResolutionMinutes = 15.0)
+        openEntry(ALL_DAY.id)
+        onMain { model.setDuration("1:37") }
+
+        save()
+
+        assertEquals(listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-13T23:30:00Z on 2026-10-14"), changes.calls)
+    }
+
+    /**
+     * A change queued in Madrid keeps its day after the account moves to New York, where the
+     * midnight it was queued with falls on the evening before.
+     */
+    @Test
+    fun aQueuedNoTimeEntryKeepsItsDayAfterTheTimezoneChanges() {
+        settings.value = SETTINGS.copy(timeZone = "America/New_York")
+        entries.value = listOf(EntryWithSendState(ALL_DAY.copy(day = LocalDate.of(2026, 10, 14)), unsent = true))
+        assertEquals(LocalDate.of(2026, 10, 14), openEntry(ALL_DAY.id).date)
+        onMain { model.setDuration("2h") }
+
+        save()
+
+        // Midnight in New York's summer time.
+        assertEquals(listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-14T04:00:00Z 2026-10-14T06:00:00Z on 2026-10-14"), changes.calls)
+    }
+
+    @Test
+    fun aNoTimeEntryFromTheOlderDaysSavesWholeOnItsDay() {
+        val older = OLDER.copy(allDay = true, start = Instant.parse("2026-09-01T22:00:00Z"), stop = Instant.parse("2026-09-01T23:00:00Z"))
+        onMain { model.edit(older.id, older = older) }
+        val form = awaitOpen("the form opens on the older entry") { it.noTimes }
+        assertEquals(LocalDate.of(2026, 9, 2), form.date)
+        assertEquals("1:00:00", form.duration)
+        onMain { model.setDate(LocalDate.of(2026, 9, 3)) }
+
+        save()
+
+        val fields = EntryFields(description = "Plan the sprint", projectId = APP.id)
+        assertEquals(listOf("updateOlder ${older.id} $OLDER_WORKSPACE $fields 2026-09-02T22:00:00Z 2026-09-02T23:00:00Z on 2026-09-03"), changes.calls)
+    }
+
+    /** As the web app's editor: the date stays, and the duration is the one the form shows. */
+    @Test
+    fun switchingNoTimesOnKeepsTheDateAndTheDurationShown() {
+        openEntry()
+        onMain {
+            model.setDate(LocalDate.of(2026, 10, 15))
+            model.setNoTimes(true)
+        }
+        val form = awaitOpen("the form has no times") { it.noTimes }
+        assertEquals(LocalDate.of(2026, 10, 15), form.date)
+        assertEquals("1:30:25", form.duration)
+
+        save()
+
+        assertEquals(listOf("update $ENTRY_ID $ENTRY_FIELDS 2026-10-14T22:00:00Z 2026-10-14T23:30:25Z on 2026-10-15"), changes.calls)
+    }
+
+    @Test
+    fun switchingNoTimesOnTakesTheDurationFromTimesTypedAlone() {
+        openNew()
+        onMain {
+            model.setStart("9")
+            model.setEnd("10:30")
+            model.setNoTimes(true)
+        }
+
+        awaitOpen("the duration follows the times") { it.noTimes && it.duration == "1:30:00" }
+    }
+
+    @Test
+    fun switchingNoTimesOffLeavesANewEntryWithoutTimes() {
+        onMain { model.newAllDay(LocalDate.of(2026, 9, 2)) }
+        awaitOpen("the form opens") { it.noTimes }
+
+        onMain { model.setNoTimes(false) }
+
+        val form = awaitOpen("the times are back") { !it.noTimes }
+        assertEquals("" to "", form.start to form.end)
+        assertEquals(LocalDate.of(2026, 9, 2), form.date)
+    }
+
+    @Test
+    fun switchingNoTimesOffGivesATimedEntryItsOwnTimesBack() {
+        openEntry()
+        onMain { model.setNoTimes(true) }
+        awaitOpen("the form has no times") { it.noTimes }
+
+        onMain { model.setNoTimes(false) }
+
+        val form = awaitOpen("the times are back") { !it.noTimes }
+        assertEquals(Triple("09:00", "10:30", "1:30:25"), Triple(form.start, form.end, form.duration))
+        save()
+        assertEquals(listOf("update $ENTRY_ID $ENTRY_FIELDS ${ENTRY.start} ${ENTRY.stop}"), changes.calls)
+    }
+
+    /** A no-time entry that gets times starts at midnight and lasts its duration, for the user to change. */
+    @Test
+    fun aNoTimeEntryGetsTimesFromMidnightForItsDuration() {
+        openEntry(ALL_DAY.id)
+
+        onMain { model.setNoTimes(false) }
+
+        val form = awaitOpen("the times are back") { !it.noTimes }
+        assertEquals(Triple("00:00", "01:37", "1:37:00"), Triple(form.start, form.end, form.duration))
+        save()
+        assertEquals("times and no day", listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-13T23:37:00Z"), changes.calls)
+    }
+
+    @Test
+    fun aNoTimeEntrySavedWithTypedTimesSendsThemAndNoDay() {
+        openEntry(ALL_DAY.id)
+        onMain {
+            model.setNoTimes(false)
+            model.setStart("9")
+            model.setEnd("10")
+        }
+
+        save()
+
+        assertEquals(listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-14T07:00:00Z 2026-10-14T08:00:00Z"), changes.calls)
+    }
+
+    /** Its end is midnight again, which the end field cannot tell from the start, so the duration says it. */
+    @Test
+    fun aDayLongNoTimeEntryKeepsItsLengthWhenItGetsTimes() {
+        entries.value = listOf(EntryWithSendState(ALL_DAY.copy(stop = Instant.parse("2026-10-14T22:00:00Z")), unsent = false))
+        openEntry(ALL_DAY.id)
+
+        onMain { model.setNoTimes(false) }
+
+        val form = awaitOpen("the times are back") { !it.noTimes }
+        assertEquals(Triple("00:00", "00:00", "24:00:00"), Triple(form.start, form.end, form.duration))
+        assertEquals(LocalDate.of(2026, 10, 15), form.endsOn)
+        save()
+        assertEquals(listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-14T22:00:00Z"), changes.calls)
+    }
+
+    /** Toggl Track, and a Tokkl that cannot store them, get no switch, and it follows the flag. */
+    @Test
+    fun noTimesIsOfferedOnlyWhenTheServerStoresThem() {
+        allDay.value = false
+        assertEquals(false, openNew().noTimesOffered)
+
+        allDay.value = true
+        awaitOpen("the switch is offered") { it.noTimesOffered }
+    }
+
+    @Test
+    fun noTimesIsNeverOfferedForTheRunningEntry() {
+        val running = ENTRY.copy(stop = null)
+        changes.running = running
+        onMain { model.editRunning(RunningEntryIdentity(running.id, running.workspaceId, running.start)) }
+        assertEquals(false, awaitOpen("the running entry opens") { it.running }.noTimesOffered)
+
+        onMain {
+            model.setNoTimes(true)
+            model.setDescription("Still running")
+        }
+
+        assertEquals(false, awaitOpen("the description changed") { it.fields.description == "Still running" }.noTimes)
+    }
+
     private fun openNew(): EntryFormState.Open {
         onMain { model.new() }
         return awaitOpen("the form for a past entry opens") { !it.editing && it.start.isEmpty() }
@@ -615,8 +895,8 @@ class EntryFormModelTest {
         val stop: String,
     )
 
-    private fun openEntry(): EntryFormState.Open {
-        onMain { model.edit(ENTRY_ID) }
+    private fun openEntry(id: Long = ENTRY_ID): EntryFormState.Open {
+        onMain { model.edit(id) }
         return awaitOpen("the form opens") { true }
     }
 
@@ -646,12 +926,12 @@ class EntryFormModelTest {
         var updates = true
 
         override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
-            calls += "update $entryId $fields $start $stop"
+            calls += "update $entryId $fields $start $stop" + noTimeDay.onDay()
             return updates
         }
 
         override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
-            calls += "create $workspaceId $fields $start $stop"
+            calls += "create $workspaceId $fields $start $stop" + noTimeDay.onDay()
             return -1
         }
 
@@ -660,10 +940,19 @@ class EntryFormModelTest {
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("the form stops no timer")
 
         override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?) {
-            calls += "updateOlder $entryId $workspaceId $fields $start $stop"
+            calls += "updateOlder $entryId $workspaceId $fields $start $stop" + noTimeDay.onDay()
         }
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the form deletes nothing")
+
+        /** The running entry the timer holds, if any. */
+        @Volatile
+        var running: CachedTimeEntry? = null
+
+        override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? = running?.takeIf { it.id == identity.entryId }
+
+        /** A no-time change names its day, and a timed one names none. */
+        private fun LocalDate?.onDay(): String = this?.let { " on $it" } ?: ""
     }
 
     private companion object {
@@ -698,6 +987,25 @@ class EntryFormModelTest {
             tagIds = emptyList(),
         )
         val ENTRY_FIELDS = EntryFields(description = "Write the form")
+
+        /**
+         * A no-time entry of 1:37 on Wednesday 14 October 2026, as the server stores it: from
+         * midnight in Madrid, with no day of its own.
+         */
+        val ALL_DAY = CachedTimeEntry(
+            id = 8,
+            workspaceId = WORKSPACE,
+            projectId = null,
+            taskId = null,
+            description = "Read the spec",
+            start = Instant.parse("2026-10-13T22:00:00Z"),
+            stop = Instant.parse("2026-10-13T23:37:00Z"),
+            billable = false,
+            tags = emptyList(),
+            tagIds = emptyList(),
+            allDay = true,
+        )
+        val ALL_DAY_FIELDS = EntryFields(description = "Read the spec")
         const val OLDER_WORKSPACE = 20L
 
         /** 08:00 to 09:15 in Madrid on Wednesday 2 September 2026, a day older than the cache. */

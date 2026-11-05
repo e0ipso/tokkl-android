@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.TokklApplication
+import kotlinx.coroutines.flow.map
 
 /** Keeps the entry form and what it holds across configuration changes. */
 class EntryFormViewModel(application: Application) : AndroidViewModel(application) {
@@ -16,6 +17,7 @@ class EntryFormViewModel(application: Application) : AndroidViewModel(applicatio
             accountSettings = app.accountSettings.state,
             changes = app.changes,
             scope = viewModelScope,
+            allDay = app.capabilities.state.map { it.allDay == true },
         )
     }
 }

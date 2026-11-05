@@ -6,6 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 /** Keeps the chosen day and the weeks loaded from the server across configuration changes, so turning the phone loads nothing again. */
 class CalendarViewModel(application: Application) : AndroidViewModel(application) {
@@ -20,6 +24,8 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
             client = Session(application)::client,
             scope = viewModelScope,
             io = Dispatchers.IO,
+            // The capabilities load from disk on first read, off the main thread.
+            allDayOffered = flow { emitAll(app.capabilities.state) }.map { it.allDay == true }.distinctUntilChanged(),
         )
     }
 }

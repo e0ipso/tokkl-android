@@ -65,7 +65,6 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.daySticker
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Locale
@@ -289,7 +288,8 @@ private fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSetting
 /**
  * Similar entries of a day as one line, as the web app's timer list groups them (docs/PRD.md H4):
  * the newest member's fields, a badge with the count, the members' total, and the time from the
- * oldest member's start to the newest member's stop, with a button that continues the newest
+ * earliest timed member's start to the latest timed member's stop (none for a group of only
+ * no-time entries), with a button that continues the newest
  * member. A tap shows or hides the members, each with its own tap, Continue and menu. TalkBack
  * reads the line as one button with the count, the total and the state, Expanded or Collapsed,
  * and says the new state after a tap. A chevron shows the state too, so it never rests on colour.
@@ -375,14 +375,17 @@ private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineM
                     callbacks.onDuplicate(entry.id)
                 },
             )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.history_split)) },
-                leadingIcon = { Icon(painterResource(R.drawable.ic_split), contentDescription = null) },
-                onClick = {
-                    open = false
-                    callbacks.onSplit(entry.id)
-                },
-            )
+            // A no-time entry has no time to cut at, as in the web app's editor.
+            if (!entry.allDay) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.history_split)) },
+                    leadingIcon = { Icon(painterResource(R.drawable.ic_split), contentDescription = null) },
+                    onClick = {
+                        open = false
+                        callbacks.onSplit(entry.id)
+                    },
+                )
+            }
             val pin = callbacks.pin
             if (pin != null) {
                 // TalkBack reads the item's text as its label, after the menu button that names the entry.
@@ -410,20 +413,20 @@ private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineM
 
 /**
  * What a line of the history shows: an entry, or a group of similar ones. [entry] gives the
- * fields, [count] is the group's size or null for one entry, and [seconds], [start], [stop] and
- * [unsent] cover the whole line.
+ * fields, [count] is the group's size or null for one entry, and [seconds], [range] and [unsent]
+ * cover the whole line. [range] is null when the line has no timed entry, so it shows only the
+ * duration.
  */
 private class RowLine(
     val entry: HistoryEntry,
     val count: Int?,
     val seconds: Long,
-    val start: Instant,
-    val stop: Instant,
+    val range: HistoryRange?,
     val unsent: Boolean,
 ) {
-    constructor(entry: HistoryEntry) : this(entry, null, entry.seconds, entry.start, entry.stop, entry.unsent)
+    constructor(entry: HistoryEntry) : this(entry, null, entry.seconds, HistoryRange(entry.start, entry.stop).takeIf { !entry.allDay }, entry.unsent)
 
-    constructor(row: HistoryRow) : this(row.newest, row.entries.size, row.seconds, row.oldest.start, row.newest.stop, row.entries.any { it.unsent })
+    constructor(row: HistoryRow) : this(row.newest, row.entries.size, row.seconds, row.range, row.entries.any { it.unsent })
 }
 
 /** The line's count, description, duration, project, times and marks. [modifier] takes its tap. */
@@ -441,9 +444,10 @@ private fun EntryText(
     val topPadding = with(LocalDensity.current) { TokklTheme.spacing.space3.toPx() }
     val resources = LocalResources.current
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    val start = settings.formatTime(line.start, zone)
-    val stop = settings.formatTime(line.stop, zone)
-    val spokenRange = stringResource(R.string.history_time_range_spoken, start, stop)
+    val range = line.range
+    val start = range?.let { settings.formatTime(it.start, zone) }
+    val stop = range?.let { settings.formatTime(it.stop, zone) }
+    val spokenRange = if (start != null && stop != null) stringResource(R.string.history_time_range_spoken, start, stop) else null
     val spokenSeconds = spokenDuration(resources, line.seconds)
     Column(
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
@@ -481,12 +485,14 @@ private fun EntryText(
             }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3)) {
-            Text(
-                text = stringResource(R.string.history_time_range, start, stop),
-                style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
-                color = muted,
-                modifier = Modifier.semantics { contentDescription = spokenRange },
-            )
+            if (start != null && stop != null && spokenRange != null) {
+                Text(
+                    text = stringResource(R.string.history_time_range, start, stop),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
+                    color = muted,
+                    modifier = Modifier.semantics { contentDescription = spokenRange },
+                )
+            }
             if (entry.tags.isNotEmpty()) {
                 Text(entry.tags.joinToString(", "), style = MaterialTheme.typography.bodyMedium, color = muted)
             }

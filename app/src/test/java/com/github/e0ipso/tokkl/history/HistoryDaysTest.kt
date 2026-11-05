@@ -137,6 +137,67 @@ class HistoryDaysTest {
         assertTrue(shown.unsent)
     }
 
+    @Test
+    fun aNoTimeEntryGoesUnderItsStoredDayNotTheDayOfItsMidnightInstant() {
+        // Stored start 00:00 on the 15th in Madrid, left stale by a timezone change; its day is the 14th.
+        val stale = noTime(1, "2026-10-14T22:00:00Z", seconds = 1800, day = LocalDate.of(2026, 10, 14))
+        // A server row without a day: its start is local midnight of the 14th in Madrid.
+        val bare = noTime(2, "2026-10-13T22:00:00Z", seconds = 3600, day = null)
+
+        val days = historyDays(listOf(sent(stale), sent(bare)), emptyList(), emptyList(), emptyList(), time(resolution = 15.0))
+
+        val day = days.single()
+        assertEquals(LocalDate.of(2026, 10, 14), day.date)
+        assertEquals(setOf(1L, 2L), day.entries.map { it.id }.toSet())
+        assertEquals(1800L + 3600L, day.totalSeconds)
+        assertTrue(day.entries.all { it.allDay })
+        assertEquals("a sent entry shows the stored times", stale.start, day.entries.single { it.id == 1L }.start)
+    }
+
+    /** The stored day also decides whether the entry is inside the cache window, not its midnight instant. */
+    @Test
+    fun aNoTimeEntryIsInTheWindowByItsStoredDay() {
+        val inside = noTime(1, "2026-10-01T22:00:00Z", seconds = 600, day = LocalDate.of(2026, 10, 2))
+
+        val shown = historyDays(
+            listOf(sent(inside)), emptyList(), emptyList(), emptyList(), time(resolution = null),
+            windowStart = LocalDate.of(2026, 10, 2),
+        ).single().entries.single()
+
+        assertTrue(shown.cached)
+    }
+
+    /** Never snapUnsent: its stale start would snap to a grid point and could shift the day. */
+    @Test
+    fun anUnsentNoTimeEntryShowsMidnightPlusTheSnappedDurationOnItsDay() {
+        // A stale start, 00:07 local on the 14th, and 5600 seconds: snapUnsent would start at 00:15.
+        val raw = noTime(3, "2026-10-13T22:07:00Z", seconds = 5600, day = LocalDate.of(2026, 10, 14))
+
+        val days = historyDays(listOf(unsent(raw)), emptyList(), emptyList(), emptyList(), time(resolution = 15.0))
+
+        val shown = days.single().entries.single()
+        assertEquals(LocalDate.of(2026, 10, 14), days.single().date)
+        assertEquals(Instant.parse("2026-10-13T22:00:00Z"), shown.start)
+        assertEquals("5600 seconds snap to 90 minutes", Instant.parse("2026-10-13T23:30:00Z"), shown.stop)
+        assertEquals(5400L, shown.seconds)
+        assertTrue(shown.unsent)
+        assertTrue(shown.allDay)
+    }
+
+    @Test
+    fun anUnsentNoTimeEntryWithoutAResolutionKeepsItsDuration() {
+        val raw = noTime(3, "2026-10-14T22:00:00Z", seconds = 450, day = LocalDate.of(2026, 10, 15))
+
+        val shown = historyDays(listOf(unsent(raw)), emptyList(), emptyList(), emptyList(), time(resolution = null))
+            .single().entries.single()
+
+        assertEquals(Instant.parse("2026-10-14T22:00:00Z"), shown.start)
+        assertEquals(450L, shown.seconds)
+    }
+
+    private fun noTime(id: Long, start: String, seconds: Long, day: LocalDate?) =
+        entry(id, start, Instant.parse(start).plusSeconds(seconds).toString()).copy(allDay = true, day = day)
+
     private fun time(resolution: Double?) = AccountTime(MADRID, DayOfWeek.MONDAY, resolution, CLOCK)
 
     private fun sent(entry: CachedTimeEntry) = EntryWithSendState(entry, unsent = false)

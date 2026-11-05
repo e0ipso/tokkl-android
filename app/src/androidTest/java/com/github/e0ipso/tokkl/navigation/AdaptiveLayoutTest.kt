@@ -490,7 +490,7 @@ internal fun SampleTimerPage(view: TimerView) {
     )
 }
 
-/** The entry form for ScreenshotTest's Sprint planning, a stopped entry. */
+/** The entry form for ScreenshotTest's Sprint planning, a stopped entry, on Tokkl, which offers No times. */
 @Composable
 internal fun SampleEntryForm() {
     EntryFormContent(
@@ -507,6 +507,7 @@ internal fun SampleEntryForm() {
             mistakes = emptyMap(),
             endsOn = null,
             saving = false,
+            noTimesOffered = true,
         ),
         actions = EntryFormActions(),
         picker = { _, _, _, _, _ -> },
