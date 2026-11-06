@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Clock
 import java.time.LocalDate
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -109,6 +111,8 @@ sealed interface OlderDays {
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
+ * @param overrides the entry actions' deletes and restores, which [reconcile] applies.
+ * @param appEvents each online report of the network calls [reconnected].
  */
 class HistoryViewModel(
     entries: Flow<List<EntryWithSendState>>,
@@ -120,6 +124,8 @@ class HistoryViewModel(
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),
     private val currentId: suspend (Long) -> Long = { it },
+    overrides: Flow<Map<Long, CachedTimeEntry?>> = emptyFlow(),
+    appEvents: Flow<AppEvent> = emptyFlow(),
 ) : ViewModel(scope) {
 
     private val older = MutableStateFlow(Older())
@@ -364,6 +370,11 @@ class HistoryViewModel(
         data class Read(val bounds: Bounds) : BoundsAnswer
 
         data class Failed(val status: OlderDays) : BoundsAnswer
+    }
+
+    init {
+        viewModelScope.launch { overrides.collect(::reconcile) }
+        viewModelScope.launch { appEvents.collect { if (it == AppEvent.ONLINE) reconnected() } }
     }
 
     companion object {

@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.reports
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.koinViewModels
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import androidx.compose.ui.test.hasText
@@ -23,6 +21,8 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -184,7 +184,7 @@ class ReportsForegroundTest {
 
     private fun modelOf(activity: MainActivity): ReportsViewModel {
         var model: ReportsViewModel? = null
-        instrumentation.runOnMainSync { model = koinViewModels(activity)[ReportsViewModel::class.java] }
+        instrumentation.runOnMainSync { model = sessionViewModels(activity)[ReportsViewModel::class.java] }
         return model!!
     }
 

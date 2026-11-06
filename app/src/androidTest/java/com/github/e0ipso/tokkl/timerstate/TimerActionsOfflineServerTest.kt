@@ -1,11 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.koinViewModels
-import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerControls
-import com.github.e0ipso.tokkl.components.timerState
 import android.os.SystemClock
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -32,6 +26,12 @@ import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
@@ -42,8 +42,8 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.pomodoro.PomodoroProblem
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver
-import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionActionReceiver
+import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.widget.NativeWidget
@@ -238,7 +238,7 @@ class TimerActionsOfflineServerTest {
             compose.awaitPomodoroOffered(15_000)
             compose.openBarPage(R.string.pomodoro_title)
             var model: PomodoroViewModel? = null
-            scenario.onActivity { model = koinViewModels(it)[PomodoroViewModel::class.java] }
+            scenario.onActivity { model = sessionViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
             compose.waitUntil("the page has loaded", 15_000) { !page.state.value.loading }
             compose.runOnIdle {

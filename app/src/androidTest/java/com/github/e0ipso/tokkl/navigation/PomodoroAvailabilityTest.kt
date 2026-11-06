@@ -1,17 +1,8 @@
 package com.github.e0ipso.tokkl.navigation
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.koinViewModels
-import com.github.e0ipso.tokkl.components.sessionTrust
-import com.github.e0ipso.tokkl.components.signOutConfirmation
-import com.github.e0ipso.tokkl.components.themeSettings
-import com.github.e0ipso.tokkl.components.timerView
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
@@ -29,22 +20,9 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.clients.ClientsViewModel
-import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
-import com.github.e0ipso.tokkl.history.EntryActionsViewModel
-import com.github.e0ipso.tokkl.history.HistoryViewModel
-import com.github.e0ipso.tokkl.projects.ProjectsViewModel
-import com.github.e0ipso.tokkl.reports.ReportsViewModel
-import com.github.e0ipso.tokkl.signin.SignInViewModel
-import com.github.e0ipso.tokkl.tags.TagsViewModel
-import com.github.e0ipso.tokkl.timer.TimerViewModel
-import com.github.e0ipso.tokkl.trash.TrashViewModel
-import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
@@ -63,7 +41,6 @@ class PomodoroAvailabilityTest {
     private val compose = createEmptyComposeRule()
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val app get() = context.applicationContext as TokklApplication
     private val capabilities = MutableStateFlow(Capabilities.NONE.copy(trash = true, favorites = true, timerState = true))
     private var scenario: ActivityScenario<ComponentActivity>? = null
 
@@ -118,36 +95,10 @@ class PomodoroAvailabilityTest {
         scenario!!.onActivity { activity ->
             WindowCompat.enableEdgeToEdge(activity.window)
             activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            val models = koinViewModels(activity)
-            val history = models[HistoryViewModel::class.java]
-            val timer = models[TimerViewModel::class.java]
             activity.setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(width.dp, 900.dp))) {
                     TokklTheme(darkTheme = false) {
-                        // The override wraps the context, and the host takes view models from the activity.
-                        CompositionLocalProvider(LocalContext provides activity) {
-                        TokklNavHost(
-                            signIn = models[SignInViewModel::class.java],
-                            themeSettings = app.themeSettings,
-                            signOut = app.signOutConfirmation,
-                            sessionTrust = app.sessionTrust,
-                            reports = models[ReportsViewModel::class.java],
-                            history = history,
-                            entryActions = models[EntryActionsViewModel::class.java],
-                            calendar = models[CalendarViewModel::class.java],
-                            projects = models[ProjectsViewModel::class.java],
-                            clients = models[ClientsViewModel::class.java],
-                            tags = models[TagsViewModel::class.java],
-                            timerView = app.timerView,
-                            timer = timer,
-                            entryForm = models[EntryFormViewModel::class.java],
-                            cache = app.cache,
-                            trash = models[TrashViewModel::class.java],
-                            capabilities = capabilities,
-                            settings = app.accountSettings.state,
-                            favorites = models[FavoritesViewModel::class.java],
-                        )
-                        }
+                        TokklNavHost(capabilities = capabilities)
                     }
                 }
             }

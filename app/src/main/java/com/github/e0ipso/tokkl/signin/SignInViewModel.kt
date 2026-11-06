@@ -12,6 +12,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -79,6 +82,8 @@ data class SignInState(
  *   the app.
  * @param io where the blocking [SignIn.attempt] and the writes to [trust] and
  *   [cooldowns] run.
+ * @param onSignedIn runs once the server has accepted the credentials and the
+ *   app has stored them.
  */
 class SignInViewModel(
     private val signIn: SignIn,
@@ -87,10 +92,17 @@ class SignInViewModel(
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: () -> Long,
+    onSignedIn: () -> Unit = {},
 ) : ViewModel(scope) {
 
     private val mutableState = MutableStateFlow(SignInState())
     val state: StateFlow<SignInState> = mutableState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            state.map { it.signedIn }.distinctUntilChanged().filter { it }.collect { onSignedIn() }
+        }
+    }
 
     /** The 429 deadlines by server origin. Used on [viewModelScope]'s thread only. */
     private val deadlines = mutableMapOf<String, Long>()

@@ -6,16 +6,19 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import java.io.File
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
+import java.io.File
 import java.time.Clock
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -92,6 +95,7 @@ sealed interface ReportFailure {
  * @param clock where today comes from, in the account's timezone.
  * @param filterOptions the projects, clients and tags the filter sheet offers, from the phone's cache.
  * @param exporter the CSV export, which runs on [scope] and is cancelled when this view model is.
+ * @param appEvents the network's returns, each of which calls [reconnected].
  */
 class ReportsViewModel(
     val accountSettings: StateFlow<AccountSettings?>,
@@ -102,6 +106,7 @@ class ReportsViewModel(
     val filterOptions: StateFlow<FilterOptions> = MutableStateFlow(FilterOptions.NONE),
     val exportCapabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
     private val exporter: ReportExportController? = null,
+    appEvents: Flow<AppEvent> = emptyFlow(),
 ) : ViewModel(scope) {
 
     val exportState: StateFlow<ReportExportState> = exporter?.state ?: MutableStateFlow(ReportExportState.Idle)
@@ -346,6 +351,10 @@ class ReportsViewModel(
     }
 
     private fun failureOf(error: ApiError): ReportFailure = reportFailureOf(error)
+
+    init {
+        viewModelScope.launch { appEvents.collect { if (it == AppEvent.RECONNECTED) reconnected() } }
+    }
 }
 
 internal fun reportFailureOf(error: ApiError): ReportFailure = when (error) {

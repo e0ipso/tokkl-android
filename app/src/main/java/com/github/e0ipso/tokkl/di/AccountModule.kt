@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.di
 
+import com.github.e0ipso.tokkl.MainActivityForeground
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
@@ -9,6 +10,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
+import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
@@ -92,8 +94,8 @@ internal val accountModule = module {
 
     /**
      * Refreshes the account, and with it the running entry and the cache, each time the app comes
-     * to the foreground and each time the network comes back while it is there. MainActivity
-     * reports its starts, stops and network changes. It also tries queued changes independently
+     * to the foreground and each time the network comes back while it is there.
+     * [MainActivityForeground] reports MainActivity's starts, stops and network changes. It also tries queued changes independently
      * of the refresh, so an expired token still asks for sign-in when `/me` fails on opening the
      * app with a saved queue. Nothing refreshes on a timer.
      */
@@ -109,6 +111,23 @@ internal val accountModule = module {
                 sender.value.send()
                 accountSettings.value.refreshOnReconnect()
             },
+        )
+    }
+
+    /** MainActivity's starts and stops and the network's reports, for the screens' view models. */
+    single { AppEvents() }
+
+    /** MainActivity's lifecycle observer: the foreground refresh, the timer sync and [AppEvents]. One for each MainActivity. */
+    factory {
+        MainActivityForeground(
+            context = androidContext(),
+            refresh = get(),
+            events = get(),
+            timerSync = get(),
+            runningNotification = get(),
+            pomodoroNotification = get(),
+            scope = get(),
+            io = io(),
         )
     }
 

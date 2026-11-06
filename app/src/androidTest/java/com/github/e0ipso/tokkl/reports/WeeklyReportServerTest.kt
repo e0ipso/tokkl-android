@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.reports
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.koinViewModels
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
@@ -26,6 +24,8 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -296,7 +296,7 @@ class WeeklyReportServerTest {
     private fun state(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the reports state") {
-            checkNotNull(scenario).onActivity { state = koinViewModels(it)[ReportsViewModel::class.java].state.value }
+            checkNotNull(scenario).onActivity { state = sessionViewModels(it)[ReportsViewModel::class.java].state.value }
         }
         return checkNotNull(state)
     }

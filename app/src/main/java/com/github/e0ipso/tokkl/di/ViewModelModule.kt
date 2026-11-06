@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.di
 
-import com.github.e0ipso.tokkl.ViewModelsAfterSignOuts
 import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.TimerControlsSource
@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.favorites.FavoritesServer
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
+import com.github.e0ipso.tokkl.navigation.EntryFormRequest
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
@@ -24,6 +25,7 @@ import com.github.e0ipso.tokkl.reports.ReportExportFiles
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
+import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -43,27 +45,34 @@ import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
-import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.parameter.ParametersHolder
 import org.koin.dsl.module
 
 /**
- * The screens' view models. MainActivity keeps them in its store until a sign-out, so they outlive
- * a configuration change and turning the phone loads nothing again.
+ * The screens' view models. The navigation keeps each in its back stack entry's store, or in the
+ * signed-in session's, until the entry closes or a sign-out, so they outlive a configuration
+ * change and turning the phone loads nothing again. Some take parameters from the screen that
+ * makes them: sign-in the account to sign in again to, the entry form what it opens, and the
+ * Timer page's history and calendar the entry actions' deletes and restores.
  */
 internal val viewModelModule = module {
-    viewModel {
+    viewModel { params ->
         val servers = get<ServerConfigStore>()
         val accountSettings = get<AccountSettingsStore>()
+        val accountSettingsSource = inject<AccountSettingsSource>()
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
             signIn = SignIn(
@@ -81,7 +90,9 @@ internal val viewModelModule = module {
             scope = viewModelCoroutineScope(),
             io = io(),
             clock = System::currentTimeMillis,
-        )
+            // A sign-in loads the account settings and the cache, as coming to the foreground does.
+            onSignedIn = { accountSettingsSource.value.refresh() },
+        ).also { model -> params.getOrNull<SignInAgain>()?.let(model::signInAgain) }
     }
     viewModel {
         val session = get<Session>()
@@ -114,9 +125,10 @@ internal val viewModelModule = module {
             ) { projects, clients, tags, settings, capabilities ->
                 FilterOptions.of(projects, clients, tags, settings?.defaultWorkspaceId, negation = capabilities.negatedFilters)
             }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FilterOptions.NONE),
+            appEvents = get<AppEvents>().events,
         )
     }
-    viewModel {
+    viewModel { params ->
         val cache = get<AccountCache>()
         val changes = get<ChangeQueue>()
         HistoryViewModel(
@@ -128,6 +140,8 @@ internal val viewModelModule = module {
             scope = viewModelCoroutineScope(),
             io = io(),
             currentId = changes::currentId,
+            overrides = params.overrides(),
+            appEvents = get<AppEvents>().events,
         )
     }
     viewModel {
@@ -141,7 +155,7 @@ internal val viewModelModule = module {
             scope = viewModelCoroutineScope(),
         )
     }
-    viewModel {
+    viewModel { params ->
         val cache = get<AccountCache>()
         val capabilities = inject<CapabilitiesSource>()
         CalendarViewModel(
@@ -155,6 +169,8 @@ internal val viewModelModule = module {
             io = io(),
             // The capabilities load from disk on first read, off the main thread.
             allDayOffered = flow { emitAll(capabilities.value.state) }.map { it.allDay == true }.distinctUntilChanged(),
+            overrides = params.overrides(),
+            appEvents = get<AppEvents>().events,
         )
     }
     viewModel {
@@ -236,7 +252,7 @@ internal val viewModelModule = module {
             io = io(),
         )
     }
-    viewModel {
+    viewModel { params ->
         val cache = get<AccountCache>()
         EntryFormViewModel(
             entries = cache.entries,
@@ -246,7 +262,7 @@ internal val viewModelModule = module {
             changes = get<ChangeQueue>(),
             scope = viewModelCoroutineScope(),
             allDay = get<CapabilitiesSource>().state.map { it.allDay == true },
-        )
+        ).also { form -> params.getOrNull<EntryFormRequest>()?.openIn(form) }
     }
     viewModel {
         val changes = get<ChangeQueue>()
@@ -273,8 +289,11 @@ internal val viewModelModule = module {
             scope = viewModelCoroutineScope(),
         )
     }
-    viewModelOf(::ViewModelsAfterSignOuts)
 }
+
+/** The entry actions' deletes and restores, which the Timer page passes, or none. */
+private fun ParametersHolder.overrides(): Flow<Map<Long, CachedTimeEntry?>> =
+    getOrNull<StateFlow<Map<Long, CachedTimeEntry?>>>() ?: emptyFlow()
 
 /**
  * The scope a view model gets, as `viewModelScope` makes it by default: the main thread, and a

@@ -1,14 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.followTimerSync
-import com.github.e0ipso.tokkl.components.koinViewModels
-import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerControls
-import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.components.timerSync
-import com.github.e0ipso.tokkl.components.timerSyncService
 import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
@@ -51,6 +42,15 @@ import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.seconds
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.followTimerSync
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.timerSync
+import com.github.e0ipso.tokkl.components.timerSyncService
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.openBarPage
@@ -58,9 +58,9 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRing
-import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
+import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -244,7 +244,7 @@ class TimerCrossDeviceServerTest {
             compose.awaitPomodoroOffered(15_000)
             compose.openBarPage(R.string.pomodoro_title)
             var model: PomodoroViewModel? = null
-            scenario.onActivity { model = koinViewModels(it)[PomodoroViewModel::class.java] }
+            scenario.onActivity { model = sessionViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
             compose.waitUntil("the page has loaded", 15_000) { !page.state.value.loading }
             compose.runOnIdle {

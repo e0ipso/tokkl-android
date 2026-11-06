@@ -33,12 +33,9 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.SignedInFrame
-import com.github.e0ipso.tokkl.SignedInPanes
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.timer.TimerView
@@ -49,7 +46,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import com.github.e0ipso.tokkl.showsEntryBeside as entryBeside
 
 /**
  * The entry form and the Timer page keep their state when a fold or a rotation moves them between
@@ -65,7 +61,7 @@ class AdaptiveStateTest {
 
     @Test
     fun aFoldKeepsTheFormAndThePageBesideIt() {
-        var stack by mutableStateOf(listOf(Destination.TIMER, Destination.ENTRY))
+        var stack by mutableStateOf(listOf(Route.Timer, FORM_ROUTE))
         StateRestorationTester(composeRule).apply {
             setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(window)) {
@@ -91,7 +87,7 @@ class AdaptiveStateTest {
             composeRule.onNodeWithText("$PAGE 1").performClick()
 
             // Closing the form leaves the page with its state, and so does a fold after that.
-            composeRule.runOnIdle { stack = listOf(Destination.TIMER) }
+            composeRule.runOnIdle { stack = listOf(Route.Timer) }
             assertShows("$PAGE 2")
             assertGone(FORM)
             window = MEDIUM_WINDOW
@@ -102,13 +98,13 @@ class AdaptiveStateTest {
 
     /** What TokklNavHost draws for [stack] at the window's width, with a saved counter for each screen. */
     @Composable
-    private fun Panes(stack: List<Destination>) {
+    private fun Panes(stack: List<Route>) {
         val width = windowWidth()
         SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, width = width) {
-            SignedInPanes(destination = stack.last(), entryBeside = entryBeside(width, TimerView.LIST, stack), entryKey = 0) { shown ->
+            SignedInPanes(top = stack.last(), entryBeside = showsEntryBeside(width, TimerView.LIST, stack)) { shown ->
                 when (shown) {
-                    Destination.TIMER -> Counter(PAGE)
-                    Destination.ENTRY -> Counter(FORM)
+                    Route.Timer -> Counter(PAGE)
+                    is Route.Entry -> Counter(FORM)
                     else -> error("$shown is not on this stack")
                 }
             }
@@ -135,6 +131,7 @@ class AdaptiveStateTest {
     private companion object {
         const val PAGE = "Timer page"
         const val FORM = "Entry form"
+        val FORM_ROUTE = Route.Entry(EntryOpening.Edit(1), id = "form")
         val COMPACT_WINDOW = DpSize(411.dp, 891.dp)
         val MEDIUM_WINDOW = DpSize(700.dp, 1000.dp)
         val EXPANDED_WINDOW = DpSize(1280.dp, 800.dp)

@@ -1,11 +1,5 @@
 package com.github.e0ipso.tokkl.calendar
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.koinViewModels
-import com.github.e0ipso.tokkl.components.sender
 import android.os.SystemClock
 import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
@@ -31,9 +25,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -45,11 +39,17 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.timerPageViewModels
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.reports.spokenDuration
@@ -655,7 +655,7 @@ class CalendarServerTest {
             composeRule.onNode(hasText(string(R.string.timer_view_calendar)) and isSelectable())
                 .performSemanticsAction(SemanticsActions.OnClick)
             var model: CalendarViewModel? = null
-            scenario.onActivity { model = koinViewModels(it)[CalendarViewModel::class.java] }
+            scenario.onActivity { model = timerPageViewModels(it)[CalendarViewModel::class.java] }
             steps(checkNotNull(model))
         }
     }

@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl
+package com.github.e0ipso.tokkl.navigation
 
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.WindowWidth
@@ -11,7 +11,8 @@ import org.junit.Test
  * Timer page. Everywhere else it takes the screen, as on a phone.
  */
 class EntryBesideTest {
-    private val formOverTimer = listOf(Destination.TIMER, Destination.ENTRY)
+    private val form = Route.Entry(EntryOpening.New(), id = "form")
+    private val formOverTimer = listOf(Route.Timer, form)
 
     @Test
     fun anExpandedWindowShowsTheFormBesideTheHistory() {
@@ -31,11 +32,11 @@ class EntryBesideTest {
 
     @Test
     fun onlyTheFormOnTopOfTheTimerPageGoesBeside() {
-        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Destination.TIMER)))
-        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Destination.TIMER, Destination.REPORTS)))
-        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Destination.ENTRY)))
+        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer)))
+        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer, Route.Reports)))
+        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(form)))
         assertFalse(
-            showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Destination.TIMER, Destination.SETTINGS, Destination.ENTRY)),
+            showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer, Route.Settings, form)),
         )
     }
 }

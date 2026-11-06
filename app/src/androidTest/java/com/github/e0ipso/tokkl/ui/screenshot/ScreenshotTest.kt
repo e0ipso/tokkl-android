@@ -25,18 +25,18 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.DpSize
@@ -45,19 +45,16 @@ import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.SignedInFrame
-import com.github.e0ipso.tokkl.SignedInPanes
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.calendar.CalendarEditing
 import com.github.e0ipso.tokkl.calendar.CalendarEntry
@@ -73,7 +70,11 @@ import com.github.e0ipso.tokkl.history.HistoryDay
 import com.github.e0ipso.tokkl.history.HistoryEntry
 import com.github.e0ipso.tokkl.history.HistoryState
 import com.github.e0ipso.tokkl.history.OlderDays
+import com.github.e0ipso.tokkl.navigation.EntryOpening
+import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.SampleEntryForm
+import com.github.e0ipso.tokkl.navigation.SignedInFrame
+import com.github.e0ipso.tokkl.navigation.SignedInPanes
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContent
@@ -264,8 +265,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
                 SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
-                    SignedInPanes(destination = Destination.ENTRY, entryBeside = true, entryKey = 0) { shown ->
-                        if (shown == Destination.ENTRY) SampleEntryForm() else TimerPage(TimerView.LIST)
+                    SignedInPanes(top = Route.Entry(EntryOpening.Edit(1), id = "form"), entryBeside = true) { shown ->
+                        if (shown is Route.Entry) SampleEntryForm() else TimerPage(TimerView.LIST)
                     }
                 }
             }

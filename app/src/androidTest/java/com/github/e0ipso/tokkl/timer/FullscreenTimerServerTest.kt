@@ -1,24 +1,12 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.koinViewModels
-import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.components.timerSync
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.view.KeyEvent
 import androidx.activity.compose.setContent
-import com.github.e0ipso.tokkl.session.ServerTrustStore
-import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.ZoneId
-import java.time.ZoneOffset
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
@@ -30,11 +18,24 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.calendar.CalendarViewModel
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.timerPageViewModels
+import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.timerSync
+import com.github.e0ipso.tokkl.session.ServerTrustStore
+import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.time.parseDuration
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
-import com.github.e0ipso.tokkl.calendar.CalendarViewModel
-import com.github.e0ipso.tokkl.time.parseDuration
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -78,7 +79,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             for (view in listOf(TimerView.LIST, TimerView.CALENDAR)) {
                 chooseView(view)
                 if (view == TimerView.CALENDAR) {
-                    scenario.onActivity { koinViewModels(it)[CalendarViewModel::class.java].select(day.minusWeeks(2)) }
+                    scenario.onActivity { timerPageViewModels(it)[CalendarViewModel::class.java].select(day.minusWeeks(2)) }
                 }
                 compose.onRoot().performTouchInput { swipeUp() }
                 compose.waitForIdle()
@@ -246,7 +247,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.awaitTimerPage()
             openFocused()
             lateinit var model: TimerViewModel
-            scenario.onActivity { model = koinViewModels(it)[TimerViewModel::class.java] }
+            scenario.onActivity { model = sessionViewModels(it)[TimerViewModel::class.java] }
             val old = fixture.shown() as TimerControls.Running
             focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
             compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
@@ -324,7 +325,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()
                 scenario.onActivity { activity ->
-                    val model = koinViewModels(activity)[TimerViewModel::class.java]
+                    val model = sessionViewModels(activity)[TimerViewModel::class.java]
                     activity.setContent { TokklTheme { FullscreenTimerScreen(model, {}, {}, clock) } }
                 }
                 awaitFocused()

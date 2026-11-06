@@ -24,8 +24,9 @@ class SignOut(private val steps: List<suspend () -> Unit>, private val io: Corou
     private val mutableFinished = MutableStateFlow(0)
 
     /**
-     * How many sign-outs have finished in this process with every step done. MainActivity drops
-     * its view models, and with them what each screen holds in memory, when this changes.
+     * How many sign-outs have finished in this process with every step done. The navigation
+     * starts over at sign-in and drops its view models, and with them what each screen holds in
+     * memory, when this changes.
      */
     val finished: StateFlow<Int> = mutableFinished.asStateFlow()
 

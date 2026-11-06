@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.navigation
 
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -13,7 +12,7 @@ class TopLevelPageTest {
             listOf(TopLevelPage.TIMER, TopLevelPage.POMODORO, TopLevelPage.PROJECTS, TopLevelPage.SETTINGS),
             TopLevelPage.entries.filterNot { it.inMore },
         )
-        assertEquals(TopLevelPage.POMODORO, TopLevelPage.of(Destination.POMODORO))
+        assertEquals(TopLevelPage.POMODORO, TopLevelPage.of(Route.Pomodoro))
     }
 
     @Test

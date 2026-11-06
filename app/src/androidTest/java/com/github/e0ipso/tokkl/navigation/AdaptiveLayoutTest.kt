@@ -31,10 +31,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.SignedInFrame
-import com.github.e0ipso.tokkl.SignedInPanes
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.SharedHttpClient
@@ -65,7 +62,6 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.settings.SettingsContent
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
 import com.github.e0ipso.tokkl.settings.ThemeSettings
-import com.github.e0ipso.tokkl.showsEntryBeside
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.signin.SignInViewModel
@@ -210,14 +206,15 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     /** On an expanded window the form shares the width with the history, which stays in sight. */
     @Test
     fun theEntryFormShowsBesideTheHistoryOnlyWhenExpanded() {
-        val beside = showsEntryBeside(width, TimerView.LIST, listOf(Destination.TIMER, Destination.ENTRY))
+        val formRoute = Route.Entry(EntryOpening.Edit(1), id = "form")
+        val beside = showsEntryBeside(width, TimerView.LIST, listOf(Route.Timer, formRoute))
         assertEquals(width == WindowWidth.EXPANDED, beside)
         show {
             SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
-                SignedInPanes(destination = Destination.ENTRY, entryBeside = beside, entryKey = 0) { shown ->
+                SignedInPanes(top = formRoute, entryBeside = beside) { shown ->
                     when (shown) {
-                        Destination.TIMER -> SampleTimerPage(TimerView.LIST)
-                        Destination.ENTRY -> SampleEntryForm()
+                        Route.Timer -> SampleTimerPage(TimerView.LIST)
+                        is Route.Entry -> SampleEntryForm()
                         else -> error("$shown is not on this stack")
                     }
                 }

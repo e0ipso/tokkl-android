@@ -1,239 +1,119 @@
 package com.github.e0ipso.tokkl
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
-import androidx.compose.runtime.saveable.listSaver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.ViewModelStoreOwner
-import com.github.e0ipso.tokkl.api.ApiError
-import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.calendar.CalendarViewModel
-import com.github.e0ipso.tokkl.calendar.WeekCalendar
+import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.rememberDecoratedNavEntries
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.clients.ClientsViewModel
-import com.github.e0ipso.tokkl.clients.ClientsScreen
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.di.IoDispatcher
-import com.github.e0ipso.tokkl.entry.EntryFormViewModel
-import com.github.e0ipso.tokkl.entry.EntryFormScreen
-import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
-import com.github.e0ipso.tokkl.favorites.TemplatesScreen
-import com.github.e0ipso.tokkl.history.EntryActionsHost
-import com.github.e0ipso.tokkl.history.EntryActionsViewModel
-import com.github.e0ipso.tokkl.history.HistoryList
-import com.github.e0ipso.tokkl.history.HistoryViewModel
-import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
 import com.github.e0ipso.tokkl.navigation.AppNavigationRail
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
+import com.github.e0ipso.tokkl.navigation.NavigationRequestEffects
+import com.github.e0ipso.tokkl.navigation.NavigationRequests
+import com.github.e0ipso.tokkl.navigation.NavigationStores
+import com.github.e0ipso.tokkl.navigation.Navigator
+import com.github.e0ipso.tokkl.navigation.NotificationPrompts
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.Show
+import com.github.e0ipso.tokkl.navigation.SignedInHost
+import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.navigation.orTimerIfUnavailable
+import com.github.e0ipso.tokkl.navigation.routeEntry
 import com.github.e0ipso.tokkl.navigation.unavailablePages
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
-import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
-import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
-import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
-import com.github.e0ipso.tokkl.pomodoro.PomodoroScreen
-import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
-import com.github.e0ipso.tokkl.projects.ProjectsViewModel
-import com.github.e0ipso.tokkl.projects.ProjectsScreen
-import com.github.e0ipso.tokkl.reminder.ReminderSetting
-import com.github.e0ipso.tokkl.reports.ReportsViewModel
-import com.github.e0ipso.tokkl.reports.ReportsScreen
-import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.settings.SettingsScreen
-import com.github.e0ipso.tokkl.settings.SignOutConfirmation
-import com.github.e0ipso.tokkl.settings.ThemeSettingsRepository
-import com.github.e0ipso.tokkl.signin.SignInAgain
-import com.github.e0ipso.tokkl.signin.SignInViewModel
-import com.github.e0ipso.tokkl.signin.SignInScreen
-import com.github.e0ipso.tokkl.sync.DiscardNotice
-import com.github.e0ipso.tokkl.sync.NeedsAttention
-import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
-import com.github.e0ipso.tokkl.sync.SyncStatus
-import com.github.e0ipso.tokkl.sync.SyncStatusBand
-import com.github.e0ipso.tokkl.tags.TagsViewModel
-import com.github.e0ipso.tokkl.tags.TagsScreen
-import com.github.e0ipso.tokkl.timer.FullscreenTimerScreen
-import com.github.e0ipso.tokkl.timer.TimerBar
-import com.github.e0ipso.tokkl.timer.TimerViewModel
-import com.github.e0ipso.tokkl.timer.TimerNotices
-import com.github.e0ipso.tokkl.timer.TimerScreen
-import com.github.e0ipso.tokkl.timer.TimerState
-import com.github.e0ipso.tokkl.timer.TimerView
-import com.github.e0ipso.tokkl.timer.TimerViewSetting
-import com.github.e0ipso.tokkl.timer.settleDescription
-import com.github.e0ipso.tokkl.timer.target
-import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
-import com.github.e0ipso.tokkl.trash.TrashViewModel
-import com.github.e0ipso.tokkl.trash.TrashScreen
-import com.github.e0ipso.tokkl.trust.SessionTrust
-import com.github.e0ipso.tokkl.trust.TrustPrompt
-import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
-import com.github.e0ipso.tokkl.ui.WindowWidth
-import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
-import com.github.e0ipso.tokkl.ui.windowWidth
-import com.github.e0ipso.tokkl.widget.WidgetPage
-import java.time.Clock
+import com.github.e0ipso.tokkl.session.SignOut
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model
- * holds. NEEDS_ATTENTION lists the changes the server refused.
- */
-enum class Destination { SIGN_IN, TIMER, FULLSCREEN_TIMER, POMODORO, REPORTS, PROJECTS, CLIENTS, TAGS, TRASH, TEMPLATES, SETTINGS, LICENCES, ENTRY, NEEDS_ATTENTION }
-
-/**
- * The app's navigation host: a back stack of [Destination]s that survives configuration changes
- * and process death. It starts at sign-in until a server and its token are stored, and at the
- * Timer page after that. A restored signed-in back stack goes to sign-in when nobody is signed in
- * any more.
+ * The app's navigation host: a Navigation 3 back stack of [Route]s that survives configuration
+ * changes and process death. It starts at sign-in until a server and its token are stored, and at
+ * the Timer page after that. A restored signed-in back stack goes to sign-in when nobody is signed
+ * in any more, and a sign-out starts the navigation over at sign-in, with new view models.
  *
  * Every signed-in screen has the bottom bar ([AppNavigationBar]), or on a medium or expanded
  * window the navigation rail ([AppNavigationRail]) with the same items. Opening a page from it puts
  * that page right above Timer, so Back from any page in the bar or the More sheet goes to Timer,
  * and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a page, such as Licences from
- * Settings, stacks above that page, and the bar keeps marking the page. While [timerRunning] says
- * a time entry runs, the bar's Timer item carries a dot. The Timer page's [timer] picks projects,
- * tasks and tags from [cache]. A tap on an entry in the history, or on the Timer page's button for
- * a past entry, opens [entryForm] above the Timer page, beside its List view on an expanded window
- * ([SignedInPanes]), an entry's menu deletes it through
- * [entryActions], and its Continue button starts [timer] with its fields. Trash, on [trash], shows
- * only while the server's [capabilities] have it: when they lose it, the page goes back to Timer.
- * Timer templates, on [favorites], show in More the same way, while the server keeps that key. Pomodoro shows in the bar
- * and the rail only while the server has the timer API, since the server owns the session. Without it the page opens
- * nowhere, and a back stack restored from before the server lost it shows Timer ([unavailablePages]).
+ * Settings, stacks above that page, and the bar keeps marking the page. Trash shows only while the
+ * server's [capabilities] have it, and Timer templates while the server keeps that key: when they
+ * lose it, the page goes back to Timer. Pomodoro shows in the bar and the rail only while the
+ * server has the timer API, since the server owns the session. Without it the page opens nowhere,
+ * and a back stack restored from before the server lost it shows Timer. [requests] opens the
+ * pages that widget, reminder and Pomodoro notification taps ask for.
  *
- * Above any screen of a signed-in session it shows the prompt for a request that [sessionTrust]
- * saw refused, and after a cancel a notice that opens the prompt again. Sign-in shows its own
- * prompts. Above the bottom bar, or at the bottom beside the rail, it shows [syncStatus] while
- * changes wait to reach the server (docs/PRD.md O5, O6). Its button opens the [needsAttention]
- * list above the page, and after a refused token its other button opens sign-in above the page,
- * filled in for [signedInAccount], so the user signs in again to the same account. At the bottom
- * of a signed-in screen, a notice says how many changes [discardedChanges] counts, until
- * [onDismissDiscarded].
+ * Each route's screen takes its own view models, which go when the route leaves the stack. The
+ * ones that several screens share live in the signed-in session's store ([NavigationStores]).
  */
 @Composable
 fun TokklNavHost(
-    signIn: SignInViewModel,
-    themeSettings: ThemeSettingsRepository,
-    signOut: SignOutConfirmation,
-    sessionTrust: SessionTrust,
-    reports: ReportsViewModel,
-    history: HistoryViewModel,
-    entryActions: EntryActionsViewModel,
-    calendar: CalendarViewModel,
-    projects: ProjectsViewModel,
-    clients: ClientsViewModel,
-    tags: TagsViewModel,
-    timerView: TimerViewSetting,
-    timer: TimerViewModel,
-    entryForm: EntryFormViewModel,
-    cache: AccountCache,
-    trash: TrashViewModel,
-    timerRunning: Flow<Boolean> = flowOf(false),
-    capabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
-    favorites: FavoritesViewModel? = null,
-    syncStatus: Flow<SyncStatus?> = flowOf(null),
-    needsAttention: NeedsAttention? = null,
-    settings: StateFlow<AccountSettings?> = MutableStateFlow(null),
-    discardedChanges: StateFlow<Int> = MutableStateFlow(0),
-    onDismissDiscarded: () -> Unit = {},
-    signedInAccount: () -> SignInAgain? = { null },
+    requests: NavigationRequests = remember { NavigationRequests() },
+    capabilities: StateFlow<Capabilities> = koinInject<CapabilitiesSource>().state,
     notificationPermission: NotificationPermissionAsk? = null,
     onNotificationsAllowed: () -> Unit = {},
-    reminderSettings: ReminderSetting? = null,
-    openReminderTimer: Int = 0,
-    openWidgetPage: WidgetPage? = null,
-    onWidgetPageOpened: (WidgetPage) -> Unit = {},
-    openPomodoro: PomodoroNotificationTap? = null,
-    onPomodoroOpened: (PomodoroNotificationTap) -> Unit = {},
 ) {
-    LaunchedEffect(entryActions, calendar, history) {
-        entryActions.reconciliation.collect { overrides ->
-            calendar.reconcile(overrides)
-            history.reconcile(overrides)
+    val signOuts by koinInject<SignOut>().finished.collectAsState()
+    val stores = viewModel { NavigationStores() }
+    val discarded = remember(stores, signOuts) { stores.after(signOuts) }
+    LaunchedEffect(signOuts) {
+        // A tap from before the sign-out opens nothing for the next account.
+        if (discarded) requests.clear()
+    }
+    // A sign-out starts the navigation over, at sign-in, with a back stack of its own.
+    key(signOuts) {
+        CompositionLocalProvider(LocalSignedInSession provides stores.session) {
+            Navigation(stores, requests, capabilities, notificationPermission, onNotificationsAllowed)
         }
     }
+}
+
+@Composable
+private fun Navigation(
+    stores: NavigationStores,
+    requests: NavigationRequests,
+    capabilities: StateFlow<Capabilities>,
+    notificationPermission: NotificationPermissionAsk?,
+    onNotificationsAllowed: () -> Unit,
+) {
     val session: Session = koinInject()
     val io: CoroutineDispatcher = koinInject(IoDispatcher)
-    val pomodoroNotification: AccountPomodoroNotification = koinInject()
-    val held: HeldTimerFlows = koinInject()
-    val scope = rememberCoroutineScope()
-    val pomodoroStarts = remember { Channel<Unit>(Channel.UNLIMITED) }
-    val notificationRetries = remember { Channel<Unit>(Channel.UNLIMITED) }
-    val permissionStarts = remember(timer, pomodoroStarts) { merge(timer.starts, pomodoroStarts.receiveAsFlow()) }
-    val permissionRetries = remember(notificationRetries) { notificationRetries.receiveAsFlow() }
-    var notificationPermissionRevision by remember { mutableIntStateOf(0) }
-    val focusManager = LocalFocusManager.current
-    val timerPageState = rememberSaveableStateHolder()
-    val backStack = rememberSaveable(saver = BackStackSaver) { SnapshotStateList<Destination>() }
+    val backStack = rememberSerializable(serializer = NavBackStackSerializer(Route.serializer())) { NavBackStack<Route>() }
+    val savedStates = rememberSaveableStateHolder()
+    val navigator = remember(backStack, stores) { Navigator(backStack, stores.entryOpenings) }
+    val prompts = remember { NotificationPrompts() }
+    val entries = rememberDecoratedNavEntries(
+        backStack = backStack,
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(savedStates),
+            rememberViewModelStoreNavEntryDecorator(stores.entries),
+        ),
+        entryProvider = { route -> routeEntry(route, navigator, prompts, capabilities) },
+    )
     // A signed-in page restored from saved state can outlive its session: a sign-out that finished
     // in the background before the process died, or a token that no longer decrypts. The page
     // shows while the stores are read, once per composition of the host, so sign-in pays nothing.
-    val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && it != Destination.SIGN_IN } }
+    val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && it !is Route.SignIn } }
     if (restoredSignedIn) {
         LaunchedEffect(Unit) {
             val signedIn = withContext(io) { session.isSignedIn() }
-            if (!signedIn) {
-                backStack.clear()
-                backStack.add(Destination.SIGN_IN)
-            }
+            if (!signedIn) navigator.signIn()
         }
     }
     if (backStack.isEmpty()) {
@@ -241,525 +121,29 @@ fun TokklNavHost(
         // stores are read off the main thread.
         LaunchedEffect(Unit) {
             val signedIn = withContext(io) { session.isSignedIn() }
-            backStack.add(if (signedIn) Destination.TIMER else Destination.SIGN_IN)
+            backStack.add(if (signedIn) Route.Timer else Route.SignIn())
         }
         return
     }
-    val capabilityFlags = capabilities.collectAsState().value
-    val unavailable = unavailablePages(capabilityFlags, hasFavorites = favorites != null)
-    val openPage: (TopLevelPage) -> Unit = { page -> backStack.open(if (page in unavailable) TopLevelPage.TIMER else page) }
-    LaunchedEffect(openWidgetPage) {
-        val page = openWidgetPage ?: return@LaunchedEffect
-        val signedIn = withContext(io) { session.isSignedIn() }
-        if (!signedIn) {
-            backStack.clear()
-            backStack.add(Destination.SIGN_IN)
-        } else {
-            entryForm.close()
-            when (page) {
-                WidgetPage.TIMER -> openPage(TopLevelPage.TIMER)
-                WidgetPage.TODAY -> {
-                    reports.openToday()
-                    openPage(TopLevelPage.REPORTS)
-                }
-                WidgetPage.POMODORO -> openPage(TopLevelPage.POMODORO)
-            }
-        }
-        onWidgetPageOpened(page)
-    }
-    LaunchedEffect(openPomodoro) {
-        val request = openPomodoro ?: return@LaunchedEffect
-        val accepted = withContext(io) {
-            pomodoroNotification.current.acceptsTap(request.account, request.phase)
-        }
-        if (accepted) {
-            entryForm.close()
-            openPage(TopLevelPage.POMODORO)
-        }
-        onPomodoroOpened(request)
-    }
-    BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
+    val flags by capabilities.collectAsState()
+    val unavailable = unavailablePages(flags, hasFavorites = true)
     // A page the server lacks never shows, not even for the frame before the stack is corrected.
-    val destination = backStack.last().orTimerIfUnavailable(unavailable)
-    if (destination == Destination.SIGN_IN) {
-        LaunchedEffect(Unit) { timerPageState.removeState("timer-page") }
-        SignInScreen(
-            model = signIn,
-            onSignedIn = {
-                signIn.reset()
-                backStack.open(TopLevelPage.TIMER)
-            },
-        )
+    val top = backStack.last().orTimerIfUnavailable(unavailable)
+    NavigationRequestEffects(requests, navigator, unavailable, onSignIn = top is Route.SignIn)
+    BackHandler(enabled = backStack.size > 1) { navigator.back() }
+    if (top is Route.SignIn) {
+        LaunchedEffect(Unit) { savedStates.removeState(Route.Timer.contentKey) }
+        entries.Show(top)
         return
     }
-    LaunchedEffect(openReminderTimer) {
-        if (openReminderTimer > 0) backStack.open(TopLevelPage.TIMER)
-    }
-    LaunchedEffect(unavailable) {
-        if (backStack.any { TopLevelPage.of(it) in unavailable }) backStack.open(TopLevelPage.TIMER)
-    }
-    val view by timerView.view.collectAsState()
-    val running by timerRunning.collectAsState(initial = false)
-    // The server's session, from the held timer state.
-    val pomodoroRunningFlow = remember(held) {
-        held.held.map { it?.state?.pomodoro != null }.distinctUntilChanged()
-    }
-    val pomodoroRunning by pomodoroRunningFlow.collectAsState(initial = false)
-    val status by syncStatus.collectAsState(initial = null)
-    val width = windowWidth()
-    // Counts the openings of the entry form, so a form opened beside the history over another one
-    // starts afresh, as a form opened on its own screen does.
-    var entryOpenings by rememberSaveable { mutableIntStateOf(0) }
-    val openEntry: () -> Unit = {
-        entryOpenings++
-        if (backStack.lastOrNull() != Destination.ENTRY) backStack.add(Destination.ENTRY)
-    }
-    val focused = destination == Destination.FULLSCREEN_TIMER ||
-        (destination == Destination.ENTRY && backStack.getOrNull(backStack.lastIndex - 1) == Destination.FULLSCREEN_TIMER)
-    val timerState by timer.state.collectAsState()
-    LaunchedEffect(focused, timerState) {
-        if (focused && (timerState as? TimerState.Idle)?.authoritative == true) {
-            // A notification may have opened Pomodoro before this old focused effect runs.
-            val top = backStack.lastOrNull()
-            if (top != Destination.FULLSCREEN_TIMER &&
-                !(top == Destination.ENTRY && backStack.getOrNull(backStack.lastIndex - 1) == Destination.FULLSCREEN_TIMER)
-            ) return@LaunchedEffect
-            if (backStack.lastOrNull() == Destination.ENTRY) entryForm.close()
-            while (backStack.size > 1 && backStack.lastOrNull() != Destination.TIMER) backStack.removeAt(backStack.lastIndex)
-        }
-    }
-    val discarded by discardedChanges.collectAsState()
-    val changes: ChangeQueue = koinInject()
-    val shortUndo by changes.shortStopUndo.collectAsState(initial = null)
-    // The short Stop's Undo and the timer's notices share one host, so they queue, never overlap.
-    val shortHost = remember { SnackbarHostState() }
-    val timerPage = destination in TIMER_PAGES
-    val shortMessage = stringResource(R.string.timer_short_stop_trashed)
-    val undoLabel = stringResource(R.string.history_undo)
-    LaunchedEffect(destination, shortUndo?.entryId, shortUndo?.capturedAt) {
-        val pending = shortUndo ?: return@LaunchedEffect
-        if (destination != Destination.TIMER) return@LaunchedEffect
-        val result = shortHost.showSnackbar(shortMessage, undoLabel, withDismissAction = true, duration = SnackbarDuration.Long)
-        if (result == SnackbarResult.ActionPerformed) changes.undoShortStop(pending.entryId)
-        else changes.dismissShortStop(pending.entryId)
-    }
-    SignedInFrame(
-        current = backStack.currentPage(),
-        showNavigation = !focused,
-        onOpen = openPage,
-        timerRunning = running,
-        pomodoroRunning = pomodoroRunning,
-        hidden = unavailable,
-        syncStatus = status,
-        onOpenNeedsAttention = needsAttention?.let { { if (backStack.lastOrNull() != Destination.NEEDS_ATTENTION) backStack.add(Destination.NEEDS_ATTENTION) } },
-        onSignInAgain = {
-            scope.launch {
-                // Reads the stored server, off the main thread.
-                val account = withContext(io) { signedInAccount() } ?: return@launch
-                signIn.signInAgain(account)
-                backStack.add(Destination.SIGN_IN)
-            }
-        },
-        width = width,
-        notice = { SessionTrustPrompts(sessionTrust) },
-    ) {
-        if (destination == Destination.FULLSCREEN_TIMER) {
-            FullscreenTimerScreen(
-                model = timer,
-                onExit = { if (backStack.lastOrNull() == Destination.FULLSCREEN_TIMER) backStack.removeAt(backStack.lastIndex) },
-                onEditRunning = { target ->
-                    scope.launch {
-                        if (backStack.lastOrNull() != Destination.FULLSCREEN_TIMER) return@launch
-                        val identity = timer.runningForEditShown(target) ?: return@launch
-                        if (backStack.lastOrNull() == Destination.FULLSCREEN_TIMER) {
-                            entryForm.editRunning(identity)
-                            openEntry()
-                        }
-                    }
-                },
-            )
-        } else {
-            SignedInPanes(
-                destination = destination,
-                entryBeside = showsEntryBeside(width, view, backStack),
-                entryKey = entryOpenings,
-            ) { shown ->
-                val render: @Composable () -> Unit = {
-                    Screen(
-                        destination = shown,
-                        backStack = backStack,
-                        themeSettings = themeSettings,
-                        reminderSettings = reminderSettings,
-                        pomodoroDefaults = koinInject(),
-                        pomodoroSharedWithWeb = capabilityFlags.favorites,
-                        signOut = signOut,
-                        reports = reports,
-                        history = history,
-                        entryActions = entryActions,
-                        calendar = calendar,
-                        projects = projects,
-                        clients = clients,
-                        tags = tags,
-                        trash = trash,
-                        entryForm = entryForm,
-                        cache = cache,
-                        timerView = view,
-                        onTimerViewChange = timerView::choose,
-                        onContinue = { entryId ->
-                            history.entry(entryId)?.let { source ->
-                                timer.continueEntry(source)
-                                settleDescription(focusManager)
-                            }
-                        },
-                        onOpenEntry = openEntry,
-                        favorites = favorites,
-                        needsAttention = needsAttention,
-                        settings = settings,
-                        onPomodoroStarted = { pomodoroStarts.trySend(Unit) },
-                        onNotificationRetry = { notificationRetries.trySend(Unit) },
-                        notificationPermissionRevision = notificationPermissionRevision,
-                    ) {
-                        TimerBar(
-                            timer,
-                            cache,
-                            favorites = favorites,
-                            onManageTemplates = { backStack.open(TopLevelPage.TEMPLATES) },
-                            onOpenFullscreen = {
-                                if (backStack.lastOrNull() == Destination.TIMER && timerState.target != null) {
-                                    backStack.add(Destination.FULLSCREEN_TIMER)
-                                }
-                            },
-                            onAddEntry = {
-                                entryForm.new()
-                                openEntry()
-                            },
-                            onEditRunning = {
-                                scope.launch {
-                                    val identity = timer.runningForEdit() ?: return@launch
-                                    if (backStack.lastOrNull() == Destination.TIMER || backStack.lastOrNull() == Destination.ENTRY) {
-                                        entryForm.editRunning(identity)
-                                        openEntry()
-                                    }
-                                }
-                            },
-                        )
-                    }
-                }
-                if (shown == Destination.TIMER) timerPageState.SaveableStateProvider("timer-page", content = render)
-                else render()
-            }
-        }
-        if (discarded > 0) DiscardNotice(discarded, onDismiss = onDismissDiscarded, modifier = Modifier.align(Alignment.BottomCenter))
-        if (timerPage) {
-            TimerNotices(timer, shortHost)
-            SnackbarHost(shortHost, Modifier.align(Alignment.BottomCenter))
-        }
-        if (notificationPermission != null) {
-            NotificationPermissionPrompt(
-                permissionStarts,
-                notificationPermission,
-                onAllowed = onNotificationsAllowed,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                retries = permissionRetries,
-                onResult = { notificationPermissionRevision++ },
-            )
-        }
-    }
+    SignedInHost(
+        stack = backStack,
+        top = top,
+        entries = entries,
+        navigator = navigator,
+        unavailable = unavailable,
+        prompts = prompts,
+        notificationPermission = notificationPermission,
+        onNotificationsAllowed = onNotificationsAllowed,
+    )
 }
-
-/**
- * Whether the entry form on top of [backStack] shows beside the Timer page below it: on an expanded
- * window ([width]) in the List [view], so the history and the form share the width. The Calendar
- * view keeps the whole width for the week, so there the form takes the screen, as on a phone.
- */
-internal fun showsEntryBeside(width: WindowWidth, view: TimerView, backStack: List<Destination>): Boolean =
-    width == WindowWidth.EXPANDED && view == TimerView.LIST &&
-        backStack.lastOrNull() == Destination.ENTRY && backStack.getOrNull(backStack.lastIndex - 1) == Destination.TIMER
-
-/**
- * The signed-in screen on top, [destination], drawn by [screen]. With [entryBeside], which an
- * expanded window allows for the entry form above the Timer page's List view, the Timer page and
- * the form share the width, with a line between them, so the history stays in sight while an entry
- * is edited ([showsEntryBeside]). Otherwise the screen on top has the whole width, as on a phone.
- *
- * The Timer page and the form each keep one place in the composition, whether they show side by
- * side or alone, so a rotation or a fold that changes the layout keeps their saved state, and the
- * page keeps its scroll as the form opens and closes beside it. [entryKey] changes with each
- * opening of the form, so a form opened over one already beside the history starts afresh.
- */
-@Composable
-internal fun SignedInPanes(
-    destination: Destination,
-    entryBeside: Boolean,
-    entryKey: Int,
-    screen: @Composable (Destination) -> Unit,
-) {
-    Row(Modifier.fillMaxSize()) {
-        val page = if (entryBeside) Destination.TIMER else destination
-        if (page != Destination.ENTRY) {
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .then(if (entryBeside) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.End)) else Modifier),
-            ) {
-                screen(page)
-            }
-        }
-        if (entryBeside) VerticalDivider()
-        if (destination == Destination.ENTRY) {
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .then(if (entryBeside) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start)) else Modifier),
-            ) {
-                key(entryKey) { screen(Destination.ENTRY) }
-            }
-        }
-    }
-}
-
-/**
- * A signed-in screen, [content], with the navigation that fits [width]: above the bottom bar on a
- * compact window, beside the navigation rail on wider ones. The bar or the rail marks [current]
- * and opens pages with [onOpen], leaves out the pages in [hidden], and puts a dot on Timer while
- * [timerRunning]. Right above the bar, or at the bottom of the screen beside the rail, shows
- * [syncStatus] when it is not null, its "needs attention" button calls [onOpenNeedsAttention]
- * and its sign-in button [onSignInAgain]. Above both shows [notice], when there is one, and the
- * screens end at its top, so it covers none of them. The bar's height, status and system navigation bar included, is padding
- * the screens consume, so their own navigation bar padding adds nothing above the bar. Beside the
- * rail, which keeps clear of the system bars at its side, the screens consume that side's insets.
- */
-@Composable
-internal fun SignedInFrame(
-    current: TopLevelPage,
-    onOpen: (TopLevelPage) -> Unit,
-    timerRunning: Boolean = false,
-    pomodoroRunning: Boolean = false,
-    hidden: Set<TopLevelPage> = emptySet(),
-    syncStatus: SyncStatus? = null,
-    onOpenNeedsAttention: (() -> Unit)? = null,
-    onSignInAgain: (() -> Unit)? = null,
-    syncStatusClock: Clock = Clock.systemUTC(),
-    width: WindowWidth = windowWidth(),
-    showNavigation: Boolean = true,
-    notice: @Composable () -> Unit = {},
-    content: @Composable BoxScope.() -> Unit,
-) {
-    val rail = showNavigation && width != WindowWidth.COMPACT
-    Row(Modifier.fillMaxSize()) {
-        if (rail) {
-            AppNavigationRail(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
-        }
-        Scaffold(
-            modifier = Modifier
-                .weight(1f)
-                .then(if (rail) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start)) else Modifier),
-            bottomBar = {
-                Column {
-                    // The bar, or the band's spacer, keeps clear of the system navigation bar for
-                    // the notice too.
-                    val clearsSystemBar = (showNavigation && !rail) || syncStatus != null
-                    Box(if (clearsSystemBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars) else Modifier) { notice() }
-                    if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, onSignInAgain = onSignInAgain, clock = syncStatusClock)
-                    if (showNavigation && !rail) {
-                        AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
-                    } else if (syncStatus != null) {
-                        // Without the bar, the band keeps above the system navigation bar on its own.
-                        Spacer(
-                            Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surface)
-                                .windowInsetsBottomHeight(WindowInsets.navigationBars),
-                        )
-                    }
-                }
-            },
-            contentWindowInsets = WindowInsets(0),
-        ) { innerPadding ->
-            // The page's stickers take the current tab's hue, LocalSectionHue.
-            CompositionLocalProvider(LocalSectionHue provides current.hue) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .consumeWindowInsets(innerPadding),
-                    content = content,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun Screen(
-    destination: Destination,
-    backStack: SnapshotStateList<Destination>,
-    themeSettings: ThemeSettingsRepository,
-    reminderSettings: ReminderSetting?,
-    pomodoroDefaults: PomodoroDefaultsSetting,
-    pomodoroSharedWithWeb: Boolean,
-    signOut: SignOutConfirmation,
-    reports: ReportsViewModel,
-    history: HistoryViewModel,
-    entryActions: EntryActionsViewModel,
-    calendar: CalendarViewModel,
-    projects: ProjectsViewModel,
-    clients: ClientsViewModel,
-    tags: TagsViewModel,
-    trash: TrashViewModel,
-    entryForm: EntryFormViewModel,
-    cache: AccountCache,
-    timerView: TimerView,
-    onTimerViewChange: (TimerView) -> Unit,
-    onContinue: (Long) -> Unit,
-    onOpenEntry: () -> Unit,
-    favorites: FavoritesViewModel?,
-    needsAttention: NeedsAttention?,
-    settings: StateFlow<AccountSettings?>,
-    onPomodoroStarted: () -> Unit,
-    onNotificationRetry: () -> Unit,
-    notificationPermissionRevision: Int,
-    timer: @Composable () -> Unit,
-) {
-    when (destination) {
-        // TokklNavHost draws sign-in on its own, without the bar.
-        Destination.SIGN_IN, Destination.FULLSCREEN_TIMER -> Unit
-        Destination.TIMER -> TimerScreen(
-            view = timerView,
-            onViewChange = onTimerViewChange,
-            timer = timer,
-            listContent = {
-                HistoryList(
-                    history,
-                    entryActions,
-                    onEdit = { entryId ->
-                        entryForm.edit(entryId, older = history.entry(entryId))
-                        onOpenEntry()
-                    },
-                    onContinue = onContinue,
-                    favorites = favorites,
-                    showActions = false,
-                )
-            },
-            feedback = {
-                val actionsState by entryActions.state.collectAsState()
-                val account by settings.collectAsState()
-                EntryActionsHost(
-                    state = actionsState,
-                    onUndo = entryActions::undo,
-                    onNoticeDone = entryActions::noticeDone,
-                    onConfirmDelete = entryActions::confirmDelete,
-                    onCancelDelete = entryActions::cancelDelete,
-                    settings = account,
-                    onSplitTextChange = entryActions::setSplitText,
-                    onConfirmSplit = entryActions::confirmSplit,
-                    onCancelSplit = entryActions::cancelSplit,
-                )
-            },
-            calendarContent = {
-                WeekCalendar(
-                    model = calendar,
-                    onEdit = { entryId, older ->
-                        entryForm.edit(entryId, older)
-                        onOpenEntry()
-                    },
-                    onAdd = { day ->
-                        entryForm.new(day)
-                        onOpenEntry()
-                    },
-                    onAddAllDay = { day ->
-                        entryForm.newAllDay(day)
-                        onOpenEntry()
-                    },
-                )
-            },
-        )
-        Destination.POMODORO -> {
-            val pomodoro = koinViewModel<PomodoroViewModel>(
-                viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner,
-            )
-            PomodoroScreen(
-                model = pomodoro, cache = cache,
-                onNotificationStart = onPomodoroStarted,
-                onNotificationRetry = onNotificationRetry,
-                notificationPermissionRevision = notificationPermissionRevision,
-            )
-        }
-        Destination.REPORTS -> ReportsScreen(model = reports)
-        Destination.PROJECTS -> ProjectsScreen(model = projects)
-        Destination.CLIENTS -> ClientsScreen(model = clients)
-        Destination.TAGS -> TagsScreen(model = tags)
-        Destination.TRASH -> TrashScreen(model = trash)
-        Destination.TEMPLATES -> if (favorites != null) {
-            val account by settings.collectAsState()
-            TemplatesScreen(model = favorites, cache = cache, workspaceId = account?.defaultWorkspaceId)
-        }
-        Destination.SETTINGS -> SettingsScreen(
-            model = themeSettings,
-            reminder = reminderSettings,
-            pomodoro = pomodoroDefaults,
-            pomodoroSharedWithWeb = pomodoroSharedWithWeb,
-            signOut = signOut,
-            onOpenLicences = { backStack.add(Destination.LICENCES) },
-        )
-        Destination.LICENCES -> LicencesScreen(onBack = { backStack.removeAt(backStack.lastIndex) })
-        Destination.ENTRY -> EntryFormScreen(
-            model = entryForm,
-            cache = cache,
-            canRestore = entryActions::canRestoreDelete,
-            onDeleted = entryActions::deleted,
-            onClose = {
-                if (backStack.lastOrNull() == Destination.ENTRY) backStack.removeAt(backStack.lastIndex)
-                entryForm.close()
-            },
-        )
-        Destination.NEEDS_ATTENTION -> if (needsAttention != null) {
-            NeedsAttentionScreen(
-                model = needsAttention,
-                settings = settings,
-                onEdit = { entryId ->
-                    entryForm.edit(entryId, older = null)
-                    onOpenEntry()
-                },
-                onBack = { backStack.removeAt(backStack.lastIndex) },
-            )
-        }
-    }
-}
-
-/**
- * The pages that show the timer, where its notices show: a failed Pause, Resume or Stop while
- * paused, and a pomodoro too short to save.
- */
-private val TIMER_PAGES = setOf(Destination.TIMER, Destination.FULLSCREEN_TIMER, Destination.POMODORO)
-
-/** Shows [page] right above Timer, or Timer alone, dropping whatever stood above Timer before. */
-private fun SnapshotStateList<Destination>.open(page: TopLevelPage) {
-    clear()
-    add(Destination.TIMER)
-    if (page != TopLevelPage.TIMER) add(page.destination)
-}
-
-/** The top-level page the screen on top belongs to: itself, or the nearest one below it. */
-private fun List<Destination>.currentPage(): TopLevelPage =
-    asReversed().firstNotNullOfOrNull(TopLevelPage::of) ?: TopLevelPage.TIMER
-
-/** The prompt for a refused request, or after a cancel the notice that reopens it. */
-@Composable
-private fun SessionTrustPrompts(sessionTrust: SessionTrust) {
-    val state by sessionTrust.state.collectAsState()
-    val refusal = state.refusal ?: return
-    if (state.promptOpen && refusal is ApiError.TrustQuestion) {
-        TrustPrompt(refusal, onAccept = sessionTrust::accept, onCancel = sessionTrust::cancel)
-    } else {
-        TrustRefusedNotice(refusal, onReview = sessionTrust::reopen)
-    }
-}
-
-/** Saves the stack by name. A name this version no longer has, such as an older version's HOME, is dropped. */
-private val BackStackSaver = listSaver<SnapshotStateList<Destination>, String>(
-    save = { stack -> stack.map { it.name } },
-    restore = { names -> names.mapNotNull { name -> Destination.entries.firstOrNull { it.name == name } }.toMutableStateList() },
-)

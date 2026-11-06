@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.navigation
 
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -31,9 +30,9 @@ class UnavailablePagesTest {
     @Test
     fun aRestoredOrDirectOpenOfAnUnavailablePageShowsTimerAndOtherPagesStay() {
         val unavailable = setOf(TopLevelPage.POMODORO)
-        assertEquals(Destination.TIMER, Destination.POMODORO.orTimerIfUnavailable(unavailable))
-        assertEquals(Destination.REPORTS, Destination.REPORTS.orTimerIfUnavailable(unavailable))
-        assertEquals("a screen below a page is not a page", Destination.LICENCES, Destination.LICENCES.orTimerIfUnavailable(unavailable))
-        assertEquals(Destination.POMODORO, Destination.POMODORO.orTimerIfUnavailable(emptySet()))
+        assertEquals(Route.Timer, Route.Pomodoro.orTimerIfUnavailable(unavailable))
+        assertEquals(Route.Reports, Route.Reports.orTimerIfUnavailable(unavailable))
+        assertEquals("a screen below a page is not a page", Route.Licences, Route.Licences.orTimerIfUnavailable(unavailable))
+        assertEquals(Route.Pomodoro, Route.Pomodoro.orTimerIfUnavailable(emptySet()))
     }
 }

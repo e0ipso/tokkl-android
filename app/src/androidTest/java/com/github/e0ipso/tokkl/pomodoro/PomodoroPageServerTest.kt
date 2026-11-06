@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.koinViewModels
-import com.github.e0ipso.tokkl.components.sender
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -24,10 +21,13 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.SignedInPanes
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.SignedInPanes
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.PhaseKind
@@ -204,8 +204,8 @@ class PomodoroPageServerTest {
         }
         compose.setContent {
             TokklTheme {
-                SignedInPanes(Destination.POMODORO, entryBeside = false, entryKey = 0) { destination ->
-                    check(destination == Destination.POMODORO)
+                SignedInPanes(Route.Pomodoro, entryBeside = false) { route ->
+                    check(route == Route.Pomodoro)
                     PomodoroScreen(model, app.cache)
                 }
             }

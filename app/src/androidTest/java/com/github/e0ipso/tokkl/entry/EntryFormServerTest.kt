@@ -4,12 +4,7 @@ import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.koinViewModels
 import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.sessionTrust
-import com.github.e0ipso.tokkl.components.signOutConfirmation
-import com.github.e0ipso.tokkl.components.themeSettings
-import com.github.e0ipso.tokkl.components.timerView
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -27,17 +22,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.github.e0ipso.tokkl.TokklNavHost
-import com.github.e0ipso.tokkl.calendar.CalendarViewModel
-import com.github.e0ipso.tokkl.clients.ClientsViewModel
-import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
-import com.github.e0ipso.tokkl.history.EntryActionsViewModel
-import com.github.e0ipso.tokkl.history.HistoryViewModel
-import com.github.e0ipso.tokkl.projects.ProjectsViewModel
-import com.github.e0ipso.tokkl.reports.ReportsViewModel
-import com.github.e0ipso.tokkl.signin.SignInViewModel
-import com.github.e0ipso.tokkl.tags.TagsViewModel
-import com.github.e0ipso.tokkl.timer.TimerViewModel
-import com.github.e0ipso.tokkl.trash.TrashViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -665,7 +649,7 @@ class EntryFormServerTest {
     }
 
     /**
-     * The app's navigation host, with MainActivity's view models, in a window forced to
+     * The app's navigation host, as MainActivity shows it, in a window forced to
      * [EXPANDED_WINDOW], where the entry form shows beside the Timer page's history. The phone's
      * own window is too narrow for that.
      */
@@ -674,38 +658,16 @@ class EntryFormServerTest {
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
                 activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                val models = koinViewModels(activity)
-                val history = models[HistoryViewModel::class.java]
-                val timer = models[TimerViewModel::class.java]
                 activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
                         TokklTheme(darkTheme = false) {
-                            TokklNavHost(
-                                signIn = models[SignInViewModel::class.java],
-                                themeSettings = app.themeSettings,
-                                signOut = app.signOutConfirmation,
-                                sessionTrust = app.sessionTrust,
-                                reports = models[ReportsViewModel::class.java],
-                                history = history,
-                                entryActions = models[EntryActionsViewModel::class.java],
-                                calendar = models[CalendarViewModel::class.java],
-                                projects = models[ProjectsViewModel::class.java],
-                                clients = models[ClientsViewModel::class.java],
-                                tags = models[TagsViewModel::class.java],
-                                timerView = app.timerView,
-                                timer = timer,
-                                entryForm = models[EntryFormViewModel::class.java],
-                                cache = app.cache,
-                                trash = models[TrashViewModel::class.java],
-                                capabilities = app.capabilities.state,
-                                favorites = models[FavoritesViewModel::class.java],
-                            )
+                            TokklNavHost()
                         }
                     }
                 }
             }
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
-            // MainActivity refreshes on sign-in; this host does not, so the test fills the cache.
+            // The host opens signed in, with no sign-in or foreground refresh, so the test fills the cache.
             runBlocking { app.accountSettings.refresh().join() }
             steps()
         }

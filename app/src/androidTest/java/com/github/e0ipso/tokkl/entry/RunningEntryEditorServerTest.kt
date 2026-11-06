@@ -1,17 +1,5 @@
 package com.github.e0ipso.tokkl.entry
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.koinViewModels
-import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.sessionTrust
-import com.github.e0ipso.tokkl.components.signOutConfirmation
-import com.github.e0ipso.tokkl.components.themeSettings
-import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerControls
-import com.github.e0ipso.tokkl.components.timerView
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.view.KeyEvent
@@ -54,7 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -78,22 +69,20 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.calendar.CalendarViewModel
-import com.github.e0ipso.tokkl.clients.ClientsViewModel
-import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.navigationStores
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.finishWithin
-import com.github.e0ipso.tokkl.history.EntryActionsViewModel
-import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.orFail
-import com.github.e0ipso.tokkl.projects.ProjectsViewModel
-import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.signin.SignInViewModel
-import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.trash.TrashViewModel
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
 import java.time.Instant
@@ -476,43 +465,22 @@ class RunningEntryEditorServerTest {
         }
     }
 
-    /** Production navigation and view models in a size override, matching the existing adaptive fixture. */
+    /** Production navigation and view models in a size override, matching the existing adaptive fixture. With [changes], the timer sends to it. */
     private fun withHost(width: Int, changes: EntryChanges? = null, steps: () -> Unit) {
         val scenario = finishWithin("launch sized navigation host") { ActivityScenario.launch(ComponentActivity::class.java) }
         try {
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
                 activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                val models = koinViewModels(activity)
-                val history = models[HistoryViewModel::class.java]
-                val timer = models[TimerViewModel::class.java]
-                val shownTimer = changes?.let {
-                    TimerViewModel(app.timerControls, app.cache.projects, app.cache.tasks, app.accountSettings.state, it, activity.lifecycleScope)
-                } ?: timer
+                if (changes != null) {
+                    // The session's timer, made before the host asks for it, sends its changes to [changes].
+                    val timer = TimerViewModel(app.timerControls, app.cache.projects, app.cache.tasks, app.accountSettings.state, changes, activity.lifecycleScope)
+                    ViewModelProvider(navigationStores(activity).session, viewModelFactory { initializer { timer } })[TimerViewModel::class.java]
+                }
                 activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(width.dp, 900.dp))) {
                         TokklTheme(darkTheme = false) {
-                            TokklNavHost(
-                                signIn = models[SignInViewModel::class.java],
-                                themeSettings = app.themeSettings,
-                                signOut = app.signOutConfirmation,
-                                sessionTrust = app.sessionTrust,
-                                reports = models[ReportsViewModel::class.java],
-                                history = history,
-                                entryActions = models[EntryActionsViewModel::class.java],
-                                calendar = models[CalendarViewModel::class.java],
-                                projects = models[ProjectsViewModel::class.java],
-                                clients = models[ClientsViewModel::class.java],
-                                tags = models[TagsViewModel::class.java],
-                                timerView = app.timerView,
-                                timer = shownTimer,
-                                entryForm = models[EntryFormViewModel::class.java],
-                                cache = app.cache,
-                                trash = models[TrashViewModel::class.java],
-                                capabilities = app.capabilities.state,
-                                settings = app.accountSettings.state,
-                                favorites = models[FavoritesViewModel::class.java],
-                            )
+                            TokklNavHost()
                         }
                     }
                 }

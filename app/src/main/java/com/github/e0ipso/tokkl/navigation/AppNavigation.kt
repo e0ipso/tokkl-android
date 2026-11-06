@@ -43,9 +43,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
@@ -63,47 +61,28 @@ import kotlinx.coroutines.launch
  * gives each item a section since tokkl d012228; the pages on the More sheet take More's.
  */
 enum class TopLevelPage(
-    val destination: Destination,
+    val route: Route,
     @StringRes val label: Int,
     @DrawableRes val icon: Int,
     val hue: SectionHue,
     val inMore: Boolean = false,
 ) {
-    TIMER(Destination.TIMER, R.string.nav_timer, R.drawable.ic_nav_timer, SectionHues.timer),
-    POMODORO(Destination.POMODORO, R.string.pomodoro_title, R.drawable.ic_nav_pomodoro, SectionHues.timer),
-    REPORTS(Destination.REPORTS, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports, inMore = true),
-    PROJECTS(Destination.PROJECTS, R.string.nav_projects, R.drawable.ic_nav_projects, SectionHues.projects),
-    TEMPLATES(Destination.TEMPLATES, R.string.nav_templates, R.drawable.ic_nav_templates, SectionHues.more, inMore = true),
-    CLIENTS(Destination.CLIENTS, R.string.nav_clients, R.drawable.ic_nav_clients, SectionHues.more, inMore = true),
-    TAGS(Destination.TAGS, R.string.nav_tags, R.drawable.ic_nav_tags, SectionHues.more, inMore = true),
-    TRASH(Destination.TRASH, R.string.nav_trash, R.drawable.ic_nav_trash, SectionHues.more, inMore = true),
-    SETTINGS(Destination.SETTINGS, R.string.settings, R.drawable.ic_nav_settings, SectionHues.settings),
+    TIMER(Route.Timer, R.string.nav_timer, R.drawable.ic_nav_timer, SectionHues.timer),
+    POMODORO(Route.Pomodoro, R.string.pomodoro_title, R.drawable.ic_nav_pomodoro, SectionHues.timer),
+    REPORTS(Route.Reports, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports, inMore = true),
+    PROJECTS(Route.Projects, R.string.nav_projects, R.drawable.ic_nav_projects, SectionHues.projects),
+    TEMPLATES(Route.Templates, R.string.nav_templates, R.drawable.ic_nav_templates, SectionHues.more, inMore = true),
+    CLIENTS(Route.Clients, R.string.nav_clients, R.drawable.ic_nav_clients, SectionHues.more, inMore = true),
+    TAGS(Route.Tags, R.string.nav_tags, R.drawable.ic_nav_tags, SectionHues.more, inMore = true),
+    TRASH(Route.Trash, R.string.nav_trash, R.drawable.ic_nav_trash, SectionHues.more, inMore = true),
+    SETTINGS(Route.Settings, R.string.settings, R.drawable.ic_nav_settings, SectionHues.settings),
     ;
 
     companion object {
-        /** The page [destination] opens, or null for a page below one, such as Licences. */
-        fun of(destination: Destination): TopLevelPage? = entries.firstOrNull { it.destination == destination }
+        /** The page [route] opens, or null for a screen opened from a page, such as Licences. */
+        fun of(route: Route): TopLevelPage? = entries.firstOrNull { it.route == route }
     }
 }
-
-/**
- * The pages the server's [flags] leave without a use: Trash without the trash API, Timer
- * templates without the favorites key or without the host's favorites model
- * ([hasFavorites]), and Pomodoro without the timer API, since the server owns the session. The
- * bar, the rail and the More sheet leave them out, and the host opens none of them.
- */
-fun unavailablePages(flags: Capabilities, hasFavorites: Boolean): Set<TopLevelPage> = buildSet {
-    if (!flags.trash) add(TopLevelPage.TRASH)
-    if (!(flags.favorites && hasFavorites)) add(TopLevelPage.TEMPLATES)
-    if (!flags.timerState) add(TopLevelPage.POMODORO)
-}
-
-/**
- * This destination, or Timer when it belongs to a page in [unavailable]. A back stack restored
- * from before a capability was lost, or a direct open of a page, then shows Timer.
- */
-fun Destination.orTimerIfUnavailable(unavailable: Set<TopLevelPage>): Destination =
-    if (TopLevelPage.of(this) in unavailable) Destination.TIMER else this
 
 /**
  * The bottom bar of a signed-in screen on a compact window: Timer, Pomodoro, Projects, Settings and

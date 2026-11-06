@@ -1,10 +1,13 @@
 package com.github.e0ipso.tokkl.components
 
 import android.content.Context
+import androidx.activity.ComponentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.Configuration
 import androidx.work.DelegatingWorkerFactory
 import androidx.work.testing.SynchronousExecutor
@@ -18,6 +21,9 @@ import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerControlsSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.di.WidgetClock
+import com.github.e0ipso.tokkl.navigation.NavigationStores
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
@@ -139,3 +145,17 @@ fun koinViewModels(owner: ViewModelStoreOwner): ViewModelProvider =
                 GlobalContext.get().get(modelClass.kotlin)
         },
     )
+
+/** The navigation's view model stores in [activity], which TokklNavHost reads them from. */
+internal fun navigationStores(activity: ComponentActivity): NavigationStores =
+    ViewModelProvider(activity, viewModelFactory { initializer { NavigationStores() } })[NavigationStores::class.java]
+
+/**
+ * The view models of [activity]'s signed-in session, which the screens share: the timer, the entry
+ * actions, the timer templates, the reports and the Pomodoro page.
+ */
+internal fun sessionViewModels(activity: ComponentActivity): ViewModelProvider = koinViewModels(navigationStores(activity).session)
+
+/** The view models of [activity]'s Timer page: its history and its calendar. */
+internal fun timerPageViewModels(activity: ComponentActivity): ViewModelProvider =
+    koinViewModels(navigationStores(activity).entries.getOrCreateOwner(Route.Timer.contentKey))

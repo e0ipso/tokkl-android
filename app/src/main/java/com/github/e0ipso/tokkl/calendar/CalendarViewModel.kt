@@ -20,6 +20,7 @@ import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.history.reconcileEntryRows
 import com.github.e0ipso.tokkl.history.resolveEntryOverrides
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Clock
 import java.time.Duration
@@ -34,9 +35,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -145,6 +147,9 @@ enum class ResizeEdge { START, END }
  * @param clock where today comes from, in the account's timezone.
  * @param allDayOffered whether the server stores no-time entries (`Capabilities.allDay == true`),
  *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
+ * @param overrides the entry actions' deletes and restores, which [reconcile] applies.
+ * @param appEvents MainActivity's starts and stops and the network's reports, which call
+ *   [cameToForeground], [wentToBackground] and [reconnected].
  */
 class CalendarViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
@@ -157,6 +162,8 @@ class CalendarViewModel(
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),
     allDayOffered: Flow<Boolean> = flowOf(false),
+    overrides: Flow<Map<Long, CachedTimeEntry?>> = emptyFlow(),
+    appEvents: Flow<AppEvent> = emptyFlow(),
 ) : ViewModel(scope) {
 
     /** The chosen day, or null to follow today. */
@@ -450,6 +457,20 @@ class CalendarViewModel(
 
     /** The copy of an entry changed on the phone, and whether the cache [held] it when last read. */
     private data class Edit(val entry: CachedTimeEntry, val held: Boolean)
+
+    init {
+        viewModelScope.launch { overrides.collect(::reconcile) }
+        viewModelScope.launch {
+            appEvents.collect { event ->
+                when (event) {
+                    AppEvent.CAME_TO_FOREGROUND -> cameToForeground()
+                    AppEvent.WENT_TO_BACKGROUND -> wentToBackground()
+                    AppEvent.ONLINE -> reconnected()
+                    AppEvent.RECONNECTED -> Unit
+                }
+            }
+        }
+    }
 
     companion object {
         /** Bad gateway, service unavailable and gateway timeout. */

@@ -1,14 +1,5 @@
 package com.github.e0ipso.tokkl.settings
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.koinViewModels
-import com.github.e0ipso.tokkl.components.pomodoroDefaults
-import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.sessionTrust
-import com.github.e0ipso.tokkl.components.timerView
 import android.database.sqlite.SQLiteDatabase
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
@@ -19,6 +10,7 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkInfo
@@ -38,24 +30,32 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
-import com.github.e0ipso.tokkl.clients.ClientsViewModel
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.pomodoroDefaults
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.sessionTrust
+import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.timerPageViewModels
+import com.github.e0ipso.tokkl.components.timerView
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
-import com.github.e0ipso.tokkl.entry.EntryFormViewModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.finishWithin
+import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
+import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.StoredPomodoroDefaults
-import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.signin.SignInViewModel
-import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewStore
@@ -64,6 +64,7 @@ import java.security.KeyStore
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -144,7 +145,7 @@ class SignOutServerTest {
 
         scenario = ActivityScenario.launch(MainActivity::class.java)
         composeRule.openBarPage(R.string.settings)
-        val before = viewModels()
+        val before = viewModels(timerPageKinds = TIMER_PAGE_VIEW_MODELS)
         composeRule.onNode(signOutRow()).performScrollTo().performClick()
 
         composeRule.awaitText(string(R.string.settings_sign_out_title))
@@ -167,8 +168,9 @@ class SignOutServerTest {
         composeRule.awaitText(string(R.string.sign_in_title), TIMEOUT_MS)
         assertFalse("the bottom bar went with the session", exists(hasText(string(R.string.nav_timer))))
         assertNothingOfTheAccountStays()
-        val after = viewModels()
-        for ((kind, old) in before) assertNotSame("$kind is a new view model", old, after.getValue(kind))
+        for ((kind, old) in before) assertFalse("$kind of the signed-out account is cleared", old.viewModelScope.isActive)
+        val after = viewModels(SESSION_VIEW_MODELS)
+        for ((kind, new) in after) assertNotSame("$kind is a new view model", before.getValue(kind), new)
 
         // The next account starts from nothing: the cache holds none of the first one's data.
         ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
@@ -246,12 +248,21 @@ class SignOutServerTest {
         }
     }
 
-    /** Each view model of the activity, by class, as the activity reads them. */
-    private fun viewModels(): Map<String, ViewModel> {
+    /**
+     * The view models that outlive a page while somebody is signed in, by class, where the app
+     * keeps them: the signed-in session's [sessionKinds], and the Timer page's [timerPageKinds],
+     * which stays below every signed-in page. The other screens' view models close with their page.
+     */
+    private fun viewModels(
+        sessionKinds: List<Class<out ViewModel>> = SESSION_VIEW_MODELS,
+        timerPageKinds: List<Class<out ViewModel>> = emptyList(),
+    ): Map<String, ViewModel> {
         val models = mutableMapOf<String, ViewModel>()
         checkNotNull(scenario).onActivity { activity ->
-            val provider = koinViewModels(activity)
-            for (kind in VIEW_MODELS) models[kind.simpleName] = provider[kind]
+            val session = sessionViewModels(activity)
+            for (kind in sessionKinds) models[kind.simpleName] = session[kind]
+            val timerPage = timerPageViewModels(activity)
+            for (kind in timerPageKinds) models[kind.simpleName] = timerPage[kind]
         }
         return models
     }
@@ -293,16 +304,17 @@ class SignOutServerTest {
         /** SQLite's and Room's own tables, which hold no account data. */
         val BOOKKEEPING_TABLES = setOf("android_metadata", "room_master_table", "sqlite_sequence")
 
-        val VIEW_MODELS = listOf(
-            SignInViewModel::class.java,
+        val SESSION_VIEW_MODELS: List<Class<out ViewModel>> = listOf(
             ReportsViewModel::class.java,
+            TimerViewModel::class.java,
+            EntryActionsViewModel::class.java,
+            FavoritesViewModel::class.java,
+            PomodoroViewModel::class.java,
+        )
+
+        val TIMER_PAGE_VIEW_MODELS: List<Class<out ViewModel>> = listOf(
             HistoryViewModel::class.java,
             CalendarViewModel::class.java,
-            ProjectsViewModel::class.java,
-            ClientsViewModel::class.java,
-            TagsViewModel::class.java,
-            TimerViewModel::class.java,
-            EntryFormViewModel::class.java,
         )
     }
 }

@@ -1,22 +1,22 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.koinViewModels
 import android.content.Intent
-import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
-import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.awaitText
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.reports.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
@@ -35,7 +35,7 @@ class WidgetNavigationTest {
         ActivityScenario.launch<MainActivity>(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY)).use { scenario ->
             assertToday(scenario)
             lateinit var model: ReportsViewModel
-            scenario.onActivity { model = koinViewModels(it)[ReportsViewModel::class.java] }
+            scenario.onActivity { model = sessionViewModels(it)[ReportsViewModel::class.java] }
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 model.selectTab(ReportTab.WEEKLY)
                 model.select(RangePreset.LAST_WEEK)
@@ -95,7 +95,7 @@ class WidgetNavigationTest {
         compose.waitUntil(15_000) {
             var today = false
             scenario.onActivity {
-                val model = koinViewModels(it)[ReportsViewModel::class.java]
+                val model = sessionViewModels(it)[ReportsViewModel::class.java]
                 val selection = when (val state = model.state.value) {
                     is ReportsState.Loaded -> state.selection
                     is ReportsState.Loading -> state.selection

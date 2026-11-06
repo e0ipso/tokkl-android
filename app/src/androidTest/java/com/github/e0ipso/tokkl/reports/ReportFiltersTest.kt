@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.reports
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.koinViewModels
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -35,6 +32,9 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
@@ -472,7 +472,7 @@ class ReportFiltersTest {
     private fun model(): ReportsViewModel {
         var model: ReportsViewModel? = null
         finishWithin("reading the reports model") {
-            checkNotNull(scenario).onActivity { model = koinViewModels(it)[ReportsViewModel::class.java] }
+            checkNotNull(scenario).onActivity { model = sessionViewModels(it)[ReportsViewModel::class.java] }
         }
         return checkNotNull(model)
     }
