@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.accountRefresh
-import com.github.e0ipso.tokkl.components.timerState
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -21,12 +19,14 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
