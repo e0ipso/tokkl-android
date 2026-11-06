@@ -3,11 +3,11 @@ package com.github.e0ipso.tokkl.di
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.platform.DefaultDispatcher
+import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.ElapsedTimerSyncClock
-import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.SessionActions
@@ -21,7 +21,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.timerstate.TimerSyncService
 import com.github.e0ipso.tokkl.timerstate.TimerSyncServiceSlot
-import com.github.e0ipso.tokkl.widget.PomodoroWidgetFieldsStore
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -33,7 +32,6 @@ import org.koin.dsl.module
 /** The server's timer state, its actions and event stream, and the controls every timer surface shows. */
 internal val timerModule = module {
     single { TimerStateStore(androidContext()) } bind AccountDataOwner::class
-    single { PomodoroWidgetFieldsStore(androidContext()) } binds arrayOf(HeldFieldsMemory::class, AccountDataOwner::class)
 
     single { AccountTimerStates(get(), get(), get(), get()) } bind AccountDataOwner::class
     single { HeldTimerFlows(get(), get(), io()) }

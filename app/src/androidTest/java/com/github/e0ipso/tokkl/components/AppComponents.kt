@@ -18,7 +18,6 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.di.WidgetClock
 import com.github.e0ipso.tokkl.navhost.NavigationStores
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.contentKey
@@ -52,6 +51,7 @@ import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
+import com.github.e0ipso.tokkl.widget.WidgetClock
 import com.github.e0ipso.tokkl.widget.WidgetState
 import com.github.e0ipso.tokkl.widget.WidgetStateSource
 import java.time.Clock

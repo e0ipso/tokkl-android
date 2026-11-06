@@ -13,21 +13,16 @@ import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.cache.SendOnQueue
 import com.github.e0ipso.tokkl.cache.ServerSpans
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.sync.DiscardedChanges
-import com.github.e0ipso.tokkl.sync.DiscardedChangesStore
-import com.github.e0ipso.tokkl.sync.LastAnswer
-import com.github.e0ipso.tokkl.sync.LastAnswerStore
-import com.github.e0ipso.tokkl.sync.NeedsAttention
-import com.github.e0ipso.tokkl.sync.SyncStatusSource
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** The Room cache, the change queue and its sender, and what the sync status shows. */
+/** The Room cache, and the change queue and its sender. */
 internal val dataModule = module {
 
     /** The file of the cache and the queue. It opens on the first query, which Room keeps off the main thread. */
@@ -70,38 +65,4 @@ internal val dataModule = module {
         )
     } bind AccountDataOwner::class
 
-    single { LastAnswerStore(androidContext()) }
-
-    /**
-     * When the server last answered the signed-in session (docs/PRD.md O5), which the [Session]'s
-     * client reports. The first answer or the first frame of a signed-in screen loads it from a
-     * file of one value.
-     */
-    single { LastAnswer(get<LastAnswerStore>()) } bind AccountDataOwner::class
-
-    single { DiscardedChangesStore(androidContext()) }
-
-    /**
-     * How many queued changes the [ChangeSender] discarded because the server no longer had their
-     * entries, for the notice that says so (docs/PRD.md O6). The first discard or the first frame
-     * of a signed-in screen loads it from a file of one value.
-     */
-    single { DiscardedChanges(get<DiscardedChangesStore>()) } bind AccountDataOwner::class
-
-    /**
-     * The "needs attention" list of the changes the server refused (docs/PRD.md O6). Discarding
-     * one refreshes the account, so the cache takes the server's entry back.
-     */
-    single {
-        val changes = get<ChangeQueue>()
-        NeedsAttention(
-            held = changes.held,
-            release = changes::sendAgain,
-            drop = changes::discard,
-            afterDiscard = get<AccountRefresh>()::refresh,
-            scope = get(),
-        )
-    }
-
-    single { SyncStatusSource(get(), get(), get(), get(), get()) }
 }

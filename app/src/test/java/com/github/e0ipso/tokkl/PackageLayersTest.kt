@@ -113,9 +113,11 @@ class PackageLayersTest {
             "timernotice" to setOf("catalog"),
             // The Timer page shows the history, the calendar and the timer templates and opens the
             // entry form, and the history pins entries as timer templates. Settings opens Licences.
+            // The notification feature's Koin module defines the reminder's notification too.
             "timer" to setOf("favorites", "history", "calendar", "entry"),
             "history" to setOf("favorites"),
             "settings" to setOf("licences"),
+            "notification" to setOf("reminder"),
             // TokklApplication starts Koin; Koin builds the lifecycle observers and the navigation host.
             ROOT to setOf("di", "lifecycle", "navhost"),
             "di" to setOf("lifecycle", "navhost"),
