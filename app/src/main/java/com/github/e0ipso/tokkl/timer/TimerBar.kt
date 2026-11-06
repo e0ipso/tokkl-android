@@ -1,20 +1,9 @@
 package com.github.e0ipso.tokkl.timer
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,30 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entry.DescriptionSuggestion
 import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
@@ -55,21 +27,10 @@ import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.TemplatesPopup
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
-import com.github.e0ipso.tokkl.reports.spokenDuration
-import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.time.formatDuration
-import com.github.e0ipso.tokkl.ui.TokklButton
-import com.github.e0ipso.tokkl.ui.TokklDangerButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
-import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 
 /**
  * The project, task and tag picker for an entry in [workspaceId], as [EntityPicker] takes it.
@@ -306,194 +267,3 @@ fun TimerBarContent(
         }
     }
 }
-
-/**
- * "Running" in the running colour beside a dot, and while the server lacks a change to the entry,
- * the unsent icon and NOT SENT, as the history marks it. TalkBack reads the words.
- */
-@Composable
-private fun RunningLabel(unsent: Boolean) {
-    val locale = LocalConfiguration.current.locales[0]
-    val colour = TokklTheme.extraColors.running
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2)) {
-        Canvas(Modifier.size(TokklTheme.spacing.space2)) { drawCircle(colour) }
-        Text(stringResource(R.string.timer_running), style = MaterialTheme.typography.labelLarge, color = colour)
-        if (unsent) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
-                UnsentIcon(TokklTheme.smallCapsLabelTextStyle)
-                Text(
-                    text = stringResource(R.string.history_unsent).uppercase(locale),
-                    style = TokklTheme.smallCapsLabelTextStyle,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-    }
-}
-
-/** The running time, which TalkBack reads in words: "1 hour, 5 minutes elapsed". */
-@Composable
-private fun RunningClock(elapsedSeconds: Long, onEdit: () -> Unit) {
-    val spoken = stringResource(R.string.timer_elapsed_spoken, spokenDuration(LocalResources.current, elapsedSeconds))
-    val editLabel = stringResource(R.string.timer_edit_running)
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-            .clickable(role = Role.Button, onClickLabel = editLabel, onClick = onEdit)
-            .semantics { contentDescription = "$spoken. $editLabel" },
-    ) {
-        Text(text = formatDuration(elapsedSeconds), style = TokklTheme.clockTextStyle)
-    }
-}
-
-/** The clock at zero while no timer runs, which TalkBack skips, since Start says what it does. */
-@Composable
-private fun IdleClock() {
-    Text(
-        text = formatDuration(0),
-        style = TokklTheme.clockTextStyle,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.clearAndSetSemantics {},
-    )
-}
-
-/** "Paused" in the muted colour, as the web app says it beside the frozen clock. */
-@Composable
-private fun PausedLabel() {
-    Text(stringResource(R.string.timer_paused), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
-/** The paused total, which stands still, and which TalkBack reads as "1 hour elapsed, paused". */
-@Composable
-private fun PausedClock(seconds: Long) {
-    val spoken = stringResource(R.string.timer_paused_elapsed_spoken, spokenDuration(LocalResources.current, seconds))
-    Text(
-        text = formatDuration(seconds),
-        style = TokklTheme.clockTextStyle,
-        modifier = Modifier.semantics { contentDescription = spoken },
-    )
-}
-
-/** How a [TimerButton] looks: Start and Resume on primary, Pause outlined, Stop on danger. */
-private enum class TimerButtonLook { Primary, Neutral, Danger }
-
-/** A timer button in its [look]: an icon and a word, and the whole action to TalkBack. */
-@Composable
-private fun TimerButton(
-    @DrawableRes icon: Int,
-    @StringRes label: Int,
-    @StringRes spoken: Int,
-    look: TimerButtonLook,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    val description = stringResource(spoken)
-    val content: @Composable RowScope.() -> Unit = {
-        Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(TokklTheme.spacing.space5))
-        Text(stringResource(label), modifier = Modifier.padding(start = TokklTheme.spacing.space2))
-    }
-    val semantics = Modifier.semantics { contentDescription = description }
-    when (look) {
-        TimerButtonLook.Primary -> TokklButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
-        TimerButtonLook.Neutral -> TokklGhostButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
-        TimerButtonLook.Danger -> TokklDangerButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
-    }
-}
-
-/** Effective Room rows include queued changes and remaps; the pause-chain clock is not added. */
-@Composable
-internal fun TimerTotals(
-    entries: Flow<List<CachedTimeEntry>>,
-    settings: StateFlow<AccountSettings?>,
-    clock: Clock = Clock.systemUTC(),
-) {
-    val current by settings.collectAsState()
-    val cached: List<CachedTimeEntry>? by entries.collectAsState(initial = null)
-    val now = rememberTotalsNow(clock, current, cached?.any { it.stop == null } == true)
-    val account = current ?: return
-    val rows = cached ?: return
-    val totals = timerPeriodTotals(rows, account, now)
-    if (totals == null) {
-        Text(stringResource(R.string.history_unknown_time_zone, account.timeZone), style = MaterialTheme.typography.bodyLarge)
-        return
-    }
-    val text = totals.formatted(account)
-    TimerTotalsRow(text.today, text.week, totals.todaySeconds, totals.weekSeconds)
-}
-
-/**
- * Today and this week share one row. Each total wraps inside its half, so a large font does not
- * stack them and push the view switch off the phone. The summary belongs to the scroll-away header.
- */
-@Composable
-private fun TimerTotalsRow(today: String, week: String, todaySeconds: Long, weekSeconds: Long) {
-    Row(
-        Modifier.fillMaxWidth().padding(top = TokklTheme.spacing.space3),
-        horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space4),
-    ) {
-        TimerTotal(R.string.timer_total_today, today, todaySeconds, "timer_totals_today", Modifier.weight(1f))
-        TimerTotal(R.string.timer_total_this_week, week, weekSeconds, "timer_totals_week", Modifier.weight(1f))
-    }
-}
-
-/** TalkBack gets the account-period label and the elapsed duration in words. */
-@Composable
-private fun TimerTotal(@StringRes labelId: Int, value: String, seconds: Long, tag: String, modifier: Modifier = Modifier) {
-    val label = stringResource(labelId)
-    val spoken = stringResource(R.string.timer_total_spoken, label, spokenDuration(LocalResources.current, seconds))
-    Column(modifier.testTag(tag).semantics(mergeDescendants = true) { contentDescription = spoken }) {
-        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.titleMedium)
-    }
-}
-
-/**
- * The instant the totals use. While an entry runs it moves each whole second. Otherwise it
- * waits until account midnight, so an idle page still rolls the day and the week. With no
- * [settings] zone there is nothing to roll.
- */
-@Composable
-private fun rememberTotalsNow(clock: Clock, settings: AccountSettings?, hasRunning: Boolean): Instant {
-    var now by remember(clock) { mutableStateOf(clock.instant()) }
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val time = settings?.time()
-    LaunchedEffect(clock, lifecycle, time?.zone, time?.firstDayOfWeek, hasRunning) {
-        val accountTime = time ?: return@LaunchedEffect
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (true) {
-                val current = clock.instant()
-                now = current
-                delay(nextTotalsDelay(current, accountTime, hasRunning))
-            }
-        }
-    }
-    return now
-}
-
-/**
- * Whole seconds from [start] to now on [clock], moved on at each whole second while the screen
- * shows, or zero without [start]. Nothing here asks the server.
- */
-@Composable
-internal fun rememberElapsedSeconds(start: Instant?, clock: Clock): Long {
-    var now by remember(clock) { mutableStateOf(clock.instant()) }
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    if (start != null) {
-        LaunchedEffect(start, clock, lifecycle) {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                while (true) {
-                    now = clock.instant()
-                    delay(SECOND_MS - Math.floorMod(Duration.between(start, now).toMillis(), SECOND_MS))
-                }
-            }
-        }
-    }
-    return if (start == null) 0L else elapsedSeconds(start, now)
-}
-
-/** Whole seconds from [start] to [now], as the web app's entrySeconds counts, and never below zero. */
-internal fun elapsedSeconds(start: Instant, now: Instant): Long =
-    maxOf(0L, Math.floorDiv(Duration.between(start, now).toMillis(), SECOND_MS))
-
-private const val SECOND_MS = 1_000L

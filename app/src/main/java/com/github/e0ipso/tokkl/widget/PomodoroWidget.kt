@@ -61,7 +61,6 @@ class PomodoroWidgetReceiver : GlanceAppWidgetReceiver() {
 
 internal val PomodoroColors = ColorProviders(light = TokklLightColorScheme, dark = TokklDarkColorScheme)
 private val Running = ColorProvider(TokklLightExtraColors.running, TokklDarkExtraColors.running)
-private val PrimaryFill = ColorProvider(TokklLightExtraColors.primaryFill, TokklDarkExtraColors.primaryFill)
 private val OnPrimary = ColorProvider(TokklLightExtraColors.onPrimaryFill, TokklDarkExtraColors.onPrimaryFill)
 // The light secondary fill is 3.06:1 on white. Use a darker teal for small text (4.9:1).
 private val RestText = ColorProvider(Color(0xFF007A7A), TokklDarkColorScheme.secondary)
