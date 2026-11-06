@@ -9,7 +9,9 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.Me
+import com.github.e0ipso.tokkl.session.ServerConfigStore
 import java.io.IOException
 import java.security.GeneralSecurityException
 import okhttp3.OkHttpClient
@@ -172,3 +174,15 @@ private fun ApiError.toSignInResult(): SignInResult =
         is ApiError.CertificateHostMismatch -> SignInResult.CertificateHostMismatch(host)
         is ApiError.Network -> SignInResult.Unreachable
     }
+
+/**
+ * The account a sign-in would replace, read from the stores on each call: the stored server and
+ * the stored settings' user. Sign-in rechecks it on every submit, including a form restored after
+ * the process died, whose in-memory reauthentication marker may be gone. Reads the disk.
+ */
+internal class StoredSignInAccount(
+    private val servers: ServerConfigStore,
+    private val accountSettings: AccountSettingsStore,
+) {
+    fun current(): SignInAgain? = servers.load()?.let { server -> SignInAgain(server, accountSettings.load()?.userId) }
+}

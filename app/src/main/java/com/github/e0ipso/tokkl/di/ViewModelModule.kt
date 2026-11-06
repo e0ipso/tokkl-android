@@ -23,11 +23,10 @@ import com.github.e0ipso.tokkl.reports.FilterOptions
 import com.github.e0ipso.tokkl.reports.ReportExportController
 import com.github.e0ipso.tokkl.reports.ReportExportFiles
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
+import com.github.e0ipso.tokkl.reports.reportFilterOptions
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.AppEvents
-import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.signin.SessionWriter
@@ -35,10 +34,10 @@ import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.signin.SignInViewModel
+import com.github.e0ipso.tokkl.signin.StoredSignInAccount
 import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TapTrace
 import com.github.e0ipso.tokkl.timer.TimerViewModel
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.trash.TrashViewModel
@@ -49,14 +48,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.parameter.ParametersHolder
@@ -71,19 +65,11 @@ import org.koin.dsl.module
  */
 internal val viewModelModule = module {
     viewModel { params ->
-        val servers = get<ServerConfigStore>()
-        val accountSettings = get<AccountSettingsStore>()
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
             signIn = SignIn(
                 session = get<SessionWriter>(),
-                // Recheck persisted identity on every submit, including a form restored after the
-                // process died. The in-memory form's reauthentication marker may have been lost.
-                signedInAccount = {
-                    servers.load()?.let { server ->
-                        SignInAgain(server, accountSettings.load()?.userId)
-                    }
-                },
+                signedInAccount = StoredSignInAccount(get(), get())::current,
             ),
             trust = get<ServerTrustStore>(),
             cooldowns = get<SignInCooldownStore>(),
@@ -103,10 +89,10 @@ internal val viewModelModule = module {
         val scope = viewModelCoroutineScope()
         ReportsViewModel(
             accountSettings = accountSettings.state,
-            client = session::client,
+            client = session,
             exportCapabilities = capabilities.state,
             exporter = ReportExportController(
-                client = session::client,
+                client = session,
                 files = ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)),
                 account = Session.exports,
                 csvMissing = capabilities::csvMissing,
@@ -115,16 +101,9 @@ internal val viewModelModule = module {
             ),
             scope = scope,
             io = io(),
-            // From the Room cache, never from the server, and only while the screen reads them.
-            filterOptions = combine(
-                cache.projects,
-                cache.clients,
-                cache.tags,
-                accountSettings.state,
-                capabilities.state,
-            ) { projects, clients, tags, settings, capabilities ->
-                FilterOptions.of(projects, clients, tags, settings?.defaultWorkspaceId, negation = capabilities.negatedFilters)
-            }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FilterOptions.NONE),
+            // Only while the screen reads them.
+            filterOptions = reportFilterOptions(cache, accountSettings.state, capabilities.state)
+                .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FilterOptions.NONE),
             appEvents = get<AppEvents>().events,
         )
     }
@@ -136,7 +115,7 @@ internal val viewModelModule = module {
             projects = cache.projects,
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
-            client = get<Session>()::client,
+            client = get<Session>(),
             scope = viewModelCoroutineScope(),
             io = io(),
             currentId = changes::currentId,
@@ -150,7 +129,7 @@ internal val viewModelModule = module {
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
             undoDelete = get<ChangeSender>()::undoDelete,
-            canRestore = { capabilities.state.value.restore },
+            canRestore = capabilities::offersRestore,
             accountSettings = get<AccountSettingsSource>().state,
             scope = viewModelCoroutineScope(),
         )
@@ -164,11 +143,11 @@ internal val viewModelModule = module {
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
-            client = get<Session>()::client,
+            client = get<Session>(),
             scope = viewModelCoroutineScope(),
             io = io(),
             // The capabilities load from disk on first read, off the main thread.
-            allDayOffered = flow { emitAll(capabilities.state) }.map { it.allDay == true }.distinctUntilChanged(),
+            allDayOffered = capabilities.allDayOffers(),
             overrides = params.overrides(),
             appEvents = get<AppEvents>().events,
         )
@@ -177,8 +156,8 @@ internal val viewModelModule = module {
         val accountSettings = get<AccountSettingsSource>()
         val cache = get<AccountCache>()
         ProjectsViewModel(
-            client = get<Session>()::client,
-            workspaceId = { accountSettings.state.value?.defaultWorkspaceId },
+            client = get<Session>(),
+            workspaceId = accountSettings::defaultWorkspaceId,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = viewModelCoroutineScope(),
             io = io(),
@@ -189,8 +168,8 @@ internal val viewModelModule = module {
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
         ClientsViewModel(
-            client = get<Session>()::client,
-            workspaceId = { accountSettings.state.value?.defaultWorkspaceId },
+            client = get<Session>(),
+            workspaceId = accountSettings::defaultWorkspaceId,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = viewModelCoroutineScope(),
             io = io(),
@@ -200,8 +179,8 @@ internal val viewModelModule = module {
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
         TagsViewModel(
-            client = get<Session>()::client,
-            workspaceId = { accountSettings.state.value?.defaultWorkspaceId },
+            client = get<Session>(),
+            workspaceId = accountSettings::defaultWorkspaceId,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = viewModelCoroutineScope(),
             io = io(),
@@ -211,7 +190,7 @@ internal val viewModelModule = module {
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
         TrashViewModel(
-            client = get<Session>()::client,
+            client = get<Session>(),
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             trashMissing = get<CapabilitiesSource>()::trashMissing,
             scope = viewModelCoroutineScope(),
@@ -222,8 +201,6 @@ internal val viewModelModule = module {
     viewModel {
         val cache = get<AccountCache>()
         val sender = get<ChangeSender>()
-        val timerStates = get<AccountTimerStates>()
-        val io = io()
         TimerViewModel(
             controls = get<TimerControlsSource>().controls,
             projects = cache.projects,
@@ -233,10 +210,9 @@ internal val viewModelModule = module {
             scope = viewModelCoroutineScope(),
             trace = TapTrace.System,
             pauseChain = get<TimerActions>(),
-            sendQueued = { sender.sendAndWait() },
+            sendQueued = sender::sendAndWait,
             discardNotices = get<HeldTimerFlows>().discardNotice,
-            // Records the notice as shown in the account's timer state store.
-            takeDiscardNotice = { withContext(io) { timerStates.source.takeDiscardNotice() } },
+            takeDiscardNotice = get<HeldTimerFlows>()::takeDiscardNotice,
             timerApi = get<CapabilitiesSource>().state.map { it.timerState },
         )
     }
@@ -247,7 +223,7 @@ internal val viewModelModule = module {
             projects = cache.projects,
             tasks = cache.tasks,
             available = get<CapabilitiesSource>().state.map { it.favorites },
-            save = FavoritesServer(client = get<Session>()::client, cache = cache)::save,
+            save = FavoritesServer(client = get<Session>(), cache = cache)::save,
             scope = viewModelCoroutineScope(),
             io = io(),
         )
@@ -278,8 +254,8 @@ internal val viewModelModule = module {
             unsent = changes.unsentCount,
             refused = changes.held,
             scope = viewModelCoroutineScope(),
-            sendQueued = { sender.sendAndWait() },
-            alarmProbe = { alarms.permissionDenied },
+            sendQueued = sender::sendAndWait,
+            alarmProbe = alarms::permissionDenied,
         )
     }
     viewModel {

@@ -20,7 +20,6 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.AccountTime
-import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate

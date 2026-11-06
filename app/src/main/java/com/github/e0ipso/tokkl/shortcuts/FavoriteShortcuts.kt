@@ -1,10 +1,17 @@
 package com.github.e0ipso.tokkl.shortcuts
 
+import android.content.Context
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.favorites.fields
 import java.security.MessageDigest
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 
 /**
  * One favorite as a launcher shortcut (docs/PRD.md N6).
@@ -76,3 +83,17 @@ private fun projectName(fields: EntryFields, projects: List<CachedProject>): Str
 private fun field(value: String): String = "${value.length}:$value"
 
 private const val ID_PREFIX = "favorite-"
+
+/**
+ * The launcher shortcuts of the cached favorites as they, the projects and the capabilities change.
+ * The capabilities load on the first collection, on the collecting thread.
+ */
+internal fun favoriteShortcutLists(
+    context: Context,
+    launcher: LauncherShortcuts,
+    capabilities: CapabilitiesSource,
+    cache: AccountCache,
+): Flow<List<FavoriteShortcut>> =
+    combine(flow { emitAll(capabilities.state) }, cache.favorites, cache.projects) { flags, favorites, projects ->
+        favoriteShortcuts(flags.favorites, favorites, projects, launcher.limit, favoriteNames(context))
+    }

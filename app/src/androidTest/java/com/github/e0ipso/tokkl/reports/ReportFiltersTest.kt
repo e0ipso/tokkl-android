@@ -33,7 +33,6 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.components.accountRefresh
-import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.finishWithin

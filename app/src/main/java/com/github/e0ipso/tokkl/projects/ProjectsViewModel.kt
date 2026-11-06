@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.projects
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedClient
@@ -45,7 +46,7 @@ typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
  * @param cachedClients the clients on the phone, which the form offers and the list names.
  */
 class ProjectsViewModel(
-    client: () -> TogglApiClient?,
+    client: ApiClientProvider,
     workspaceId: () -> Long?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,

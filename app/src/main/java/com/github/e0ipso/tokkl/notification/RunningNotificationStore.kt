@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.notification
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
 /**
@@ -11,21 +12,21 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so it reads the disk.
  */
-class RunningNotificationStore(context: Context) {
+class RunningNotificationStore(context: Context) : ValueStore<FollowedEntry?> {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
-    fun load(): FollowedEntry? {
+    override fun load(): FollowedEntry? {
         val key = preferences.getString(KEY_SHOWN, null) ?: return null
         val entryId = if (preferences.contains(KEY_SHOWN_ENTRY)) preferences.getLong(KEY_SHOWN_ENTRY, 0) else null
         return FollowedEntry(key, entryId)
     }
 
     @Throws(IOException::class)
-    fun save(followed: FollowedEntry?) {
+    override fun save(value: FollowedEntry?) {
         commit {
-            if (followed == null) remove(KEY_SHOWN) else putString(KEY_SHOWN, followed.key)
-            if (followed?.entryId == null) remove(KEY_SHOWN_ENTRY) else putLong(KEY_SHOWN_ENTRY, followed.entryId)
+            if (value == null) remove(KEY_SHOWN) else putString(KEY_SHOWN, value.key)
+            if (value?.entryId == null) remove(KEY_SHOWN_ENTRY) else putLong(KEY_SHOWN_ENTRY, value.entryId)
         }
     }
 

@@ -80,7 +80,7 @@ internal val accountModule = module {
         )
     }
 
-    single { AccountRefresh(client = get<Session>()::client, settings = get(), scope = get(), io = io(), steps = get<AccountRefreshPipeline>()) }
+    single { AccountRefresh(client = get<Session>(), settings = get(), scope = get(), io = io(), steps = get<AccountRefreshPipeline>()) }
 
     /**
      * Refreshes the account, and with it the running entry and the cache, each time the app comes
@@ -115,7 +115,7 @@ internal val accountModule = module {
     single {
         TimerViewSetting(
             store = get<TimerViewStore>(),
-            client = get<Session>()::client,
+            client = get<Session>(),
             keepsTimerView = get<CapabilitiesSource>()::keepsPreferences,
             scope = get(),
             io = io(),

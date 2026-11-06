@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
@@ -77,7 +77,7 @@ data class StoredPomodoroDefaults(val defaults: PomodoroDefaults, val unsent: Bo
  */
 class PomodoroDefaultsSetting(
     private val store: ValueStore<StoredPomodoroDefaults>,
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val keepsPreferences: () -> Boolean,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,

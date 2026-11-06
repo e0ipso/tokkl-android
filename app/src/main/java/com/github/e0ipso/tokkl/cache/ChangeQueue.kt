@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.components.accountRefresh
-import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.initializeTestWorkManager

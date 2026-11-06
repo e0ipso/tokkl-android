@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -25,14 +26,12 @@ import kotlinx.coroutines.launch
  * launcher ticks, and the widget sets no update period.
  *
  * @param keys keys of what one widget provider shows. Collected on [io], since they read the disk.
- * @param loadShown the key of what the widget last showed, null for none.
- * @param saveShown replaces it.
+ * @param shown the key of what the widget last showed, null for none.
  * @param update draws every placed widget again from the phone's state.
  */
 class WidgetSync(
     private val keys: Flow<String>,
-    private val loadShown: () -> String?,
-    private val saveShown: (String) -> Unit,
+    private val shown: ValueStore<String>,
     private val update: suspend () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -41,12 +40,11 @@ class WidgetSync(
     /** Keeps the Timer widget's lazy state factory compatible with independent key flows. */
     constructor(
         state: () -> Flow<WidgetState>,
-        loadShown: () -> String?,
-        saveShown: (String) -> Unit,
+        shown: ValueStore<String>,
         update: suspend () -> Unit,
         scope: CoroutineScope,
         io: CoroutineContext,
-    ) : this(flow { emitAll(state().map { it.key() }) }, loadShown, saveShown, update, scope, io)
+    ) : this(flow { emitAll(state().map { it.key() }) }, shown, update, scope, io)
 
     /** Follows the phone's state until the scope ends. Call once, at process start. */
     fun start(): Job = scope.launch(io) { follow() }
@@ -58,10 +56,10 @@ class WidgetSync(
 
     /** Updates the widgets unless they already show what [key] stands for. */
     suspend fun apply(key: String) {
-        if (key == loadShown()) return
+        if (key == shown.load()) return
         update()
         try {
-            saveShown(key)
+            shown.save(key)
         } catch (e: IOException) {
             // The widgets are right. A new process draws them once more, which costs nothing else.
         }
@@ -75,15 +73,15 @@ class WidgetSync(
  *
  * The first call loads the preferences file, so it reads the disk.
  */
-class WidgetStore(context: Context, private val keyName: String = TIMER_KEY) {
+class WidgetStore(context: Context, private val keyName: String = TIMER_KEY) : ValueStore<String> {
 
     private val preferences: SharedPreferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
-    fun load(): String? = preferences.getString(keyName, null)
+    override fun load(): String? = preferences.getString(keyName, null)
 
     @Throws(IOException::class)
-    fun save(key: String) {
-        if (!preferences.edit().putString(keyName, key).commit()) throw IOException("Could not write $FILE_NAME")
+    override fun save(value: String) {
+        if (!preferences.edit().putString(keyName, value).commit()) throw IOException("Could not write $FILE_NAME")
     }
 
     companion object {

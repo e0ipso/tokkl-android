@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl.favorites
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.EntryFields
@@ -23,7 +23,7 @@ const val MAX_FAVORITES = 9
  *
  * @param client the signed-in account's API client, or null when signed out.
  */
-class FavoritesServer(private val client: () -> TogglApiClient?, private val cache: AccountCache) {
+class FavoritesServer(private val client: ApiClientProvider, private val cache: AccountCache) {
 
     /**
      * Posts [favorites], in order, to `POST /api/v9/me/preferences`, and once the server has

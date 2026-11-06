@@ -1,9 +1,9 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.csvEndpointAbsent
 import com.github.e0ipso.tokkl.session.ExportAccount
 import java.io.File
@@ -30,7 +30,7 @@ sealed interface ReportExportState {
 
 /** One export at a time, independent of report pagination and protected by an account lease. */
 class ReportExportController(
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val files: ReportExportFiles,
     private val account: ExportAccount,
     private val csvMissing: (ReportCsvKind) -> Unit,

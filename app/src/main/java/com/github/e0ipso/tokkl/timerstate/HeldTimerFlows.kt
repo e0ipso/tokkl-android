@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 
 /**
  * The signed-in account's held timer state, as flows that follow [timerStates] across sign-ins.
@@ -33,6 +34,12 @@ class HeldTimerFlows(
     val session: Flow<HeldTimerState?> =
         combine(held, flow { emitAll(capabilities.state) }) { held, flags -> held.takeIf { flags.timerState } }
             .flowOn(io)
+
+    /**
+     * Takes the [discardNotice] on show, recording it as shown in the account's timer state
+     * store, on [io].
+     */
+    suspend fun takeDiscardNotice(): DiscardedPomodoro? = withContext(io) { timerStates.source.takeDiscardNotice() }
 
     /** The too-short pomodoro of the signed-in account's timer state that no screen has shown yet. */
     val discardNotice: Flow<DiscardedPomodoro?> =

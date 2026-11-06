@@ -26,7 +26,7 @@ internal val pomodoroModule = module {
     single {
         PomodoroDefaultsSetting(
             store = get<PomodoroDefaultsStore>(),
-            client = get<Session>()::client,
+            client = get<Session>(),
             keepsPreferences = get<CapabilitiesSource>()::keepsPreferences,
             scope = get(),
             io = io(),

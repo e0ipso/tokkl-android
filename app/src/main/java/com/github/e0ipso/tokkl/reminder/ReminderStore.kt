@@ -22,6 +22,13 @@ class ReminderStore(context: Context) : ValueStore<StoredReminderPreferences> {
         putBoolean("shared", value.shared)
     }
 
+    /** The reminder of the running timer, null for none. */
+    val timers: ValueStore<ReminderTimer?> = object : ValueStore<ReminderTimer?> {
+        override fun load(): ReminderTimer? = loadTimer()
+
+        override fun save(value: ReminderTimer?) = saveTimer(value)
+    }
+
     fun loadTimer(): ReminderTimer? = if (!preferences.contains("timer_id")) null else ReminderTimer(
         preferences.getLong("timer_id", 0), preferences.getLong("timer_start", 0),
         preferences.getLong("timer_due", 0), preferences.getBoolean("timer_handled", false),

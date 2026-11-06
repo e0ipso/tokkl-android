@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.catalog
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -89,7 +90,7 @@ interface CatalogPageModel {
  * @param fetch reads the page's data from the workspace. Runs on [io].
  */
 class CatalogModel<D, O>(
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val workspaceId: () -> Long?,
     private val refreshCache: () -> Unit,
     private val scope: CoroutineScope,

@@ -21,7 +21,6 @@ import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
-import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.pomodoroDefaults
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail

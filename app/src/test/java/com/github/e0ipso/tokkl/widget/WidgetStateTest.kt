@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
+import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
@@ -388,8 +389,7 @@ class WidgetStateTest {
         val updates = mutableListOf<String?>()
         val sync = WidgetSync(
             state = { flowOf(first, first, second) },
-            loadShown = { shown },
-            saveShown = { shown = it },
+            shown = valueStore(load = { shown }, save = { shown = it }),
             update = { updates += shown },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
@@ -407,8 +407,7 @@ class WidgetStateTest {
         var shown: String? = state(entry = null).key()
         val sync = WidgetSync(
             state = { flowOf(state()) },
-            loadShown = { shown },
-            saveShown = { shown = it },
+            shown = valueStore(load = { shown }, save = { shown = it }),
             update = { updates++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
@@ -425,8 +424,7 @@ class WidgetStateTest {
         var updates = 0
         val sync = WidgetSync(
             state = { flowOf(state(), state(entry = null)) },
-            loadShown = { null },
-            saveShown = { throw IOException("disk full") },
+            shown = valueStore(load = { null }, save = { throw IOException("disk full") }),
             update = { updates++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,

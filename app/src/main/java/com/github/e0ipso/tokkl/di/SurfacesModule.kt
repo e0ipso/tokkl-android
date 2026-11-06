@@ -1,30 +1,20 @@
 package com.github.e0ipso.tokkl.di
 
 import androidx.glance.appwidget.updateAll
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerControlsSource
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.notification.RunningNotificationStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
 import com.github.e0ipso.tokkl.notification.RunningNotifier
-import com.github.e0ipso.tokkl.notification.runningNotificationContent
-import com.github.e0ipso.tokkl.reminder.ReminderInput
-import com.github.e0ipso.tokkl.reminder.ReminderNotifier
+import com.github.e0ipso.tokkl.notification.runningNotificationContents
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderStore
-import com.github.e0ipso.tokkl.reminder.ReminderSync
-import com.github.e0ipso.tokkl.reminder.ReminderWork
+import com.github.e0ipso.tokkl.reminder.accountReminderSync
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutSync
 import com.github.e0ipso.tokkl.shortcuts.LauncherShortcuts
-import com.github.e0ipso.tokkl.shortcuts.favoriteNames
-import com.github.e0ipso.tokkl.shortcuts.favoriteShortcuts
+import com.github.e0ipso.tokkl.shortcuts.favoriteShortcutLists
 import com.github.e0ipso.tokkl.tile.TileRefresh
-import com.github.e0ipso.tokkl.timer.SurfaceTap
-import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
-import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.widget.PomodoroWidget
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
 import com.github.e0ipso.tokkl.widget.TokklWidget
@@ -32,9 +22,7 @@ import com.github.e0ipso.tokkl.widget.WidgetStateSource
 import com.github.e0ipso.tokkl.widget.WidgetStore
 import com.github.e0ipso.tokkl.widget.WidgetSync
 import com.github.e0ipso.tokkl.widget.key
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import org.koin.android.ext.koin.androidApplication
@@ -59,15 +47,10 @@ internal val surfacesModule = module {
      * start, pause, resume, stop and edit from any surface or device reaches it.
      */
     single {
-        val store = get<RunningNotificationStore>()
         val notifier = RunningNotifier(androidContext())
-        val cache = get<AccountCache>()
         RunningNotificationSync(
-            running = combine(get<TimerControlsSource>().controls, cache.projects, cache.tasks) { controls, projects, tasks ->
-                runningNotificationContent(controls, projects, tasks)
-            },
-            loadShown = store::load,
-            saveShown = store::save,
+            running = runningNotificationContents(get<TimerControlsSource>().controls, get()),
+            shown = get<RunningNotificationStore>(),
             currentId = get<ChangeQueue>()::currentId,
             post = notifier::post,
             remove = notifier::remove,
@@ -85,11 +68,9 @@ internal val surfacesModule = module {
      */
     single(TimerWidgetQualifier) {
         val context = androidContext()
-        val store = get<WidgetStore>(TimerWidgetQualifier)
         WidgetSync(
             state = { get<WidgetStateSource>().state },
-            loadShown = store::load,
-            saveShown = store::save,
+            shown = get<WidgetStore>(TimerWidgetQualifier),
             update = { TokklWidget().updateAll(context) },
             scope = get(),
             io = io(),
@@ -102,11 +83,9 @@ internal val surfacesModule = module {
     /** The Pomodoro widget's redraws. Its key is independent of the Timer widget. */
     single(PomodoroWidgetQualifier) {
         val context = androidContext()
-        val store = get<WidgetStore>(PomodoroWidgetQualifier)
         WidgetSync(
             keys = flow { emitAll(get<PomodoroWidgetStateSource>().state.map { it.key() }) },
-            loadShown = store::load,
-            saveShown = store::save,
+            shown = get<WidgetStore>(PomodoroWidgetQualifier),
             update = { PomodoroWidget().updateAll(context) },
             scope = get(),
             io = io(),
@@ -119,14 +98,9 @@ internal val surfacesModule = module {
      * main thread.
      */
     single {
-        val context = androidContext()
-        val launcher = LauncherShortcuts(context)
-        val cache = get<AccountCache>()
-        val capabilities = get<CapabilitiesSource>()
+        val launcher = LauncherShortcuts(androidContext())
         FavoriteShortcutSync(
-            shortcuts = combine(flow { emitAll(capabilities.state) }, cache.favorites, cache.projects) { flags, favorites, projects ->
-                favoriteShortcuts(flags.favorites, favorites, projects, launcher.limit, favoriteNames(context))
-            },
+            shortcuts = favoriteShortcutLists(androidContext(), launcher, get(), get()),
             published = launcher::published,
             publish = launcher::publish,
             scope = get(),
@@ -139,42 +113,8 @@ internal val surfacesModule = module {
     single { ReminderStore(androidContext()) }
 
     /** Shared reminder settings where both keys exist, account-local on older servers. */
-    single {
-        val store = get<ReminderStore>()
-        ReminderSetting(store, get<Session>()::client, get(), io())
-    }
+    single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), io()) }
 
-    /**
-     * One reminder per running id/start, followed independently of any screen. Its Pause shows,
-     * and goes to the server, only where the timer controls offer Pause for that entry.
-     */
-    single {
-        val context = androidContext()
-        val store = get<ReminderStore>()
-        val notifier = ReminderNotifier(context)
-        val session = get<Session>()
-        val changes = get<ChangeQueue>()
-        val cache = get<AccountCache>()
-        val settings = get<ReminderSetting>()
-        val controls = get<TimerControlsSource>()
-        val surfaceActions = get<TimerSurfaceActions>()
-        suspend fun runningNow(entryId: Long) =
-            (controls.controls.first() as? TimerControls.Running)?.takeIf { it.entry.id == entryId }
-        ReminderSync(
-            latest = {
-                ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.state.value)
-            },
-            currentId = changes::currentId,
-            load = store::loadTimer,
-            save = store::saveTimer,
-            schedule = { ReminderWork.schedule(context, it) },
-            cancel = { ReminderWork.cancel(context) },
-            post = { timer -> notifier.post(timer, pausable = runningNow(changes.currentId(timer.id))?.pausable == true) },
-            remove = notifier::remove,
-            stop = { changes.stop(it) },
-            pause = { entryId ->
-                runningNow(entryId)?.let { surfaceActions.tap(TimerSurfaceAction.Pause, it.target) as? SurfaceTap.Request }
-            },
-        )
-    }
+    /** The running entry's reminder, followed independently of any screen. */
+    single { accountReminderSync(androidContext(), get(), get(), get(), get(), get(), get(), get()) }
 }

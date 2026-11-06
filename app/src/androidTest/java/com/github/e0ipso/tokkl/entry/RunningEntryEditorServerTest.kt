@@ -72,7 +72,6 @@ import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.navigationStores
 import com.github.e0ipso.tokkl.components.sender

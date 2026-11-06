@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.tags
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedTag
@@ -44,7 +45,7 @@ typealias TagsState = CatalogState<TagsData, TagsOverlay>
  * @param cachedTags the tags on the phone, which the page lists while the server's do not load.
  */
 class TagsViewModel(
-    client: () -> TogglApiClient?,
+    client: ApiClientProvider,
     workspaceId: () -> Long?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,

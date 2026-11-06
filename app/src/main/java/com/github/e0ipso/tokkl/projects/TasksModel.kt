@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.projects
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -38,7 +39,7 @@ typealias TasksState = CatalogState<TasksData, TaskOverlay>
  * [refreshCache] reloads the offline cache, so the entry editor's picker offers the change.
  */
 class TasksModel(
-    client: () -> TogglApiClient?,
+    client: ApiClientProvider,
     workspaceId: () -> Long?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,

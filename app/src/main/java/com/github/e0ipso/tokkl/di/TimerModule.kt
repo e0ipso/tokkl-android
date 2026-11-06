@@ -37,7 +37,7 @@ internal val timerModule = module {
      * server at once and never queued. Each answer, refusals included, goes to the account's
      * timer state.
      */
-    single { TimerActions(client = get<Session>()::client, source = get<AccountTimerStates>()::source, io = io()) }
+    single { TimerActions(client = get<Session>(), source = get<AccountTimerStates>()::source, io = io()) }
 
     /**
      * The Pause, Resume and Stop of the running notification, the widget, the Quick Settings tile

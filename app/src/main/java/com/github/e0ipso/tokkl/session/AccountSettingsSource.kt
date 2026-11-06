@@ -24,6 +24,9 @@ class AccountSettingsSource(private val disk: ValueStore<AccountSettings>) {
     /** The stored settings, or null when none are stored yet. */
     val state: StateFlow<AccountSettings?> by lazy { mutableState.asStateFlow() }
 
+    /** The workspace of a new entry, or null while no settings are stored. */
+    fun defaultWorkspaceId(): Long? = state.value?.defaultWorkspaceId
+
     /** Guards [writes], and each write together with the state it sets. */
     private val lock = Any()
 

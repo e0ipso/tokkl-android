@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
@@ -109,7 +110,7 @@ import okhttp3.HttpUrl
  */
 class ChangeSender(
     private val store: ChangeStore,
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val onSent: () -> Unit = {},

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.reminder
 
+import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -19,7 +20,7 @@ class ReminderSyncTest {
     private val mappings = mutableMapOf<Long, Long>()
     private var removals = 0
     private fun sync() = ReminderSync(
-        latest = { input }, currentId = { mappings[it] ?: it }, load = { stored }, save = { stored = it },
+        latest = { input }, currentId = { mappings[it] ?: it }, timers = valueStore(load = { stored }, save = { stored = it }),
         schedule = { if (waiting.none { old -> old.id == it.id && old.start == it.start && old.due == it.due }) waiting += it },
         cancel = { waiting.clear() }, post = { posted += it }, remove = {}, stop = { stopped += it; true },
     )
@@ -157,7 +158,7 @@ class ReminderSyncTest {
     }
 
     private fun pausing(pause: suspend (Long) -> SurfaceTap.Request?) = ReminderSync(
-        latest = { input }, currentId = { mappings[it] ?: it }, load = { stored }, save = { stored = it },
+        latest = { input }, currentId = { mappings[it] ?: it }, timers = valueStore(load = { stored }, save = { stored = it }),
         schedule = { waiting += it }, cancel = { waiting.clear() }, post = { posted += it }, remove = { removals++ },
         stop = { stopped += it; true }, pause = pause,
     )

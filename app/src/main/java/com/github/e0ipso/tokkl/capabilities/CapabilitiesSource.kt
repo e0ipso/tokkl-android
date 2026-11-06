@@ -6,9 +6,14 @@ import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.io.IOException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 /**
  * The server's capabilities for the whole process, and the one place features read them from.
@@ -37,6 +42,15 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
 
     /** Whether the server stores no-time entries ([Capabilities.allDay]). */
     fun offersAllDay(): Boolean = state.value.allDay == true
+
+    /** Whether the server restores deleted entries ([Capabilities.restore]). */
+    fun offersRestore(): Boolean = state.value.restore
+
+    /**
+     * [offersAllDay] as it changes. The first collection loads the capabilities, on the
+     * collecting thread.
+     */
+    fun allDayOffers(): Flow<Boolean> = flow { emitAll(state) }.map { it.allDay == true }.distinctUntilChanged()
 
     /**
      * Sets the flags from [me], the refresh's `GET /api/v9/me`, one `GET /api/app/trash` and one

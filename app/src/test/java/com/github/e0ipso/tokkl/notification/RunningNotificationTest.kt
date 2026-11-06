@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.notification
 
+import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
@@ -354,8 +355,7 @@ class RunningNotificationTest {
         fun sync(running: Flow<RunningNotificationContent?>) =
             RunningNotificationSync(
                 running = running,
-                loadShown = { shown },
-                saveShown = { followed -> if (failWrites) throw IOException("disk full") else shown = followed },
+                shown = valueStore(load = { shown }, save = { followed -> if (failWrites) throw IOException("disk full") else shown = followed }),
                 currentId = { id -> serverIds[id] ?: id },
                 post = { calls += "post ${it.description} ${it.entryId}" },
                 remove = { calls += "remove" },

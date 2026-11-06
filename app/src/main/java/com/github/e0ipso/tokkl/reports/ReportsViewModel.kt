@@ -2,9 +2,9 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
@@ -99,7 +99,7 @@ sealed interface ReportFailure {
  */
 class ReportsViewModel(
     val accountSettings: StateFlow<AccountSettings?>,
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),

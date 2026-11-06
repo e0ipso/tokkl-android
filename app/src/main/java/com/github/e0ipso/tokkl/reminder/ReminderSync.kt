@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.io.IOException
@@ -30,8 +31,7 @@ data class ReminderInput(val running: CachedTimeEntry?, val preferences: Reminde
 class ReminderSync(
     private val latest: suspend () -> ReminderInput,
     private val currentId: suspend (Long) -> Long,
-    private val load: () -> ReminderTimer?,
-    private val save: (ReminderTimer?) -> Unit,
+    private val timers: ValueStore<ReminderTimer?>,
     private val schedule: (ReminderTimer) -> Unit,
     private val cancel: () -> Unit,
     private val post: suspend (ReminderTimer) -> Unit,
@@ -56,17 +56,17 @@ class ReminderSync(
     private suspend fun update(input: ReminderInput): ReminderTimer? {
         val entry = input.running?.takeIf { it.stop == null }
         if (entry == null) {
-            cancel(); remove(); save(null)
+            cancel(); remove(); timers.save(null)
             return null
         }
-        val previous = load()
+        val previous = timers.load()
         val same = previous != null && currentId(previous.id) == entry.id && previous.start == entry.start.epochSecond
         val due = entry.start.epochSecond * 1000 + Duration.ofHours(input.preferences.clamped().hours.toLong()).toMillis()
         val timer = if (same) previous.copy(due = due) else ReminderTimer(entry.id, entry.start.epochSecond, due)
         if (!same || previous.due != due) {
             cancel(); remove()
         }
-        save(timer)
+        timers.save(timer)
         if (!input.preferences.enabled || timer.handled) cancel() else schedule(timer)
         if (!input.preferences.enabled) remove()
         return timer.takeIf { input.preferences.enabled }
@@ -77,7 +77,7 @@ class ReminderSync(
         val timer = update(latest()) ?: return@withLock
         if (timer.start != start || currentId(id) != currentId(timer.id) || timer.handled || timer.due != due) return@withLock
         // Persist first, so another process or a second delivery never posts it twice.
-        save(timer.copy(handled = true))
+        timers.save(timer.copy(handled = true))
         post(timer)
     }
 
@@ -99,7 +99,7 @@ class ReminderSync(
             val input = latest()
             val entry = input.running ?: return null
             if (entry.stop != null || entry.start.epochSecond != start || currentId(id) != entry.id) return null
-            val timer = load() ?: return null
+            val timer = timers.load() ?: return null
             if (timer.start != start || currentId(timer.id) != entry.id) return null
             if (pauseTimer) {
                 pause(entry.id) ?: return null
@@ -114,18 +114,18 @@ class ReminderSync(
         if (result == TimerActionResult.Done) {
             lock.withLock {
                 // The server's paused state may have ended the reminder already.
-                load()?.takeIf { it.start == start && currentId(it.id) == currentId(id) }?.let(::handled)
+                timers.load()?.takeIf { it.start == start && currentId(it.id) == currentId(id) }?.let(::handled)
             }
         }
         return result
     }
 
     private fun handled(timer: ReminderTimer) {
-        save(timer.copy(handled = true))
+        timers.save(timer.copy(handled = true))
         cancel(); remove()
     }
 
     suspend fun forget(): Unit = lock.withLock {
-        cancel(); remove(); save(null)
+        cancel(); remove(); timers.save(null)
     }
 }

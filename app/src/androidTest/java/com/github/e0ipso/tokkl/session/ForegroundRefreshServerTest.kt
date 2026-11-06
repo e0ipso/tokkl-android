@@ -22,7 +22,6 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.components.accountRefresh
-import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient

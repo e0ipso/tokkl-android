@@ -2,10 +2,10 @@ package com.github.e0ipso.tokkl.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -157,7 +157,7 @@ class CalendarViewModel(
     tasks: Flow<List<CachedTask>>,
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),

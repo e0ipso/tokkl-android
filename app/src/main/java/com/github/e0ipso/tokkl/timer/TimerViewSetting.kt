@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
@@ -44,7 +44,7 @@ data class StoredTimerView(val view: TimerView, val unsent: Boolean)
  */
 class TimerViewSetting(
     private val store: ValueStore<StoredTimerView>,
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val keepsTimerView: () -> Boolean,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -32,7 +33,7 @@ fun interface AccountRefreshSteps {
  *   settings while the requests ran.
  */
 class AccountRefresh(
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val settings: AccountSettingsSource,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,

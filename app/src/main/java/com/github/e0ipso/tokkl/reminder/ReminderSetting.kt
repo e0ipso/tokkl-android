@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.reminder
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
@@ -42,7 +42,7 @@ data class StoredReminderPreferences(val preferences: ReminderPreferences, val u
  */
 class ReminderSetting(
     private val store: ValueStore<StoredReminderPreferences>,
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AccountRefreshListener {

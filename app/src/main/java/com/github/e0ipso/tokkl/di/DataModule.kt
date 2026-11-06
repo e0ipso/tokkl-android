@@ -55,7 +55,7 @@ internal val dataModule = module {
     single {
         ChangeSender(
             get(),
-            client = get<Session>()::client,
+            client = get<Session>(),
             scope = get(),
             io = io(),
             onSent = get<AccountRefreshRequests>()::refreshAfterChange,

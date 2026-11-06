@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.notification
 
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -10,6 +11,8 @@ import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.fields
 import java.security.MessageDigest
 import java.time.Instant
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 /**
  * What the running timer's notification shows (docs/PRD.md N1): the entry's description, its
@@ -175,3 +178,10 @@ private fun field(value: String): String = "${value.length}:$value"
 /** A tag as Tokkl matches names: trimmed, with ASCII letters in lower case. */
 private fun tagKey(name: String): String =
     name.trim().map { if (it in 'A'..'Z') it + ('a' - 'A') else it }.joinToString("")
+
+/**
+ * The running notification's content as the timer controls and the cached projects and tasks
+ * change, null while nothing runs.
+ */
+internal fun runningNotificationContents(controls: Flow<TimerControls>, cache: AccountCache): Flow<RunningNotificationContent?> =
+    combine(controls, cache.projects, cache.tasks) { current, projects, tasks -> runningNotificationContent(current, projects, tasks) }

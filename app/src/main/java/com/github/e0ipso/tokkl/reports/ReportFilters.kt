@@ -1,9 +1,13 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTag
+import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.session.AccountSettings
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
@@ -117,3 +121,17 @@ data class FilterOptions(
         }
     }
 }
+
+/**
+ * The options of the filter sheet as the cache, the settings and the capabilities change: the
+ * projects, clients and tags of the default workspace, and negation where the server offers it.
+ * From the Room cache, never from the server.
+ */
+internal fun reportFilterOptions(
+    cache: AccountCache,
+    settings: Flow<AccountSettings?>,
+    capabilities: Flow<Capabilities>,
+): Flow<FilterOptions> =
+    combine(cache.projects, cache.clients, cache.tags, settings, capabilities) { projects, clients, tags, account, flags ->
+        FilterOptions.of(projects, clients, tags, account?.defaultWorkspaceId, negation = flags.negatedFilters)
+    }

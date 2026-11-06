@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.timerstate
 
 import androidx.annotation.StringRes
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Refusable
@@ -37,7 +38,7 @@ import kotlinx.serialization.json.put
  * @param io where requests run, off the main thread.
  */
 class TimerActions(
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val source: () -> TimerStateSource,
     private val io: CoroutineContext,
 ) : PauseActions, SessionActions {

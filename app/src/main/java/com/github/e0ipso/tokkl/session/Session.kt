@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SuccessListener
@@ -25,7 +26,7 @@ class Session(
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
     private val clearExports: () -> Unit = {},
-) {
+) : ApiClientProvider {
 
     /**
      * Signed in means a server is stored and the token decrypts. A Keystore or
@@ -55,6 +56,8 @@ class Session(
             null
         }
     }
+
+    override fun invoke(): TogglApiClient? = client()
 
     /**
      * Stores [server] as the configured server and [token] as its API token.

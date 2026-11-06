@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.di
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.reports.ReportExportFiles
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -17,6 +18,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
 import org.koin.core.scope.Scope
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /** [Dispatchers.IO], for disk and network work. */
@@ -62,5 +64,5 @@ internal val coreModule = module {
             successListener = get<LastAnswer>(),
             clearExports = get<ReportExportFiles>()::clear,
         )
-    }
+    } bind ApiClientProvider::class
 }

@@ -2,9 +2,9 @@ package com.github.e0ipso.tokkl.trash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.CatalogPageModel
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.toServerProblem
@@ -69,7 +69,7 @@ data class TrashState(
  * @param settings the account settings, for the times, dates and durations the page shows.
  */
 class TrashViewModel(
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     private val refreshCache: () -> Unit,
     private val trashMissing: () -> Unit,
     scope: CoroutineScope,

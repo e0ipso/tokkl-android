@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
@@ -119,7 +120,7 @@ class HistoryViewModel(
     projects: Flow<List<CachedProject>>,
     tasks: Flow<List<CachedTask>>,
     private val accountSettings: StateFlow<AccountSettings?>,
-    private val client: () -> TogglApiClient?,
+    private val client: ApiClientProvider,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),

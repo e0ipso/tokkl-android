@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.clients
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedClient
@@ -52,7 +53,7 @@ typealias ClientsState = CatalogState<ClientsData, ClientsOverlay>
  *   load.
  */
 class ClientsViewModel(
-    client: () -> TogglApiClient?,
+    client: ApiClientProvider,
     workspaceId: () -> Long?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,
