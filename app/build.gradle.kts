@@ -1,12 +1,10 @@
-import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.tokkl.android.application)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
@@ -88,19 +86,13 @@ val releaseSigning: Map<String, String>? = run {
 
 android {
     namespace = "com.github.e0ipso.tokkl"
-    // Compose UI 1.12 and androidx.core 1.19 need compileSdk 37.
-    compileSdk = 37
-    // Pinned so that F-Droid builds with the same build-tools as CI, which
-    // installs this version. 36.0.0 is both the default and the minimum of AGP
-    // 9.4.1, so check this pin whenever AGP changes.
-    buildToolsVersion = "36.0.0"
+    // compileSdk, buildToolsVersion, minSdk, Java 17 and Compose come from the
+    // tokkl.android.application plugin in build-logic.
 
     defaultConfig {
         // The ID F-Droid lists the app under. The code keeps the namespace's
         // package, so only installed-app lookups use this one.
         applicationId = "com.canpicasoft.tokkl"
-        // Android 12 (docs/PRD.md, Compatibility).
-        minSdk = 31
         // The API level of the test emulator.
         targetSdk = 36
         versionCode = appVersionCode
@@ -141,15 +133,6 @@ android {
         includeInBundle = false
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
-    }
-
     // These probes need the script to revoke permission before instrumentation starts. Revoking
     // it inside a test kills that test's process; ordinary suites keep their restart fixtures.
     if (providers.gradleProperty("tokklFreshNotificationPermission").orNull == "true") {
@@ -173,7 +156,6 @@ room {
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.adaptive)
@@ -293,16 +275,4 @@ val checkDeniedDependencies = tasks.register("checkDeniedDependencies") {
 
 tasks.named("check") {
     dependsOn(checkDeniedDependencies)
-}
-
-// Lint's analysis stores the files of this module relative to path variables,
-// but files outside it, such as gradle/libs.versions.toml and
-// gradle/wrapper/gradle-wrapper.properties, by absolute path: lint has no
-// variable for the root project, and AGP 9.4.1 passes it no --path-variables.
-// From the build cache, one checkout's analysis made another checkout's lint
-// report cite the first checkout's files. With the checkout's path as an
-// input, the analysis comes from the cache only for the checkout that ran it.
-val checkoutDir: String = rootDir.absolutePath
-tasks.withType<AndroidLintAnalysisTask>().configureEach {
-    inputs.property("checkoutDir", checkoutDir)
 }

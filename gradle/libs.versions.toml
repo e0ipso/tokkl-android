@@ -54,9 +54,18 @@ androidx-test-espresso-accessibility = { module = "androidx.test.espresso:espres
 androidx-test-orchestrator = { module = "androidx.test:orchestrator", version.ref = "androidxTestOrchestrator" }
 androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 
+# The plugins that build-logic compiles against.
+android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
+
+# The convention plugins in build-logic.
+tokkl-android-application = { id = "tokkl.android.application" }
+tokkl-android-library = { id = "tokkl.android.library" }
+tokkl-android-library-compose = { id = "tokkl.android.library.compose" }

@@ -1,4 +1,6 @@
 pluginManagement {
+    // Convention plugins with the Android settings the modules share.
+    includeBuild("build-logic")
     repositories {
         google {
             content {
