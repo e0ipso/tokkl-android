@@ -1,3 +1,10 @@
+## [0.8.0](https://github.com/e0ipso/tokkl-android/compare/v0.7.1...v0.8.0) (2026-11-06)
+
+### Features
+
+* add all-day entries to the calendar, entry form and Timer list ([#30](https://github.com/e0ipso/tokkl-android/issues/30)) ([17682a2](https://github.com/e0ipso/tokkl-android/commit/17682a22d0dc4bc9b077f418ee3da32997f0bd07)), closes [#28](https://github.com/e0ipso/tokkl-android/issues/28)
+* show Pomodoro lengths as stepper cards ([#29](https://github.com/e0ipso/tokkl-android/issues/29)) ([31d74bc](https://github.com/e0ipso/tokkl-android/commit/31d74bc6335b7de5ab892c8fa8112b6a52640243)), references [#27](https://github.com/e0ipso/tokkl-android/issues/27)
+
 ## [0.7.1](https://github.com/e0ipso/tokkl-android/compare/v0.7.0...v0.7.1) (2026-10-31)
 
 ### Bug Fixes
