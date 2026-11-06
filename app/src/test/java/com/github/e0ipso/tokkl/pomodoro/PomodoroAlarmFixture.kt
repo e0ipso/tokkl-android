@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId

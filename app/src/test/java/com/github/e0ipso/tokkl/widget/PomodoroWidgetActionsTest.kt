@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.widget
 
 import com.github.e0ipso.tokkl.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult

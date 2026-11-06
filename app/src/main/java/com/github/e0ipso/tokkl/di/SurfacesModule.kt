@@ -6,8 +6,8 @@ import com.github.e0ipso.tokkl.notification.RunningNotificationStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.notification.runningNotificationContents
-import com.github.e0ipso.tokkl.pomodoro.PomodoroWidgetRedraw
-import com.github.e0ipso.tokkl.reminder.ReminderSetting
+import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
+import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderStore
 import com.github.e0ipso.tokkl.reminder.accountReminderSync
 import com.github.e0ipso.tokkl.session.AccountDataOwner

@@ -9,6 +9,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
+import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
 import java.time.Instant
@@ -212,12 +215,4 @@ class PomodoroAlarmRearmReceiver : BroadcastReceiver(), KoinComponent {
         @Volatile
         internal var completed: CountDownLatch? = null
     }
-}
-
-/**
- * Redraws the Pomodoro widget at a planned end that no exact alarm rings for, and arms the next
- * redraw while the phase still runs. The widget implements it.
- */
-fun interface PomodoroWidgetRedraw {
-    suspend fun redraw(context: Context, phase: PomodoroPhaseKey)
 }

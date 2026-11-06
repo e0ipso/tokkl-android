@@ -82,7 +82,7 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContent
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmState
 import com.github.e0ipso.tokkl.pomodoro.PomodoroContent
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPageState
 import com.github.e0ipso.tokkl.pomodoro.heldSession

@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.settings
 
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 
 /** Settings validates drafts before passing them to the shared defaults repository. */
 internal enum class PomodoroDefaultField(val range: IntRange) {

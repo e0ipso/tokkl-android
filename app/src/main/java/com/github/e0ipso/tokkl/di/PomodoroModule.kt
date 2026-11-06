@@ -3,8 +3,8 @@ package com.github.e0ipso.tokkl.di
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.AlarmClockPomodoroScheduler
-import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
+import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRinging
@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
@@ -48,8 +49,8 @@ internal val pomodoroModule = module {
         AlarmClockPomodoroScheduler(androidContext(), timerSyncStarts = get<CapabilitiesSource>()::offersTimerApi)
     } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
-    /** The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it. */
-    single { ServicePomodoroRinging(androidContext()) } bind PomodoroRinging::class
+    /** The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it and the Pomodoro widget reads it. */
+    single { ServicePomodoroRinging(androidContext()) } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class)
 
     /**
      * The exact alarm and the ring of the server's Pomodoro session, which follow the held timer

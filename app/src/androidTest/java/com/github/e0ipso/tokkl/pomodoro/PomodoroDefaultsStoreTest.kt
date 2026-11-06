@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.pomodoro
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

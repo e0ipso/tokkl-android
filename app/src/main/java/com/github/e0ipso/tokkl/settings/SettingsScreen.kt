@@ -33,10 +33,10 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
-import com.github.e0ipso.tokkl.reminder.ReminderPreferences
-import com.github.e0ipso.tokkl.reminder.ReminderSetting
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
+import com.github.e0ipso.tokkl.preferences.ReminderPreferences
+import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.TokklTopBar

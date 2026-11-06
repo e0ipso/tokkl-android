@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.notification.RunningNotifier
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Instant
 import java.util.UUID
 import org.junit.Assert.assertEquals

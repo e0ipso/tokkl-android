@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.runBlocking

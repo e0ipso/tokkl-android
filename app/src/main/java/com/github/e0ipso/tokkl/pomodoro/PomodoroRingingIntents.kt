@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Intent
 import android.net.Uri
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Instant
 
 private const val EXTRA_PHASE_START = "pomodoro_phase_start"

@@ -2,12 +2,12 @@ package com.github.e0ipso.tokkl.widget
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
-import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
+import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +29,7 @@ internal class PomodoroWidgetStateSource(
     held: HeldTimerFlows,
     timerStates: AccountTimerStates,
     cache: AccountCache,
-    ringing: ServicePomodoroRinging,
+    ringing: PomodoroRingingPhase,
     capabilities: CapabilitiesSource,
     accountSettings: AccountSettingsSource,
     pomodoroDefaults: PomodoroDefaultsSetting,
@@ -41,8 +41,8 @@ internal class PomodoroWidgetStateSource(
         val deadlines = pomodoroWidgetDeadlineChanges(held.held.map { held ->
             held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
         })
-        val catalog = combine(cache.projects, cache.tasks, ringing.state, deadlines) { projects, tasks, ring, _ ->
-            Triple(projects, tasks, ring.ring?.phase)
+        val catalog = combine(cache.projects, cache.tasks, ringing.ringingPhase, deadlines) { projects, tasks, ring, _ ->
+            Triple(projects, tasks, ring)
         }
         combine(
             held.held,

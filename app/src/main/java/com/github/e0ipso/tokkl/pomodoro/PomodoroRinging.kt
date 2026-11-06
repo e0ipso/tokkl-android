@@ -3,14 +3,8 @@ package com.github.e0ipso.tokkl.pomodoro
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Instant
-
-/**
- * A phase of the server's session, by its `phase.start`. The phase alarm, the ring, the alarm
- * screen and every notification button carry it, so a delivery or a tap meant for an older phase
- * changes nothing once another device or the phone has moved the session on.
- */
-data class PomodoroPhaseKey(val start: Instant)
 
 /** The four released WAVs, one per server `transition`. The Android output maps them to bundled raw resources. */
 enum class PomodoroSound(val transition: PhaseTransition) {

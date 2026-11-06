@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 
 /** An immutable intent for one phase; re-posting cannot retarget an older alarm's actions. */
 internal fun pomodoroAlarmIntent(context: Context, phase: PomodoroPhaseKey): Intent =

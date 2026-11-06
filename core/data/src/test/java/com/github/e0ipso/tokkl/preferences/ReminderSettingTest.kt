@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.reminder
+package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.*
 import com.github.e0ipso.tokkl.session.MePreferences

@@ -2,9 +2,9 @@ package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
 import androidx.glance.appwidget.updateAll
-import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
-import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
-import com.github.e0ipso.tokkl.pomodoro.PomodoroWidgetRedraw
+import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
 import kotlinx.coroutines.flow.first
 
 /**

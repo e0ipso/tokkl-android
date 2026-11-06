@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.reminder
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.preferences.ReminderPreferences
+import com.github.e0ipso.tokkl.preferences.StoredReminderPreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException

@@ -19,7 +19,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`app/src/main/java/com/github/e0ipso/tokkl/pomodoro/PomodoroDefaultsSetting.kt` owns the work length, short rest, long rest and long-rest frequency. Defaults are 25, 5, 15 and 4. Values are clamped to the accepted ranges. `PomodoroDefaultsStore` persists them and their unsent flag for cold starts and offline use; sign-out clears them.
+`core/data/src/main/java/com/github/e0ipso/tokkl/preferences/PomodoroDefaultsSetting.kt` owns the work length, short rest, long rest and long-rest frequency. It sits in core:data because the Pomodoro page, Settings and the Pomodoro widget all read it. Defaults are 25, 5, 15 and 4. Values are clamped to the accepted ranges. `PomodoroDefaultsStore`, in the Pomodoro feature, persists them and their unsent flag for cold starts and offline use; sign-out clears them.
 
 With Tokkl preference support, a change shows immediately and POSTs only `pomodoro_focus_interval_in_minutes`, `pomodoro_break_interval_in_minutes`, `pomodoro_long_break_interval_in_minutes` and `pomodoro_long_break_every` to `/api/v9/me/preferences`. Failed writes remain unsent and retry on refresh. A refresh protects a local edit from an older response. Without support, including Toggl Track, values stay on the phone and no request is sent. The defaults component does not read or write `pomodoro_enabled` or `pomodoro_stop_timer_at_end`. The start form begins from these defaults and sends all four as per-session overrides to `POST /api/app/pomodoro`, so a later change to a default does not touch a running session. The Pomodoro page itself exists only with the `timerState` capability.
 

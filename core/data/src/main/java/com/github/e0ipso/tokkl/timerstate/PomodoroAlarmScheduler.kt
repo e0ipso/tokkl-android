@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.pomodoro
+package com.github.e0ipso.tokkl.timerstate
 
 import java.time.Instant
 

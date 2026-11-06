@@ -8,13 +8,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
@@ -24,10 +28,11 @@ import org.koin.android.ext.android.inject
  * thread before returning, including when the phone has no network. A queued service start still
  * checks the held phase before it plays.
  */
-internal class ServicePomodoroRinging(private val context: Context) : PomodoroRinging {
+internal class ServicePomodoroRinging(private val context: Context) : PomodoroRinging, PomodoroRingingPhase {
     internal var service: PomodoroRingingService? = null
     private val observed = MutableStateFlow(PomodoroRingingState())
     internal val state = observed.asStateFlow()
+    override val ringingPhase: Flow<PomodoroPhaseKey?> = state.map { it.ring?.phase }
 
     internal fun update(value: PomodoroRingingState) { observed.value = value }
 

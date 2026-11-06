@@ -40,9 +40,9 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.reminderSettings
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
-import com.github.e0ipso.tokkl.reminder.ReminderPreferences
+import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.reminder.ReminderTimer
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode

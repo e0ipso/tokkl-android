@@ -10,6 +10,7 @@ import android.graphics.drawable.Icon
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 
 /** The player owns sound/vibration; the high-importance channel adds neither a second sound nor haptics. */
 internal class PomodoroRingingNotifier(private val context: Context) {

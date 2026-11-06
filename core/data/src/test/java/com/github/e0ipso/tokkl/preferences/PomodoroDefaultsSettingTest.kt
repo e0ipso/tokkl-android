@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.pomodoro
+package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ConfiguredServer

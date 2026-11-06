@@ -6,8 +6,8 @@ import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.entryLabels
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
-import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import java.security.MessageDigest
 import java.time.Instant

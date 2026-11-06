@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.pomodoro.*
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

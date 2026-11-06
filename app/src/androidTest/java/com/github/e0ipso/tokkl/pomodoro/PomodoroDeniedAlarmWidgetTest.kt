@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.components.pomodoroRinging
 import android.app.AlarmManager
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.widget.*
 import java.time.Instant
 import org.junit.*

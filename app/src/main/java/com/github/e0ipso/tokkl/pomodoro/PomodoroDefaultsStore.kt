@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.IOException
 

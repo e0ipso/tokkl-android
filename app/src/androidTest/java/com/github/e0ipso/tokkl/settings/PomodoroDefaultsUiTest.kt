@@ -31,7 +31,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.pomodoro.lengthCard
 import com.github.e0ipso.tokkl.pomodoro.lengthValue
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale

@@ -53,7 +53,6 @@ import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
-import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRing
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier

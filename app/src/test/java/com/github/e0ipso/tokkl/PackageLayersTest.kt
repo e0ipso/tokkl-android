@@ -87,7 +87,7 @@ class PackageLayersTest {
          */
         val LAYERS: List<Set<String>> = listOf(
             setOf("api", "time", "storage", "ui", "platform"),
-            setOf("credentials", "capabilities", "session", "cache", "timerstate", "account"),
+            setOf("credentials", "capabilities", "session", "preferences", "cache", "timerstate", "account"),
             setOf("catalog", "picker", "entryfields", "trust", "timernotice"),
             setOf(
                 "calendar", "clients", "entry", "favorites", "history", "licences", "notification", "pomodoro",
@@ -99,22 +99,20 @@ class PackageLayersTest {
 
         /** The imports allowed between packages of one layer. */
         val SAME_LAYER: Map<String, Set<String>> = mapOf(
-            // Core data, in the order it builds up: the session reads the capabilities, the cache
-            // the session, the timer state the cache, and the account's refresh and reads all four.
+            // Core data, in the order it builds up: the session reads the capabilities, the shared
+            // preferences and the cache the session, the timer state the cache, and the account's
+            // refresh and reads the capabilities, the session, the cache and the timer state.
             "session" to setOf("credentials", "capabilities"),
+            "preferences" to setOf("session"),
             "cache" to setOf("capabilities", "session"),
             "timerstate" to setOf("capabilities", "session", "cache"),
             "account" to setOf("capabilities", "session", "cache", "timerstate"),
             // The entry fields pick projects and tags; a timer notice reads as a catalog problem.
             "entryfields" to setOf("picker"),
             "timernotice" to setOf("catalog"),
-            // The Timer page and the history pin entries as timer templates. Settings shows the
-            // Pomodoro defaults and the reminder. The Pomodoro widget starts sessions with the
-            // Pomodoro defaults and rings through the Pomodoro ringing service.
+            // The Timer page and the history pin entries as timer templates.
             "timer" to setOf("favorites"),
             "history" to setOf("favorites"),
-            "settings" to setOf("pomodoro", "reminder"),
-            "widget" to setOf("pomodoro"),
             // TokklApplication starts Koin; Koin builds the lifecycle observers and the navigation.
             ROOT to setOf("di", "lifecycle", "navigation"),
             "di" to setOf("lifecycle", "navigation"),

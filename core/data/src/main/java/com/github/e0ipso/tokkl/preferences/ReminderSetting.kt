@@ -1,5 +1,6 @@
-package com.github.e0ipso.tokkl.reminder
+package com.github.e0ipso.tokkl.preferences
 
+import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -140,7 +141,8 @@ internal fun ReminderPreferences.body() = buildJsonObject {
     put(ReminderPreferences.HOURS_KEY, clamped().hours)
 }
 
-internal fun MePreferences.reminderPreferences(): ReminderPreferences {
+@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+fun MePreferences.reminderPreferences(): ReminderPreferences {
     val enabled = (body[ReminderPreferences.ENABLED_KEY] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull ?: true
     val number = (body[ReminderPreferences.HOURS_KEY] as? JsonPrimitive)?.takeUnless { it.isString }?.doubleOrNull
     val hours = number?.takeIf { it % 1.0 == 0.0 && it >= 1 && it <= 168 }?.toInt() ?: 8

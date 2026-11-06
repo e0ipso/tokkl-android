@@ -13,9 +13,9 @@ import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
-import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
+import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmViewModel
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.FilterOptions
