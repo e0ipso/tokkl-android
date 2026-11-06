@@ -8,6 +8,8 @@ import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.ElapsedTimerSyncClock
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
+import com.github.e0ipso.tokkl.timerstate.PauseActions
+import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerEventConnections
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
@@ -21,6 +23,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /** The server's timer state, its actions and event stream, and the controls every timer surface shows. */
@@ -37,7 +40,7 @@ internal val timerModule = module {
      * server at once and never queued. Each answer, refusals included, goes to the account's
      * timer state.
      */
-    single { TimerActions(client = get<Session>(), source = get<AccountTimerStates>()::source, io = io()) }
+    single { TimerActions(client = get<Session>(), source = get<AccountTimerStates>()::source, io = io()) } binds arrayOf(PauseActions::class, SessionActions::class)
 
     /**
      * The Pause, Resume and Stop of the running notification, the widget, the Quick Settings tile

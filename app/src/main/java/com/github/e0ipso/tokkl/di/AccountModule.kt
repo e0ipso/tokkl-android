@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshPipeline
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
+import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.AppEvents
@@ -27,6 +28,7 @@ import com.github.e0ipso.tokkl.settings.themeSettingsWithNightMode
 import com.github.e0ipso.tokkl.signin.AccountSessionWriter
 import com.github.e0ipso.tokkl.signin.SessionWriter
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
+import com.github.e0ipso.tokkl.signin.SignInCooldowns
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
@@ -41,7 +43,7 @@ internal val accountModule = module {
     single { CapabilitiesStore(androidContext()) }
     single { TimerViewStore(androidContext()) }
     single { ThemeSettingsStore(androidContext()) }
-    single { SignInCooldownStore(androidContext()) }
+    single { SignInCooldownStore(androidContext()) } bind SignInCooldowns::class
 
     /**
      * Loaded on first use, which is MainActivity's onCreate, on the main thread, so the first frame
@@ -78,7 +80,7 @@ internal val accountModule = module {
                 ),
             ),
         )
-    }
+    } bind AccountRefreshSteps::class
 
     single { AccountRefresh(client = get<Session>(), settings = get(), scope = get(), io = io(), steps = get<AccountRefreshPipeline>()) }
 

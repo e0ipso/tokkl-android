@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRinging
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
@@ -44,7 +45,7 @@ internal val pomodoroModule = module {
     } bind PomodoroAlarmScheduler::class
 
     /** The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it. */
-    single { ServicePomodoroRinging(androidContext()) }
+    single { ServicePomodoroRinging(androidContext()) } bind PomodoroRinging::class
 
     /**
      * The exact alarm and the ring of the server's Pomodoro session, which follow the held timer

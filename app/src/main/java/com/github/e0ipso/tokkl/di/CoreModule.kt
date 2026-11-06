@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.reports.ReportExportFiles
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -48,7 +49,7 @@ internal val coreModule = module {
 
     single { ServerConfigStore(androidContext()) }
     single { ApiTokenStore(androidContext()) }
-    single { ServerTrustStore(androidContext()) }
+    single { ServerTrustStore(androidContext()) } bind ServerTrust::class
 
     single { ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)) }
 

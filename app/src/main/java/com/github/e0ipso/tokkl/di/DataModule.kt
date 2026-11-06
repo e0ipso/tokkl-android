@@ -8,8 +8,10 @@ import com.github.e0ipso.tokkl.cache.CancelWaitingSend
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.ChangeStore
+import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.cache.SendOnQueue
+import com.github.e0ipso.tokkl.cache.ServerSpans
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
@@ -21,6 +23,7 @@ import com.github.e0ipso.tokkl.sync.LastAnswerStore
 import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.SyncStatusSource
 import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /** The Room cache, the change queue and its sender, and what the sync status shows. */
@@ -34,7 +37,7 @@ internal val dataModule = module {
 
     single<ChangeStore> { RoomChangeStore(get()) }
 
-    single { AccountServerSpans(get()) }
+    single { AccountServerSpans(get()) } bind ServerSpans::class
 
     /**
      * Start, stop, create, edit and delete entries on the phone. The [ChangeSender] sends each
@@ -42,7 +45,7 @@ internal val dataModule = module {
      * the app closed.
      */
     single { SendOnQueue(androidContext(), get()) }
-    single { ChangeQueue(get(), io(), onQueued = get<SendOnQueue>()::queued, spans = get<AccountServerSpans>()) }
+    single { ChangeQueue(get(), io(), onQueued = get<SendOnQueue>()::queued, spans = get<AccountServerSpans>()) } bind EntryChanges::class
 
     /**
      * Sends the queued changes in order. Once it has sent some, the account refreshes with a read
