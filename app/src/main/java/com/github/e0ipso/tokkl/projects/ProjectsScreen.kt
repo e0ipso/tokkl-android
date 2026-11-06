@@ -17,7 +17,6 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
@@ -53,10 +53,10 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
     CatalogPageEffects(model, offline)
-    val state by model.state.collectAsState()
-    val cachedProjects by model.cachedProjects.collectAsState(initial = emptyList())
-    val cachedClients by model.cachedClients.collectAsState(initial = emptyList())
-    val tasks by model.tasks.state.collectAsState()
+    val state by model.state.collectAsStateWithLifecycle()
+    val cachedProjects by model.cachedProjects.collectAsStateWithLifecycle(initialValue = emptyList())
+    val cachedClients by model.cachedClients.collectAsStateWithLifecycle(initialValue = emptyList())
+    val tasks by model.tasks.state.collectAsStateWithLifecycle()
     TaskListEffect(model.tasks, (state.overlay as? ProjectForm.Edit)?.project?.id)
     val workspace = model.workspace()
     BackHandler(enabled = state.overlay != null) { model.closeForm() }

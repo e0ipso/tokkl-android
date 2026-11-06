@@ -22,7 +22,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +37,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -66,8 +66,8 @@ import com.github.e0ipso.tokkl.ui.TokklIconButton
 fun TagsScreen(model: TagsViewModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
     CatalogPageEffects(model, offline)
-    val state by model.state.collectAsState()
-    val cachedTags by model.cachedTags.collectAsState(initial = emptyList())
+    val state by model.state.collectAsStateWithLifecycle()
+    val cachedTags by model.cachedTags.collectAsStateWithLifecycle(initialValue = emptyList())
     val workspace = model.workspace()
     TagsContent(
         state = state,

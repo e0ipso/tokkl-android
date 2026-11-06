@@ -13,7 +13,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -21,6 +20,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
@@ -53,8 +53,8 @@ import java.time.format.DateTimeParseException
 fun TrashScreen(model: TrashViewModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
     CatalogPageEffects(model, offline)
-    val state by model.state.collectAsState()
-    val settings by model.settings.collectAsState()
+    val state by model.state.collectAsStateWithLifecycle()
+    val settings by model.settings.collectAsStateWithLifecycle()
     TrashContent(
         state = state,
         offline = offline,

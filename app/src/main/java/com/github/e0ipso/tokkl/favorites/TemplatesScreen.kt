@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedProject
@@ -50,9 +50,9 @@ fun TemplatesScreen(
     workspaceId: Long?,
     modifier: Modifier = Modifier,
 ) {
-    val state by model.state.collectAsState()
-    val projects by cache.projects.collectAsState(initial = emptyList())
-    val tasks by cache.tasks.collectAsState(initial = emptyList())
+    val state by model.state.collectAsStateWithLifecycle()
+    val projects by cache.projects.collectAsStateWithLifecycle(initialValue = emptyList())
+    val tasks by cache.tasks.collectAsStateWithLifecycle(initialValue = emptyList())
     val offline = rememberOffline()
     val savedText = stringResource(R.string.favorites_saved)
     var done by remember { mutableStateOf<String?>(null) }

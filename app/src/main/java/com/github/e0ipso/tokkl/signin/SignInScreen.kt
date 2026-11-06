@@ -71,15 +71,52 @@ fun SignInScreen(model: SignInViewModel, onSignedIn: () -> Unit, modifier: Modif
         }
         if (state.retryAt != null) model.cooldownEnded()
     }
+    SignInContent(
+        state = state,
+        secondsLeft = secondsLeft,
+        actions = SignInActions(
+            onServerUrlChange = model::onServerUrlChange,
+            onMethodChange = model::onMethodChange,
+            onApiTokenChange = model::onApiTokenChange,
+            onEmailChange = model::onEmailChange,
+            onPasswordChange = model::onPasswordChange,
+            onSubmit = model::submit,
+            onConfirmCleartext = model::confirmCleartext,
+            onTrustCertificate = model::trustCertificate,
+            onDismissPrompt = model::dismissPrompt,
+        ),
+        modifier = modifier,
+    )
+}
+
+/** What the sign-in form and its prompts do. */
+internal class SignInActions(
+    val onServerUrlChange: (String) -> Unit,
+    val onMethodChange: (SignInMethod) -> Unit,
+    val onApiTokenChange: (String) -> Unit,
+    val onEmailChange: (String) -> Unit,
+    val onPasswordChange: (String) -> Unit,
+    val onSubmit: () -> Unit,
+    val onConfirmCleartext: () -> Unit,
+    val onTrustCertificate: () -> Unit,
+    val onDismissPrompt: () -> Unit,
+)
+
+/**
+ * [SignInScreen] without its model: the form, with the sign-in open again after [secondsLeft],
+ * and the plain http:// and certificate prompts that [state]'s failure asks for.
+ */
+@Composable
+internal fun SignInContent(state: SignInState, secondsLeft: Long, actions: SignInActions, modifier: Modifier = Modifier) {
     SignInForm(
         state = state,
         secondsLeft = secondsLeft,
-        onServerUrlChange = model::onServerUrlChange,
-        onMethodChange = model::onMethodChange,
-        onApiTokenChange = model::onApiTokenChange,
-        onEmailChange = model::onEmailChange,
-        onPasswordChange = model::onPasswordChange,
-        onSubmit = model::submit,
+        onServerUrlChange = actions.onServerUrlChange,
+        onMethodChange = actions.onMethodChange,
+        onApiTokenChange = actions.onApiTokenChange,
+        onEmailChange = actions.onEmailChange,
+        onPasswordChange = actions.onPasswordChange,
+        onSubmit = actions.onSubmit,
         modifier = modifier,
     )
     val keyboard = LocalSoftwareKeyboardController.current
@@ -93,14 +130,14 @@ fun SignInScreen(model: SignInViewModel, onSignedIn: () -> Unit, modifier: Modif
     when (failure) {
         is SignInResult.CleartextNotConfirmed -> CleartextWarning(
             server = failure.server,
-            onConfirm = model::confirmCleartext,
-            onCancel = model::dismissPrompt,
+            onConfirm = actions.onConfirmCleartext,
+            onCancel = actions.onDismissPrompt,
         )
         is SignInResult.UntrustedCertificate -> CertificatePrompt(
             certificate = failure.certificate,
             changed = failure.changed,
-            onTrust = model::trustCertificate,
-            onCancel = model::dismissPrompt,
+            onTrust = actions.onTrustCertificate,
+            onCancel = actions.onDismissPrompt,
         )
         else -> Unit
     }

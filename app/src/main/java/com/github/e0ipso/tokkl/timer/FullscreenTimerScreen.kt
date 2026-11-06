@@ -42,7 +42,6 @@ import java.time.Clock
  * paused, the fields Resume starts show read-only, and Edit is hidden: the server keeps them as
  * they were at Pause. Pause shows only where the running state offers it.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FullscreenTimerScreen(
     model: TimerViewModel,
@@ -51,6 +50,37 @@ fun FullscreenTimerScreen(
     clock: Clock = Clock.systemUTC(),
 ) {
     val state by model.state.collectAsState()
+    FullscreenTimerContent(
+        state = state,
+        actions = FullscreenTimerActions(
+            onPause = model::pauseShown,
+            onResume = model::resumeShown,
+            onStop = model::stopShown,
+            isShown = model::isShown,
+            onEditRunning = onEditRunning,
+            onExit = onExit,
+        ),
+        clock = clock,
+    )
+}
+
+/**
+ * What the full-screen timer's buttons do with the timer they were shown for. [onEditRunning]
+ * runs only while [isShown] says that timer is still the one shown.
+ */
+internal class FullscreenTimerActions(
+    val onPause: (TimerTarget) -> Unit,
+    val onResume: (TimerTarget) -> Unit,
+    val onStop: (TimerTarget) -> Unit,
+    val isShown: (TimerTarget) -> Boolean,
+    val onEditRunning: (TimerTarget) -> Unit,
+    val onExit: () -> Unit,
+)
+
+/** [FullscreenTimerScreen] without its model. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerActions, clock: Clock) {
     val running = state as? TimerState.Running
     val paused = state as? TimerState.Paused
     val token = state.target
@@ -65,7 +95,7 @@ fun FullscreenTimerScreen(
                 .testTag("fullscreen_timer"),
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
         ) {
-            TokklGhostButton(onClick = { focus.clearFocus(); onExit() }) {
+            TokklGhostButton(onClick = { focus.clearFocus(); actions.onExit() }) {
                 Text(stringResource(R.string.timer_exit_fullscreen))
             }
             if (token != null && (running != null || paused != null)) {
@@ -91,18 +121,18 @@ fun FullscreenTimerScreen(
                     if (paused != null) {
                         val resumeAction = stringResource(R.string.timer_resume_spoken)
                         TokklButton(modifier = Modifier.semantics { contentDescription = resumeAction }, onClick = {
-                            model.resumeShown(token)
+                            actions.onResume(token)
                             focus.clearFocus()
                         }) { Text(stringResource(R.string.timer_resume)) }
                     } else if (running?.pausable == true) {
                         val pauseAction = stringResource(R.string.timer_pause_spoken)
                         TokklButton(modifier = Modifier.semantics { contentDescription = pauseAction }, onClick = {
-                            model.pauseShown(token)
+                            actions.onPause(token)
                             focus.clearFocus()
                         }) { Text(stringResource(R.string.timer_pause)) }
                     }
                     TokklDangerButton(modifier = Modifier.semantics { contentDescription = stopAction }, onClick = {
-                        model.stopShown(token)
+                        actions.onStop(token)
                         focus.clearFocus()
                     }) { Text(stringResource(R.string.timer_stop)) }
                     if (running != null) {
@@ -110,9 +140,9 @@ fun FullscreenTimerScreen(
                             icon = R.drawable.ic_edit,
                             description = stringResource(R.string.timer_focused_edit),
                             onClick = {
-                                if (model.isShown(token)) {
+                                if (actions.isShown(token)) {
                                     focus.clearFocus()
-                                    onEditRunning(token)
+                                    actions.onEditRunning(token)
                                 }
                             },
                         )
