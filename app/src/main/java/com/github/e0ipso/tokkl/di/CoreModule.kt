@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.sync.LastAnswer
-import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.trust.SessionTrust
 import java.io.File
 import java.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
@@ -50,7 +50,7 @@ internal val coreModule = module {
     single { ServerTrustStore(androidContext()) }
 
     /**
-     * Reports trust refusals to the [SessionTrustModel], and answers to the [LastAnswer], which
+     * Reports trust refusals to the [SessionTrust], and answers to the [LastAnswer], which
      * loads on the first answer, off the main thread.
      */
     single {
@@ -59,7 +59,7 @@ internal val coreModule = module {
         Session(
             servers = get(),
             tokens = get(),
-            trustListener = get<SessionTrustModel>(),
+            trustListener = get<SessionTrust>(),
             successListener = SuccessListener { lastAnswer.value.succeeded() },
             clearExports = { ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY)).clear() },
         )

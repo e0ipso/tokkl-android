@@ -6,7 +6,7 @@ import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
-import com.github.e0ipso.tokkl.components.signOutModel
+import com.github.e0ipso.tokkl.components.signOutConfirmation
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerState
 import android.app.AlarmManager
@@ -130,7 +130,7 @@ class PomodoroSignOutServerTest {
         val warning = context.resources.getQuantityString(R.plurals.settings_sign_out_unsent, 1, 1)
         compose.onNode(hasText(warning) and inDialog).assertExists()
         compose.onNode(hasText(context.getString(R.string.catalog_cancel)) and hasClickAction() and inDialog).performClick()
-        compose.waitUntil("warning dismissed", 10_000) { app.signOutModel.state.value.unsentToConfirm == null }
+        compose.waitUntil("warning dismissed", 10_000) { app.signOutConfirmation.state.value.unsentToConfirm == null }
         assertEquals("Cancel keeps the server's session as held", session, app.timerState.state.value)
         assertEquals(1, queueCount())
         assertTrue(Session(context).isSignedIn())

@@ -78,7 +78,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             for (view in listOf(TimerView.LIST, TimerView.CALENDAR)) {
                 chooseView(view)
                 if (view == TimerView.CALENDAR) {
-                    scenario.onActivity { koinViewModels(it)[CalendarViewModel::class.java].model.select(day.minusWeeks(2)) }
+                    scenario.onActivity { koinViewModels(it)[CalendarViewModel::class.java].select(day.minusWeeks(2)) }
                 }
                 compose.onRoot().performTouchInput { swipeUp() }
                 compose.waitForIdle()
@@ -245,8 +245,8 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.awaitTimerPage()
             openFocused()
-            lateinit var model: TimerModel
-            scenario.onActivity { model = koinViewModels(it)[TimerViewModel::class.java].model }
+            lateinit var model: TimerViewModel
+            scenario.onActivity { model = koinViewModels(it)[TimerViewModel::class.java] }
             val old = fixture.shown() as TimerControls.Running
             focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
             compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
@@ -324,7 +324,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()
                 scenario.onActivity { activity ->
-                    val model = koinViewModels(activity)[TimerViewModel::class.java].model
+                    val model = koinViewModels(activity)[TimerViewModel::class.java]
                     activity.setContent { TokklTheme { FullscreenTimerScreen(model, {}, {}, clock) } }
                 }
                 awaitFocused()

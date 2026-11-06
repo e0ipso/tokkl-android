@@ -45,7 +45,7 @@ import java.time.Clock
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FullscreenTimerScreen(
-    model: TimerModel,
+    model: TimerViewModel,
     onEditRunning: (TimerTarget) -> Unit,
     onExit: () -> Unit,
     clock: Clock = Clock.systemUTC(),

@@ -13,13 +13,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
-import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
-import com.github.e0ipso.tokkl.timerstate.TimerActions
+import com.github.e0ipso.tokkl.settings.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -32,7 +28,7 @@ import org.koin.androidx.viewmodel.ext.android.getViewModel
  */
 class PomodoroAlarmActivity : ComponentActivity() {
     private val holder by lazy { getViewModel<PomodoroAlarmViewModel>() }
-    private val themes: ThemeSettingsModel by inject()
+    private val themes: ThemeSettingsRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,16 +36,16 @@ class PomodoroAlarmActivity : ComponentActivity() {
         setTurnScreenOn(true)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         WindowCompat.enableEdgeToEdge(window)
-        holder.model.open(intent?.phaseKey())
+        holder.open(intent?.phaseKey())
         lifecycleScope.launch {
             // Also while stopped, as after Home, so a confirm elsewhere leaves no stale alarm behind.
             repeatOnLifecycle(Lifecycle.State.CREATED) {
-                holder.model.state.collect { if (it.closed) finish() }
+                holder.state.collect { if (it.closed) finish() }
             }
         }
         setContent {
             val theme by themes.state.collectAsState()
-            val state by holder.model.state.collectAsState()
+            val state by holder.state.collectAsState()
             val dark = theme.mode.isDark(isSystemInDarkTheme())
             TokklTheme(darkTheme = dark, dynamicColor = theme.dynamicColor) {
                 val background = MaterialTheme.colorScheme.background.toArgb()
@@ -62,7 +58,7 @@ class PomodoroAlarmActivity : ComponentActivity() {
                     }
                     onDispose { }
                 }
-                PomodoroAlarmContent(state, onNext = { holder.model.next() }, onEnd = { holder.model.end() })
+                PomodoroAlarmContent(state, onNext = { holder.next() }, onEnd = { holder.end() })
             }
         }
     }
@@ -70,11 +66,6 @@ class PomodoroAlarmActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        holder.model.open(intent.phaseKey())
+        holder.open(intent.phaseKey())
     }
-}
-
-/** Retains an in-flight command through rotation without replaying it. */
-class PomodoroAlarmViewModel(held: HeldTimerFlows, actions: TimerActions) : ViewModel() {
-    internal val model = PomodoroAlarmModel(held = held.session, actions = actions, scope = viewModelScope)
 }

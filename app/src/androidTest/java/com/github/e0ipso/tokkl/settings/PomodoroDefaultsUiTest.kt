@@ -128,7 +128,7 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
             TokklTheme(darkTheme = dark) {
                 SettingsContent(
                     settings = ThemeSettings(), onModeChange = {}, onDynamicColorChange = {},
-                    signOut = SignOutModel.State(), onSignOut = {}, onConfirmSignOut = {}, onCancelSignOut = {}, onOpenLicences = {},
+                    signOut = SignOutConfirmation.State(), onSignOut = {}, onConfirmSignOut = {}, onCancelSignOut = {}, onOpenLicences = {},
                     pomodoro = defaults, pomodoroSharedWithWeb = shared, onPomodoroChange = { defaults = it; changes++ },
                 )
             }

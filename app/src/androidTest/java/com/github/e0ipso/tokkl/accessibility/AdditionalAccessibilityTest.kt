@@ -27,7 +27,7 @@ import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
+import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -104,7 +104,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         val settings = MutableStateFlow<AccountSettings?>(AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null))
         var edited: Long? = null
         var resent: Long? = null
-        val model = NeedsAttentionModel(
+        val model = NeedsAttention(
             held = held,
             release = { resent = it; true },
             drop = { sequence -> held.value = held.value.filterNot { it.sequence == sequence }; true },

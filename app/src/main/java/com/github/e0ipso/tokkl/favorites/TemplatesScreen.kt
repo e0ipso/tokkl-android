@@ -45,7 +45,7 @@ import com.github.e0ipso.tokkl.ui.TokklIconButton
  */
 @Composable
 fun TemplatesScreen(
-    model: FavoritesModel,
+    model: FavoritesViewModel,
     cache: AccountCache,
     workspaceId: Long?,
     modifier: Modifier = Modifier,

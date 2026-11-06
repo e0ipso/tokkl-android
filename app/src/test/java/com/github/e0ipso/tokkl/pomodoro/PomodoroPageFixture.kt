@@ -150,7 +150,7 @@ internal class PageFixture(
     val refused = MutableStateFlow<List<PendingChange>>(emptyList())
     val queueSends = CopyOnWriteArrayList<String>()
     var alarmsDenied = false
-    val page = PomodoroScreenModel(
+    val page = PomodoroViewModel(
         held, controls, server, changes, defaults, settings, unsent, refused, scope,
         sendQueued = { queueSends += "send" },
         alarmProbe = { alarmsDenied },

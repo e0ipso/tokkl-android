@@ -6,7 +6,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class SettingsModelTest {
+class PomodoroDefaultFieldTest {
     @Test
     fun everyFieldAcceptsBothInclusiveBounds() {
         val ranges = listOf(1..180, 1..60, 1..60, 1..12)

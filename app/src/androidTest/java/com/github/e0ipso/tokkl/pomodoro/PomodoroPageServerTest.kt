@@ -60,7 +60,7 @@ class PomodoroPageServerTest {
     private val fixture = TimerAcceptanceFixture()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val app get() = fixture.app
-    private lateinit var model: PomodoroScreenModel
+    private lateinit var model: PomodoroViewModel
 
     @Before
     fun prepareAnAccountWithItsOwnDefaults() {
@@ -200,7 +200,7 @@ class PomodoroPageServerTest {
         compose.activityRule.scenario.onActivity { activity ->
             WindowCompat.enableEdgeToEdge(activity.window)
             activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            model = koinViewModels(activity)[PomodoroViewModel::class.java].model
+            model = koinViewModels(activity)[PomodoroViewModel::class.java]
         }
         compose.setContent {
             TokklTheme {

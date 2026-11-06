@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.sync.DiscardedChanges
 import com.github.e0ipso.tokkl.sync.DiscardedChangesStore
 import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.sync.LastAnswerStore
-import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
+import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.SyncStatusSource
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import org.koin.android.ext.koin.androidContext
@@ -116,7 +116,7 @@ internal val dataModule = module {
     single {
         val changes = get<ChangeQueue>()
         val accountSettings = inject<AccountSettingsSource>()
-        NeedsAttentionModel(
+        NeedsAttention(
             held = changes.held,
             release = changes::sendAgain,
             drop = changes::discard,

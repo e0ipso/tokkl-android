@@ -50,7 +50,7 @@ class PomodoroFullScreenPageTest {
                 ?: error("Cannot restore full-screen app-op: $output")
         }
         DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT deny")
-        val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java].model
+        val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java]
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
         compose.setContent { TokklTheme { PomodoroScreen(model, app.cache) } }
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_denied)).performScrollTo().assertIsDisplayed()
@@ -66,7 +66,7 @@ class PomodoroFullScreenPageTest {
     @Test @SdkSuppress(maxSdkVersion = 33)
     fun olderAndroidShowsThePageWithoutAnUnsupportedFullScreenSettingsButton() {
         assertTrue(Build.VERSION.SDK_INT in 31..33)
-        val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java].model
+        val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java]
         compose.setContent { TokklTheme { PomodoroScreen(model, app.cache) } }
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_denied)).assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_settings)).assertDoesNotExist()

@@ -34,7 +34,7 @@ import org.junit.Test
  * prefix, and SignInRateLimitTest trips the container's own 429 with a
  * throwaway account, so the shared account is never locked.
  */
-class SignInModelTest {
+class SignInViewModelTest {
 
     private val server = MockWebServer()
     private val saved = mutableListOf<Pair<ServerUrl, String>>()
@@ -43,7 +43,7 @@ class SignInModelTest {
     private var now = 5_000_000L
     private val cooldowns = InMemoryCooldowns()
     private lateinit var trust: InMemoryServerTrust
-    private lateinit var model: SignInModel
+    private lateinit var model: SignInViewModel
 
     @Before
     fun setUp() {
@@ -60,7 +60,7 @@ class SignInModelTest {
         server.close()
     }
 
-    private fun model(trust: ServerTrust, httpClient: OkHttpClient = SharedHttpClient.instance): SignInModel {
+    private fun model(trust: ServerTrust, httpClient: OkHttpClient = SharedHttpClient.instance): SignInViewModel {
         val signIn = SignIn(
             session = { url, token, settings ->
                 saveFailure?.let { throw it }
@@ -70,7 +70,7 @@ class SignInModelTest {
             httpClient = httpClient,
         )
         // Unconfined runs each attempt to the end inside submit().
-        return SignInModel(signIn, trust, cooldowns, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
+        return SignInViewModel(signIn, trust, cooldowns, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
     }
 
     /** The deadlines a [SignInCooldownStore] would hold, in memory. */

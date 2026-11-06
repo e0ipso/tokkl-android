@@ -21,7 +21,7 @@ sealed interface ShortcutStart {
 
 /**
  * Starts the favorite that the shortcut [id] names, as a tap on it on the Timer page does
- * (TimerModel.startFrom): in the account's default workspace [workspaceId], from the cache, so it
+ * (TimerViewModel.startFrom): in the account's default workspace [workspaceId], from the cache, so it
  * works offline, and a running entry stops at the new one's start. [start] is
  * `ChangeQueue.start`, which reads the tap time first.
  *

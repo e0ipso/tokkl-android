@@ -48,7 +48,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  * foreground, loads the clients again.
  */
 @Composable
-fun ClientsScreen(model: ClientsModel, modifier: Modifier = Modifier) {
+fun ClientsScreen(model: ClientsViewModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
     CatalogPageEffects(model, offline)
     val state by model.state.collectAsState()

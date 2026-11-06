@@ -49,7 +49,7 @@ abstract class SignOutFitTest(private val fontScale: Float) {
     @Test
     fun theWarningAboutUnsentChanges() {
         for (dark in listOf(false, true)) {
-            show(SignOutModel.State(unsentToConfirm = 12), dark)
+            show(SignOutConfirmation.State(unsentToConfirm = 12), dark)
             val warning = InstrumentationRegistry.getInstrumentation().targetContext.resources
                 .getQuantityString(R.plurals.settings_sign_out_unsent, 12, 12)
 
@@ -64,7 +64,7 @@ abstract class SignOutFitTest(private val fontScale: Float) {
     @Test
     fun aFailedSignOut() {
         for (dark in listOf(false, true)) {
-            show(SignOutModel.State(failed = true), dark)
+            show(SignOutConfirmation.State(failed = true), dark)
 
             composeRule.onNode(hasText(string(R.string.settings_sign_out_failed)), useUnmergedTree = true).performScrollTo().assertIsDisplayed()
             assertNoTextCutOff("the failed sign-out, dark $dark")
@@ -72,9 +72,9 @@ abstract class SignOutFitTest(private val fontScale: Float) {
     }
 
     /** What the screen shows, which each step of a test changes. setContent runs once a test. */
-    private var shown by mutableStateOf<Pair<SignOutModel.State, Boolean>?>(null)
+    private var shown by mutableStateOf<Pair<SignOutConfirmation.State, Boolean>?>(null)
 
-    private fun show(signOut: SignOutModel.State, dark: Boolean) {
+    private fun show(signOut: SignOutConfirmation.State, dark: Boolean) {
         val first = shown == null
         shown = signOut to dark
         if (first) {

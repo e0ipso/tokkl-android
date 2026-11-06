@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
  *
  * @param scope outlives the screen, so leaving it does not cancel a write.
  */
-class NeedsAttentionModel(
+class NeedsAttention(
     val held: Flow<List<PendingChange>>,
     private val release: suspend (sequence: Long) -> Boolean,
     private val drop: suspend (sequence: Long) -> Boolean,

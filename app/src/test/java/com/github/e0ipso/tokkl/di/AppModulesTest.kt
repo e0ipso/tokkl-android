@@ -9,13 +9,19 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRinging
 import com.github.e0ipso.tokkl.pomodoro.StoredPomodoroDefaults
 import com.github.e0ipso.tokkl.reminder.StoredReminderPreferences
+import com.github.e0ipso.tokkl.reports.ReportExportController
 import com.github.e0ipso.tokkl.session.SignOutSteps
+import com.github.e0ipso.tokkl.signin.SignIn
+import com.github.e0ipso.tokkl.signin.SignInCooldowns
+import com.github.e0ipso.tokkl.timer.TapTrace
 import com.github.e0ipso.tokkl.timer.StoredTimerView
 import com.github.e0ipso.tokkl.timerstate.PauseActions
+import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerSyncClock
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import org.junit.Test
 import org.koin.dsl.module
 import org.koin.test.verify.verify
@@ -28,8 +34,9 @@ class AppModulesTest {
      * by the type it wraps.
      *
      * The types listed here are what a definition passes itself: the Android context, the stored
-     * values it loads, flows and callbacks it builds, and components it hands over as one of
-     * their interfaces.
+     * values it loads, flows and callbacks it builds, components it hands over as one of their
+     * interfaces, and the helpers it makes for one view model, such as the sign-in request and the
+     * CSV exporter.
      */
     @Test
     fun everyDefinitionsDependenciesAreDefined() {
@@ -45,6 +52,7 @@ class AppModulesTest {
                 Function2::class,
                 Function3::class,
                 Flow::class,
+                StateFlow::class,
                 Instant::class,
                 StoredTimerView::class,
                 StoredPomodoroDefaults::class,
@@ -56,6 +64,11 @@ class AppModulesTest {
                 EntryChanges::class,
                 PauseActions::class,
                 PomodoroRinging::class,
+                SessionActions::class,
+                SignIn::class,
+                SignInCooldowns::class,
+                TapTrace::class,
+                ReportExportController::class,
             ),
         )
     }

@@ -157,7 +157,7 @@ class ReportsForegroundTest {
     }
 
     /** Launches the app on the Timer page, opens the reports and returns the screen's model. */
-    private fun openReports(): ReportsModel {
+    private fun openReports(): ReportsViewModel {
         runBlocking { app.accountSettings.refresh().join() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.openMorePage(R.string.reports, LOAD_TIMEOUT_MS)
@@ -168,7 +168,7 @@ class ReportsForegroundTest {
      * Waits for a report other than [after] and returns it. The compose rule's wait lets the
      * screen recompose, which a plain sleep does not.
      */
-    private fun awaitLoaded(model: ReportsModel, after: ReportsState.Loaded?): ReportsState.Loaded {
+    private fun awaitLoaded(model: ReportsViewModel, after: ReportsState.Loaded?): ReportsState.Loaded {
         compose.waitUntil("a report loads", LOAD_TIMEOUT_MS) {
             when (val state = model.state.value) {
                 is ReportsState.Loaded -> state !== after
@@ -182,9 +182,9 @@ class ReportsForegroundTest {
         return state as ReportsState.Loaded
     }
 
-    private fun modelOf(activity: MainActivity): ReportsModel {
-        var model: ReportsModel? = null
-        instrumentation.runOnMainSync { model = koinViewModels(activity)[ReportsViewModel::class.java].model }
+    private fun modelOf(activity: MainActivity): ReportsViewModel {
+        var model: ReportsViewModel? = null
+        instrumentation.runOnMainSync { model = koinViewModels(activity)[ReportsViewModel::class.java] }
         return model!!
     }
 

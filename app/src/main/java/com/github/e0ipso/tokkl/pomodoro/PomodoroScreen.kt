@@ -63,7 +63,7 @@ import kotlinx.coroutines.delay
 /** The destination can be opened directly; the navigation item is added separately. */
 @Composable
 fun PomodoroScreen(
-    model: PomodoroScreenModel,
+    model: PomodoroViewModel,
     cache: AccountCache,
     modifier: Modifier = Modifier,
     onNotificationStart: () -> Unit = {},

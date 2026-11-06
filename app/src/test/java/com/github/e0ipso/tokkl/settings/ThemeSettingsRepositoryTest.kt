@@ -6,13 +6,13 @@ import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class ThemeSettingsModelTest {
+class ThemeSettingsRepositoryTest {
 
     private val saved = mutableListOf<ThemeSettings>()
     private var failSaves = false
 
     private fun model(initial: ThemeSettings = ThemeSettings()) =
-        ThemeSettingsModel(
+        ThemeSettingsRepository(
             initial = initial,
             save = { if (failSaves) throw IOException("disk full") else saved += it },
             scope = CoroutineScope(Dispatchers.Unconfined),

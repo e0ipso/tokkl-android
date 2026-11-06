@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.koinViewModels
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.sessionTrust
-import com.github.e0ipso.tokkl.components.signOutModel
+import com.github.e0ipso.tokkl.components.signOutConfirmation
 import com.github.e0ipso.tokkl.components.themeSettings
 import com.github.e0ipso.tokkl.components.timerView
 import android.view.KeyEvent
@@ -29,6 +29,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
+import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
@@ -641,9 +643,9 @@ class EntryFormServerTest {
     }
 
     /** The actual form and Room queue, with collection and handlers on the main dispatcher. */
-    private fun withModel(steps: suspend (EntryFormModel) -> Unit) = runBlocking {
+    private fun withModel(steps: suspend (EntryFormViewModel) -> Unit) = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-        val model = EntryFormModel(app.cache.entries, app.cache.projects, app.cache.tasks, app.accountSettings.state, app.changes, scope)
+        val model = EntryFormViewModel(app.cache.entries, app.cache.projects, app.cache.tasks, app.accountSettings.state, app.changes, scope)
         val collector = scope.launch { model.state.collect {} }
         try {
             withTimeout(NETWORK_TIMEOUT.toMillis()) { withContext(Dispatchers.Main) { steps(model) } }
@@ -679,24 +681,24 @@ class EntryFormServerTest {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
                         TokklTheme(darkTheme = false) {
                             TokklNavHost(
-                                signInModel = models[SignInViewModel::class.java].model,
+                                signIn = models[SignInViewModel::class.java],
                                 themeSettings = app.themeSettings,
-                                signOut = app.signOutModel,
+                                signOut = app.signOutConfirmation,
                                 sessionTrust = app.sessionTrust,
-                                reports = models[ReportsViewModel::class.java].model,
-                                history = history.model,
-                                entryActions = history.actions,
-                                calendar = models[CalendarViewModel::class.java].model,
-                                projects = models[ProjectsViewModel::class.java].model,
-                                clients = models[ClientsViewModel::class.java].model,
-                                tags = models[TagsViewModel::class.java].model,
+                                reports = models[ReportsViewModel::class.java],
+                                history = history,
+                                entryActions = models[EntryActionsViewModel::class.java],
+                                calendar = models[CalendarViewModel::class.java],
+                                projects = models[ProjectsViewModel::class.java],
+                                clients = models[ClientsViewModel::class.java],
+                                tags = models[TagsViewModel::class.java],
                                 timerView = app.timerView,
-                                timer = timer.model,
-                                entryForm = models[EntryFormViewModel::class.java].model,
+                                timer = timer,
+                                entryForm = models[EntryFormViewModel::class.java],
                                 cache = app.cache,
-                                trash = models[TrashViewModel::class.java].model,
+                                trash = models[TrashViewModel::class.java],
                                 capabilities = app.capabilities.state,
-                                favorites = timer.favorites,
+                                favorites = models[FavoritesViewModel::class.java],
                             )
                         }
                     }

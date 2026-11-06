@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.history
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
@@ -11,7 +13,7 @@ import com.github.e0ipso.tokkl.entry.SplitProblem
 import com.github.e0ipso.tokkl.entry.SplitResult
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.entry.splitTimes
-import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.FavoritesProblem
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -108,15 +110,15 @@ data class EntryActionsState(val confirmDelete: Long? = null, val notice: EntryN
  * @param undoDelete takes back the delete of an entry, as `ChangeSender.undoDelete` does.
  * @param canRestore whether the server restores deleted entries, `Capabilities.restore`.
  */
-class EntryActionsModel(
+class EntryActionsViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
     private val changes: EntryChanges,
     private val undoDelete: suspend (Long) -> UndoOutcome,
     private val canRestore: () -> Boolean,
     private val accountSettings: StateFlow<AccountSettings?>,
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),
-) {
+) : ViewModel(scope) {
 
     private val mutableState = MutableStateFlow(EntryActionsState())
 
@@ -164,7 +166,7 @@ class EntryActionsModel(
         if (undoing) return
         undoing = true
         val offered = mutableState.value.notice
-        scope.launch {
+        viewModelScope.launch {
             try {
                 val notice = when (val outcome = undoDelete(entryId)) {
                     UndoOutcome.Cancelled, UndoOutcome.Restored -> {
@@ -194,7 +196,7 @@ class EntryActionsModel(
      * makes a no-time copy on its day; without an account timezone to read that day in, it makes none.
      */
     fun duplicate(entryId: Long) {
-        scope.launch {
+        viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
             val stop = source.stop ?: return@launch
             val noTimeDay = if (source.allDay) {
@@ -213,7 +215,7 @@ class EntryActionsModel(
      * phone cannot resolve opens nothing.
      */
     fun split(entryId: Long) {
-        scope.launch {
+        viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
             if (source.allDay) return@launch
             val stop = source.stop?.takeIf { !it.isBefore(source.start) } ?: return@launch
@@ -231,12 +233,12 @@ class EntryActionsModel(
      * not store the list, says why nothing was saved. An entry the cache no longer holds saves
      * nothing.
      */
-    fun pin(entryId: Long, favorites: FavoritesModel, offline: Boolean) {
+    fun pin(entryId: Long, favorites: FavoritesViewModel, offline: Boolean) {
         if (offline) {
             mutableState.update { it.copy(notice = EntryNotice.PinNeedsServer(++serial)) }
             return
         }
-        scope.launch {
+        viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
             favorites.add(source.fields()) { problem ->
                 val notice = when (problem) {
@@ -274,7 +276,7 @@ class EntryActionsModel(
      */
     fun confirmSplit() {
         val dialog = mutableState.value.split ?: return
-        scope.launch {
+        viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == dialog.source.id }?.entry
             val result = source?.let { splitOf(it, dialog.text) }
             if (source == null || result == null) {
@@ -311,7 +313,7 @@ class EntryActionsModel(
 
     private fun queueDelete(entryId: Long, undo: Boolean) {
         if (!deleting.add(entryId)) return
-        scope.launch {
+        viewModelScope.launch {
             try {
                 val snapshot = entries.first().firstOrNull { it.entry.id == entryId }?.entry
                 if (snapshot != null) {

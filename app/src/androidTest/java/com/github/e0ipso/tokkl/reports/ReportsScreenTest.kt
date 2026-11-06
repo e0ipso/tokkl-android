@@ -368,7 +368,7 @@ class ReportsScreenTest {
     private fun modelState(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the report's state") {
-            scenario!!.onActivity { state = koinViewModels(it)[ReportsViewModel::class.java].model.state.value }
+            scenario!!.onActivity { state = koinViewModels(it)[ReportsViewModel::class.java].state.value }
         }
         return state!!
     }

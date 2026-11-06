@@ -52,8 +52,8 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
  */
 @Composable
 fun SettingsScreen(
-    model: ThemeSettingsModel,
-    signOut: SignOutModel,
+    model: ThemeSettingsRepository,
+    signOut: SignOutConfirmation,
     onOpenLicences: () -> Unit,
     modifier: Modifier = Modifier,
     reminder: ReminderSetting? = null,
@@ -88,7 +88,7 @@ internal fun SettingsContent(
     settings: ThemeSettings,
     onModeChange: (ThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
-    signOut: SignOutModel.State,
+    signOut: SignOutConfirmation.State,
     onSignOut: () -> Unit,
     onConfirmSignOut: () -> Unit,
     onCancelSignOut: () -> Unit,
@@ -188,7 +188,7 @@ private fun ThemeSection(
  * that it is signing out until the phone is clear, and shows a failed sign-out below it.
  */
 @Composable
-private fun AccountSection(signOut: SignOutModel.State, onSignOut: () -> Unit) {
+private fun AccountSection(signOut: SignOutConfirmation.State, onSignOut: () -> Unit) {
     Text(
         text = stringResource(R.string.settings_account),
         style = MaterialTheme.typography.titleMedium,

@@ -39,7 +39,7 @@ import org.junit.Test
  * queue that records what it is asked to queue. The web app's EntryEditor.tsx and the manual mode
  * of its TimerBar.tsx are the reference for what each set of fields saves.
  */
-class EntryFormModelTest {
+class EntryFormViewModelTest {
 
     private val main: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
@@ -50,11 +50,11 @@ class EntryFormModelTest {
     /** Whether the server stores no-time entries, as on Tokkl. */
     private val allDay = MutableStateFlow(true)
     private val changes = FakeChanges()
-    private lateinit var model: EntryFormModel
+    private lateinit var model: EntryFormViewModel
 
     @Before
     fun showTheForm() {
-        model = EntryFormModel(
+        model = EntryFormViewModel(
             entries = entries,
             projects = MutableStateFlow(listOf(APP, CLIENT_WORK)),
             tasks = MutableStateFlow(listOf(DESIGN)),

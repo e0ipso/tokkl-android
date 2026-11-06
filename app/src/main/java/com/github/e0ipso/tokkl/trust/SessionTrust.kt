@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
  *   refresh.
  * @param io where the writes to [trust] run.
  */
-class SessionTrustModel(
+class SessionTrust(
     private val trust: ServerTrust,
     private val retry: () -> Unit,
     private val scope: CoroutineScope,

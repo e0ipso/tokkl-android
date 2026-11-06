@@ -30,6 +30,8 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
 import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
+import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
@@ -46,19 +48,19 @@ import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.NetworkWatch
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.SignOut
-import com.github.e0ipso.tokkl.settings.SignOutModel
-import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
+import com.github.e0ipso.tokkl.settings.SignOutConfirmation
+import com.github.e0ipso.tokkl.settings.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.sync.DiscardedChanges
-import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
+import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.SyncStatusSource
 import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.trash.TrashViewModel
-import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.widget.WidgetPage
 import com.github.e0ipso.tokkl.widget.takeWidgetPage
@@ -79,25 +81,27 @@ class MainActivity : ComponentActivity() {
     private val signInViewModel: SignInViewModel get() = viewModel()
     private val reportsViewModel: ReportsViewModel get() = viewModel()
     private val historyViewModel: HistoryViewModel get() = viewModel()
+    private val entryActionsViewModel: EntryActionsViewModel get() = viewModel()
     private val calendarViewModel: CalendarViewModel get() = viewModel()
     private val projectsViewModel: ProjectsViewModel get() = viewModel()
     private val clientsViewModel: ClientsViewModel get() = viewModel()
     private val tagsViewModel: TagsViewModel get() = viewModel()
     private val trashViewModel: TrashViewModel get() = viewModel()
     private val timerViewModel: TimerViewModel get() = viewModel()
+    private val favoritesViewModel: FavoritesViewModel get() = viewModel()
     private val entryFormViewModel: EntryFormViewModel get() = viewModel()
 
     private val io: CoroutineDispatcher by inject(IoDispatcher)
     private val cache: AccountCache by inject()
-    private val themeSettings: ThemeSettingsModel by inject()
+    private val themeSettings: ThemeSettingsRepository by inject()
     private val reminderSettings: ReminderSetting by inject()
     private val signOut: SignOut by inject()
-    private val signOutModel: SignOutModel by inject()
-    private val sessionTrust: SessionTrustModel by inject()
+    private val signOutConfirmation: SignOutConfirmation by inject()
+    private val sessionTrust: SessionTrust by inject()
     private val timerView: TimerViewSetting by inject()
     private val capabilities: CapabilitiesSource by inject()
     private val syncStatus: SyncStatusSource by inject()
-    private val needsAttention: NeedsAttentionModel by inject()
+    private val needsAttention: NeedsAttention by inject()
     private val accountSettings: AccountSettingsSource by inject()
     private val discarded: DiscardedChanges by inject()
     private val foregroundRefresh: ForegroundRefresh by inject()
@@ -151,7 +155,7 @@ class MainActivity : ComponentActivity() {
                 // A sign-out starts the navigation over, at sign-in, with new view models.
                 key(signOuts) {
                     TokklNavHost(
-                        signInModel = signInViewModel.model,
+                        signIn = signInViewModel,
                         themeSettings = themeSettings,
                         reminderSettings = reminderSettings,
                         openReminderTimer = openReminderTimer,
@@ -159,23 +163,23 @@ class MainActivity : ComponentActivity() {
                         onWidgetPageOpened = { handled -> if (openWidgetPage == handled) openWidgetPage = null },
                         openPomodoro = openPomodoro,
                         onPomodoroOpened = { handled -> if (openPomodoro == handled) openPomodoro = null },
-                        signOut = signOutModel,
+                        signOut = signOutConfirmation,
                         sessionTrust = sessionTrust,
-                        reports = reportsViewModel.model,
-                        history = historyViewModel.model,
-                        entryActions = historyViewModel.actions,
-                        calendar = calendarViewModel.model,
-                        projects = projectsViewModel.model,
-                        clients = clientsViewModel.model,
-                        tags = tagsViewModel.model,
+                        reports = reportsViewModel,
+                        history = historyViewModel,
+                        entryActions = entryActionsViewModel,
+                        calendar = calendarViewModel,
+                        projects = projectsViewModel,
+                        clients = clientsViewModel,
+                        tags = tagsViewModel,
                         timerView = timerView,
-                        timer = timerViewModel.model,
-                        entryForm = entryFormViewModel.model,
+                        timer = timerViewModel,
+                        entryForm = entryFormViewModel,
                         cache = cache,
-                        trash = trashViewModel.model,
+                        trash = trashViewModel,
                         timerRunning = timerRunning,
                         capabilities = capabilities.state,
-                        favorites = timerViewModel.favorites,
+                        favorites = favoritesViewModel,
                         syncStatus = syncStatus.status,
                         needsAttention = needsAttention,
                         settings = accountSettings.state,
@@ -255,7 +259,7 @@ class MainActivity : ComponentActivity() {
         if (allowed && !notificationsAllowed) notificationsGranted()
         notificationsAllowed = allowed
         foregroundRefresh.started(online = network.start())
-        calendarViewModel.model.cameToForeground()
+        calendarViewModel.cameToForeground()
         // The app is on screen, so the platform lets the timer sync service start, also offline.
         lifecycleScope.launch(io) { timerSync.follow() }
     }
@@ -268,7 +272,7 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         network.stop()
         foregroundRefresh.stopped(isChangingConfigurations)
-        if (!isChangingConfigurations) calendarViewModel.model.wentToBackground()
+        if (!isChangingConfigurations) calendarViewModel.wentToBackground()
     }
 
     /**
@@ -285,11 +289,11 @@ class MainActivity : ComponentActivity() {
             // A cellular route can appear before it works, followed by Wi-Fi without an
             // offline interval. Retry failed history days and calendar weeks on each online
             // update, while keeping the account refresh and other foreground work debounced.
-            historyViewModel.model.reconnected()
-            calendarViewModel.model.reconnected()
+            historyViewModel.reconnected()
+            calendarViewModel.reconnected()
         }
         if (!returned) return
-        reportsViewModel.model.reconnected()
+        reportsViewModel.reconnected()
     }
 
     private fun allowsNotifications(): Boolean =
@@ -313,7 +317,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             // Each sign-out brings a new sign-in view model.
             shownSignOuts.collectLatest {
-                signInViewModel.model.state
+                signInViewModel.state
                     .map { it.signedIn }
                     .distinctUntilChanged()
                     .filter { it }

@@ -31,7 +31,7 @@ import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.DayOfWeek
@@ -208,7 +208,7 @@ class EntryActionsUiTest {
     }
 
     /** Favorites with none pinned yet, whose server stores every list in [saves]. */
-    private fun favorites(available: MutableStateFlow<Boolean>) = FavoritesModel(
+    private fun favorites(available: MutableStateFlow<Boolean>) = FavoritesViewModel(
         favorites = MutableStateFlow(emptyList()),
         projects = MutableStateFlow(emptyList()),
         tasks = MutableStateFlow(emptyList()),
@@ -231,8 +231,8 @@ class EntryActionsUiTest {
     private fun liveMessage(text: Int) =
         SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite) and hasAnyDescendant(hasText(string(text)))
 
-    private fun show(canRestore: Boolean, undo: UndoOutcome = UndoOutcome.Restored, favorites: FavoritesModel? = null) {
-        val model = EntryActionsModel(
+    private fun show(canRestore: Boolean, undo: UndoOutcome = UndoOutcome.Restored, favorites: FavoritesViewModel? = null) {
+        val model = EntryActionsViewModel(
             entries = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false))),
             changes = RecordingChanges(),
             undoDelete = { entryId ->

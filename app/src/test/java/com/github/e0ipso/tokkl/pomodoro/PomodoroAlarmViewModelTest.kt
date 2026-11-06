@@ -23,12 +23,12 @@ import org.junit.Test
  * that phase's planned end has come, closes when any device moves the session on, keeps a new
  * revision of its phase, and sends the revision it shows.
  */
-class PomodoroAlarmModelTest {
+class PomodoroAlarmViewModelTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val clock = MovableClock(T0.plusSeconds(1_565))
     private val held = MutableStateFlow<HeldTimerState?>(heldState(revision = 3))
     private val server = FakeServer(held)
-    private val model = PomodoroAlarmModel(held, server, scope, clock)
+    private val model = PomodoroAlarmViewModel(held, server, scope, clock)
     private val key = PomodoroPhaseKey(T0)
 
     @After fun closeScope() { scope.cancel() }
@@ -81,7 +81,7 @@ class PomodoroAlarmModelTest {
     @Test fun itOpensOnceTheStoredStateHasLoaded() {
         val loading = MutableStateFlow<HeldTimerState?>(null)
         val loaded = CompletableDeferred<Unit>()
-        val late = PomodoroAlarmModel(
+        val late = PomodoroAlarmViewModel(
             flow {
                 loaded.await()
                 emit(heldState(revision = 3))

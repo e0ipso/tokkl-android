@@ -42,17 +42,17 @@ import org.junit.Test
  * The model's work off the main thread waits in [io] until a test runs it, so a test sees what
  * the screen shows while the answer is on its way.
  *
- * Coming back to the foreground: [ReportsScreen] calls [ReportsModel.wentToBackground] on every
- * stop that is not a configuration change, and [ReportsModel.cameToForeground] on every start,
+ * Coming back to the foreground: [ReportsScreen] calls [ReportsViewModel.wentToBackground] on every
+ * stop that is not a configuration change, and [ReportsViewModel.cameToForeground] on every start,
  * including the one Android replays when the screen starts observing. ReportsForegroundTest
  * checks the rotation on the emulator; these tests check the model's half.
  */
-class ReportsModelTest {
+class ReportsViewModelTest {
     private val server = MockWebServer()
     private val searches = CopyOnWriteArrayList<JsonObject>()
     private val io = QueuedDispatcher()
     private val settings = MutableStateFlow<AccountSettings?>(AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null))
-    private lateinit var model: ReportsModel
+    private lateinit var model: ReportsViewModel
 
     /** The search gets the 503 of a proxy whose server is down. */
     @Volatile
@@ -77,7 +77,7 @@ class ReportsModelTest {
         val url = ServerUrl.parse(server.url("/").toString())!!
         ConfiguredServer.readStoredFrom { url }
         ConfiguredTrust.readFrom(InMemoryServerTrust(url))
-        model = ReportsModel(
+        model = ReportsViewModel(
             accountSettings = settings,
             client = { TogglApiClient(url, ApiCredentials.ApiToken("token")) },
             scope = CoroutineScope(Dispatchers.Unconfined),

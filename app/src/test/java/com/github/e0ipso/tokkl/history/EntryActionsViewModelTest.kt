@@ -10,7 +10,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entry.SplitProblem
-import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -46,7 +46,7 @@ import org.junit.Test
  * saves the entry's fields at the end of the timer templates, as the web app's EntryList.tsx does, and
  * says why when it saves nothing.
  */
-class EntryActionsModelTest {
+class EntryActionsViewModelTest {
 
     private val main: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
@@ -403,9 +403,9 @@ class EntryActionsModelTest {
     }
 
     /** Favorites that hold [cachedFavorites] and save to [saved], shown as the Timer page shows them. */
-    private fun favorites(cachedFavorites: List<CachedFavorite>): FavoritesModel {
+    private fun favorites(cachedFavorites: List<CachedFavorite>): FavoritesViewModel {
         val cachedFlow = MutableStateFlow(cachedFavorites)
-        val model = FavoritesModel(
+        val model = FavoritesViewModel(
             favorites = cachedFlow,
             projects = MutableStateFlow(emptyList()),
             tasks = MutableStateFlow(emptyList()),
@@ -430,16 +430,16 @@ class EntryActionsModelTest {
 
     private fun CachedFavorite.fields() = EntryFields(description, projectId, taskId, tags, billable)
 
-    private fun awaitSplit(model: EntryActionsModel): SplitDialog = awaitState(model) { it.split != null }.split!!
+    private fun awaitSplit(model: EntryActionsViewModel): SplitDialog = awaitState(model) { it.split != null }.split!!
 
-    private fun awaitState(model: EntryActionsModel, condition: (EntryActionsState) -> Boolean): EntryActionsState {
+    private fun awaitState(model: EntryActionsViewModel, condition: (EntryActionsState) -> Boolean): EntryActionsState {
         var last: EntryActionsState? = null
         return runBlocking {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first(condition) }
         } ?: throw AssertionError("timed out; the last state was $last, after $calls")
     }
 
-    private fun model(canRestore: Boolean) = EntryActionsModel(
+    private fun model(canRestore: Boolean) = EntryActionsViewModel(
         entries = entries,
         changes = FakeChanges(),
         undoDelete = { entryId ->
@@ -451,7 +451,7 @@ class EntryActionsModelTest {
         scope = scope,
     )
 
-    private fun awaitNotice(model: EntryActionsModel, condition: (EntryNotice) -> Boolean): EntryNotice {
+    private fun awaitNotice(model: EntryActionsViewModel, condition: (EntryNotice) -> Boolean): EntryNotice {
         var last: EntryActionsState? = null
         return runBlocking {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first { it.notice?.let(condition) == true } }

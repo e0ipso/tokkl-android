@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
  * @param clear signs out and clears the phone, returning false when a step failed.
  * @param scope outlives every screen, so leaving the app does not stop a sign-out half way.
  */
-class SignOutModel(
+class SignOutConfirmation(
     private val unsentCount: suspend () -> Int,
     private val clear: suspend () -> Boolean,
     private val scope: CoroutineScope,

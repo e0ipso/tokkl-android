@@ -59,7 +59,7 @@ class CertificateHostMismatchTest {
                     if (hostname == HOST) InetAddress.getAllByName(proxy.host).toList() else Dns.SYSTEM.lookup(hostname)
             })
             .build()
-        val model = SignInModel(
+        val model = SignInViewModel(
             signIn = SignIn(session = { _, _, _ -> saved = true }, httpClient = client),
             trust = ServerTrustStore(context),
             cooldowns = SignInCooldownStore(context),

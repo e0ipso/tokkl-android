@@ -50,7 +50,7 @@ import java.time.format.DateTimeParseException
  * every action is off. Coming back online, or to the foreground, loads the trash again.
  */
 @Composable
-fun TrashScreen(model: TrashModel, modifier: Modifier = Modifier) {
+fun TrashScreen(model: TrashViewModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
     CatalogPageEffects(model, offline)
     val state by model.state.collectAsState()

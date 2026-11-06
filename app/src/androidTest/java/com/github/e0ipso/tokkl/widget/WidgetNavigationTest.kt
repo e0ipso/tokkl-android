@@ -34,8 +34,8 @@ class WidgetNavigationTest {
         runBlocking { app.accountSettings.refresh().join() }
         ActivityScenario.launch<MainActivity>(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY)).use { scenario ->
             assertToday(scenario)
-            lateinit var model: ReportsModel
-            scenario.onActivity { model = koinViewModels(it)[ReportsViewModel::class.java].model }
+            lateinit var model: ReportsViewModel
+            scenario.onActivity { model = koinViewModels(it)[ReportsViewModel::class.java] }
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 model.selectTab(ReportTab.WEEKLY)
                 model.select(RangePreset.LAST_WEEK)
@@ -95,7 +95,7 @@ class WidgetNavigationTest {
         compose.waitUntil(15_000) {
             var today = false
             scenario.onActivity {
-                val model = koinViewModels(it)[ReportsViewModel::class.java].model
+                val model = koinViewModels(it)[ReportsViewModel::class.java]
                 val selection = when (val state = model.state.value) {
                     is ReportsState.Loaded -> state.selection
                     is ReportsState.Loading -> state.selection

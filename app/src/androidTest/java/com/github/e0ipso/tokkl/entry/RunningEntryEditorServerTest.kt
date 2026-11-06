@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.koinViewModels
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.sessionTrust
-import com.github.e0ipso.tokkl.components.signOutModel
+import com.github.e0ipso.tokkl.components.signOutConfirmation
 import com.github.e0ipso.tokkl.components.themeSettings
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
@@ -80,7 +80,9 @@ import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.finishWithin
+import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
@@ -89,7 +91,6 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsViewModel
-import com.github.e0ipso.tokkl.timer.TimerModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.trash.TrashViewModel
@@ -486,31 +487,31 @@ class RunningEntryEditorServerTest {
                 val history = models[HistoryViewModel::class.java]
                 val timer = models[TimerViewModel::class.java]
                 val shownTimer = changes?.let {
-                    TimerModel(app.timerControls, app.cache.projects, app.cache.tasks, app.accountSettings.state, it, activity.lifecycleScope)
-                } ?: timer.model
+                    TimerViewModel(app.timerControls, app.cache.projects, app.cache.tasks, app.accountSettings.state, it, activity.lifecycleScope)
+                } ?: timer
                 activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(width.dp, 900.dp))) {
                         TokklTheme(darkTheme = false) {
                             TokklNavHost(
-                                signInModel = models[SignInViewModel::class.java].model,
+                                signIn = models[SignInViewModel::class.java],
                                 themeSettings = app.themeSettings,
-                                signOut = app.signOutModel,
+                                signOut = app.signOutConfirmation,
                                 sessionTrust = app.sessionTrust,
-                                reports = models[ReportsViewModel::class.java].model,
-                                history = history.model,
-                                entryActions = history.actions,
-                                calendar = models[CalendarViewModel::class.java].model,
-                                projects = models[ProjectsViewModel::class.java].model,
-                                clients = models[ClientsViewModel::class.java].model,
-                                tags = models[TagsViewModel::class.java].model,
+                                reports = models[ReportsViewModel::class.java],
+                                history = history,
+                                entryActions = models[EntryActionsViewModel::class.java],
+                                calendar = models[CalendarViewModel::class.java],
+                                projects = models[ProjectsViewModel::class.java],
+                                clients = models[ClientsViewModel::class.java],
+                                tags = models[TagsViewModel::class.java],
                                 timerView = app.timerView,
                                 timer = shownTimer,
-                                entryForm = models[EntryFormViewModel::class.java].model,
+                                entryForm = models[EntryFormViewModel::class.java],
                                 cache = app.cache,
-                                trash = models[TrashViewModel::class.java].model,
+                                trash = models[TrashViewModel::class.java],
                                 capabilities = app.capabilities.state,
                                 settings = app.accountSettings.state,
-                                favorites = timer.favorites,
+                                favorites = models[FavoritesViewModel::class.java],
                             )
                         }
                     }

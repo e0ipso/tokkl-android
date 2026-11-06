@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.favorites
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
@@ -59,20 +61,20 @@ data class FavoritesState(
  * list there and then in the cache, and until it answers, no other change starts. A change the
  * server does not store leaves the list as it was and says why.
  *
- * Starting a template is the timer's: TimerModel.startFrom.
+ * Starting a template is the timer's: TimerViewModel.startFrom.
  *
  * @param available whether the server keeps Tokkl's favorites, from the capabilities.
  * @param save posts the list and caches it, blocking, so it runs on [io].
  */
-class FavoritesModel(
+class FavoritesViewModel(
     favorites: Flow<List<CachedFavorite>>,
     projects: Flow<List<CachedProject>>,
     tasks: Flow<List<CachedTask>>,
     available: Flow<Boolean>,
     private val save: (List<EntryFields>) -> ApiResult<Unit>,
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     private val io: CoroutineContext,
-) {
+) : ViewModel(scope) {
 
     private val local = MutableStateFlow(Local())
 
@@ -83,7 +85,7 @@ class FavoritesModel(
             saving = edits.saving,
             problem = edits.problem,
         )
-    }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FavoritesState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FavoritesState())
 
     /**
      * Adds [fields] at the end of the list, as the web app's Pin as favorite does, unless it is
@@ -134,7 +136,7 @@ class FavoritesModel(
             return
         }
         local.value = Local(saving = true)
-        scope.launch {
+        viewModelScope.launch {
             val result = withContext(io) { save(next) }
             val problem = (result as? ApiResult.Failure)?.let { FavoritesProblem.Server(it.error.toServerProblem()) }
             local.value = Local(problem = problem)

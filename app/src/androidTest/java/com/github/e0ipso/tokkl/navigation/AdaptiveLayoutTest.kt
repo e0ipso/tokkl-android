@@ -63,12 +63,12 @@ import com.github.e0ipso.tokkl.reports.ReportsContent
 import com.github.e0ipso.tokkl.reports.ReportsState
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.settings.SettingsContent
-import com.github.e0ipso.tokkl.settings.SignOutModel
+import com.github.e0ipso.tokkl.settings.SignOutConfirmation
 import com.github.e0ipso.tokkl.settings.ThemeSettings
 import com.github.e0ipso.tokkl.showsEntryBeside
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
-import com.github.e0ipso.tokkl.signin.SignInModel
+import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
@@ -337,7 +337,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     /** The screens, each with fixed data, inside the signed-in frame where they have one. */
     private inner class ScreenScope {
         private val signInModel by lazy {
-            SignInModel(
+            SignInViewModel(
                 signIn = SignIn(session = { _, _, _ -> }, httpClient = SharedHttpClient.instance),
                 trust = ServerTrustStore(context),
                 cooldowns = SignInCooldownStore(context),
@@ -403,7 +403,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                     settings = ThemeSettings(),
                     onModeChange = {},
                     onDynamicColorChange = {},
-                    signOut = SignOutModel.State(),
+                    signOut = SignOutConfirmation.State(),
                     onSignOut = {},
                     onConfirmSignOut = {},
                     onCancelSignOut = {},

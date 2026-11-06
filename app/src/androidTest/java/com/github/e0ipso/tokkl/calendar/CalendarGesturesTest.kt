@@ -235,8 +235,8 @@ class CalendarGesturesTest {
     }
 
     /** The calendar on [ENTRY], in a window of [window], or the phone's own, with the All day row when [allDayOffered]. */
-    private fun show(window: DpSize?, allDayOffered: Boolean = false): CalendarModel {
-        val model = CalendarModel(
+    private fun show(window: DpSize?, allDayOffered: Boolean = false): CalendarViewModel {
+        val model = CalendarViewModel(
             entries = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY_ENTRY, unsent = false))),
             projects = MutableStateFlow(emptyList()),
             tasks = MutableStateFlow(emptyList()),
@@ -265,7 +265,7 @@ class CalendarGesturesTest {
         return model
     }
 
-    private fun shown(model: CalendarModel): CalendarState.Shown = model.state.value as CalendarState.Shown
+    private fun shown(model: CalendarViewModel): CalendarState.Shown = model.state.value as CalendarState.Shown
 
     /**
      * Presses at [from], holds past the long-press time, drags [dy] down and [dx] across in a few

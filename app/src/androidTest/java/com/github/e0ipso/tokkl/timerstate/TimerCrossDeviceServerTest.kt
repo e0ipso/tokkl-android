@@ -58,10 +58,9 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRing
-import com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModel
+import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
-import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -244,8 +243,8 @@ class TimerCrossDeviceServerTest {
             compose.awaitTimerPage()
             compose.awaitPomodoroOffered(15_000)
             compose.openBarPage(R.string.pomodoro_title)
-            var model: PomodoroScreenModel? = null
-            scenario.onActivity { model = koinViewModels(it)[PomodoroViewModel::class.java].model }
+            var model: PomodoroViewModel? = null
+            scenario.onActivity { model = koinViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
             compose.waitUntil("the page has loaded", 15_000) { !page.state.value.loading }
             compose.runOnIdle {

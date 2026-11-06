@@ -49,20 +49,20 @@ import androidx.lifecycle.ViewModelStoreOwner
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.calendar.CalendarModel
+import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.clients.ClientsModel
+import com.github.e0ipso.tokkl.clients.ClientsViewModel
 import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.di.IoDispatcher
-import com.github.e0ipso.tokkl.entry.EntryFormModel
+import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
-import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.TemplatesScreen
 import com.github.e0ipso.tokkl.history.EntryActionsHost
-import com.github.e0ipso.tokkl.history.EntryActionsModel
+import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryList
-import com.github.e0ipso.tokkl.history.HistoryModel
+import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
 import com.github.e0ipso.tokkl.navigation.AppNavigationRail
@@ -76,29 +76,29 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
 import com.github.e0ipso.tokkl.pomodoro.PomodoroScreen
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
-import com.github.e0ipso.tokkl.projects.ProjectsModel
+import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
-import com.github.e0ipso.tokkl.reports.ReportsModel
+import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.SettingsScreen
-import com.github.e0ipso.tokkl.settings.SignOutModel
-import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
+import com.github.e0ipso.tokkl.settings.SignOutConfirmation
+import com.github.e0ipso.tokkl.settings.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.signin.SignInAgain
-import com.github.e0ipso.tokkl.signin.SignInModel
+import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
 import com.github.e0ipso.tokkl.sync.DiscardNotice
-import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
+import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.sync.SyncStatusBand
-import com.github.e0ipso.tokkl.tags.TagsModel
+import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.timer.FullscreenTimerScreen
 import com.github.e0ipso.tokkl.timer.TimerBar
-import com.github.e0ipso.tokkl.timer.TimerModel
+import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timer.TimerNotices
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
@@ -107,9 +107,9 @@ import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.settleDescription
 import com.github.e0ipso.tokkl.timer.target
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
-import com.github.e0ipso.tokkl.trash.TrashModel
+import com.github.e0ipso.tokkl.trash.TrashViewModel
 import com.github.e0ipso.tokkl.trash.TrashScreen
-import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.trust.TrustPrompt
 import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
 import com.github.e0ipso.tokkl.ui.WindowWidth
@@ -170,27 +170,27 @@ enum class Destination { SIGN_IN, TIMER, FULLSCREEN_TIMER, POMODORO, REPORTS, PR
  */
 @Composable
 fun TokklNavHost(
-    signInModel: SignInModel,
-    themeSettings: ThemeSettingsModel,
-    signOut: SignOutModel,
-    sessionTrust: SessionTrustModel,
-    reports: ReportsModel,
-    history: HistoryModel,
-    entryActions: EntryActionsModel,
-    calendar: CalendarModel,
-    projects: ProjectsModel,
-    clients: ClientsModel,
-    tags: TagsModel,
+    signIn: SignInViewModel,
+    themeSettings: ThemeSettingsRepository,
+    signOut: SignOutConfirmation,
+    sessionTrust: SessionTrust,
+    reports: ReportsViewModel,
+    history: HistoryViewModel,
+    entryActions: EntryActionsViewModel,
+    calendar: CalendarViewModel,
+    projects: ProjectsViewModel,
+    clients: ClientsViewModel,
+    tags: TagsViewModel,
     timerView: TimerViewSetting,
-    timer: TimerModel,
-    entryForm: EntryFormModel,
+    timer: TimerViewModel,
+    entryForm: EntryFormViewModel,
     cache: AccountCache,
-    trash: TrashModel,
+    trash: TrashViewModel,
     timerRunning: Flow<Boolean> = flowOf(false),
     capabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
-    favorites: FavoritesModel? = null,
+    favorites: FavoritesViewModel? = null,
     syncStatus: Flow<SyncStatus?> = flowOf(null),
-    needsAttention: NeedsAttentionModel? = null,
+    needsAttention: NeedsAttention? = null,
     settings: StateFlow<AccountSettings?> = MutableStateFlow(null),
     discardedChanges: StateFlow<Int> = MutableStateFlow(0),
     onDismissDiscarded: () -> Unit = {},
@@ -284,9 +284,9 @@ fun TokklNavHost(
     if (destination == Destination.SIGN_IN) {
         LaunchedEffect(Unit) { timerPageState.removeState("timer-page") }
         SignInScreen(
-            model = signInModel,
+            model = signIn,
             onSignedIn = {
-                signInModel.reset()
+                signIn.reset()
                 backStack.open(TopLevelPage.TIMER)
             },
         )
@@ -356,7 +356,7 @@ fun TokklNavHost(
             scope.launch {
                 // Reads the stored server, off the main thread.
                 val account = withContext(io) { signedInAccount() } ?: return@launch
-                signInModel.signInAgain(account)
+                signIn.signInAgain(account)
                 backStack.add(Destination.SIGN_IN)
             }
         },
@@ -596,27 +596,27 @@ internal fun SignedInFrame(
 private fun Screen(
     destination: Destination,
     backStack: SnapshotStateList<Destination>,
-    themeSettings: ThemeSettingsModel,
+    themeSettings: ThemeSettingsRepository,
     reminderSettings: ReminderSetting?,
     pomodoroDefaults: PomodoroDefaultsSetting,
     pomodoroSharedWithWeb: Boolean,
-    signOut: SignOutModel,
-    reports: ReportsModel,
-    history: HistoryModel,
-    entryActions: EntryActionsModel,
-    calendar: CalendarModel,
-    projects: ProjectsModel,
-    clients: ClientsModel,
-    tags: TagsModel,
-    trash: TrashModel,
-    entryForm: EntryFormModel,
+    signOut: SignOutConfirmation,
+    reports: ReportsViewModel,
+    history: HistoryViewModel,
+    entryActions: EntryActionsViewModel,
+    calendar: CalendarViewModel,
+    projects: ProjectsViewModel,
+    clients: ClientsViewModel,
+    tags: TagsViewModel,
+    trash: TrashViewModel,
+    entryForm: EntryFormViewModel,
     cache: AccountCache,
     timerView: TimerView,
     onTimerViewChange: (TimerView) -> Unit,
     onContinue: (Long) -> Unit,
     onOpenEntry: () -> Unit,
-    favorites: FavoritesModel?,
-    needsAttention: NeedsAttentionModel?,
+    favorites: FavoritesViewModel?,
+    needsAttention: NeedsAttention?,
     settings: StateFlow<AccountSettings?>,
     onPomodoroStarted: () -> Unit,
     onNotificationRetry: () -> Unit,
@@ -681,7 +681,7 @@ private fun Screen(
                 viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner,
             )
             PomodoroScreen(
-                model = pomodoro.model, cache = cache,
+                model = pomodoro, cache = cache,
                 onNotificationStart = onPomodoroStarted,
                 onNotificationRetry = onNotificationRetry,
                 notificationPermissionRevision = notificationPermissionRevision,
@@ -748,7 +748,7 @@ private fun List<Destination>.currentPage(): TopLevelPage =
 
 /** The prompt for a refused request, or after a cancel the notice that reopens it. */
 @Composable
-private fun SessionTrustPrompts(sessionTrust: SessionTrustModel) {
+private fun SessionTrustPrompts(sessionTrust: SessionTrust) {
     val state by sessionTrust.state.collectAsState()
     val refusal = state.refusal ?: return
     if (state.promptOpen && refusal is ApiError.TrustQuestion) {

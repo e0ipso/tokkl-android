@@ -95,7 +95,7 @@ typealias EntryFormPicker =
  */
 @Composable
 fun EntryFormScreen(
-    model: EntryFormModel,
+    model: EntryFormViewModel,
     cache: AccountCache,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,

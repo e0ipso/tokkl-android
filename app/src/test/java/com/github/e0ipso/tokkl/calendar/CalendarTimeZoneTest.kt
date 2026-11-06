@@ -44,7 +44,7 @@ class CalendarTimeZoneTest {
 
     @Test
     fun theWeekAndItsBlocksFollowTheAccountTimezone() = runBlocking {
-        val model = CalendarModel(
+        val model = CalendarViewModel(
             entries = flowOf(listOf(EntryWithSendState(LATE_CALL, unsent = false))),
             projects = flowOf(emptyList()),
             tasks = flowOf(emptyList()),
@@ -90,7 +90,7 @@ class CalendarTimeZoneTest {
             allDay = true,
             day = LocalDate.of(2026, 10, 11),
         )
-        val model = CalendarModel(
+        val model = CalendarViewModel(
             entries = flowOf(listOf(EntryWithSendState(stale, unsent = true))),
             projects = flowOf(emptyList()),
             tasks = flowOf(emptyList()),

@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
  * @param save writes the settings, throwing [IOException] when it cannot.
  * @param scope outlives every screen, so leaving the app does not cancel a pending write.
  */
-class ThemeSettingsModel(
+class ThemeSettingsRepository(
     initial: ThemeSettings,
     private val save: (ThemeSettings) -> Unit,
     private val scope: CoroutineScope,

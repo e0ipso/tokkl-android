@@ -54,7 +54,7 @@ import org.junit.Test
  * [entriesAnswer], with a clock the test can move on a day while the model lives, as when the app
  * stays open past midnight.
  */
-class HistoryModelTest {
+class HistoryViewModelTest {
 
     private val server = MockWebServer()
     private val requests = CopyOnWriteArrayList<String>()
@@ -361,7 +361,7 @@ class HistoryModelTest {
         assertEquals(OlderDays.Unreachable, awaitShown(model) { it.older.settled() }.older)
     }
 
-    private fun model() = HistoryModel(
+    private fun model() = HistoryViewModel(
         entries = cached,
         projects = MutableStateFlow(emptyList<CachedProject>()),
         tasks = MutableStateFlow(emptyList<CachedTask>()),
@@ -382,7 +382,7 @@ class HistoryModelTest {
     private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
 
     /** Fails with the last state shown and the requests sent when [condition] never holds. */
-    private fun awaitShown(model: HistoryModel, condition: (HistoryState.Shown) -> Boolean): HistoryState.Shown {
+    private fun awaitShown(model: HistoryViewModel, condition: (HistoryState.Shown) -> Boolean): HistoryState.Shown {
         var last: HistoryState.Shown? = null
         return runBlocking {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.filterIsInstance<HistoryState.Shown>().onEach { last = it }.first(condition) }

@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 @Composable
 fun NeedsAttentionScreen(
-    model: NeedsAttentionModel,
+    model: NeedsAttention,
     settings: StateFlow<AccountSettings?>,
     onEdit: (entryId: Long) -> Unit,
     onBack: () -> Unit,

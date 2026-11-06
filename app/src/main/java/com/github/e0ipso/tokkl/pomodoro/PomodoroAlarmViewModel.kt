@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -27,23 +29,24 @@ internal data class PomodoroAlarmState(
 )
 
 /**
- * The full-screen alarm's model, bound to one phase of the server's session. It opens only for the
- * held phase its intent names, once that phase's planned end has come, and closes as soon as the
- * held state has another phase or none, whichever device moved it on. A new revision of the same
- * phase keeps it open with that revision. Next phase and End session go to the server with the
- * revision shown; one that fails leaves the alarm open, ringing, with the standard message.
- * Closing, Back, Home and recreation have no ringing side effects.
+ * The full-screen alarm's view model, bound to one phase of the server's session. It opens only
+ * for the held phase its intent names, once that phase's planned end has come, and closes as soon
+ * as the held state has another phase or none, whichever device moved it on. A new revision of
+ * the same phase keeps it open with that revision. Next phase and End session go to the server
+ * with the revision shown; one that fails leaves the alarm open, ringing, with the standard
+ * message. Closing, Back, Home and recreation have no ringing side effects. A command in flight
+ * outlives a rotation and is not sent again.
  *
  * All public methods are called on the main thread.
  *
  * @param held the held timer state while the server offers the timer API, and null otherwise.
  */
-internal class PomodoroAlarmModel(
+internal class PomodoroAlarmViewModel(
     held: Flow<HeldTimerState?>,
     private val actions: SessionActions,
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),
-) {
+) : ViewModel(scope) {
     private val mutable = MutableStateFlow(PomodoroAlarmState())
     val state = mutable.asStateFlow()
 
@@ -57,7 +60,7 @@ internal class PomodoroAlarmModel(
     private var target: PomodoroPhaseKey? = null
 
     init {
-        scope.launch { held.collect(::accept) }
+        viewModelScope.launch { held.collect(::accept) }
     }
 
     /** An intent asks for the alarm of [expected]. A stale one never replaces an alarm on screen. */
@@ -108,7 +111,7 @@ internal class PomodoroAlarmModel(
         val ring = shown.ring ?: return null
         if (shown.busy || shown.closed) return null
         mutable.value = shown.copy(busy = true, problem = null)
-        return scope.launch {
+        return viewModelScope.launch {
             val result = send(ring.revision)
             mutable.update { it.copy(busy = false, problem = result.takeUnless { result == TimerActionResult.Done }) }
         }

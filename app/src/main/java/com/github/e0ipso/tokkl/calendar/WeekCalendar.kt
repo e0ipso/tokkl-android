@@ -162,7 +162,7 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun WeekCalendar(
-    model: CalendarModel,
+    model: CalendarViewModel,
     onEdit: (entryId: Long, older: CachedTimeEntry?) -> Unit,
     onAdd: (LocalDate) -> Unit,
     onAddAllDay: (LocalDate) -> Unit,

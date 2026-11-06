@@ -46,7 +46,7 @@ import org.junit.Test
  * a change queue that writes it, and can wait as a slow write to the phone's database would. Each
  * tap must change what the timer shows before the queue has written anything.
  */
-class TimerModelTest {
+class TimerViewModelTest {
 
     private val main: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
@@ -68,11 +68,11 @@ class TimerModelTest {
         val end = { taps += "end $section" }
         end
     }
-    private lateinit var model: TimerModel
+    private lateinit var model: TimerViewModel
 
     @Before
     fun showTheTimer() {
-        model = TimerModel(
+        model = TimerViewModel(
             controls = running.map { serverTimerControls(it, held = null, timerApi = true) },
             projects = MutableStateFlow(listOf(APP, CLIENT_WORK)),
             tasks = MutableStateFlow(listOf(DESIGN)),

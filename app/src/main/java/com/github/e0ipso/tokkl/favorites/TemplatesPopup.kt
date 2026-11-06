@@ -38,7 +38,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  * The timer panel's timer-templates icon (docs/PRD.md T5). It opens a popup of the cached
  * templates in [state], in saved order. Choosing one dismisses the popup and calls [onStart].
  * Save as template stores [timerFields]. Manage templates calls [onManage]. Without the
- * capability, nothing shows. [onSave]'s callback hears how the save went, as [FavoritesModel.add]
+ * capability, nothing shows. [onSave]'s callback hears how the save went, as [FavoritesViewModel.add]
  * reports it.
  */
 @Composable

@@ -50,7 +50,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  * foreground, loads the projects again.
  */
 @Composable
-fun ProjectsScreen(model: ProjectsModel, modifier: Modifier = Modifier) {
+fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
     CatalogPageEffects(model, offline)
     val state by model.state.collectAsState()

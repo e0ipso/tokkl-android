@@ -25,7 +25,7 @@ import org.junit.Test
  * The trash page's model against a MockWebServer that answers by method and path. Unconfined runs
  * each request to its end inside the call.
  */
-class TrashModelTest {
+class TrashViewModelTest {
 
     private val server = MockWebServer()
     private lateinit var client: TogglApiClient
@@ -35,7 +35,7 @@ class TrashModelTest {
     private var missing = 0
 
     private val model by lazy {
-        TrashModel(
+        TrashViewModel(
             client = { client },
             refreshCache = { cacheRefreshes++ },
             trashMissing = { missing++ },

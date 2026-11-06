@@ -32,13 +32,13 @@ import org.junit.Test
  * A signed-in session's requests against a MockWebServer, with the session's
  * client reporting to the model as the app's Session does.
  */
-class SessionTrustModelTest {
+class SessionTrustTest {
 
     private val server = MockWebServer()
     private val trust = InMemoryServerTrust()
     private lateinit var url: ServerUrl
     private var retries = 0
-    private lateinit var model: SessionTrustModel
+    private lateinit var model: SessionTrust
 
     @Before
     fun setUp() {
@@ -66,13 +66,13 @@ class SessionTrustModelTest {
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(url)), refused)
         assertEquals("no request before the confirmation", 0, server.requestCount)
-        assertEquals(SessionTrustModel.State(ApiError.CleartextNotConfirmed(url), promptOpen = true), model.state.value)
+        assertEquals(SessionTrust.State(ApiError.CleartextNotConfirmed(url), promptOpen = true), model.state.value)
 
         model.accept()
 
         assertTrue(trust.isCleartextConfirmed(url))
         assertEquals(1, retries)
-        assertEquals(SessionTrustModel.State(), model.state.value)
+        assertEquals(SessionTrust.State(), model.state.value)
         assertTrue(client.get(url.api("me"), JsonObject.serializer()) is ApiResult.Success)
         assertEquals(ApiCredentials.ApiToken(TOKEN).authorizationHeader, server.takeRequest().headers["Authorization"])
     }
@@ -87,7 +87,7 @@ class SessionTrustModelTest {
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(url)), again)
         assertEquals(0, server.requestCount)
-        assertEquals(SessionTrustModel.State(ApiError.CleartextNotConfirmed(url), promptOpen = false), model.state.value)
+        assertEquals(SessionTrust.State(ApiError.CleartextNotConfirmed(url), promptOpen = false), model.state.value)
 
         model.reopen()
 
@@ -107,7 +107,7 @@ class SessionTrustModelTest {
         val refusal = ApiError.UntrustedCertificate(CERTIFICATE, changed = true)
         assertEquals(ApiResult.Failure(refusal), refused)
         assertEquals(0, server.requestCount)
-        assertEquals(SessionTrustModel.State(refusal, promptOpen = true), model.state.value)
+        assertEquals(SessionTrust.State(refusal, promptOpen = true), model.state.value)
 
         model.accept()
 
@@ -123,7 +123,7 @@ class SessionTrustModelTest {
 
         model.refused(ApiError.UntrustedCertificate(CERTIFICATE, changed = false))
 
-        assertEquals(SessionTrustModel.State(ApiError.UntrustedCertificate(CERTIFICATE, changed = false), promptOpen = true), model.state.value)
+        assertEquals(SessionTrust.State(ApiError.UntrustedCertificate(CERTIFICATE, changed = false), promptOpen = true), model.state.value)
     }
 
     @Test
@@ -146,7 +146,7 @@ class SessionTrustModelTest {
 
         client().get(url.api("me"), JsonObject.serializer())
 
-        assertEquals(SessionTrustModel.State(), model.state.value)
+        assertEquals(SessionTrust.State(), model.state.value)
     }
 
     @Test
@@ -159,12 +159,12 @@ class SessionTrustModelTest {
 
         model.accept()
 
-        assertEquals(SessionTrustModel.State(ApiError.CleartextNotConfirmed(url), promptOpen = false), model.state.value)
+        assertEquals(SessionTrust.State(ApiError.CleartextNotConfirmed(url), promptOpen = false), model.state.value)
         assertEquals(0, retries)
     }
 
     private fun model(trust: ServerTrust) =
-        SessionTrustModel(trust, retry = { retries++ }, scope = CoroutineScope(Dispatchers.Unconfined), io = Dispatchers.Unconfined)
+        SessionTrust(trust, retry = { retries++ }, scope = CoroutineScope(Dispatchers.Unconfined), io = Dispatchers.Unconfined)
 
     /** The signed-in session's client, as Session builds it. */
     private fun client(httpClient: OkHttpClient = SharedHttpClient.instance) =

@@ -42,9 +42,8 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.pomodoro.PomodoroProblem
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver
-import com.github.e0ipso.tokkl.pomodoro.PomodoroScreenModel
-import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionActionReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionActionReceiver
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.widget.NativeWidget
@@ -238,8 +237,8 @@ class TimerActionsOfflineServerTest {
             compose.awaitTimerPage()
             compose.awaitPomodoroOffered(15_000)
             compose.openBarPage(R.string.pomodoro_title)
-            var model: PomodoroScreenModel? = null
-            scenario.onActivity { model = koinViewModels(it)[PomodoroViewModel::class.java].model }
+            var model: PomodoroViewModel? = null
+            scenario.onActivity { model = koinViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
             compose.waitUntil("the page has loaded", 15_000) { !page.state.value.loading }
             compose.runOnIdle {
@@ -355,7 +354,7 @@ class TimerActionsOfflineServerTest {
     }
 
     /** Waits until the Pomodoro page says [action] could not reach the server, and shows it. */
-    private fun awaitProblem(page: PomodoroScreenModel, action: PomodoroAction) {
+    private fun awaitProblem(page: PomodoroViewModel, action: PomodoroAction) {
         compose.waitUntil("$action fails offline", 15_000) { !page.state.value.busy && page.state.value.problem != null }
         assertEquals(PomodoroProblem(action, TimerActionResult.Offline), page.state.value.problem)
         compose.onNodeWithText(offline).performScrollTo().assertIsDisplayed()

@@ -56,7 +56,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.reports.DateWords
 import com.github.e0ipso.tokkl.reports.projectMark
@@ -80,12 +80,12 @@ import java.util.Locale
  */
 @Composable
 fun HistoryList(
-    model: HistoryModel,
-    actions: EntryActionsModel,
+    model: HistoryViewModel,
+    actions: EntryActionsViewModel,
     onEdit: (Long) -> Unit,
     onContinue: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    favorites: FavoritesModel? = null,
+    favorites: FavoritesViewModel? = null,
     showActions: Boolean = true,
 ) {
     val state by model.state.collectAsState()
@@ -125,7 +125,7 @@ internal class PinAction(val enabled: Boolean, val onPin: (Long) -> Unit)
 
 /** Save as template through [favorites], or null when the server keeps no timer templates. */
 @Composable
-internal fun pinAction(actions: EntryActionsModel, favorites: FavoritesModel): PinAction? {
+internal fun pinAction(actions: EntryActionsViewModel, favorites: FavoritesViewModel): PinAction? {
     val shown by favorites.state.collectAsState()
     val offline = rememberOffline()
     if (!shown.available) return null

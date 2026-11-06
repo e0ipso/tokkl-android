@@ -30,7 +30,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
-import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetFieldsStore
 
 /**
@@ -67,7 +67,7 @@ internal class SignOutSteps(
     private val alarmClock: AlarmClockPomodoroScheduler,
     private val timerView: Lazy<TimerViewSetting>,
     private val pomodoroDefaults: Lazy<PomodoroDefaultsSetting>,
-    private val sessionTrust: SessionTrustModel,
+    private val sessionTrust: SessionTrust,
     private val lastAnswer: Lazy<LastAnswer>,
     private val discarded: Lazy<DiscardedChanges>,
     private val stores: Stores,

@@ -51,7 +51,7 @@ import com.github.e0ipso.tokkl.entry.DescriptionSuggestion
 import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
 import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.entry.descriptionSuggestions
-import com.github.e0ipso.tokkl.favorites.FavoritesModel
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.TemplatesPopup
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
@@ -89,11 +89,11 @@ typealias WorkspacePicker =
  */
 @Composable
 fun TimerBar(
-    model: TimerModel,
+    model: TimerViewModel,
     cache: AccountCache,
     onAddEntry: () -> Unit,
     modifier: Modifier = Modifier,
-    favorites: FavoritesModel? = null,
+    favorites: FavoritesViewModel? = null,
     onManageTemplates: () -> Unit = {},
     clock: Clock = Clock.systemUTC(),
     onEditRunning: () -> Unit = {},
@@ -132,7 +132,7 @@ fun TimerBar(
 /** The panel popup for [favorites]. A choice starts through [onStart], which ends a pause chain. */
 @Composable
 private fun TemplatePopup(
-    favorites: FavoritesModel,
+    favorites: FavoritesViewModel,
     timerFields: EntryFields?,
     onManageTemplates: () -> Unit,
     onStart: (EntryFields) -> Unit,
@@ -160,7 +160,7 @@ fun settleDescription(focusManager: FocusManager) = focusManager.clearFocus()
 
 @Composable
 private fun TimerBarCore(
-    model: TimerModel,
+    model: TimerViewModel,
     cache: AccountCache,
     state: TimerState,
     elapsed: Long,

@@ -649,19 +649,19 @@ class CalendarServerTest {
     }
 
     /** Starts the app, shows the Calendar view and runs [steps] with the activity's calendar model. */
-    private fun withCalendar(steps: (CalendarModel) -> Unit) {
+    private fun withCalendar(steps: (CalendarViewModel) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             composeRule.onNode(hasText(string(R.string.timer_view_calendar)) and isSelectable())
                 .performSemanticsAction(SemanticsActions.OnClick)
-            var model: CalendarModel? = null
-            scenario.onActivity { model = koinViewModels(it)[CalendarViewModel::class.java].model }
+            var model: CalendarViewModel? = null
+            scenario.onActivity { model = koinViewModels(it)[CalendarViewModel::class.java] }
             steps(checkNotNull(model))
         }
     }
 
     /** Shows [day], as the arrows would. */
-    private fun show(model: CalendarModel, day: LocalDate) {
+    private fun show(model: CalendarViewModel, day: LocalDate) {
         instrumentation.runOnMainSync {
             model.showToday()
             model.step(ChronoUnit.DAYS.between(today, day))

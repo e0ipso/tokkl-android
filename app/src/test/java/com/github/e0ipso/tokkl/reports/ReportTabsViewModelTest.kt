@@ -41,14 +41,14 @@ import org.junit.Test
  * in UTC, already Wednesday 21 October in the account's zone. Requests run when [io] runs them, so
  * a test can look at the state while they wait.
  */
-class ReportTabsModelTest {
+class ReportTabsViewModelTest {
 
     private val server = MockWebServer()
     private val searches = CopyOnWriteArrayList<JsonObject>()
     private val weeklies = CopyOnWriteArrayList<JsonObject>()
     private val io = Queued()
     private val settings = MutableStateFlow<AccountSettings?>(AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null))
-    private lateinit var model: ReportsModel
+    private lateinit var model: ReportsViewModel
 
     /** The detailed search's pages after the first answer 503, as a proxy does while the server is down. */
     @Volatile
@@ -78,7 +78,7 @@ class ReportTabsModelTest {
         ConfiguredServer.readStoredFrom { url }
         // The user has confirmed the MockWebServer's plain http URL.
         ConfiguredTrust.readFrom(InMemoryServerTrust(url))
-        model = ReportsModel(
+        model = ReportsViewModel(
             settings,
             { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
             CoroutineScope(Dispatchers.Unconfined),

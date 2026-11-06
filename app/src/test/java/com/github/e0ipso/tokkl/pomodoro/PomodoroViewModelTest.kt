@@ -14,7 +14,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The Pomodoro page as the controller of the server's session: the start form and the open pomodoro's fields. */
-class PomodoroScreenModelTest {
+class PomodoroViewModelTest {
     private val fixtures = mutableListOf<PageFixture>()
     private fun idle() = PageFixture().also { fixtures += it }
     private fun running(description: String = "Focused work") =
@@ -111,7 +111,7 @@ class PomodoroScreenModelTest {
     @Test
     fun nothingStartsUntilTheHeldStateAndTheCacheHaveBeenRead() {
         val f = idle()
-        val unread = PomodoroScreenModel(
+        val unread = PomodoroViewModel(
             emptyFlow(), emptyFlow(), f.server, f.changes, f.defaults, f.settings, f.unsent, f.refused, f.scope,
         )
         assertTrue(unread.state.value.loading)

@@ -45,7 +45,7 @@ import org.junit.Test
  * on Monday, and the phone keeps the entries that start from 12 October on, so the weeks of 12 and
  * 19 October come from the cache and every other week from the server.
  */
-class CalendarModelTest {
+class CalendarViewModelTest {
 
     private val server = MockWebServer()
 
@@ -530,7 +530,7 @@ class CalendarModelTest {
         cache: Flow<List<EntryWithSendState>> = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
         io: CoroutineContext = Dispatchers.Unconfined,
         allDayOffered: Boolean = false,
-    ) = CalendarModel(
+    ) = CalendarViewModel(
         entries = cache,
         projects = flowOf(emptyList()),
         tasks = flowOf(emptyList()),
@@ -543,7 +543,7 @@ class CalendarModelTest {
         allDayOffered = flowOf(allDayOffered),
     )
 
-    private fun shown(model: CalendarModel, condition: (CalendarState.Shown) -> Boolean): CalendarState.Shown = runBlocking {
+    private fun shown(model: CalendarViewModel, condition: (CalendarState.Shown) -> Boolean): CalendarState.Shown = runBlocking {
         withTimeout(TIMEOUT_MS) { model.state.first { it is CalendarState.Shown && condition(it) } as CalendarState.Shown }
     }
 

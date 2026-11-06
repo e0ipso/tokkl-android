@@ -16,7 +16,6 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivity
-import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
@@ -71,13 +70,13 @@ internal object TimerSurfaces {
     fun noOpenAlarm(): Boolean = openAlarms().all { it.isFinishing }
 
     /** Waits until a full-screen alarm is open and not finishing, and returns its model. */
-    fun awaitAlarm(): PomodoroAlarmModel {
+    fun awaitAlarm(): PomodoroAlarmViewModel {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
         while (true) {
             val open = openAlarms().singleOrNull { !it.isFinishing }
             if (open != null) {
-                var model: PomodoroAlarmModel? = null
-                instrumentation.runOnMainSync { model = koinViewModels(open)[PomodoroAlarmViewModel::class.java].model }
+                var model: PomodoroAlarmViewModel? = null
+                instrumentation.runOnMainSync { model = koinViewModels(open)[PomodoroAlarmViewModel::class.java] }
                 return checkNotNull(model)
             }
             if (SystemClock.elapsedRealtime() > deadline) throw AssertionError("no full-screen alarm opened")

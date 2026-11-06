@@ -59,7 +59,7 @@ import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewStore
-import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.trust.SessionTrust
 import java.security.KeyStore
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -189,7 +189,7 @@ class SignOutServerTest {
         ServerConfigStore(context).clear()
         ServerTrustStore(context).confirmCleartext(DEAD_SERVER)
         Session(context).save(DEAD_SERVER, account.apiToken)
-        assertEquals("no trust prompt waits", SessionTrustModel.State(), app.sessionTrust.state.value)
+        assertEquals("no trust prompt waits", SessionTrust.State(), app.sessionTrust.state.value)
         val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Never sent")) }
         assertTrue(runBlocking { app.changes.stop(id) })
         runBlocking { app.sender.send().join() }
@@ -225,7 +225,7 @@ class SignOutServerTest {
         assertEquals("the Pomodoro defaults in memory", PomodoroDefaults.DEFAULT, app.pomodoroDefaults.defaults.value)
         assertFalse("the http confirmation", ServerTrustStore(context).isCleartextConfirmed(DEAD_SERVER))
         assertNull("the pinned certificate", ServerTrustStore(context).pinnedSha256(PINNED.host, PINNED.port))
-        assertEquals("the trust prompt", SessionTrustModel.State(), app.sessionTrust.state.value)
+        assertEquals("the trust prompt", SessionTrust.State(), app.sessionTrust.state.value)
         assertEquals("the queue", 0, unsentCount())
         assertEquals("rows left in the cache's tables", emptyMap<String, Long>(), cacheRows().filterValues { it > 0 })
         assertTrue("the background work", queueWork().all { it.state == WorkInfo.State.CANCELLED })

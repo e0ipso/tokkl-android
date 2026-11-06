@@ -67,7 +67,7 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
  * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable
-fun ReportsScreen(model: ReportsModel, modifier: Modifier = Modifier) {
+fun ReportsScreen(model: ReportsViewModel, modifier: Modifier = Modifier) {
     val activity = LocalActivity.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(model) {

@@ -296,7 +296,7 @@ class WeeklyReportServerTest {
     private fun state(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the reports state") {
-            checkNotNull(scenario).onActivity { state = koinViewModels(it)[ReportsViewModel::class.java].model.state.value }
+            checkNotNull(scenario).onActivity { state = koinViewModels(it)[ReportsViewModel::class.java].state.value }
         }
         return checkNotNull(state)
     }

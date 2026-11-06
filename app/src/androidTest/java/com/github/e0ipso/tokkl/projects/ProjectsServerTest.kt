@@ -88,7 +88,7 @@ class ProjectsServerTest {
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
     private var acme = 0L
-    private lateinit var model: ProjectsModel
+    private lateinit var model: ProjectsViewModel
 
     @Before
     fun seedTheServerAndRefresh() {
@@ -99,7 +99,7 @@ class ProjectsServerTest {
         val gone = create("clients", buildJsonObject { put("name", "Gone") })
         account.client.sendNoContent("POST", url("clients", gone.toString(), "archive"), buildJsonObject {}).orFail("archive Gone")
         runBlocking { app.accountSettings.refresh().join() }
-        model = ProjectsModel(
+        model = ProjectsViewModel(
             client = Session(context)::client,
             workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
             refreshCache = { refreshes += app.accountSettings.refreshAfterChange() },

@@ -345,7 +345,7 @@ class TimerServerTest {
         BlackholeDiagnostics.begin("timer-hang")
         try {
             scenario.onActivity { activity ->
-                val model = koinViewModels(activity)[TimerViewModel::class.java].model
+                val model = koinViewModels(activity)[TimerViewModel::class.java]
                 observations.launch {
                     model.state.map { it.javaClass.simpleName }.distinctUntilChanged().collect {
                         BlackholeDiagnostics.record("model.state kind=$it drawn=UNKNOWN")

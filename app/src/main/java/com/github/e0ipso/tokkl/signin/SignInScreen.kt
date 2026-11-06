@@ -73,7 +73,7 @@ import kotlinx.coroutines.flow.filter
  * accepted the credentials and the app has stored the server and the token.
  */
 @Composable
-fun SignInScreen(model: SignInModel, onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
+fun SignInScreen(model: SignInViewModel, onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
     val state by model.state.collectAsState()
     LaunchedEffect(state.signedIn) {
         if (state.signedIn) onSignedIn()

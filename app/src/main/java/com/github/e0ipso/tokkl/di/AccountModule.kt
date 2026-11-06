@@ -13,8 +13,8 @@ import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.session.SignOutSteps
-import com.github.e0ipso.tokkl.settings.SignOutModel
-import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
+import com.github.e0ipso.tokkl.settings.SignOutConfirmation
+import com.github.e0ipso.tokkl.settings.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
 import com.github.e0ipso.tokkl.signin.AccountSessionWriter
@@ -24,7 +24,7 @@ import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
-import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.trust.SessionTrust
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -48,8 +48,8 @@ internal val accountModule = module {
     single {
         val store = get<ThemeSettingsStore>()
         val scope = get<CoroutineScope>()
-        ThemeSettingsModel(initial = store.load(), save = store::save, scope = scope, io = io()).also { model ->
-            syncApplicationNightMode(androidContext(), model.state.map { it.mode }, scope, io())
+        ThemeSettingsRepository(initial = store.load(), save = store::save, scope = scope, io = io()).also { themes ->
+            syncApplicationNightMode(androidContext(), themes.state.map { it.mode }, scope, io())
         }
     }
 
@@ -142,7 +142,7 @@ internal val accountModule = module {
      */
     single {
         val accountSettings = inject<AccountSettingsSource>()
-        SessionTrustModel(
+        SessionTrust(
             trust = get(),
             retry = { accountSettings.value.refresh() },
             scope = get(),
@@ -195,6 +195,6 @@ internal val accountModule = module {
     /** The Settings page's sign-out button and its warning about unsent changes. */
     single {
         val changes = inject<ChangeQueue>()
-        SignOutModel(unsentCount = { changes.value.unsentCount.first() }, clear = get<SignOut>()::run, scope = get())
+        SignOutConfirmation(unsentCount = { changes.value.unsentCount.first() }, clear = get<SignOut>()::run, scope = get())
     }
 }

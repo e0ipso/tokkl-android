@@ -90,7 +90,7 @@ class TimerPauseTest {
 
     /** The queue's and the server's calls in the order they came, by kind. */
     private val events = CopyOnWriteArrayList<String>()
-    private lateinit var model: TimerModel
+    private lateinit var model: TimerViewModel
 
     @Before
     fun showTheTimer() {
@@ -108,7 +108,7 @@ class TimerPauseTest {
     private fun timerModel(
         discardNotices: Flow<DiscardedPomodoro?> = MutableStateFlow(null),
         takeDiscardNotice: suspend () -> DiscardedPomodoro? = { null },
-    ) = TimerModel(
+    ) = TimerViewModel(
         controls = combine(phone, timerApi) { shown, api -> serverTimerControls(shown.running, shown.held, api) },
         projects = MutableStateFlow(listOf(APP)),
         tasks = MutableStateFlow(listOf(DESIGN)),
@@ -430,7 +430,7 @@ class TimerPauseTest {
         } ?: throw AssertionError("timed out waiting until $what; the last state was $last, after ${changes.calls} and $calls")
     }
 
-    private fun awaitNotice(from: TimerModel = model, condition: (TimerNotice?) -> Boolean): TimerNotice? {
+    private fun awaitNotice(from: TimerViewModel = model, condition: (TimerNotice?) -> Boolean): TimerNotice? {
         var last: TimerNotice? = null
         var matched = false
         val found = runBlocking {

@@ -24,14 +24,14 @@ import org.junit.Test
  * The clients page's model against a MockWebServer with one client, Acme, in workspace 7, and one
  * project of Acme's. Unconfined runs each request to the end inside the call.
  */
-class ClientsModelTest {
+class ClientsViewModelTest {
 
     private val server = MockWebServer()
 
     /** Each request's method, path and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
     private var refreshes = 0
-    private lateinit var model: ClientsModel
+    private lateinit var model: ClientsViewModel
 
     @Before
     fun setUp() {
@@ -54,7 +54,7 @@ class ClientsModelTest {
         ConfiguredServer.readStoredFrom { url }
         // The user has confirmed the MockWebServer's plain http URL.
         ConfiguredTrust.readFrom(InMemoryServerTrust(url))
-        model = ClientsModel(
+        model = ClientsViewModel(
             client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
             workspaceId = { 7L },
             refreshCache = { refreshes++ },

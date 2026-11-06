@@ -85,7 +85,7 @@ class TagsServerTest {
     private val refreshes = CopyOnWriteArrayList<Job>()
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
-    private lateinit var model: TagsModel
+    private lateinit var model: TagsViewModel
 
     @Before
     fun seedTheServerAndRefresh() {
@@ -93,7 +93,7 @@ class TagsServerTest {
         Session(context).save(TokklTestServer.url, account.apiToken)
         workspace = account.workspaceId
         runBlocking { app.accountSettings.refresh().join() }
-        model = TagsModel(
+        model = TagsViewModel(
             client = Session(context)::client,
             workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
             refreshCache = { refreshes += app.accountSettings.refreshAfterChange() },

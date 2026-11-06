@@ -469,10 +469,10 @@ class ReportFiltersTest {
 
     private fun state(): ReportsState = model().state.value
 
-    private fun model(): ReportsModel {
-        var model: ReportsModel? = null
+    private fun model(): ReportsViewModel {
+        var model: ReportsViewModel? = null
         finishWithin("reading the reports model") {
-            checkNotNull(scenario).onActivity { model = koinViewModels(it)[ReportsViewModel::class.java].model }
+            checkNotNull(scenario).onActivity { model = koinViewModels(it)[ReportsViewModel::class.java] }
         }
         return checkNotNull(model)
     }

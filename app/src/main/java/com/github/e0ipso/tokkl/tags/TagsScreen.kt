@@ -63,7 +63,7 @@ import com.github.e0ipso.tokkl.ui.TokklIconButton
  * off. Coming back online, or to the foreground, loads the tags again.
  */
 @Composable
-fun TagsScreen(model: TagsModel, modifier: Modifier = Modifier) {
+fun TagsScreen(model: TagsViewModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
     CatalogPageEffects(model, offline)
     val state by model.state.collectAsState()

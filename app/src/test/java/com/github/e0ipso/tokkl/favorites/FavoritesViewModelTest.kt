@@ -37,7 +37,7 @@ import org.junit.Test
  * The favorites' model against a cache the test sets and a server that stores what it gets, or
  * fails as the test says. Every edit saves the whole list, in the web app's format.
  */
-class FavoritesModelTest {
+class FavoritesViewModelTest {
 
     private val main: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
@@ -48,11 +48,11 @@ class FavoritesModelTest {
 
     @Volatile
     private var answer: ApiResult<Unit> = ApiResult.Success(Unit)
-    private lateinit var model: FavoritesModel
+    private lateinit var model: FavoritesViewModel
 
     @Before
     fun showTheFavorites() {
-        model = FavoritesModel(
+        model = FavoritesViewModel(
             favorites = cached,
             projects = MutableStateFlow(listOf(APP)),
             tasks = MutableStateFlow(listOf(DESIGN)),

@@ -41,12 +41,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class AppSummaryModelTest {
+class AppSummaryViewModelTest {
     private val http = MockWebServer()
     private val requests = CopyOnWriteArrayList<JsonObject>()
     private val paths = CopyOnWriteArrayList<String>()
     private val io = QueuedDispatcher()
-    private lateinit var model: ReportsModel
+    private lateinit var model: ReportsViewModel
     @Volatile private var summaryBody = APP_SUMMARY_FIXTURE
     @Volatile private var summaryStatus = 200
     @Volatile private var beforeSummaryReply: (() -> Unit)? = null
@@ -73,7 +73,7 @@ class AppSummaryModelTest {
         val url = ServerUrl.parse(http.url("/").toString())!!
         ConfiguredServer.readStoredFrom { url }
         ConfiguredTrust.readFrom(InMemoryServerTrust(url))
-        model = ReportsModel(
+        model = ReportsViewModel(
             accountSettings = MutableStateFlow(AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null)),
             client = { TogglApiClient(url, ApiCredentials.ApiToken("test-token")) },
             scope = CoroutineScope(Dispatchers.Unconfined), io = io,
@@ -149,7 +149,7 @@ class AppSummaryModelTest {
         }
         val liveScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val url = ServerUrl.parse(http.url("/").toString())!!
-        val live = ReportsModel(
+        val live = ReportsViewModel(
             accountSettings = MutableStateFlow(AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null)),
             client = { TogglApiClient(url, ApiCredentials.ApiToken("test-token")) },
             scope = liveScope, io = Dispatchers.IO,
