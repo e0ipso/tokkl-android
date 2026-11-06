@@ -13,10 +13,6 @@ fun interface TapTrace {
     fun begin(section: String): () -> Unit
 
     companion object {
-        /** Nonsecret observations of existing handler/trace points, installed only by diagnostics. */
-        @Volatile
-        internal var diagnostic: ((String) -> Unit)? = null
-
         /** From a Start tap until the screen shows the timer running. */
         const val START = "TimerStart"
 
@@ -31,13 +27,9 @@ fun interface TapTrace {
          * when nothing traces.
          */
         val System = TapTrace { section ->
-            diagnostic?.invoke("timer.model.accept trace=$section actual_touch_receipt=UNKNOWN")
             val cookie = cookies.incrementAndGet()
             Trace.beginAsyncSection(section, cookie)
-            val end: () -> Unit = {
-                Trace.endAsyncSection(section, cookie)
-                diagnostic?.invoke("timer.trace.end trace=$section reason=shown_or_superseded")
-            }
+            val end: () -> Unit = { Trace.endAsyncSection(section, cookie) }
             end
         }
 

@@ -331,6 +331,8 @@ class TimerServerTest {
     }
 
     private fun launch(diagnose: Boolean = false, steps: () -> Unit) {
+        // The page's view model takes its trace when it is made, so the trace goes in first.
+        if (diagnose) BlackholeDiagnostics.traceTimerTaps()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.

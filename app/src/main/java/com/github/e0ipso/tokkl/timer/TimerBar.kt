@@ -221,7 +221,6 @@ fun TimerBarContent(
             modifier = Modifier.padding(spacing.space3),
         ) {
             val stop = {
-                TapTrace.diagnostic?.invoke("timer.stop.handler.enter actual_touch_receipt=UNKNOWN")
                 onStop()
                 focusManager.clearFocus()
             }

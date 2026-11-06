@@ -64,6 +64,9 @@ import org.koin.dsl.module
  * Timer page's history and calendar the entry actions' deletes and restores.
  */
 internal val viewModelModule = module {
+    /** The system trace of each Start and Stop tap on the Timer page. */
+    single { TapTrace.System }
+
     viewModel { params ->
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
@@ -208,7 +211,7 @@ internal val viewModelModule = module {
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
             scope = viewModelCoroutineScope(),
-            trace = TapTrace.System,
+            trace = get(),
             pauseChain = get<TimerActions>(),
             sendQueued = sender::sendAndWait,
             discardNotices = get<HeldTimerFlows>().discardNotice,

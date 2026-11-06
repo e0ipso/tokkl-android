@@ -4,6 +4,7 @@ import android.util.Log
 import com.github.e0ipso.tokkl.timer.TapTrace
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import org.koin.core.context.GlobalContext
 
 /**
  * Two monotonic seconds from before a tap through every observation of its visible state. A tap
@@ -54,15 +55,31 @@ internal object BlackholeDiagnostics {
     private val records = AtomicInteger()
     @Volatile private var active = false
     @Volatile private var phase = "inactive"
-    private var previousTapDiagnostic: ((String) -> Unit)? = null
 
     fun begin(name: String) {
         records.set(0)
         phase = name
-        previousTapDiagnostic = TapTrace.diagnostic
         active = true
-        TapTrace.diagnostic = { record(it) }
         record("begin clock=System.nanoTime_ns actual_touch_receipt=UNKNOWN")
+    }
+
+    /**
+     * Gives the Timer page view models made from now on a tap trace that also records when the
+     * model accepts a Start or Stop tap and when the screen shows what it did. Call it before the
+     * activity opens; [finish] puts the system trace back.
+     */
+    fun traceTimerTaps() {
+        GlobalContext.get().declare<TapTrace>(RecordingTapTrace, allowOverride = true)
+    }
+
+    private val RecordingTapTrace = TapTrace { section ->
+        record("timer.model.accept trace=$section actual_touch_receipt=UNKNOWN")
+        val end = TapTrace.System.begin(section)
+        val recorded: () -> Unit = {
+            end()
+            record("timer.trace.end trace=$section reason=shown_or_superseded")
+        }
+        recorded
     }
 
     fun mark(name: String) {
@@ -111,7 +128,7 @@ internal object BlackholeDiagnostics {
 
     fun finish() {
         record("finish")
-        TapTrace.diagnostic = previousTapDiagnostic
+        GlobalContext.get().declare(TapTrace.System, allowOverride = true)
         active = false
         phase = "inactive"
     }

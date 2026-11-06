@@ -10,7 +10,6 @@ import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
-import com.github.e0ipso.tokkl.timer.TapTrace
 import com.github.e0ipso.tokkl.timerstate.TimerSyncClock
 import java.io.File
 import java.time.Instant
@@ -60,7 +59,6 @@ class AppModulesTest {
                 AccountRefreshListener::class,
                 TimerSyncClock::class,
                 SignIn::class,
-                TapTrace::class,
                 ReportExportController::class,
             ),
         )
