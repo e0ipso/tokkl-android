@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.components.timerState
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.core.app.ActivityScenario

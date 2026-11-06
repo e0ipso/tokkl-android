@@ -1,5 +1,12 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.storeSignIn
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.cache.*

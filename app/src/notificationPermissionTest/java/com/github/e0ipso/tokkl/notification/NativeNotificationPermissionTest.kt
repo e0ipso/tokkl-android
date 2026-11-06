@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.notification
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.koinViewModels
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -15,7 +18,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
@@ -120,7 +122,7 @@ class NativeNotificationPermissionTest {
         // The system question remains unanswered: starting the timer must not wait for consent.
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it != null } } }
         scenario.onActivity { activity ->
-            val starts = ViewModelProvider(activity)[TimerViewModel::class.java].model.starts.replayCache.size
+            val starts = koinViewModels(activity)[TimerViewModel::class.java].model.starts.replayCache.size
             println("Native permission start: lifecycle=${activity.lifecycle.currentState}, events=$starts, permission=${activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)}, asked=${NotificationPermissionStore(activity.applicationContext).asked()}")
         }
         var nativeButton: UiObject2? = null

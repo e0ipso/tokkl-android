@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.settings
 
+import com.github.e0ipso.tokkl.components.reminderSettings
 import android.view.KeyEvent
 import androidx.annotation.StringRes
 import androidx.compose.material3.dynamicDarkColorScheme

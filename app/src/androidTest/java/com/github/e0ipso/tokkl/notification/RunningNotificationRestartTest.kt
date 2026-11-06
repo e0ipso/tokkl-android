@@ -1,10 +1,12 @@
 package com.github.e0ipso.tokkl.notification
 
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import android.app.Notification
 import android.os.Process
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
@@ -71,7 +73,7 @@ class RunningNotificationRestartTest {
     fun step2OpensTheAppInANewProcessAndAnEditPostsTheNotificationAgain() {
         assertTrue("step 1 did not run before step 2", handOver.exists())
         // As SessionRule does: the work step 1 queued must never send in another test.
-        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        initializeTestWorkManager(context)
         val saved = Properties().apply { handOver.inputStream().use { load(it) } }
         try {
             assertNotEquals("step 1 ran in this same process", saved.getProperty("process"), currentProcess())

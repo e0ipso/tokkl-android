@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.widget
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.widgetClock
+import com.github.e0ipso.tokkl.components.widgetState
 import androidx.activity.compose.setContent
 import android.os.SystemClock
 import androidx.compose.ui.semantics.SemanticsProperties

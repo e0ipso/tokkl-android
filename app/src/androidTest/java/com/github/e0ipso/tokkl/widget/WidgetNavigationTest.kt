@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.widget
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.koinViewModels
 import android.content.Intent
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -8,7 +11,6 @@ import androidx.compose.ui.test.isHeading
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.awaitText
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
@@ -33,7 +35,7 @@ class WidgetNavigationTest {
         ActivityScenario.launch<MainActivity>(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY)).use { scenario ->
             assertToday(scenario)
             lateinit var model: ReportsModel
-            scenario.onActivity { model = ViewModelProvider(it)[ReportsViewModel::class.java].model }
+            scenario.onActivity { model = koinViewModels(it)[ReportsViewModel::class.java].model }
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 model.selectTab(ReportTab.WEEKLY)
                 model.select(RangePreset.LAST_WEEK)
@@ -93,7 +95,7 @@ class WidgetNavigationTest {
         compose.waitUntil(15_000) {
             var today = false
             scenario.onActivity {
-                val model = ViewModelProvider(it)[ReportsViewModel::class.java].model
+                val model = koinViewModels(it)[ReportsViewModel::class.java].model
                 val selection = when (val state = model.state.value) {
                     is ReportsState.Loaded -> state.selection
                     is ReportsState.Loading -> state.selection

@@ -8,16 +8,21 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import androidx.glance.appwidget.updateAll
 import com.github.e0ipso.tokkl.widget.PomodoroWidget
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
+import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
+import org.koin.core.component.inject
 
 /**
  * Arms one [AlarmManager.setAlarmClock] at a phase's planned end. That is the exact alarm the
@@ -134,21 +139,23 @@ class AlarmClockPomodoroScheduler(
  * is still in the phase it was armed for, it starts that phase's ringing service, which an alarm
  * delivery may start from the background. It does not start the next phase.
  */
-class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
+class PomodoroPhaseAlarmReceiver : BroadcastReceiver(), KoinComponent {
+    private val scope: CoroutineScope by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_PHASE_END && intent.action != ACTION_WIDGET_REDRAW) return
         val phase = intent.phaseKey() ?: return
         val pending = goAsync()
-        CoroutineScope(Dispatchers.IO).launch {
+        scope.launch(io) {
             try {
-                val app = context.applicationContext as TokklApplication
                 if (intent.action == ACTION_PHASE_END) {
-                    app.pomodoroAlarm.onAlarm(phase)
+                    get<PomodoroPhaseAlarm>().onAlarm(phase)
                 } else {
-                    val state = app.pomodoroWidgetState.first() as? PomodoroWidgetState.Active
+                    val state = get<PomodoroWidgetStateSource>().state.first() as? PomodoroWidgetState.Active
                     if (state?.session?.phase?.start == phase.start) {
                         if (state.ended) PomodoroWidget().updateAll(context)
-                        else app.pomodoroAlarms.schedule(state.end, phase)
+                        else get<PomodoroAlarmScheduler>().schedule(state.end, phase)
                     }
                 }
             } finally {
@@ -175,16 +182,20 @@ class PomodoroPhaseAlarmReceiver : BroadcastReceiver() {
  * Declared disabled. [AlarmClockPomodoroScheduler] enables it while the account's server has the
  * timer API. The system sends these protected broadcasts, so the receiver is exported.
  */
-class PomodoroAlarmRearmReceiver : BroadcastReceiver() {
+class PomodoroAlarmRearmReceiver : BroadcastReceiver(), KoinComponent {
+    private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
+    private val timerSync: TimerSyncFollower by inject()
+    private val scope: CoroutineScope by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action !in ACTIONS) return
         val done = completed
         val pending = goAsync()
-        val app = context.applicationContext as TokklApplication
-        CoroutineScope(Dispatchers.IO).launch {
+        scope.launch(io) {
             try {
-                app.pomodoroAlarm.follow(rearm = true)
-                if (intent.action in TIMER_SYNC_STARTS) app.followTimerSync()
+                pomodoroAlarm.follow(rearm = true)
+                if (intent.action in TIMER_SYNC_STARTS) timerSync.follow()
             } finally {
                 // A direct receiver invocation in the boot test has no active broadcast result.
                 pending?.finish()

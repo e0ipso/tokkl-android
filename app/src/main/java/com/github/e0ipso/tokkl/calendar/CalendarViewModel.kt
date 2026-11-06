@@ -1,31 +1,38 @@
 package com.github.e0ipso.tokkl.calendar
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
-import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 /** Keeps the chosen day and the weeks loaded from the server across configuration changes, so turning the phone loads nothing again. */
-class CalendarViewModel(application: Application) : AndroidViewModel(application) {
+class CalendarViewModel(
+    cache: AccountCache,
+    accountSettings: AccountSettingsSource,
+    changes: ChangeQueue,
+    session: Session,
+    capabilities: Lazy<CapabilitiesSource>,
+    io: CoroutineContext,
+) : ViewModel() {
 
-    val model = (application as TokklApplication).let { app ->
-        CalendarModel(
-            entries = app.cache.entries,
-            projects = app.cache.projects,
-            tasks = app.cache.tasks,
-            accountSettings = app.accountSettings.state,
-            changes = app.changes,
-            client = Session(application)::client,
-            scope = viewModelScope,
-            io = Dispatchers.IO,
-            // The capabilities load from disk on first read, off the main thread.
-            allDayOffered = flow { emitAll(app.capabilities.state) }.map { it.allDay == true }.distinctUntilChanged(),
-        )
-    }
+    val model = CalendarModel(
+        entries = cache.entries,
+        projects = cache.projects,
+        tasks = cache.tasks,
+        accountSettings = accountSettings.state,
+        changes = changes,
+        client = session::client,
+        scope = viewModelScope,
+        io = io,
+        // The capabilities load from disk on first read, off the main thread.
+        allDayOffered = flow { emitAll(capabilities.value.state) }.map { it.allDay == true }.distinctUntilChanged(),
+    )
 }

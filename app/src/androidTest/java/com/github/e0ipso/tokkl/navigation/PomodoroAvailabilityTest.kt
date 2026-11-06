@@ -1,5 +1,12 @@
 package com.github.e0ipso.tokkl.navigation
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.sessionTrust
+import com.github.e0ipso.tokkl.components.signOutModel
+import com.github.e0ipso.tokkl.components.themeSettings
+import com.github.e0ipso.tokkl.components.timerView
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,7 +25,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
@@ -110,7 +116,7 @@ class PomodoroAvailabilityTest {
         scenario!!.onActivity { activity ->
             WindowCompat.enableEdgeToEdge(activity.window)
             activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            val models = ViewModelProvider(activity)
+            val models = koinViewModels(activity)
             val history = models[HistoryViewModel::class.java]
             val timer = models[TimerViewModel::class.java]
             activity.setContent {

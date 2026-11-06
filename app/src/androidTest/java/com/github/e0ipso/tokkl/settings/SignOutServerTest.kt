@@ -1,5 +1,14 @@
 package com.github.e0ipso.tokkl.settings
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.pomodoroDefaults
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.sessionTrust
+import com.github.e0ipso.tokkl.components.timerView
 import android.database.sqlite.SQLiteDatabase
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
@@ -10,7 +19,6 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkInfo
@@ -242,7 +250,7 @@ class SignOutServerTest {
     private fun viewModels(): Map<String, ViewModel> {
         val models = mutableMapOf<String, ViewModel>()
         checkNotNull(scenario).onActivity { activity ->
-            val provider = ViewModelProvider(activity)
+            val provider = koinViewModels(activity)
             for (kind in VIEW_MODELS) models[kind.simpleName] = provider[kind]
         }
         return models

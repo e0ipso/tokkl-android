@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
-import com.github.e0ipso.tokkl.TokklApplication
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
 
 /**
  * The ringing service as [PomodoroPhaseAlarm] drives it. Stop releases both outputs on the main
@@ -95,7 +95,8 @@ internal data class PomodoroRingingState(
  */
 class PomodoroRingingService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val app get() = application as TokklApplication
+    private val ringing: ServicePomodoroRinging by inject()
+    private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
     private lateinit var notifier: PomodoroRingingNotifier
     internal lateinit var output: AndroidPomodoroRingOutput
         private set
@@ -111,7 +112,7 @@ class PomodoroRingingService : Service() {
         notifier.createChannel()
         output = AndroidPomodoroRingOutput(this, notifier)
         controller = PomodoroRingController(output)
-        app.pomodoroRinging.service = this
+        ringing.service = this
         publishState()
     }
 
@@ -133,7 +134,7 @@ class PomodoroRingingService : Service() {
         }
         scope.launch {
             try {
-                val valid = app.pomodoroAlarm.withRingingPhase(expected) { ring ->
+                val valid = pomodoroAlarm.withRingingPhase(expected) { ring ->
                     withContext(Dispatchers.Main.immediate) { controller.start(ring) }
                 }
                 // An old start must neither play nor stop a newer valid ring.
@@ -151,8 +152,8 @@ class PomodoroRingingService : Service() {
     }
 
     internal fun publishState() {
-        if (app.pomodoroRinging.service !== this) return
-        app.pomodoroRinging.update(
+        if (ringing.service !== this) return
+        ringing.update(
             PomodoroRingingState(
                 serviceRunning = true, ring = current, playing = output.playing, looping = output.looping,
                 audioUsage = output.audioAttributes.usage, audioSessionId = output.audioSessionId,
@@ -181,9 +182,9 @@ class PomodoroRingingService : Service() {
     override fun onDestroy() {
         scope.cancel()
         controller.stop()
-        if (app.pomodoroRinging.service === this) {
-            app.pomodoroRinging.service = null
-            app.pomodoroRinging.update(PomodoroRingingState())
+        if (ringing.service === this) {
+            ringing.service = null
+            ringing.update(PomodoroRingingState())
         }
         super.onDestroy()
     }

@@ -1,11 +1,12 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.koinViewModels
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -183,7 +184,7 @@ class ReportsForegroundTest {
 
     private fun modelOf(activity: MainActivity): ReportsModel {
         var model: ReportsModel? = null
-        instrumentation.runOnMainSync { model = ViewModelProvider(activity)[ReportsViewModel::class.java].model }
+        instrumentation.runOnMainSync { model = koinViewModels(activity)[ReportsViewModel::class.java].model }
         return model!!
     }
 

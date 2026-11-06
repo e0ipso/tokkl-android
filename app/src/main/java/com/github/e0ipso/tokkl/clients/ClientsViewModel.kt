@@ -1,23 +1,26 @@
 package com.github.e0ipso.tokkl.clients
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
-import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 
 /** Keeps the clients page's state across configuration changes, so turning the phone sends no request. */
-class ClientsViewModel(application: Application) : AndroidViewModel(application) {
+class ClientsViewModel(
+    session: Session,
+    accountSettings: AccountSettingsSource,
+    cache: AccountCache,
+    io: CoroutineContext,
+) : ViewModel() {
 
-    val model = (application as TokklApplication).let { app ->
-        ClientsModel(
-            client = Session(application)::client,
-            workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { app.accountSettings.refreshAfterChange() },
-            scope = viewModelScope,
-            io = Dispatchers.IO,
-            cachedClients = app.cache.clients,
-        )
-    }
+    val model = ClientsModel(
+        client = session::client,
+        workspaceId = { accountSettings.state.value?.defaultWorkspaceId },
+        refreshCache = { accountSettings.refreshAfterChange() },
+        scope = viewModelScope,
+        io = io,
+        cachedClients = cache.clients,
+    )
 }

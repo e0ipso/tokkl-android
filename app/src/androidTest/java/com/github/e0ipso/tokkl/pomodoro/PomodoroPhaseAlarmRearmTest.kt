@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.components.pomodoroAlarms
+import com.github.e0ipso.tokkl.components.timerState
 import android.app.AlarmManager
 import android.content.Intent
 import androidx.test.platform.app.InstrumentationRegistry

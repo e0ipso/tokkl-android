@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.pomodoroDefaults
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasClickAction

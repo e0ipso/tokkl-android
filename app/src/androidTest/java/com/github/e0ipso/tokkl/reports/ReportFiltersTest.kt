@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.koinViewModels
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -23,7 +26,6 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
@@ -470,7 +472,7 @@ class ReportFiltersTest {
     private fun model(): ReportsModel {
         var model: ReportsModel? = null
         finishWithin("reading the reports model") {
-            checkNotNull(scenario).onActivity { model = ViewModelProvider(it)[ReportsViewModel::class.java].model }
+            checkNotNull(scenario).onActivity { model = koinViewModels(it)[ReportsViewModel::class.java].model }
         }
         return checkNotNull(model)
     }

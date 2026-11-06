@@ -1,5 +1,14 @@
 package com.github.e0ipso.tokkl.reminder
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.reminder
+import com.github.e0ipso.tokkl.components.reminderSettings
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.storeSignIn
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent

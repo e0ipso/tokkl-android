@@ -1,5 +1,17 @@
 package com.github.e0ipso.tokkl.entry
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.sessionTrust
+import com.github.e0ipso.tokkl.components.signOutModel
+import com.github.e0ipso.tokkl.components.themeSettings
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.components.timerView
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.view.KeyEvent
@@ -42,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -471,7 +482,7 @@ class RunningEntryEditorServerTest {
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
                 activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                val models = ViewModelProvider(activity)
+                val models = koinViewModels(activity)
                 val history = models[HistoryViewModel::class.java]
                 val timer = models[TimerViewModel::class.java]
                 val shownTimer = changes?.let {

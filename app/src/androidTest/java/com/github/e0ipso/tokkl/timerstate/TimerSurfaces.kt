@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.components.koinViewModels
 import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
@@ -9,7 +10,6 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
@@ -77,7 +77,7 @@ internal object TimerSurfaces {
             val open = openAlarms().singleOrNull { !it.isFinishing }
             if (open != null) {
                 var model: PomodoroAlarmModel? = null
-                instrumentation.runOnMainSync { model = ViewModelProvider(open)[PomodoroAlarmViewModel::class.java].model }
+                instrumentation.runOnMainSync { model = koinViewModels(open)[PomodoroAlarmViewModel::class.java].model }
                 return checkNotNull(model)
             }
             if (SystemClock.elapsedRealtime() > deadline) throw AssertionError("no full-screen alarm opened")

@@ -7,16 +7,19 @@ import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ApiJson
+import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
@@ -74,7 +77,7 @@ internal fun phasePomodoroWidget(state: PomodoroWidgetState.Active, end: Boolean
         PHASE to state.session.phase.start.toString(), END to end,
     ))
 
-class StartPomodoroWidgetAction : ActionCallback {
+class StartPomodoroWidgetAction : ActionCallback, KoinComponent {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val tap = runCatching {
             val account = parameters[ACCOUNT] ?: return
@@ -87,7 +90,7 @@ class StartPomodoroWidgetAction : ActionCallback {
     }
 }
 
-class PhasePomodoroWidgetAction : ActionCallback {
+class PhasePomodoroWidgetAction : ActionCallback, KoinComponent {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val tap = runCatching {
             PomodoroWidgetTap.Phase(parameters[ACCOUNT] ?: return, parameters[REVISION] ?: return,
@@ -98,15 +101,18 @@ class PhasePomodoroWidgetAction : ActionCallback {
 }
 
 /** A server request must outlive Glance's broadcast, like the shipped Timer widget actions. */
-private fun dispatchPomodoroWidget(context: Context, tap: PomodoroWidgetTap) {
-    val app = context.applicationContext as TokklApplication
-    val source = app.timerState
-    CoroutineScope(Dispatchers.IO).launch {
-        val current = app.pomodoroWidgetState.first()
-        if (app.timerState !== source || !Session(app).isSignedIn()) return@launch
-        val client = Session(app).client()
+private fun KoinComponent.dispatchPomodoroWidget(context: Context, tap: PomodoroWidgetTap) {
+    val app = context.applicationContext
+    val timerStates = get<AccountTimerStates>()
+    val session = get<Session>()
+    val io = get<CoroutineDispatcher>(IoDispatcher)
+    val source = timerStates.source
+    get<CoroutineScope>().launch(io) {
+        val current = get<PomodoroWidgetStateSource>().state.first()
+        if (timerStates.source !== source || !session.isSignedIn()) return@launch
+        val client = session.client()
         // Keep the captured holder and credential together across sign-out/account replacement.
-        val actions = TimerActions(client = { client.takeIf { app.timerState === source && Session(app).isSignedIn() } }, source = { source }, io = Dispatchers.IO)
+        val actions = TimerActions(client = { client.takeIf { timerStates.source === source && session.isSignedIn() } }, source = { source }, io = io)
         sendPomodoroWidgetAction(tap, current, actions)?.let { showTimerActionFailure(app, it) }
     }
 }

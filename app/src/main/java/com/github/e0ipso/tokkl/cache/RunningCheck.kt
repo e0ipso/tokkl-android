@@ -8,14 +8,12 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Duration
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -90,13 +88,18 @@ object RunningCheck {
  * sends nothing from the queue and refreshes nothing else. A failed request leaves the cache for
  * the next period, with no retry in between, so a failure adds no wakeup.
  */
-class RunningCheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+class RunningCheckWorker(
+    context: Context,
+    params: WorkerParameters,
+    private val cache: AccountCache,
+    private val session: Session,
+    private val io: CoroutineContext,
+) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result =
-        withContext(Dispatchers.IO) {
+        withContext(io) {
             val generation = RunningCheck.results.generation()
-            val cache = (applicationContext as TokklApplication).cache
-            val api = Session(applicationContext).client() ?: return@withContext Result.success()
+            val api = session.client() ?: return@withContext Result.success()
             val before = cache.runningCheckStart()
             RunningCheck.currentRequestDiagnostic?.invoke(
                 "producer=RunningCheckWorker current.enter host=${api.server.api("me").host} port=${api.server.api("me").port} generation=$generation",

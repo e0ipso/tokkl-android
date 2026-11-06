@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.ui.theme
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
 import android.os.SystemClock
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions

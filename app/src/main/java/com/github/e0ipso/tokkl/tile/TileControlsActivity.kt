@@ -28,22 +28,25 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.cache.TimerControlsSource
+import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 /**
  * The Quick Settings tile's long press (docs/PRD.md N4, T1). SystemUI starts it with
- * [TileService.ACTION_QS_TILE_PREFERENCES]. It reads [TokklApplication.timerControls] and offers
+ * [TileService.ACTION_QS_TILE_PREFERENCES]. It reads [TimerControlsSource.controls] and offers
  * Stop while a timer runs, with Pause where the server's timer offers it, or Resume and Stop while
  * one is paused. Each button keeps the [com.github.e0ipso.tokkl.cache.TimerTarget] it was drawn
  * with. The intent's extras are ignored, so the caller cannot name a timer. With nothing running
@@ -52,15 +55,19 @@ import kotlinx.coroutines.launch
  */
 class TileControlsActivity : ComponentActivity() {
 
+    private val timerControls: TimerControlsSource by inject()
+    private val surfaceActions: TimerSurfaceActions by inject()
+    private val scope: CoroutineScope by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!isTilePreferencesIntent(intent?.action)) {
             finish()
             return
         }
-        val app = applicationContext as TokklApplication
         setContent {
-            val controls: TimerControls? by app.timerControls.collectAsState(initial = null as TimerControls?)
+            val controls: TimerControls? by timerControls.controls.collectAsState(initial = null as TimerControls?)
             TokklTheme {
                 val shown = controls
                 val panel = shown?.let(::tileControlsPanel)
@@ -70,7 +77,7 @@ class TileControlsActivity : ComponentActivity() {
                 if (panel != null) {
                     TileControlsDialog(
                         panel = panel,
-                        onPress = { control -> runControl(app, control) },
+                        onPress = { control -> runControl(control) },
                         onDismiss = { finish() },
                     )
                 }
@@ -79,16 +86,17 @@ class TileControlsActivity : ComponentActivity() {
     }
 
     /**
-     * The control goes through [TokklApplication.timerSurfaceActions] in a scope of its own, so
+     * The control goes through [TimerSurfaceActions] in the application scope, so
      * dismissing the dialog does not cancel it. A Stop of a running entry is written on the phone
      * at once and does not wait for the network. Pause, Resume and Stop while paused go to the
      * server, and one that fails, offline included, says why in a toast while the dialog keeps
      * the timer it drew.
      */
-    private fun runControl(app: TokklApplication, control: TileControl) {
-        CoroutineScope(Dispatchers.IO).launch {
+    private fun runControl(control: TileControl) {
+        val app = applicationContext
+        scope.launch(io) {
             try {
-                val tap = app.timerSurfaceActions.tap(control.action, control.target)
+                val tap = surfaceActions.tap(control.action, control.target)
                 if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
             } catch (e: SQLiteException) {
                 // The disk refused the change. The dialog still shows the timer it drew.

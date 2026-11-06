@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.koinViewModels
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -13,7 +15,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -252,7 +253,7 @@ class DetailedReportServerTest {
     private fun state(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the reports state") {
-            checkNotNull(scenario).onActivity { state = ViewModelProvider(it)[ReportsViewModel::class.java].model.state.value }
+            checkNotNull(scenario).onActivity { state = koinViewModels(it)[ReportsViewModel::class.java].model.state.value }
         }
         return checkNotNull(state)
     }

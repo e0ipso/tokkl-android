@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.timerState
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager

@@ -3,11 +3,15 @@ package com.github.e0ipso.tokkl.tile
 import android.database.sqlite.SQLiteException
 import android.graphics.drawable.Icon
 import android.service.quicksettings.TileService
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.TimerControlsSource
+import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.timer.SurfaceTap
+import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -15,6 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 /**
  * The Quick Settings tile (docs/PRD.md N4). While a timer runs it is active, with the entry's
@@ -42,8 +47,15 @@ import kotlinx.coroutines.launch
  */
 class RunningTileService : TileService() {
 
-    private val app get() = applicationContext as TokklApplication
+    private val timerControls: TimerControlsSource by inject()
+    private val cache: AccountCache by inject()
+    private val changes: ChangeQueue by inject()
+    private val surfaceActions: TimerSurfaceActions by inject()
+    private val tileRefresh: TileRefresh by inject()
+    private val appScope: CoroutineScope by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
 
+    /** Cancelled in [onDestroy], with the listening interval's collection. */
     private val scope = MainScope()
     private var listening: Job? = null
 
@@ -54,7 +66,7 @@ class RunningTileService : TileService() {
         super.onStartListening()
         listening?.cancel()
         listening = scope.launch { content().distinctUntilChanged().collect(::show) }
-        TileRefresh.onStartListening(this)
+        tileRefresh.onStartListening()
     }
 
     override fun onStopListening() {
@@ -66,16 +78,16 @@ class RunningTileService : TileService() {
     /**
      * Acts on what this service has shown. Before its first cache emission, a tile retained by
      * SystemUI may show an older state; never guess that tap's action from newer cache contents.
-     * The change goes to the queue, or the server, in a scope of its own, so the service ending
-     * does not cancel it.
+     * The change goes to the queue, or the server, in the application scope, so the service
+     * ending does not cancel it.
      */
     override fun onClick() {
         super.onClick()
         val showing = shown ?: return
-        val app = app
-        CoroutineScope(Dispatchers.IO).launch {
+        val app = applicationContext
+        appScope.launch(io) {
             try {
-                val tap = tapTile(showing, app.timerSurfaceActions, app.changes)
+                val tap = tapTile(showing, surfaceActions, changes)
                 if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
             } catch (e: SQLiteException) {
                 // The disk refused the change. Nothing changed, and the tile still says so.
@@ -89,7 +101,7 @@ class RunningTileService : TileService() {
     }
 
     private fun content(): Flow<RunningTileContent> =
-        combine(app.timerControls, app.cache.entries) { controls, entries -> runningTileContent(controls, entries.map { it.entry }) }
+        combine(timerControls.controls, cache.entries) { controls, entries -> runningTileContent(controls, entries.map { it.entry }) }
 
     private fun show(content: RunningTileContent) {
         val tile = qsTile ?: return

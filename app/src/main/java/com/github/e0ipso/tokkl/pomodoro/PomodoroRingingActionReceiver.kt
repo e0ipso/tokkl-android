@@ -3,12 +3,15 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
+import com.github.e0ipso.tokkl.timerstate.TimerActions
 import java.util.concurrent.CountDownLatch
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * The ringing notification's buttons. Next phase and End session go to the server with the
@@ -16,7 +19,12 @@ import kotlinx.coroutines.launch
  * other device. One that fails, offline included, leaves the ring going and says why. A swipe
  * posts the notification again.
  */
-class PomodoroRingingActionReceiver : BroadcastReceiver() {
+class PomodoroRingingActionReceiver : BroadcastReceiver(), KoinComponent {
+    private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
+    private val timerActions: TimerActions by inject()
+    private val scope: CoroutineScope by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action !in setOf(NEXT, END, REPOST)) return
         val phase = intent.phaseKey() ?: return
@@ -24,12 +32,12 @@ class PomodoroRingingActionReceiver : BroadcastReceiver() {
         if (intent.action != REPOST && revision == null) return
         val done = completed
         val pending = goAsync()
-        val app = context.applicationContext as TokklApplication
-        CoroutineScope(Dispatchers.IO).launch {
+        val app = context.applicationContext
+        scope.launch(io) {
             try {
                 if (intent.action == REPOST) {
                     try {
-                        app.pomodoroAlarm.repost(phase)
+                        pomodoroAlarm.repost(phase)
                     } finally {
                         pending.finish()
                     }
@@ -37,7 +45,7 @@ class PomodoroRingingActionReceiver : BroadcastReceiver() {
                     // The broadcast ends before the request, so a server slow to answer cannot
                     // hold it past its time limit. The ringing service keeps the process alive.
                     pending.finish()
-                    app.pomodoroAlarm.sendPhaseAction(app.timerActions, phase, checkNotNull(revision), end = intent.action == END)
+                    pomodoroAlarm.sendPhaseAction(timerActions, phase, checkNotNull(revision), end = intent.action == END)
                         ?.let { showTimerActionFailure(app, it) }
                 }
             } finally {

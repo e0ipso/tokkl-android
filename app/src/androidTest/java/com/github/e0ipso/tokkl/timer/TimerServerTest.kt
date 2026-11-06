@@ -1,5 +1,10 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.sender
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
@@ -25,7 +30,6 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -341,7 +345,7 @@ class TimerServerTest {
         BlackholeDiagnostics.begin("timer-hang")
         try {
             scenario.onActivity { activity ->
-                val model = ViewModelProvider(activity)[TimerViewModel::class.java].model
+                val model = koinViewModels(activity)[TimerViewModel::class.java].model
                 observations.launch {
                     model.state.map { it.javaClass.simpleName }.distinctUntilChanged().collect {
                         BlackholeDiagnostics.record("model.state kind=$it drawn=UNKNOWN")

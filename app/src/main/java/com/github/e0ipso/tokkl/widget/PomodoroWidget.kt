@@ -30,7 +30,6 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
@@ -40,12 +39,14 @@ import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.flow.first
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
 /** Server-owned session controls. Only the launcher's Chronometer ticks between state changes. */
-class PomodoroWidget : GlanceAppWidget() {
+class PomodoroWidget : GlanceAppWidget(), KoinComponent {
     override val sizeMode: SizeMode = SizeMode.Exact
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val states = (context.applicationContext as TokklApplication).pomodoroWidgetState
+        val states = get<PomodoroWidgetStateSource>().state
         val initial = states.first()
         provideContent {
             val state by states.collectAsState(initial)

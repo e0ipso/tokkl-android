@@ -1,39 +1,46 @@
 package com.github.e0ipso.tokkl.history
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
-import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Keeps the history's older days across configuration changes, so turning the phone loads nothing
  * again, and the [actions] on its entries, so a message with Undo shows again after a turn.
  */
-class HistoryViewModel(application: Application) : AndroidViewModel(application) {
+class HistoryViewModel(
+    cache: AccountCache,
+    accountSettings: AccountSettingsSource,
+    changes: ChangeQueue,
+    sender: ChangeSender,
+    capabilities: CapabilitiesSource,
+    session: Session,
+    io: CoroutineContext,
+) : ViewModel() {
 
-    val model = (application as TokklApplication).let { app ->
-        HistoryModel(
-            entries = app.cache.entries,
-            projects = app.cache.projects,
-            tasks = app.cache.tasks,
-            accountSettings = app.accountSettings.state,
-            client = Session(application)::client,
-            scope = viewModelScope,
-            io = Dispatchers.IO,
-            currentId = app.changes::currentId,
-        )
-    }
+    val model = HistoryModel(
+        entries = cache.entries,
+        projects = cache.projects,
+        tasks = cache.tasks,
+        accountSettings = accountSettings.state,
+        client = session::client,
+        scope = viewModelScope,
+        io = io,
+        currentId = changes::currentId,
+    )
 
-    val actions = (application as TokklApplication).let { app ->
-        EntryActionsModel(
-            entries = app.cache.entries,
-            changes = app.changes,
-            undoDelete = app.sender::undoDelete,
-            canRestore = { app.capabilities.state.value.restore },
-            accountSettings = app.accountSettings.state,
-            scope = viewModelScope,
-        )
-    }
+    val actions = EntryActionsModel(
+        entries = cache.entries,
+        changes = changes,
+        undoDelete = sender::undoDelete,
+        canRestore = { capabilities.state.value.restore },
+        accountSettings = accountSettings.state,
+        scope = viewModelScope,
+    )
 }

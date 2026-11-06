@@ -11,13 +11,15 @@ import android.database.sqlite.SQLiteException
 import androidx.core.net.toUri
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.notification.finishOnce
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /** Separate alert channel; the ongoing notification and its Live Update are unchanged. */
 class ReminderNotifier(private val context: Context) {
@@ -73,13 +75,17 @@ class ReminderNotifier(private val context: Context) {
  * network. Pause goes to the server after the broadcast has ended; one that fails, offline
  * included, keeps the reminder and says why in a toast.
  */
-class ReminderActionReceiver : BroadcastReceiver() {
+class ReminderActionReceiver : BroadcastReceiver(), KoinComponent {
+    private val reminder: ReminderSync by inject()
+    private val scope: CoroutineScope by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
+
     override fun onReceive(context: Context, intent: Intent) {
-        val app = context.applicationContext as TokklApplication
+        val app = context.applicationContext
         val finish = goAsync().finishOnce()
-        CoroutineScope(Dispatchers.IO).launch {
+        scope.launch(io) {
             try {
-                app.reminder.act(
+                reminder.act(
                     intent.getLongExtra(ReminderWork.ID, 0),
                     intent.getLongExtra(ReminderWork.START, 0),
                     stopTimer = intent.getBooleanExtra(ReminderNotifier.STOP, false),

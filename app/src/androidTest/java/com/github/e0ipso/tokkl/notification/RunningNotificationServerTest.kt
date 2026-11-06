@@ -1,5 +1,11 @@
 package com.github.e0ipso.tokkl.notification
 
+import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.timerControls
 import android.app.Notification
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -15,7 +21,6 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.awaitControls
-import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
@@ -59,7 +64,7 @@ import org.junit.Test
 
 /**
  * The running timer's notification (docs/PRD.md N1) against the real Tokkl container. Each test
- * starts and stops through the phone's running-entry state, [TokklApplication.changes], which the
+ * starts and stops through the phone's running-entry state, the app's [com.github.e0ipso.tokkl.cache.ChangeQueue], which the
  * app, the widget, the tile and the shortcuts all write, never through a screen. Each test seeds
  * its own account and deletes it after.
  */

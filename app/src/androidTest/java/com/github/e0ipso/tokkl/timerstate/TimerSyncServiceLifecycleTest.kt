@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.timerSyncService
 import android.app.AlarmManager
 import android.app.NotificationManager
 import android.content.ComponentName
@@ -19,7 +23,6 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmRearmReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
-import com.github.e0ipso.tokkl.timerState
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject

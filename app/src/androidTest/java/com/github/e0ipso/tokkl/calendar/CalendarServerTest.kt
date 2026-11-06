@@ -1,5 +1,11 @@
 package com.github.e0ipso.tokkl.calendar
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.sender
 import android.os.SystemClock
 import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
@@ -29,7 +35,6 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -650,7 +655,7 @@ class CalendarServerTest {
             composeRule.onNode(hasText(string(R.string.timer_view_calendar)) and isSelectable())
                 .performSemanticsAction(SemanticsActions.OnClick)
             var model: CalendarModel? = null
-            scenario.onActivity { model = ViewModelProvider(it)[CalendarViewModel::class.java].model }
+            scenario.onActivity { model = koinViewModels(it)[CalendarViewModel::class.java].model }
             steps(checkNotNull(model))
         }
     }

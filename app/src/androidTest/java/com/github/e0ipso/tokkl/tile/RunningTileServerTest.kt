@@ -1,5 +1,11 @@
 package com.github.e0ipso.tokkl.tile
 
+import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
 import android.net.ConnectivityManager
 import android.service.quicksettings.Tile
 import androidx.test.platform.app.InstrumentationRegistry
@@ -20,7 +26,6 @@ import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.followNoTimerEvents
-import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
@@ -62,7 +67,7 @@ import org.junit.Test
  * The Quick Settings tile (docs/PRD.md N4) in the device's real SystemUI, against the real Tokkl
  * container. The tile is added first in the panel and tapped through the shell, as a user taps
  * it, and the panel is read through the accessibility tree. Starts and stops from other surfaces
- * go through [TokklApplication.changes], which the app, the notification and the widget all
+ * go through the app's [com.github.e0ipso.tokkl.cache.ChangeQueue], which the app, the notification and the widget all
  * write. Each test seeds its own account and deletes it after.
  */
 class RunningTileServerTest {

@@ -10,11 +10,10 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ApiError
 import java.time.Duration
 import java.util.concurrent.ExecutionException
-import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.withContext
 
 /**
@@ -84,9 +83,14 @@ object BackgroundSend {
  * worker and the app never send at once. A transient failure retries with [BackgroundSend.BACKOFF];
  * any other failure ends the work, and the queue waits for the next change or refresh.
  */
-class BackgroundSendWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+class BackgroundSendWorker(
+    context: Context,
+    params: WorkerParameters,
+    private val sender: ChangeSender,
+    private val io: CoroutineContext,
+) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result = withContext(io) {
         val workManager = WorkManager.getInstance(applicationContext)
         val joined = try {
             BackgroundSend.runs.join(id) {
@@ -99,7 +103,6 @@ class BackgroundSendWorker(context: Context, params: WorkerParameters) : Corouti
         }
         if (!joined) return@withContext Result.success()
         try {
-            val sender = (applicationContext as TokklApplication).sender
             when (sender.sendAndWait().afterBackgroundSend()) {
                 AfterBackgroundSend.DONE -> Result.success()
                 AfterBackgroundSend.RETRY -> Result.retry()

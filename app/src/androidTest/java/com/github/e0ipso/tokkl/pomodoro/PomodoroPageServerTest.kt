@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.sender
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -19,7 +22,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.Destination
@@ -198,7 +200,7 @@ class PomodoroPageServerTest {
         compose.activityRule.scenario.onActivity { activity ->
             WindowCompat.enableEdgeToEdge(activity.window)
             activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            model = ViewModelProvider(activity)[PomodoroViewModel::class.java].model
+            model = koinViewModels(activity)[PomodoroViewModel::class.java].model
         }
         compose.setContent {
             TokklTheme {

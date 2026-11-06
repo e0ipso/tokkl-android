@@ -4,16 +4,15 @@ import android.content.Context
 import android.database.sqlite.SQLiteException
 import android.net.ConnectivityManager
 import android.os.SystemClock
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.reachesInternet
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.nullable
 
@@ -23,22 +22,26 @@ import kotlinx.serialization.builtins.nullable
  * request nor starts another. There is no periodic wakeup or retry. Failures also wait a minute
  * before another opening can try, so repeated openings cannot exceed N4's request cap.
  */
-internal object TileRefresh {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+internal class TileRefresh(
+    private val context: Context,
+    private val session: Session,
+    private val cache: Lazy<AccountCache>,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) {
     private val throttle = TileRefreshThrottle()
 
-    fun onStartListening(context: Context) {
-        val application = context.applicationContext as TokklApplication
-        scope.launch {
+    fun onStartListening() {
+        scope.launch(io) {
             val generation = RunningCheck.results.generation()
-            val online = application.getSystemService(ConnectivityManager::class.java).reachesInternet()
+            val online = context.getSystemService(ConnectivityManager::class.java).reachesInternet()
             RunningCheck.currentRequestDiagnostic?.invoke("producer=TileRefresh connectivity.decision generation=$generation online=$online")
             if (!online) return@launch
-            val api = Session(application).client() ?: return@launch
+            val api = session.client() ?: return@launch
             if (!throttle.tryStart(generation, online, SystemClock.elapsedRealtime())) return@launch
             var succeeded = false
             try {
-                val cache = application.cache
+                val cache = cache.value
                 val before = cache.runningCheckStart()
                 RunningCheck.currentRequestDiagnostic?.invoke(
                     "producer=TileRefresh current.enter host=${api.server.api("me").host} port=${api.server.api("me").port} generation=$generation online=$online",

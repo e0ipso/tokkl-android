@@ -1,23 +1,28 @@
 package com.github.e0ipso.tokkl.entry
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import kotlinx.coroutines.flow.map
 
 /** Keeps the entry form and what it holds across configuration changes. */
-class EntryFormViewModel(application: Application) : AndroidViewModel(application) {
+class EntryFormViewModel(
+    cache: AccountCache,
+    accountSettings: AccountSettingsSource,
+    changes: ChangeQueue,
+    capabilities: CapabilitiesSource,
+) : ViewModel() {
 
-    val model = (application as TokklApplication).let { app ->
-        EntryFormModel(
-            entries = app.cache.entries,
-            projects = app.cache.projects,
-            tasks = app.cache.tasks,
-            accountSettings = app.accountSettings.state,
-            changes = app.changes,
-            scope = viewModelScope,
-            allDay = app.capabilities.state.map { it.allDay == true },
-        )
-    }
+    val model = EntryFormModel(
+        entries = cache.entries,
+        projects = cache.projects,
+        tasks = cache.tasks,
+        accountSettings = accountSettings.state,
+        changes = changes,
+        scope = viewModelScope,
+        allDay = capabilities.state.map { it.allDay == true },
+    )
 }

@@ -1,23 +1,26 @@
 package com.github.e0ipso.tokkl.trash
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
-import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 
 /** Keeps the trash page's state across configuration changes, so turning the phone sends no request. */
-class TrashViewModel(application: Application) : AndroidViewModel(application) {
+class TrashViewModel(
+    session: Session,
+    accountSettings: AccountSettingsSource,
+    capabilities: CapabilitiesSource,
+    io: CoroutineContext,
+) : ViewModel() {
 
-    val model = (application as TokklApplication).let { app ->
-        TrashModel(
-            client = Session(application)::client,
-            refreshCache = { app.accountSettings.refreshAfterChange() },
-            trashMissing = app.capabilities::trashMissing,
-            scope = viewModelScope,
-            io = Dispatchers.IO,
-            settings = app.accountSettings.state,
-        )
-    }
+    val model = TrashModel(
+        client = session::client,
+        refreshCache = { accountSettings.refreshAfterChange() },
+        trashMissing = capabilities::trashMissing,
+        scope = viewModelScope,
+        io = io,
+        settings = accountSettings.state,
+    )
 }

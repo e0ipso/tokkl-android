@@ -1,5 +1,14 @@
 package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.followTimerSync
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.timerSync
+import com.github.e0ipso.tokkl.components.timerSyncService
 import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
@@ -20,7 +29,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -237,7 +245,7 @@ class TimerCrossDeviceServerTest {
             compose.awaitPomodoroOffered(15_000)
             compose.openBarPage(R.string.pomodoro_title)
             var model: PomodoroScreenModel? = null
-            scenario.onActivity { model = ViewModelProvider(it)[PomodoroViewModel::class.java].model }
+            scenario.onActivity { model = koinViewModels(it)[PomodoroViewModel::class.java].model }
             val page = checkNotNull(model)
             compose.waitUntil("the page has loaded", 15_000) { !page.state.value.loading }
             compose.runOnIdle {

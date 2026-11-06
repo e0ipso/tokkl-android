@@ -10,12 +10,17 @@ import android.os.Looper
 import android.view.WindowManager
 import android.widget.Toast
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
 
 /**
  * A tap on a favorite's launcher shortcut (docs/PRD.md N6). It starts the favorite on the phone
@@ -30,6 +35,13 @@ import kotlinx.coroutines.withContext
  */
 class StartFavoriteActivity : Activity() {
 
+    private val capabilities: CapabilitiesSource by inject()
+    private val cache: AccountCache by inject()
+    private val accountSettings: AccountSettingsSource by inject()
+    private val changes: ChangeQueue by inject()
+    private val scope: CoroutineScope by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val id = intent.takeIf { it.action == ACTION_START_FAVORITE }?.getStringExtra(EXTRA_SHORTCUT_ID)
@@ -38,19 +50,19 @@ class StartFavoriteActivity : Activity() {
             return
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        val app = applicationContext as TokklApplication
-        CoroutineScope(Dispatchers.Main).launch {
+        val app = applicationContext
+        scope.launch {
             val names = favoriteNames(app)
             val message = try {
-                val started = withContext(Dispatchers.IO) {
+                val started = withContext(io) {
                     startFavoriteShortcut(
                         id = id,
-                        available = app.capabilities.state.value.favorites,
-                        favorites = app.cache.favorites.first(),
-                        projects = app.cache.projects.first(),
-                        workspaceId = app.accountSettings.state.value?.defaultWorkspaceId,
+                        available = capabilities.state.value.favorites,
+                        favorites = cache.favorites.first(),
+                        projects = cache.projects.first(),
+                        workspaceId = accountSettings.state.value?.defaultWorkspaceId,
                         names = names,
-                        start = app.changes::start,
+                        start = changes::start,
                     )
                 }
                 when (started) {

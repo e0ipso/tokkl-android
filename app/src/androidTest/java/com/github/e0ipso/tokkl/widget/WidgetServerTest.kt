@@ -1,5 +1,14 @@
 package com.github.e0ipso.tokkl.widget
 
+import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.components.widgetState
 import android.appwidget.AppWidgetProviderInfo
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -21,7 +30,6 @@ import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.followNoTimerEvents
-import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials

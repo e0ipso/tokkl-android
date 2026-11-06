@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
@@ -13,15 +12,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
+import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
+import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.getViewModel
 
 /**
  * The full-screen alarm of the held phase. A separate unexported task: no account page is exposed
@@ -29,7 +31,8 @@ import kotlinx.coroutines.launch
  * any device closes it, and it never opens without the timer API.
  */
 class PomodoroAlarmActivity : ComponentActivity() {
-    private val holder by lazy { ViewModelProvider(this)[PomodoroAlarmViewModel::class.java] }
+    private val holder by lazy { getViewModel<PomodoroAlarmViewModel>() }
+    private val themes: ThemeSettingsModel by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +47,6 @@ class PomodoroAlarmActivity : ComponentActivity() {
                 holder.model.state.collect { if (it.closed) finish() }
             }
         }
-        val themes = (application as TokklApplication).themeSettings
         setContent {
             val theme by themes.state.collectAsState()
             val state by holder.model.state.collectAsState()
@@ -73,7 +75,6 @@ class PomodoroAlarmActivity : ComponentActivity() {
 }
 
 /** Retains an in-flight command through rotation without replaying it. */
-class PomodoroAlarmViewModel(application: Application) : AndroidViewModel(application) {
-    private val app = application as TokklApplication
-    internal val model = PomodoroAlarmModel(held = app.heldSession, actions = app.timerActions, scope = viewModelScope)
+class PomodoroAlarmViewModel(held: HeldTimerFlows, actions: TimerActions) : ViewModel() {
+    internal val model = PomodoroAlarmModel(held = held.session, actions = actions, scope = viewModelScope)
 }

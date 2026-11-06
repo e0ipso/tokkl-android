@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.components.pomodoroAlarm
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.timerState
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Intent

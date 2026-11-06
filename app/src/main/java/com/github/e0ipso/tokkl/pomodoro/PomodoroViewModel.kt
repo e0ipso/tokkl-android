@@ -1,25 +1,36 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.TimerControlsSource
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
+import com.github.e0ipso.tokkl.timerstate.TimerActions
 
 /** Keeps the start form's draft and the typed fields across rotation, until the account signs out. */
-class PomodoroViewModel(application: Application) : AndroidViewModel(application) {
-    val model = (application as TokklApplication).let { app ->
-        PomodoroScreenModel(
-            held = app.heldTimerState,
-            controls = app.timerControls,
-            actions = app.timerActions,
-            changes = app.changes,
-            defaults = app.pomodoroDefaults.defaults,
-            settings = app.accountSettings.state,
-            unsent = app.changes.unsentCount,
-            refused = app.changes.held,
-            scope = viewModelScope,
-            sendQueued = { app.sender.sendAndWait() },
-            alarmProbe = { app.pomodoroAlarms.permissionDenied },
-        )
-    }
+class PomodoroViewModel(
+    held: HeldTimerFlows,
+    controls: TimerControlsSource,
+    actions: TimerActions,
+    changes: ChangeQueue,
+    defaults: PomodoroDefaultsSetting,
+    accountSettings: AccountSettingsSource,
+    sender: ChangeSender,
+    alarms: PomodoroAlarmScheduler,
+) : ViewModel() {
+    val model = PomodoroScreenModel(
+        held = held.held,
+        controls = controls.controls,
+        actions = actions,
+        changes = changes,
+        defaults = defaults.defaults,
+        settings = accountSettings.state,
+        unsent = changes.unsentCount,
+        refused = changes.held,
+        scope = viewModelScope,
+        sendQueued = { sender.sendAndWait() },
+        alarmProbe = { alarms.permissionDenied },
+    )
 }

@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.navigation
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerState
 import android.os.SystemClock
 import android.view.KeyEvent
 import androidx.annotation.StringRes

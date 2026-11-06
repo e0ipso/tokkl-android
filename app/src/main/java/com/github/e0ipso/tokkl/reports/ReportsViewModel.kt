@@ -1,45 +1,51 @@
 package com.github.e0ipso.tokkl.reports
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import java.io.File
-import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 /** Keeps the reports screen's state across configuration changes, so turning the phone sends no request. */
-class ReportsViewModel(application: Application) : AndroidViewModel(application) {
+class ReportsViewModel(
+    context: Context,
+    session: Session,
+    accountSettings: AccountSettingsSource,
+    capabilities: CapabilitiesSource,
+    cache: AccountCache,
+    io: CoroutineContext,
+) : ViewModel() {
 
-    private val app = application as TokklApplication
-
-    private val session = Session(application)
     private val exporter = ReportExportController(
         client = session::client,
-        files = ReportExportFiles(File(application.cacheDir, ReportExportFiles.DIRECTORY)),
+        files = ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY)),
         account = Session.exports,
-        csvMissing = app.capabilities::csvMissing,
+        csvMissing = capabilities::csvMissing,
         scope = viewModelScope,
-        io = Dispatchers.IO,
+        io = io,
     )
 
     val model = ReportsModel(
-        accountSettings = app.accountSettings.state,
+        accountSettings = accountSettings.state,
         client = session::client,
-        exportCapabilities = app.capabilities.state,
+        exportCapabilities = capabilities.state,
         exporter = exporter,
         scope = viewModelScope,
-        io = Dispatchers.IO,
+        io = io,
         // From the Room cache, never from the server, and only while the screen reads them.
         filterOptions = combine(
-            app.cache.projects,
-            app.cache.clients,
-            app.cache.tags,
-            app.accountSettings.state,
-            app.capabilities.state,
+            cache.projects,
+            cache.clients,
+            cache.tags,
+            accountSettings.state,
+            capabilities.state,
         ) { projects, clients, tags, settings, capabilities ->
             FilterOptions.of(projects, clients, tags, settings?.defaultWorkspaceId, negation = capabilities.negatedFilters)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FilterOptions.NONE),

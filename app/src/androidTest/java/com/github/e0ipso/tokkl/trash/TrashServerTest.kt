@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.trash
 
+import com.github.e0ipso.tokkl.components.capabilities
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher

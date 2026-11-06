@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.components.accountSettings
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasContentDescription

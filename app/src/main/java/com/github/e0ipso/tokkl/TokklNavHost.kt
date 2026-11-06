@@ -45,15 +45,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.calendar.CalendarModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.clients.ClientsModel
 import com.github.e0ipso.tokkl.clients.ClientsScreen
+import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.entry.EntryFormModel
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
 import com.github.e0ipso.tokkl.favorites.FavoritesModel
@@ -70,14 +71,14 @@ import com.github.e0ipso.tokkl.navigation.orTimerIfUnavailable
 import com.github.e0ipso.tokkl.navigation.unavailablePages
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
-import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
+import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
+import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
 import com.github.e0ipso.tokkl.pomodoro.PomodoroScreen
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.projects.ProjectsModel
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
-import com.github.e0ipso.tokkl.widget.WidgetPage
 import com.github.e0ipso.tokkl.reports.ReportsModel
 import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -96,15 +97,16 @@ import com.github.e0ipso.tokkl.sync.SyncStatusBand
 import com.github.e0ipso.tokkl.tags.TagsModel
 import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.timer.FullscreenTimerScreen
-import com.github.e0ipso.tokkl.timer.TimerState
-import com.github.e0ipso.tokkl.timer.target
 import com.github.e0ipso.tokkl.timer.TimerBar
 import com.github.e0ipso.tokkl.timer.TimerModel
 import com.github.e0ipso.tokkl.timer.TimerNotices
 import com.github.e0ipso.tokkl.timer.TimerScreen
+import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.settleDescription
+import com.github.e0ipso.tokkl.timer.target
+import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.trash.TrashModel
 import com.github.e0ipso.tokkl.trash.TrashScreen
 import com.github.e0ipso.tokkl.trust.SessionTrustModel
@@ -113,8 +115,9 @@ import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
 import com.github.e0ipso.tokkl.ui.windowWidth
+import com.github.e0ipso.tokkl.widget.WidgetPage
 import java.time.Clock
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -126,6 +129,8 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * The app's screens. ENTRY is the entry form, for the entry or the manual entry that its model
@@ -205,7 +210,10 @@ fun TokklNavHost(
             history.reconcile(overrides)
         }
     }
-    val appContext = LocalContext.current.applicationContext
+    val session: Session = koinInject()
+    val io: CoroutineDispatcher = koinInject(IoDispatcher)
+    val pomodoroNotification: AccountPomodoroNotification = koinInject()
+    val held: HeldTimerFlows = koinInject()
     val scope = rememberCoroutineScope()
     val pomodoroStarts = remember { Channel<Unit>(Channel.UNLIMITED) }
     val notificationRetries = remember { Channel<Unit>(Channel.UNLIMITED) }
@@ -221,7 +229,7 @@ fun TokklNavHost(
     val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && it != Destination.SIGN_IN } }
     if (restoredSignedIn) {
         LaunchedEffect(Unit) {
-            val signedIn = withContext(Dispatchers.IO) { Session(appContext).isSignedIn() }
+            val signedIn = withContext(io) { session.isSignedIn() }
             if (!signedIn) {
                 backStack.clear()
                 backStack.add(Destination.SIGN_IN)
@@ -232,7 +240,7 @@ fun TokklNavHost(
         // Shows the window background, which matches the theme, while the
         // stores are read off the main thread.
         LaunchedEffect(Unit) {
-            val signedIn = withContext(Dispatchers.IO) { Session(appContext).isSignedIn() }
+            val signedIn = withContext(io) { session.isSignedIn() }
             backStack.add(if (signedIn) Destination.TIMER else Destination.SIGN_IN)
         }
         return
@@ -242,7 +250,7 @@ fun TokklNavHost(
     val openPage: (TopLevelPage) -> Unit = { page -> backStack.open(if (page in unavailable) TopLevelPage.TIMER else page) }
     LaunchedEffect(openWidgetPage) {
         val page = openWidgetPage ?: return@LaunchedEffect
-        val signedIn = withContext(Dispatchers.IO) { Session(appContext).isSignedIn() }
+        val signedIn = withContext(io) { session.isSignedIn() }
         if (!signedIn) {
             backStack.clear()
             backStack.add(Destination.SIGN_IN)
@@ -261,8 +269,8 @@ fun TokklNavHost(
     }
     LaunchedEffect(openPomodoro) {
         val request = openPomodoro ?: return@LaunchedEffect
-        val accepted = withContext(Dispatchers.IO) {
-            (appContext as TokklApplication).pomodoroSessionNotification.acceptsTap(request.account, request.phase)
+        val accepted = withContext(io) {
+            pomodoroNotification.current.acceptsTap(request.account, request.phase)
         }
         if (accepted) {
             entryForm.close()
@@ -293,8 +301,8 @@ fun TokklNavHost(
     val view by timerView.view.collectAsState()
     val running by timerRunning.collectAsState(initial = false)
     // The server's session, from the held timer state.
-    val pomodoroRunningFlow = remember(appContext) {
-        (appContext as TokklApplication).heldTimerState.map { it?.state?.pomodoro != null }.distinctUntilChanged()
+    val pomodoroRunningFlow = remember(held) {
+        held.held.map { it?.state?.pomodoro != null }.distinctUntilChanged()
     }
     val pomodoroRunning by pomodoroRunningFlow.collectAsState(initial = false)
     val status by syncStatus.collectAsState(initial = null)
@@ -321,7 +329,7 @@ fun TokklNavHost(
         }
     }
     val discarded by discardedChanges.collectAsState()
-    val changes = (appContext as TokklApplication).changes
+    val changes: ChangeQueue = koinInject()
     val shortUndo by changes.shortStopUndo.collectAsState(initial = null)
     // The short Stop's Undo and the timer's notices share one host, so they queue, never overlap.
     val shortHost = remember { SnackbarHostState() }
@@ -347,7 +355,7 @@ fun TokklNavHost(
         onSignInAgain = {
             scope.launch {
                 // Reads the stored server, off the main thread.
-                val account = withContext(Dispatchers.IO) { signedInAccount() } ?: return@launch
+                val account = withContext(io) { signedInAccount() } ?: return@launch
                 signInModel.signInAgain(account)
                 backStack.add(Destination.SIGN_IN)
             }
@@ -382,7 +390,7 @@ fun TokklNavHost(
                         backStack = backStack,
                         themeSettings = themeSettings,
                         reminderSettings = reminderSettings,
-                        pomodoroDefaults = (appContext as TokklApplication).pomodoroDefaults,
+                        pomodoroDefaults = koinInject(),
                         pomodoroSharedWithWeb = capabilityFlags.favorites,
                         signOut = signOut,
                         reports = reports,
@@ -669,9 +677,9 @@ private fun Screen(
             },
         )
         Destination.POMODORO -> {
-            val pomodoro = ViewModelProvider(
-                LocalContext.current as ViewModelStoreOwner,
-            )[PomodoroViewModel::class.java]
+            val pomodoro = koinViewModel<PomodoroViewModel>(
+                viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner,
+            )
             PomodoroScreen(
                 model = pomodoro.model, cache = cache,
                 onNotificationStart = onPomodoroStarted,

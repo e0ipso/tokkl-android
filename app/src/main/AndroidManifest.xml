@@ -154,6 +154,20 @@
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />
+        <!--
+            TokklApplication starts WorkManager with Koin's worker factory, which gives the workers
+            their dependencies, so WorkManager's own startup initializer stays out.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
         <receiver android:name=".reminder.ReminderActionReceiver" android:exported="false" />
 
         <!-- The running timer notification's Stop action. Only its own PendingIntent reaches it. -->

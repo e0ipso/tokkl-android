@@ -199,7 +199,7 @@ class ServerReaderTest {
     }
 
     /**
-     * Wired as TokklApplication wires a refresh, minus the Room write and the trash probe. The
+     * Wired as the app's Koin graph wires a refresh, minus the Room write and the trash probe. The
      * settings take the duration format and the cache the favorites, from one request.
      */
     @Test

@@ -1,15 +1,11 @@
 package com.github.e0ipso.tokkl.session
 
-import android.content.Context
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
-import com.github.e0ipso.tokkl.reports.ReportExportFiles
-import java.io.File
 import java.io.IOException
 import java.security.GeneralSecurityException
 
@@ -30,18 +26,6 @@ class Session(
     private val successListener: SuccessListener? = null,
     private val clearExports: () -> Unit = {},
 ) {
-
-    /**
-     * Reports trust refusals to the app's [TokklApplication.sessionTrust], and answers to its
-     * [TokklApplication.lastAnswer], which loads on the first answer, off the main thread.
-     */
-    constructor(context: Context) : this(
-        ServerConfigStore(context),
-        ApiTokenStore(context),
-        (context.applicationContext as? TokklApplication)?.sessionTrust,
-        (context.applicationContext as? TokklApplication)?.let { app -> SuccessListener { app.lastAnswer.succeeded() } },
-        { ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY)).clear() },
-    )
 
     /**
      * Signed in means a server is stored and the token decrypts. A Keystore or
@@ -104,7 +88,7 @@ class Session(
     }
 
     companion object {
-        /** Shared by Session instances, as sign-in, sign-out and screens create their own. */
+        /** Shared by every Session instance, so a report export never outlives the account it was made for. */
         val exports = ExportAccount()
     }
 }

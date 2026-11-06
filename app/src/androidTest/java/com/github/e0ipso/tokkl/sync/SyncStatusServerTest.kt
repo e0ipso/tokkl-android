@@ -1,5 +1,10 @@
 package com.github.e0ipso.tokkl.sync
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.discarded
+import com.github.e0ipso.tokkl.components.lastAnswer
+import com.github.e0ipso.tokkl.components.sender
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.performScrollTo

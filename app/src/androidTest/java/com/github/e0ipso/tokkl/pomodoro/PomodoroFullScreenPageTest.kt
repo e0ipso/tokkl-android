@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.koinViewModels
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -8,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -49,7 +50,7 @@ class PomodoroFullScreenPageTest {
                 ?: error("Cannot restore full-screen app-op: $output")
         }
         DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT deny")
-        val model = ViewModelProvider(compose.activity)[PomodoroViewModel::class.java].model
+        val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java].model
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
         compose.setContent { TokklTheme { PomodoroScreen(model, app.cache) } }
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_denied)).performScrollTo().assertIsDisplayed()
@@ -65,7 +66,7 @@ class PomodoroFullScreenPageTest {
     @Test @SdkSuppress(maxSdkVersion = 33)
     fun olderAndroidShowsThePageWithoutAnUnsupportedFullScreenSettingsButton() {
         assertTrue(Build.VERSION.SDK_INT in 31..33)
-        val model = ViewModelProvider(compose.activity)[PomodoroViewModel::class.java].model
+        val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java].model
         compose.setContent { TokklTheme { PomodoroScreen(model, app.cache) } }
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_denied)).assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_settings)).assertDoesNotExist()

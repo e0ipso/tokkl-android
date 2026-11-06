@@ -1,5 +1,11 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.timerSync
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.view.KeyEvent
@@ -15,7 +21,6 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -73,7 +78,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             for (view in listOf(TimerView.LIST, TimerView.CALENDAR)) {
                 chooseView(view)
                 if (view == TimerView.CALENDAR) {
-                    scenario.onActivity { ViewModelProvider(it)[CalendarViewModel::class.java].model.select(day.minusWeeks(2)) }
+                    scenario.onActivity { koinViewModels(it)[CalendarViewModel::class.java].model.select(day.minusWeeks(2)) }
                 }
                 compose.onRoot().performTouchInput { swipeUp() }
                 compose.waitForIdle()
@@ -241,7 +246,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.awaitTimerPage()
             openFocused()
             lateinit var model: TimerModel
-            scenario.onActivity { model = ViewModelProvider(it)[TimerViewModel::class.java].model }
+            scenario.onActivity { model = koinViewModels(it)[TimerViewModel::class.java].model }
             val old = fixture.shown() as TimerControls.Running
             focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
             compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
@@ -319,7 +324,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()
                 scenario.onActivity { activity ->
-                    val model = ViewModelProvider(activity)[TimerViewModel::class.java].model
+                    val model = koinViewModels(activity)[TimerViewModel::class.java].model
                     activity.setContent { TokklTheme { FullscreenTimerScreen(model, {}, {}, clock) } }
                 }
                 awaitFocused()

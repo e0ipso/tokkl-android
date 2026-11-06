@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.SessionRule

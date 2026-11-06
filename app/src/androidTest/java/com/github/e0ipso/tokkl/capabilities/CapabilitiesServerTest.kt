@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.capabilities
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule

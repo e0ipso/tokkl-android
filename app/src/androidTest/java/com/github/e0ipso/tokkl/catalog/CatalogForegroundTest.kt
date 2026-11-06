@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.catalog
 
+import com.github.e0ipso.tokkl.components.accountSettings
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import androidx.annotation.StringRes

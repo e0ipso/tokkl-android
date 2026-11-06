@@ -1,0 +1,71 @@
+package com.github.e0ipso.tokkl.widget
+
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
+import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
+import java.time.Instant
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+
+/**
+ * The Pomodoro widget's held session and idle defaults. Read the current account under its
+ * holder lock, rather than combining a previous account's emitted state with new settings.
+ * The ringing service and a single in-process phase-end wait trigger redraws. The latter
+ * also works with denied exact alarms. No ticking job or idle work is added.
+ */
+internal class PomodoroWidgetStateSource(
+    fields: PomodoroWidgetFieldsStore,
+    held: HeldTimerFlows,
+    timerStates: AccountTimerStates,
+    cache: AccountCache,
+    ringing: ServicePomodoroRinging,
+    capabilities: Lazy<CapabilitiesSource>,
+    accountSettings: Lazy<AccountSettingsSource>,
+    pomodoroDefaults: Lazy<PomodoroDefaultsSetting>,
+    session: Session,
+    io: CoroutineContext,
+) {
+
+    val state: Flow<PomodoroWidgetState> = run {
+        val deadlines = pomodoroWidgetDeadlineChanges(held.held.map { held ->
+            held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
+        })
+        val catalog = combine(cache.projects, cache.tasks, ringing.state, deadlines) { projects, tasks, ring, _ ->
+            Triple(projects, tasks, ring.ring?.phase)
+        }
+        combine(
+            held.held,
+            flow { emitAll(capabilities.value.state) },
+            flow { emitAll(accountSettings.value.state) },
+            flow { emitAll(pomodoroDefaults.value.defaults) },
+            catalog,
+        ) { _, flags, settings, defaults, (projects, tasks, ringing) ->
+            val owner = timerStates.current()
+            owner.source.withState { held ->
+                pomodoroWidgetState(
+                    workspaceId = settings?.defaultWorkspaceId,
+                    account = owner.account.takeIf { session.isSignedIn() },
+                    available = flags.timerState,
+                    held = held,
+                    defaults = defaults,
+                    remembered = fields.load(owner.account),
+                    projects = projects,
+                    tasks = tasks,
+                    deviceNow = Instant.now(),
+                    ringing = ringing,
+                )
+            }
+        }.flowOn(io).distinctUntilChanged()
+    }
+}

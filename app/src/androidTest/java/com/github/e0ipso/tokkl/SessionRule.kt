@@ -1,7 +1,11 @@
 package com.github.e0ipso.tokkl
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.initializeTestWorkManager
+import com.github.e0ipso.tokkl.components.renewTimerState
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
@@ -68,7 +72,7 @@ class SessionRule : TestRule {
          * test's queue, in this process or a later one.
          */
         fun signOut() {
-            WorkManagerTestInitHelper.initializeTestWorkManager(context)
+            initializeTestWorkManager(context)
             ServerConfigStore(context).clear()
             ApiTokenStore(context).clear()
             val app = context.applicationContext as TokklApplication

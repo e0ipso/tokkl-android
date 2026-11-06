@@ -1,5 +1,15 @@
 package com.github.e0ipso.tokkl.entry
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.sessionTrust
+import com.github.e0ipso.tokkl.components.signOutModel
+import com.github.e0ipso.tokkl.components.themeSettings
+import com.github.e0ipso.tokkl.components.timerView
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -16,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModelProvider
 import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
@@ -663,7 +672,7 @@ class EntryFormServerTest {
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
                 activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                val models = ViewModelProvider(activity)
+                val models = koinViewModels(activity)
                 val history = models[HistoryViewModel::class.java]
                 val timer = models[TimerViewModel::class.java]
                 activity.setContent {

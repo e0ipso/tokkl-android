@@ -1,5 +1,15 @@
 package com.github.e0ipso.tokkl.widget
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.pomodoroAlarm
+import com.github.e0ipso.tokkl.components.pomodoroAlarms
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.pomodoroWidgetState
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.storeSignIn
+import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.timerSync
 import android.os.SystemClock
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.*

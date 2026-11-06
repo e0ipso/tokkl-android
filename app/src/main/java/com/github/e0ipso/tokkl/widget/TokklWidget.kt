@@ -43,7 +43,6 @@ import androidx.glance.unit.ColorProvider
 import androidx.glance.color.ColorProvider
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.time.formatDurationWithoutSeconds
@@ -55,13 +54,15 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.flow.first
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
 /** Cached Timer and Today report. The launcher ticks both clocks; redraws follow existing events. */
-class TokklWidget : GlanceAppWidget() {
+class TokklWidget : GlanceAppWidget(), KoinComponent {
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val states = (context.applicationContext as TokklApplication).widgetState
+        val states = get<WidgetStateSource>().state
         val initial = states.first()
         provideContent {
             val state by states.collectAsState(initial)

@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.timerState
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState

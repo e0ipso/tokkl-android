@@ -8,15 +8,20 @@ import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
 /**
  * The widget's Start and its timer templates (docs/PRD.md N3). It starts a timer on the phone
@@ -26,14 +31,13 @@ import kotlinx.coroutines.launch
  *
  * Glance's own receiver runs it, which is not exported: only the widget's PendingIntents reach it.
  */
-class StartTimerAction : ActionCallback {
+class StartTimerAction : ActionCallback, KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val app = context.applicationContext as TokklApplication
         // Signed out since the widget was drawn: nothing to start in.
-        val workspaceId = app.accountSettings.state.value?.defaultWorkspaceId ?: return
+        val workspaceId = get<AccountSettingsSource>().state.value?.defaultWorkspaceId ?: return
         try {
-            app.changes.start(workspaceId, parameters.fields())
+            get<ChangeQueue>().start(workspaceId, parameters.fields())
         } catch (e: SQLiteException) {
             // The disk refused the change. Nothing starts, and the widget stays as it was.
         }
@@ -44,7 +48,7 @@ class StartTimerAction : ActionCallback {
  * The widget's Stop: of the running entry it showed, on the phone and queued, as the
  * notification's Stop does, so it works offline; or of the paused timer it showed, on the server.
  */
-class StopTimerAction : ActionCallback {
+class StopTimerAction : ActionCallback, KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         tapTimer(context, TimerSurfaceAction.Stop, parameters)
@@ -52,7 +56,7 @@ class StopTimerAction : ActionCallback {
 }
 
 /** The widget's Pause (docs/PRD.md T1): it pauses the entry the widget showed, on the server. */
-class PauseTimerAction : ActionCallback {
+class PauseTimerAction : ActionCallback, KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         tapTimer(context, TimerSurfaceAction.Pause, parameters)
@@ -63,7 +67,7 @@ class PauseTimerAction : ActionCallback {
  * The widget's Resume (docs/PRD.md T1): the server starts a new entry with the paused timer's
  * fields, at the revision the widget showed.
  */
-class ResumeTimerAction : ActionCallback {
+class ResumeTimerAction : ActionCallback, KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         tapTimer(context, TimerSurfaceAction.Resume, parameters)
@@ -71,21 +75,21 @@ class ResumeTimerAction : ActionCallback {
 }
 
 /**
- * Runs [action] for the target [parameters] carry through [TokklApplication.timerSurfaceActions].
+ * Runs [action] for the target [parameters] carry through [TimerSurfaceActions].
  * A Stop of a running entry is queued before this returns. A server action goes out in a scope of
  * its own, so Glance's broadcast does not wait for the server, and one that fails, offline
  * included, says why in a toast while the widget keeps showing what it showed.
  */
-private suspend fun tapTimer(context: Context, action: TimerSurfaceAction, parameters: ActionParameters) {
-    val app = context.applicationContext as TokklApplication
+private suspend fun KoinComponent.tapTimer(context: Context, action: TimerSurfaceAction, parameters: ActionParameters) {
+    val app = context.applicationContext
     val tap = try {
-        app.timerSurfaceActions.tap(action, parameters.target())
+        get<TimerSurfaceActions>().tap(action, parameters.target())
     } catch (e: SQLiteException) {
         // The disk refused the change. The timer stays as it was, and the widget shows it.
         null
     }
     if (tap is SurfaceTap.Request) {
-        CoroutineScope(Dispatchers.IO).launch { tap.send()?.let { showTimerActionFailure(app, it) } }
+        get<CoroutineScope>().launch(get<CoroutineDispatcher>(IoDispatcher)) { tap.send()?.let { showTimerActionFailure(app, it) } }
     }
 }
 

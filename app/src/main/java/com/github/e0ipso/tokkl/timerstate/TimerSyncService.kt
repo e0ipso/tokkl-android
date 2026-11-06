@@ -18,7 +18,8 @@ import android.os.Looper
 import android.os.SystemClock
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.di.IoDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,6 +27,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
 
 /**
  * Keeps the timer event stream open while the phone is signed in to a Tokkl server with the timer
@@ -36,7 +38,7 @@ import kotlinx.coroutines.withContext
  * service stays a separate `mediaPlayback` service.
  *
  * [TimerSync] owns the stream. The service gives it the foreground state it needs in the
- * background, and the default network's changes. [TokklApplication.followTimerSync] starts it at app
+ * background, and the default network's changes. [TimerSyncFollower.follow] starts it at app
  * open, after sign-in and from the boot and update receiver, and stops it at sign-out, when the
  * server loses the timer API and when the server refuses the credential.
  *
@@ -46,8 +48,11 @@ import kotlinx.coroutines.withContext
  */
 class TimerSyncService : Service() {
 
+    /** Cancelled in [onDestroy]. */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val app get() = application as TokklApplication
+    private val follower: TimerSyncFollower by inject()
+    private val timerSync: TimerSync<TimerStateSource> by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
     private var network: ConnectivityManager.NetworkCallback? = null
     private var latestStart = 0
 
@@ -65,15 +70,12 @@ class TimerSyncService : Service() {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        app.timerSyncService = this
+        follower.service = this
         if (network == null) network = followDefaultNetwork()
         scope.launch {
-            val running = withContext(Dispatchers.IO) {
-                app.timerSyncWanted().also { wanted ->
-                    if (wanted) app.timerSync.run(app.timerState) {
-                        app.timerSyncService === this@TimerSyncService &&
-                            app.capabilities.state.value.timerState && !app.sender.signInNeeded.value
-                    }
+            val running = withContext(io) {
+                follower.wanted().also { wanted ->
+                    if (wanted) follower.run(this@TimerSyncService)
                 }
             }
             if (!running) stopSelf(startId)
@@ -82,10 +84,10 @@ class TimerSyncService : Service() {
     }
 
     override fun onDestroy() {
-        if (app.timerSyncService === this) app.timerSyncService = null
+        if (follower.service === this) follower.service = null
         network?.let { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(it) }
         network = null
-        app.timerSync.stop()
+        timerSync.stop()
         scope.cancel()
         super.onDestroy()
     }
@@ -112,7 +114,7 @@ class TimerSyncService : Service() {
      * from Wi-Fi to mobile data, counts as both: the open call belongs to the old one.
      */
     private fun followDefaultNetwork(): ConnectivityManager.NetworkCallback {
-        val sync = app.timerSync
+        val sync = timerSync
         val callback = object : ConnectivityManager.NetworkCallback() {
             private var current: Network? = null
 

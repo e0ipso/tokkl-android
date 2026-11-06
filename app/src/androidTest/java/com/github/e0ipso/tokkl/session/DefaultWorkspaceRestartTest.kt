@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode

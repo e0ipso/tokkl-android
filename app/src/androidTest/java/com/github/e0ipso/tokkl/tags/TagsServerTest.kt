@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.tags
 
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity

@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.widget
 
+import com.github.e0ipso.tokkl.components.pomodoroAlarm
+import com.github.e0ipso.tokkl.components.pomodoroAlarms
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.timerState
 import android.app.PendingIntent
 import android.os.Handler
 import android.os.Looper

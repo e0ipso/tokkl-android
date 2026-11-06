@@ -38,7 +38,7 @@ class ServerSmokeTest {
         trust.confirmCleartext(TokklTestServer.url)
     }
 
-    /** TokklApplication points the guard at the stored trust decisions, so an unconfirmed http server gets nothing. */
+    /** AppStartup points the guard at the stored trust decisions, so an unconfirmed http server gets nothing. */
     @Test
     fun unconfirmedHttpServerGetsNoRequest() {
         trust.clear()
@@ -48,7 +48,7 @@ class ServerSmokeTest {
         assertEquals(ApiError.CleartextNotConfirmed(TokklTestServer.url), (result as? ApiResult.Failure)?.error)
     }
 
-    /** TokklApplication points the host guard at the stored server, so with none stored nothing goes out. */
+    /** AppStartup points the host guard at the stored server, so with none stored nothing goes out. */
     @Test
     fun withNoStoredServerTheGuardRefusesTheRequest() {
         servers.clear()

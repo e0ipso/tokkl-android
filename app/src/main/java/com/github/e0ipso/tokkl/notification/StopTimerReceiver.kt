@@ -4,19 +4,22 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteException
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * The notification's Stop, Pause and Resume actions (docs/PRD.md N1, T1), for what the
- * notification showed, without opening the app. [TokklApplication.timerSurfaceActions] decides
+ * notification showed, without opening the app. [TimerSurfaceActions] decides
  * each one. Stop of a running entry changes the phone and queues the change, so it works offline,
  * and [RunningNotificationSync] shows the result. Pause, Resume and Stop while paused go to the
  * server after the broadcast has ended; one that fails, offline included, changes nothing and says
@@ -25,7 +28,11 @@ import kotlinx.coroutines.launch
  *
  * Declared in the manifest and not exported: only the notification's own PendingIntents reach it.
  */
-class StopTimerReceiver : BroadcastReceiver() {
+class StopTimerReceiver : BroadcastReceiver(), KoinComponent {
+
+    private val surfaceActions: TimerSurfaceActions by inject()
+    private val scope: CoroutineScope by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = when (intent.action) {
@@ -35,11 +42,11 @@ class StopTimerReceiver : BroadcastReceiver() {
             else -> return
         }
         val target = intent.timerTarget()
-        val app = context.applicationContext as TokklApplication
+        val app = context.applicationContext
         val finish = goAsync().finishOnce()
-        CoroutineScope(Dispatchers.IO).launch {
+        scope.launch(io) {
             try {
-                val tap = app.timerSurfaceActions.tap(action, target)
+                val tap = surfaceActions.tap(action, target)
                 // The server may be slow to answer. The timer sync service, which runs wherever
                 // these actions are offered, keeps the process alive meanwhile.
                 finish()

@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.components.initializeTestWorkManager
+import com.github.e0ipso.tokkl.components.pomodoroSessionNotification
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.timerState
 import android.app.NotificationManager
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
@@ -8,7 +12,6 @@ import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
-import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
@@ -67,7 +70,7 @@ class PomodoroSessionNotificationRestartTest {
 
     @Test fun step2TheStoredStateKeepsTheNotificationAndItsTapOpensPomodoroThenSignOutErasesIt() {
         assertTrue("step 1 must precede step 2", handover.exists())
-        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        initializeTestWorkManager(context)
         val saved = Properties().apply { handover.inputStream().use { load(it) } }
         try {
             assertNotEquals(saved.getProperty("process"), processIdentity())

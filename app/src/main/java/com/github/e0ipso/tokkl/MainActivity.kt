@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl
 
 import android.Manifest
-import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -22,33 +21,48 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
+import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.notification.RunningNotificationSync
+import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
-import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap
 import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
+import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap
 import com.github.e0ipso.tokkl.projects.ProjectsViewModel
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
+import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.NetworkWatch
 import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.session.SignOut
+import com.github.e0ipso.tokkl.settings.SignOutModel
+import com.github.e0ipso.tokkl.settings.ThemeSettingsModel
 import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInViewModel
+import com.github.e0ipso.tokkl.sync.DiscardedChanges
+import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
+import com.github.e0ipso.tokkl.sync.SyncStatusSource
 import com.github.e0ipso.tokkl.tags.TagsViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewModel
+import com.github.e0ipso.tokkl.timer.TimerViewSetting
+import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.trash.TrashViewModel
+import com.github.e0ipso.tokkl.trust.SessionTrustModel
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.widget.WidgetPage
 import com.github.e0ipso.tokkl.widget.takeWidgetPage
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -56,6 +70,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.getViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -71,9 +87,28 @@ class MainActivity : ComponentActivity() {
     private val timerViewModel: TimerViewModel get() = viewModel()
     private val entryFormViewModel: EntryFormViewModel get() = viewModel()
 
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
+    private val cache: AccountCache by inject()
+    private val themeSettings: ThemeSettingsModel by inject()
+    private val reminderSettings: ReminderSetting by inject()
+    private val signOut: SignOut by inject()
+    private val signOutModel: SignOutModel by inject()
+    private val sessionTrust: SessionTrustModel by inject()
+    private val timerView: TimerViewSetting by inject()
+    private val capabilities: CapabilitiesSource by inject()
+    private val syncStatus: SyncStatusSource by inject()
+    private val needsAttention: NeedsAttentionModel by inject()
+    private val accountSettings: AccountSettingsSource by inject()
+    private val discarded: DiscardedChanges by inject()
+    private val foregroundRefresh: ForegroundRefresh by inject()
+    private val timerSync: TimerSyncFollower by inject()
+    private val runningNotification: RunningNotificationSync by inject()
+    private val pomodoroNotification: AccountPomodoroNotification by inject()
+    private val servers: ServerConfigStore by inject()
+
     /** Whether a time entry runs, from the phone's cache, which the bottom bar marks on Timer. */
     private val timerRunning: Flow<Boolean> by lazy {
-        (application as TokklApplication).cache.running.map { it != null }.distinctUntilChanged()
+        cache.running.map { it != null }.distinctUntilChanged()
     }
 
     private val notificationPermission by lazy { NotificationPermissionAsk.forApp(this) }
@@ -102,7 +137,6 @@ class MainActivity : ComponentActivity() {
             WidgetPage.entries.firstOrNull { it.name == name }
         } ?: intent?.takeWidgetPage()
         notificationsAllowed = allowsNotifications()
-        val themeSettings = (application as TokklApplication).themeSettings
         // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
         val systemIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         showSystemBarIconsFor(darkTheme = themeSettings.state.value.mode.isDark(systemIsDark))
@@ -119,14 +153,14 @@ class MainActivity : ComponentActivity() {
                     TokklNavHost(
                         signInModel = signInViewModel.model,
                         themeSettings = themeSettings,
-                        reminderSettings = (application as TokklApplication).reminderSettings,
+                        reminderSettings = reminderSettings,
                         openReminderTimer = openReminderTimer,
                         openWidgetPage = openWidgetPage,
                         onWidgetPageOpened = { handled -> if (openWidgetPage == handled) openWidgetPage = null },
                         openPomodoro = openPomodoro,
                         onPomodoroOpened = { handled -> if (openPomodoro == handled) openPomodoro = null },
-                        signOut = (application as TokklApplication).signOutModel,
-                        sessionTrust = (application as TokklApplication).sessionTrust,
+                        signOut = signOutModel,
+                        sessionTrust = sessionTrust,
                         reports = reportsViewModel.model,
                         history = historyViewModel.model,
                         entryActions = historyViewModel.actions,
@@ -134,19 +168,19 @@ class MainActivity : ComponentActivity() {
                         projects = projectsViewModel.model,
                         clients = clientsViewModel.model,
                         tags = tagsViewModel.model,
-                        timerView = (application as TokklApplication).timerView,
+                        timerView = timerView,
                         timer = timerViewModel.model,
                         entryForm = entryFormViewModel.model,
-                        cache = (application as TokklApplication).cache,
+                        cache = cache,
                         trash = trashViewModel.model,
                         timerRunning = timerRunning,
-                        capabilities = (application as TokklApplication).capabilities.state,
+                        capabilities = capabilities.state,
                         favorites = timerViewModel.favorites,
-                        syncStatus = (application as TokklApplication).syncStatus,
-                        needsAttention = (application as TokklApplication).needsAttention,
-                        settings = (application as TokklApplication).accountSettings.state,
-                        discardedChanges = (application as TokklApplication).discarded.state,
-                        onDismissDiscarded = (application as TokklApplication).discarded::dismiss,
+                        syncStatus = syncStatus.status,
+                        needsAttention = needsAttention,
+                        settings = accountSettings.state,
+                        discardedChanges = discarded.state,
+                        onDismissDiscarded = discarded::dismiss,
                         signedInAccount = ::signedInAccount,
                         notificationPermission = notificationPermission,
                         onNotificationsAllowed = ::notificationsGranted,
@@ -186,7 +220,7 @@ class MainActivity : ComponentActivity() {
      * finished while the activity was being made again counts too.
      */
     private fun followSignOuts() {
-        val signOuts = (application as TokklApplication).signOut.finished
+        val signOuts = signOut.finished
         dropViewModelsBefore(signOuts.value)
         shownSignOuts = MutableStateFlow(signOuts.value)
         lifecycleScope.launch {
@@ -205,7 +239,7 @@ class MainActivity : ComponentActivity() {
         if (viewModel<ViewModelsAfterSignOuts>().signOuts != signOuts) viewModelStore.clear()
     }
 
-    private inline fun <reified T : ViewModel> viewModel(): T = ViewModelProvider(this)[T::class.java]
+    private inline fun <reified T : ViewModel> viewModel(): T = getViewModel()
 
     /**
      * Coming to the foreground reads the account settings again (docs/PRD.md S7) and refreshes the
@@ -220,10 +254,10 @@ class MainActivity : ComponentActivity() {
         val allowed = allowsNotifications()
         if (allowed && !notificationsAllowed) notificationsGranted()
         notificationsAllowed = allowed
-        (application as TokklApplication).foregroundRefresh.started(online = network.start())
+        foregroundRefresh.started(online = network.start())
         calendarViewModel.model.cameToForeground()
         // The app is on screen, so the platform lets the timer sync service start, also offline.
-        lifecycleScope.launch(Dispatchers.IO) { (application as TokklApplication).followTimerSync() }
+        lifecycleScope.launch(io) { timerSync.follow() }
     }
 
     /**
@@ -233,7 +267,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         network.stop()
-        (application as TokklApplication).foregroundRefresh.stopped(isChangingConfigurations)
+        foregroundRefresh.stopped(isChangingConfigurations)
         if (!isChangingConfigurations) calendarViewModel.model.wentToBackground()
     }
 
@@ -247,7 +281,7 @@ class MainActivity : ComponentActivity() {
         // written, so the queue could not tell whether a delete reached the server, and Undo
         // would need the server. Without one, the request fails before it leaves the phone.
         if (!online) SharedHttpClient.instance.connectionPool.evictAll()
-        val returned = (application as TokklApplication).foregroundRefresh.networkChanged(online) {
+        val returned = foregroundRefresh.networkChanged(online) {
             // A cellular route can appear before it works, followed by Wi-Fi without an
             // offline interval. Retry failed history days and calendar weeks on each online
             // update, while keeping the account refresh and other foreground work debounced.
@@ -264,17 +298,15 @@ class MainActivity : ComponentActivity() {
 
     private fun notificationsGranted() {
         notificationsAllowed = true
-        lifecycleScope.launch(Dispatchers.IO) {
-            (application as TokklApplication).runningNotification.repost()
-            (application as TokklApplication).pomodoroSessionNotification.refresh(force = true)
+        lifecycleScope.launch(io) {
+            runningNotification.repost()
+            pomodoroNotification.current.refresh(force = true)
         }
     }
 
     /** The account signed in now, for signing in again after the server refused its token. Reads the disk. */
-    private fun signedInAccount(): SignInAgain? {
-        val app = application as TokklApplication
-        return ServerConfigStore(app).load()?.let { server -> SignInAgain(server, app.accountSettings.state.value?.userId) }
-    }
+    private fun signedInAccount(): SignInAgain? =
+        servers.load()?.let { server -> SignInAgain(server, accountSettings.state.value?.userId) }
 
     /** A sign-in loads the account settings and the cache, as coming to the foreground does. */
     private fun refreshOnSignIn() {
@@ -285,7 +317,7 @@ class MainActivity : ComponentActivity() {
                     .map { it.signedIn }
                     .distinctUntilChanged()
                     .filter { it }
-                    .collect { (application as TokklApplication).accountSettings.refresh() }
+                    .collect { accountSettings.refresh() }
             }
         }
     }
@@ -334,6 +366,6 @@ class MainActivity : ComponentActivity() {
  * Made along with MainActivity's other view models, so it tells which sign-out they came after:
  * [SignOut.finished][com.github.e0ipso.tokkl.session.SignOut.finished] as it stood then.
  */
-class ViewModelsAfterSignOuts(application: Application) : AndroidViewModel(application) {
-    val signOuts: Int = (application as TokklApplication).signOut.finished.value
+class ViewModelsAfterSignOuts(signOut: SignOut) : ViewModel() {
+    val signOuts: Int = signOut.finished.value
 }
