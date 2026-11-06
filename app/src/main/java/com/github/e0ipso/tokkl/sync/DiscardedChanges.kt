@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.sync
 
-import com.github.e0ipso.tokkl.storage.ValueStore
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +14,14 @@ import kotlinx.coroutines.flow.asStateFlow
  * outlives the process, so a discard by the background send with the app closed shows when the
  * app opens. The first read loads the stored count from [store] on the reading thread.
  */
-class DiscardedChanges(private val store: ValueStore<Int>) {
+class DiscardedChanges(private val store: ClearableStore<Int>) : AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.DISCARDED_CHANGES
+
+    override suspend fun forgetAccount() {
+        dismiss()
+        store.clear()
+    }
 
     private val mutableState by lazy { MutableStateFlow(store.load() ?: 0) }
 

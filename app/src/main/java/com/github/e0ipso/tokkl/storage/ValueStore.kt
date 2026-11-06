@@ -11,3 +11,10 @@ interface ValueStore<T> {
     @Throws(IOException::class)
     fun save(value: T)
 }
+
+/** A [ValueStore] whose value sign-out deletes. */
+interface ClearableStore<T> : ValueStore<T> {
+
+    @Throws(IOException::class)
+    fun clear()
+}

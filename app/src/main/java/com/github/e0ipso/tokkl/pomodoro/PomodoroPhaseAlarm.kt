@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -41,7 +43,12 @@ internal class PomodoroPhaseAlarm(
     private val ringing: PomodoroRinging,
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),
-) {
+) : AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.POMODORO_ALARM
+
+    override suspend fun forgetAccount() = release()
+
     private val lock = Mutex()
 
     /** The phase and time of the alarm this process armed, so a state that moves neither arms nothing. */

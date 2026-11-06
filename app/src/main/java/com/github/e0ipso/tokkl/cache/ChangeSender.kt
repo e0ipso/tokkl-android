@@ -6,8 +6,10 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -81,7 +83,11 @@ class ChangeSender(
     private val clock: Clock = Clock.systemUTC(),
     private val spans: ServerSpans = ServerSpans.Unsnapped,
     private val allDay: () -> Boolean = { false },
-) : AccountRefreshListener {
+) : AccountRefreshListener, AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.CHANGE_SENDER
+
+    override suspend fun forgetAccount() = stop()
 
     private val tries = ChangeTries(store, spans, allDay)
 

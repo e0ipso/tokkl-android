@@ -5,8 +5,10 @@ import android.content.Context
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.reports.ReportExportController
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.SignOutSteps
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.signin.SignIn
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timer.TapTrace
 import com.github.e0ipso.tokkl.timerstate.TimerSyncClock
@@ -15,7 +17,10 @@ import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.koin.core.annotation.KoinInternalApi
+import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import org.koin.test.verify.verify
 
@@ -48,9 +53,10 @@ class AppModulesTest {
                 Flow::class,
                 StateFlow::class,
                 Instant::class,
-                SignOutSteps.Stores::class,
                 File::class,
                 ValueStore::class,
+                ClearableStore::class,
+                SignOutOrder::class,
                 AccountRefreshListener::class,
                 TimerSyncClock::class,
                 SignIn::class,
@@ -58,5 +64,19 @@ class AppModulesTest {
                 ReportExportController::class,
             ),
         )
+    }
+
+    /**
+     * Sign-out runs one step for each [SignOutOrder], and the graph binds one [AccountDataOwner]
+     * for each. Nothing is made here; the device's AppGraphTest checks which order each takes.
+     */
+    @OptIn(KoinInternalApi::class)
+    @Test
+    fun theGraphBindsOneOwnerForEachSignOutStep() {
+        val koin = koinApplication { modules(appModules) }.koin
+        val owners = koin.instanceRegistry.instances.values.map { it.beanDefinition }.distinct()
+            .filter { AccountDataOwner::class in it.secondaryTypes }
+
+        assertEquals(SignOutOrder.entries.size, owners.size)
     }
 }

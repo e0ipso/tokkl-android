@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshPipeline
@@ -21,7 +22,7 @@ import com.github.e0ipso.tokkl.session.SendThenRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
-import com.github.e0ipso.tokkl.session.SignOutSteps
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.themeSettingsWithNightMode
@@ -39,7 +40,7 @@ import org.koin.dsl.module
 
 /** The account's settings, its refresh and capabilities, the theme, trust, sign-in and sign-out. */
 internal val accountModule = module {
-    single { AccountSettingsStore(androidContext()) }
+    single { AccountSettingsStore(androidContext()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext()) }
     single { TimerViewStore(androidContext()) }
     single { ThemeSettingsStore(androidContext()) }
@@ -82,7 +83,7 @@ internal val accountModule = module {
         )
     } bind AccountRefreshSteps::class
 
-    single { AccountRefresh(client = get<Session>(), settings = get(), scope = get(), io = io(), steps = get<AccountRefreshPipeline>()) }
+    single { AccountRefresh(client = get<Session>(), settings = get(), scope = get(), io = io(), steps = get<AccountRefreshPipeline>()) } bind AccountDataOwner::class
 
     /**
      * Refreshes the account, and with it the running entry and the cache, each time the app comes
@@ -122,56 +123,21 @@ internal val accountModule = module {
             scope = get(),
             io = io(),
         )
-    }
+    } bind AccountDataOwner::class
 
     /**
      * The trust refusals of the signed-in session's requests, which the [Session] reports and the
      * navigation host prompts about. Accepting one refreshes the account settings, the request
      * that ran into it.
      */
-    single { SessionTrust(trust = get<ServerTrustStore>(), retry = get<AccountRefreshRequests>()::refresh, scope = get(), io = io()) }
+    single { SessionTrust(trust = get<ServerTrustStore>(), retry = get<AccountRefreshRequests>()::refresh, scope = get(), io = io()) } bind AccountDataOwner::class
 
     single { AccountSessionWriter(get(), get(), get(), get(), get(), get()) } bind SessionWriter::class
 
-    single {
-        SignOutSteps(
-            context = androidContext(),
-            session = get(),
-            timerStates = get(),
-            pomodoroAlarm = get(),
-            timerSync = get(),
-            timerSyncFollower = get(),
-            pomodoroNotification = get(),
-            accountRefresh = get(),
-            sender = get(),
-            cache = get(),
-            reminder = get(),
-            reminderSettings = get(),
-            runningNotification = get(),
-            favoriteShortcuts = get(),
-            capabilities = get(),
-            alarmClock = get(),
-            timerView = get(),
-            pomodoroDefaults = get(),
-            sessionTrust = get(),
-            lastAnswer = get(),
-            discarded = get(),
-            stores = SignOutSteps.Stores(
-                timerState = get(),
-                pomodoroWidgetFields = get(),
-                reminder = get(),
-                accountSettings = get(),
-                capabilities = get(),
-                timerView = get(),
-                pomodoroDefaults = get(),
-                serverTrust = get(),
-                discardedChanges = get(),
-            ),
-        )
-    }
+    signOutSteps()
 
-    /** Sign-out (docs/PRD.md S6), with the steps [SignOutSteps] lists. */
-    single { SignOut(steps = get<SignOutSteps>().steps, io = io()) }
+    /** Sign-out (docs/PRD.md S6): every [AccountDataOwner], in [SignOutOrder]. */
+    single { SignOut(owners = getAll(), io = io()) }
 
     /** The Settings page's sign-out button and its warning about unsent changes. */
     single { SignOutConfirmation(unsentCount = get<ChangeQueue>()::unsentNow, clear = get<SignOut>()::run, scope = get()) }

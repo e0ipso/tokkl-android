@@ -2,11 +2,12 @@ package com.github.e0ipso.tokkl.reminder
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
 /** Account-scoped, excluded from backups with the other private stores. */
-class ReminderStore(context: Context) : ValueStore<StoredReminderPreferences> {
+class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences> {
     private val preferences = context.getSharedPreferences("long_timer_reminder", Context.MODE_PRIVATE)
 
     override fun load(): StoredReminderPreferences? = if (!preferences.contains("hours")) null else StoredReminderPreferences(
@@ -43,7 +44,7 @@ class ReminderStore(context: Context) : ValueStore<StoredReminderPreferences> {
         }
     }
 
-    fun clear() = commit { clear() }
+    override fun clear() = commit { clear() }
 
     private fun commit(change: SharedPreferences.Editor.() -> Unit) {
         if (!preferences.edit().apply(change).commit()) throw IOException("Could not write long_timer_reminder")

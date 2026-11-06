@@ -12,6 +12,8 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
@@ -65,6 +67,14 @@ class AppGraphTest {
             whileMainWaits { models.mapNotNull { definition -> failureOf(definition) { makeAndClear(definition) } } }
 
         assertEquals("definitions that do not resolve", emptyList<String>(), failures)
+    }
+
+    /** Sign-out runs one step for each [SignOutOrder], so each has exactly one owner in the graph. */
+    @Test
+    fun eachSignOutStepHasOneOwner() {
+        val orders = koin.getAll<AccountDataOwner>().map { it.signOutOrder }.sorted()
+
+        assertEquals(SignOutOrder.entries.toList(), orders)
     }
 
     private fun resolve(definition: BeanDefinition<*>) {

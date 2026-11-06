@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -38,7 +40,12 @@ class ReminderSync(
     private val remove: () -> Unit,
     private val stop: suspend (Long) -> Boolean,
     private val pause: suspend (Long) -> SurfaceTap.Request? = { null },
-) {
+) : AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.REMINDER
+
+    override suspend fun forgetAccount() = forget()
+
     private val lock = Mutex()
 
     fun follow(changes: Flow<*>, scope: CoroutineScope, io: CoroutineContext) = scope.launch(io) {

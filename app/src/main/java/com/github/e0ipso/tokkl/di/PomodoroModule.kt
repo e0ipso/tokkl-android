@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRinging
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import org.koin.android.ext.koin.androidContext
@@ -32,7 +33,7 @@ internal val pomodoroModule = module {
             scope = get(),
             io = io(),
         )
-    }
+    } bind AccountDataOwner::class
 
     /**
      * The exact alarm at a running Pomodoro phase's planned end.
@@ -60,7 +61,7 @@ internal val pomodoroModule = module {
             ringing = get<ServicePomodoroRinging>(),
             io = io(),
         )
-    }
+    } bind AccountDataOwner::class
 
-    single { AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), get(), get(), get(), io()) }
+    single { AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), get(), get(), get(), io()) } bind AccountDataOwner::class
 }

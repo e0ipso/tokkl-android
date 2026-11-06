@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.di
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.TimerControlsSource
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
@@ -23,15 +24,16 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /** The server's timer state, its actions and event stream, and the controls every timer surface shows. */
 internal val timerModule = module {
-    single { TimerStateStore(androidContext()) }
-    single { PomodoroWidgetFieldsStore(androidContext()) }
+    single { TimerStateStore(androidContext()) } bind AccountDataOwner::class
+    single { PomodoroWidgetFieldsStore(androidContext()) } bind AccountDataOwner::class
 
-    single { AccountTimerStates(get(), get(), get(), get()) }
+    single { AccountTimerStates(get(), get(), get(), get()) } bind AccountDataOwner::class
     single { HeldTimerFlows(get(), get(), io()) }
     single { TimerControlsSource(get(), get(), get(), io()) }
 
@@ -73,5 +75,5 @@ internal val timerModule = module {
         TimerSync<TimerStateSource>(ElapsedTimerSyncClock(scope), connections::open, connections::stopped)
     }
 
-    single { TimerSyncFollower(androidContext(), get(), get(), get(), get(), get(), get(), get()) }
+    single { TimerSyncFollower(androidContext(), get(), get(), get(), get(), get(), get(), get()) } bind AccountDataOwner::class
 }

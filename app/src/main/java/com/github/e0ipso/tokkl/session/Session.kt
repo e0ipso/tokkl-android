@@ -26,7 +26,11 @@ class Session(
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
     private val clearExports: () -> Unit = {},
-) : ApiClientProvider {
+) : ApiClientProvider, AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.SESSION
+
+    override suspend fun forgetAccount() = clear()
 
     /**
      * Signed in means a server is stored and the token decrypts. A Keystore or

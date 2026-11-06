@@ -2,10 +2,12 @@ package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
-import com.github.e0ipso.tokkl.storage.ValueStore
+import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -43,12 +45,19 @@ data class StoredTimerView(val view: TimerView, val unsent: Boolean)
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class TimerViewSetting(
-    private val store: ValueStore<StoredTimerView>,
+    private val store: ClearableStore<StoredTimerView>,
     private val client: ApiClientProvider,
     private val keepsTimerView: () -> Boolean,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : AccountRefreshListener {
+) : AccountRefreshListener, AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.TIMER_VIEW
+
+    override suspend fun forgetAccount() {
+        forget()
+        store.clear()
+    }
 
     private val loaded by lazy { Loaded(store.load()) }
 

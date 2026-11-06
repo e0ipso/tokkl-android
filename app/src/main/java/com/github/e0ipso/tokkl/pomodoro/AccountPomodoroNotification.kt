@@ -2,7 +2,9 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Context
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import kotlin.coroutines.CoroutineContext
@@ -25,7 +27,12 @@ internal class AccountPomodoroNotification(
     private val ringing: ServicePomodoroRinging,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) {
+) : AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.POMODORO_NOTIFICATION
+
+    override suspend fun forgetAccount() = current.forget()
+
     private val lock = Any()
     private var forAccount = newNotification(restore = true)
 

@@ -18,7 +18,11 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so make calls off the main thread.
  */
-class ServerTrustStore(context: Context) : ServerTrust {
+class ServerTrustStore(context: Context) : ServerTrust, AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.SERVER_TRUST
+
+    override suspend fun forgetAccount() = clear()
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 

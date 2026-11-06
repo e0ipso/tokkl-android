@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.cache.SendOnQueue
 import com.github.e0ipso.tokkl.cache.ServerSpans
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.Session
@@ -67,7 +68,7 @@ internal val dataModule = module {
             spans = get<AccountServerSpans>(),
             allDay = get<CapabilitiesSource>()::offersAllDay,
         )
-    }
+    } bind AccountDataOwner::class
 
     single { LastAnswerStore(androidContext()) }
 
@@ -76,7 +77,7 @@ internal val dataModule = module {
      * client reports. The first answer or the first frame of a signed-in screen loads it from a
      * file of one value.
      */
-    single { LastAnswer(get<LastAnswerStore>()) }
+    single { LastAnswer(get<LastAnswerStore>()) } bind AccountDataOwner::class
 
     single { DiscardedChangesStore(androidContext()) }
 
@@ -85,7 +86,7 @@ internal val dataModule = module {
      * entries, for the notice that says so (docs/PRD.md O6). The first discard or the first frame
      * of a signed-in screen loads it from a file of one value.
      */
-    single { DiscardedChanges(get<DiscardedChangesStore>()) }
+    single { DiscardedChanges(get<DiscardedChangesStore>()) } bind AccountDataOwner::class
 
     /**
      * The "needs attention" list of the changes the server refused (docs/PRD.md O6). Discarding

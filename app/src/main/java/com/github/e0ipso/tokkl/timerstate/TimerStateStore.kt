@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.timerstate
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.api.ApiJson
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
@@ -42,7 +44,11 @@ data class StoredTimerState(
  *
  * The first call loads the preferences file, so make calls off the main thread.
  */
-class TimerStateStore(context: Context) {
+class TimerStateStore(context: Context) : AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.TIMER_STATE_STORE
+
+    override suspend fun forgetAccount() = clear()
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 

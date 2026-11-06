@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.trust
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.TrustListener
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -37,7 +39,11 @@ class SessionTrust(
     private val retry: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : TrustListener {
+) : TrustListener, AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.SESSION_TRUST
+
+    override suspend fun forgetAccount() = forget()
 
     /**
      * [refusal] is the latest refusal, or null while requests pass.

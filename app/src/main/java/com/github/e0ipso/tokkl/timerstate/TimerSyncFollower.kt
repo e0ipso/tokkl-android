@@ -4,9 +4,11 @@ import android.content.Context
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.pomodoro.AlarmClockPomodoroScheduler
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignOutOrder
 
 /**
  * Decides whether the timer event stream and [TimerSyncService] run, and starts, points or stops
@@ -21,7 +23,14 @@ class TimerSyncFollower(
     private val sender: ChangeSender,
     private val alarmClock: AlarmClockPomodoroScheduler,
     private val slot: TimerSyncServiceSlot,
-) : AccountRefreshListener {
+) : AccountRefreshListener, AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.TIMER_SYNC
+
+    override suspend fun forgetAccount() {
+        timerSync.stop()
+        stopService()
+    }
 
     /**
      * Whether the timer event stream should run: signed in to a server with the timer API, whose

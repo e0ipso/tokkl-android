@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.api.SuccessListener
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.time.Clock
 import java.time.Instant
@@ -19,7 +21,11 @@ import kotlinx.coroutines.flow.asStateFlow
 class LastAnswer(
     private val store: ValueStore<Instant?>,
     private val clock: Clock = Clock.systemUTC(),
-) : SuccessListener {
+) : SuccessListener, AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.LAST_ANSWER
+
+    override suspend fun forgetAccount() = forget()
 
     private val mutableState by lazy { MutableStateFlow(store.load()) }
 

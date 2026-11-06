@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.sync
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import com.github.e0ipso.tokkl.storage.ValueStore
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.IOException
 
 /**
@@ -12,7 +12,7 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so it reads the disk.
  */
-class DiscardedChangesStore(context: Context) : ValueStore<Int> {
+class DiscardedChangesStore(context: Context) : ClearableStore<Int> {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
@@ -25,7 +25,7 @@ class DiscardedChangesStore(context: Context) : ValueStore<Int> {
 
     /** Forgets the count at once, for a sign-out. */
     @Throws(IOException::class)
-    fun clear() {
+    override fun clear() {
         commit { clear() }
     }
 

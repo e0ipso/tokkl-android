@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.notification.runningNotificationContents
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderStore
 import com.github.e0ipso.tokkl.reminder.accountReminderSync
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutSync
 import com.github.e0ipso.tokkl.shortcuts.LauncherShortcuts
@@ -29,6 +30,7 @@ import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /** The Timer widget's store and sync. */
@@ -57,7 +59,7 @@ internal val surfacesModule = module {
             scope = get(),
             io = io(),
         )
-    }
+    } bind AccountDataOwner::class
 
     single { WidgetStateSource(androidApplication(), get(), get(), get(), get(), get(), clock = { get(WidgetClock) }, io = io()) }
     single(TimerWidgetQualifier) { WidgetStore(androidContext()) }
@@ -106,15 +108,15 @@ internal val surfacesModule = module {
             scope = get(),
             io = io(),
         )
-    }
+    } bind AccountDataOwner::class
 
     single { TileRefresh(androidContext(), get(), get(), get(), io()) }
 
     single { ReminderStore(androidContext()) }
 
     /** Shared reminder settings where both keys exist, account-local on older servers. */
-    single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), io()) }
+    single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), io()) } bind AccountDataOwner::class
 
     /** The running entry's reminder, followed independently of any screen. */
-    single { accountReminderSync(androidContext(), get(), get(), get(), get(), get(), get(), get()) }
+    single { accountReminderSync(androidContext(), get(), get(), get(), get(), get(), get(), get()) } bind AccountDataOwner::class
 }

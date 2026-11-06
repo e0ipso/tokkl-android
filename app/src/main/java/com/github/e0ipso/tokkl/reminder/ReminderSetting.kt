@@ -2,10 +2,12 @@ package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
-import com.github.e0ipso.tokkl.storage.ValueStore
+import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -41,11 +43,19 @@ data class StoredReminderPreferences(val preferences: ReminderPreferences, val u
  * Only these keys go to POST /me/preferences. A generation prevents an old send persisting after sign-out.
  */
 class ReminderSetting(
-    private val store: ValueStore<StoredReminderPreferences>,
+    private val store: ClearableStore<StoredReminderPreferences>,
     private val client: ApiClientProvider,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : AccountRefreshListener {
+) : AccountRefreshListener, AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.REMINDER_SETTING
+
+    override suspend fun forgetAccount() {
+        forget()
+        store.clear()
+    }
+
     private val loaded by lazy { Loaded(store.load()) }
 
     /** What the store held, and what changed since. Guarded by [lock], apart from [state]'s reads. */

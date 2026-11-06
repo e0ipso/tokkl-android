@@ -14,12 +14,17 @@ import kotlinx.coroutines.withContext
  * Signs the account out and leaves none of its data on the phone (docs/PRD.md S6). The phone holds
  * one account at a time, so the next sign-in starts from nothing.
  *
- * [steps] run in order on [io]. The first should forget the session, so the app counts as signed
- * out and sends nothing new. The ones after it stop what is still sending, then clear the stores.
- * A failed step does not stop the ones after it, and the next [run] runs them all again, since
- * each clears what is there.
+ * Each of [owners] forgets its part, in [SignOutOrder], on [io]. A failed step does not stop the
+ * ones after it, and the next [run] runs them all again, since each clears what is there.
  */
-class SignOut(private val steps: List<suspend () -> Unit>, private val io: CoroutineContext) {
+class SignOut(owners: List<AccountDataOwner>, private val io: CoroutineContext) {
+
+    private val steps: List<AccountDataOwner> = owners.sortedBy { it.signOutOrder }
+
+    init {
+        val orders = steps.map { it.signOutOrder }
+        require(orders.distinct() == orders) { "Two sign-out steps share an order: $orders" }
+    }
 
     private val mutableFinished = MutableStateFlow(0)
 
@@ -38,7 +43,7 @@ class SignOut(private val steps: List<suspend () -> Unit>, private val io: Corou
             var cleared = true
             for (step in steps) {
                 try {
-                    step()
+                    step.forgetAccount()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

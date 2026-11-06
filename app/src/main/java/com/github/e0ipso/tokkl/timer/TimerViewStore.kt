@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.timer
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.github.e0ipso.tokkl.storage.ValueStore
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.IOException
 
 /**
@@ -12,7 +12,7 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so it reads the disk.
  */
-class TimerViewStore(context: Context) : ValueStore<StoredTimerView> {
+class TimerViewStore(context: Context) : ClearableStore<StoredTimerView> {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
@@ -33,7 +33,7 @@ class TimerViewStore(context: Context) : ValueStore<StoredTimerView> {
     }
 
     @Throws(IOException::class)
-    fun clear() {
+    override fun clear() {
         commit { clear() }
     }
 

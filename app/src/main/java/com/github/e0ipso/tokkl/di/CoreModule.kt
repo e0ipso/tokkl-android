@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.reports.ReportExportFiles
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -20,6 +21,7 @@ import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
 import org.koin.core.scope.Scope
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /** [Dispatchers.IO], for disk and network work. */
@@ -49,7 +51,7 @@ internal val coreModule = module {
 
     single { ServerConfigStore(androidContext()) }
     single { ApiTokenStore(androidContext()) }
-    single { ServerTrustStore(androidContext()) } bind ServerTrust::class
+    single { ServerTrustStore(androidContext()) } binds arrayOf(ServerTrust::class, AccountDataOwner::class)
 
     single { ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)) }
 
@@ -65,5 +67,5 @@ internal val coreModule = module {
             successListener = get<LastAnswer>(),
             clearExports = get<ReportExportFiles>()::clear,
         )
-    } bind ApiClientProvider::class
+    } binds arrayOf(ApiClientProvider::class, AccountDataOwner::class)
 }

@@ -38,7 +38,11 @@ class AccountRefresh(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val steps: AccountRefreshSteps,
-) {
+) : AccountDataOwner {
+
+    override val signOutOrder = SignOutOrder.ACCOUNT_REFRESH
+
+    override suspend fun forgetAccount() = forget()
 
     /** Guards [answers] and [refreshing]. */
     private val lock = Any()
