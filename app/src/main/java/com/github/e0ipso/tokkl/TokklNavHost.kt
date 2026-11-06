@@ -13,26 +13,28 @@ import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.navigation.AppNavigationBar
-import com.github.e0ipso.tokkl.navigation.AppNavigationRail
+import com.github.e0ipso.tokkl.navhost.AppNavigationBar
+import com.github.e0ipso.tokkl.navhost.AppNavigationRail
+import com.github.e0ipso.tokkl.navhost.NavigationRequestEffects
+import com.github.e0ipso.tokkl.navhost.NavigationRequests
+import com.github.e0ipso.tokkl.navhost.NavigationStores
+import com.github.e0ipso.tokkl.navhost.Show
+import com.github.e0ipso.tokkl.navhost.SignedInHost
+import com.github.e0ipso.tokkl.navhost.orTimerIfUnavailable
+import com.github.e0ipso.tokkl.navhost.unavailablePages
+import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
-import com.github.e0ipso.tokkl.navigation.NavigationRequestEffects
-import com.github.e0ipso.tokkl.navigation.NavigationRequests
-import com.github.e0ipso.tokkl.navigation.NavigationStores
+import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.Show
-import com.github.e0ipso.tokkl.navigation.SignedInHost
 import com.github.e0ipso.tokkl.navigation.contentKey
-import com.github.e0ipso.tokkl.navigation.orTimerIfUnavailable
-import com.github.e0ipso.tokkl.navigation.routeEntry
-import com.github.e0ipso.tokkl.navigation.unavailablePages
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.Session
@@ -40,6 +42,7 @@ import com.github.e0ipso.tokkl.session.SignOut
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
+import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 
 /**
@@ -59,8 +62,9 @@ import org.koin.compose.koinInject
  * and a back stack restored from before the server lost it shows Timer. [requests] opens the
  * pages that widget, reminder and Pomodoro notification taps ask for.
  *
- * Each route's screen takes its own view models, which go when the route leaves the stack. The
- * ones that several screens share live in the signed-in session's store ([NavigationStores]).
+ * Each feature adds the entries of its routes ([FeatureEntries]). Each route's screen takes its
+ * own view models, which go when the route leaves the stack. The ones that several screens share
+ * live in the signed-in session's store ([NavigationStores]).
  */
 @Composable
 fun TokklNavHost(
@@ -98,13 +102,19 @@ private fun Navigation(
     val savedStates = rememberSaveableStateHolder()
     val navigator = remember(backStack, stores) { Navigator(backStack, stores.entryOpenings) }
     val prompts = remember { NotificationPrompts() }
+    val koin = getKoin()
+    val features = remember(koin) { koin.getAll<FeatureEntries>() }
+    val entryProvider = remember(features, navigator, prompts, capabilities) {
+        val host = NavigationHost(navigator, prompts, capabilities)
+        entryProvider<Route> { features.forEach { feature -> with(feature) { addEntries(host) } } }
+    }
     val entries = rememberDecoratedNavEntries(
         backStack = backStack,
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(savedStates),
             rememberViewModelStoreNavEntryDecorator(stores.entries),
         ),
-        entryProvider = { route -> routeEntry(route, navigator, prompts, capabilities) },
+        entryProvider = entryProvider,
     )
     // A signed-in page restored from saved state can outlive its session: a sign-out that finished
     // in the background before the process died, or a token that no longer decrypts. The page

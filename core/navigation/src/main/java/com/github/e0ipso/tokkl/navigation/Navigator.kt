@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
  * change is one snapshot, so a route that stays, such as Timer under a page that closes, keeps
  * its view models and saved state. Call it on the main thread.
  */
-internal class Navigator(private val stack: MutableList<Route>, val openings: EntryFormOpenings) {
+class Navigator(private val stack: MutableList<Route>, val openings: EntryFormOpenings) {
 
     val top: Route? get() = stack.lastOrNull()
 

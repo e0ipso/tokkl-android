@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.navigation
 import androidx.navigation3.runtime.NavKey
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.signin.SignInAgain
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.serialization.Serializable
@@ -101,4 +100,4 @@ sealed interface EntryOpening {
  * The key a route's saved state and view models live under. Every route's text is different: the
  * objects print their names, and the entry form its opening and id.
  */
-internal val Route.contentKey: String get() = toString()
+val Route.contentKey: String get() = toString()

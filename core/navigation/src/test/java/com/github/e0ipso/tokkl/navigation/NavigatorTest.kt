@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.navigation
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.widget.WidgetPage
 import java.time.Instant
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
@@ -83,18 +82,5 @@ class NavigatorTest {
         val day = LocalDate.of(2026, 11, 6)
         assertEquals(day, EntryOpening.New.on(day, noTimes = true).day)
         assertNull(EntryOpening.New.on(null).day)
-    }
-
-    @Test
-    fun aLaterTapOfTheSameKindReplacesTheWaitingOne() {
-        val requests = NavigationRequests()
-        requests.request(NavigationRequest.Widget(WidgetPage.TIMER))
-        requests.request(NavigationRequest.ReminderTimer)
-        requests.request(NavigationRequest.Widget(WidgetPage.TODAY))
-        assertEquals(listOf(NavigationRequest.ReminderTimer, NavigationRequest.Widget(WidgetPage.TODAY)), requests.pending)
-        requests.handled(NavigationRequest.Widget(WidgetPage.TIMER))
-        assertEquals("a replaced request's answer leaves the new one", 2, requests.pending.size)
-        requests.handled(NavigationRequest.ReminderTimer)
-        assertEquals(listOf<NavigationRequest>(NavigationRequest.Widget(WidgetPage.TODAY)), requests.pending)
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.performScrollTo
+import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText

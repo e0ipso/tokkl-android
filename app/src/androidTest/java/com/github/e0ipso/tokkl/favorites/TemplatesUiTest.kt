@@ -22,8 +22,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
-import com.github.e0ipso.tokkl.navigation.AppNavigationBar
-import com.github.e0ipso.tokkl.navigation.AppNavigationRail
+import com.github.e0ipso.tokkl.navhost.AppNavigationBar
+import com.github.e0ipso.tokkl.navhost.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals

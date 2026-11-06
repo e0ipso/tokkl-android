@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.trust.SessionTrust
@@ -42,6 +43,7 @@ internal object ClassReferences {
         TokklTheme::class.java,
         Session::class.java,
         SessionTrust::class.java,
+        Navigator::class.java,
     )
 
     /** The directory or jar of each module's compiled classes. */

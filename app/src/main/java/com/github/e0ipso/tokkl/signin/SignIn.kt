@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -95,13 +96,6 @@ sealed interface SignInResult {
      */
     data object OtherAccount : SignInResult
 }
-
-/**
- * The signed-in account, when the user signs in again because the server refused its API token
- * (docs/PRD.md O6). The phone keeps that account's cache and queued changes, so only a sign-in to
- * the same [server] and, when the phone knows it, the same [userId] may replace the token.
- */
-data class SignInAgain(val server: ServerUrl, val userId: Long?)
 
 /**
  * Stores the configured server, its API token and the account settings once the server has

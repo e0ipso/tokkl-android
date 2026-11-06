@@ -17,14 +17,6 @@ class BackStackRulesTest {
     }
 
     @Test
-    fun theBarMarksThePageAScreenWasOpenedFrom() {
-        assertEquals(TopLevelPage.SETTINGS, listOf(Route.Timer, Route.Settings, Route.Licences).currentPage())
-        assertEquals(TopLevelPage.TIMER, listOf(Route.Timer, form).currentPage())
-        assertEquals(TopLevelPage.REPORTS, listOf(Route.Timer, Route.Reports, Route.NeedsAttention).currentPage())
-        assertEquals(TopLevelPage.TIMER, listOf<Route>(Route.SignIn()).currentPage())
-    }
-
-    @Test
     fun aFormOpenedOverAFormReplacesItAndOtherwiseStacks() {
         val other = Route.Entry(EntryOpening.Edit(1), id = "b")
         assertEquals(listOf(Route.Timer, form), listOf<Route>(Route.Timer).withEntry(form))
@@ -46,13 +38,6 @@ class BackStackRulesTest {
         assertEquals(listOf(Route.Timer), listOf(Route.Timer, Route.FullscreenTimer, form).downToTimer())
         assertEquals(listOf(Route.Timer), listOf(Route.Timer, Route.FullscreenTimer).downToTimer())
         assertEquals(listOf<Route>(Route.Pomodoro), listOf<Route>(Route.Pomodoro).downToTimer())
-    }
-
-    @Test
-    fun aStackHoldingAnUnavailablePageIsFound() {
-        val unavailable = setOf(TopLevelPage.TRASH)
-        assertTrue(listOf(Route.Timer, Route.Trash).holdsAnyOf(unavailable))
-        assertFalse(listOf(Route.Timer, Route.Settings, Route.Licences).holdsAnyOf(unavailable))
     }
 
     @Test

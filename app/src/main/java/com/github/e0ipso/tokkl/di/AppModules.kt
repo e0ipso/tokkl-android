@@ -41,5 +41,6 @@ internal val appModules: List<Module> = listOf(
     surfacesModule,
     workerModule,
     viewModelModule,
+    screensModule,
     startupModule,
 )

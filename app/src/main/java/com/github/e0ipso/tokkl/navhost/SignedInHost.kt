@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.navigation
+package com.github.e0ipso.tokkl.navhost
 
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -17,12 +17,18 @@ import androidx.navigation3.runtime.NavEntry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.navigation.Navigator
+import com.github.e0ipso.tokkl.navigation.NotificationPrompts
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.SignInAgain
+import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.contentKey
+import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.ServerConfigStore
-import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.sync.DiscardNotice
 import com.github.e0ipso.tokkl.sync.DiscardedChanges
 import com.github.e0ipso.tokkl.sync.SyncStatusSource
@@ -92,7 +98,7 @@ internal fun SignedInHost(
     val pomodoroRunning by pomodoroRunningFlow.collectAsState(initial = false)
     val status by koinInject<SyncStatusSource>().status.collectAsState(initial = null)
     val width = windowWidth()
-    val focused = stack.isFocused()
+    val focused = navigator.focused
     val timerState by timer.state.collectAsState()
     LaunchedEffect(focused, timerState) {
         // A notification may have opened Pomodoro before this old focused effect runs.

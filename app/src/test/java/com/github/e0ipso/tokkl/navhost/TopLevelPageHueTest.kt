@@ -1,7 +1,10 @@
-package com.github.e0ipso.tokkl.navigation
+package com.github.e0ipso.tokkl.navhost
 
 import androidx.compose.ui.graphics.Color
+import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 /**
@@ -27,6 +30,11 @@ class TopLevelPageHueTest {
         )
         assertEquals(TopLevelPage.entries.toSet(), expected.keys)
         for ((page, fill) in expected) assertEquals("$page's hue", fill, page.hue.fill)
+    }
+
+    @Test
+    fun reportsKeepsItsOwnHueOnTheMoreSheet() {
+        assertSame(SectionHues.reports, TopLevelPage.REPORTS.hue)
     }
 
 }

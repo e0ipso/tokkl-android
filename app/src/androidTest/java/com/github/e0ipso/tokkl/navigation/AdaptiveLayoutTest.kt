@@ -48,6 +48,10 @@ import com.github.e0ipso.tokkl.entry.EntryFormState
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.licences.LicencesScreen
+import com.github.e0ipso.tokkl.navhost.SignedInFrame
+import com.github.e0ipso.tokkl.navhost.SignedInPanes
+import com.github.e0ipso.tokkl.navhost.label
+import com.github.e0ipso.tokkl.navhost.showsEntryBeside
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions

@@ -24,7 +24,8 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
-import com.github.e0ipso.tokkl.navigation.SignedInFrame
+import com.github.e0ipso.tokkl.navhost.SignedInFrame
+import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.sync.NeedsAttention

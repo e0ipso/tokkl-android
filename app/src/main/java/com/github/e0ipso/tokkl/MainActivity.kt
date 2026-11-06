@@ -16,8 +16,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
-import com.github.e0ipso.tokkl.navigation.NavigationRequest
-import com.github.e0ipso.tokkl.navigation.NavigationRequests
+import com.github.e0ipso.tokkl.navhost.NavigationRequest
+import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
 import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap

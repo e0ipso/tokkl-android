@@ -1,5 +1,7 @@
-package com.github.e0ipso.tokkl.navigation
+package com.github.e0ipso.tokkl.navhost
 
+import com.github.e0ipso.tokkl.navigation.EntryOpening
+import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import org.junit.Assert.assertFalse

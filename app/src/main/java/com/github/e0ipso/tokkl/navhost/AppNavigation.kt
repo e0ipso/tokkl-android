@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.navigation
+package com.github.e0ipso.tokkl.navhost
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -46,6 +46,7 @@ import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
@@ -56,35 +57,48 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.navigationBarLabelWeight
 import kotlinx.coroutines.launch
 
-/**
- * The app's top-level pages, in the order of NAV in Tokkl's App.tsx (docs/PRD.md B1). As on the
- * web app on a phone, the pages [inMore] sit on the More sheet, not in the bottom bar. Admin stays
- * out, since the app has no admin features. Each page has its section's [hue], as NAV in App.tsx
- * gives each item a section since tokkl d012228; the pages on the More sheet take More's.
- */
-enum class TopLevelPage(
-    val route: Route,
-    @StringRes val label: Int,
-    @DrawableRes val icon: Int,
-    val hue: SectionHue,
-    val inMore: Boolean = false,
-) {
-    TIMER(Route.Timer, R.string.nav_timer, DataR.drawable.ic_nav_timer, SectionHues.timer),
-    POMODORO(Route.Pomodoro, R.string.pomodoro_title, R.drawable.ic_nav_pomodoro, SectionHues.timer),
-    REPORTS(Route.Reports, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports, inMore = true),
-    PROJECTS(Route.Projects, R.string.nav_projects, SharedR.drawable.ic_nav_projects, SectionHues.projects),
-    TEMPLATES(Route.Templates, R.string.nav_templates, R.drawable.ic_nav_templates, SectionHues.more, inMore = true),
-    CLIENTS(Route.Clients, R.string.nav_clients, R.drawable.ic_nav_clients, SectionHues.more, inMore = true),
-    TAGS(Route.Tags, R.string.nav_tags, SharedR.drawable.ic_nav_tags, SectionHues.more, inMore = true),
-    TRASH(Route.Trash, R.string.nav_trash, R.drawable.ic_nav_trash, SectionHues.more, inMore = true),
-    SETTINGS(Route.Settings, R.string.settings, R.drawable.ic_nav_settings, SectionHues.settings),
-    ;
-
-    companion object {
-        /** The page [route] opens, or null for a screen opened from a page, such as Licences. */
-        fun of(route: Route): TopLevelPage? = entries.firstOrNull { it.route == route }
+/** The page's label in the bar, the rail and the More sheet. */
+@get:StringRes
+val TopLevelPage.label: Int
+    get() = when (this) {
+        TopLevelPage.TIMER -> R.string.nav_timer
+        TopLevelPage.POMODORO -> R.string.pomodoro_title
+        TopLevelPage.REPORTS -> R.string.reports
+        TopLevelPage.PROJECTS -> R.string.nav_projects
+        TopLevelPage.TEMPLATES -> R.string.nav_templates
+        TopLevelPage.CLIENTS -> R.string.nav_clients
+        TopLevelPage.TAGS -> R.string.nav_tags
+        TopLevelPage.TRASH -> R.string.nav_trash
+        TopLevelPage.SETTINGS -> R.string.settings
     }
-}
+
+/** The page's icon in the bar, the rail and the More sheet. */
+@get:DrawableRes
+val TopLevelPage.icon: Int
+    get() = when (this) {
+        TopLevelPage.TIMER -> DataR.drawable.ic_nav_timer
+        TopLevelPage.POMODORO -> R.drawable.ic_nav_pomodoro
+        TopLevelPage.REPORTS -> R.drawable.ic_nav_reports
+        TopLevelPage.PROJECTS -> SharedR.drawable.ic_nav_projects
+        TopLevelPage.TEMPLATES -> R.drawable.ic_nav_templates
+        TopLevelPage.CLIENTS -> R.drawable.ic_nav_clients
+        TopLevelPage.TAGS -> SharedR.drawable.ic_nav_tags
+        TopLevelPage.TRASH -> R.drawable.ic_nav_trash
+        TopLevelPage.SETTINGS -> R.drawable.ic_nav_settings
+    }
+
+/**
+ * The page's section hue, as NAV in App.tsx gives each item a section since tokkl d012228. The
+ * pages on the More sheet take More's, except Reports, which keeps its own.
+ */
+val TopLevelPage.hue: SectionHue
+    get() = when (this) {
+        TopLevelPage.TIMER, TopLevelPage.POMODORO -> SectionHues.timer
+        TopLevelPage.REPORTS -> SectionHues.reports
+        TopLevelPage.PROJECTS -> SectionHues.projects
+        TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH -> SectionHues.more
+        TopLevelPage.SETTINGS -> SectionHues.settings
+    }
 
 /**
  * The bottom bar of a signed-in screen on a compact window: Timer, Pomodoro, Projects, Settings and

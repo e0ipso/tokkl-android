@@ -1,18 +1,14 @@
-package com.github.e0ipso.tokkl.navigation
+package com.github.e0ipso.tokkl.timer
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
-import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
@@ -21,115 +17,36 @@ import com.github.e0ipso.tokkl.history.EntryActionsHost
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryViewModel
-import com.github.e0ipso.tokkl.licences.LicencesScreen
-import com.github.e0ipso.tokkl.pomodoro.PomodoroScreen
-import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
-import com.github.e0ipso.tokkl.projects.ProjectsScreen
-import com.github.e0ipso.tokkl.reports.ReportsScreen
+import com.github.e0ipso.tokkl.navigation.EntryOpening
+import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.NavigationHost
+import com.github.e0ipso.tokkl.navigation.Navigator
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.route
+import com.github.e0ipso.tokkl.navigation.routes
+import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.settings.SettingsScreen
-import com.github.e0ipso.tokkl.signin.SignInScreen
-import com.github.e0ipso.tokkl.signin.SignInViewModel
-import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
-import com.github.e0ipso.tokkl.tags.TagsScreen
-import com.github.e0ipso.tokkl.timer.FullscreenTimerScreen
-import com.github.e0ipso.tokkl.timer.TimerBar
-import com.github.e0ipso.tokkl.timer.TimerScreen
-import com.github.e0ipso.tokkl.timer.TimerViewModel
-import com.github.e0ipso.tokkl.timer.TimerViewSetting
-import com.github.e0ipso.tokkl.timer.settleDescription
-import com.github.e0ipso.tokkl.timer.target
-import com.github.e0ipso.tokkl.trash.TrashScreen
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * What the Pomodoro page and the frame's notification permission prompt share: the page's
- * starts and retries, which may ask for the permission, and a count of the prompt's answers,
- * which tells the page to read the permission again.
+ * The Timer page, the fullscreen timer, the entry form and the timer templates. Each screen takes
+ * its view models: its own, which live in its back stack entry and go when it closes, or the
+ * signed-in session's ([sessionViewModel]) when other screens share them or their state outlives
+ * the page.
  */
-internal class NotificationPrompts {
-    val pomodoroStarts = Channel<Unit>(Channel.UNLIMITED)
-    val retries = Channel<Unit>(Channel.UNLIMITED)
-    var answers by mutableIntStateOf(0)
-}
-
-/**
- * The back stack entry for [route], whose content is the route's screen. The entries live as
- * long as the stack does not change, so the content takes only objects that stay the same for
- * the host's life, and reads every state itself.
- */
-internal fun routeEntry(
-    route: Route,
-    navigator: Navigator,
-    prompts: NotificationPrompts,
-    capabilities: StateFlow<Capabilities>,
-): NavEntry<Route> = NavEntry(route, contentKey = route.contentKey) { RouteScreen(it, navigator, prompts, capabilities) }
-
-/**
- * The screen [route] shows. Each screen takes its view models: its own, which live in its back
- * stack entry and go when it closes, or the signed-in session's ([sessionViewModel]) when other
- * screens share them or their state outlives the page.
- */
-@Composable
-private fun RouteScreen(
-    route: Route,
-    navigator: Navigator,
-    prompts: NotificationPrompts,
-    capabilities: StateFlow<Capabilities>,
-) {
-    when (route) {
-        is Route.SignIn -> {
-            val model = koinViewModel<SignInViewModel>(parameters = { parametersOf(route.again) })
-            SignInScreen(
-                model = model,
-                onSignedIn = {
-                    model.reset()
-                    navigator.open(TopLevelPage.TIMER)
-                },
-            )
-        }
-        Route.Timer -> TimerPage(navigator)
-        Route.FullscreenTimer -> FullscreenTimer(navigator)
-        Route.Pomodoro -> PomodoroScreen(
-            model = sessionViewModel<PomodoroViewModel>(),
-            cache = koinInject(),
-            onNotificationStart = { prompts.pomodoroStarts.trySend(Unit) },
-            onNotificationRetry = { prompts.retries.trySend(Unit) },
-            notificationPermissionRevision = prompts.answers,
-        )
-        Route.Reports -> ReportsScreen(model = sessionViewModel())
-        Route.Projects -> ProjectsScreen(model = koinViewModel())
-        Route.Clients -> ClientsScreen(model = koinViewModel())
-        Route.Tags -> TagsScreen(model = koinViewModel())
-        Route.Trash -> TrashScreen(model = koinViewModel())
-        Route.Templates -> {
+internal object TimerEntries : FeatureEntries {
+    override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
+        route(Route.Timer) { TimerPage(host.navigator) }
+        route(Route.FullscreenTimer) { FullscreenTimer(host.navigator) }
+        routes<Route.Entry> { route -> EntryForm(route, host.navigator) }
+        route(Route.Templates) {
             val account by koinInject<AccountSettingsSource>().state.collectAsState()
             TemplatesScreen(model = sessionViewModel<FavoritesViewModel>(), cache = koinInject(), workspaceId = account?.defaultWorkspaceId)
         }
-        Route.Settings -> {
-            val flags by capabilities.collectAsState()
-            SettingsScreen(
-                model = koinInject(),
-                reminder = koinInject(),
-                pomodoro = koinInject(),
-                pomodoroSharedWithWeb = flags.favorites,
-                signOut = koinInject(),
-                onOpenLicences = { navigator.push(Route.Licences) },
-            )
-        }
-        Route.Licences -> LicencesScreen(onBack = { navigator.close(Route.Licences) })
-        is Route.Entry -> EntryForm(route, navigator)
-        Route.NeedsAttention -> NeedsAttentionScreen(
-            model = koinInject(),
-            settings = koinInject<AccountSettingsSource>().state,
-            onEdit = { entryId -> navigator.openEntry(EntryOpening.Edit(entryId)) },
-            onBack = { navigator.close(Route.NeedsAttention) },
-        )
     }
 }
 

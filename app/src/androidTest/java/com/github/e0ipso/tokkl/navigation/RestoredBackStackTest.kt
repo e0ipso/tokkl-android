@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.bottomBarItem
+import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.Session
 import org.junit.After

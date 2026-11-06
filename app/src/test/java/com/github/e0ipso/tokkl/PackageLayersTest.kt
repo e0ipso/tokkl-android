@@ -83,18 +83,19 @@ class PackageLayersTest {
         /**
          * The layers, lowest first. Core leaves import no app package. Core data holds what the
          * phone keeps for the account and what reads and changes it. Shared parts are what several
-         * features show. The app shell starts the app and wires and navigates the features.
+         * features show, and the routes by which they open one another's screens. The app shell
+         * starts the app and wires and navigates the features.
          */
         val LAYERS: List<Set<String>> = listOf(
             setOf("api", "time", "storage", "ui", "platform"),
             setOf("credentials", "capabilities", "session", "preferences", "cache", "timerstate", "account"),
-            setOf("catalog", "picker", "entryfields", "trust", "timernotice"),
+            setOf("catalog", "picker", "entryfields", "trust", "timernotice", "navigation"),
             setOf(
                 "calendar", "clients", "entry", "favorites", "history", "licences", "notification", "pomodoro",
                 "projects", "reminder", "reports", "settings", "shortcuts", "signin", "sync", "tags", "tile",
                 "timer", "trash", "widget",
             ),
-            setOf(ROOT, "di", "navigation", "lifecycle"),
+            setOf(ROOT, "di", "navhost", "lifecycle"),
         )
 
         /** The imports allowed between packages of one layer. */
@@ -110,12 +111,14 @@ class PackageLayersTest {
             // The entry fields pick projects and tags; a timer notice reads as a catalog problem.
             "entryfields" to setOf("picker"),
             "timernotice" to setOf("catalog"),
-            // The Timer page and the history pin entries as timer templates.
-            "timer" to setOf("favorites"),
+            // The Timer page shows the history, the calendar and the timer templates and opens the
+            // entry form, and the history pins entries as timer templates. Settings opens Licences.
+            "timer" to setOf("favorites", "history", "calendar", "entry"),
             "history" to setOf("favorites"),
-            // TokklApplication starts Koin; Koin builds the lifecycle observers and the navigation.
-            ROOT to setOf("di", "lifecycle", "navigation"),
-            "di" to setOf("lifecycle", "navigation"),
+            "settings" to setOf("licences"),
+            // TokklApplication starts Koin; Koin builds the lifecycle observers and the navigation host.
+            ROOT to setOf("di", "lifecycle", "navhost"),
+            "di" to setOf("lifecycle", "navhost"),
         )
     }
 }
