@@ -18,7 +18,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-Version 5 adds `pending_changes.held` and `pending_changes.refusal`; version 6 adds `capturedStop`, `shortStop` and `short_stop_undo` without rewriting older queued requests. Versions 1 through 6 each have an exported schema in `app/schemas/`, with consecutive Room `AutoMigration` steps. Never drop the database file, since that loses queued changes. `CacheDatabaseMigrationTest` opens files written by earlier schema versions under the current version without room-testing, relying on Room's exported-schema validation.
+Version 5 adds `pending_changes.held` and `pending_changes.refusal`; version 6 adds `capturedStop`, `shortStop` and `short_stop_undo` without rewriting older queued requests. Versions 1 through 6 each have an exported schema in `core/data/schemas/`, with consecutive Room `AutoMigration` steps. Never drop the database file, since that loses queued changes. `CacheDatabaseMigrationTest` opens files written by earlier schema versions under the current version without room-testing, relying on Room's exported-schema validation.
 
 <!-- kk:related:start -->
 # Related
