@@ -18,6 +18,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -130,7 +131,7 @@ class PomodoroSignOutServerTest {
         compose.awaitText(context.getString(R.string.settings_sign_out_title))
         val warning = context.resources.getQuantityString(R.plurals.settings_sign_out_unsent, 1, 1)
         compose.onNode(hasText(warning) and inDialog).assertExists()
-        compose.onNode(hasText(context.getString(R.string.catalog_cancel)) and hasClickAction() and inDialog).performClick()
+        compose.onNode(hasText(context.getString(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog).performClick()
         compose.waitUntil("warning dismissed", 10_000) { app.signOutConfirmation.state.value.unsentToConfirm == null }
         assertEquals("Cancel keeps the server's session as held", session, app.timerState.state.value)
         assertEquals(1, queueCount())

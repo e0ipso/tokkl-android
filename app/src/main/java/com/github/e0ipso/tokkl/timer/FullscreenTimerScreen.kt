@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -107,11 +108,11 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                 )
                 val fields = running?.fields ?: paused!!.fields
                 val labels = running?.labels ?: paused!!.labels
-                Text(fields.description.ifEmpty { stringResource(R.string.timer_suggestion_no_description) }, style = MaterialTheme.typography.headlineSmall)
+                Text(fields.description.ifEmpty { stringResource(SharedR.string.timer_suggestion_no_description) }, style = MaterialTheme.typography.headlineSmall)
                 labels.project?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 labels.task?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
                 if (fields.tags.isNotEmpty()) Text(fields.tags.joinToString(", "), style = MaterialTheme.typography.bodyLarge)
-                if (fields.billable) Text(stringResource(R.string.entry_billable), style = MaterialTheme.typography.bodyLarge)
+                if (fields.billable) Text(stringResource(SharedR.string.entry_billable), style = MaterialTheme.typography.bodyLarge)
                 if (running?.unsent == true) Text(stringResource(R.string.history_unsent), style = MaterialTheme.typography.labelLarge)
                 val stopAction = stringResource(R.string.timer_stop_spoken)
                 FlowRow(

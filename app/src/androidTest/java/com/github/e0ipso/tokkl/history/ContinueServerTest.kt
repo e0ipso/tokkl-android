@@ -20,6 +20,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -162,7 +163,7 @@ class ContinueServerTest {
             composeRule.waitUntil("the entry shows with its Continue button", LOAD_TIMEOUT_MS) {
                 composeRule.onAllNodes(continueButton and hasAnyAncestor(hasScrollToKeyAction())).fetchSemanticsNodes().size == 1
             }
-            val description = hasSetTextAction() and hasText(context.getString(R.string.entry_description))
+            val description = hasSetTextAction() and hasText(context.getString(SharedR.string.entry_description))
             composeRule.waitUntil("the running entry's description shows", LOAD_TIMEOUT_MS) {
                 composeRule.onAllNodes(description and hasText("Answer email")).fetchSemanticsNodes().size == 1
             }

@@ -18,7 +18,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /** What a catalog page shows when the server has none of its items: [title] over [message]. */
 @Composable
-internal fun CatalogEmpty(title: String, message: String) {
+fun CatalogEmpty(title: String, message: String) {
     Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         Text(message, style = MaterialTheme.typography.bodyLarge)
@@ -27,7 +27,7 @@ internal fun CatalogEmpty(title: String, message: String) {
 
 /** One row of a catalog list: [content] across the row, usually the part a tap opens and a button after it. */
 @Composable
-internal fun CatalogListRow(content: @Composable RowScope.() -> Unit) {
+fun CatalogListRow(content: @Composable RowScope.() -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
@@ -41,7 +41,7 @@ internal fun CatalogListRow(content: @Composable RowScope.() -> Unit) {
  * a divider between its rows. A list with no items shows nothing, heading included.
  */
 @Composable
-internal fun <T> ActiveThenArchived(active: List<T>, archived: List<T>, archivedHeading: String, row: @Composable (T) -> Unit) {
+fun <T> ActiveThenArchived(active: List<T>, archived: List<T>, archivedHeading: String, row: @Composable (T) -> Unit) {
     if (active.isNotEmpty()) DividedRows(active, row)
     if (archived.isNotEmpty()) {
         Column {

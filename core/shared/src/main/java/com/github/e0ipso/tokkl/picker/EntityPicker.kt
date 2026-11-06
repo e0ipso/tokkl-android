@@ -43,7 +43,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -279,7 +279,7 @@ private fun ProjectDot(color: Color?) {
 }
 
 /** A `#rrggbb` project colour, or null when it is not one. */
-internal fun projectColor(hex: String?): Color? {
+fun projectColor(hex: String?): Color? {
     val digits = hex?.removePrefix("#")?.takeIf { it.length == 6 } ?: return null
     val rgb = digits.toLongOrNull(16) ?: return null
     return Color(0xFF000000 or rgb)

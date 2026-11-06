@@ -13,7 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
@@ -62,7 +62,7 @@ fun ConfirmDialog(
  * colours.
  */
 @Composable
-internal fun CancelAndConfirm(confirmLabel: String, onConfirm: () -> Unit, onCancel: () -> Unit, enabled: Boolean = true, danger: Boolean = false) {
+fun CancelAndConfirm(confirmLabel: String, onConfirm: () -> Unit, onCancel: () -> Unit, enabled: Boolean = true, danger: Boolean = false) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)

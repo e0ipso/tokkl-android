@@ -23,6 +23,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ApiResult
@@ -115,7 +116,7 @@ class EntryActionsUiTest {
         show(canRestore = false)
 
         openMenuAndDelete()
-        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
 
         composeRule.waitForIdle()
         assertEquals(0, composeRule.onAllNodes(isDialog()).fetchSemanticsNodes().size)

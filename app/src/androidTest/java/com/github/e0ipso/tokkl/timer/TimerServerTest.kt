@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TestAccounts
@@ -176,11 +177,11 @@ class TimerServerTest {
 
                 projectButton(null).performClick()
                 option("Timer project").performClick()
-                composeRule.onNode(hasSetTextAction() and hasText(string(R.string.picker_search))).performTextInput("call")
-                option(string(R.string.picker_add_tag, "call")).performClick()
-                composeRule.onNode(hasText(string(R.string.entry_picker_done)) and hasClickAction()).performClick()
+                composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.picker_search))).performTextInput("call")
+                option(string(SharedR.string.picker_add_tag, "call")).performClick()
+                composeRule.onNode(hasText(string(SharedR.string.entry_picker_done)) and hasClickAction()).performClick()
                 awaitAtOnce("the project shows") { shows(projectButton("Timer project")) }
-                awaitAtOnce("the tag shows") { shows(composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call")))) }
+                awaitAtOnce("the tag shows") { shows(composeRule.onNode(hasContentDescription(string(SharedR.string.entry_tags_spoken, "call")))) }
                 fields = fields.copy(projectId = project, tags = listOf("call"))
                 awaitPersistedFields(database, running, fields, "picker")
 
@@ -389,7 +390,7 @@ class TimerServerTest {
         ).orFail("POST a project").getValue("id").jsonPrimitive.long
 
     private fun description(): SemanticsNodeInteraction =
-        composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description)))
+        composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.entry_description)))
 
     private fun descriptionText(): String =
         description().fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty()
@@ -447,21 +448,21 @@ class TimerServerTest {
     private fun stop(): SemanticsNodeInteraction = stopButton()
 
     private fun billable(): SemanticsNodeInteraction =
-        composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable())
+        composeRule.onNode(hasText(string(SharedR.string.entry_billable)) and isToggleable())
 
     private fun billableState(): ToggleableState? =
         billable().fetchSemanticsNode().config.getOrNull(SemanticsProperties.ToggleableState)
 
     /** The project button, as TalkBack reads it for [name], or for no project. */
     private fun projectButton(name: String?): SemanticsNodeInteraction {
-        val spoken = name?.let { string(R.string.entry_project_spoken, it) } ?: string(R.string.entry_no_project_spoken)
+        val spoken = name?.let { string(SharedR.string.entry_project_spoken, it) } ?: string(SharedR.string.entry_no_project_spoken)
         return composeRule.onNode(hasContentDescription(spoken) and hasClickAction())
     }
 
     /** A row of the picker, scrolled into view. */
     private fun option(text: String): SemanticsNodeInteraction {
         val matcher = hasText(text) and hasClickAction()
-        val list = hasScrollToNodeAction() and hasAnyDescendant(hasText(string(R.string.picker_project)))
+        val list = hasScrollToNodeAction() and hasAnyDescendant(hasText(string(SharedR.string.picker_project)))
         composeRule.onNode(list).performScrollToNode(matcher)
         return composeRule.onNode(matcher)
     }

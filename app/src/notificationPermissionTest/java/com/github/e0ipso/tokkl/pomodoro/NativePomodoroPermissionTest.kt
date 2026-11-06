@@ -15,6 +15,7 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -93,7 +94,7 @@ class NativePomodoroPermissionTest {
             tap(R.string.pomodoro_end)
             compose.waitUntil(15_000) { session() == null }
             // Shorter than half the test server's 5-minute resolution, the pomodoro went to the trash.
-            waitOutSnackbar(R.string.timer_pomodoro_too_short)
+            waitOutSnackbar(SharedR.string.timer_pomodoro_too_short)
             tap(R.string.pomodoro_start)
             compose.waitUntil(15_000) { session() != null }
             assertNull(device.findObject(By.res(CONTROLLER, "permission_allow_button")))

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -56,7 +57,7 @@ abstract class SignOutFitTest(private val fontScale: Float) {
 
             composeRule.onNode(hasText(string(R.string.settings_sign_out_title)) and isHeading() and inDialog()).assertIsDisplayed()
             composeRule.onNode(hasText(warning) and inDialog()).assertIsDisplayed()
-            composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction() and inDialog()).assertIsDisplayed()
+            composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog()).assertIsDisplayed()
             composeRule.onNode(hasText(string(R.string.settings_sign_out)) and hasClickAction() and inDialog()).assertIsDisplayed()
             assertNoTextCutOff("the warning, dark $dark")
         }

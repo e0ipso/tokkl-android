@@ -35,6 +35,7 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -509,10 +510,10 @@ class CalendarServerTest {
             assertTrue("the form is on $day", exists(hasContentDescription(spokenDate(day)) and hasClickAction()))
             assertTrue("a no-time entry has no start", !exists(hasSetTextAction() and hasText(string(R.string.entry_start))))
             composeRule.waitUntil("the account's workspace is known", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasSetTextAction() and hasText(string(R.string.entry_description))).fetchSemanticsNodes()
+                composeRule.onAllNodes(hasSetTextAction() and hasText(string(SharedR.string.entry_description))).fetchSemanticsNodes()
                     .singleOrNull()?.config?.contains(SemanticsProperties.Disabled) == false
             }
-            composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description))).performTextInput("Added from the plus")
+            composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.entry_description))).performTextInput("Added from the plus")
             composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_duration))).performScrollTo().performTextInput("90m")
             composeRule.onNode(hasText(string(R.string.entry_save)) and hasClickAction()).performScrollTo().performClick()
             composeRule.waitUntil("the form closes", LOAD_TIMEOUT_MS) {

@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.catalog.ProblemBanner
 import com.github.e0ipso.tokkl.catalog.ServerNeededNotice
 import com.github.e0ipso.tokkl.catalog.ServerProblem
@@ -118,7 +119,7 @@ private fun FormFields(
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            TokklGhostButton(onClick = onCancel) { Text(stringResource(R.string.catalog_cancel)) }
+            TokklGhostButton(onClick = onCancel) { Text(stringResource(SharedR.string.catalog_cancel)) }
             TokklButton(onClick = save, enabled = canSave && !sending) {
                 Text(stringResource(if (client == null) R.string.client_create else R.string.client_save))
             }

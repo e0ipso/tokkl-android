@@ -15,6 +15,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
@@ -69,9 +70,9 @@ class NewKeyWhileSignedInTest {
     @Test
     fun aNewKeyShowsTheChangedPromptWithItsFingerprintAndConnectsOnceTrusted() {
         signIn()
-        awaitNode(hasText(string(R.string.sign_in_certificate_title)), "the certificate prompt shows")
+        awaitNode(hasText(string(SharedR.string.sign_in_certificate_title)), "the certificate prompt shows")
         composeRule.onNode(hasText(TokklTestServer.tlsFingerprint)).performScrollTo().assertIsDisplayed()
-        composeRule.onNode(hasText(string(R.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
         assertEquals(firstSha256, pinnedSha256())
         assertEquals(TokklTestServer.email, email(me()))
@@ -83,13 +84,13 @@ class NewKeyWhileSignedInTest {
             ApiError.UntrustedCertificate(ServerCertificate(LOOPBACK, relay.localPort, newSha256, SUBJECT), changed = true),
             (me() as? ApiResult.Failure)?.error,
         )
-        awaitNode(hasText(string(R.string.sign_in_certificate_changed_title)), "the changed certificate prompt shows")
+        awaitNode(hasText(string(SharedR.string.sign_in_certificate_changed_title)), "the changed certificate prompt shows")
         composeRule.onNode(hasText(TokklTestServer.newKeyTlsFingerprint)).performScrollTo().assertIsDisplayed()
         assertEquals("the old pin stays until the user trusts the new certificate", firstSha256, pinnedSha256())
 
-        composeRule.onNode(hasText(string(R.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
 
-        awaitGone(hasText(string(R.string.sign_in_certificate_changed_title)), "the prompt closes")
+        awaitGone(hasText(string(SharedR.string.sign_in_certificate_changed_title)), "the prompt closes")
         assertEquals(newSha256, pinnedSha256())
         assertEquals(TokklTestServer.email, email(me()))
         assertEquals("connections the relay could not pass on", emptyList<String>(), relay.failures.toList())

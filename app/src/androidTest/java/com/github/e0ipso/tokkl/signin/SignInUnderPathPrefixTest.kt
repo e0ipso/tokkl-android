@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
@@ -119,11 +120,11 @@ class SignInUnderPathPrefixTest {
      */
     private fun confirmHttpWarning() {
         composeRule.waitUntil("the http warning shows", NETWORK_TIMEOUT_MS) {
-            exists(hasText(string(R.string.sign_in_http_warning_title)))
+            exists(hasText(string(SharedR.string.sign_in_http_warning_title)))
         }
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_body, server.toString()))).assertExists()
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_understood)) and isToggleable()).performClick()
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_continue)) and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_http_warning_body, server.toString()))).assertExists()
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_http_warning_understood)) and isToggleable()).performClick()
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_http_warning_continue)) and hasClickAction()).performClick()
     }
 
     private fun exists(matcher: SemanticsMatcher): Boolean =

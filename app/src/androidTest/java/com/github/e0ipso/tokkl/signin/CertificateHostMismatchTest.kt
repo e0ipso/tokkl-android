@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
@@ -84,7 +85,7 @@ class CertificateHostMismatchTest {
         signIn()
 
         awaitHostMessage()
-        assertFalse("the trust prompt shows", exists(hasText(string(R.string.sign_in_certificate_title))))
+        assertFalse("the trust prompt shows", exists(hasText(string(SharedR.string.sign_in_certificate_title))))
         assertNull(ServerTrustStore(context).pinnedSha256(HOST, proxy.port))
         assertFalse("the session was stored", saved)
     }

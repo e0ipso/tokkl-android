@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -233,7 +234,7 @@ class HistoryFitTest {
             "title" to text(string(R.string.history_split_title)),
             "entry" to text(string(R.string.history_split_entry, SOLO_DESCRIPTION, range)),
             "field" to composeRule.onNode(hasSetTextAction() and hasText(string(R.string.history_split_field))),
-            "cancel button" to composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()),
+            "cancel button" to composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction()),
             "split button" to composeRule.onNode(hasText(string(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog())),
         )
         assertFit(blocks + ("note" to text(note)) + inside(R.string.history_split_confirm, hasClickAction() and hasAnyAncestor(isDialog())), area = dialog)

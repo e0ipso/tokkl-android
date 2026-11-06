@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
@@ -130,7 +131,7 @@ private fun ColourOption(label: String, hex: String?, selected: Boolean, onSelec
                 .border(DividerDefaults.Thickness, MaterialTheme.colorScheme.outline, CircleShape),
         )
         Text(label, style = MaterialTheme.typography.bodyMedium)
-        if (selected) Icon(painter = painterResource(R.drawable.ic_check), contentDescription = null)
+        if (selected) Icon(painter = painterResource(SharedR.drawable.ic_check), contentDescription = null)
     }
 }
 

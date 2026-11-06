@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.cache.EntryFields
@@ -76,14 +77,14 @@ class PomodoroPageFontScaleTest {
             readable(compose.lengthLabel(name))
             readable(compose.lengthValue(name))
         }
-        val description = compose.onNode(hasText(context.getString(R.string.entry_description)) and hasSetTextAction())
+        val description = compose.onNode(hasText(context.getString(SharedR.string.entry_description)) and hasSetTextAction())
         description.performScrollTo().performTextReplacement("Accessible entry")
         assertEquals("Accessible entry", state.fields.description)
-        for (spoken in listOf(R.string.entry_no_project_spoken, R.string.entry_no_tags_spoken)) {
+        for (spoken in listOf(SharedR.string.entry_no_project_spoken, SharedR.string.entry_no_tags_spoken)) {
             compose.onNode(hasContentDescription(context.getString(spoken)) and hasClickAction())
                 .performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp)
         }
-        compose.onNode(hasText(context.getString(R.string.entry_billable)) and isToggleable())
+        compose.onNode(hasText(context.getString(SharedR.string.entry_billable)) and isToggleable())
             .performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
         assertTrue(state.fields.billable)
         button(R.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp)

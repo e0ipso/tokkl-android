@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timernotice
 
 import android.content.res.Resources
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.catalog.toServerProblem

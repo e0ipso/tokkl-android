@@ -29,6 +29,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -126,8 +127,8 @@ class TagsServerTest {
         field(R.string.tags_new_name).type("focus")
         button(R.string.tags_add).tap()
 
-        awaitText(string(R.string.catalog_created, "focus"))
-        awaitMessageGone(string(R.string.catalog_created, "focus"))
+        awaitText(string(SharedR.string.catalog_created, "focus"))
+        awaitMessageGone(string(SharedR.string.catalog_created, "focus"))
         val id = tag("focus")!!.getValue("id").jsonPrimitive.long
         awaitCache("the cache holds the new tag") { tags, _ -> tags.any { it.id == id && it.name == "focus" } }
         field(R.string.tags_new_name).assert(SemanticsMatcher("an empty field") { it.config.getOrNull(SemanticsProperties.EditableText)?.text == "" })
@@ -141,8 +142,8 @@ class TagsServerTest {
         field(R.string.tags_rename_field).type("deep work")
         composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
 
-        awaitText(string(R.string.catalog_renamed, "deep work"))
-        awaitMessageGone(string(R.string.catalog_renamed, "deep work"))
+        awaitText(string(SharedR.string.catalog_renamed, "deep work"))
+        awaitMessageGone(string(SharedR.string.catalog_renamed, "deep work"))
         assertEquals(null, tag("focus"))
         assertEquals(id, tag("deep work")!!.getValue("id").jsonPrimitive.long)
         awaitCache("the cache and the history hold the new name") { tags, entries ->
@@ -153,7 +154,7 @@ class TagsServerTest {
         awaitText(string(R.string.tags_delete_title, "deep work"))
         composeRule.onNode(hasText(string(R.string.tags_delete_confirm)) and hasClickAction()).tap(scroll = false)
 
-        awaitText(string(R.string.catalog_deleted, "deep work"))
+        awaitText(string(SharedR.string.catalog_deleted, "deep work"))
         assertEquals(null, tag("deep work"))
         awaitCache("the tag left the cache and the entry") { tags, entries ->
             tags.none { it.id == id } && entries.single().tags.isEmpty()
@@ -174,7 +175,7 @@ class TagsServerTest {
             field(R.string.tags_new_name).type("focus")
             button(R.string.tags_add).tap()
 
-            awaitText(string(R.string.catalog_created, "focus"))
+            awaitText(string(SharedR.string.catalog_created, "focus"))
             assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
             row("focus").assertExists()
             assertNoText("A tag with the same name already exists")
@@ -200,7 +201,7 @@ class TagsServerTest {
         awaitText("keep")
         composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "keep"))).tap()
         awaitText(string(R.string.tags_delete_title, "keep"))
-        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
+        composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
         composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
             composeRule.onAllNodesWithText(string(R.string.tags_delete_title, "keep")).fetchSemanticsNodes().isEmpty()
         }

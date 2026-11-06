@@ -26,6 +26,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
@@ -151,7 +152,7 @@ class SignInScreenTest {
         field(R.string.sign_in_api_token).performTextInput(TokklTestServer.apiToken)
         submit()
         awaitHttpWarning()
-        val body = string(R.string.sign_in_http_warning_body, TokklTestServer.url.toString())
+        val body = string(SharedR.string.sign_in_http_warning_body, TokklTestServer.url.toString())
         assertTrue("the warning names the token or password", "API token or password" in body)
         assertTrue("the warning names Tailscale", "Tailscale" in body)
         composeRule.onNode(hasText(body)).assertIsDisplayed()
@@ -162,11 +163,11 @@ class SignInScreenTest {
         DeviceShell.run("input tap 4 ${screen.heightPixels / 2}")
         DeviceShell.run("input keyevent KEYCODE_BACK")
         composeRule.waitForIdle()
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_title))).assertIsDisplayed()
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_http_warning_title))).assertIsDisplayed()
         assertNothingStored()
 
-        composeRule.onNode(hasText(string(R.string.sign_in_warning_cancel)) and hasClickAction()).performClick()
-        composeRule.waitUntil("the warning closes") { !exists(hasText(string(R.string.sign_in_http_warning_title))) }
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_warning_cancel)) and hasClickAction()).performClick()
+        composeRule.waitUntil("the warning closes") { !exists(hasText(string(SharedR.string.sign_in_http_warning_title))) }
         assertNothingStored()
 
         submit()
@@ -281,7 +282,7 @@ class SignInScreenTest {
 
     private fun awaitHttpWarning() {
         composeRule.waitUntil("the http warning shows", NETWORK_TIMEOUT_MS) {
-            exists(hasText(string(R.string.sign_in_http_warning_title)))
+            exists(hasText(string(SharedR.string.sign_in_http_warning_title)))
         }
     }
 
@@ -293,10 +294,10 @@ class SignInScreenTest {
     }
 
     private fun understood(): SemanticsNodeInteraction =
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_understood)) and isToggleable())
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_http_warning_understood)) and isToggleable())
 
     private fun continueButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_continue)) and hasClickAction())
+        composeRule.onNode(hasText(string(SharedR.string.sign_in_http_warning_continue)) and hasClickAction())
 
     private fun assertNothingStored() {
         assertNull(ServerConfigStore(context).load())

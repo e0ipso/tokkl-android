@@ -33,6 +33,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -146,7 +147,7 @@ class ProjectsServerTest {
         composeRule.onNode(hasText(string(R.string.project_billable_default)) and hasClickAction()).tap()
         button(R.string.project_create).tap()
 
-        composeRule.awaitText(string(R.string.catalog_created, "Website"))
+        composeRule.awaitText(string(SharedR.string.catalog_created, "Website"))
         var server = project("Website")
         assertEquals("#2da608", server.string("color"))
         assertEquals(acme, server.getValue("client_id").jsonPrimitive.long)
@@ -176,7 +177,7 @@ class ProjectsServerTest {
         composeRule.onNode(hasText(string(R.string.project_billable_default)) and hasClickAction()).tap()
         button(R.string.project_save).tap()
 
-        composeRule.awaitText(string(R.string.catalog_saved, "Web site"))
+        composeRule.awaitText(string(SharedR.string.catalog_saved, "Web site"))
         server = project("Web site")
         assertEquals(id, server.id())
         assertEquals("#123456", server.string("color"))
@@ -190,13 +191,13 @@ class ProjectsServerTest {
         }
 
         composeRule.onNode(hasContentDescription(string(R.string.projects_archive_named, "Web site"))).tap()
-        composeRule.awaitText(string(R.string.catalog_archived, "Web site"))
+        composeRule.awaitText(string(SharedR.string.catalog_archived, "Web site"))
         assertEquals("false", project("Web site").getValue("active").jsonPrimitive.content)
         composeRule.onNode(hasText(string(R.string.projects_archived)) and isHeading()).assertExists()
         awaitCache("the cache no longer offers the archived project") { cached -> cached.none { it.id == id && it.active } }
 
         composeRule.onNode(hasContentDescription(string(R.string.projects_restore_named, "Web site"))).tap()
-        composeRule.awaitText(string(R.string.catalog_restored, "Web site"))
+        composeRule.awaitText(string(SharedR.string.catalog_restored, "Web site"))
         assertEquals("true", project("Web site").getValue("active").jsonPrimitive.content)
         awaitCache("the cache offers the restored project") { cached -> cached.any { it.id == id && it.active } }
     }
@@ -231,7 +232,7 @@ class ProjectsServerTest {
             field(R.string.project_name).type("Website")
             button(R.string.project_create).tap()
 
-            composeRule.awaitText(string(R.string.catalog_created, "Website"))
+            composeRule.awaitText(string(SharedR.string.catalog_created, "Website"))
             assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
             row("Website").assertExists()
             assertNoText("Name has already been taken")
@@ -297,8 +298,8 @@ class ProjectsServerTest {
         field(R.string.project_tasks_new_name).type("Design")
         button(R.string.project_tasks_add).tap()
 
-        composeRule.awaitText(string(R.string.catalog_created, "Design"))
-        awaitMessageGone(string(R.string.catalog_created, "Design"))
+        composeRule.awaitText(string(SharedR.string.catalog_created, "Design"))
+        awaitMessageGone(string(SharedR.string.catalog_created, "Design"))
         val id = tasks(project).single { it.string("name") == "Design" }.id()
         assertEquals("true", tasks(project).single().getValue("active").jsonPrimitive.content)
         awaitTasksCache("the cache holds the new task") { cached -> cached.any { it.id == id && it.projectId == project && it.name == "Design" && it.active } }
@@ -311,8 +312,8 @@ class ProjectsServerTest {
         field(R.string.project_task_name).type("Wireframes")
         dialogButton(R.string.project_task_save).tap(scroll = false)
 
-        composeRule.awaitText(string(R.string.catalog_saved, "Wireframes"))
-        awaitMessageGone(string(R.string.catalog_saved, "Wireframes"))
+        composeRule.awaitText(string(SharedR.string.catalog_saved, "Wireframes"))
+        awaitMessageGone(string(SharedR.string.catalog_saved, "Wireframes"))
         var saved = tasks(project).single()
         assertEquals(id, saved.id())
         assertEquals("Wireframes", saved.string("name"))
@@ -324,8 +325,8 @@ class ProjectsServerTest {
         composeRule.onNode(hasText(string(R.string.project_task_done)) and hasClickAction() and inDialog()).tap()
         dialogButton(R.string.project_task_save).tap(scroll = false)
 
-        composeRule.awaitText(string(R.string.catalog_saved, "Wireframes"))
-        awaitMessageGone(string(R.string.catalog_saved, "Wireframes"))
+        composeRule.awaitText(string(SharedR.string.catalog_saved, "Wireframes"))
+        awaitMessageGone(string(SharedR.string.catalog_saved, "Wireframes"))
         saved = tasks(project).single()
         assertEquals("false", saved.getValue("active").jsonPrimitive.content)
         // The cache keeps a done task only while an entry uses it, so the picker stops offering it.
@@ -335,7 +336,7 @@ class ProjectsServerTest {
         val delete = composeRule.onNode(hasContentDescription(string(R.string.project_task_delete_named, "Wireframes")))
         delete.tap()
         composeRule.awaitText(string(R.string.project_task_delete_title, "Wireframes"))
-        dialogButton(R.string.catalog_cancel).tap(scroll = false)
+        dialogButton(SharedR.string.catalog_cancel).tap(scroll = false)
         composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
             composeRule.onAllNodesWithText(string(R.string.project_task_delete_title, "Wireframes")).fetchSemanticsNodes().isEmpty()
         }
@@ -345,7 +346,7 @@ class ProjectsServerTest {
         composeRule.awaitText(string(R.string.project_task_delete_title, "Wireframes"))
         dialogButton(R.string.project_task_delete_confirm).tap(scroll = false)
 
-        composeRule.awaitText(string(R.string.catalog_deleted, "Wireframes"))
+        composeRule.awaitText(string(SharedR.string.catalog_deleted, "Wireframes"))
         assertEquals(emptyList<JsonObject>(), tasks(project))
         awaitTasksCache("the cache no longer has the deleted task") { cached -> cached.none { it.id == id } }
         composeRule.awaitText(string(R.string.project_tasks_empty))
@@ -368,7 +369,7 @@ class ProjectsServerTest {
             field(R.string.project_tasks_new_name).type("Design")
             button(R.string.project_tasks_add).tap()
 
-            composeRule.awaitText(string(R.string.catalog_created, "Design"))
+            composeRule.awaitText(string(SharedR.string.catalog_created, "Design"))
             assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
             row("Design").assertExists()
             assertNoText("Name has already been taken")

@@ -17,6 +17,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -152,7 +153,7 @@ class SignOutServerTest {
         composeRule.awaitText(string(R.string.settings_sign_out_title))
         val warning = context.resources.getQuantityString(R.plurals.settings_sign_out_unsent, 2, 2)
         composeRule.onNode(hasText(warning) and inDialog()).assertExists()
-        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction() and inDialog()).performClick()
+        composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog()).performClick()
 
         composeRule.waitUntil("the warning closes", TIMEOUT_MS) { !exists(hasText(string(R.string.settings_sign_out_title))) }
         assertTrue("Cancel keeps the session", Session(context).isSignedIn())

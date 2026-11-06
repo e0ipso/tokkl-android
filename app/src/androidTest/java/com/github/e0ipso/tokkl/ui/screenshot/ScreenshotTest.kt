@@ -47,6 +47,7 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
@@ -498,7 +499,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun httpWarning() {
         show({ CleartextWarning(HTTP_SERVER, onConfirm = {}, onCancel = {}) }) {
-            composeRule.awaitText(string(R.string.sign_in_http_warning_title))
+            composeRule.awaitText(string(SharedR.string.sign_in_http_warning_title))
             assertDialog("http-warning")
         }
     }
@@ -507,7 +508,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun certificatePrompt() {
         show({ CertificatePrompt(CERTIFICATE, changed = false, onTrust = {}, onCancel = {}) }) {
-            composeRule.awaitText(string(R.string.sign_in_certificate_title))
+            composeRule.awaitText(string(SharedR.string.sign_in_certificate_title))
             assertDialog("certificate-prompt")
         }
     }

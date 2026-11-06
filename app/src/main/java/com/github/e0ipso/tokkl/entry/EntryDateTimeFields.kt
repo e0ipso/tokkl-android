@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -199,7 +200,7 @@ private fun DateDialog(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismis
                             .semantics { heading() },
                     )
                     TextButton(onClick = { picked?.let(onPick) }, enabled = picked != null) {
-                        Text(stringResource(R.string.entry_picker_done))
+                        Text(stringResource(SharedR.string.entry_picker_done))
                     }
                 }
                 DatePicker(state = state, title = null, modifier = Modifier.weight(1f))

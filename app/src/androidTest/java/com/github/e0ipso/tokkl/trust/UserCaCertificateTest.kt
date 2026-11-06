@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
@@ -59,8 +60,8 @@ class UserCaCertificateTest {
         signIn()
 
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-        assertFalse("a certificate prompt shows", exists(R.string.sign_in_certificate_title))
-        assertFalse("a certificate prompt shows", exists(R.string.sign_in_certificate_changed_title))
+        assertFalse("a certificate prompt shows", exists(SharedR.string.sign_in_certificate_title))
+        assertFalse("a certificate prompt shows", exists(SharedR.string.sign_in_certificate_changed_title))
         assertNull("a pin for the server", ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
         assertEquals(TokklTestServer.userCaTlsUrl, ServerConfigStore(context).load())
         val client = Session(context).client() ?: throw AssertionError("no stored session")

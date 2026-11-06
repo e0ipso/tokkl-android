@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    What a timer action says when it fails: Pause, Resume and Discard, and a Pomodoro session's
-    Start, Next phase and End. Worded as the web app's timer (packages/web/src/api/timerState.ts),
-    as is the notice for a pomodoro the server discarded.
+    The notice for a pomodoro the server discarded, worded as the web app's timer
+    (packages/web/src/api/timerState.ts). core:data has the strings of the failed timer actions.
 -->
 <resources>
     <!-- The server sent a pomodoro too short to keep to the trash. Shown once per pomodoro. -->

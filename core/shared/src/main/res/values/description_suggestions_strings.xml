@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The description suggestions under the timer's and the entry form's description field. -->
+<resources>
+    <!-- Above the timer's description suggestions; TalkBack announces it when they change. -->
+    <plurals name="timer_suggestions">
+        <item quantity="one">%d suggestion</item>
+        <item quantity="other">%d suggestions</item>
+    </plurals>
+    <!-- A suggestion from an entry with a project and no description, as the web app shows it. -->
+    <string name="timer_suggestion_no_description">(no description)</string>
+</resources>

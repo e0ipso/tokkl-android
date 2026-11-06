@@ -23,6 +23,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -384,7 +385,7 @@ class FavoritesServerTest {
         composeRule.onNode(hasContentDescription(string(label, name)) and hasClickAction())
 
     private fun description(): SemanticsNodeInteraction =
-        composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description)))
+        composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.entry_description)))
 
     private fun stopButton(): SemanticsNodeInteraction =
         composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction())

@@ -22,6 +22,7 @@ import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
@@ -91,7 +92,7 @@ class PomodoroPageServerTest {
         typeLength(R.string.pomodoro_card_short_rest, "5")
         typeLength(R.string.pomodoro_card_long_rest, "12")
         typeLength(R.string.pomodoro_card_long_rest_every, "2")
-        type(R.string.entry_description, "First work")
+        type(SharedR.string.entry_description, "First work")
         tap(R.string.pomodoro_start)
         await { model.state.value.pomodoro != null && !model.state.value.busy }
 
@@ -144,18 +145,18 @@ class PomodoroPageServerTest {
     @Test
     fun aDescriptionTypedJustBeforeNextPhaseReachesTheServerAndCarriesToTheNextPhase() {
         show()
-        type(R.string.entry_description, "Before")
+        type(SharedR.string.entry_description, "Before")
         tap(R.string.pomodoro_start)
         await { model.state.value.pomodoro != null && !model.state.value.busy }
 
-        type(R.string.entry_description, "After the edit")
+        type(SharedR.string.entry_description, "After the edit")
         tap(R.string.pomodoro_start_short_rest)
         await { model.state.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.state.value.busy }
         assertNull("the user's own edit is not another device's change", model.state.value.problem)
         val server = serverTimer()
         assertEquals(PhaseKind.SHORT_REST, server.pomodoro!!.phase.kind)
         assertEquals("After the edit", server.runningEntry!!.description)
-        compose.onNode(hasText(context.getString(R.string.entry_description)) and hasSetTextAction())
+        compose.onNode(hasText(context.getString(SharedR.string.entry_description)) and hasSetTextAction())
             .performScrollTo().assert(hasText("After the edit"))
     }
 
@@ -165,7 +166,7 @@ class PomodoroPageServerTest {
         tap(R.string.pomodoro_start)
         await { model.state.value.pomodoro != null && !model.state.value.busy }
         assertTrue(serverTimer().runningEntry!!.billable != true)
-        compose.onNode(hasText(context.getString(R.string.entry_billable)) and isToggleable()).performScrollTo().performClick()
+        compose.onNode(hasText(context.getString(SharedR.string.entry_billable)) and isToggleable()).performScrollTo().performClick()
         await { model.state.value.fields.billable }
         // The page shows the switch at once and queues the edit a moment later. Send once the
         // queue has it, which the cache's running entry shows.
@@ -178,14 +179,14 @@ class PomodoroPageServerTest {
     @Test
     fun withoutAConnectionStartKeepsTheFormAndSaysSo() {
         show()
-        type(R.string.entry_description, "Offline start")
+        type(SharedR.string.entry_description, "Offline start")
         AirplaneMode.set(true, fixture.account.client)
         tap(R.string.pomodoro_start)
         await { model.state.value.problem != null && !model.state.value.busy }
         assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Offline), model.state.value.problem)
         compose.onNodeWithText(context.getString(TimerActionResult.Offline.message)).performScrollTo().assertIsDisplayed()
         assertNull(model.state.value.pomodoro)
-        field(R.string.entry_description).performScrollTo().assert(hasText("Offline start"))
+        field(SharedR.string.entry_description).performScrollTo().assert(hasText("Offline start"))
         button(R.string.pomodoro_start).performScrollTo().assertIsEnabled()
         AirplaneMode.set(false, fixture.account.client)
         assertNull("the failed start reached no server", serverTimer().pomodoro)

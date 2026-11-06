@@ -45,6 +45,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
@@ -71,10 +72,10 @@ enum class TopLevelPage(
     TIMER(Route.Timer, R.string.nav_timer, DataR.drawable.ic_nav_timer, SectionHues.timer),
     POMODORO(Route.Pomodoro, R.string.pomodoro_title, R.drawable.ic_nav_pomodoro, SectionHues.timer),
     REPORTS(Route.Reports, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports, inMore = true),
-    PROJECTS(Route.Projects, R.string.nav_projects, R.drawable.ic_nav_projects, SectionHues.projects),
+    PROJECTS(Route.Projects, R.string.nav_projects, SharedR.drawable.ic_nav_projects, SectionHues.projects),
     TEMPLATES(Route.Templates, R.string.nav_templates, R.drawable.ic_nav_templates, SectionHues.more, inMore = true),
     CLIENTS(Route.Clients, R.string.nav_clients, R.drawable.ic_nav_clients, SectionHues.more, inMore = true),
-    TAGS(Route.Tags, R.string.nav_tags, R.drawable.ic_nav_tags, SectionHues.more, inMore = true),
+    TAGS(Route.Tags, R.string.nav_tags, SharedR.drawable.ic_nav_tags, SectionHues.more, inMore = true),
     TRASH(Route.Trash, R.string.nav_trash, R.drawable.ic_nav_trash, SectionHues.more, inMore = true),
     SETTINGS(Route.Settings, R.string.settings, R.drawable.ic_nav_settings, SectionHues.settings),
     ;

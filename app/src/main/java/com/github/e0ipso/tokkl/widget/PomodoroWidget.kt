@@ -29,6 +29,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
@@ -297,13 +298,13 @@ private fun EntryChips(context: Context, entry: PomodoroWidgetEntry, width: Floa
         if (scale <= 1.5f && entry.fields.billable) {
             Spacer(GlanceModifier.width(6.dp))
             Box(GlanceModifier.cornerRadius(13.dp).background(GlanceTheme.colors.surfaceVariant).padding(6.dp)) {
-                Label(context.getString(R.string.entry_billable), 12f)
+                Label(context.getString(SharedR.string.entry_billable), 12f)
             }
         }
     }
     // Large text spends a separate row on tags/billable instead of squeezing them into chips.
     if (scale > 1.5f && (entry.fields.tags.isNotEmpty() || entry.fields.billable)) {
-        Label((entry.fields.tags + if (entry.fields.billable) listOf(context.getString(R.string.entry_billable)) else emptyList()).joinToString(" · "), 11f, muted = true)
+        Label((entry.fields.tags + if (entry.fields.billable) listOf(context.getString(SharedR.string.entry_billable)) else emptyList()).joinToString(" · "), 11f, muted = true)
     }
 }
 
