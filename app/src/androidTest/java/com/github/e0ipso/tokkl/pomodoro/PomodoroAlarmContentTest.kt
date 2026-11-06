@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.PhaseKind
@@ -127,7 +128,7 @@ class PomodoroAlarmContentTest {
     @Test fun aFailedActionShowsTheStandardMessageAndKeepsBothActions() {
         show()
         compose.runOnIdle { state = state.copy(problem = TimerActionResult.Offline) }
-        val message = compose.onNodeWithText(context.getString(R.string.timer_action_offline))
+        val message = compose.onNodeWithText(context.getString(DataR.string.timer_action_offline))
         message.performScrollTo().assertIsDisplayed()
         readable(message)
         button(R.string.pomodoro_alarm_next).performScrollTo().assertIsEnabled()

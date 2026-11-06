@@ -10,6 +10,7 @@ import android.content.Intent
 import android.database.sqlite.SQLiteException
 import androidx.core.net.toUri
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.finishOnce
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
@@ -33,7 +34,7 @@ class ReminderNotifier(private val context: Context) {
     }
 
     internal fun build(timer: ReminderTimer, pausable: Boolean): Notification = Notification.Builder(context, CHANNEL)
-        .setSmallIcon(R.drawable.ic_nav_timer)
+        .setSmallIcon(DataR.drawable.ic_nav_timer)
         .setContentTitle(context.getString(R.string.reminder_question))
         .setContentText(context.getString(R.string.reminder_summary))
         .setStyle(Notification.BigTextStyle().bigText(context.getString(R.string.reminder_question)))

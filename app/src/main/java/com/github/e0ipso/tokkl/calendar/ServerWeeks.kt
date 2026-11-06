@@ -47,7 +47,7 @@ internal fun fetchWeek(client: ApiClientProvider, span: WeekSpan): ServerWeek {
     return when (val answer = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
         is ApiResult.Failure -> ServerWeek(emptyList(), statusOf(answer.error))
         is ApiResult.Success -> ServerWeek(
-            answer.value.mapNotNull { it.toCached() }.filter { it.stop == null || it.stop > span.from },
+            answer.value.mapNotNull { it.toCached() }.filter { entry -> entry.stop.let { it == null || it > span.from } },
             WeekSource.Loaded,
         )
     }

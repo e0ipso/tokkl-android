@@ -13,6 +13,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.toArgb
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
@@ -54,7 +55,7 @@ class RunningNotifier(context: Context) {
         requestPromotion: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && manager.canPostPromotedNotifications(),
     ): Notification {
         val builder = Notification.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_nav_timer)
+            .setSmallIcon(DataR.drawable.ic_nav_timer)
             .setContentTitle(content.description.ifBlank { context.getString(R.string.notification_no_description) })
             .setOnlyAlertOnce(true)
             .setContentIntent(openApp())

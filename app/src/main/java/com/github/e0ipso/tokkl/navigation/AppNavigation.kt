@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
@@ -67,7 +68,7 @@ enum class TopLevelPage(
     val hue: SectionHue,
     val inMore: Boolean = false,
 ) {
-    TIMER(Route.Timer, R.string.nav_timer, R.drawable.ic_nav_timer, SectionHues.timer),
+    TIMER(Route.Timer, R.string.nav_timer, DataR.drawable.ic_nav_timer, SectionHues.timer),
     POMODORO(Route.Pomodoro, R.string.pomodoro_title, R.drawable.ic_nav_pomodoro, SectionHues.timer),
     REPORTS(Route.Reports, R.string.reports, R.drawable.ic_nav_reports, SectionHues.reports, inMore = true),
     PROJECTS(Route.Projects, R.string.nav_projects, R.drawable.ic_nav_projects, SectionHues.projects),

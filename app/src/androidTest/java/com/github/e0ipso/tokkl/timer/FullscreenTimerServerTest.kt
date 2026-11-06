@@ -15,6 +15,7 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -142,7 +143,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             val queued = runBlocking { app.changes.unsentCount.first() }
             assertTrue("the start edit waits in the queue", queued > 0)
             focusedButton(R.string.timer_pause).performScrollTo().performClick()
-            awaitNotice(R.string.timer_action_offline)
+            awaitNotice(DataR.string.timer_action_offline)
             assertEquals(original.id, awaitRunning().entry.id)
             assertActions(running = true)
             assertEquals(queued, runBlocking { app.changes.unsentCount.first() })
@@ -164,10 +165,10 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             // Offline, Resume and Stop while paused need the server too, and the pause stays as it was.
             AirplaneMode.set(true, fixture.account.client)
             focusedButton(R.string.timer_resume).performScrollTo().performClick()
-            awaitNotice(R.string.timer_action_offline)
+            awaitNotice(DataR.string.timer_action_offline)
             assertEquals(paused, awaitPaused())
             focusedButton(R.string.timer_stop).performScrollTo().performClick()
-            awaitNotice(R.string.timer_action_offline)
+            awaitNotice(DataR.string.timer_action_offline)
             assertEquals(paused, awaitPaused())
             assertActions(running = false)
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })

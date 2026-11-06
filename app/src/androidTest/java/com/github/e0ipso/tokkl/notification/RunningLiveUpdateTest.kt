@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
@@ -75,7 +76,7 @@ class RunningLiveUpdateTest {
         assertFalse("not a group summary", notification.flags and Notification.FLAG_GROUP_SUMMARY != 0)
         assertFalse("never colorized", notification.extras.getBoolean(Notification.EXTRA_COLORIZED))
         assertEquals(TokklLightExtraColors.primaryFill.toArgb(), notification.color)
-        assertEquals(R.drawable.ic_nav_timer, notification.smallIcon.resId)
+        assertEquals(DataR.drawable.ic_nav_timer, notification.smallIcon.resId)
         assertEquals(NotificationManager.IMPORTANCE_LOW, manager.getNotificationChannel(RunningNotifier.CHANNEL_ID).importance)
         assertRegularContent(notification)
     }

@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.io.ByteArrayInputStream
@@ -38,6 +39,7 @@ internal object ClassReferences {
         SharedHttpClient::class.java,
         AccountTime::class.java,
         TokklTheme::class.java,
+        Session::class.java,
     )
 
     /** The directory or jar of each module's compiled classes. */

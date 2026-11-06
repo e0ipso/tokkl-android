@@ -5,10 +5,6 @@
     as is the notice for a pomodoro the server discarded.
 -->
 <resources>
-    <!-- The server refused the action because the timer changed after the phone showed it. -->
-    <string name="timer_action_refused">Another device changed the timer first.</string>
-    <!-- The action got no answer. Nothing changed on the phone and nothing waits to be sent. -->
-    <string name="timer_action_offline">Can\'t reach the server. Try again when you\'re back online.</string>
     <!-- The server sent a pomodoro too short to keep to the trash. Shown once per pomodoro. -->
     <string name="timer_pomodoro_too_short">This pomodoro was too short to save.</string>
 </resources>

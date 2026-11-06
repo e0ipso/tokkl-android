@@ -444,7 +444,7 @@ class CacheDatabaseMigrationTest {
         const val FILE = "cache-migration-test.db"
         val START: Instant = Instant.parse("2026-10-19T08:00:00Z")
 
-        /** The tables of version 1, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/1.json. */
+        /** The tables of version 1, from core/data/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/1.json. */
         val VERSION_1 = listOf(
             "CREATE TABLE IF NOT EXISTS `time_entries` (`id` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
                 "`projectId` INTEGER, `taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, " +
@@ -467,7 +467,7 @@ class CacheDatabaseMigrationTest {
         )
 
         /**
-         * The tables of version 2, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/2.json:
+         * The tables of version 2, from core/data/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/2.json:
          * those of version 1 and the queue's.
          */
         val VERSION_2 = VERSION_1.dropLast(1) + listOf(
@@ -481,7 +481,7 @@ class CacheDatabaseMigrationTest {
         )
 
         /**
-         * The tables of version 3, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/3.json:
+         * The tables of version 3, from core/data/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/3.json:
          * those of version 2, with `pending_changes.maybeSent`.
          */
         val VERSION_3 = VERSION_1.dropLast(1) + listOf(
@@ -495,7 +495,7 @@ class CacheDatabaseMigrationTest {
         )
 
         /**
-         * The tables of version 6, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/6.json:
+         * The tables of version 6, from core/data/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/6.json:
          * those of version 3, with the queue's later columns and the short Stop's Undo.
          */
         val VERSION_6 = VERSION_1.dropLast(1) + listOf(
@@ -516,7 +516,7 @@ class CacheDatabaseMigrationTest {
         )
 
         /**
-         * The tables of version 7, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/7.json:
+         * The tables of version 7, from core/data/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/7.json:
          * those of version 6, plus the pause chain and the timer session.
          */
         val VERSION_7 = VERSION_6.dropLast(1) + listOf(
@@ -530,7 +530,7 @@ class CacheDatabaseMigrationTest {
         )
 
         /**
-         * The tables of version 8, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/8.json:
+         * The tables of version 8, from core/data/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/8.json:
          * those of version 7, plus the Pomodoro session.
          */
         val VERSION_8 = VERSION_7.dropLast(1) + listOf(
@@ -544,7 +544,7 @@ class CacheDatabaseMigrationTest {
         )
 
         /**
-         * The tables of version 9, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/9.json:
+         * The tables of version 9, from core/data/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/9.json:
          * version 8's without the local timer tables, which is version 6's schema and identity hash.
          */
         val VERSION_9 = VERSION_6

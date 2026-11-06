@@ -6,8 +6,6 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.tokkl.android.application)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.room)
 }
 
 // The app version lives in gradle/version.properties, which the release step
@@ -149,16 +147,11 @@ android {
     }
 }
 
-// Room writes the schema of each database version here. The files are tracked,
-// so a later version can be checked against them and migrated.
-room {
-    schemaDirectory("$projectDir/schemas")
-}
-
 dependencies {
     implementation(project(":core:api"))
     implementation(project(":core:time"))
     implementation(project(":core:ui"))
+    implementation(project(":core:data"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.adaptive)
@@ -169,8 +162,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
+    // The widgets watch the cache database's invalidation tracker.
     implementation(libs.androidx.room.runtime)
-    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
@@ -186,6 +179,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:ui")))
+    testImplementation(testFixtures(project(":core:data")))
     testImplementation(libs.mockwebserver3)
     testImplementation(platform(libs.koin.bom))
     testImplementation(libs.koin.test)
