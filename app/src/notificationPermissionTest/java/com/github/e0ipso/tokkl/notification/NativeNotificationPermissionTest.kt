@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.notification
 
-import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import android.Manifest
@@ -68,7 +68,7 @@ class NativeNotificationPermissionTest {
         assertTrue(context.getSharedPreferences("notification_permission", Context.MODE_PRIVATE).edit().clear().commit())
         account = TestAccounts.create("Europe/Madrid")
         Session(context).save(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     @After

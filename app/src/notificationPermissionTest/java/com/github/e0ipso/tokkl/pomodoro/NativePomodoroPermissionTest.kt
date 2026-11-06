@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.timerState
 import android.Manifest
 import android.content.Context
@@ -56,7 +56,7 @@ class NativePomodoroPermissionTest {
         assertTrue(context.getSharedPreferences("notification_permission", Context.MODE_PRIVATE).edit().clear().commit())
         account = TestAccounts.create("Europe/Madrid")
         Session(context).save(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     @After fun removeFixtures() {
