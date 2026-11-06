@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl
 
 import android.util.Log
-import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.timer.TapTrace
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -55,16 +54,13 @@ internal object BlackholeDiagnostics {
     private val records = AtomicInteger()
     @Volatile private var active = false
     @Volatile private var phase = "inactive"
-    private var previousRequestDiagnostic: ((String) -> Unit)? = null
     private var previousTapDiagnostic: ((String) -> Unit)? = null
 
     fun begin(name: String) {
         records.set(0)
         phase = name
-        previousRequestDiagnostic = RunningCheck.currentRequestDiagnostic
         previousTapDiagnostic = TapTrace.diagnostic
         active = true
-        RunningCheck.currentRequestDiagnostic = { record(it) }
         TapTrace.diagnostic = { record(it) }
         record("begin clock=System.nanoTime_ns actual_touch_receipt=UNKNOWN")
     }
@@ -86,17 +82,35 @@ internal object BlackholeDiagnostics {
         }
     }
 
-    /** Request paths only, so an unrelated background call cannot hide behind a relay count. */
+    /**
+     * Request paths only, so an unrelated background call cannot hide behind a relay count. Then
+     * which of the app's current-entry readers is inside an OkHttp call, read from the threads'
+     * stacks, so the app needs no hook for it.
+     */
     fun recordHttpCalls() {
         if (!active) return
         val dispatcher = com.github.e0ipso.tokkl.api.SharedHttpClient.instance.dispatcher
         val calls = dispatcher.runningCalls() + dispatcher.queuedCalls()
         record("http.calls=" + calls.joinToString { it.request().url.encodedPath })
+        record("http.producers=" + producersInCalls().joinToString())
     }
+
+    /** The simple names of [CURRENT_READERS] on the stack of each thread that is inside OkHttp now. */
+    private fun producersInCalls(): List<String> =
+        Thread.getAllStackTraces().values.mapNotNull { frames ->
+            if (frames.none { it.className.startsWith("okhttp3.") }) return@mapNotNull null
+            frames.firstNotNullOfOrNull { frame -> CURRENT_READERS.firstOrNull { frame.className.startsWith(it) } }
+        }.map { it.substringAfterLast('.') }
+
+    /** The classes whose current-entry reads, `GET /api/v9/me/time_entries/current`, the diagnostics name. */
+    private val CURRENT_READERS = listOf(
+        "com.github.e0ipso.tokkl.tile.TileRefresh",
+        "com.github.e0ipso.tokkl.cache.RunningCheckWorker",
+        "com.github.e0ipso.tokkl.cache.ChangeTries",
+    )
 
     fun finish() {
         record("finish")
-        RunningCheck.currentRequestDiagnostic = previousRequestDiagnostic
         TapTrace.diagnostic = previousTapDiagnostic
         active = false
         phase = "inactive"

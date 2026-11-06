@@ -121,11 +121,7 @@ internal class ChangeTries(
      * and the server stops an earlier timer itself.
      */
     private fun endBeforeALaterTimer(api: TogglApiClient, start: PendingChange): ApiResult<PendingChange> {
-        RunningCheck.currentRequestDiagnostic?.invoke(
-            "producer=ChangeSender current.enter host=${api.server.api("me").host} port=${api.server.api("me").port}",
-        )
         val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
-        RunningCheck.currentRequestDiagnostic?.invoke("producer=ChangeSender current.return success=${current is ApiResult.Success}")
         val running = when (current) {
             is ApiResult.Success -> current.value?.toCached()
             is ApiResult.Failure -> return current

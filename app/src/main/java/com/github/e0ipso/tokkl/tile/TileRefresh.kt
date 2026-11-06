@@ -35,18 +35,13 @@ internal class TileRefresh(
         scope.launch(io) {
             val generation = RunningCheck.results.generation()
             val online = context.getSystemService(ConnectivityManager::class.java).reachesInternet()
-            RunningCheck.currentRequestDiagnostic?.invoke("producer=TileRefresh connectivity.decision generation=$generation online=$online")
             if (!online) return@launch
             val api = session.client() ?: return@launch
             if (!throttle.tryStart(generation, online, SystemClock.elapsedRealtime())) return@launch
             var succeeded = false
             try {
                 val before = cache.runningCheckStart()
-                RunningCheck.currentRequestDiagnostic?.invoke(
-                    "producer=TileRefresh current.enter host=${api.server.api("me").host} port=${api.server.api("me").port} generation=$generation online=$online",
-                )
                 val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
-                RunningCheck.currentRequestDiagnostic?.invoke("producer=TileRefresh current.return success=${current is ApiResult.Success}")
                 if (current is ApiResult.Success) {
                     // Reuse the background check's sign-out, queued-change and newer-write guards.
                     RunningCheck.results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
