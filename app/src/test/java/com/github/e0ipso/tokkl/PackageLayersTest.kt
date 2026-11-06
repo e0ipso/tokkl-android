@@ -1,19 +1,22 @@
 package com.github.e0ipso.tokkl
 
-import java.io.File
+import com.github.e0ipso.tokkl.SourceTree.ROOT
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Keeps the app's packages in layers, so each layer can become a Gradle module. A package imports
- * packages of lower layers, and a package of its own layer only where [SAME_LAYER] lists it. The
- * test reads the main sources: each `import com.github.e0ipso.tokkl.<package>` and each fully
- * qualified name in code. `R` belongs to no layer yet.
+ * Keeps the app's packages in layers. A package imports packages of lower layers, and a package of
+ * its own layer only where [SAME_LAYER] lists it. The test reads the main sources of every Gradle
+ * module: each `import com.github.e0ipso.tokkl.<package>` and each fully qualified name in code.
+ * The R classes belong to no layer; ModuleLayersTest checks the modules that hold the packages.
  */
 class PackageLayersTest {
 
-    private val imports: Map<String, Set<Use>> by lazy { readSources(File("src/main/java/com/github/e0ipso/tokkl")) }
+    private val imports: Map<String, Set<SourceTree.Use>> by lazy {
+        SourceTree.modules.map { it.packages }.reduce { all, module ->
+            (all.keys + module.keys).associateWith { all[it].orEmpty() + module[it].orEmpty() }
+        }
+    }
 
     @Test
     fun everyPackageHasALayer() {
@@ -42,41 +45,6 @@ class PackageLayersTest {
         val toLayer = layerOf(to)
         return toLayer < fromLayer || (toLayer == fromLayer && to in SAME_LAYER[from].orEmpty())
     }
-
-    private fun layerOf(pkg: String): Int = LAYERS.indexOfFirst { pkg in it }.also { check(it >= 0) { "$pkg has no layer" } }
-
-    /** One import or qualified name of [target], an app package, in [file]. */
-    private data class Use(val target: String, val file: String)
-
-    private fun readSources(root: File): Map<String, Set<Use>> {
-        assertTrue("main sources at ${root.absolutePath}", root.isDirectory)
-        val uses = mutableMapOf<String, MutableSet<Use>>()
-        root.walkTopDown().filter { it.isFile && it.extension == "kt" }.forEach { file ->
-            val text = file.readText()
-            val from = PACKAGE.find(text)?.groupValues?.get(1)?.let(::topPackage) ?: error("no package in $file")
-            val code = withoutCommentsAndStrings(text).lineSequence().filterNot { it.startsWith("package ") }.joinToString("\n")
-            val found = uses.getOrPut(from) { mutableSetOf() }
-            for (match in APP_NAME.findAll(code)) {
-                val target = topPackage(match.groupValues[1]) ?: continue
-                found += Use(target, file.relativeTo(root).path)
-            }
-        }
-        return uses
-    }
-
-    /** The first package below the app's, or [ROOT] for a class of the app's package. Null for `R`. */
-    private fun topPackage(name: String): String? {
-        val first = name.removePrefix("$APP.").substringBefore('.')
-        return when {
-            name == APP -> ROOT
-            first == "R" -> null
-            first.first().isUpperCase() -> ROOT
-            else -> first
-        }
-    }
-
-    private fun withoutCommentsAndStrings(text: String): String =
-        text.replace(BLOCK_COMMENT, " ").replace(LINE_COMMENT, " ").replace(STRING, "\"\"")
 
     /** The groups of packages that import one another round, each sorted, found by Tarjan's algorithm. */
     private fun cycles(graph: Map<String, Set<String>>): List<List<String>> {
@@ -108,15 +76,9 @@ class PackageLayersTest {
         return found
     }
 
-    private companion object {
-        const val APP = "com.github.e0ipso.tokkl"
-        const val ROOT = "<root>"
-
-        val PACKAGE = Regex("""^package\s+([\w.]+)""", RegexOption.MULTILINE)
-        val APP_NAME = Regex("""(?<![\w.])(com\.github\.e0ipso\.tokkl(?:\.\w+)?)""")
-        val BLOCK_COMMENT = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
-        val LINE_COMMENT = Regex("""//[^\n]*""")
-        val STRING = Regex(""""(?:\\.|[^"\\\n])*"""")
+    companion object {
+        /** The layer of [pkg], counted from 0 for the lowest. */
+        fun layerOf(pkg: String): Int = LAYERS.indexOfFirst { pkg in it }.also { check(it >= 0) { "$pkg has no layer" } }
 
         /**
          * The layers, lowest first. Core leaves import no app package. Core data holds what the
