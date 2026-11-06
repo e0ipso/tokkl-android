@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.io.IOException
 import java.time.Duration
@@ -10,8 +10,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals

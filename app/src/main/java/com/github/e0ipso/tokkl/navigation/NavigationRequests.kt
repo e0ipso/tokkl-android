@@ -6,7 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.rememberUpdatedState
-import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
 import com.github.e0ipso.tokkl.reports.ReportsViewModel

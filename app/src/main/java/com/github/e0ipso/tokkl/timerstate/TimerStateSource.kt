@@ -1,10 +1,13 @@
 package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.capabilities.ProbedTimerState
 import java.io.IOException
 import java.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,7 +49,7 @@ class TimerStateSource(
     private val cache: CurrentEntryCache,
     private val clock: Clock = Clock.systemUTC(),
     private val onRunningEnded: () -> Unit = {},
-) {
+) : ProbedTimerState<TimerStateRead> {
 
     /** Orders acceptance, storage, cache writes, notice taking and retirement. */
     private val lock = Any()
@@ -76,7 +79,7 @@ class TimerStateSource(
      * so the next event's answer cannot undo a change the phone made in between. Blocks on disk
      * I/O.
      */
-    fun begin(): TimerStateRead {
+    override fun begin(): TimerStateRead {
         val writtenBefore = synchronized(lock) { written }
         return TimerStateRead(this, cache.runningCheckStart(), writtenBefore)
     }
@@ -89,7 +92,7 @@ class TimerStateSource(
      * under one lock, so a slower answer with a lower revision cannot overwrite a newer one.
      * Returns whether it took the state. Blocks on disk I/O.
      */
-    fun accept(read: TimerStateRead, state: TimerState): Boolean {
+    override fun accept(read: TimerStateRead, state: TimerState): Boolean {
         // Taken before waiting for the lock, so a wait does not skew the clock offset.
         val receivedAt = clock.instant()
         val ended = synchronized(lock) {

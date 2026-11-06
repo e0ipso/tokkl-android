@@ -1,19 +1,19 @@
 package com.github.e0ipso.tokkl.widget
 
 import com.github.e0ipso.tokkl.ServerTimerStates
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
+import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.time.Clock
 import java.time.Duration

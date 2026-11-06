@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.di
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.platform.DefaultDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.reports.ReportExportFiles
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -23,12 +25,6 @@ import org.koin.core.scope.Scope
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
-
-/** [Dispatchers.IO], for disk and network work. */
-val IoDispatcher: Qualifier = named("IoDispatcher")
-
-/** [Dispatchers.Default], which the timer event stream's clock runs on. */
-val DefaultDispatcher: Qualifier = named("DefaultDispatcher")
 
 /** The clock the home screen widget reads on each of its events. */
 val WidgetClock: Qualifier = named("WidgetClock")

@@ -34,14 +34,15 @@ import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.seconds
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.followTimerSync
 import com.github.e0ipso.tokkl.components.pomodoroRinging

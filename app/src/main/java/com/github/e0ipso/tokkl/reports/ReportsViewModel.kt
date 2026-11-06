@@ -58,7 +58,7 @@ class ReportsViewModel(
     /** Snapshot every export setting now, independently of the rows loaded by Detailed. */
     fun exportCsv() {
         val shown = state.value as? ReportsState.Loaded ?: return
-        val kind = ReportCsvKind.of(tab.value) ?: return
+        val kind = tab.value.csvKind() ?: return
         if (!exportCapabilities.value.supports(kind) || accountTime() == null) return
         val settings = accountSettings.value ?: return
         val knownWorkspace = workspace ?: return

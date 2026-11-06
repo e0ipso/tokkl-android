@@ -5,9 +5,6 @@ import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.cache.countsFrom
 import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.favorites.fields
@@ -16,6 +13,9 @@ import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timer.countedTimerEntries
 import com.github.e0ipso.tokkl.timer.timerEntrySeconds
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.countsFrom
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.Duration

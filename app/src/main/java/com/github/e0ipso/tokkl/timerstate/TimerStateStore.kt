@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.timerstate
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.api.ApiJson
+import com.github.e0ipso.tokkl.api.IsoInstantSerializer
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import java.io.IOException

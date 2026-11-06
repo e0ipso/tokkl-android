@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.cache.TimerControlsSource
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.clients.ClientsViewModel
@@ -40,6 +39,7 @@ import com.github.e0ipso.tokkl.timer.TapTrace
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.TimerActions
+import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.trash.TrashViewModel
 import java.io.File
 import kotlinx.coroutines.CoroutineScope

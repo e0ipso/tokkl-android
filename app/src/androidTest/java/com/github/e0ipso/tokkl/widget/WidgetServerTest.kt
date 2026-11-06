@@ -28,7 +28,6 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheck
-import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -47,6 +46,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.tile.QuickSettingsTile
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.filterNotNull

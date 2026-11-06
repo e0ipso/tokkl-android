@@ -4,14 +4,15 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ConfiguredServer
+import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
-import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.session.accountSettings
 import java.io.IOException
 import java.security.GeneralSecurityException
 import okhttp3.OkHttpClient

@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.entry.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import java.time.Duration
 import java.time.Instant
 

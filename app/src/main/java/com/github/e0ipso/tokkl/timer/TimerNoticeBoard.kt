@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

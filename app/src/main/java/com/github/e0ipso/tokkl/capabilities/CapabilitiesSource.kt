@@ -1,10 +1,9 @@
 package com.github.e0ipso.tokkl.capabilities
 
+import com.github.e0ipso.tokkl.api.Me
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.reports.ReportCsvKind
-import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.storage.ValueStore
-import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,7 +59,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
      * flags.
      */
     @Synchronized
-    fun refresh(api: TogglApiClient, me: Me, timerState: TimerStateSource): Capabilities {
+    fun <R> refresh(api: TogglApiClient, me: Me, timerState: ProbedTimerState<R>): Capabilities {
         val trash = probeTrash(api)
         val read = timerState.begin()
         val timer = probeTimerState(api)
@@ -126,4 +125,17 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
         loaded.state.value = Capabilities.NONE
         loaded.stored = null
     }
+}
+
+/**
+ * Takes the timer state that [CapabilitiesSource.refresh] reads with its probe, ordered against the
+ * states the timer's own requests and events read.
+ */
+interface ProbedTimerState<R> {
+
+    /** Marks a read that starts now, before its request goes out. */
+    fun begin(): R
+
+    /** Takes the [state] that [read] got. Returns false when a newer state is already held. */
+    fun accept(read: R, state: TimerState): Boolean
 }

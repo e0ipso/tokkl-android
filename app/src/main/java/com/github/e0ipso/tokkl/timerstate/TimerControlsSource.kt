@@ -1,5 +1,6 @@
-package com.github.e0ipso.tokkl.cache
+package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlin.coroutines.CoroutineContext

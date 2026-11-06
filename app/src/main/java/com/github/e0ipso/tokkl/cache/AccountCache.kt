@@ -1,9 +1,9 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
+import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.session.MePreferences
 import java.time.Clock
 import kotlinx.coroutines.flow.Flow

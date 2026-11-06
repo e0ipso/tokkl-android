@@ -7,19 +7,15 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
-import androidx.glance.appwidget.updateAll
-import com.github.e0ipso.tokkl.widget.PomodoroWidget
-import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
-import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
+import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.component.inject
@@ -48,7 +44,7 @@ class AlarmClockPomodoroScheduler(
     private val context: Context,
     private val timerSyncStarts: () -> Boolean = { false },
     private val exactAlarmsAllowed: (() -> Boolean)? = null,
-) : PomodoroAlarmScheduler {
+) : PomodoroAlarmScheduler, TimerSyncWatcher {
     private val manager = context.getSystemService(AlarmManager::class.java)
 
     override val permissionDenied: Boolean
@@ -87,7 +83,7 @@ class AlarmClockPomodoroScheduler(
     }
 
     /** Applies a change of [timerSyncStarts] to the receiver. */
-    fun watchTimerSync() {
+    override fun watchTimerSync() {
         synchronized(this) { applyRearmReceiver() }
     }
 
@@ -115,7 +111,7 @@ class AlarmClockPomodoroScheduler(
     }
 
     private fun showPhase(): PendingIntent {
-        val intent = Intent(context, MainActivity::class.java)
+        val intent = mainActivityIntent(context)
             .setAction(ACTION_SHOW)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         return PendingIntent.getActivity(
@@ -152,11 +148,7 @@ class PomodoroPhaseAlarmReceiver : BroadcastReceiver(), KoinComponent {
                 if (intent.action == ACTION_PHASE_END) {
                     get<PomodoroPhaseAlarm>().onAlarm(phase)
                 } else {
-                    val state = get<PomodoroWidgetStateSource>().state.first() as? PomodoroWidgetState.Active
-                    if (state?.session?.phase?.start == phase.start) {
-                        if (state.ended) PomodoroWidget().updateAll(context)
-                        else get<PomodoroAlarmScheduler>().schedule(state.end, phase)
-                    }
+                    get<PomodoroWidgetRedraw>().redraw(context, phase)
                 }
             } finally {
                 pending.finish()
@@ -220,4 +212,12 @@ class PomodoroAlarmRearmReceiver : BroadcastReceiver(), KoinComponent {
         @Volatile
         internal var completed: CountDownLatch? = null
     }
+}
+
+/**
+ * Redraws the Pomodoro widget at a planned end that no exact alarm rings for, and arms the next
+ * redraw while the phase still runs. The widget implements it.
+ */
+fun interface PomodoroWidgetRedraw {
+    suspend fun redraw(context: Context, phase: PomodoroPhaseKey)
 }

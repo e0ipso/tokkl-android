@@ -1,22 +1,16 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-/** The app CSV routes, separate from Toggl's v3 export routes and from on-screen pagination. */
-enum class ReportCsvKind(val path: String) {
-    SUMMARY("summary"),
-    DETAILED("detailed");
-
-    companion object {
-        fun of(tab: ReportTab): ReportCsvKind? = when (tab) {
-            ReportTab.SUMMARY -> SUMMARY
-            ReportTab.DETAILED -> DETAILED
-            ReportTab.WEEKLY -> null
-        }
-    }
+/** The CSV route of [this] tab, or null for a tab without one. */
+fun ReportTab.csvKind(): ReportCsvKind? = when (this) {
+    ReportTab.SUMMARY -> ReportCsvKind.SUMMARY
+    ReportTab.DETAILED -> ReportCsvKind.DETAILED
+    ReportTab.WEEKLY -> null
 }
 
 /** Immutable settings captured when Share is pressed. Dates remain inclusive account dates. */

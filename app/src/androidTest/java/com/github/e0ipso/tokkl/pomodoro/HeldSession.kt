@@ -1,12 +1,12 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoroPhase
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.time.Instant
 
 /**

@@ -7,8 +7,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
-import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
 
 /** The player owns sound/vibration; the high-importance channel adds neither a second sound nor haptics. */
 internal class PomodoroRingingNotifier(private val context: Context) {
@@ -38,7 +38,7 @@ internal class PomodoroRingingNotifier(private val context: Context) {
     fun build(ring: PomodoroRing?, phase: PomodoroPhaseKey? = ring?.phase): Notification {
         val open = PendingIntent.getActivity(
             context, 0,
-            Intent(context, MainActivity::class.java).setAction("com.github.e0ipso.tokkl.action.SHOW_POMODORO")
+            mainActivityIntent(context).setAction("com.github.e0ipso.tokkl.action.SHOW_POMODORO")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )

@@ -1,25 +1,14 @@
-package com.github.e0ipso.tokkl.session
+package com.github.e0ipso.tokkl.account
 
+import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountRefreshListener
+import com.github.e0ipso.tokkl.session.AccountRefreshSteps
+import com.github.e0ipso.tokkl.session.AccountRefreshed
+import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-
-/** A refresh's `GET /api/v9/me/preferences`, null when it failed, and the capabilities it learned. */
-class AccountRefreshed(val preferences: MePreferences?, val capabilities: Capabilities)
-
-/** Takes each account refresh's answers, on the refresh's thread and inside its job. */
-fun interface AccountRefreshListener {
-    fun refreshed(refresh: AccountRefreshed)
-
-    companion object {
-        /** One listener that runs [listeners] one after another, in list order. */
-        fun inOrder(listeners: List<AccountRefreshListener>) = AccountRefreshListener { refresh ->
-            listeners.forEach { it.refreshed(refresh) }
-        }
-    }
-}
 
 /**
  * The steps of each account refresh, in order. The capabilities refresh first, from the same

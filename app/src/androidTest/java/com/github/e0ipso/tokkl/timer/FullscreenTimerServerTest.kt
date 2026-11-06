@@ -16,8 +16,6 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -30,7 +28,9 @@ import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.parseDuration
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock

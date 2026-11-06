@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.widget
 
 import com.github.e0ipso.tokkl.api.ApiJson
+import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.EntryFields
@@ -8,7 +9,6 @@ import com.github.e0ipso.tokkl.entry.entryLabels
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
 import java.security.MessageDigest
 import java.time.Instant
 import kotlinx.serialization.json.JsonNull

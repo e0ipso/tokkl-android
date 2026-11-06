@@ -17,8 +17,6 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerControlsSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.di.WidgetClock
 import com.github.e0ipso.tokkl.navigation.NavigationStores
@@ -44,6 +42,8 @@ import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower

@@ -26,8 +26,6 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheck
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
@@ -41,6 +39,8 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.reachesInternet
 import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.delay

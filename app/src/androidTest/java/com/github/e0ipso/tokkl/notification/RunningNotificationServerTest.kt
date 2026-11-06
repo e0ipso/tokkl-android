@@ -23,8 +23,6 @@ import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.countsFrom
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
@@ -34,7 +32,9 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerSyncService
+import com.github.e0ipso.tokkl.timerstate.countsFrom
 import com.github.e0ipso.tokkl.trash.TrashServer
 import java.time.Instant
 import java.time.temporal.ChronoUnit

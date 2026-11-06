@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.timerstate
+package com.github.e0ipso.tokkl.api
 
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import java.time.Instant

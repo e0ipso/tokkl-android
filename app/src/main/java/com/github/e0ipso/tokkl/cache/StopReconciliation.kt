@@ -4,7 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.trash.TrashEntry
+import com.github.e0ipso.tokkl.api.TrashEntry
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import kotlinx.serialization.builtins.ListSerializer

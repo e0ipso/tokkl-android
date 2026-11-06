@@ -4,13 +4,13 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
+import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
-import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.io.IOException

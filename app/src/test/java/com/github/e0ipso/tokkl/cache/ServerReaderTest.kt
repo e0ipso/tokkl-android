@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
+import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -12,7 +13,6 @@ import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat

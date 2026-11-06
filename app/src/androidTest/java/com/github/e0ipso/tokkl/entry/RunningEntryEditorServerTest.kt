@@ -68,7 +68,6 @@ import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -83,6 +82,7 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
 import java.time.Instant

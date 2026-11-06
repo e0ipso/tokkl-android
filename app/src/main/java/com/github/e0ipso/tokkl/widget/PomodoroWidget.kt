@@ -14,12 +14,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.*
-import androidx.glance.color.ColorProvider
 import androidx.glance.action.Action
-import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.*
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.components.SquareIconButton
+import androidx.glance.color.ColorProvider
 import androidx.glance.layout.*
 import androidx.glance.material3.ColorProviders
 import androidx.glance.semantics.contentDescription
@@ -28,9 +28,9 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkExtraColors
@@ -88,7 +88,7 @@ internal fun PomodoroWidgetContent(state: PomodoroWidgetState, now: Instant = In
 }
 
 private fun openPomodoro(context: Context): Action = actionStartActivity(
-    Intent(context, MainActivity::class.java)
+    mainActivityIntent(context)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         .putExtra(WidgetNavigation.OPEN_POMODORO, true),
 )

@@ -12,10 +12,10 @@ import android.os.Bundle
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.toArgb
-import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
 
 /**
@@ -101,7 +101,7 @@ class RunningNotifier(context: Context) {
 
     /** Brings the app's task to the front as the launcher does, or starts it. */
     private fun openApp(): PendingIntent {
-        val intent = Intent(context, MainActivity::class.java)
+        val intent = mainActivityIntent(context)
             .setAction(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_LAUNCHER)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)

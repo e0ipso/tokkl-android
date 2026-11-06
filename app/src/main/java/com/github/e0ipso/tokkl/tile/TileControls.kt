@@ -1,9 +1,9 @@
 package com.github.e0ipso.tokkl.tile
 
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 
 /**
  * One button in the Quick Settings long-press dialog, bound to the [TimerTarget] the dialog was

@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import java.util.concurrent.CountDownLatch

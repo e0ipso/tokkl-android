@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.SignOutOrder
-import com.github.e0ipso.tokkl.widget.PomodoroWidgetFieldsStore
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +21,7 @@ class AccountTimerState(val source: TimerStateSource, val account: String)
  */
 class AccountTimerStates(
     private val store: TimerStateStore,
-    private val lastFields: PomodoroWidgetFieldsStore,
+    private val lastFields: HeldFieldsMemory,
     private val cache: AccountCache,
     private val refreshes: AccountRefreshRequests,
 ) : AccountDataOwner {

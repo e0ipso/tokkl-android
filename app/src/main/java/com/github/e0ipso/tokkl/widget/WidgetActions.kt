@@ -10,13 +10,13 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

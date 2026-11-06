@@ -2,28 +2,10 @@ package com.github.e0ipso.tokkl.trash
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import kotlinx.serialization.SerialName
+import com.github.e0ipso.tokkl.api.TrashEntry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonObject
-
-/**
- * A deleted time entry as `GET /api/app/trash` sends it: a v9 time entry with Tokkl's meta fields.
- *
- * @property duration seconds, negative while the entry runs, as in API v9.
- * @property deletedAt when it went to the trash, `server_deleted_at`.
- */
-@Serializable
-data class TrashEntry(
-    val id: Long,
-    val description: String? = null,
-    val start: String,
-    val stop: String? = null,
-    val duration: Long = 0,
-    @SerialName("project_id") val projectId: Long? = null,
-    @SerialName("project_name") val projectName: String? = null,
-    @SerialName("server_deleted_at") val deletedAt: String? = null,
-)
 
 /** How many entries a purge removed for good. */
 @Serializable

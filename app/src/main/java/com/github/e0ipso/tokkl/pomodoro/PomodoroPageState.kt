@@ -1,12 +1,12 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
 import java.time.Instant
 
 /** Session-only inputs. Editing these never changes the account's defaults. */

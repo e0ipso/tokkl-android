@@ -2,16 +2,16 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseTransition
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoroPhase
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.flow.first

@@ -2,22 +2,22 @@ package com.github.e0ipso.tokkl.timer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.cache.target
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.entry.withPicked
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.target
 import java.time.Clock
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope

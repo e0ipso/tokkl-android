@@ -10,6 +10,8 @@ import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TimerPause
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.cache.CREATED_WITH

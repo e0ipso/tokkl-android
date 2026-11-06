@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlin.coroutines.CoroutineContext

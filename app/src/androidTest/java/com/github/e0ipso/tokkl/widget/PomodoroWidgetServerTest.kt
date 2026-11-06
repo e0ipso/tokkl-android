@@ -1,5 +1,10 @@
 package com.github.e0ipso.tokkl.widget
 
+import android.os.SystemClock
+import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
@@ -10,15 +15,12 @@ import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
-import android.os.SystemClock
-import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import com.github.e0ipso.tokkl.signin.SessionWriter
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
-import com.github.e0ipso.tokkl.signin.SessionWriter
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.*
 import java.time.Duration

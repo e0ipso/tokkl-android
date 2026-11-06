@@ -1,5 +1,8 @@
-package com.github.e0ipso.tokkl.cache
+package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import java.time.Duration
 import java.time.Instant

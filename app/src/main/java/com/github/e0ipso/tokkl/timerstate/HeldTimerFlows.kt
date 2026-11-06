@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi

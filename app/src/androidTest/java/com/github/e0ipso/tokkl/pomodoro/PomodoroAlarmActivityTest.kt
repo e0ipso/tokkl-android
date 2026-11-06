@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerState
 import android.app.Activity
 import android.app.KeyguardManager
 import android.app.NotificationManager
@@ -22,15 +18,19 @@ import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseTransition
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.flow.first

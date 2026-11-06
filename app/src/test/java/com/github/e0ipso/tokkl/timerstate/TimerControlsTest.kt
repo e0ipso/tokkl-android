@@ -1,13 +1,16 @@
-package com.github.e0ipso.tokkl.cache
+package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.api.TimerPause
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
+import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
-import com.github.e0ipso.tokkl.timerstate.TimerPause
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoroPhase
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.time.Duration
 import java.time.Instant
 import org.junit.Assert.assertEquals

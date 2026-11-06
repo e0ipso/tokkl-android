@@ -5,7 +5,6 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.util.UUID
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject

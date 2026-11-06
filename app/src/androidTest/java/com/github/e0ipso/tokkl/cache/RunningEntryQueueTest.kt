@@ -4,10 +4,13 @@ import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.api.TimerPause
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.TimerPause
-import com.github.e0ipso.tokkl.timerstate.TimerState
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.seconds
+import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset

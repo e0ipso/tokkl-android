@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Refusable
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.cache.EntryFields

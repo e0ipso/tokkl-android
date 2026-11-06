@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.MainActivityForeground
+import com.github.e0ipso.tokkl.account.AccountRefreshPipeline
+import com.github.e0ipso.tokkl.account.SendThenRefresh
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
@@ -10,7 +12,6 @@ import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.AccountRefreshPipeline
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
@@ -18,7 +19,6 @@ import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.ForegroundReads
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
-import com.github.e0ipso.tokkl.session.SendThenRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut

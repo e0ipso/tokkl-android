@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

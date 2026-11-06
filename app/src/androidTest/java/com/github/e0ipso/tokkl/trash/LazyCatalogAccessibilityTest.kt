@@ -17,6 +17,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
+import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.tags.Tag
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent

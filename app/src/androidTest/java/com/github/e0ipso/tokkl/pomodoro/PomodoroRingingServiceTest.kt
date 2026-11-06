@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.pomodoroAlarm
-import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.timerState
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Intent
@@ -15,17 +12,20 @@ import android.os.VibrationAttributes
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.Until
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.PhaseTransition
+import com.github.e0ipso.tokkl.components.pomodoroAlarm
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

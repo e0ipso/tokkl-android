@@ -194,7 +194,7 @@ class PomodoroViewModelTest {
         val f = running("Report")
         f.page.editLengths(PomodoroLengths("1", "1", "1", "1"))
         f.held.value = heldState(revision = 5, pomodoro = null)
-        f.controls.value = com.github.e0ipso.tokkl.cache.TimerControls.Idle
+        f.controls.value = com.github.e0ipso.tokkl.timerstate.TimerControls.Idle
         assertNull(f.page.state.value.pomodoro)
         assertEquals("Report", f.page.state.value.fields.description)
         assertEquals(PomodoroLengths("40", "8", "20", "3"), f.page.state.value.lengths)

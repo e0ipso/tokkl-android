@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.cache.target
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.target
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

@@ -4,13 +4,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteException
-import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.platform.finishOnce
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
-import java.util.concurrent.atomic.AtomicBoolean
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -85,9 +85,3 @@ fun Intent.timerTarget(): TimerTarget = TimerTarget.server(
     entryId = getLongExtra(StopTimerReceiver.EXTRA_ENTRY_ID, 0),
     account = getStringExtra(StopTimerReceiver.EXTRA_ACCOUNT).orEmpty(),
 )
-
-/** Ends this broadcast the first time the function it returns is called, and never again. */
-internal fun BroadcastReceiver.PendingResult.finishOnce(): () -> Unit {
-    val finished = AtomicBoolean(false)
-    return { if (finished.compareAndSet(false, true)) finish() }
-}

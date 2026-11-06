@@ -2,10 +2,9 @@ package com.github.e0ipso.tokkl.capabilities
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.Me
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.reports.ReportCsvKind
-import com.github.e0ipso.tokkl.session.Me
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import kotlinx.serialization.json.JsonArray
 
 /**

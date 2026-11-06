@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
+import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.DurationFormat

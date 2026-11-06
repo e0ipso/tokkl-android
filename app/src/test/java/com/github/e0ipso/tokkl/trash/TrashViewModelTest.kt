@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import java.io.IOException
 import kotlinx.serialization.Serializable
@@ -51,7 +52,7 @@ internal fun decodeRememberedPomodoroFields(text: String, account: String): Reme
  * Calls read the disk. Like the held timer state, these private preferences are excluded from
  * backup by the app's existing rules. No token or other credential is stored here.
  */
-class PomodoroWidgetFieldsStore(context: Context) : AccountDataOwner {
+class PomodoroWidgetFieldsStore(context: Context) : HeldFieldsMemory, AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.POMODORO_WIDGET_FIELDS
 
@@ -64,7 +65,7 @@ class PomodoroWidgetFieldsStore(context: Context) : AccountDataOwner {
 
     /** Idle states leave the last fields in place; accepted field edits update them too. */
     @Throws(IOException::class)
-    fun remember(account: String, held: HeldTimerState) {
+    override fun remember(account: String, held: HeldTimerState) {
         val fields = rememberedPomodoroFields(account, held) ?: return
         val encoded = encodeRememberedPomodoroFields(fields)
         if (preferences.getString(KEY_FIELDS, null) == encoded) return
@@ -72,7 +73,7 @@ class PomodoroWidgetFieldsStore(context: Context) : AccountDataOwner {
     }
 
     @Throws(IOException::class)
-    fun clear() {
+    override fun clear() {
         if (!preferences.edit().clear().commit()) throw IOException("Could not clear $FILE_NAME")
     }
 

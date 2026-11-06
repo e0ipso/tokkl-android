@@ -31,8 +31,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
@@ -42,8 +42,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
-import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.ErrorBanner
+import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
@@ -128,7 +128,7 @@ fun ReportsScreen(model: ReportsViewModel, modifier: Modifier = Modifier) {
         onFilters = model::applyFilters,
         onRetry = model::retry,
         onLoadMore = model::loadMore,
-        exportSupported = ReportCsvKind.of(tab)?.let(capabilities::supports) == true,
+        exportSupported = tab.csvKind()?.let(capabilities::supports) == true,
         exportState = exportState,
         onExport = model::exportCsv,
         modifier = modifier,

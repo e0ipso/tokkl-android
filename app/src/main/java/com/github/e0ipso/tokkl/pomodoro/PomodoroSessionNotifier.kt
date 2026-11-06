@@ -11,7 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.os.Build
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseKind
 
 /** A native countdown crosses zero into negative elapsed overtime without app ticks. */
 internal class PomodoroSessionNotifier(private val context: Context) {

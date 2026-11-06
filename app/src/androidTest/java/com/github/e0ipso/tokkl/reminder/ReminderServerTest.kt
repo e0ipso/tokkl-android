@@ -12,6 +12,7 @@ import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -28,7 +29,6 @@ import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID

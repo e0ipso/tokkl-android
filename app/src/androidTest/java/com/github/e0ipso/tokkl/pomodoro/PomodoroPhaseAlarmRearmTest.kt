@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.pomodoroAlarms
-import com.github.e0ipso.tokkl.components.timerState
 import android.app.AlarmManager
 import android.content.Intent
 import androidx.test.platform.app.InstrumentationRegistry
@@ -9,7 +7,9 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
+import com.github.e0ipso.tokkl.api.PhaseTransition
+import com.github.e0ipso.tokkl.components.pomodoroAlarms
+import com.github.e0ipso.tokkl.components.timerState
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

@@ -1,13 +1,13 @@
 package com.github.e0ipso.tokkl
 
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.followTimerSync
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSyncService
-import com.github.e0ipso.tokkl.timerstate.TimerState
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull

@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Context
 import android.content.Intent
-import com.github.e0ipso.tokkl.MainActivity
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
 
 internal const val SHOW_POMODORO = "com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION"
 internal const val POMODORO_NOTIFICATION_ACCOUNT = "pomodoro_notification_account"
@@ -18,7 +18,7 @@ internal fun Intent.putNotificationIdentity(account: String, phase: PomodoroPhas
     }
 
 internal fun pomodoroSessionOpenIntent(context: Context, account: String, phase: PomodoroPhaseKey) =
-    Intent(context, MainActivity::class.java).setAction(SHOW_POMODORO)
+    mainActivityIntent(context).setAction(SHOW_POMODORO)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         .putNotificationIdentity(account, phase)
 

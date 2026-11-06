@@ -18,7 +18,6 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.navigation.AppNavigationBar
 import com.github.e0ipso.tokkl.navigation.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
@@ -35,6 +34,7 @@ import com.github.e0ipso.tokkl.navigation.orTimerIfUnavailable
 import com.github.e0ipso.tokkl.navigation.routeEntry
 import com.github.e0ipso.tokkl.navigation.unavailablePages
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
 import kotlinx.coroutines.CoroutineDispatcher

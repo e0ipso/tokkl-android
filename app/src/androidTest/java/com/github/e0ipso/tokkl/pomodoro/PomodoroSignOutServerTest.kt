@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.BackgroundSend
@@ -44,7 +45,6 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import java.time.Duration
 import java.time.Instant

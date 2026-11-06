@@ -1,7 +1,14 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.ApiJson
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.api.TimerPause
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart

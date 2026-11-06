@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -173,7 +174,7 @@ class AppSummaryServerTest {
             assertEquals(old.body(), current.body())
             assertTrue(current.body().containsKey("rounding"))
         }
-        assertEquals(null, ReportCsvKind.of(ReportTab.WEEKLY))
+        assertEquals(null, ReportTab.WEEKLY.csvKind())
         assertFalse(ReportCsvRequest(ReportCsvKind.DETAILED, range, filters, workspace, DurationFormat.CLASSIC).body().containsKey("grouping"))
     }
 

@@ -8,21 +8,21 @@ import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import com.github.e0ipso.tokkl.api.ApiJson
-import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.SessionActions
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerActions
+import java.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
-import com.github.e0ipso.tokkl.timerstate.SessionActions
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Instant
 
 internal sealed interface PomodoroWidgetTap {
     val account: String

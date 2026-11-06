@@ -17,9 +17,9 @@ import androidx.navigation3.runtime.NavEntry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.di.IoDispatcher
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.signin.SignInAgain

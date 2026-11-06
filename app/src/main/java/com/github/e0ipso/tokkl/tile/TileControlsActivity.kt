@@ -28,13 +28,13 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerControlsSource
-import com.github.e0ipso.tokkl.di.IoDispatcher
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timer.SurfaceTap
 import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -48,7 +48,7 @@ import org.koin.android.ext.android.inject
  * The Quick Settings tile's long press (docs/PRD.md N4, T1). SystemUI starts it with
  * [TileService.ACTION_QS_TILE_PREFERENCES]. It reads [TimerControlsSource.controls] and offers
  * Stop while a timer runs, with Pause where the server's timer offers it, or Resume and Stop while
- * one is paused. Each button keeps the [com.github.e0ipso.tokkl.cache.TimerTarget] it was drawn
+ * one is paused. Each button keeps the [com.github.e0ipso.tokkl.timerstate.TimerTarget] it was drawn
  * with. The intent's extras are ignored, so the caller cannot name a timer. With nothing running
  * or paused, it closes. The window is translucent and Compose draws the dialog, so the shade stays
  * behind it.

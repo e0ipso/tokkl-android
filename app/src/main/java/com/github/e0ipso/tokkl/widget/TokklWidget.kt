@@ -10,23 +10,23 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
-import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.color.ColorProvider
 import androidx.glance.layout.*
 import androidx.glance.material3.ColorProviders
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.unit.ColorProvider
-import androidx.glance.color.ColorProvider
-import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkExtraColors
@@ -79,7 +79,7 @@ internal fun TimerWidgetContent(state: WidgetState) {
     ) {
         when (state) {
             WidgetState.NoAccount -> Box(
-                GlanceModifier.fillMaxSize().clickable(actionStartActivity(android.content.Intent(context, MainActivity::class.java)))
+                GlanceModifier.fillMaxSize().clickable(actionStartActivity(mainActivityIntent(context)))
                     .semantics { contentDescription = context.getString(R.string.widget_sign_in) },
                 contentAlignment = Alignment.Center,
             ) { Label(context.getString(R.string.widget_sign_in), 14f) }

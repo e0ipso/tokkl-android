@@ -12,8 +12,10 @@ import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /** The Pomodoro defaults, the phase alarm, its ring and the session notification. */
@@ -43,7 +45,7 @@ internal val pomodoroModule = module {
      */
     single {
         AlarmClockPomodoroScheduler(androidContext(), timerSyncStarts = get<CapabilitiesSource>()::offersTimerApi)
-    } bind PomodoroAlarmScheduler::class
+    } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
     /** The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it. */
     single { ServicePomodoroRinging(androidContext()) } bind PomodoroRinging::class

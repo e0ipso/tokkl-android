@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.notification
 
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import android.app.Notification
 import android.os.Process
 import androidx.test.core.app.ActivityScenario
@@ -10,12 +7,15 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import java.io.File
 import java.time.Instant
 import java.util.Properties

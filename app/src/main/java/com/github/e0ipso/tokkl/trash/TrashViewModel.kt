@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.toServerProblem

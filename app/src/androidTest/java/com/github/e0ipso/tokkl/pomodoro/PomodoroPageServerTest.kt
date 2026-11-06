@@ -23,6 +23,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.koinViewModels
 import com.github.e0ipso.tokkl.components.sender
@@ -30,9 +32,7 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.SignedInPanes
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking

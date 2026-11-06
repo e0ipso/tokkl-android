@@ -9,8 +9,8 @@ import android.content.pm.PackageManager
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.notification.RunningNotifier
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import java.time.Instant
 import java.util.UUID
 import org.junit.Assert.assertEquals

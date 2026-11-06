@@ -2,11 +2,11 @@ package com.github.e0ipso.tokkl.di
 
 import androidx.glance.appwidget.updateAll
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.cache.TimerControlsSource
 import com.github.e0ipso.tokkl.notification.RunningNotificationStore
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.notification.runningNotificationContents
+import com.github.e0ipso.tokkl.pomodoro.PomodoroWidgetRedraw
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderStore
 import com.github.e0ipso.tokkl.reminder.accountReminderSync
@@ -16,7 +16,9 @@ import com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutSync
 import com.github.e0ipso.tokkl.shortcuts.LauncherShortcuts
 import com.github.e0ipso.tokkl.shortcuts.favoriteShortcutLists
 import com.github.e0ipso.tokkl.tile.TileRefresh
+import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.widget.PomodoroWidget
+import com.github.e0ipso.tokkl.widget.PomodoroWidgetRedrawer
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
 import com.github.e0ipso.tokkl.widget.TokklWidget
 import com.github.e0ipso.tokkl.widget.WidgetStateSource
@@ -80,6 +82,9 @@ internal val surfacesModule = module {
     }
 
     single { PomodoroWidgetStateSource(get(), get(), get(), get(), get(), get(), get(), get(), get(), io()) }
+
+    /** What the phase alarm redraws when it could not arm an exact alarm. */
+    factory<PomodoroWidgetRedraw> { PomodoroWidgetRedrawer(get(), get()) }
     single(PomodoroWidgetQualifier) { WidgetStore(androidContext(), keyName = WidgetStore.POMODORO_KEY) }
 
     /** The Pomodoro widget's redraws. Its key is independent of the Timer widget. */

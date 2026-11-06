@@ -21,11 +21,11 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sessionViewModels

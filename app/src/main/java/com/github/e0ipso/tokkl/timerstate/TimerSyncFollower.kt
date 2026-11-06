@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.timerstate
 import android.content.Context
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.pomodoro.AlarmClockPomodoroScheduler
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
@@ -21,7 +20,7 @@ class TimerSyncFollower(
     private val timerSync: TimerSync<TimerStateSource>,
     private val capabilities: CapabilitiesSource,
     private val sender: ChangeSender,
-    private val alarmClock: AlarmClockPomodoroScheduler,
+    private val syncWatcher: TimerSyncWatcher,
     private val slot: TimerSyncServiceSlot,
 ) : AccountRefreshListener, AccountDataOwner {
 
@@ -52,7 +51,7 @@ class TimerSyncFollower(
      * set still rings. Blocks on disk I/O.
      */
     fun follow() {
-        alarmClock.watchTimerSync()
+        syncWatcher.watchTimerSync()
         val running = slot.service
         if (!wanted()) {
             timerSync.stop()

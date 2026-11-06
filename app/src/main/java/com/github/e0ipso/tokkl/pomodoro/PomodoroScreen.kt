@@ -21,8 +21,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +37,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
@@ -50,7 +51,6 @@ import com.github.e0ipso.tokkl.entry.withPicked
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.timer.TimerNotice
 import com.github.e0ipso.tokkl.timer.timerNoticeText
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.StepperCard
 import com.github.e0ipso.tokkl.ui.StepperUnit

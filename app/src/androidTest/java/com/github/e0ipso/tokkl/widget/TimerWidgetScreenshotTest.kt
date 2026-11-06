@@ -16,8 +16,8 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.time.DurationFormat
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme

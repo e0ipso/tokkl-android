@@ -14,6 +14,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseTransition
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.timerstate.*
 import java.time.Duration

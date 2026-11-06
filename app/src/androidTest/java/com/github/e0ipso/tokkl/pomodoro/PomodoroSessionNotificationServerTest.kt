@@ -22,6 +22,8 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -36,10 +38,8 @@ import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.first

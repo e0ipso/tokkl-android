@@ -2,19 +2,19 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart

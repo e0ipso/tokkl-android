@@ -1,6 +1,12 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro
+import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.api.TimerPause
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -11,21 +17,15 @@ import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.TimerTarget
-import com.github.e0ipso.tokkl.cache.serverTimerControls
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.timerstate.DiscardedPomodoro
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PauseActions
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.timerstate.TimerPause
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoroPhase
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Duration
@@ -466,7 +466,7 @@ class TimerPauseTest {
     ): HeldTimerState {
         val clone = pause?.cloneEntryId?.let { ServerTimeEntry(id = it, workspaceId = WORKSPACE, description = FIELDS.description, start = CLONE_START.toString()) }
         return HeldTimerState(
-            com.github.e0ipso.tokkl.timerstate.TimerState(revision, TAP.plus(offset), clone, pause, pomodoro, discardedPomodoro = null),
+            com.github.e0ipso.tokkl.api.TimerState(revision, TAP.plus(offset), clone, pause, pomodoro, discardedPomodoro = null),
             receivedAt = TAP,
         )
     }

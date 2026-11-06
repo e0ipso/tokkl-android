@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.initializeTestWorkManager
-import com.github.e0ipso.tokkl.components.pomodoroSessionNotification
-import com.github.e0ipso.tokkl.components.signOut
-import com.github.e0ipso.tokkl.components.timerState
 import android.app.NotificationManager
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
@@ -16,10 +12,14 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.PhaseTransition
+import com.github.e0ipso.tokkl.components.initializeTestWorkManager
+import com.github.e0ipso.tokkl.components.pomodoroSessionNotification
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import java.io.File
 import java.time.Duration

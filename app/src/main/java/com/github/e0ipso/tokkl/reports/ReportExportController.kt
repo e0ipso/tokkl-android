@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiCallCancellation
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.capabilities.csvEndpointAbsent
 import com.github.e0ipso.tokkl.session.ExportAccount
 import java.io.File

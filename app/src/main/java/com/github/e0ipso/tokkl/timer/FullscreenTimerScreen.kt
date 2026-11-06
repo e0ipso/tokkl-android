@@ -21,20 +21,20 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.time.formatDuration
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
+import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
-import com.github.e0ipso.tokkl.ui.TokklIconButton
 import java.time.Clock
 
 /**

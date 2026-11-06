@@ -9,10 +9,10 @@ import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteException
 import androidx.core.net.toUri
-import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.di.IoDispatcher
-import com.github.e0ipso.tokkl.notification.finishOnce
+import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.platform.finishOnce
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timer.showTimerActionFailure
 import java.io.IOException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -40,7 +40,7 @@ class ReminderNotifier(private val context: Context) {
         .setCategory(Notification.CATEGORY_REMINDER)
         .setAutoCancel(true)
         .setContentIntent(PendingIntent.getActivity(context, ID,
-            Intent(context, MainActivity::class.java).setAction(Intent.ACTION_MAIN)
+            mainActivityIntent(context).setAction(Intent.ACTION_MAIN)
                 .addCategory(Intent.CATEGORY_LAUNCHER).putExtra(OPEN_TIMER, true)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))

@@ -26,7 +26,7 @@ class PomodoroPagePhaseActionsTest {
         val f = page(revision = 4)
         f.page.next()!!.join()
         assertEquals(listOf("next 4"), f.server.calls)
-        assertEquals(com.github.e0ipso.tokkl.timerstate.PhaseKind.SHORT_REST, f.page.state.value.pomodoro!!.phase.kind)
+        assertEquals(com.github.e0ipso.tokkl.api.PhaseKind.SHORT_REST, f.page.state.value.pomodoro!!.phase.kind)
         assertEquals(5L, f.page.state.value.shown!!.revision)
         assertNull(f.page.state.value.problem)
         assertFalse(f.page.state.value.busy)
@@ -51,7 +51,7 @@ class PomodoroPagePhaseActionsTest {
         f.page.end(drawn)!!.join()
         assertEquals("the old revision goes out and the server refuses it", listOf("next 4", "end 4"), f.server.calls)
         assertEquals(5L, f.page.state.value.shown!!.revision)
-        assertEquals(com.github.e0ipso.tokkl.timerstate.PhaseKind.SHORT_REST, f.page.state.value.pomodoro!!.phase.kind)
+        assertEquals(com.github.e0ipso.tokkl.api.PhaseKind.SHORT_REST, f.page.state.value.pomodoro!!.phase.kind)
         assertEquals(PomodoroProblem(PomodoroAction.END, TimerActionResult.Refused), f.page.state.value.problem)
     }
 
@@ -150,7 +150,7 @@ class PomodoroPagePhaseActionsTest {
         val session = f.page.state.value.pomodoro!!
         assertEquals(3, session.number)
         assertEquals(4, session.longRestEvery)
-        assertEquals(com.github.e0ipso.tokkl.timerstate.PhaseKind.SHORT_REST, session.upcomingPhase)
+        assertEquals(com.github.e0ipso.tokkl.api.PhaseKind.SHORT_REST, session.upcomingPhase)
         assertEquals(PomodoroShown(4, T0, ENTRY), f.page.state.value.shown)
     }
 }

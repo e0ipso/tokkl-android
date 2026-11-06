@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import java.io.IOException
 import java.io.InputStream

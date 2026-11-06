@@ -7,9 +7,9 @@ import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.RunningCheck
-import com.github.e0ipso.tokkl.cache.TimerControlsSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import java.time.Clock
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.channels.awaitClose

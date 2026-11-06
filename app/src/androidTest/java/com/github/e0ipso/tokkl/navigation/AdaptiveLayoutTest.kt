@@ -35,6 +35,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
@@ -64,8 +65,8 @@ import com.github.e0ipso.tokkl.settings.SignOutConfirmation
 import com.github.e0ipso.tokkl.settings.ThemeSettings
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
-import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
+import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.timer.TimerBarContent
@@ -74,7 +75,6 @@ import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trash.TrashActions
 import com.github.e0ipso.tokkl.trash.TrashContent
-import com.github.e0ipso.tokkl.trash.TrashEntry
 import com.github.e0ipso.tokkl.trash.TrashState
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.screenshot.ScreenshotTest
