@@ -13,8 +13,8 @@ import com.github.e0ipso.tokkl.entry.SplitProblem
 import com.github.e0ipso.tokkl.entry.SplitResult
 import com.github.e0ipso.tokkl.entry.fields
 import com.github.e0ipso.tokkl.entry.splitTimes
-import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.FavoritesProblem
+import com.github.e0ipso.tokkl.favorites.TemplateAdder
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Clock
@@ -226,21 +226,21 @@ class EntryActionsViewModel(
     }
 
     /**
-     * Saves the cached entry [entryId] as a timer template through [favorites]: its description,
+     * Saves the cached entry [entryId] as a timer template through [templates]: its description,
      * project, task, tags and billable, as `pin` in ../tokkl/packages/web/src/components/EntryList.tsx
      * does. Templates live on the server, so when the phone is [offline] nothing is tried and the
      * message says the server is needed. A full list, or a server that cannot be reached or does
      * not store the list, says why nothing was saved. An entry the cache no longer holds saves
      * nothing.
      */
-    fun pin(entryId: Long, favorites: FavoritesViewModel, offline: Boolean) {
+    fun pin(entryId: Long, templates: TemplateAdder, offline: Boolean) {
         if (offline) {
             mutableState.update { it.copy(notice = EntryNotice.PinNeedsServer(++serial)) }
             return
         }
         viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
-            favorites.add(source.fields()) { problem ->
+            templates.add(source.fields()) { problem ->
                 val notice = when (problem) {
                     null -> EntryNotice.Pinned(++serial)
                     FavoritesProblem.Full -> EntryNotice.PinFull(++serial)

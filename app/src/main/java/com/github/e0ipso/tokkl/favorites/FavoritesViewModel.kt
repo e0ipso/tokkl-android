@@ -74,7 +74,7 @@ class FavoritesViewModel(
     private val save: (List<EntryFields>) -> ApiResult<Unit>,
     scope: CoroutineScope,
     private val io: CoroutineContext,
-) : ViewModel(scope) {
+) : ViewModel(scope), TemplateAdder {
 
     private val local = MutableStateFlow(Local())
 
@@ -93,7 +93,7 @@ class FavoritesViewModel(
      * Without the capability, or while another change is saving, nothing happens and [onDone]
      * is not called.
      */
-    fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {}) =
+    override fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit) =
         change(onDone) { list -> if (list.size >= MAX_FAVORITES) null else list + fields }
 
     /** Replaces the template at [index] with [fields]. [onDone] hears how the save went. */
@@ -149,4 +149,10 @@ class FavoritesViewModel(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
     }
+}
+
+/** Adds an entry's fields at the end of the timer templates, as the history's Save as template does. */
+interface TemplateAdder {
+    /** [onDone] gets null once the server has stored the list, or why nothing was added. */
+    fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {})
 }
