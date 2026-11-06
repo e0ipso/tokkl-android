@@ -142,8 +142,8 @@ private fun Instant.plusSecondsOrNull(seconds: Long): Instant? =
  */
 private fun NoTimeDuration.mistake(minutes: Double?): TimeMistake {
     val resolution = minutes?.takeIf(::isTimeResolution)
+    val seconds = seconds ?: return TimeMistake.NO_TIME_DURATION
     return when {
-        seconds == null -> TimeMistake.NO_TIME_DURATION
         seconds > MAX_ALL_DAY_SECONDS -> TimeMistake.NO_TIME_TOO_LONG
         resolution != null -> TimeMistake.NoTimeRoundsToZero(resolution.toInt())
         else -> TimeMistake.NO_TIME_DURATION

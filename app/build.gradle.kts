@@ -157,6 +157,7 @@ room {
 
 dependencies {
     implementation(project(":core:api"))
+    implementation(project(":core:time"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.adaptive)

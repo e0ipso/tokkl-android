@@ -21,7 +21,7 @@ internal val JS_WHITESPACE_RUN = Regex("$JS_WHITESPACE+")
 private val JS_TRIM = Regex("""^$JS_WHITESPACE+|$JS_WHITESPACE+\z""")
 
 /** JavaScript's `String.prototype.trim`. */
-internal fun String.jsTrim(): String = replace(JS_TRIM, "")
+fun String.jsTrim(): String = replace(JS_TRIM, "")
 
 /** JavaScript's `Math.round`, which rounds halves up. [kotlin.math.round] rounds them to even. */
 internal fun jsRound(x: Double): Double {
@@ -51,7 +51,7 @@ internal fun jsToFixed(x: Double, digits: Int): String {
  * use it. It tries each digit count and reads each candidate back with parseDouble, which Java
  * specifies to round correctly.
  */
-internal fun jsShortestDecimal(x: Double): BigDecimal {
+fun jsShortestDecimal(x: Double): BigDecimal {
     require(x.isFinite()) { "jsShortestDecimal takes a finite number, not $x" }
     if (x == 0.0) return BigDecimal.ZERO
     val exact = BigDecimal(x)

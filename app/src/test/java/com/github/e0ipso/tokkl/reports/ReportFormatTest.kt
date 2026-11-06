@@ -1,8 +1,9 @@
 package com.github.e0ipso.tokkl.reports
 
 import androidx.compose.ui.graphics.Color
-import com.github.e0ipso.tokkl.time.jsToFixed
 import com.github.e0ipso.tokkl.ui.projectMark
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -36,7 +37,7 @@ class ReportFormatTest {
         // The cases must hold halves where toFixed's rounding would fail this test.
         val toFixedMisses = cases.count { (part, whole, web) ->
             val percent = if (whole.toLong() > 0) part.toDouble() / whole.toLong() * 100 else 0.0
-            "${jsToFixed(percent, 1)}%" != web
+            "${toFixed(percent)}%" != web
         }
         assertTrue("only $toFixedMisses cases where toFixed rounds otherwise", toFixedMisses >= 100)
     }
@@ -74,4 +75,7 @@ class ReportFormatTest {
         assertEquals(0.4f, projectMark(null, Color.White, Color.Black).green, 0.005f)
         assertEquals(0.4f, projectMark("blue", Color.White, Color.Black).green, 0.005f)
     }
+
+    /** JavaScript's `percent.toFixed(1)`: the double's exact value rounded with halves up. */
+    private fun toFixed(percent: Double): String = BigDecimal(percent).setScale(1, RoundingMode.HALF_UP).toPlainString()
 }

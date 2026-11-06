@@ -2,8 +2,8 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.time.jsShortestDecimal
-import com.github.e0ipso.tokkl.time.jsToFixed
 import java.math.BigDecimal
+import java.math.RoundingMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -28,7 +28,7 @@ class SharePercentOnDeviceTest {
         // The sample holds the halves where rounding the double's exact value, as toFixed does, fails.
         val toFixedMisses = cases.count { (part, whole, web) ->
             val percent = if (whole.toLong() > 0) part.toDouble() / whole.toLong() * 100 else 0.0
-            "${jsToFixed(percent, 1)}%" != web
+            "${toFixed(percent)}%" != web
         }
         assertTrue("only $toFixedMisses cases where toFixed rounds otherwise", toFixedMisses >= 100)
     }
@@ -56,4 +56,7 @@ class SharePercentOnDeviceTest {
             assertEquals("$x: $actual has more digits than String(x)", expected.stripTrailingZeros().precision(), actual.stripTrailingZeros().precision())
         }
     }
+
+    /** JavaScript's `percent.toFixed(1)`: the double's exact value rounded with halves up. */
+    private fun toFixed(percent: Double): String = BigDecimal(percent).setScale(1, RoundingMode.HALF_UP).toPlainString()
 }
