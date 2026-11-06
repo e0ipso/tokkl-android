@@ -2,17 +2,18 @@ package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.api.*
 import com.github.e0ipso.tokkl.session.MePreferences
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
-import mockwebserver3.RecordedRequest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -32,7 +33,7 @@ class ReminderSettingTest {
         server.close(); ConfiguredServer.readStoredFrom { null }; ConfiguredTrust.readFrom(InMemoryServerTrust())
     }
     private fun setting(initial: StoredReminderPreferences? = null) = ReminderSetting(
-        initial, { saved += it }, { client }, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined,
+        InMemoryValueStore(initial) { saved += it }, { client }, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined,
     )
     private fun prefs(body: String = """{"long_timer_reminder_enabled":true,"long_timer_reminder_hours":12}""") =
         MePreferences(Json.parseToJsonElement(body).jsonObject)
@@ -101,7 +102,7 @@ class ReminderSettingTest {
                 return MockResponse.Builder().code(200).body("{}").build()
             }
         }
-        val setting = ReminderSetting(null, { saved += it }, { client }, CoroutineScope(Dispatchers.IO), Dispatchers.IO)
+        val setting = ReminderSetting(InMemoryValueStore(null) { saved += it }, { client }, CoroutineScope(Dispatchers.IO), Dispatchers.IO)
         runBlocking { setting.refreshed(prefs(), true).join() }
         val job = setting.change(ReminderPreferences(false, 6))
         try {

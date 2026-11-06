@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
@@ -11,6 +7,11 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -51,7 +52,7 @@ class ChangeQueueRestartTest {
         signIn(TokklTestServer.url, account.apiToken)
         // A real sign-in caches the resolution before going offline, so a short Stop predicts
         // the server's Trash outcome before this process exits.
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
         val workspace = account.client.get(account.client.server.api("me"), JsonObject.serializer())
             .orFail("GET /api/v9/me").getValue("default_workspace_id").jsonPrimitive.long
         Properties().apply {
@@ -93,7 +94,7 @@ class ChangeQueueRestartTest {
             assertEquals(4, runBlocking { app.changes.unsentCount.first() })
 
             signIn(TokklTestServer.url, account.apiToken)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             while (true) {
                 // The refresh and WorkManager can drain concurrently. Use the same
                 // observation for the loop guard and its strict progress assertion.

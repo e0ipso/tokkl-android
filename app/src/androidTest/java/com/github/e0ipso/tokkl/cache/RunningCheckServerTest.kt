@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.NetworkType
 import androidx.work.WorkInfo
@@ -19,6 +15,11 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
@@ -76,7 +77,7 @@ class RunningCheckServerTest {
         workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertNotNull("the refresh stored the settings", app.accountSettings.state.value)
         RunningNotifications.allow()
         RunningNotifications.awaitGone("no notification before a timer starts")
@@ -139,7 +140,7 @@ class RunningCheckServerTest {
         // Seed on the server, then await the one explicit setup refresh. A queued start would
         // launch an independent post-send refresh that could observe the remote stop first.
         val id = startOnTheWeb("Stopped on the web")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         // The timer event stream would bring the web's stop to the phone at once and cancel the
         // check. Without it, as on Toggl Track or while the stream is down, only the check learns of it.
         app.followNoTimerEvents()
@@ -166,7 +167,7 @@ class RunningCheckServerTest {
     @Test
     fun aTimerStartedOnTheServerTakesThePlaceOfTheOneItStopped() {
         startOnTheWeb("On the phone")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val check = awaitCheck("the start schedules a check") { it.state == WorkInfo.State.ENQUEUED }
 
         val elsewhere = startOnTheWeb("Started on the web")
@@ -182,7 +183,7 @@ class RunningCheckServerTest {
     @Test
     fun theCheckLeavesAnEntryWithUnsentChangesAsItIs() {
         val id = startOnTheWeb("Sent")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val start = checkNotNull(runBlocking { app.cache.running.first() }).entry.start
         val check = awaitCheck("the start schedules a check") { it.state == WorkInfo.State.ENQUEUED }
 

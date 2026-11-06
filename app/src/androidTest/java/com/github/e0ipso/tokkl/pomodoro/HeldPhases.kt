@@ -1,11 +1,12 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerState
-import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.PhaseTransition
@@ -34,7 +35,7 @@ internal object HeldPhases {
 
     /** Refreshes the signed-in account, which probes the timer API, and checks that the server has it. */
     fun learnTheTimerApi() {
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertTrue("the test server offers the timer API", app.capabilities.state.value.timerState)
     }
 

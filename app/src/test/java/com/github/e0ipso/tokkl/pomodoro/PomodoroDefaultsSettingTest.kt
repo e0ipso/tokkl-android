@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
@@ -232,8 +233,7 @@ class PomodoroDefaultsSettingTest {
     }
 
     private fun setting(initial: StoredPomodoroDefaults? = null, keepsPreferences: Boolean = true) = PomodoroDefaultsSetting(
-        initial = initial,
-        save = { saved += it },
+        store = InMemoryValueStore(initial) { saved += it },
         client = { client },
         keepsPreferences = { keepsPreferences },
         scope = CoroutineScope(Dispatchers.Unconfined),

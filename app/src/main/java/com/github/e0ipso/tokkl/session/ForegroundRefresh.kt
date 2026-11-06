@@ -1,5 +1,38 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.cache.ChangeSender
+
+/** The reads [ForegroundRefresh] starts. */
+interface ForegroundReads {
+
+    /** Reads the running entry and the cached data again. */
+    fun refresh()
+
+    /**
+     * Does the same when the network comes back, and once more after a refresh that was running
+     * then ends without an answer.
+     */
+    fun refreshOnReconnect()
+}
+
+/**
+ * Tries the queued changes, then refreshes the account. The send does not wait for the refresh,
+ * so an expired token still asks for sign-in when `/me` fails on opening the app with a saved
+ * queue.
+ */
+class SendThenRefresh(private val sender: ChangeSender, private val refresh: AccountRefresh) : ForegroundReads {
+
+    override fun refresh() {
+        sender.send()
+        refresh.refresh()
+    }
+
+    override fun refreshOnReconnect() {
+        sender.send()
+        refresh.refreshOnReconnect()
+    }
+}
+
 /**
  * When the app reads the server again while it is in the foreground (docs/PRD.md O2): once each
  * time it comes to the foreground, and once each time the network comes back while it is there.
@@ -12,12 +45,8 @@ package com.github.e0ipso.tokkl.session
  *
  * It lives as long as the process, so it knows across a rotation that the activity only changed
  * its configuration.
- *
- * @param refresh reads the running entry and the cached data again.
- * @param refreshOnReconnect does the same when the network comes back, and once more after a
- *   refresh that was running then ends without an answer.
  */
-class ForegroundRefresh(private val refresh: () -> Unit, private val refreshOnReconnect: () -> Unit) {
+class ForegroundRefresh(private val reads: ForegroundReads) {
 
     /** The activity stopped for a configuration change, so its next start is no trip back. */
     private var changingConfigurations = false
@@ -31,7 +60,7 @@ class ForegroundRefresh(private val refresh: () -> Unit, private val refreshOnRe
         if (changingConfigurations) {
             changingConfigurations = false
         } else {
-            refresh()
+            reads.refresh()
         }
     }
 
@@ -57,7 +86,7 @@ class ForegroundRefresh(private val refresh: () -> Unit, private val refreshOnRe
         val before = this.online ?: return false
         this.online = online
         val back = online && !before
-        if (back) refreshOnReconnect()
+        if (back) reads.refreshOnReconnect()
         if (online) onOnline()
         return back
     }

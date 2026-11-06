@@ -32,6 +32,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.sessionViewModels
@@ -101,7 +102,7 @@ class ReportFiltersTest {
         report.entry(report.weekStart.minusDays(1).atTime(12, 0), 3600, "Outside", website, listOf(deep), billable = true)
         Session(context).save(TokklTestServer.url, report.account.apiToken)
         // Fills the cache, where the sheet's choices come from.
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     @After

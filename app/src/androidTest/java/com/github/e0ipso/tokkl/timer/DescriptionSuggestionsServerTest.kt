@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import android.os.SystemClock
 import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Rect
@@ -46,6 +42,11 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -184,7 +185,7 @@ class DescriptionSuggestionsServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             composeRule.waitUntil("the cache holds the entries", NETWORK_TIMEOUT.toMillis()) {
                 runBlocking { app.cache.timeEntries.first() }.size == ENTRIES
             }
@@ -310,7 +311,7 @@ class DescriptionSuggestionsServerTest {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
             runBlocking { app.sender.send().join() }
         }
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     private fun serverEntries(): List<JsonObject> =

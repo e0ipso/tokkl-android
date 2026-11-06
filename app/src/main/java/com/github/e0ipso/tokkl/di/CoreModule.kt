@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.di
 
-import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.reports.ReportExportFiles
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -49,19 +48,19 @@ internal val coreModule = module {
     single { ApiTokenStore(androidContext()) }
     single { ServerTrustStore(androidContext()) }
 
+    single { ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)) }
+
     /**
      * Reports trust refusals to the [SessionTrust], and answers to the [LastAnswer], which
      * loads on the first answer, off the main thread.
      */
     single {
-        val context = androidContext()
-        val lastAnswer = inject<LastAnswer>()
         Session(
             servers = get(),
             tokens = get(),
             trustListener = get<SessionTrust>(),
-            successListener = SuccessListener { lastAnswer.value.succeeded() },
-            clearExports = { ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY)).clear() },
+            successListener = get<LastAnswer>(),
+            clearExports = get<ReportExportFiles>()::clear,
         )
     }
 }

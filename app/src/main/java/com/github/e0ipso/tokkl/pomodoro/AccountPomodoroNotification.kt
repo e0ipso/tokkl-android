@@ -21,7 +21,7 @@ internal class AccountPomodoroNotification(
     private val alarm: PomodoroPhaseAlarm,
     private val actions: TimerActions,
     private val held: HeldTimerFlows,
-    private val capabilities: Lazy<CapabilitiesSource>,
+    private val capabilities: CapabilitiesSource,
     private val ringing: ServicePomodoroRinging,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -44,7 +44,7 @@ internal class AccountPomodoroNotification(
         PomodoroSessionNotificationSync(
             alarm = alarm,
             actions = actions,
-            changes = combine(held.held, flow { emitAll(capabilities.value.state) }, ringing.state) { _, _, _ -> Unit },
+            changes = combine(held.held, flow { emitAll(capabilities.state) }, ringing.state) { _, _, _ -> Unit },
             signedIn = { session.isSignedIn() },
             serviceRunning = { ringing.state.value.serviceRunning },
             load = { if (restore) store.load() else null }, save = store::save, post = notifier::post, remove = notifier::remove,

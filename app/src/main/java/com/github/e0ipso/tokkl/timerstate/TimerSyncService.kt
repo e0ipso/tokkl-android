@@ -51,6 +51,7 @@ class TimerSyncService : Service() {
     /** Cancelled in [onDestroy]. */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val follower: TimerSyncFollower by inject()
+    private val slot: TimerSyncServiceSlot by inject()
     private val timerSync: TimerSync<TimerStateSource> by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
     private var network: ConnectivityManager.NetworkCallback? = null
@@ -70,7 +71,7 @@ class TimerSyncService : Service() {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        follower.service = this
+        slot.service = this
         if (network == null) network = followDefaultNetwork()
         scope.launch {
             val running = withContext(io) {
@@ -84,7 +85,7 @@ class TimerSyncService : Service() {
     }
 
     override fun onDestroy() {
-        if (follower.service === this) follower.service = null
+        if (slot.service === this) slot.service = null
         network?.let { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(it) }
         network = null
         timerSync.stop()

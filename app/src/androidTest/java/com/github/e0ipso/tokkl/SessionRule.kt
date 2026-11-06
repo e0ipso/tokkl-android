@@ -1,12 +1,13 @@
 package com.github.e0ipso.tokkl
 
+import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import com.github.e0ipso.tokkl.components.renewTimerState
-import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
@@ -78,7 +79,7 @@ class SessionRule : TestRule {
             val app = context.applicationContext as TokklApplication
             // Process-start widget and shortcut observers can load these before this rule.
             // Forget the loaded account too, waiting out a refresh before clearing its stores.
-            runBlocking { app.accountSettings.forget() }
+            runBlocking { app.accountRefresh.forget() }
             AccountSettingsStore(context).clear()
             app.capabilities.forget()
             CapabilitiesStore(context).clear()

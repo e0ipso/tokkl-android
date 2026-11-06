@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.tags
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -37,6 +35,9 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -92,11 +93,11 @@ class TagsServerTest {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         Session(context).save(TokklTestServer.url, account.apiToken)
         workspace = account.workspaceId
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         model = TagsViewModel(
             client = Session(context)::client,
             workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { refreshes += app.accountSettings.refreshAfterChange() },
+            refreshCache = { refreshes += app.accountRefresh.refreshAfterChange() },
             scope = scope,
             io = Dispatchers.IO,
             cachedTags = app.cache.tags,
@@ -132,7 +133,7 @@ class TagsServerTest {
         field(R.string.tags_new_name).assert(SemanticsMatcher("an empty field") { it.config.getOrNull(SemanticsProperties.EditableText)?.text == "" })
 
         entry("focus")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         row("focus").tap(scroll = false)
         awaitText(string(R.string.tags_rename_title, "focus"))
@@ -247,7 +248,7 @@ class TagsServerTest {
     @Test
     fun theServerOutOfReachListsThePhonesTags() {
         create("cached")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, account.client)
         show()
         awaitText(string(R.string.tags_server_needed_title))

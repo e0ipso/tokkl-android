@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.clients
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -38,6 +36,9 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -90,11 +91,11 @@ class ClientsServerTest {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         Session(context).save(TokklTestServer.url, account.apiToken)
         workspace = account.workspaceId
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         model = ClientsViewModel(
             client = Session(context)::client,
             workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { refreshes += app.accountSettings.refreshAfterChange() },
+            refreshCache = { refreshes += app.accountRefresh.refreshAfterChange() },
             scope = scope,
             io = Dispatchers.IO,
             cachedClients = app.cache.clients,
@@ -132,7 +133,7 @@ class ClientsServerTest {
         awaitCache("the cache holds the new client") { clients, _ -> clients.any { it.id == id && it.name == "Acme" && !it.archived } }
 
         val project = create("projects", buildJsonObject { put("name", "Website"); put("client_id", id) })
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         // The page counts projects when it loads, as opening it again would.
         composeRule.runOnUiThread { model.retry() }
         awaitText(context.resources.getQuantityString(R.plurals.clients_projects, 1, 1))
@@ -248,7 +249,7 @@ class ClientsServerTest {
     fun theServerOutOfReachListsThePhonesClientsWithTheArchivedOnesMarked() {
         val gone = create("clients", buildJsonObject { put("name", "Gone") })
         account.client.sendNoContent("POST", url("clients", gone.toString(), "archive"), buildJsonObject {}).orFail("archive")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, account.client)
         show()
 

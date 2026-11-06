@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.signOut
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -10,6 +7,10 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -67,7 +68,7 @@ class WidgetLargeTextTest {
                 """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[],"billable":false}]}""",
             )).orFail("save favorite")
             Session(context).save(TokklTestServer.url, account.apiToken)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             val offline = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
             ServerTrustStore(context).confirmCleartext(offline)
             Session(context).save(offline, account.apiToken)

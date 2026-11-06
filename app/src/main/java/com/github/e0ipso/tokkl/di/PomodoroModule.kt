@@ -20,17 +20,14 @@ internal val pomodoroModule = module {
 
     /**
      * The lengths a Pomodoro session starts with, kept in Tokkl's four `pomodoro_*` length
-     * preferences, or on the phone only where the server lacks them. Loaded on first use, which
-     * reads a file of five values.
+     * preferences, or on the phone only where the server lacks them. The first read loads them
+     * from a file of five values.
      */
     single {
-        val store = get<PomodoroDefaultsStore>()
-        val capabilities = inject<CapabilitiesSource>()
         PomodoroDefaultsSetting(
-            initial = store.load(),
-            save = store::save,
+            store = get<PomodoroDefaultsStore>(),
             client = get<Session>()::client,
-            keepsPreferences = { capabilities.value.state.value.favorites },
+            keepsPreferences = get<CapabilitiesSource>()::keepsPreferences,
             scope = get(),
             io = io(),
         )
@@ -39,12 +36,11 @@ internal val pomodoroModule = module {
     /**
      * The exact alarm at a running Pomodoro phase's planned end.
      * [PomodoroAlarmScheduler.permissionDenied] is what the Pomodoro page reads when that alarm
-     * cannot be set. Loaded on first use, which reads the permission from the platform. Its boot
-     * and update receiver also starts the timer sync service.
+     * cannot be set, from the platform. Its boot and update receiver also starts the timer sync
+     * service.
      */
     single {
-        val capabilities = inject<CapabilitiesSource>()
-        AlarmClockPomodoroScheduler(androidContext(), timerSyncStarts = { capabilities.value.state.value.timerState })
+        AlarmClockPomodoroScheduler(androidContext(), timerSyncStarts = get<CapabilitiesSource>()::offersTimerApi)
     } bind PomodoroAlarmScheduler::class
 
     /** The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it. */
@@ -56,16 +52,14 @@ internal val pomodoroModule = module {
      * first call loads the held state and the capabilities from disk.
      */
     single {
-        val timerStates = get<AccountTimerStates>()
-        val capabilities = inject<CapabilitiesSource>()
         PomodoroPhaseAlarm(
-            held = { timerStates.source.state.value },
-            available = { capabilities.value.state.value.timerState },
+            held = get<AccountTimerStates>()::held,
+            available = get<CapabilitiesSource>()::offersTimerApi,
             alarms = get<AlarmClockPomodoroScheduler>(),
             ringing = get<ServicePomodoroRinging>(),
             io = io(),
         )
     }
 
-    single { AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), inject(), get(), get(), io()) }
+    single { AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), get(), get(), get(), io()) }
 }

@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetFieldsStore
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +21,8 @@ class AccountTimerState(val source: TimerStateSource, val account: String)
 class AccountTimerStates(
     private val store: TimerStateStore,
     private val lastFields: PomodoroWidgetFieldsStore,
-    private val cache: Lazy<AccountCache>,
-    private val accountSettings: Lazy<AccountSettingsSource>,
+    private val cache: AccountCache,
+    private val refreshes: AccountRefreshRequests,
 ) {
     private val lock = Any()
     private var forAccount = newTimerState(restore = true)
@@ -34,6 +34,12 @@ class AccountTimerStates(
     /** The signed-in account's source. */
     val source: TimerStateSource
         get() = current().source
+
+    /** The signed-in account's held state now, or null without one. Loads the stored state on first use. */
+    fun held(): HeldTimerState? = source.state.value
+
+    /** The name the signed-in account's timer controls carry in their targets. */
+    fun account(): String = current().account
 
     /** The source and the account name, read together under the holder's lock. */
     fun current(): AccountTimerState = synchronized(lock) { forAccount.value }
@@ -68,9 +74,9 @@ class AccountTimerStates(
                     // Under the holder's acceptance lock, for actions and SSE from any surface.
                     lastFields.remember(account, stored.held)
                 },
-                cache = cache.value,
+                cache = cache,
                 // The state does not carry a stopped entry's stop; the history read does.
-                onRunningEnded = { accountSettings.value.refreshAfterChange() },
+                onRunningEnded = refreshes::refreshAfterChange,
             ),
             // Made anew after each sign-in and sign-out, which clear the store.
             account = account,

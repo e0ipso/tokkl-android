@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.components.accountSettings
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasContentDescription
@@ -20,6 +19,8 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.runBlocking
@@ -159,7 +160,7 @@ class TimerViewServerTest {
         }
     }
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     private fun setOnTheServer(view: String) {
         account.client.send("POST", account.client.server.api("me", "preferences"), buildJsonObject { put("timerView", view) }, JsonObject.serializer())

@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.history
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -30,6 +27,10 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -276,7 +277,7 @@ class HistoryServerTest {
      */
     private fun JsonObject.instant(key: String): Instant = OffsetDateTime.parse(getValue(key).jsonPrimitive.content).toInstant()
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     /** Sends the queue until it is empty, as the next refresh would. */
     private fun sendTheQueue() {

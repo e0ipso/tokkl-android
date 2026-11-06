@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.finishWithin
@@ -85,7 +86,7 @@ class WeeklyReportServerTest {
         report.entry(report.today.atTime(0, 10), 600, "Midnight", website)
         report.entry(report.weekStart.minusDays(1).atTime(12, 0), 3600, "Outside", website)
         Session(context).save(TokklTestServer.url, report.account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertEquals(DayOfWeek.WEDNESDAY, settings().beginningOfWeek)
     }
 

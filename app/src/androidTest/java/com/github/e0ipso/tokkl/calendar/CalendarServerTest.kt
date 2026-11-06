@@ -44,6 +44,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
@@ -525,7 +526,7 @@ class CalendarServerTest {
         }
     }
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     /**
      * Scrolls the Timer page's top away and the grid until [anchor]'s block shows, then holds and

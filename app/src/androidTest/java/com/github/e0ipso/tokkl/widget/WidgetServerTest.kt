@@ -1,14 +1,5 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.timerState
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.signOut
-import com.github.e0ipso.tokkl.components.timerControls
-import com.github.e0ipso.tokkl.components.widgetState
 import android.appwidget.AppWidgetProviderInfo
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -24,21 +15,30 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
+import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TimerActionToasts
-import com.github.e0ipso.tokkl.awaitText
-import com.github.e0ipso.tokkl.awaitControls
-import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.awaitControls
+import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.components.widgetState
+import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.stopAction
 import com.github.e0ipso.tokkl.orFail
@@ -46,6 +46,7 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.tile.QuickSettingsTile
 import com.github.e0ipso.tokkl.time.formatDuration
+import com.github.e0ipso.tokkl.timerState
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.filterNotNull
@@ -54,8 +55,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -95,7 +96,7 @@ class WidgetServerTest {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         workspace = account.workspaceId
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         RunningNotifications.allow()
         widget = NativeWidget()
         native.awaitText(context.getString(R.string.widget_idle))
@@ -149,7 +150,7 @@ class WidgetServerTest {
     @Test
     fun pauseResumeAndStopWhilePausedGoToTheServerFromTheNativeControls() {
         val first = account.createEntry("Paused on the widget", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         native.awaitText("Paused on the widget")
 
         native.click(pauseLabel)
@@ -183,7 +184,7 @@ class WidgetServerTest {
     @Test
     fun anOfflinePauseSaysWhyAndKeepsTheTimerWhileStopStillQueues() {
         val id = account.createEntry("Paused offline", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         native.awaitDescription(pauseLabel)
         AirplaneMode.set(true, web)
         try {
@@ -214,7 +215,7 @@ class WidgetServerTest {
         web.sendNoContent("POST", web.server.api("me", "preferences"), buildJsonObject {
             put("favorites", kotlinx.serialization.json.JsonArray(favorites))
         }).orFail("save favorites")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         native.awaitText("Favorite 3")
 
 
@@ -283,7 +284,7 @@ class WidgetServerTest {
                 put("start", start.toString()); put("stop", start.plusSeconds(seconds).toString())
             }, JsonObject.serializer()).orFail("seed stopped segment")
         }
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
         signIn(NO_ROUTE, account.apiToken)
         runBlocking { app.changes.start(workspace, EntryFields("Billable ticking", billable = true)) }
         native.awaitText("Billable ticking")
@@ -358,7 +359,7 @@ class WidgetServerTest {
             put("start", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS).toString()); put("duration", -1)
         }, JsonObject.serializer()).orFail("seed long entry")
         // The sender's refresh may have read the earlier timer before this server write.
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
         val id = runBlocking { app.cache.running.filterNotNull().first().entry.id }
         native.awaitText("Long entry stopped by widget")
         native.click(context.getString(R.string.widget_stop_description))
@@ -372,7 +373,7 @@ class WidgetServerTest {
     @Test
     fun remoteStopClearsTheNativeWidgetAndNotificationAtThePeriodicCheck() {
         val id = account.createEntry("Stopped remotely", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         // Without the timer event stream, as on Toggl Track, only the periodic check learns of it.
         app.followNoTimerEvents()
         native.awaitText("Stopped remotely")
@@ -437,7 +438,7 @@ class WidgetServerTest {
 
 
     private fun drain() {
-        runBlocking { app.sender.sendAndWait(); app.accountSettings.refresh().join() }
+        runBlocking { app.sender.sendAndWait(); app.accountRefresh.refresh().join() }
         assertEquals("every queued change reached the server", 0, unsentCount())
     }
 

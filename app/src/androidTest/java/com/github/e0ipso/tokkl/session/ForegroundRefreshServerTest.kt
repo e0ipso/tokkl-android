@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.session
 
-import com.github.e0ipso.tokkl.components.accountSettings
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.net.ConnectivityManager
@@ -22,6 +21,8 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.bottomBarItem
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -113,7 +114,7 @@ class ForegroundRefreshServerTest {
         val all = checkNotNull(all)
         val me = checkNotNull(me)
         // The settings the Timer page needs, read before the app opens, as after a sign-in.
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val beforeOpen = me.count
 
         launch()

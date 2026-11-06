@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.capabilities
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.capabilities
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
@@ -9,6 +7,9 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -48,7 +49,7 @@ class CapabilitiesServerTest {
         assertFalse("the account has saved no favorites", "favorites" in preferences)
         assertEquals("nothing is stored before the refresh", Capabilities.NONE, app.capabilities.state.value)
 
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         assertEquals(ALL, app.capabilities.state.value)
         assertEquals("the stored flags", ALL, CapabilitiesStore(context).load())

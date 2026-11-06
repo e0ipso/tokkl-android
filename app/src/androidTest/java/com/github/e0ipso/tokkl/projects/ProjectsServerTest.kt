@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.projects
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -41,6 +39,9 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -98,11 +99,11 @@ class ProjectsServerTest {
         acme = create("clients", buildJsonObject { put("name", "Acme") })
         val gone = create("clients", buildJsonObject { put("name", "Gone") })
         account.client.sendNoContent("POST", url("clients", gone.toString(), "archive"), buildJsonObject {}).orFail("archive Gone")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         model = ProjectsViewModel(
             client = Session(context)::client,
             workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { refreshes += app.accountSettings.refreshAfterChange() },
+            refreshCache = { refreshes += app.accountRefresh.refreshAfterChange() },
             scope = scope,
             io = Dispatchers.IO,
             cachedProjects = app.cache.projects,
@@ -275,7 +276,7 @@ class ProjectsServerTest {
     @Test
     fun theServerOutOfReachListsThePhonesProjectsWithEveryActionOff() {
         create("projects", buildJsonObject { put("name", "Cached") })
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, account.client)
         show()
 

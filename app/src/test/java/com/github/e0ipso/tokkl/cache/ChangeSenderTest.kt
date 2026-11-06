@@ -935,7 +935,9 @@ class ChangeSenderTest {
             scope = scope,
             io = Dispatchers.IO,
             clock = clock,
-            switchSpan = { start, stop -> stopSpan(start, stop, 15.0, ZoneId.of("UTC"), oneStep = false) },
+            spans = object : ServerSpans {
+                override fun switched(start: Instant, stop: Instant) = stopSpan(start, stop, 15.0, ZoneId.of("UTC"), oneStep = false)
+            },
         )
         // 08:08 snaps to 08:15 and the later timer's 08:20 to 08:15 too, so the phone's entry is
         // stored with no length. Sent as 08:08 to 08:20, Tokkl would store 08:15 to 08:30.
@@ -1068,7 +1070,9 @@ class ChangeSenderTest {
             scope = scope,
             io = Dispatchers.IO,
             clock = clock,
-            serverStart = { it.truncatedTo(java.time.temporal.ChronoUnit.HOURS) },
+            spans = object : ServerSpans {
+                override fun start(start: Instant): Instant = start.truncatedTo(java.time.temporal.ChronoUnit.HOURS)
+            },
         )
         store.queue(ChangeKind.CREATE, LOCAL, TAP.plusSeconds(120).plusMillis(300), stop = TAP.plusSeconds(600), description = "Manual", maybeSent = true)
         server.enqueue(entries(listed(101, "Manual", start = "2026-10-19T08:00:00+00:00")))

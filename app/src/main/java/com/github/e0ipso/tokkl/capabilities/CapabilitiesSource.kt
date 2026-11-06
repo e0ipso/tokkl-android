@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.capabilities
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.reports.ReportCsvKind
 import com.github.e0ipso.tokkl.session.Me
+import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,20 +12,31 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * The server's capabilities for the whole process, and the one place features read them from.
- * They refresh with each `GET /api/v9/me` of the account settings refresh, and persist.
- *
- * @param initial the stored capabilities, or null when none are stored.
- * @param save writes the capabilities, throwing [IOException] when it cannot.
+ * They refresh with each `GET /api/v9/me` of the account settings refresh, and persist. The first
+ * read loads them from [store], a file of a few flags, on the reading thread.
  */
-class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities) -> Unit) {
+class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
 
-    private val mutableState = MutableStateFlow(initial ?: Capabilities.NONE)
+    private val loaded by lazy { Loaded(store.load()) }
 
-    /** What the disk holds, so a refresh after a failed write writes again. */
-    private var stored: Capabilities? = initial
+    private class Loaded(initial: Capabilities?) {
+        val state = MutableStateFlow(initial ?: Capabilities.NONE)
+
+        /** What the disk holds, so a refresh after a failed write writes again. */
+        var stored: Capabilities? = initial
+    }
 
     /** The latest capabilities: the stored ones after a restart, [Capabilities.NONE] before any refresh. */
-    val state: StateFlow<Capabilities> = mutableState.asStateFlow()
+    val state: StateFlow<Capabilities> by lazy { loaded.state.asStateFlow() }
+
+    /** Whether the server keeps Tokkl's preferences, which only Tokkl offers, as it does favorites. */
+    fun keepsPreferences(): Boolean = state.value.favorites
+
+    /** Whether the server offers Tokkl's timer API ([Capabilities.timerState]). */
+    fun offersTimerApi(): Boolean = state.value.timerState
+
+    /** Whether the server stores no-time entries ([Capabilities.allDay]). */
+    fun offersAllDay(): Boolean = state.value.allDay == true
 
     /**
      * Sets the flags from [me], the refresh's `GET /api/v9/me`, one `GET /api/app/trash` and one
@@ -38,7 +50,7 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
         val trash = probeTrash(api)
         val read = timerState.begin()
         val timer = probeTimerState(api)
-        val flags = update(mutableState.value.updatedWith(me, trash, timer))
+        val flags = update(loaded.state.value.updatedWith(me, trash, timer))
         if (timer is TimerStateProbe.Present) timerState.accept(read, timer.state)
         return flags
     }
@@ -46,7 +58,7 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
     /** A CSV request got definite endpoint absence. It affects only this export kind. */
     @Synchronized
     fun csvMissing(kind: ReportCsvKind) {
-        val current = mutableState.value
+        val current = loaded.state.value
         if (!current.supports(kind)) return
         update(when (kind) {
             ReportCsvKind.SUMMARY -> current.copy(summaryCsv = false)
@@ -62,7 +74,7 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
      */
     @Synchronized
     fun trashMissing() {
-        val current = mutableState.value
+        val current = loaded.state.value
         if (current.trash || current.restore) update(current.copy(trash = false, restore = false))
     }
 
@@ -74,20 +86,20 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
      */
     @Synchronized
     fun allDayMissing() {
-        val current = mutableState.value
+        val current = loaded.state.value
         if (current.allDay == true) update(current.copy(allDay = false))
     }
 
     private fun update(next: Capabilities): Capabilities {
-        if (next != stored) {
+        if (next != loaded.stored) {
             try {
-                save(next)
-                stored = next
+                store.save(next)
+                loaded.stored = next
             } catch (e: IOException) {
                 // The next refresh writes them again.
             }
         }
-        mutableState.value = next
+        loaded.state.value = next
         return next
     }
 
@@ -97,7 +109,7 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
      */
     @Synchronized
     fun forget() {
-        mutableState.value = Capabilities.NONE
-        stored = null
+        loaded.state.value = Capabilities.NONE
+        loaded.stored = null
     }
 }

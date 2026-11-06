@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.catalog
 
-import com.github.e0ipso.tokkl.components.accountSettings
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import androidx.annotation.StringRes
@@ -26,6 +25,8 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -153,7 +154,7 @@ class CatalogForegroundTest {
 
     /** Launches the app on the Timer page with the account's settings read. */
     private fun launch() {
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.waitUntil("the bottom bar shows", TIMEOUT_MS) {
             compose.onAllNodes(barItemMatcher(R.string.nav_projects)).fetchSemanticsNodes().isNotEmpty()

@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.session.Me
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.io.IOException
 import kotlinx.serialization.json.Json
@@ -187,10 +188,10 @@ class CapabilitiesTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
         var failWrites = true
-        val source = CapabilitiesSource(initial = null) {
+        val source = CapabilitiesSource(InMemoryValueStore<Capabilities>(null) {
             if (failWrites) throw IOException("disk full")
             saved += it
-        }
+        })
 
         assertEquals(ALL, source.refresh(client, me(TOKKL_ME)))
         assertEquals(ALL, source.state.value)
@@ -315,7 +316,7 @@ class CapabilitiesTest {
     private fun MockWebServer.requests(): List<String> =
         List(requestCount) { takeRequest().url.encodedPath }
 
-    private fun source(initial: Capabilities? = null) = CapabilitiesSource(initial) { saved += it }
+    private fun source(initial: Capabilities? = null) = CapabilitiesSource(InMemoryValueStore(initial) { saved += it })
 
     private fun me(body: String): Me = Json { ignoreUnknownKeys = true }.decodeFromString(Me.serializer(), body)
 

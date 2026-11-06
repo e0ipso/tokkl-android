@@ -69,6 +69,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
@@ -688,12 +689,12 @@ class RunningEntryEditorServerTest {
     private fun serverEntry(id: Long): JsonObject = web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("read fixture entry")
     private fun serverCurrent(): JsonObject = web.get(web.server.api("me", "time_entries", "current"), JsonObject.serializer()).orFail("read running fixture")
     private fun queued(): Int = runBlocking { app.changes.unsentCount.first() }
-    private fun refresh() = runBlocking { withTimeout(NETWORK_MS) { app.accountSettings.refreshAfterChange().join() } }
+    private fun refresh() = runBlocking { withTimeout(NETWORK_MS) { app.accountRefresh.refreshAfterChange().join() } }
     private fun drain() {
         runBlocking {
             withTimeout(NETWORK_MS) {
                 while (app.changes.unsentCount.first() > 0) app.sender.sendAndWait()
-                app.accountSettings.refreshAfterChange().join()
+                app.accountRefresh.refreshAfterChange().join()
             }
         }
     }

@@ -10,9 +10,11 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import java.time.Clock
 import java.time.Instant
@@ -135,7 +137,7 @@ class ServerReaderTest {
         assertEquals("an older Tokkl", 1, missing)
         assertEquals("the entries are cached all the same", listOf("Old"), snapshot.timeEntries?.map { it.description })
 
-        val capabilities = CapabilitiesSource(Capabilities.NONE.copy(favorites = true, allDay = true)) {}
+        val capabilities = CapabilitiesSource(InMemoryValueStore(Capabilities.NONE.copy(favorites = true, allDay = true)))
         answers["/api/v9/me/time_entries"] = json(old)
         readServerSnapshot(
             client, me("UTC", role = "user"), preferences("{}"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true,
@@ -208,18 +210,18 @@ class ServerReaderTest {
         answers["/api/v9/me/time_entries"] = json("[]")
         answers["/api/v9/me/preferences"] = json("""{"duration_format":"decimal","favorites":[{"description":"Standup","billable":true}]}""")
         var snapshot: ServerSnapshot? = null
-        val settings = AccountSettingsSource(
-            initial = null,
-            save = {},
+        val settings = AccountSettingsSource(InMemoryValueStore(null))
+        val refresh = AccountRefresh(
             client = { client },
+            settings = settings,
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
-            onRefresh = { api, me, preferences ->
+            steps = { api, me, preferences ->
                 snapshot = readServerSnapshot(api, me, preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
             },
         )
 
-        settings.refresh()
+        refresh.refresh()
 
         val paths = List(server.requestCount) { server.takeRequest().url.encodedPath }
         assertEquals(paths.toString(), 1, paths.count { it == "/api/v9/me/preferences" })

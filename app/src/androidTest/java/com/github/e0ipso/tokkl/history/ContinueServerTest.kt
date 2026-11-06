@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.history
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.hasAnyAncestor
@@ -32,6 +28,11 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -107,7 +108,7 @@ class ContinueServerTest {
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(2, ChronoUnit.HOURS)
         postEntry("Paint the wall", project, task, listOf("outdoor", "spray"), billable = true, stop.minus(45, ChronoUnit.MINUTES), stop)
         val running = account.createEntry("Answer email", Instant.now().minus(10, ChronoUnit.MINUTES))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
@@ -154,7 +155,7 @@ class ContinueServerTest {
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(2, ChronoUnit.HOURS)
         postEntry("Paint the wall", project = null, task = null, tags = emptyList(), billable = false, stop.minus(45, ChronoUnit.MINUTES), stop)
         val running = account.createEntry("Answer email", Instant.now().minus(10, ChronoUnit.MINUTES))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
@@ -199,7 +200,7 @@ class ContinueServerTest {
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS)
         postEntry("Earlier work", project = null, task = null, tags = emptyList(), billable = false, stop.minus(3, ChronoUnit.HOURS), stop.minus(2, ChronoUnit.HOURS))
         postEntry("Latest work", project, task, listOf("deep"), billable = true, stop.minus(30, ChronoUnit.MINUTES), stop)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, web)
 
         val id = runBlocking { app.changes.continueLast(app.cache.entries.first().map { it.entry }) }

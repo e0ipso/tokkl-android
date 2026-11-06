@@ -19,21 +19,21 @@ import java.security.GeneralSecurityException
  * disk I/O.
  */
 internal class AccountSessionWriter(
-    private val accountSettings: Lazy<AccountSettingsSource>,
+    private val accountSettings: AccountSettingsSource,
     private val timerStates: AccountTimerStates,
     private val session: Session,
     private val pomodoroNotification: AccountPomodoroNotification,
-    private val sender: Lazy<ChangeSender>,
+    private val sender: ChangeSender,
     private val timerSync: TimerSyncFollower,
 ) : SessionWriter {
 
     @Throws(GeneralSecurityException::class, IOException::class)
     override fun save(server: ServerUrl, token: String, settings: AccountSettings) {
-        accountSettings.value.store(settings)
+        accountSettings.store(settings)
         timerStates.renew()
         session.save(server, token)
         pomodoroNotification.current.start()
-        if (sender.value.signInNeeded.value) sender.value.resume()
+        if (sender.signInNeeded.value) sender.resume()
         // Signing in again over a refused token keeps the capability: the stream restarts for the
         // new source now. A first sign-in starts it once its refresh has learned the capability.
         timerSync.follow()

@@ -2,19 +2,20 @@ package com.github.e0ipso.tokkl.reminder
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
 /** Account-scoped, excluded from backups with the other private stores. */
-class ReminderStore(context: Context) {
+class ReminderStore(context: Context) : ValueStore<StoredReminderPreferences> {
     private val preferences = context.getSharedPreferences("long_timer_reminder", Context.MODE_PRIVATE)
 
-    fun load(): StoredReminderPreferences? = if (!preferences.contains("hours")) null else StoredReminderPreferences(
+    override fun load(): StoredReminderPreferences? = if (!preferences.contains("hours")) null else StoredReminderPreferences(
         ReminderPreferences(preferences.getBoolean("enabled", true), preferences.getInt("hours", 8)).clamped(),
         preferences.getBoolean("unsent", false),
         preferences.getBoolean("shared", false),
     )
 
-    fun save(value: StoredReminderPreferences) = commit {
+    override fun save(value: StoredReminderPreferences) = commit {
         putBoolean("enabled", value.preferences.enabled)
         putInt("hours", value.preferences.clamped().hours)
         putBoolean("unsent", value.unsent)

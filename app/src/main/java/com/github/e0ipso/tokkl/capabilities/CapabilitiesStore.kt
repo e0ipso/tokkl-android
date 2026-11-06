@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.capabilities
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
 /**
@@ -11,12 +12,12 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so make calls off the main thread.
  */
-class CapabilitiesStore(context: Context) {
+class CapabilitiesStore(context: Context) : ValueStore<Capabilities> {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
     /** The stored capabilities, or null when none are stored. */
-    fun load(): Capabilities? {
+    override fun load(): Capabilities? {
         if (!preferences.contains(KEY_TRASH)) return null
         return Capabilities(
             trash = preferences.getBoolean(KEY_TRASH, false),
@@ -37,17 +38,17 @@ class CapabilitiesStore(context: Context) {
 
     /** Replaces the stored capabilities in one write. */
     @Throws(IOException::class)
-    fun save(capabilities: Capabilities) {
+    override fun save(value: Capabilities) {
         commit {
-            putBoolean(KEY_TRASH, capabilities.trash)
-            putBoolean(KEY_RESTORE, capabilities.restore)
-            putBoolean(KEY_FAVORITES, capabilities.favorites)
-            putBoolean(KEY_TIME_RESOLUTION, capabilities.timeResolution)
-            putBoolean(KEY_NEGATED_FILTERS, capabilities.negatedFilters)
-            putOptional(KEY_SUMMARY_CSV, capabilities.summaryCsv)
-            putOptional(KEY_DETAILED_CSV, capabilities.detailedCsv)
-            putBoolean(KEY_TIMER_STATE, capabilities.timerState)
-            putOptional(KEY_ALL_DAY, capabilities.allDay)
+            putBoolean(KEY_TRASH, value.trash)
+            putBoolean(KEY_RESTORE, value.restore)
+            putBoolean(KEY_FAVORITES, value.favorites)
+            putBoolean(KEY_TIME_RESOLUTION, value.timeResolution)
+            putBoolean(KEY_NEGATED_FILTERS, value.negatedFilters)
+            putOptional(KEY_SUMMARY_CSV, value.summaryCsv)
+            putOptional(KEY_DETAILED_CSV, value.detailedCsv)
+            putBoolean(KEY_TIMER_STATE, value.timerState)
+            putOptional(KEY_ALL_DAY, value.allDay)
         }
     }
 

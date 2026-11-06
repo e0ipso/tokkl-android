@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -25,7 +26,7 @@ import kotlinx.coroutines.flow.flowOn
 class TimerControlsSource(
     database: CacheDatabase,
     timerStates: AccountTimerStates,
-    capabilities: Lazy<CapabilitiesSource>,
+    capabilities: CapabilitiesSource,
     io: CoroutineContext,
 ) {
 
@@ -35,10 +36,13 @@ class TimerControlsSource(
         combine(
             database.invalidationTracker.createFlow("time_entries", "pending_changes"),
             heldStates,
-            flow { emitAll(capabilities.value.state) },
+            flow { emitAll(capabilities.state) },
         ) { _, _, flags ->
             val account = timerStates.current()
             account.source.withState { held -> serverTimerControls(dao.latestRunning(), held, flags.timerState, account.account) }
         }.flowOn(io).distinctUntilChanged()
     }
+
+    /** What [controls] holds now. */
+    suspend fun current(): TimerControls = controls.first()
 }

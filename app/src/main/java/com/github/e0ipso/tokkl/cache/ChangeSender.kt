@@ -6,7 +6,8 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.time.SnappedSpan
+import com.github.e0ipso.tokkl.session.AccountRefreshListener
+import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.time.jsTrim
 import com.github.e0ipso.tokkl.trash.TrashEntry
 import java.io.InterruptedIOException
@@ -101,12 +102,8 @@ import okhttp3.HttpUrl
  *   background retry that would find nothing to send.
  * @param onDiscarded runs on [io] with how many changes a 404 took out of the queue because the
  *   server no longer has their entry, so the app can say so.
- * @param serverStart where the server puts a start once the entry is stopped: Tokkl snaps it to
- *   the account's time resolution, and Toggl keeps it. Finds the entry a lost create made.
- * @param switchSpan the span the server stores for a running entry from `start` that a new timer
- *   stopped at `stop`: Tokkl puts both ends on the grid, the stop where the new timer's start
- *   snaps (`AccountTime.snapStop` without one step), and Toggl keeps them. A queued start ended
- *   before a later timer goes this way, so it does not overlap that timer.
+ * @param spans where the server puts a start once the entry is stopped, which finds the entry a
+ *   lost create made, and the span of a queued start ended before a later timer.
  * @param allDay whether the server stores no-time entries (`Capabilities.allDay`), read for each
  *   request. While it is false no request carries `all_day`, as Toggl Track needs.
  */
@@ -119,10 +116,9 @@ class ChangeSender(
     private val onEmptied: () -> Unit = {},
     private val onDiscarded: (Int) -> Unit = {},
     private val clock: Clock = Clock.systemUTC(),
-    private val serverStart: (Instant) -> Instant = { it },
-    private val switchSpan: (start: Instant, stop: Instant) -> SnappedSpan = ::SnappedSpan,
+    private val spans: ServerSpans = ServerSpans.Unsnapped,
     private val allDay: () -> Boolean = { false },
-) {
+) : AccountRefreshListener {
 
     /** What one [drain] did. */
     sealed interface Outcome {
@@ -203,6 +199,11 @@ class ChangeSender(
      */
     fun signInRefused() {
         mutableSignInNeeded.value = true
+    }
+
+    /** The server has just answered the account's refresh, so the queue may go out now. */
+    override fun refreshed(refresh: AccountRefreshed) {
+        send()
     }
 
     /** Lifts the pause after a refused token, once the user has signed in again, and drains the queue. */
@@ -592,7 +593,7 @@ class ChangeSender(
             is ApiResult.Success -> result.value
             is ApiResult.Failure -> return result
         }
-        val starts = setOf(start, serverStart(start))
+        val starts = setOf(start, spans.start(start))
         return ApiResult.Success(
             entries.firstOrNull { create.couldHaveMade(it, starts) && it.id !in create.existingIds && !store.isMapped(it.id) },
         )
@@ -614,7 +615,7 @@ class ChangeSender(
             is ApiResult.Failure -> return current
         }
         val later = running?.takeIf { it.stop == null && it.start.isAfter(start.start.truncatedTo(ChronoUnit.SECONDS)) }
-        return ApiResult.Success(if (later == null) start else store.endBefore(start, later, switchSpan))
+        return ApiResult.Success(if (later == null) start else store.endBefore(start, later, spans::switched))
     }
 
     /** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */

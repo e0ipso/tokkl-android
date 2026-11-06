@@ -30,9 +30,9 @@ internal class PomodoroWidgetStateSource(
     timerStates: AccountTimerStates,
     cache: AccountCache,
     ringing: ServicePomodoroRinging,
-    capabilities: Lazy<CapabilitiesSource>,
-    accountSettings: Lazy<AccountSettingsSource>,
-    pomodoroDefaults: Lazy<PomodoroDefaultsSetting>,
+    capabilities: CapabilitiesSource,
+    accountSettings: AccountSettingsSource,
+    pomodoroDefaults: PomodoroDefaultsSetting,
     session: Session,
     io: CoroutineContext,
 ) {
@@ -46,9 +46,9 @@ internal class PomodoroWidgetStateSource(
         }
         combine(
             held.held,
-            flow { emitAll(capabilities.value.state) },
-            flow { emitAll(accountSettings.value.state) },
-            flow { emitAll(pomodoroDefaults.value.defaults) },
+            flow { emitAll(capabilities.state) },
+            flow { emitAll(accountSettings.state) },
+            flow { emitAll(pomodoroDefaults.defaults) },
             catalog,
         ) { _, flags, settings, defaults, (projects, tasks, ringing) ->
             val owner = timerStates.current()

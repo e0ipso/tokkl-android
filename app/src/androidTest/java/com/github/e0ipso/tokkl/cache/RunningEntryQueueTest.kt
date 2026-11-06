@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerPause
 import com.github.e0ipso.tokkl.timerstate.TimerState
@@ -135,7 +136,9 @@ class RunningEntryQueueTest {
     @Test
     fun shortStopAndItsUndoCannotReviveTheRunningEditor() {
         runBlocking {
-            queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock, capturedStopSpan = { _, _ -> null })
+            queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock, spans = object : ServerSpans {
+                override fun capturedStop(start: Instant, at: Instant): SnappedSpan? = null
+            })
             val id = queue.start(WORKSPACE, EntryFields("Short"))
             assertTrue(queue.stop(id))
             assertFalse(queue.updateRunning(identity(id), EntryFields("Stale"), START))

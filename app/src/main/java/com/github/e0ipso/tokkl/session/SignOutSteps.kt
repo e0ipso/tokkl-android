@@ -45,31 +45,29 @@ import com.github.e0ipso.tokkl.widget.PomodoroWidgetFieldsStore
  * answer and the count of discarded changes. MainActivity then drops its view models, and with
  * them the history's older days and what every other screen loaded. The theme and the sign-in
  * cooldowns stay: they belong to the phone and to a server, not to the account.
- *
- * What loads from disk or follows the cache comes in as [Lazy], so making the steps loads nothing.
  */
 internal class SignOutSteps(
     private val context: Context,
     private val session: Session,
     private val timerStates: AccountTimerStates,
     private val pomodoroAlarm: PomodoroPhaseAlarm,
-    private val timerSync: Lazy<TimerSync<TimerStateSource>>,
+    private val timerSync: TimerSync<TimerStateSource>,
     private val timerSyncFollower: TimerSyncFollower,
     private val pomodoroNotification: AccountPomodoroNotification,
-    private val accountSettings: Lazy<AccountSettingsSource>,
-    private val sender: Lazy<ChangeSender>,
-    private val cache: Lazy<AccountCache>,
-    private val reminder: Lazy<ReminderSync>,
-    private val reminderSettings: Lazy<ReminderSetting>,
-    private val runningNotification: Lazy<RunningNotificationSync>,
-    private val favoriteShortcuts: Lazy<FavoriteShortcutSync>,
-    private val capabilities: Lazy<CapabilitiesSource>,
+    private val accountRefresh: AccountRefresh,
+    private val sender: ChangeSender,
+    private val cache: AccountCache,
+    private val reminder: ReminderSync,
+    private val reminderSettings: ReminderSetting,
+    private val runningNotification: RunningNotificationSync,
+    private val favoriteShortcuts: FavoriteShortcutSync,
+    private val capabilities: CapabilitiesSource,
     private val alarmClock: AlarmClockPomodoroScheduler,
-    private val timerView: Lazy<TimerViewSetting>,
-    private val pomodoroDefaults: Lazy<PomodoroDefaultsSetting>,
+    private val timerView: TimerViewSetting,
+    private val pomodoroDefaults: PomodoroDefaultsSetting,
     private val sessionTrust: SessionTrust,
-    private val lastAnswer: Lazy<LastAnswer>,
-    private val discarded: Lazy<DiscardedChanges>,
+    private val lastAnswer: LastAnswer,
+    private val discarded: DiscardedChanges,
     private val stores: Stores,
 ) {
 
@@ -93,7 +91,7 @@ internal class SignOutSteps(
         { pomodoroAlarm.release() },
         // Before the stores clear, so no stream or reconnect of this account outlives them.
         {
-            timerSync.value.stop()
+            timerSync.stop()
             timerSyncFollower.stopService()
         },
         { pomodoroNotification.current.forget() },
@@ -103,40 +101,41 @@ internal class SignOutSteps(
         { BackgroundSend.cancel(context) },
         { RunningCheck.cancelAndWait(context) },
         { SharedHttpClient.cancelAll() },
-        { accountSettings.value.forget() },
-        { sender.value.stop() },
+        // Shows no settings and waits for a running refresh, which then stores nothing.
+        { accountRefresh.forget() },
+        { sender.stop() },
         { stores.timerState.clear() },
         { stores.pomodoroWidgetFields.clear() },
         {
-            cache.value.clear()
+            cache.clear()
             pomodoroNotification.renew()
         },
-        { reminder.value.forget() },
+        { reminder.forget() },
         {
-            reminderSettings.value.forget()
+            reminderSettings.forget()
             stores.reminder.clear()
         },
-        { runningNotification.value.forget() },
-        { favoriteShortcuts.value.forget() },
+        { runningNotification.forget() },
+        { favoriteShortcuts.forget() },
         { stores.accountSettings.clear() },
         {
-            capabilities.value.forget()
+            capabilities.forget()
             stores.capabilities.clear()
             alarmClock.watchTimerSync()
         },
         {
-            timerView.value.forget()
+            timerView.forget()
             stores.timerView.clear()
         },
         {
-            pomodoroDefaults.value.forget()
+            pomodoroDefaults.forget()
             stores.pomodoroDefaults.clear()
         },
         { stores.serverTrust.clear() },
         { sessionTrust.forget() },
-        { lastAnswer.value.forget() },
+        { lastAnswer.forget() },
         {
-            discarded.value.dismiss()
+            discarded.dismiss()
             stores.discardedChanges.clear()
         },
     )

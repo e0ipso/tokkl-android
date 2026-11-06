@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
 /**
@@ -11,12 +12,12 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so it reads the disk.
  */
-class PomodoroDefaultsStore(context: Context) {
+class PomodoroDefaultsStore(context: Context) : ValueStore<StoredPomodoroDefaults> {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
     /** The stored values, or null when none are stored or one of them is missing. */
-    fun load(): StoredPomodoroDefaults? {
+    override fun load(): StoredPomodoroDefaults? {
         if (KEYS.any { !preferences.contains(it) }) return null
         val defaults = PomodoroDefaults(
             workMinutes = preferences.getInt(KEY_WORK_MINUTES, 0),
@@ -29,14 +30,14 @@ class PomodoroDefaultsStore(context: Context) {
 
     /** Replaces the stored values in one write. */
     @Throws(IOException::class)
-    fun save(stored: StoredPomodoroDefaults) {
-        val defaults = stored.defaults.clamped()
+    override fun save(value: StoredPomodoroDefaults) {
+        val defaults = value.defaults.clamped()
         commit {
             putInt(KEY_WORK_MINUTES, defaults.workMinutes)
             putInt(KEY_SHORT_REST_MINUTES, defaults.shortRestMinutes)
             putInt(KEY_LONG_REST_MINUTES, defaults.longRestMinutes)
             putInt(KEY_LONG_REST_EVERY, defaults.longRestEvery)
-            putBoolean(KEY_UNSENT, stored.unsent)
+            putBoolean(KEY_UNSENT, value.unsent)
         }
     }
 

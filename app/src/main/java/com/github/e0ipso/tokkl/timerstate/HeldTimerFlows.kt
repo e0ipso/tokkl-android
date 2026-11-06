@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.flowOn
 @OptIn(ExperimentalCoroutinesApi::class)
 class HeldTimerFlows(
     private val timerStates: AccountTimerStates,
-    private val capabilities: Lazy<CapabilitiesSource>,
+    private val capabilities: CapabilitiesSource,
     private val io: CoroutineContext,
 ) {
 
@@ -31,7 +31,7 @@ class HeldTimerFlows(
      * full-screen alarm shows.
      */
     val session: Flow<HeldTimerState?> =
-        combine(held, flow { emitAll(capabilities.value.state) }) { held, flags -> held.takeIf { flags.timerState } }
+        combine(held, flow { emitAll(capabilities.state) }) { held, flags -> held.takeIf { flags.timerState } }
             .flowOn(io)
 
     /** The too-short pomodoro of the signed-in account's timer state that no screen has shown yet. */

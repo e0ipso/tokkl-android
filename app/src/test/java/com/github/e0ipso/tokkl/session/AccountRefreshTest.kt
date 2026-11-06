@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.DayOfWeek
@@ -32,7 +33,7 @@ import org.junit.Before
 import org.junit.Test
 
 /** Refreshes against a MockWebServer that answers `GET /api/v9/me` and `GET /api/v9/me/preferences`. */
-class AccountSettingsSourceTest {
+class AccountRefreshTest {
 
     private val server = MockWebServer()
     private val saved = mutableListOf<AccountSettings>()
@@ -159,7 +160,7 @@ class AccountSettingsSourceTest {
     @Test
     fun settingsStoredWhileARefreshRunsAreNotReplacedByItsOlderAnswer() {
         val signedIn = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0)
-        lateinit var source: AccountSettingsSource
+        lateinit var source: Account
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 if (request.url.encodedPath == "/api/v9/me/preferences") return json(CLASSIC)
@@ -182,7 +183,7 @@ class AccountSettingsSourceTest {
     @Test
     fun aRefreshThatAnswersAfterForgetStoresNothingAndRefreshesNothingElse() {
         var onRefreshRuns = 0
-        lateinit var source: AccountSettingsSource
+        lateinit var source: Account
         lateinit var forgetting: Job
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
@@ -191,7 +192,7 @@ class AccountSettingsSourceTest {
                 return json(MADRID_MONDAY)
             }
         }
-        source = AccountSettingsSource(
+        source = Account(
             initial = MADRID_MONDAY_SETTINGS,
             save = { saved += it },
             client = { client },
@@ -397,13 +398,36 @@ class AccountSettingsSourceTest {
 
     /** Unconfined runs the refresh to the end inside refresh() unless [io] holds it. */
     private fun source(initial: AccountSettings?, io: CoroutineContext = Dispatchers.Unconfined) =
-        AccountSettingsSource(
+        Account(
             initial = initial,
             save = { saved += it },
             client = { client },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = io,
         )
+
+    /** The settings and their refresh, wired as the app wires them. */
+    private class Account(
+        initial: AccountSettings?,
+        save: (AccountSettings) -> Unit,
+        client: () -> TogglApiClient?,
+        scope: CoroutineScope,
+        io: CoroutineContext,
+        onRefresh: AccountRefreshSteps = AccountRefreshSteps { _, _, _ -> },
+    ) {
+        private val settings = AccountSettingsSource(InMemoryValueStore(initial, save))
+        private val refresher = AccountRefresh(client, settings, scope, io, onRefresh)
+
+        val state get() = settings.state
+
+        fun store(stored: AccountSettings) = settings.store(stored)
+
+        fun refresh() = refresher.refresh()
+
+        fun refreshOnReconnect() = refresher.refreshOnReconnect()
+
+        suspend fun forget() = refresher.forget()
+    }
 
     private fun json(body: String) = MockResponse.Builder()
         .code(200)

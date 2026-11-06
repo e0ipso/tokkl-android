@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
 /** The night mode to give Android for this theme mode. Following the system leaves it to Android. */
@@ -35,3 +36,18 @@ fun syncApplicationNightMode(context: Context, modes: Flow<ThemeMode>, scope: Co
         .flowOn(io)
         .launchIn(scope)
 }
+
+/**
+ * The theme settings, read from [store] now, with Android following their mode through
+ * [syncApplicationNightMode]. The first frame has to know the theme, or launch would show the other
+ * mode's colours first, and Android needs the mode for the starting window of the next launch.
+ */
+internal fun themeSettingsWithNightMode(
+    context: Context,
+    store: ThemeSettingsStore,
+    scope: CoroutineScope,
+    io: CoroutineContext,
+): ThemeSettingsRepository =
+    ThemeSettingsRepository(initial = store.load(), save = store::save, scope = scope, io = io).also { themes ->
+        syncApplicationNightMode(context, themes.state.map { it.mode }, scope, io)
+    }

@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
@@ -71,7 +72,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         val day = app.accountSettings.state.value!!.time()!!.today()
         val midnight = app.accountSettings.state.value!!.time()!!.instantAt(day, 0)
         for (index in 1..24) fixture.account.createEntry("History $index", midnight.minusSeconds(index * 3600L), midnight.minusSeconds(index * 3600L - 600))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.awaitTimerPage()
             val token = shownTarget()
@@ -252,7 +253,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
             compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
             val replacementId = fixture.account.createEntry("Remote replacement", old.entry.start)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             compose.waitUntil("replacement reaches shared model", 15_000) {
                 (model.state.value as? TimerState.Running)?.entryId == replacementId
             }
@@ -273,7 +274,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             val client = fixture.account.client
             client.send("PATCH", client.server.api("workspaces", fixture.account.workspaceId.toString(), "time_entries", replacementId.toString(), "stop"),
                 buildJsonObject { put("stop", Instant.now().toString()) }, ServerTimeEntry.serializer()).orFail("external Stop")
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             awaitIdle()
             compose.awaitTimerPage()
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()

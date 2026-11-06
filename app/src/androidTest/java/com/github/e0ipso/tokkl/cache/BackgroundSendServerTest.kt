@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.reminder
-import com.github.e0ipso.tokkl.components.sender
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.NetworkType
 import androidx.work.WorkInfo
@@ -20,6 +16,11 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.reminder
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.reminder.ReminderWork
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
@@ -80,7 +81,7 @@ class BackgroundSendServerTest {
         workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertNotNull("the refresh stored the settings", app.accountSettings.state.value)
     }
 

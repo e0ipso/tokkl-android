@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.timer
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
 /**
@@ -11,12 +12,12 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so it reads the disk.
  */
-class TimerViewStore(context: Context) {
+class TimerViewStore(context: Context) : ValueStore<StoredTimerView> {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
     /** The stored view, or null when none is stored or it names a view this version lacks. */
-    fun load(): StoredTimerView? {
+    override fun load(): StoredTimerView? {
         val name = preferences.getString(KEY_VIEW, null) ?: return null
         val view = TimerView.entries.firstOrNull { it.name == name } ?: return null
         return StoredTimerView(view, unsent = preferences.getBoolean(KEY_UNSENT, false))
@@ -24,10 +25,10 @@ class TimerViewStore(context: Context) {
 
     /** Replaces the stored view in one write. */
     @Throws(IOException::class)
-    fun save(stored: StoredTimerView) {
+    override fun save(value: StoredTimerView) {
         commit {
-            putString(KEY_VIEW, stored.view.name)
-            putBoolean(KEY_UNSENT, stored.unsent)
+            putString(KEY_VIEW, value.view.name)
+            putBoolean(KEY_UNSENT, value.unsent)
         }
     }
 

@@ -25,7 +25,7 @@ import kotlinx.serialization.builtins.nullable
 internal class TileRefresh(
     private val context: Context,
     private val session: Session,
-    private val cache: Lazy<AccountCache>,
+    private val cache: AccountCache,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -41,7 +41,6 @@ internal class TileRefresh(
             if (!throttle.tryStart(generation, online, SystemClock.elapsedRealtime())) return@launch
             var succeeded = false
             try {
-                val cache = cache.value
                 val before = cache.runningCheckStart()
                 RunningCheck.currentRequestDiagnostic?.invoke(
                     "producer=TileRefresh current.enter host=${api.server.api("me").host} port=${api.server.api("me").port} generation=$generation online=$online",

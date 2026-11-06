@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.openMorePage
@@ -158,7 +159,7 @@ class ReportsForegroundTest {
 
     /** Launches the app on the Timer page, opens the reports and returns the screen's model. */
     private fun openReports(): ReportsViewModel {
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.openMorePage(R.string.reports, LOAD_TIMEOUT_MS)
         return modelOf(resumedActivity()!!)

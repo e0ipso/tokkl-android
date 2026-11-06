@@ -8,20 +8,18 @@ import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.ElapsedTimerSyncClock
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
-import com.github.e0ipso.tokkl.timerstate.StreamEnd
 import com.github.e0ipso.tokkl.timerstate.TimerActions
+import com.github.e0ipso.tokkl.timerstate.TimerEventConnections
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.timerstate.TimerSyncService
-import com.github.e0ipso.tokkl.timerstate.holdTimerEvents
+import com.github.e0ipso.tokkl.timerstate.TimerSyncServiceSlot
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetFieldsStore
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -30,19 +28,16 @@ internal val timerModule = module {
     single { TimerStateStore(androidContext()) }
     single { PomodoroWidgetFieldsStore(androidContext()) }
 
-    single { AccountTimerStates(get(), get(), inject(), inject()) }
-    single { HeldTimerFlows(get(), inject(), io()) }
-    single { TimerControlsSource(get(), get(), inject(), io()) }
+    single { AccountTimerStates(get(), get(), get(), get()) }
+    single { HeldTimerFlows(get(), get(), io()) }
+    single { TimerControlsSource(get(), get(), get(), io()) }
 
     /**
      * Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
      * server at once and never queued. Each answer, refusals included, goes to the account's
      * timer state.
      */
-    single {
-        val timerStates = get<AccountTimerStates>()
-        TimerActions(client = get<Session>()::client, source = { timerStates.source }, io = io())
-    }
+    single { TimerActions(client = get<Session>()::client, source = get<AccountTimerStates>()::source, io = io()) }
 
     /**
      * The Pause, Resume and Stop of the running notification, the widget, the Quick Settings tile
@@ -51,46 +46,29 @@ internal val timerModule = module {
      * [TimerActions].
      */
     single {
-        val controls = inject<TimerControlsSource>()
-        val timerStates = get<AccountTimerStates>()
-        val sender = inject<ChangeSender>()
         TimerSurfaceActions(
-            controls = { controls.value.controls.first() },
-            account = { timerStates.current().account },
+            controls = get<TimerControlsSource>()::current,
+            account = get<AccountTimerStates>()::account,
             changes = get<ChangeQueue>(),
             server = get<TimerActions>(),
-            sendQueued = { sender.value.sendAndWait() },
+            sendQueued = get<ChangeSender>()::sendAndWait,
         )
     }
 
+    single { TimerSyncServiceSlot() }
+
     /**
      * The one owner of the timer event stream, which [TimerSyncService] runs for the account's
-     * timer state. Each connection takes the signed-in client and feeds the source it was opened
-     * for, so a stream of a retired account changes nothing. A refused credential pauses the queue
-     * as the queue's own refusal does, which shows the existing prompt to sign in again, and stops
-     * the service, as a stream with no account does.
+     * timer state, with its calls from [TimerEventConnections].
      *
      * It keeps a scope of its own on [DefaultDispatcher], not the application scope on the main
      * thread, for its reconnect delays.
      */
     single {
         val scope = CoroutineScope(SupervisorJob() + get<CoroutineDispatcher>(DefaultDispatcher))
-        val io = io()
-        val session = get<Session>()
-        val timerStates = get<AccountTimerStates>()
-        val sender = inject<ChangeSender>()
-        val follower = inject<TimerSyncFollower>()
-        TimerSync<TimerStateSource>(
-            clock = ElapsedTimerSyncClock(scope),
-            open = { source, link ->
-                scope.launch(io) { link.ended(holdTimerEvents(session.client(), source, link)) }
-            },
-            stopped = { source, end ->
-                if (end == StreamEnd.Refused && source === timerStates.source) sender.value.signInRefused()
-                follower.value.stopService()
-            },
-        )
+        val connections = TimerEventConnections(get(), get(), get(), get(), scope, io())
+        TimerSync<TimerStateSource>(ElapsedTimerSyncClock(scope), connections::open, connections::stopped)
     }
 
-    single { TimerSyncFollower(androidContext(), get(), get(), inject(), inject(), inject(), get()) }
+    single { TimerSyncFollower(androidContext(), get(), get(), get(), get(), get(), get(), get()) }
 }

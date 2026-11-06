@@ -1,13 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.signOut
-import com.github.e0ipso.tokkl.components.storeSignIn
-import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerState
 import android.app.Notification
 import android.app.NotificationManager
 import androidx.compose.ui.semantics.SemanticsActions
@@ -31,6 +23,15 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.storeSignIn
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -74,7 +75,7 @@ class PomodoroSessionNotificationServerTest {
     @Before fun prepareDisposableAccount() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         Session(context).save(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val settings = checkNotNull(app.accountSettings.state.value)
         workspace = checkNotNull(settings.defaultWorkspaceId)
         app.storeSignIn(TokklTestServer.url, account.apiToken, settings)

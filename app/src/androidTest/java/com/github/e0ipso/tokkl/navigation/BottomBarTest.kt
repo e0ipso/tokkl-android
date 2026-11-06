@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.navigation
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerState
 import android.os.SystemClock
 import android.view.KeyEvent
 import androidx.annotation.StringRes
@@ -33,12 +29,17 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.timerstate.SessionLengths
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.SessionLengths
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.runBlocking
@@ -212,7 +213,7 @@ class BottomBarTest {
 
             val stop = account.client.server.api("workspaces", account.workspaceId.toString(), "time_entries", running.toString(), "stop")
             account.client.send("PATCH", stop, buildJsonObject {}, JsonObject.serializer()).orFail("PATCH .../time_entries/<id>/stop")
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
 
             composeRule.waitUntil("the Timer item drops its state", NETWORK_TIMEOUT_MS) {
                 composeRule.onAllNodes(runningItem).fetchSemanticsNodes().isEmpty()

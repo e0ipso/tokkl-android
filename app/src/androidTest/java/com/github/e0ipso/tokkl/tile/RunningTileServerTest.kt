@@ -1,11 +1,5 @@
 package com.github.e0ipso.tokkl.tile
 
-import com.github.e0ipso.tokkl.timerState
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerControls
 import android.net.ConnectivityManager
 import android.service.quicksettings.Tile
 import androidx.test.platform.app.InstrumentationRegistry
@@ -21,25 +15,32 @@ import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
+import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TimerActionToasts
-import com.github.e0ipso.tokkl.awaitControls
-import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.reachesInternet
+import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -101,7 +102,7 @@ class RunningTileServerTest {
             Created.serializer(),
         ).orFail("POST a project").id
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         QuickSettingsTile.add()
     }
 
@@ -166,7 +167,7 @@ class RunningTileServerTest {
     @Test
     fun aTapDuringAHeldRefreshContinuesTheDisplayedEntryAtOnce() {
         account.createEntry("Continue while refresh hangs", Instant.now().minusSeconds(7_200), Instant.now().minusSeconds(3_600))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         // Without the timer event stream, as on Toggl Track, only the held refresh would show the laptop's timer.
         app.followNoTimerEvents()
         account.createEntry("Laptop timer hidden by the held reply", Instant.now().minusSeconds(1_800))
@@ -295,7 +296,7 @@ class RunningTileServerTest {
     fun longPressPausesResumesAndStopsWhilePausedOnTheServer() {
         val fields = EntryFields(description = "Long press controls", projectId = project)
         val first = account.createEntry(fields.description, Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val press = openCompactControls(fields.description)
 
         press(R.string.timer_pause_spoken)
@@ -349,7 +350,7 @@ class RunningTileServerTest {
         // asks on the first start, so this test does not rely on an earlier class having done so.
         RunningNotifications.allow()
         account.createEntry("Paused on the laptop", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertEquals("the server pauses it", TimerActionResult.Done, runBlocking { app.timerActions.pause() })
         val paused = app.awaitControls<TimerControls.Paused>("the server's Pause")
         QuickSettingsTile.expand()

@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.sync
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
 /**
@@ -11,15 +12,15 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so it reads the disk.
  */
-class DiscardedChangesStore(context: Context) {
+class DiscardedChangesStore(context: Context) : ValueStore<Int> {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
-    fun load(): Int = preferences.getInt(KEY_COUNT, 0)
+    override fun load(): Int = preferences.getInt(KEY_COUNT, 0)
 
     /** Written in the background: a lost write only shows the notice once more, or not at all. */
-    fun save(count: Int) {
-        preferences.edit { if (count > 0) putInt(KEY_COUNT, count) else remove(KEY_COUNT) }
+    override fun save(value: Int) {
+        preferences.edit { if (value > 0) putInt(KEY_COUNT, value) else remove(KEY_COUNT) }
     }
 
     /** Forgets the count at once, for a sign-out. */

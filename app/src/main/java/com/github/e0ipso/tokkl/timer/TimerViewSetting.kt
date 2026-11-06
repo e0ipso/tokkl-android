@@ -2,7 +2,10 @@ package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.session.AccountRefreshListener
+import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -34,31 +37,34 @@ data class StoredTimerView(val view: TimerView, val unsent: Boolean)
  * preferences may predate it. A server without Tokkl's preferences, such as Toggl Track, gets
  * nothing: the choice stays on the phone.
  *
- * @param initial the stored view, or null when none is stored.
- * @param save writes the view, throwing [IOException] when it cannot.
+ * @param store keeps the view on the phone. The first read loads it, on the reading thread.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
  * @param keepsTimerView true when the server keeps Tokkl's preferences.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class TimerViewSetting(
-    initial: StoredTimerView?,
-    private val save: (StoredTimerView) -> Unit,
+    private val store: ValueStore<StoredTimerView>,
     private val client: () -> TogglApiClient?,
     private val keepsTimerView: () -> Boolean,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) {
+) : AccountRefreshListener {
 
-    private val mutableView = MutableStateFlow(initial?.view ?: TimerView.LIST)
+    private val loaded by lazy { Loaded(store.load()) }
+
+    /** What the store held, and what changed since. Guarded by [lock], apart from [view]'s reads. */
+    private class Loaded(stored: StoredTimerView?) {
+        val view = MutableStateFlow(stored?.view ?: TimerView.LIST)
+
+        /** The server has not received the view on show. */
+        var unsent = stored?.unsent ?: false
+    }
 
     /** The view the Timer page shows. */
-    val view: StateFlow<TimerView> = mutableView.asStateFlow()
+    val view: StateFlow<TimerView> by lazy { loaded.view.asStateFlow() }
 
-    /** Guards [unsent], [chosenSinceRefresh] and each change of [view] with them. */
+    /** Guards [Loaded.unsent], [chosenSinceRefresh] and each change of [view] with them. */
     private val lock = Any()
-
-    /** The server has not received the view on show. */
-    private var unsent = initial?.unsent ?: false
 
     /** A tap came after the last refresh, whose preferences may predate it. */
     private var chosenSinceRefresh = false
@@ -75,14 +81,18 @@ class TimerViewSetting(
      */
     fun choose(view: TimerView) {
         synchronized(lock) {
-            mutableView.value = view
-            unsent = true
+            loaded.view.value = view
+            loaded.unsent = true
             chosenSinceRefresh = true
         }
         scope.launch(io) {
-            store()
+            persist()
             if (keepsTimerView()) send()
         }
+    }
+
+    override fun refreshed(refresh: AccountRefreshed) {
+        refreshed(refresh.preferences, keepsTimerView = refresh.capabilities.favorites)
     }
 
     /**
@@ -97,18 +107,18 @@ class TimerViewSetting(
             when {
                 // The choice stays on the phone.
                 !keepsTimerView -> {
-                    unsent = false
+                    loaded.unsent = false
                     false
                 }
-                unsent -> true
+                loaded.unsent -> true
                 tapped || preferences == null -> false
                 else -> {
-                    mutableView.value = preferences.timerView()
+                    loaded.view.value = preferences.timerView()
                     false
                 }
             }
         }
-        store()
+        persist()
         if (sendNow) scope.launch(io) { send() }
     }
 
@@ -119,8 +129,8 @@ class TimerViewSetting(
     fun forget() {
         synchronized(storing) {
             synchronized(lock) {
-                mutableView.value = TimerView.LIST
-                unsent = false
+                loaded.view.value = TimerView.LIST
+                loaded.unsent = false
                 chosenSinceRefresh = false
             }
         }
@@ -128,23 +138,23 @@ class TimerViewSetting(
 
     /** Posts the view on show while it is unsent. A failure leaves it unsent for the next refresh. */
     private suspend fun send() = sending.withLock {
-        val view = synchronized(lock) { mutableView.value.takeIf { unsent } } ?: return@withLock
+        val view = synchronized(lock) { loaded.view.value.takeIf { loaded.unsent } } ?: return@withLock
         val api = client() ?: return@withLock
         val body = buildJsonObject { put(PREFERENCE, view.preferenceValue) }
         val answer = api.send("POST", api.server.api("me", "preferences"), body, JsonObject.serializer())
         if (answer !is ApiResult.Success) return@withLock
         synchronized(lock) {
             // A tap while the request ran has its own write queued.
-            if (mutableView.value == view) unsent = false
+            if (loaded.view.value == view) loaded.unsent = false
         }
-        store()
+        persist()
     }
 
-    private fun store() {
+    private fun persist() {
         synchronized(storing) {
-            val stored = synchronized(lock) { StoredTimerView(mutableView.value, unsent) }
+            val stored = synchronized(lock) { StoredTimerView(loaded.view.value, loaded.unsent) }
             try {
-                save(stored)
+                store.save(stored)
             } catch (e: IOException) {
                 // The next change writes it again.
             }

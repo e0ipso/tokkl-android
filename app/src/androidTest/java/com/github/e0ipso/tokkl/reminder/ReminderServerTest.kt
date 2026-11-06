@@ -1,14 +1,5 @@
 package com.github.e0ipso.tokkl.reminder
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.reminder
-import com.github.e0ipso.tokkl.components.reminderSettings
-import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.signOut
-import com.github.e0ipso.tokkl.components.storeSignIn
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -21,14 +12,24 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.*
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.reminder
+import com.github.e0ipso.tokkl.components.reminderSettings
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.TimerState
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -38,8 +39,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.After
@@ -78,7 +79,7 @@ class ReminderServerTest {
     private fun signIn(url: ServerUrl) {
         ServerTrustStore(context).confirmCleartext(url); Session(context).save(url, account.apiToken)
     }
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
     private fun preferences() = account.client.get(account.client.server.api("me", "preferences"), JsonObject.serializer()).orFail("read preferences")
     private fun change(value: ReminderPreferences) = runBlocking { app.reminderSettings.change(value).join() }
     private fun seed(): Long {

@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.SessionRule
@@ -11,6 +9,9 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.Session
@@ -88,7 +89,7 @@ class AccountCacheServerTest {
             }
         }
 
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         setAirplaneMode(on = true)
         val offline = account.client.get(account.client.server.api("me"), JsonObject.serializer())
         assertTrue("requests fail in airplane mode: $offline", (offline as? ApiResult.Failure)?.error is ApiError.Network)

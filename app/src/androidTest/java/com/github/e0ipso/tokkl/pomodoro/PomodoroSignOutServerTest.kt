@@ -1,14 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.pomodoroAlarm
-import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.signOut
-import com.github.e0ipso.tokkl.components.signOutConfirmation
-import com.github.e0ipso.tokkl.components.storeSignIn
-import com.github.e0ipso.tokkl.components.timerState
 import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationManager
@@ -35,6 +26,16 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.pomodoroAlarm
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.signOutConfirmation
+import com.github.e0ipso.tokkl.components.storeSignIn
+import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.notification.RunningNotifications
@@ -80,14 +81,14 @@ class PomodoroSignOutServerTest {
     private var scenario: ActivityScenario<MainActivity>? = null
 
     @Before fun prepareDisposableAccount() {
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         suiteSettings = checkNotNull(app.accountSettings.state.value)
         account = TestAccounts.create(timezone = "Etc/UTC").also(accounts::add)
         app.storeSignIn(
             TokklTestServer.url, account.apiToken,
             suiteSettings.copy(defaultWorkspaceId = account.workspaceId, userId = account.id),
         )
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         settings = checkNotNull(app.accountSettings.state.value)
         RunningNotifications.allow()
         goOffline()

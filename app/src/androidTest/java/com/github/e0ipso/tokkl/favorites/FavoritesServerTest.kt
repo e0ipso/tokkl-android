@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.favorites
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -35,6 +31,11 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -305,7 +306,7 @@ class FavoritesServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT.toMillis()) {
                 shows(composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction() and isEnabled()))
             }
@@ -423,7 +424,7 @@ class FavoritesServerTest {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
             runBlocking { app.sender.send().join() }
         }
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     private fun serverEntries(): List<JsonObject> =

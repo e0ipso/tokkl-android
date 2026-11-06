@@ -6,6 +6,7 @@ import java.time.Instant
 import java.time.LocalDate
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 /** The fields of a time entry that the user picks, apart from its workspace and times. */
@@ -111,27 +112,24 @@ interface EntryChanges {
  * server needs. [sendAgain] lets a held change go out as it is, and [discard] drops it.
  *
  * @param io where the database writes run.
- * @param stopSpan the legacy predictor retained for older queued Stops and a short Stop's
- *   snapped zero point.
- * @param capturedStopSpan the latest server prediction; null means Trash.
+ * @param spans the spans the server stores for a Stop: [ServerSpans.capturedStop] for a Stop now,
+ *   and [ServerSpans.stopped] for a short Stop's snapped zero point.
  */
 class ChangeQueue(
     private val database: CacheDatabase,
     private val io: CoroutineContext,
     private val onQueued: () -> Unit,
     private val clock: Clock = Clock.systemUTC(),
-    private val stopSpan: (start: Instant, at: Instant, oneStep: Boolean) -> SnappedSpan = { start, at, _ ->
-        SnappedSpan(start, maxOf(at, start))
-    },
-    private val capturedStopSpan: (start: Instant, at: Instant) -> SnappedSpan? = { start, at ->
-        SnappedSpan(start, maxOf(at, start))
-    },
+    private val spans: ServerSpans = ServerSpans.Unsnapped,
 ) : EntryChanges {
 
     private val dao = database.changes()
 
     /** How many changes the server has not received (docs/PRD.md O5), held ones included. */
     val unsentCount: Flow<Int> = dao.count()
+
+    /** [unsentCount] now. */
+    suspend fun unsentNow(): Int = unsentCount.first()
 
     /** The changes the server refused, which wait for the user, oldest first (docs/PRD.md O6). */
     val held: Flow<List<PendingChange>> = dao.held()
@@ -335,9 +333,9 @@ class ChangeQueue(
 
     /** Queues the captured Stop of [running] at [at], with an Undo record for a short one. */
     private fun stopAt(running: CachedTimeEntry, at: Instant) {
-        val span = capturedStopSpan(running.start, at)
+        val span = spans.capturedStop(running.start, at)
         val stopped = if (span == null) {
-            val point = stopSpan(running.start, running.start, false).start
+            val point = spans.stopped(running.start, running.start, false).start
             running.copy(start = point, stop = point)
         } else {
             running.copy(start = span.start, stop = span.stop)

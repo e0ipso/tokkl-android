@@ -1,19 +1,13 @@
 package com.github.e0ipso.tokkl.shortcuts
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.signOut
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.widget.Toast
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleCallback
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
@@ -30,14 +24,21 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.widget.NativeWidget
+import java.io.ByteArrayOutputStream
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.io.ByteArrayOutputStream
 import java.util.regex.Pattern
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -286,7 +287,7 @@ class FavoriteShortcutsServerTest {
     private fun saveFavorites(vararg favorites: String) {
         val body = Json.parseToJsonElement("""{"favorites": [${favorites.joinToString(",")}]}""")
         web.send("POST", web.server.api("me", "preferences"), body, JsonElement.serializer()).orFail("POST /api/v9/me/preferences")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     private fun published(): List<ShortcutInfo> = manager.dynamicShortcuts.sortedBy { it.rank }

@@ -1,10 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.RequestCounter
@@ -15,6 +10,12 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -81,7 +82,7 @@ class ChangeQueueServerTest {
             .getValue("default_workspace_id").jsonPrimitive.long
         relay = HangingRelay(TokklTestServer.url)
         signIn(relay.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertNotNull("the refresh through the relay stored the settings", app.accountSettings.state.value)
     }
 
@@ -226,7 +227,7 @@ class ChangeQueueServerTest {
             },
             JsonObject.serializer(),
         ).orFail("POST a time entry").getValue("id").jsonPrimitive.long
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         relay.hang()
         val phone = EntryFields(description = "From the phone")
@@ -240,7 +241,7 @@ class ChangeQueueServerTest {
         assertEquals("with every field it sent, not merged", false, afterPhone.getValue("billable").jsonPrimitive.content.toBoolean())
 
         editOnTheWeb(entry, "From the web, later", billable = true)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val row = runBlocking { app.cache.entries.first() }.single { it.entry.id == entry }
         assertEquals("the web app's change came last and wins on the phone too", "From the web, later", row.entry.description)
         assertFalse(row.unsent)
@@ -262,12 +263,12 @@ class ChangeQueueServerTest {
             },
             JsonObject.serializer(),
         ).orFail("POST a running time entry").getValue("id").jsonPrimitive.long
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertEquals("the phone shows the web's timer", entry, runBlocking { app.cache.running.first() }?.entry?.id)
 
         // The server answers a refresh with the running entry, and the answer is slow to reach the phone.
         relay.holdAnswerTo(TIME_ENTRIES)
-        val stale = app.accountSettings.refresh()
+        val stale = app.accountRefresh.refresh()
         waitUntil("the server answered the refresh's entries") { relay.holdsAnswer }
         assertTrue(runBlocking { app.changes.stop(entry) })
         waitUntil("the sender sent the stop") { unsentCount() == 0 }
@@ -327,7 +328,7 @@ class ChangeQueueServerTest {
         // timer's start snaps, as long as that start keeps clear of a half step.
         val start = startPastAHalfStep(Duration.ofHours(1))
         val earlier = startOnTheWeb("Started on the web", start)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertEquals("the phone shows the timer", earlier, runBlocking { app.cache.running.first() }?.entry?.id)
 
         awayFromAHalfStep()
@@ -351,7 +352,7 @@ class ChangeQueueServerTest {
         // of a half step.
         val start = startPastAHalfStep(Duration.ofHours(1))
         val onPhone = startOnTheWeb("Stopped on the phone", start)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertEquals("the phone shows the timer", onPhone, runBlocking { app.cache.running.first() }?.entry?.id)
 
         relay.hang()
@@ -542,7 +543,7 @@ class ChangeQueueServerTest {
             },
             JsonObject.serializer(),
         ).orFail("POST a time entry").getValue("id").jsonPrimitive.long
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         relay.hang()
         val copy = runBlocking { app.changes.create(workspace, EntryFields(description = "Copied"), start, stop) }
         runBlocking { app.sender.send().join() }
@@ -753,7 +754,7 @@ class ChangeQueueServerTest {
             runBlocking { app.sender.send().join() }
         }
         // The drain's own refresh, so the cache shows the server's rows.
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     private fun serverId(localId: Long): Long =

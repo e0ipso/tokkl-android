@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.pomodoro.AlarmClockPomodoroScheduler
+import com.github.e0ipso.tokkl.session.AccountRefreshListener
+import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.Session
 
 /**
@@ -16,22 +16,24 @@ class TimerSyncFollower(
     private val context: Context,
     private val session: Session,
     private val timerStates: AccountTimerStates,
-    private val timerSync: Lazy<TimerSync<TimerStateSource>>,
-    private val capabilities: Lazy<CapabilitiesSource>,
-    private val sender: Lazy<ChangeSender>,
+    private val timerSync: TimerSync<TimerStateSource>,
+    private val capabilities: CapabilitiesSource,
+    private val sender: ChangeSender,
     private val alarmClock: AlarmClockPomodoroScheduler,
-) {
-
-    /** [TimerSyncService] while it runs in the foreground. The service sets it. */
-    @Volatile
-    internal var service: TimerSyncService? = null
+    private val slot: TimerSyncServiceSlot,
+) : AccountRefreshListener {
 
     /**
      * Whether the timer event stream should run: signed in to a server with the timer API, whose
      * token the server has not refused. Reads the disk.
      */
     internal fun wanted(): Boolean =
-        capabilities.value.state.value.timerState && !sender.value.signInNeeded.value && session.isSignedIn()
+        capabilities.state.value.timerState && !sender.signInNeeded.value && session.isSignedIn()
+
+    /** The first refresh after sign-in learns the capability, and any refresh can lose it. */
+    override fun refreshed(refresh: AccountRefreshed) {
+        follow()
+    }
 
     /**
      * Starts [TimerSyncService], or points the running one at the account signed in now, while
@@ -42,9 +44,9 @@ class TimerSyncFollower(
      */
     fun follow() {
         alarmClock.watchTimerSync()
-        val running = service
+        val running = slot.service
         if (!wanted()) {
-            timerSync.value.stop()
+            timerSync.stop()
             stopService()
         } else if (running != null) {
             run(running)
@@ -58,13 +60,13 @@ class TimerSyncFollower(
      * the stream is still wanted.
      */
     internal fun run(running: TimerSyncService) {
-        timerSync.value.run(timerStates.source) {
-            service === running && capabilities.value.state.value.timerState && !sender.value.signInNeeded.value
+        timerSync.run(timerStates.source) {
+            slot.service === running && capabilities.state.value.timerState && !sender.signInNeeded.value
         }
     }
 
     /** Stops [TimerSyncService] unless a newer start is on its way, which then decides for itself. */
     fun stopService() {
-        Handler(Looper.getMainLooper()).post { service?.stopLatest() }
+        slot.stop()
     }
 }

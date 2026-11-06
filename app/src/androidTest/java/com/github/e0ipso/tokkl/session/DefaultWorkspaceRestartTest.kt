@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.session
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -12,6 +9,10 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -56,7 +57,7 @@ class DefaultWorkspaceRestartTest {
         try {
             Session(context).save(TokklTestServer.url, account.apiToken)
 
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
 
             assertEquals(account.workspaceId, app.accountSettings.state.value?.defaultWorkspaceId)
             assertEquals(account.workspaceId, AccountSettingsStore(context).load()?.defaultWorkspaceId)
@@ -76,7 +77,7 @@ class DefaultWorkspaceRestartTest {
         try {
             AirplaneMode.set(true, client)
             assertEquals("read from the phone", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             assertEquals("a failed refresh keeps it", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
 
             val stored = checkNotNull(app.accountSettings.state.value?.defaultWorkspaceId)

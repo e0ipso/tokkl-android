@@ -30,6 +30,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
@@ -111,7 +112,7 @@ class SignOutServerTest {
         val now = Instant.now().truncatedTo(ChronoUnit.SECONDS)
         account.createEntry(ENTRY, now.minusSeconds(3600), now.minusSeconds(1800))
         Session(context).save(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         // A certificate pinned for another server, which sign-out has to forget too.
         ServerTrustStore(context).pinCertificate(PINNED)
     }
@@ -175,7 +176,7 @@ class SignOutServerTest {
         // The next account starts from nothing: the cache holds none of the first one's data.
         ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertNotNull("the next account's settings load", app.accountSettings.state.value)
         assertFalse(runBlocking { app.cache.entries.first() }.any { it.entry.description == ENTRY })
         assertFalse(runBlocking { app.cache.projects.first() }.any { it.name == PROJECT })

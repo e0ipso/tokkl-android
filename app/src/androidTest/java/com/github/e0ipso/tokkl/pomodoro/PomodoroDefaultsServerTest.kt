@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.pomodoroDefaults
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasClickAction
@@ -10,26 +8,28 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
-import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.openBarPage
-import com.github.e0ipso.tokkl.settings.PomodoroDefaultField
-import com.github.e0ipso.tokkl.settings.cardLabel
-import com.github.e0ipso.tokkl.settings.label
-import com.github.e0ipso.tokkl.accessibility.checkAccessibility
-import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
-
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
+import com.github.e0ipso.tokkl.MainActivity
+import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.pomodoroDefaults
+import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.settings.PomodoroDefaultField
+import com.github.e0ipso.tokkl.settings.cardLabel
+import com.github.e0ipso.tokkl.settings.label
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -216,7 +216,7 @@ class PomodoroDefaultsServerTest {
         Session(context).save(server, account.apiToken)
     }
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     private fun change(defaults: PomodoroDefaults) {
         lateinit var sending: Job

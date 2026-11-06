@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.sessionViewModels
@@ -31,7 +32,7 @@ class WidgetNavigationTest {
     private val app get() = context.applicationContext as TokklApplication
 
     @Test fun todayOpensOnColdStartAndReplacesRetainedWeeklySelection() {
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         ActivityScenario.launch<MainActivity>(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY)).use { scenario ->
             assertToday(scenario)
             lateinit var model: ReportsViewModel
@@ -53,7 +54,7 @@ class WidgetNavigationTest {
     }
 
     @Test fun pomodoroPageRouteWorksOnColdAndRetainedActivityAndFallsBackWithoutCapability() {
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertTrue("the pinned server supports Timer state", app.capabilities.state.value.timerState)
         ActivityScenario.launch<MainActivity>(WidgetNavigation.intent(context, WidgetNavigation.OPEN_POMODORO)).use { scenario ->
             awaitPomodoroPage()

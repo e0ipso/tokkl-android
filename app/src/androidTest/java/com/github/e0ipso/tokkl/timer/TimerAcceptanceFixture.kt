@@ -1,5 +1,9 @@
 package com.github.e0ipso.tokkl.timer
 
+import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.cache.*
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
@@ -7,9 +11,6 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
-import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.*
-import com.github.e0ipso.tokkl.cache.*
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
@@ -43,7 +44,7 @@ internal class TimerAcceptanceFixture {
             finally { SessionRule.signOut() }
         }
     }
-    fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
     fun rows(): List<CachedTimeEntry> = runBlocking { app.cache.timeEntries.first() }
 
     /** What every timer surface shows: the cache's running entry and the server's pause chain. */
@@ -56,7 +57,7 @@ internal class TimerAcceptanceFixture {
      */
     fun startOnServer(description: String, seconds: Long = 600): TimerControls.Running {
         account.createEntry(description, Instant.now().minusSeconds(seconds))
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
         return shown() as TimerControls.Running
     }
     fun start(description: String = "Focused work"): TimerControls.Running {
@@ -87,6 +88,6 @@ internal class TimerAcceptanceFixture {
         assertEquals("all local mutations sent", 0, runBlocking { app.changes.unsentCount.first() })
         // A send ends with a refresh of its own that nobody waits for. Join that one, so a later
         // request count does not catch it.
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
     }
 }

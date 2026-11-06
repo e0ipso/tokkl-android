@@ -14,7 +14,18 @@ class ForegroundRefreshTest {
 
     private var refreshes = 0
     private var reconnects = 0
-    private val foreground = ForegroundRefresh(refresh = { refreshes++ }, refreshOnReconnect = { refreshes++; reconnects++ })
+    private val foreground = ForegroundRefresh(
+        object : ForegroundReads {
+            override fun refresh() {
+                refreshes++
+            }
+
+            override fun refreshOnReconnect() {
+                refreshes++
+                reconnects++
+            }
+        },
+    )
 
     @Test
     fun eachTripToTheForegroundRefreshesOnce() {

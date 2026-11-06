@@ -49,6 +49,7 @@ import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.cache.ShortStopUndo
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
@@ -334,7 +335,7 @@ class TimerServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT.toMillis()) { shows(startButton()) }
             if (diagnose) diagnoseTimer(scenario, steps) else steps()
         }
@@ -570,7 +571,7 @@ class TimerServerTest {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
             runBlocking { app.sender.send().join() }
         }
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
     }
 
     private fun serverEntries(): List<JsonObject> =

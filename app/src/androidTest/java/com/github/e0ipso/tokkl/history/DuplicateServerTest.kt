@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.history
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
@@ -24,13 +21,17 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -128,7 +129,7 @@ class DuplicateServerTest {
         ).orFail("POST an entry").getValue("id").jsonPrimitive.long
         // The server snaps the times to the account's resolution, and the copy takes them as stored.
         val stored = web.get(web.server.api("me", "time_entries", source.toString()), JsonObject.serializer()).orFail("GET the source")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val unsent = context.getString(R.string.history_unsent)
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -174,7 +175,7 @@ class DuplicateServerTest {
     fun aNoTimeEntryDuplicatesAsANoTimeEntryAndItsMenuHasNoSplit() {
         val day = LocalDate.now(MADRID).minusDays(1)
         val source = account.createNoTimeEntry("Team offsite", day, 7_200)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)

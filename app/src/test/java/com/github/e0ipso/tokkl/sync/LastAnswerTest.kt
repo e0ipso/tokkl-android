@@ -1,12 +1,13 @@
 package com.github.e0ipso.tokkl.sync
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
 
 class LastAnswerTest {
 
@@ -20,7 +21,7 @@ class LastAnswerTest {
 
     @Test
     fun eachAnswerTakesTheClockTimeAndSavesIt() {
-        val answer = LastAnswer(initial = Instant.parse("2026-10-15T20:00:00Z"), save = { saved += it }, clock = clock)
+        val answer = LastAnswer(InMemoryValueStore(Instant.parse("2026-10-15T20:00:00Z")) { saved += it }, clock = clock)
         assertEquals(Instant.parse("2026-10-15T20:00:00Z"), answer.state.value)
 
         answer.succeeded()
@@ -33,7 +34,7 @@ class LastAnswerTest {
 
     @Test
     fun aTimeNeverGoesBack() {
-        val answer = LastAnswer(initial = Instant.parse("2026-10-16T09:00:00Z"), save = { saved += it }, clock = clock)
+        val answer = LastAnswer(InMemoryValueStore(Instant.parse("2026-10-16T09:00:00Z")) { saved += it }, clock = clock)
 
         answer.succeeded()
 
@@ -43,7 +44,7 @@ class LastAnswerTest {
 
     @Test
     fun forgetClearsTheTimeAndTheFile() {
-        val answer = LastAnswer(initial = Instant.parse("2026-10-15T20:00:00Z"), save = { saved += it }, clock = clock)
+        val answer = LastAnswer(InMemoryValueStore(Instant.parse("2026-10-15T20:00:00Z")) { saved += it }, clock = clock)
 
         answer.forget()
 

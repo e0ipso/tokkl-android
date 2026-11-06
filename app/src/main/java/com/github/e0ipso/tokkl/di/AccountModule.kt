@@ -1,40 +1,41 @@
 package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.MainActivityForeground
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
+import com.github.e0ipso.tokkl.session.AccountRefresh
+import com.github.e0ipso.tokkl.session.AccountRefreshListener
+import com.github.e0ipso.tokkl.session.AccountRefreshPipeline
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.AppEvents
+import com.github.e0ipso.tokkl.session.ForegroundReads
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
+import com.github.e0ipso.tokkl.session.SendThenRefresh
+import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.session.SignOutSteps
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
-import com.github.e0ipso.tokkl.settings.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
-import com.github.e0ipso.tokkl.settings.syncApplicationNightMode
+import com.github.e0ipso.tokkl.settings.themeSettingsWithNightMode
 import com.github.e0ipso.tokkl.signin.AccountSessionWriter
 import com.github.e0ipso.tokkl.signin.SessionWriter
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** The account's settings and capabilities, the theme, trust, sign-in and sign-out. */
+/** The account's settings, its refresh and capabilities, the theme, trust, sign-in and sign-out. */
 internal val accountModule = module {
     single { AccountSettingsStore(androidContext()) }
     single { CapabilitiesStore(androidContext()) }
@@ -43,76 +44,52 @@ internal val accountModule = module {
     single { SignInCooldownStore(androidContext()) }
 
     /**
-     * Loaded on first use, which is MainActivity's onCreate, on the main thread. The first frame
-     * has to know the theme, or launch would show the other mode's colours first. Android learns
-     * the chosen mode too, for the starting window of the next launch.
+     * Loaded on first use, which is MainActivity's onCreate, on the main thread, so the first frame
+     * knows the theme.
      */
-    single {
-        val store = get<ThemeSettingsStore>()
-        val scope = get<CoroutineScope>()
-        ThemeSettingsRepository(initial = store.load(), save = store::save, scope = scope, io = io()).also { themes ->
-            syncApplicationNightMode(androidContext(), themes.state.map { it.mode }, scope, io())
-        }
-    }
+    single { themeSettingsWithNightMode(androidContext(), get(), get(), io()) }
+
+    /** The account settings. The first read loads them from a file of six short values. */
+    single { AccountSettingsSource(get<AccountSettingsStore>()) }
+
+    /** What the server offers. The first read loads it from a file of a few flags. */
+    single { CapabilitiesSource(get<CapabilitiesStore>()) }
+
+    single { AccountRefreshRequests() }
 
     /**
-     * Loaded on first use, which reads the stored settings from disk. That is usually
-     * MainActivity's onStart on the main thread, and the file holds six short values. Each
-     * refresh refreshes the capabilities and the cache too, with the same `GET /api/v9/me`, and
-     * the cache takes the favorites, the Timer view its view and the Pomodoro defaults their
-     * lengths from the settings' `GET /api/v9/me/preferences`. Then the [ChangeSender] sends the
-     * queue, since the server has just answered.
+     * Each refresh refreshes the capabilities and the cache too, with the same `GET /api/v9/me`.
+     * Then, in this order, the Timer view, the Pomodoro defaults and the reminder take their
+     * preferences from the settings' `GET /api/v9/me/preferences`, the [ChangeSender] sends the
+     * queue, since the server has just answered, and the timer sync follows the capabilities.
      */
     single {
-        val store = get<AccountSettingsStore>()
-        val capabilities = inject<CapabilitiesSource>()
-        val timerStates = inject<AccountTimerStates>()
-        val cache = inject<AccountCache>()
-        val timerView = inject<TimerViewSetting>()
-        val pomodoroDefaults = inject<PomodoroDefaultsSetting>()
-        val reminderSettings = inject<ReminderSetting>()
-        val sender = inject<ChangeSender>()
-        val timerSync = inject<TimerSyncFollower>()
-        AccountSettingsSource(
-            initial = store.load(),
-            save = store::save,
-            client = get<Session>()::client,
-            scope = get(),
-            io = io(),
-            onRefresh = { api, me, preferences ->
-                val flags = capabilities.value.refresh(api, me, timerStates.value.source)
-                cache.value.refresh(api, me, preferences, flags, onAllDayMissing = capabilities.value::allDayMissing)
-                timerView.value.refreshed(preferences, keepsTimerView = flags.favorites)
-                pomodoroDefaults.value.refreshed(preferences, keepsPreferences = flags.favorites)
-                reminderSettings.value.refreshed(preferences, tokkl = flags.favorites)
-                sender.value.send()
-                // The first refresh after sign-in learns the capability, and any refresh can lose it.
-                timerSync.value.follow()
-            },
+        AccountRefreshPipeline(
+            capabilities = get(),
+            timerStates = get(),
+            cache = get(),
+            listener = AccountRefreshListener.inOrder(
+                listOf(
+                    get<TimerViewSetting>(),
+                    get<PomodoroDefaultsSetting>(),
+                    get<ReminderSetting>(),
+                    get<ChangeSender>(),
+                    get<TimerSyncFollower>(),
+                ),
+            ),
         )
     }
+
+    single { AccountRefresh(client = get<Session>()::client, settings = get(), scope = get(), io = io(), steps = get<AccountRefreshPipeline>()) }
 
     /**
      * Refreshes the account, and with it the running entry and the cache, each time the app comes
      * to the foreground and each time the network comes back while it is there.
-     * [MainActivityForeground] reports MainActivity's starts, stops and network changes. It also tries queued changes independently
-     * of the refresh, so an expired token still asks for sign-in when `/me` fails on opening the
-     * app with a saved queue. Nothing refreshes on a timer.
+     * [MainActivityForeground] reports MainActivity's starts, stops and network changes. Nothing
+     * refreshes on a timer.
      */
-    single {
-        val sender = inject<ChangeSender>()
-        val accountSettings = inject<AccountSettingsSource>()
-        ForegroundRefresh(
-            refresh = {
-                sender.value.send()
-                accountSettings.value.refresh()
-            },
-            refreshOnReconnect = {
-                sender.value.send()
-                accountSettings.value.refreshOnReconnect()
-            },
-        )
-    }
+    single<ForegroundReads> { SendThenRefresh(get(), get()) }
+    single { ForegroundRefresh(get()) }
 
     /** MainActivity's starts and stops and the network's reports, for the screens' view models. */
     single { AppEvents() }
@@ -131,24 +108,15 @@ internal val accountModule = module {
         )
     }
 
-    /** What the server offers. Loaded on first use from a file of four flags. */
-    single {
-        val store = get<CapabilitiesStore>()
-        CapabilitiesSource(initial = store.load(), save = store::save)
-    }
-
     /**
-     * The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. Loaded on
-     * first use, which reads a file of two values: the Timer page's first frame on the main thread.
+     * The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. The first
+     * read loads it from a file of two values: the Timer page's first frame on the main thread.
      */
     single {
-        val store = get<TimerViewStore>()
-        val capabilities = inject<CapabilitiesSource>()
         TimerViewSetting(
-            initial = store.load(),
-            save = store::save,
+            store = get<TimerViewStore>(),
             client = get<Session>()::client,
-            keepsTimerView = { capabilities.value.state.value.favorites },
+            keepsTimerView = get<CapabilitiesSource>()::keepsPreferences,
             scope = get(),
             io = io(),
         )
@@ -159,17 +127,9 @@ internal val accountModule = module {
      * navigation host prompts about. Accepting one refreshes the account settings, the request
      * that ran into it.
      */
-    single {
-        val accountSettings = inject<AccountSettingsSource>()
-        SessionTrust(
-            trust = get(),
-            retry = { accountSettings.value.refresh() },
-            scope = get(),
-            io = io(),
-        )
-    }
+    single { SessionTrust(trust = get<ServerTrustStore>(), retry = get<AccountRefreshRequests>()::refresh, scope = get(), io = io()) }
 
-    single { AccountSessionWriter(inject(), get(), get(), get(), inject(), get()) } bind SessionWriter::class
+    single { AccountSessionWriter(get(), get(), get(), get(), get(), get()) } bind SessionWriter::class
 
     single {
         SignOutSteps(
@@ -177,23 +137,23 @@ internal val accountModule = module {
             session = get(),
             timerStates = get(),
             pomodoroAlarm = get(),
-            timerSync = inject(),
+            timerSync = get(),
             timerSyncFollower = get(),
             pomodoroNotification = get(),
-            accountSettings = inject(),
-            sender = inject(),
-            cache = inject(),
-            reminder = inject(),
-            reminderSettings = inject(),
-            runningNotification = inject(),
-            favoriteShortcuts = inject(),
-            capabilities = inject(),
+            accountRefresh = get(),
+            sender = get(),
+            cache = get(),
+            reminder = get(),
+            reminderSettings = get(),
+            runningNotification = get(),
+            favoriteShortcuts = get(),
+            capabilities = get(),
             alarmClock = get(),
-            timerView = inject(),
-            pomodoroDefaults = inject(),
+            timerView = get(),
+            pomodoroDefaults = get(),
             sessionTrust = get(),
-            lastAnswer = inject(),
-            discarded = inject(),
+            lastAnswer = get(),
+            discarded = get(),
             stores = SignOutSteps.Stores(
                 timerState = get(),
                 pomodoroWidgetFields = get(),
@@ -212,8 +172,5 @@ internal val accountModule = module {
     single { SignOut(steps = get<SignOutSteps>().steps, io = io()) }
 
     /** The Settings page's sign-out button and its warning about unsent changes. */
-    single {
-        val changes = inject<ChangeQueue>()
-        SignOutConfirmation(unsentCount = { changes.value.unsentCount.first() }, clear = get<SignOut>()::run, scope = get())
-    }
+    single { SignOutConfirmation(unsentCount = get<ChangeQueue>()::unsentNow, clear = get<SignOut>()::run, scope = get()) }
 }

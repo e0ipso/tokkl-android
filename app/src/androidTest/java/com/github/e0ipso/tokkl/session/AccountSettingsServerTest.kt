@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.session
 
-import com.github.e0ipso.tokkl.components.accountSettings
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
@@ -9,6 +8,8 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.orFail
 import java.time.DayOfWeek
 import java.time.ZoneId
@@ -50,9 +51,10 @@ class AccountSettingsServerTest {
     fun refreshReadsTheSettingsFromTheServerAndKeepsThem() {
         // Tokkl 1.5.0 stores the name Intl resolves, which accepts it in any case.
         putMe(timezone = "america/sao_paulo", beginningOfWeek = 0)
-        val source = (context.applicationContext as TokklApplication).accountSettings
+        val app = context.applicationContext as TokklApplication
+        val source = app.accountSettings
 
-        runBlocking { source.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         // Tokkl's instance time resolution is 5 minutes unless an admin changes it.
         val expected = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = serverId("default_workspace_id"), userId = serverId("id"))

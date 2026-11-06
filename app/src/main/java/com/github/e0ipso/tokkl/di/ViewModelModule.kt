@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.reports.FilterOptions
 import com.github.e0ipso.tokkl.reports.ReportExportController
 import com.github.e0ipso.tokkl.reports.ReportExportFiles
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
+import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.AppEvents
@@ -72,7 +73,6 @@ internal val viewModelModule = module {
     viewModel { params ->
         val servers = get<ServerConfigStore>()
         val accountSettings = get<AccountSettingsStore>()
-        val accountSettingsSource = inject<AccountSettingsSource>()
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
             signIn = SignIn(
@@ -91,7 +91,7 @@ internal val viewModelModule = module {
             io = io(),
             clock = System::currentTimeMillis,
             // A sign-in loads the account settings and the cache, as coming to the foreground does.
-            onSignedIn = { accountSettingsSource.value.refresh() },
+            onSignedIn = get<AccountRefresh>()::refresh,
         ).also { model -> params.getOrNull<SignInAgain>()?.let(model::signInAgain) }
     }
     viewModel {
@@ -157,7 +157,7 @@ internal val viewModelModule = module {
     }
     viewModel { params ->
         val cache = get<AccountCache>()
-        val capabilities = inject<CapabilitiesSource>()
+        val capabilities = get<CapabilitiesSource>()
         CalendarViewModel(
             entries = cache.entries,
             projects = cache.projects,
@@ -168,7 +168,7 @@ internal val viewModelModule = module {
             scope = viewModelCoroutineScope(),
             io = io(),
             // The capabilities load from disk on first read, off the main thread.
-            allDayOffered = flow { emitAll(capabilities.value.state) }.map { it.allDay == true }.distinctUntilChanged(),
+            allDayOffered = flow { emitAll(capabilities.state) }.map { it.allDay == true }.distinctUntilChanged(),
             overrides = params.overrides(),
             appEvents = get<AppEvents>().events,
         )
@@ -179,7 +179,7 @@ internal val viewModelModule = module {
         ProjectsViewModel(
             client = get<Session>()::client,
             workspaceId = { accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { accountSettings.refreshAfterChange() },
+            refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = viewModelCoroutineScope(),
             io = io(),
             cachedProjects = cache.projects,
@@ -191,7 +191,7 @@ internal val viewModelModule = module {
         ClientsViewModel(
             client = get<Session>()::client,
             workspaceId = { accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { accountSettings.refreshAfterChange() },
+            refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = viewModelCoroutineScope(),
             io = io(),
             cachedClients = get<AccountCache>().clients,
@@ -202,7 +202,7 @@ internal val viewModelModule = module {
         TagsViewModel(
             client = get<Session>()::client,
             workspaceId = { accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { accountSettings.refreshAfterChange() },
+            refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = viewModelCoroutineScope(),
             io = io(),
             cachedTags = get<AccountCache>().tags,
@@ -212,7 +212,7 @@ internal val viewModelModule = module {
         val accountSettings = get<AccountSettingsSource>()
         TrashViewModel(
             client = get<Session>()::client,
-            refreshCache = { accountSettings.refreshAfterChange() },
+            refreshCache = get<AccountRefresh>()::refreshAfterChange,
             trashMissing = get<CapabilitiesSource>()::trashMissing,
             scope = viewModelCoroutineScope(),
             io = io(),

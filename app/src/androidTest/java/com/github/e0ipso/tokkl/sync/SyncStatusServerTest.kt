@@ -1,19 +1,14 @@
 package com.github.e0ipso.tokkl.sync
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.discarded
-import com.github.e0ipso.tokkl.components.lastAnswer
-import com.github.e0ipso.tokkl.components.sender
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -25,20 +20,29 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import kotlinx.coroutines.Dispatchers
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.orFail
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.JsonObject
-import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.discarded
+import com.github.e0ipso.tokkl.components.lastAnswer
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.followNoTimerEvents
+import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.formatTime
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonObject
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -47,9 +51,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * The status element above the bottom bar against the real Tokkl container (docs/PRD.md O5).
@@ -98,7 +99,7 @@ class SyncStatusServerTest {
     fun theStatusCountsOfflineChangesAndGoesOnceTheAppHasSentThem() {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT_MS) { shows(startButton()) }
             val answered = checkNotNull(app.lastAnswer.state.value) { "the refresh's answers set no time" }
             assertTrue("the status shows with nothing queued", !shows(hasText(unsent(1))))
@@ -124,7 +125,7 @@ class SyncStatusServerTest {
     fun theNeedsAttentionLinkOpensTheReasonAndItsEditResendAndDiscardActions() {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             val start = Instant.now().minusSeconds(3600)
             runBlocking {
                 app.changes.create(account.workspaceId, EntryFields(description = "Invalid draft"), start, start.plusSeconds(1000 * 3600))
@@ -160,7 +161,7 @@ class SyncStatusServerTest {
         val id = account.createEntry("Deleted on the web", start, start.plusSeconds(1800))
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             account.deleteEntry(id)
             assertTrue(runBlocking { app.changes.update(id, EntryFields(description = "Offline edit"), start, start.plusSeconds(1800)) })
             awaitText(context.resources.getQuantityString(R.plurals.sync_discarded, 1, 1))
@@ -173,7 +174,7 @@ class SyncStatusServerTest {
     @Test
     fun openingTheAppWithAnExpiredTokenAndSavedChangesAsksForSignIn() {
         runBlocking {
-            app.accountSettings.refresh().join()
+            app.accountRefresh.refresh().join()
             app.sender.send().join()
         }
         // The server ends the timer event stream when the token is reset. The stream's refused
@@ -207,7 +208,7 @@ class SyncStatusServerTest {
     fun aResetTokenPromptsForSignInAndTheNewTokenSendsTheWaitingChanges() {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             val workspace = account.workspaceId
             val newToken = direct.send("POST", direct.server.api("me", "reset_token"), JsonObject(emptyMap()), String.serializer())
                 .orFail("POST /me/reset_token")

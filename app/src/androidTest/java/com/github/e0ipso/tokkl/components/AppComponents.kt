@@ -32,6 +32,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSync
+import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.SignOut
@@ -47,6 +48,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.timerstate.TimerSyncService
+import com.github.e0ipso.tokkl.timerstate.TimerSyncServiceSlot
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
@@ -69,6 +71,7 @@ val TokklApplication.cache: AccountCache get() = component()
 val TokklApplication.changes: ChangeQueue get() = component()
 val TokklApplication.sender: ChangeSender get() = component()
 val TokklApplication.accountSettings: AccountSettingsSource get() = component()
+val TokklApplication.accountRefresh: AccountRefresh get() = component()
 val TokklApplication.capabilities: CapabilitiesSource get() = component()
 val TokklApplication.timerView: TimerViewSetting get() = component()
 val TokklApplication.themeSettings: ThemeSettingsRepository get() = component()
@@ -97,7 +100,7 @@ internal val TokklApplication.pomodoroSessionNotification: PomodoroSessionNotifi
     get() = component<AccountPomodoroNotification>().current
 
 /** [TimerSyncService] while it runs in the foreground. */
-val TokklApplication.timerSyncService: TimerSyncService? get() = component<TimerSyncFollower>().service
+val TokklApplication.timerSyncService: TimerSyncService? get() = component<TimerSyncServiceSlot>().service
 
 /**
  * The clock the widget reads on each event. Setting it replaces the app's [WidgetClock]

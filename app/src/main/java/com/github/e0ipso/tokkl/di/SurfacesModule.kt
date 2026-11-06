@@ -96,7 +96,7 @@ internal val surfacesModule = module {
         )
     }
 
-    single { PomodoroWidgetStateSource(get(), get(), get(), get(), get(), inject(), inject(), inject(), get(), io()) }
+    single { PomodoroWidgetStateSource(get(), get(), get(), get(), get(), get(), get(), get(), get(), io()) }
     single(PomodoroWidgetQualifier) { WidgetStore(androidContext(), keyName = WidgetStore.POMODORO_KEY) }
 
     /** The Pomodoro widget's redraws. Its key is independent of the Timer widget. */
@@ -122,9 +122,9 @@ internal val surfacesModule = module {
         val context = androidContext()
         val launcher = LauncherShortcuts(context)
         val cache = get<AccountCache>()
-        val capabilities = inject<CapabilitiesSource>()
+        val capabilities = get<CapabilitiesSource>()
         FavoriteShortcutSync(
-            shortcuts = combine(flow { emitAll(capabilities.value.state) }, cache.favorites, cache.projects) { flags, favorites, projects ->
+            shortcuts = combine(flow { emitAll(capabilities.state) }, cache.favorites, cache.projects) { flags, favorites, projects ->
                 favoriteShortcuts(flags.favorites, favorites, projects, launcher.limit, favoriteNames(context))
             },
             published = launcher::published,
@@ -134,14 +134,14 @@ internal val surfacesModule = module {
         )
     }
 
-    single { TileRefresh(androidContext(), get(), inject(), get(), io()) }
+    single { TileRefresh(androidContext(), get(), get(), get(), io()) }
 
     single { ReminderStore(androidContext()) }
 
     /** Shared reminder settings where both keys exist, account-local on older servers. */
     single {
         val store = get<ReminderStore>()
-        ReminderSetting(store.load(), store::save, get<Session>()::client, get(), io())
+        ReminderSetting(store, get<Session>()::client, get(), io())
     }
 
     /**
@@ -154,15 +154,15 @@ internal val surfacesModule = module {
         val notifier = ReminderNotifier(context)
         val session = get<Session>()
         val changes = get<ChangeQueue>()
-        val cache = inject<AccountCache>()
-        val settings = inject<ReminderSetting>()
-        val controls = inject<TimerControlsSource>()
-        val surfaceActions = inject<TimerSurfaceActions>()
+        val cache = get<AccountCache>()
+        val settings = get<ReminderSetting>()
+        val controls = get<TimerControlsSource>()
+        val surfaceActions = get<TimerSurfaceActions>()
         suspend fun runningNow(entryId: Long) =
-            (controls.value.controls.first() as? TimerControls.Running)?.takeIf { it.entry.id == entryId }
+            (controls.controls.first() as? TimerControls.Running)?.takeIf { it.entry.id == entryId }
         ReminderSync(
             latest = {
-                ReminderInput(cache.value.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.value.state.value)
+                ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.state.value)
             },
             currentId = changes::currentId,
             load = store::loadTimer,
@@ -173,7 +173,7 @@ internal val surfacesModule = module {
             remove = notifier::remove,
             stop = { changes.stop(it) },
             pause = { entryId ->
-                runningNow(entryId)?.let { surfaceActions.value.tap(TimerSurfaceAction.Pause, it.target) as? SurfaceTap.Request }
+                runningNow(entryId)?.let { surfaceActions.tap(TimerSurfaceAction.Pause, it.target) as? SurfaceTap.Request }
             },
         )
     }

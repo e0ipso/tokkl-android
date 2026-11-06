@@ -1,50 +1,43 @@
 package com.github.e0ipso.tokkl.entry
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.hasScrollAction
-import androidx.compose.ui.test.isSelectable
-import androidx.compose.ui.test.performImeAction
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import com.github.e0ipso.tokkl.TokklNavHost
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import androidx.annotation.StringRes
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -53,18 +46,25 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.cache.toCached
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import kotlinx.serialization.json.Json
-import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.time.SnappedSpan
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -77,11 +77,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
@@ -444,7 +445,7 @@ class EntryFormServerTest {
         )
         for ((index, case) in cases.withIndex()) {
             val changed = web.send("PUT", web.server.api("me"), buildJsonObject { put("timezone", case[0]) }, JsonObject.serializer()).orFail("set account zone")
-            runBlocking { app.accountSettings.refreshAfterChange().join() }
+            runBlocking { app.accountRefresh.refreshAfterChange().join() }
             assertEquals("the refreshed account zone", changed.string("timezone"), app.accountSettings.state.value!!.timeZone)
             val time = app.accountSettings.state.value!!.time()!!
             val date = LocalDate.parse(case[1])
@@ -534,7 +535,7 @@ class EntryFormServerTest {
         assertEquals("the fixture snaps across midnight", day.plusDays(1).atStartOfDay(MADRID).toInstant(), java.time.OffsetDateTime.parse(legacy.string("start")).toInstant())
         // A refresh already in flight may have read before the restore. Read after it so
         // model.edit opens the restored entry rather than observing a missing cache row.
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
         assertTrue("the restored fixture is in the cache", runBlocking { app.cache.entries.first() }.any { it.entry.id == id })
         withModel { model ->
             model.edit(id)
@@ -623,7 +624,7 @@ class EntryFormServerTest {
         val url = admin.server.app("admin", "settings")
         if (originalResolution == null) originalResolution = admin.get(url, JsonObject.serializer()).orFail("GET settings").getValue("time_resolution_minutes").jsonPrimitive.long
         admin.send("PUT", url, buildJsonObject { put("time_resolution_minutes", minutes) }, JsonObject.serializer()).orFail("set resolution")
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
     }
 
     /** The actual form and Room queue, with collection and handlers on the main dispatcher. */
@@ -643,7 +644,7 @@ class EntryFormServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             steps(scenario)
         }
     }
@@ -668,7 +669,7 @@ class EntryFormServerTest {
             }
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The host opens signed in, with no sign-in or foreground refresh, so the test fills the cache.
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             steps()
         }
     }
@@ -943,7 +944,7 @@ class EntryFormServerTest {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
             runBlocking { app.sender.send().join() }
         }
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     private fun at(date: LocalDate, hour: Int, minute: Int): Instant = ZonedDateTime.of(date, LocalTime.of(hour, minute), MADRID).toInstant()

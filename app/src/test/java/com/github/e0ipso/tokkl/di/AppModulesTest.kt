@@ -4,20 +4,21 @@ import android.app.Application
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ServerTrust
-import com.github.e0ipso.tokkl.cache.ChangeStore
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.ServerSpans
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRinging
-import com.github.e0ipso.tokkl.pomodoro.StoredPomodoroDefaults
-import com.github.e0ipso.tokkl.reminder.StoredReminderPreferences
 import com.github.e0ipso.tokkl.reports.ReportExportController
+import com.github.e0ipso.tokkl.session.AccountRefreshListener
+import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.SignOutSteps
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldowns
+import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timer.TapTrace
-import com.github.e0ipso.tokkl.timer.StoredTimerView
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerSyncClock
+import java.io.File
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -54,11 +55,12 @@ class AppModulesTest {
                 Flow::class,
                 StateFlow::class,
                 Instant::class,
-                StoredTimerView::class,
-                StoredPomodoroDefaults::class,
-                StoredReminderPreferences::class,
                 SignOutSteps.Stores::class,
-                ChangeStore::class,
+                File::class,
+                ValueStore::class,
+                AccountRefreshListener::class,
+                AccountRefreshSteps::class,
+                ServerSpans::class,
                 TimerSyncClock::class,
                 ServerTrust::class,
                 EntryChanges::class,

@@ -11,6 +11,8 @@ import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSync
+import com.github.e0ipso.tokkl.session.AccountRefresh
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutSync
@@ -32,6 +34,8 @@ internal class AppStartup(
     private val context: Context,
     private val servers: ServerConfigStore,
     private val trust: ServerTrustStore,
+    private val refreshRequests: AccountRefreshRequests,
+    private val accountRefresh: Lazy<AccountRefresh>,
     private val runningNotification: Lazy<RunningNotificationSync>,
     private val held: Lazy<HeldTimerFlows>,
     private val capabilities: Lazy<CapabilitiesSource>,
@@ -52,6 +56,8 @@ internal class AppStartup(
         ConfiguredServer.readStoredFrom(servers::load)
         // A plain http:// server gets requests only once the user has confirmed it.
         ConfiguredTrust.readFrom(trust)
+        // The refreshes that the refresh's own components ask for, from any process.
+        scope.launch(io) { refreshRequests.forward(accountRefresh) }
         // Reads the cache off the main thread, and posts or removes nothing for the entry the
         // notification already followed, so opening the app never brings back a dismissed one.
         runningNotification.value.start()

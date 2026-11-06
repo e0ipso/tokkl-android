@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.HangingRelay
@@ -11,6 +8,10 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -89,7 +90,7 @@ class ChangeQueueLostAnswerRestartTest {
             assertEquals("the create survived", 1, runBlocking { app.changes.unsentCount.first() })
 
             signIn(TokklTestServer.url, account.apiToken)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             val deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos()
             while (runBlocking { app.changes.unsentCount.first() } > 0) {
                 check(System.nanoTime() < deadline) { "the queue was not sent" }

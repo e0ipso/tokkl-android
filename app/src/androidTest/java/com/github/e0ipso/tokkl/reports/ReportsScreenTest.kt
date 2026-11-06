@@ -29,6 +29,7 @@ import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.finishWithin
@@ -102,7 +103,7 @@ class ReportsScreenTest {
         account = TestAccounts.create(timezone = ZONE)
         seed = Seed(account.client)
         Session(context).save(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val settings = settings()
         assertEquals(ZONE, settings.timeZone)
         assertEquals(DayOfWeek.WEDNESDAY, settings.beginningOfWeek)

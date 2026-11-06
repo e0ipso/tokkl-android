@@ -2,12 +2,16 @@ package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.session.AccountRefreshListener
+import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -37,74 +41,84 @@ data class StoredReminderPreferences(val preferences: ReminderPreferences, val u
  * Only these keys go to POST /me/preferences. A generation prevents an old send persisting after sign-out.
  */
 class ReminderSetting(
-    initial: StoredReminderPreferences?,
-    private val save: (StoredReminderPreferences) -> Unit,
+    private val store: ValueStore<StoredReminderPreferences>,
     private val client: () -> TogglApiClient?,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) {
-    private val mutable = MutableStateFlow(initial?.preferences?.clamped() ?: ReminderPreferences())
-    val state = mutable.asStateFlow()
+) : AccountRefreshListener {
+    private val loaded by lazy { Loaded(store.load()) }
+
+    /** What the store held, and what changed since. Guarded by [lock], apart from [state]'s reads. */
+    private class Loaded(stored: StoredReminderPreferences?) {
+        val state = MutableStateFlow(stored?.preferences?.clamped() ?: ReminderPreferences())
+        var shared = stored?.shared ?: false
+        var unsent = stored?.unsent ?: false
+    }
+
+    /** The preferences the reminder follows, loaded from the store on the first read. */
+    val state: StateFlow<ReminderPreferences> by lazy { loaded.state.asStateFlow() }
     private val lock = Any()
     private val sending = Mutex()
-    private var shared = initial?.shared ?: false
-    private var unsent = initial?.unsent ?: false
     private var changed = false
     private var generation = 0L
 
     fun change(preferences: ReminderPreferences): Job {
         val expected = synchronized(lock) {
-            mutable.value = preferences.clamped()
-            unsent = shared
+            loaded.state.value = preferences.clamped()
+            loaded.unsent = loaded.shared
             changed = true
             generation
         }
         return scope.launch(io) {
-            store(expected)
+            persist(expected)
             send(expected)
         }
+    }
+
+    override fun refreshed(refresh: AccountRefreshed) {
+        refreshed(refresh.preferences, tokkl = refresh.capabilities.favorites)
     }
 
     /** Receives the existing account refresh, without another GET. Blocks on disk I/O. */
     fun refreshed(preferences: MePreferences?, tokkl: Boolean): Job {
         val expected = synchronized(lock) {
-            val wasShared = shared
-            if (!tokkl) shared = false
-            else if (preferences != null) shared = preferences.body.keys.containsAll(
+            val wasShared = loaded.shared
+            if (!tokkl) loaded.shared = false
+            else if (preferences != null) loaded.shared = preferences.body.keys.containsAll(
                 listOf(ReminderPreferences.ENABLED_KEY, ReminderPreferences.HOURS_KEY),
             )
-            if (shared && !wasShared && changed) unsent = true
-            if (!shared) unsent = false
-            if (shared && !unsent && !changed && preferences != null) mutable.value = preferences.reminderPreferences()
+            if (loaded.shared && !wasShared && changed) loaded.unsent = true
+            if (!loaded.shared) loaded.unsent = false
+            if (loaded.shared && !loaded.unsent && !changed && preferences != null) loaded.state.value = preferences.reminderPreferences()
             changed = false
             generation
         }
-        store(expected)
+        persist(expected)
         return scope.launch(io) { send(expected) }
     }
 
     fun forget() = synchronized(lock) {
         generation++
-        mutable.value = ReminderPreferences()
-        shared = false
-        unsent = false
+        loaded.state.value = ReminderPreferences()
+        loaded.shared = false
+        loaded.unsent = false
         changed = false
     }
 
     private suspend fun send(expected: Long) = sending.withLock {
-        val values = synchronized(lock) { mutable.value.takeIf { expected == generation && unsent && shared } } ?: return@withLock
+        val values = synchronized(lock) { loaded.state.value.takeIf { expected == generation && loaded.unsent && loaded.shared } } ?: return@withLock
         val api = client() ?: return@withLock
         val result = api.send("POST", api.server.api("me", "preferences"), values.body(), JsonObject.serializer())
         if (result is ApiResult.Success) synchronized(lock) {
-            if (expected == generation && mutable.value == values) unsent = false
+            if (expected == generation && loaded.state.value == values) loaded.unsent = false
         }
-        store(expected)
+        persist(expected)
     }
 
-    private fun store(expected: Long) = synchronized(lock) {
+    private fun persist(expected: Long) = synchronized(lock) {
         if (generation != expected) return@synchronized
         try {
-            save(StoredReminderPreferences(mutable.value, unsent, shared))
+            store.save(StoredReminderPreferences(loaded.state.value, loaded.unsent, loaded.shared))
         } catch (e: IOException) {
             // A later change or refresh retries the disk write.
         }

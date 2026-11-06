@@ -1,11 +1,5 @@
 package com.github.e0ipso.tokkl.notification
 
-import com.github.e0ipso.tokkl.timerState
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.components.timerControls
 import android.app.Notification
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -17,23 +11,30 @@ import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
+import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TimerActionToasts
-import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.cache.BackgroundSend
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.TimerControls
 import com.github.e0ipso.tokkl.cache.countsFrom
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.timerstate.TimerSyncService
 import com.github.e0ipso.tokkl.trash.TrashServer
 import java.time.Instant
@@ -96,7 +97,7 @@ class RunningNotificationServerTest {
             Created.serializer(),
         ).orFail("POST a project").id
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         RunningNotifications.allow()
         RunningNotifications.awaitGone("no notification before a timer starts")
     }
@@ -251,7 +252,7 @@ class RunningNotificationServerTest {
     @Test
     fun pauseResumeAndStopWhilePausedFromTheNotificationGoToTheServer() {
         val first = account.createEntry("Paused from the notification", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val running = RunningNotifications.awaitShown("the server's timer") { it.title() == "Paused from the notification" }
 
         running.notification.action(R.string.notification_pause).actionIntent.send()
@@ -303,13 +304,13 @@ class RunningNotificationServerTest {
         val serverId = account.createEntry(description, Instant.now().minusSeconds(600))
         HangingRelay(TokklTestServer.url).use { relay ->
             signIn(relay.url, account.apiToken)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id == serverId } } }
             val shown = RunningNotifications.awaitShown("the existing entry") { it.title() == description }
             assertEquals("the fixture has no queued changes", 0, unsentCount())
 
             relay.hang()
-            val refresh = app.accountSettings.refresh()
+            val refresh = app.accountRefresh.refresh()
             try {
                 runBlocking {
                     withTimeout(TIMEOUT_MS) {

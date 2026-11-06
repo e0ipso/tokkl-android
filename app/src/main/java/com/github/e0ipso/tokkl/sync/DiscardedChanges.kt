@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.sync
 
+import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,17 +10,14 @@ import kotlinx.coroutines.flow.asStateFlow
  * user last dismissed the notice that says so (docs/PRD.md O6): "1 change discarded: the entry was
  * deleted elsewhere". Each discard adds to the count, so one notice covers them all. The count
  * outlives the process, so a discard by the background send with the app closed shows when the
- * app opens.
- *
- * @param initial the stored count, 0 when none is stored.
- * @param save keeps the count on the phone.
+ * app opens. The first read loads the stored count from [store] on the reading thread.
  */
-class DiscardedChanges(initial: Int, private val save: (Int) -> Unit) {
+class DiscardedChanges(private val store: ValueStore<Int>) {
 
-    private val mutableState = MutableStateFlow(initial)
+    private val mutableState by lazy { MutableStateFlow(store.load() ?: 0) }
 
     /** The count the notice shows, or 0 while it shows none. */
-    val state: StateFlow<Int> = mutableState.asStateFlow()
+    val state: StateFlow<Int> by lazy { mutableState.asStateFlow() }
 
     private val lock = Any()
 
@@ -36,7 +34,7 @@ class DiscardedChanges(initial: Int, private val save: (Int) -> Unit) {
         synchronized(lock) {
             val count = change(mutableState.value)
             mutableState.value = count
-            save(count)
+            store.save(count)
         }
     }
 }
