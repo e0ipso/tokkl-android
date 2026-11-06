@@ -46,7 +46,7 @@ internal fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError
         change.kind == ChangeKind.STOP && change.capturedStop != null && status in setOf(CONFLICT, NOT_FOUND) ->
             when (val found = stoppedOnServer(api, change)) {
                 is ApiResult.Success -> if (found.value) Refusal.AlreadyDone else Refusal.Hold(refused.message)
-                is ApiResult.Failure -> if (found.error is ApiError.Http && found.error.status in 400..499) {
+                is ApiResult.Failure -> if ((found.error as? ApiError.Http)?.status in 400..499) {
                     Refusal.Hold(refused.message ?: "Captured Stop could not be verified")
                 } else Refusal.Wait(found.error)
             }

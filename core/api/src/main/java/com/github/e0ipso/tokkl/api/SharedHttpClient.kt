@@ -108,4 +108,4 @@ object SharedHttpClient {
 internal object StreamingRead
 
 /** JSON settings for both APIs. Models declare only the fields the app reads. */
-internal val ApiJson: Json = Json { ignoreUnknownKeys = true }
+val ApiJson: Json = Json { ignoreUnknownKeys = true }

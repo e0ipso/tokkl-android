@@ -1,0 +1,20 @@
+// The HTTP client for the Tokkl and Toggl Track APIs, its trust checks and the API's types.
+plugins {
+    alias(libs.plugins.tokkl.android.library)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+android {
+    namespace = "com.github.e0ipso.tokkl.core.api"
+    // Fakes that the unit tests of this module and of the modules above it share.
+    testFixtures.enable = true
+}
+
+dependencies {
+    // The API's types and calls use OkHttp's and kotlinx.serialization's types.
+    api(libs.okhttp)
+    api(libs.kotlinx.serialization.json)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockwebserver3)
+}

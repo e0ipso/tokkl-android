@@ -8,7 +8,6 @@ import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
-import com.github.e0ipso.tokkl.api.untrustedCertificate
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.io.IOException
 import java.time.DayOfWeek
@@ -471,19 +470,6 @@ class SignInViewModelTest {
 
         assertEquals(SignInResult.StorageFailed, model.state.value.failure)
         assertFalse(model.state.value.signedIn)
-    }
-
-    @Test
-    fun handshakeFailureFromThePinningTrustManagerCarriesTheCertificate() {
-        val refusal = UntrustedCertificateException(CERTIFICATE, pinChanged = false, cause = CertificateException("no trust anchor"))
-        val untrusted = SSLHandshakeException("handshake failed").apply { initCause(refusal) }
-        val platformOnly = SSLHandshakeException("handshake failed").apply {
-            initCause(CertificateException("Trust anchor for certification path not found."))
-        }
-
-        assertEquals(refusal, untrusted.untrustedCertificate())
-        assertNull(platformOnly.untrustedCertificate())
-        assertNull(IOException("refused").untrustedCertificate())
     }
 
     @Test

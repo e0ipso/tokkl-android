@@ -31,7 +31,7 @@ fun ApiError.toServerProblem(): ServerProblem = when (this) {
     is ApiError.UnexpectedStatus -> when {
         // A reverse proxy answers these while the Tokkl server behind it is down.
         status in PROXY_UNREACHABLE -> ServerProblem.Unreachable
-        message != null && status in 400..499 -> ServerProblem.Refused(message)
+        status in 400..499 -> message?.let(ServerProblem::Refused) ?: ServerProblem.Unexpected(status)
         else -> ServerProblem.Unexpected(status)
     }
     ApiError.AuthFailed -> ServerProblem.AuthFailed

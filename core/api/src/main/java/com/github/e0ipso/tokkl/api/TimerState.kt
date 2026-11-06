@@ -140,7 +140,7 @@ enum class PhaseTransition {
  * An ISO 8601 instant. The timer state's own times end in `Z` with milliseconds; an offset such
  * as `+00:00` reads too. It writes `Z`. A value that is not a timestamp fails the whole decode.
  */
-internal object IsoInstantSerializer : KSerializer<Instant> {
+object IsoInstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("tokkl.IsoInstant", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Instant) = encoder.encodeString(value.toString())

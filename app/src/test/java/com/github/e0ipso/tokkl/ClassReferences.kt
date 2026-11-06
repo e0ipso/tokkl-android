@@ -27,14 +27,27 @@ internal object ClassReferences {
         val names: Set<String> by lazy { classes + members.map { "${it.owner}.${it.name}" } }
     }
 
-    /** Every compiled app class, by name such as `com/github/e0ipso/tokkl/MainActivity`. */
-    val app: Map<String, References> by lazy {
-        read(SharedHttpClient::class.java).filterKeys { it.startsWith(APP_PACKAGE) }
+    /**
+     * One class of each Gradle module of the app. Each module's classes sit in a directory or jar
+     * of their own on the test classpath, and the class shows where.
+     */
+    private val MODULE_CLASSES: List<Class<*>> = listOf(
+        MainActivity::class.java,
+        SharedHttpClient::class.java,
+    )
+
+    /** The directory or jar of each module's compiled classes. */
+    val moduleLocations: List<File> by lazy {
+        MODULE_CLASSES.map { File(it.protectionDomain!!.codeSource.location.toURI()) }
     }
 
-    /** Every class in the directory or jar that [type] was loaded from. */
-    fun read(type: Class<*>): Map<String, References> {
-        val location = File(type.protectionDomain!!.codeSource.location.toURI())
+    /** Every compiled app class, by name such as `com/github/e0ipso/tokkl/MainActivity`. */
+    val app: Map<String, References> by lazy {
+        moduleLocations.map(::read).reduce { all, module -> all + module }.filterKeys { it.startsWith(APP_PACKAGE) }
+    }
+
+    /** Every class in the directory or jar at [location]. */
+    fun read(location: File): Map<String, References> {
         val classFiles: Map<String, ByteArray> = if (location.isDirectory) {
             location.walkTopDown()
                 .filter { it.isFile && it.name.endsWith(".class") }
