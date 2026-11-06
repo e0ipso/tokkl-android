@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
-import com.github.e0ipso.tokkl.catalog.CatalogPageModel
+import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -59,7 +59,7 @@ class ClientsViewModel(
     scope: CoroutineScope,
     io: CoroutineContext,
     val cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
-) : ViewModel(scope), CatalogPageModel {
+) : ViewModel(scope), CatalogPageEvents {
 
     private val catalog = CatalogModel<ClientsData, ClientsOverlay>(client, workspaceId, refreshCache, viewModelScope, io, ::read)
 

@@ -10,21 +10,21 @@ class UnavailablePagesTest {
 
     @Test
     fun aServerWithEveryFeatureOffersEveryPage() {
-        assertTrue(unavailablePages(everything, hasFavorites = true).isEmpty())
+        assertTrue(unavailablePages(everything).isEmpty())
     }
 
     @Test
     fun withoutTheTimerApiThePomodoroPageIsGone() {
-        assertEquals(setOf(TopLevelPage.POMODORO), unavailablePages(everything.copy(timerState = false), hasFavorites = true))
+        assertEquals(setOf(TopLevelPage.POMODORO), unavailablePages(everything.copy(timerState = false)))
     }
 
     @Test
     fun trashAndTemplatesStillFollowTheirOwnCapabilities() {
         assertEquals(
             setOf(TopLevelPage.TRASH, TopLevelPage.TEMPLATES, TopLevelPage.POMODORO),
-            unavailablePages(Capabilities.NONE, hasFavorites = true),
+            unavailablePages(Capabilities.NONE),
         )
-        assertEquals(setOf(TopLevelPage.TEMPLATES), unavailablePages(everything, hasFavorites = false))
+        assertEquals(setOf(TopLevelPage.TEMPLATES), unavailablePages(everything.copy(favorites = false)))
     }
 
     @Test

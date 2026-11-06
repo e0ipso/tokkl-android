@@ -18,13 +18,13 @@ internal fun List<Route>.currentPage(): TopLevelPage =
 
 /**
  * The pages the server's [flags] leave without a use: Trash without the trash API, Timer
- * templates without the favorites key or without the host's favorites model
- * ([hasFavorites]), and Pomodoro without the timer API, since the server owns the session. The
+ * templates without the favorites key, and Pomodoro without the timer API, since the server owns
+ * the session. The
  * bar, the rail and the More sheet leave them out, and the host opens none of them.
  */
-fun unavailablePages(flags: Capabilities, hasFavorites: Boolean): Set<TopLevelPage> = buildSet {
+fun unavailablePages(flags: Capabilities): Set<TopLevelPage> = buildSet {
     if (!flags.trash) add(TopLevelPage.TRASH)
-    if (!(flags.favorites && hasFavorites)) add(TopLevelPage.TEMPLATES)
+    if (!flags.favorites) add(TopLevelPage.TEMPLATES)
     if (!flags.timerState) add(TopLevelPage.POMODORO)
 }
 

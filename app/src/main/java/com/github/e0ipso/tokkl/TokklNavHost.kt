@@ -126,7 +126,7 @@ private fun Navigation(
         return
     }
     val flags by capabilities.collectAsState()
-    val unavailable = unavailablePages(flags, hasFavorites = true)
+    val unavailable = unavailablePages(flags)
     // A page the server lacks never shows, not even for the frame before the stack is corrected.
     val top = backStack.last().orTimerIfUnavailable(unavailable)
     NavigationRequestEffects(requests, navigator, unavailable, onSignIn = top is Route.SignIn)

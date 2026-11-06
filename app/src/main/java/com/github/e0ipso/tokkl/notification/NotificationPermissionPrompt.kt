@@ -26,13 +26,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.R
-import kotlinx.coroutines.Dispatchers
+import com.github.e0ipso.tokkl.di.IoDispatcher
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 
 /**
  * Asks for the notification permission at the first timer or Pomodoro start made in the app
@@ -41,6 +44,7 @@ import kotlinx.coroutines.withContext
  * A refusal shows a snackbar that says what is lost and offers the app's notification
  * settings through [openSettings]. The snackbar is a polite live region, as Material's
  * SnackbarHost makes each one, so TalkBack reads it, and it stays for Material's long duration.
+ * [ask] reads and writes its record on [io].
  */
 @Composable
 fun NotificationPermissionPrompt(
@@ -51,6 +55,7 @@ fun NotificationPermissionPrompt(
     onAllowed: () -> Unit = {},
     retries: Flow<Unit> = emptyFlow(),
     onResult: (Boolean) -> Unit = {},
+    io: CoroutineContext = koinInject<CoroutineDispatcher>(IoDispatcher),
 ) {
     val context = LocalContext.current
     val host = remember { SnackbarHostState() }
@@ -68,10 +73,10 @@ fun NotificationPermissionPrompt(
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             // One collector serializes timer and Pomodoro starts, including explicit retries.
             merge(starts.map { false }, retries.map { true }).collect { retry ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && withContext(Dispatchers.IO) { ask.atStartInApp() }) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && withContext(io) { ask.atStartInApp() }) {
                     request.launch(Manifest.permission.POST_NOTIFICATIONS)
                     // Once launched, persist even if a rotation or a background trip cancels collection.
-                    withContext(NonCancellable + Dispatchers.IO) { ask.requested() }
+                    withContext(NonCancellable + io) { ask.requested() }
                 } else if (retry) {
                     // Settings also works after Android stops displaying a repeatedly denied dialog.
                     settings(context)

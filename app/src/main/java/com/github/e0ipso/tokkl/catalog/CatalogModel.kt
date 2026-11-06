@@ -56,7 +56,7 @@ data class CatalogState<D, O>(
 }
 
 /** What a catalog page's screen tells its model about the page's life, through [CatalogPageEffects]. */
-interface CatalogPageModel {
+interface CatalogPageEvents {
     /** The page opened. */
     fun open()
 
@@ -96,7 +96,7 @@ class CatalogModel<D, O>(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val fetch: (TogglApiClient, Long) -> ApiResult<D>,
-) : CatalogPageModel {
+) : CatalogPageEvents {
 
     private val mutableState = MutableStateFlow(CatalogState<D, O>())
     val state: StateFlow<CatalogState<D, O>> = mutableState.asStateFlow()

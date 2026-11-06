@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.catalog.CatalogPageModel
+import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -75,7 +75,7 @@ class TrashViewModel(
     scope: CoroutineScope,
     private val io: CoroutineContext,
     val settings: StateFlow<AccountSettings?> = MutableStateFlow(null),
-) : ViewModel(scope), CatalogPageModel {
+) : ViewModel(scope), CatalogPageEvents {
 
     private val mutableState = MutableStateFlow(TrashState())
     val state: StateFlow<TrashState> = mutableState.asStateFlow()

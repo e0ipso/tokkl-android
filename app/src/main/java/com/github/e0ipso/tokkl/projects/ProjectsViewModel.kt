@@ -9,7 +9,7 @@ import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
-import com.github.e0ipso.tokkl.catalog.CatalogPageModel
+import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +53,7 @@ class ProjectsViewModel(
     io: CoroutineContext,
     val cachedProjects: Flow<List<CachedProject>> = flowOf(emptyList()),
     val cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
-) : ViewModel(scope), CatalogPageModel {
+) : ViewModel(scope), CatalogPageEvents {
 
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(client, workspaceId, refreshCache, viewModelScope, io, ::read)
 
