@@ -252,14 +252,29 @@ private fun CalendarPage() {
                 }
             },
             listContent = {},
-            calendarContent = { CalendarContent(state = WEEK, now = NOON, onStep = {}, onSelect = {}, onToday = {}, onRetry = {}) },
+            calendarContent = {
+                CalendarContent(state = WEEK, now = NOON, onStep = {}, onSelect = {}, onToday = {}, onRetry = {}, editing = INERT_EDITING)
+            },
         )
     }
 }
 
 private val NOON: Instant = Instant.parse("2026-10-15T12:00:00Z")
 
-/** The week of 12 October 2026 with Thursday chosen, and an entry on Monday and on Thursday. */
+/** Edits nothing: the All day row's + only shows where the calendar can edit. */
+private val INERT_EDITING = object : CalendarEditing {
+    override fun create(day: LocalDate, fromMinute: Int, toMinute: Int) = Unit
+    override fun move(entry: CalendarEntry, day: LocalDate, deltaMinutes: Int, dayMode: Boolean) = Unit
+    override fun resize(entry: CalendarEntry, edge: ResizeEdge, deltaMinutes: Int) = Unit
+    override fun edit(entry: CalendarEntry) = Unit
+    override fun add(day: LocalDate) = Unit
+    override fun addAllDay(day: LocalDate) = Unit
+}
+
+/**
+ * The week of 12 October 2026 with Thursday chosen, and an entry on Monday and on Thursday. The
+ * server stores no-time entries, so the All day row shows, with a chip on Thursday and a + on each day.
+ */
 private val WEEK = CalendarState.Shown(
     selected = LocalDate.of(2026, 10, 15),
     weekStart = LocalDate.of(2026, 10, 12),
@@ -269,11 +284,13 @@ private val WEEK = CalendarState.Shown(
     entries = listOf(
         entry(1, "Paint the mural", "2026-10-12T09:00:00Z", "2026-10-12T12:30:00Z"),
         entry(2, "Stand-up", "2026-10-15T08:00:00Z", "2026-10-15T08:30:00Z"),
+        entry(3, "Team offsite", "2026-10-15T00:00:00Z", "2026-10-15T03:00:00Z", allDay = true),
     ),
     week = WeekSource.Cached,
+    allDayOffered = true,
 )
 
-private fun entry(id: Long, description: String, start: String, stop: String) = CalendarEntry(
+private fun entry(id: Long, description: String, start: String, stop: String, allDay: Boolean = false) = CalendarEntry(
     id = id,
     description = description,
     project = "Tokkl for Android",
@@ -282,6 +299,8 @@ private fun entry(id: Long, description: String, start: String, stop: String) = 
     start = Instant.parse(start),
     stop = Instant.parse(stop),
     unsent = false,
+    allDay = allDay,
+    day = if (allDay) LocalDate.parse(start.substringBefore('T')) else null,
 )
 
 // Keep the real totals in every usual/large-font calendar positioning regression.

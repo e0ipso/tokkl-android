@@ -2,16 +2,19 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
+import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.stopSpan
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
@@ -210,6 +213,131 @@ class ChangeSenderTest {
         val request = server.takeRequest()
         assertEquals("DELETE", request.method)
         assertEquals(0L, request.bodySize)
+    }
+
+    /**
+     * Tokkl's no-time create: the stored day as `start_date` and the duration, and no times. The
+     * stored midnight is Madrid's, which falls on the day before in UTC.
+     */
+    @Test
+    fun aNoTimeCreateSendsItsDayAndDurationAndNoTimes() {
+        store.queue(ChangeKind.CREATE, LOCAL, MIDNIGHT, stop = MIDNIGHT.plusSeconds(5400), description = "Workshop", allDay = true, day = DAY)
+        server.enqueue(entry(101, "Workshop", stop = "2026-10-19T09:30:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), noTimeSender().drain())
+
+        val request = server.takeRequest()
+        assertEquals("POST /api/v9/workspaces/7/time_entries", "${request.method} ${request.url.encodedPath}")
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Workshop","project_id":3,"task_id":null,""" +
+                    """"tags":[],"billable":true,"all_day":true,"start_date":"2026-10-19","duration":5400}""",
+            ),
+            request.json(),
+        )
+    }
+
+    /**
+     * Editing a no-time entry and turning a timed one into one send the same PUT. Tokkl refuses a
+     * `start` that is not local midnight and a `stop` that is not the anchored stop, so neither goes.
+     */
+    @Test
+    fun aNoTimeEditAndTurningNoTimeOnSendTheDayAndDurationWithoutTimes() {
+        store.queue(ChangeKind.UPDATE, 55, MIDNIGHT, stop = MIDNIGHT.plusSeconds(3600), description = "Renamed", allDay = true, day = DAY)
+        val nextMidnight = MIDNIGHT.plusSeconds(86_400)
+        store.queue(ChangeKind.UPDATE, 56, nextMidnight, stop = nextMidnight.plusSeconds(7200), description = "Was timed", allDay = true, day = DAY.plusDays(1))
+        server.enqueue(entry(55, "Renamed", stop = "2026-10-19T09:00:00+00:00"))
+        server.enqueue(entry(56, "Was timed", stop = "2026-10-19T10:00:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), noTimeSender().drain())
+
+        val (edit, turnedOn) = List(2) { server.takeRequest() }
+        assertEquals("PUT /api/v9/workspaces/7/time_entries/55", "${edit.method} ${edit.url.encodedPath}")
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"workspace_id":7,"description":"Renamed","project_id":3,"task_id":null,"tags":[],"billable":true,""" +
+                    """"all_day":true,"start_date":"2026-10-19","duration":3600}""",
+            ),
+            edit.json(),
+        )
+        assertEquals("PUT /api/v9/workspaces/7/time_entries/56", "${turnedOn.method} ${turnedOn.url.encodedPath}")
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"workspace_id":7,"description":"Was timed","project_id":3,"task_id":null,"tags":[],"billable":true,""" +
+                    """"all_day":true,"start_date":"2026-10-20","duration":7200}""",
+            ),
+            turnedOn.json(),
+        )
+    }
+
+    /** Without a stored day, the change sends its local midnight, from which Tokkl takes the day. */
+    @Test
+    fun aNoTimeChangeWithoutADaySendsItsMidnightInsteadOfStartDate() {
+        store.queue(ChangeKind.UPDATE, 55, MIDNIGHT, stop = MIDNIGHT.plusSeconds(3600), description = "Renamed", allDay = true)
+        server.enqueue(entry(55, "Renamed", stop = "2026-10-19T09:00:00+00:00"))
+
+        noTimeSender().drain()
+
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"workspace_id":7,"description":"Renamed","project_id":3,"task_id":null,"tags":[],"billable":true,""" +
+                    """"all_day":true,"start":"2026-10-18T22:00:00Z","duration":3600}""",
+            ),
+            server.takeRequest().json(),
+        )
+    }
+
+    /**
+     * With no-time entries on, a timed change says so. Tokkl turns a no-time entry off only with
+     * `all_day: false` and both its start and its stop in the same PUT.
+     */
+    @Test
+    fun timedChangesSendAllDayFalseAndTurningNoTimeOffSendsStartAndStopInOnePut() {
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(5400), description = "Timed again")
+        store.queue(ChangeKind.CREATE, LOCAL, TAP.plusSeconds(7200), stop = null, description = "Running")
+        server.enqueue(entry(55, "Timed again", stop = "2026-10-19T09:30:00+00:00"))
+        server.enqueue(nothingRuns())
+        server.enqueue(entry(101, "Running", stop = null))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), noTimeSender().drain())
+
+        val (turnedOff, _, start) = List(3) { server.takeRequest() }
+        assertEquals("PUT /api/v9/workspaces/7/time_entries/55", "${turnedOff.method} ${turnedOff.url.encodedPath}")
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"workspace_id":7,"description":"Timed again","project_id":3,"task_id":null,"tags":[],"billable":true,""" +
+                    """"start":"2026-10-19T08:00:00Z","stop":"2026-10-19T09:30:00Z","duration":5400,"all_day":false}""",
+            ),
+            turnedOff.json(),
+        )
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Running","project_id":3,"task_id":null,""" +
+                    """"tags":[],"billable":true,"start":"2026-10-19T10:00:00Z","stop":null,"duration":-1,"all_day":false}""",
+            ),
+            start.json(),
+        )
+    }
+
+    /** Toggl Track, and Tokkl before 1.11.0, never get `all_day`: every change goes as it always did. */
+    @Test
+    fun withNoTimeEntriesOffNoRequestCarriesAllDay() {
+        store.queue(ChangeKind.CREATE, LOCAL, MIDNIGHT, stop = MIDNIGHT.plusSeconds(5400), description = "Workshop", allDay = true, day = DAY)
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
+        server.enqueue(entry(101, "Workshop", stop = "2026-10-19T09:30:00+00:00"))
+        server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+
+        val (create, update) = List(2) { server.takeRequest() }
+        assertEquals(
+            Json.parseToJsonElement(
+                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Workshop","project_id":3,"task_id":null,""" +
+                    """"tags":[],"billable":true,"start":"2026-10-18T22:00:00Z","stop":"2026-10-18T23:30:00Z","duration":5400}""",
+            ),
+            create.json(),
+        )
+        assertFalse(update.json().toString(), "all_day" in update.json()!!)
     }
 
     @Test
@@ -971,6 +1099,61 @@ class ChangeSenderTest {
         assertEquals(LOCAL to 105L, store.mapped.last())
     }
 
+    /**
+     * Tokkl stores a no-time create at midnight of its day in the account's timezone as the server
+     * has it, which need not be the midnight the phone stored. The lookup finds the no-time entry
+     * the lost post made by its flag and fields instead of posting it again.
+     */
+    @Test
+    fun aNoTimeCreateWhoseAnswerIsLostIsFoundInsteadOfPostedAgain() {
+        store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
+        store.queue(ChangeKind.CREATE, LOCAL, MIDNIGHT, stop = MIDNIGHT.plusSeconds(5400), description = "Workshop", allDay = true, day = DAY)
+        server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
+        // The server reads the create, then the connection drops before the answer.
+        server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
+        server.enqueue(
+            entries(
+                listed(100, "Workshop", start = "2026-10-18T22:30:00+00:00", stop = "2026-10-19T00:00:00+00:00", allDay = false),
+                listed(101, "Workshop", start = "2026-10-18T22:30:00+00:00", stop = "2026-10-19T00:00:00+00:00", allDay = true),
+            ),
+        )
+
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), noTimeSender().drain())
+
+        val requests = remainingRequests()
+        assertEquals("one post, then the lookup", listOf("PUT", "POST", "GET"), requests.map { it.method })
+        assertEquals("all_day", "true", requests[1].json()?.string("all_day"))
+        assertEquals("2026-10-18T21:00:00Z", requests[2].url.queryParameter("start_date"))
+        assertEquals("2026-10-18T23:00:00Z", requests[2].url.queryParameter("end_date"))
+        assertEquals("the no-time entry, not the timed one", listOf(LOCAL to 101L), store.mapped)
+    }
+
+    @Test
+    fun aNoTimeCreateMatchesANoTimeEntryWithItsFieldsWithinTheLookupWindow() {
+        val create = PendingChange(
+            kind = ChangeKind.CREATE, entryId = LOCAL, workspaceId = 7, projectId = 3, taskId = null, description = "Workshop",
+            start = MIDNIGHT, stop = MIDNIGHT.plusSeconds(5400), billable = true, tags = emptyList(), tagIds = emptyList(),
+            allDay = true, day = DAY,
+        )
+        fun listedEntry(start: String, allDay: Boolean?, description: String = "Workshop") =
+            ApiJson.decodeFromString(ServerTimeEntry.serializer(), listed(101, description, start, allDay = allDay))
+        val starts = setOf(MIDNIGHT)
+
+        assertTrue(create.couldHaveMade(listedEntry("2026-10-18T21:00:00+00:00", allDay = true), starts))
+        assertTrue(create.couldHaveMade(listedEntry("2026-10-18T23:00:00+00:00", allDay = true), starts))
+        assertFalse("after the window", create.couldHaveMade(listedEntry("2026-10-18T23:00:01+00:00", allDay = true), starts))
+        assertFalse("another description", create.couldHaveMade(listedEntry("2026-10-18T22:00:00+00:00", allDay = true, "Other"), starts))
+        assertFalse("a timed entry at another start", create.couldHaveMade(listedEntry("2026-10-18T22:30:00+00:00", allDay = false), starts))
+        assertTrue(
+            "sent while the flag was off, it went timed at its midnight",
+            create.couldHaveMade(listedEntry("2026-10-18T22:00:00+00:00", allDay = null), starts),
+        )
+        assertFalse(
+            "a timed create still needs its start",
+            create.copy(allDay = false, day = null).couldHaveMade(listedEntry("2026-10-18T22:30:00+00:00", allDay = true), starts),
+        )
+    }
+
     @Test
     fun aStartWhoseAnswerWasLostIsLookedUpBeforeTheRunningEntry() {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "Phone", maybeSent = true)
@@ -1249,8 +1432,20 @@ class ChangeSenderTest {
         stop: String? = "2026-10-19T08:30:00+00:00",
         project: Long = 3,
         tags: String = "[]",
+        allDay: Boolean? = null,
     ) = """{"id":$id,"workspace_id":7,"project_id":$project,"task_id":null,"description":"$description",""" +
-        """"start":"$start","stop":${stop?.let { "\"$it\"" } ?: "null"},"billable":false,"tags":$tags,"tag_ids":[]}"""
+        """"start":"$start","stop":${stop?.let { "\"$it\"" } ?: "null"},"billable":false,"tags":$tags,"tag_ids":[]""" +
+        (allDay?.let { ",\"all_day\":$it" } ?: "") + "}"
+
+    /** A sender for a server that stores no-time entries, as `Capabilities.allDay` says. */
+    private fun noTimeSender() = ChangeSender(
+        store,
+        client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+        scope = scope,
+        io = Dispatchers.IO,
+        clock = clock,
+        allDay = { true },
+    )
 
     private fun nothingRuns() = MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("null").build()
 
@@ -1306,6 +1501,8 @@ class ChangeSenderTest {
             existingIds: List<Long> = emptyList(),
             capturedStop: Instant? = null,
             shortStop: Boolean = false,
+            allDay: Boolean = false,
+            day: LocalDate? = null,
         ) {
             changes += PendingChange(
                 sequence = ++sequence,
@@ -1324,6 +1521,8 @@ class ChangeSenderTest {
                 existingIds = existingIds,
                 capturedStop = capturedStop,
                 shortStop = shortStop,
+                allDay = allDay,
+                day = day,
             )
         }
 
@@ -1411,5 +1610,9 @@ class ChangeSenderTest {
     private companion object {
         val TAP: Instant = Instant.parse("2026-10-19T08:00:00Z")
         const val LOCAL = -1L
+
+        /** A no-time entry's day, and its midnight in Europe/Madrid, as the phone stores them. */
+        val DAY: LocalDate = LocalDate.parse("2026-10-19")
+        val MIDNIGHT: Instant = Instant.parse("2026-10-18T22:00:00Z")
     }
 }

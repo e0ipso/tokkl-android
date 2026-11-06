@@ -55,6 +55,23 @@ class AccountTime(
     fun snapUnsent(start: Instant, stop: Instant): SnappedSpan? =
         snapUnsent(start, stop, timeResolutionMinutes, zone)
 
+    /**
+     * [seconds] rounded the way the server stores a no-time entry's duration, to the account's
+     * time resolution. Without a resolution, or with a value that is not one, it comes back
+     * unchanged.
+     */
+    fun snapDuration(seconds: Long): Long = snapDuration(seconds, timeResolutionMinutes?.takeIf(::isTimeResolution))
+
+    /**
+     * The span a no-time entry on [day] stores: it starts at local midnight and lasts
+     * [snapDuration] of [seconds]. Take the midnight from here and never from a stored instant,
+     * which a timezone change leaves stale.
+     */
+    fun noTimeSpan(day: LocalDate, seconds: Long): SnappedSpan {
+        val start = instantAt(day, 0)
+        return SnappedSpan(start, start.plusSeconds(snapDuration(seconds)))
+    }
+
     /** A write's start snapped independently; no resolution keeps the instant unchanged. */
     fun snapInstant(at: Instant): Instant =
         if (timeResolutionMinutes == null || !isTimeResolution(timeResolutionMinutes)) at

@@ -284,12 +284,12 @@ class EntryActionsUiTest {
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
             calls += "create $workspaceId $start $stop"
             return -1
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
             calls += "update $entryId $start $stop"
             return true
         }

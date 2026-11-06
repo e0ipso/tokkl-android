@@ -318,11 +318,11 @@ class RunningEntryEditorTest {
             return true
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
             throw AssertionError("A running editor must use the guarded update")
-        override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) =
+        override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?) =
             throw AssertionError("A running editor cannot fall back to an older-entry PUT")
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
             throw AssertionError("A running editor cannot create an entry")
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("Unexpected stop")
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("Unexpected delete")

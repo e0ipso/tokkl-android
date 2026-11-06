@@ -1,12 +1,18 @@
 package com.github.e0ipso.tokkl.calendar
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performCustomAccessibilityActionWithLabel
 import androidx.compose.ui.test.performSemanticsAction
@@ -33,8 +39,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -172,10 +180,64 @@ class CalendarGesturesTest {
         assertEquals(listOf("add $MONDAY"), opened)
     }
 
-    /** The calendar on [ENTRY], in a window of [window], or the phone's own. */
-    private fun show(window: DpSize?): CalendarModel {
+    /** The All day row, where the server stores no-time entries: a chip for Thursday's, and a + for each day shown. */
+    @Test
+    fun theAllDayRowHasAChipAndAPlusForTheDayShown() {
+        show(window = null, allDayOffered = true)
+
+        composeRule.onNode(hasText(string(R.string.calendar_all_day))).assertExists()
+        composeRule.onNode(allDayChip).assertExists()
+        composeRule.onAllNodes(allDayPlus).assertCountEquals(1)
+        // Under the strip of the week's days, with the hour grid below it.
+        val row = composeRule.onNode(hasText(string(R.string.calendar_all_day))).getBoundsInRoot()
+        val grid = composeRule.onNode(block).getBoundsInRoot()
+        assertTrue("the row sits above the grid: $row, $grid", row.bottom <= grid.top)
+    }
+
+    @Test
+    fun theWeekViewHasAPlusInEachDaysCell() {
+        show(window = MEDIUM, allDayOffered = true)
+
+        composeRule.onAllNodes(allDayPlus).assertCountEquals(7)
+        composeRule.onNode(allDayChip).assertExists()
+    }
+
+    /** A server that stores no time for an entry has no All day row. */
+    @Test
+    fun withoutTheCapabilityThereIsNoAllDayRow() {
+        show(window = null, allDayOffered = false)
+
+        composeRule.onNode(hasText(string(R.string.calendar_all_day))).assertDoesNotExist()
+        composeRule.onAllNodes(allDayPlus).assertCountEquals(0)
+        composeRule.onNode(allDayChip).assertDoesNotExist()
+    }
+
+    @Test
+    fun aTapOnTheChipOpensTheEntryAndTheCellsPlusOpensANoTimeForm() {
+        show(window = null, allDayOffered = true)
+
+        composeRule.onNode(allDayChip).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(allDayPlus).performSemanticsAction(SemanticsActions.OnClick)
+
+        composeRule.waitUntil(TIMEOUT_MS) { opened.size == 2 }
+        assertEquals(listOf("edit ${ALL_DAY_ENTRY.id}", "add all day $THURSDAY"), opened)
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun eachAllDayCellOffersTalkBackAnActionThatAddsANoTimeEntry() {
+        show(window = MEDIUM, allDayOffered = true)
+
+        composeRule.onAllNodes(allDayCellAction)[1].performCustomAccessibilityActionWithLabel(string(R.string.calendar_add_all_day))
+
+        composeRule.waitUntil(TIMEOUT_MS) { opened.isNotEmpty() }
+        assertEquals(listOf("add all day ${MONDAY.plusDays(1)}"), opened)
+    }
+
+    /** The calendar on [ENTRY], in a window of [window], or the phone's own, with the All day row when [allDayOffered]. */
+    private fun show(window: DpSize?, allDayOffered: Boolean = false): CalendarModel {
         val model = CalendarModel(
-            entries = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = false))),
+            entries = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY_ENTRY, unsent = false))),
             projects = MutableStateFlow(emptyList()),
             tasks = MutableStateFlow(emptyList()),
             accountSettings = MutableStateFlow(SETTINGS),
@@ -184,6 +246,7 @@ class CalendarGesturesTest {
             scope = scope,
             io = Dispatchers.IO,
             clock = CLOCK,
+            allDayOffered = flowOf(allDayOffered),
         )
         composeRule.setContent {
             TokklTheme(darkTheme = false) {
@@ -192,6 +255,7 @@ class CalendarGesturesTest {
                         model = model,
                         onEdit = { id, _ -> opened += "edit $id" },
                         onAdd = { day -> opened += "add $day" },
+                        onAddAllDay = { day -> opened += "add all day $day" },
                         clock = CLOCK,
                     )
                 }
@@ -226,6 +290,19 @@ class CalendarGesturesTest {
 
     private fun addLabel(day: LocalDate): String = context.getString(R.string.calendar_add_entry, dayLabel(day))
 
+    private fun string(@StringRes id: Int): String = context.getString(id)
+
+    /** The no-time entry's chip, which TalkBack reads with its description first. */
+    private val allDayChip: SemanticsMatcher = hasContentDescription("${ALL_DAY_ENTRY.description}, ", substring = true) and hasClickAction()
+
+    /** The + of a day's All day cell. */
+    private val allDayPlus: SemanticsMatcher = hasContentDescription(context.getString(R.string.calendar_add_all_day), substring = true) and hasClickAction()
+
+    /** A day's All day cell, which carries TalkBack's action. */
+    private val allDayCellAction = SemanticsMatcher("has the All day add action") { node ->
+        node.config.getOrNull(SemanticsActions.CustomActions)?.any { it.label == context.getString(R.string.calendar_add_all_day) } == true
+    }
+
     /** The entry's block, which TalkBack reads with its description first. */
     private val block: SemanticsMatcher = hasContentDescription("${ENTRY.description}, ", substring = true)
 
@@ -233,12 +310,12 @@ class CalendarGesturesTest {
     private class RecordingChanges : EntryChanges {
         val calls = CopyOnWriteArrayList<String>()
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
             calls += "create $workspaceId $fields $start $stop"
             return LOCAL_ID
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
             calls += "update $entryId $fields $start $stop"
             return true
         }
@@ -284,5 +361,21 @@ class CalendarGesturesTest {
             tags = emptyList(),
         )
         val FIELDS = EntryFields(description = "Review the plan")
+
+        /** Thursday's no-time entry of three hours. */
+        val ALL_DAY_ENTRY = CachedTimeEntry(
+            id = 22,
+            workspaceId = 7,
+            description = "Team offsite",
+            projectId = null,
+            taskId = null,
+            tagIds = emptyList(),
+            billable = false,
+            start = Instant.parse("2026-10-15T00:00:00Z"),
+            stop = Instant.parse("2026-10-15T03:00:00Z"),
+            tags = emptyList(),
+            allDay = true,
+            day = THURSDAY,
+        )
     }
 }

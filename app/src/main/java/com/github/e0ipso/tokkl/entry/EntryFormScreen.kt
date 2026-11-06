@@ -8,25 +8,31 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -45,6 +51,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -106,6 +113,7 @@ fun EntryFormScreen(
             onDescriptionChange = model::setDescription,
             onPick = model::pick,
             onBillableChange = model::setBillable,
+            onNoTimesChange = model::setNoTimes,
             onDateChange = model::setDate,
             onStartChange = model::setStart,
             onEndChange = model::setEnd,
@@ -130,6 +138,7 @@ internal class EntryFormActions(
     val onDescriptionChange: (String) -> Unit = {},
     val onPick: (Picked) -> Unit = {},
     val onBillableChange: (Boolean) -> Unit = {},
+    val onNoTimesChange: (Boolean) -> Unit = {},
     val onDateChange: (LocalDate) -> Unit = {},
     val onStartChange: (String) -> Unit = {},
     val onEndChange: (String) -> Unit = {},
@@ -145,8 +154,9 @@ internal class EntryFormActions(
 
 /**
  * [EntryFormScreen] without its model: the top bar with the back button and the title, then the
- * fields as the web app's EntryEditor.tsx lists them, then Cancel and Save. It scrolls under the
- * bar, and makes room for the keyboard, so every field can be reached at the largest font scale.
+ * fields as the web app's EntryEditor.tsx lists them, then Cancel and Save. With No times on, the
+ * date and the duration take the place of the times. It scrolls under the bar, and makes room for
+ * the keyboard, so every field can be reached at the largest font scale.
  */
 @Composable
 internal fun EntryFormContent(state: EntryFormState, actions: EntryFormActions, picker: EntryFormPicker, modifier: Modifier = Modifier) {
@@ -225,6 +235,9 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
             },
             enabled = canChange,
         )
+        if (state.noTimesOffered) {
+            NoTimesSwitch(state.noTimes, enabled = !state.saving, onChange = actions.onNoTimesChange)
+        }
         DateField(state.date, words, enabled = !state.saving, onDateChange = actions.onDateChange)
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(spacing.space3),
@@ -234,40 +247,54 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
             val fieldModifier = Modifier
                 .widthIn(min = TimeFieldMinWidth)
                 .weight(1f)
-            TimeTextField(
-                value = state.start,
-                onValueChange = actions.onStartChange,
-                onDone = actions.onTimesDone,
-                label = R.string.entry_start,
-                hint = R.string.entry_start_hint,
-                mistake = state.mistakes[TimeField.START],
-                enabled = !state.saving,
-                imeAction = if (state.running) ImeAction.Done else ImeAction.Next,
-                modifier = fieldModifier,
-            )
-            if (!state.running) {
-                TimeTextField(
-                    value = state.end,
-                    onValueChange = actions.onEndChange,
-                    onDone = actions.onTimesDone,
-                    label = R.string.entry_end,
-                    hint = R.string.entry_end_hint,
-                    mistake = state.mistakes[TimeField.END],
-                    enabled = !state.saving,
-                    imeAction = ImeAction.Next,
-                    modifier = fieldModifier,
-                )
+            if (state.noTimes) {
                 TimeTextField(
                     value = state.duration,
                     onValueChange = actions.onDurationChange,
                     onDone = actions.onDurationDone,
                     label = R.string.entry_duration,
-                    hint = R.string.entry_duration_hint,
+                    hint = R.string.entry_no_time_duration_hint,
                     mistake = state.mistakes[TimeField.DURATION],
                     enabled = !state.saving,
                     imeAction = ImeAction.Done,
                     modifier = fieldModifier,
                 )
+            } else {
+                TimeTextField(
+                    value = state.start,
+                    onValueChange = actions.onStartChange,
+                    onDone = actions.onTimesDone,
+                    label = R.string.entry_start,
+                    hint = R.string.entry_start_hint,
+                    mistake = state.mistakes[TimeField.START],
+                    enabled = !state.saving,
+                    imeAction = if (state.running) ImeAction.Done else ImeAction.Next,
+                    modifier = fieldModifier,
+                )
+                if (!state.running) {
+                    TimeTextField(
+                        value = state.end,
+                        onValueChange = actions.onEndChange,
+                        onDone = actions.onTimesDone,
+                        label = R.string.entry_end,
+                        hint = R.string.entry_end_hint,
+                        mistake = state.mistakes[TimeField.END],
+                        enabled = !state.saving,
+                        imeAction = ImeAction.Next,
+                        modifier = fieldModifier,
+                    )
+                    TimeTextField(
+                        value = state.duration,
+                        onValueChange = actions.onDurationChange,
+                        onDone = actions.onDurationDone,
+                        label = R.string.entry_duration,
+                        hint = R.string.entry_duration_hint,
+                        mistake = state.mistakes[TimeField.DURATION],
+                        enabled = !state.saving,
+                        imeAction = ImeAction.Done,
+                        modifier = fieldModifier,
+                    )
+                }
             }
         }
         state.endsOn?.let { day ->
@@ -306,6 +333,25 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
 }
 
 /**
+ * No times, a switch across the whole row, as in Settings. TalkBack reads the row as one switch
+ * with its label and state.
+ */
+@Composable
+private fun NoTimesSwitch(noTimes: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .toggleable(value = noTimes, enabled = enabled, role = Role.Switch, onValueChange = onChange),
+    ) {
+        Text(stringResource(R.string.entry_no_times), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(TokklTheme.spacing.space3))
+        Switch(checked = noTimes, onCheckedChange = null, enabled = enabled)
+    }
+}
+
+/**
  * A time or duration field, with its label above the value and an example while it is empty.
  * Losing focus calls [onDone], so the other times can follow it. A [mistake] shows under the
  * field as text, which TalkBack reads with the field and announces when it appears.
@@ -330,7 +376,7 @@ private fun TimeTextField(
         placeholder = { Text(stringResource(hint)) },
         supportingText = mistake?.let {
             {
-                Text(stringResource(it.text), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                Text(it.message(), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             }
         },
         isError = mistake != null,
@@ -344,15 +390,18 @@ private fun TimeTextField(
     )
 }
 
-private val TimeMistake.text: Int
-    @StringRes get() = when (this) {
-        TimeMistake.TIMES -> R.string.entry_mistake_times
-        TimeMistake.MANUAL_TIMES -> R.string.entry_mistake_manual_times
-        TimeMistake.DURATION -> R.string.entry_mistake_duration
-        TimeMistake.END_BEFORE_START -> R.string.entry_mistake_end_before_start
-        TimeMistake.TOO_LONG -> R.string.entry_mistake_too_long
-        TimeMistake.TOO_SHORT -> R.string.entry_mistake_too_short
-    }
+@Composable
+private fun TimeMistake.message(): String = when (this) {
+    TimeMistake.TIMES -> stringResource(R.string.entry_mistake_times)
+    TimeMistake.MANUAL_TIMES -> stringResource(R.string.entry_mistake_manual_times)
+    TimeMistake.DURATION -> stringResource(R.string.entry_mistake_duration)
+    TimeMistake.END_BEFORE_START -> stringResource(R.string.entry_mistake_end_before_start)
+    TimeMistake.TOO_LONG -> stringResource(R.string.entry_mistake_too_long)
+    TimeMistake.TOO_SHORT -> stringResource(R.string.entry_mistake_too_short)
+    TimeMistake.NO_TIME_DURATION -> stringResource(R.string.entry_mistake_no_time_duration)
+    is TimeMistake.NoTimeRoundsToZero -> stringResource(R.string.entry_mistake_no_time_rounds_to_zero, minutes)
+    TimeMistake.NO_TIME_TOO_LONG -> stringResource(R.string.entry_mistake_no_time_too_long)
+}
 
 /**
  * The date, a button that opens Material's date picker, under its label. TalkBack reads it as

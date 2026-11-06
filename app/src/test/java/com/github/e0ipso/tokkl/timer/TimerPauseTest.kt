@@ -30,6 +30,7 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
@@ -587,10 +588,10 @@ class TimerPauseTest {
             return true
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
             throw AssertionError("these timers edit running entries through updateRunning")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
             throw AssertionError("the timer creates no stopped entry")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the timer deletes nothing")

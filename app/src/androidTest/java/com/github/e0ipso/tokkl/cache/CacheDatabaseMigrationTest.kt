@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope
@@ -31,8 +32,9 @@ import org.junit.Test
  * the current version through Room's migrations, keeps its rows and its queue, and takes queued
  * changes. Versions 7 and 8, which held the phone's own pause chain, timer session and Pomodoro
  * session, open without those tables and keep their queue, which the sender then delivers to the
- * real Tokkl server. Room checks the migrated tables against the exported schema when it opens
- * the file, so a migration that left them wrong fails here.
+ * real Tokkl server. Version 9, from before no-time entries, opens with every row timed. Room
+ * checks the migrated tables against the exported schema when it opens the file, so a migration
+ * that left them wrong fails here.
  */
 class CacheDatabaseMigrationTest {
 
@@ -371,6 +373,62 @@ class CacheDatabaseMigrationTest {
         }
     }
 
+    /**
+     * A version 9 file, from before no-time entries, keeps its cached row, its queued edit and its
+     * short Stop's Undo offer, all timed. The migrated file then takes a queued no-time create and
+     * gives back its flag and day.
+     */
+    @Test
+    fun version9KeepsItsRowsAsTimedAndTakesANoTimeChange() {
+        val shortAt = START.minus(HOUR)
+        context.deleteDatabase(FILE)
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
+            VERSION_9.forEach(db::execSQL)
+            db.execSQL(entryRow(42, 7, "Cached before the update", START, START.plus(HOUR)))
+            db.execSQL(changeRow(1, "UPDATE", 42, 7, "Edited before the update", START, START.plus(HOUR)))
+            db.execSQL(
+                "INSERT INTO short_stop_undo VALUES (77, ${shortAt.plusSeconds(10).toEpochMilli()}, 77, 7, NULL, NULL, " +
+                    "'Short before the update', ${shortAt.toEpochMilli()}, ${shortAt.toEpochMilli()}, 0, '[]', '[]')",
+            )
+            db.version = 9
+        }
+
+        val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
+        try {
+            val cached = runBlocking { database.cache().timeEntries().first() }.single()
+            val queued = checkNotNull(RoomChangeStore(database).first())
+            val undo = checkNotNull(runBlocking { database.changes().latestShortStop().first() })
+            assertEquals(
+                CachedTimeEntry(42, 7, null, null, "Cached before the update", START, START.plus(HOUR), false, emptyList(), emptyList()),
+                cached,
+            )
+            assertEquals(
+                PendingChange(1, ChangeKind.UPDATE, 42, 7, null, null, "Edited before the update", START, START.plus(HOUR), false, emptyList(), emptyList()),
+                queued,
+            )
+            assertEquals(
+                ShortStopUndo(
+                    77, shortAt.plusSeconds(10),
+                    CachedTimeEntry(77, 7, null, null, "Short before the update", shortAt, shortAt, false, emptyList(), emptyList()),
+                ),
+                undo,
+            )
+            assertEquals("every migrated row is timed", listOf(false, false, false), listOf(cached, queued.entry(), undo.entry).map { it.allDay })
+            assertEquals("and has no day", listOf(null, null, null), listOf(cached, queued.entry(), undo.entry).map { it.day })
+
+            val midnight = Instant.parse("2026-10-19T00:00:00Z")
+            val noTime = CachedTimeEntry(
+                -2, 7, null, null, "Workshop", midnight, midnight.plus(Duration.ofMinutes(90)), false, emptyList(), emptyList(),
+                allDay = true, day = LocalDate.of(2026, 10, 19),
+            )
+            val sequence = database.changes().insert(PendingChange.of(ChangeKind.CREATE, noTime))
+            assertEquals("the queued no-time create keeps its flag and day", noTime, database.changes().change(sequence)?.entry())
+        } finally {
+            database.close()
+            assertTrue(context.deleteDatabase(FILE))
+        }
+    }
+
     /** The names of the tables in [database]'s file. */
     private fun tables(database: CacheDatabase): Set<String> =
         database.openHelper.readableDatabase.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->
@@ -484,6 +542,12 @@ class CacheDatabaseMigrationTest {
                 "`fields_billable` INTEGER NOT NULL, PRIMARY KEY(`slot`))",
             "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a594909fd1789ae86cc781bcdf9451b9')",
         )
+
+        /**
+         * The tables of version 9, from app/schemas/com.github.e0ipso.tokkl.cache.CacheDatabase/9.json:
+         * version 8's without the local timer tables, which is version 6's schema and identity hash.
+         */
+        val VERSION_9 = VERSION_6
 
         /** The tables of the phone's own pause chain, timer session and Pomodoro session, which version 9 drops. */
         val RETIRED_TABLES = setOf("pause_chain", "timer_session", "pomodoro_session")

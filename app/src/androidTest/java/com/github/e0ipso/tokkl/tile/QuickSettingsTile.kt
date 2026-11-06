@@ -4,6 +4,9 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.DeviceShell
 
@@ -17,6 +20,10 @@ object QuickSettingsTile {
 
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
     private val component get() = ComponentName(instrumentation.targetContext, RunningTileService::class.java).flattenToString()
+    private val device get() = UiDevice.getInstance(instrumentation)
+
+    /** The label of any tile, which the panel shows only while it is open. */
+    private val anyTile get() = By.res("com.android.systemui", "tile_label")
 
     fun add() {
         DeviceShell.run("cmd statusbar add-tile $component")
@@ -62,6 +69,21 @@ object QuickSettingsTile {
         BlackholeDiagnostics.mark("tile.collapse.idle.return")
     }
 
+    /**
+     * Closes the shade after a long press started the tile's activity, for a test's clean-up.
+     * SystemUI hides the shade for the activity, but on Android 16 its Quick Settings header and
+     * the tile keep listening. [collapse] then changes nothing, since the shade already counts as
+     * collapsed. The tile the next test adds listens from that moment, before the test's fixture
+     * exists, and opening the shade calls no onStartListening. Opening the panel and closing it
+     * again ends the listening, as it does after any opening.
+     */
+    fun closeAfterLaunch() {
+        expand()
+        awaitPanel({ device.hasObject(anyTile) }) { "the panel did not reopen to close; tiles=${tileSpecs()}" }
+        collapse()
+        if (!device.wait(Until.gone(anyTile), TIMEOUT_NANOS / 1_000_000)) throw AssertionError("the panel did not close")
+    }
+
     /** Taps the tile, as SystemUI does for a touch. */
     fun click() {
         DeviceShell.run("cmd statusbar click-tile $component")
@@ -73,11 +95,14 @@ object QuickSettingsTile {
      * the tile, so ask for the expanded panel again every few seconds. On an open panel that
      * changes nothing.
      */
-    fun awaitText(what: String, text: String) {
+    fun awaitText(what: String, text: String) =
+        awaitPanel({ shows(text) }) { "$what: the panel does not show \"$text\"; tiles=${tileSpecs()}" }
+
+    private fun awaitPanel(shown: () -> Boolean, failure: () -> String) {
         val deadline = System.nanoTime() + TIMEOUT_NANOS
         var nextExpand = System.nanoTime() + REEXPAND_NANOS
-        while (!shows(text)) {
-            if (System.nanoTime() > deadline) throw AssertionError("$what: the panel does not show \"$text\"; tiles=${tileSpecs()}")
+        while (!shown()) {
+            if (System.nanoTime() > deadline) throw AssertionError(failure())
             if (System.nanoTime() > nextExpand) {
                 expand()
                 nextExpand = System.nanoTime() + REEXPAND_NANOS

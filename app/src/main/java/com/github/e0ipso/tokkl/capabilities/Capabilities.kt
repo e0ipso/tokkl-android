@@ -29,6 +29,10 @@ import kotlinx.serialization.json.JsonArray
  * @property timerState the server owns Pomodoro sessions and pause chains, and `GET /api/app/timer`
  *   answers with a timer state. False on Toggl Track and on a Tokkl without the timer API. Pomodoro,
  *   Pause and the timer event stream follow this flag.
+ * @property allDay Tokkl's no-time entries (`all_day`). Null until a refresh. True when `/me` has
+ *   Tokkl's `role`, until a Tokkl time entry answer lacks the `all_day` key (Tokkl before 1.11.0).
+ *   False on Toggl Track and after that. The All day row, the No times switch and every `all_day`
+ *   key in a request follow it.
  */
 data class Capabilities(
     val trash: Boolean,
@@ -39,6 +43,7 @@ data class Capabilities(
     val summaryCsv: Boolean? = null,
     val detailedCsv: Boolean? = null,
     val timerState: Boolean = false,
+    val allDay: Boolean? = null,
 ) {
 
     /**
@@ -46,7 +51,8 @@ data class Capabilities(
      * trash and restore flags as they were. CSV routes are POST only, so refresh does not send
      * OPTIONS: that 404 is not absence. Tokkl offers Share until a POST proves one kind is gone,
      * and a recorded false stays false across later refreshes. The same holds for [timerState]
-     * and its probe.
+     * and its probe. [allDay] follows the CSV rule: offered on Tokkl until a time entry list
+     * proves it gone.
      */
     fun supports(kind: ReportCsvKind): Boolean = when (kind) {
         ReportCsvKind.SUMMARY -> summaryCsv == true
@@ -66,21 +72,24 @@ data class Capabilities(
             favorites = tokkl,
             timeResolution = me.timeResolutionMinutes != null,
             negatedFilters = tokkl,
-            summaryCsv = csvOffered(tokkl, summaryCsv),
-            detailedCsv = csvOffered(tokkl, detailedCsv),
+            summaryCsv = offeredUntilGone(tokkl, summaryCsv),
+            detailedCsv = offeredUntilGone(tokkl, detailedCsv),
             timerState = when (timer) {
                 is TimerStateProbe.Present -> true
                 TimerStateProbe.Absent -> false
                 TimerStateProbe.Unknown -> timerState
             },
+            allDay = offeredUntilGone(tokkl, allDay),
         )
     }
 
     /**
-     * [previous] false is a POST 404 or 410, or Toggl Track, and stays false. Null and true become
-     * true on Tokkl. Sign-out forgets the flags, so the next account is judged again.
+     * A feature Tokkl offers until a request proves it gone. [previous] false is that proof, such as
+     * a CSV POST's 404 or 410 or a time entry list without `all_day`, or Toggl Track, and stays
+     * false. Null and true become true on Tokkl. Sign-out forgets the flags, so the next account is
+     * judged again.
      */
-    private fun csvOffered(tokkl: Boolean, previous: Boolean?): Boolean? = when {
+    private fun offeredUntilGone(tokkl: Boolean, previous: Boolean?): Boolean? = when {
         !tokkl -> false
         previous == false -> false
         else -> true

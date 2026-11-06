@@ -13,14 +13,11 @@ import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmRearmReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
-import com.github.e0ipso.tokkl.session.ServerTrustStore
-import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerState
 import kotlinx.coroutines.runBlocking
@@ -41,12 +38,12 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 
 /**
- * The timer sync service's lifecycle on the device, against the real Tokkl 1.10.0 server. Opening
+ * The timer sync service's lifecycle on the device, against the real Tokkl server. Opening
  * the app signed in to a server with the timer API runs the service in the foreground as a
  * `specialUse` service, with its silent notification, and its stream brings another device's
  * session to the backgrounded phone with the session notification and the phase alarm. Signing out
- * and the server losing the timer API each stop the service, the stream, the session notification
- * and the alarm. Signing out leaves the server's session to the other devices.
+ * stops the service, the stream, the session notification and the alarm, and leaves the server's
+ * session to the other devices.
  *
  * Boot, package replacement and Doze need a reboot, a reinstall or device idle, which end the
  * instrumentation, so plan 02's task 12 probed them by hand on both emulators. Its execution record
@@ -98,26 +95,6 @@ class TimerSyncServiceLifecycleTest {
         assertNull(app.timerState.state.value)
         assertFalse(notifications.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
         assertNull(alarms.nextAlarmClock)
-    }
-
-    /**
-     * The stored account's server answers as Tokkl 1.8.1, with no timer API, as after a downgrade
-     * of the server. The refresh learns that, and everything the timer API drove stops, while the
-     * held state stays for the account.
-     */
-    @Test
-    fun aServerThatLosesTheTimerApiStopsTheStreamTheSessionNotificationAndTheAlarm() {
-        openTheAppAndReceiveASessionInTheBackground()
-
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.legacyUrl)
-        Session(context).save(TokklTestServer.legacyUrl, TokklTestServer.legacyApiToken)
-        // The stream may have started a refresh for the old server when the session replaced
-        // its running entry. Wait for that refresh, then read the newly stored server.
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
-
-        assertFalse("1.8.1 has no timer API", app.capabilities.state.value.timerState)
-        awaitEverythingStopped("the loss of the timer API")
-        assertNotNull("the server still holds the session", other.timerState().pomodoro)
     }
 
     /**

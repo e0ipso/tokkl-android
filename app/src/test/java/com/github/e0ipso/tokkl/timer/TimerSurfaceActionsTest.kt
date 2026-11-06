@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.cache.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -260,10 +261,10 @@ class TimerSurfaceActionsTest {
 
         override suspend fun currentId(entryId: Long): Long = mappings[entryId] ?: entryId
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
             throw AssertionError("nothing is created")
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
             throw AssertionError("nothing is edited")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")

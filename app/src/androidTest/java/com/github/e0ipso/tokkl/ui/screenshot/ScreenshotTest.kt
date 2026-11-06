@@ -59,8 +59,10 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.calendar.CalendarContent
+import com.github.e0ipso.tokkl.calendar.CalendarEditing
 import com.github.e0ipso.tokkl.calendar.CalendarEntry
 import com.github.e0ipso.tokkl.calendar.CalendarState
+import com.github.e0ipso.tokkl.calendar.ResizeEdge
 import com.github.e0ipso.tokkl.calendar.WeekSource
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
@@ -622,7 +624,16 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             },
             listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
             calendarContent = {
-                CalendarContent(state = CALENDAR, now = TODAY.instant(), onStep = {}, onSelect = {}, onToday = {}, onRetry = {})
+                CalendarContent(
+                    state = CALENDAR,
+                    now = TODAY.instant(),
+                    onStep = {},
+                    onSelect = {},
+                    onToday = {},
+                    onRetry = {},
+                    // Editing turns the All day row's + on, as it is on a phone with the entries to change.
+                    editing = INERT_EDITING,
+                )
             },
         )
     }
@@ -799,7 +810,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
          * [WEEK] in the calendar with Thursday chosen: entries on four days, one across midnight
          * into Thursday, two that overlap, and three the server has not received, one of them
          * running. Write the history list has room for the unsent icon and words in the capture,
-         * where Code review sits at its bottom edge.
+         * where Code review sits at its bottom edge. The server stores no-time entries, and
+         * Thursday has one of four hours.
          */
         val CALENDAR = CalendarState.Shown(
             selected = LocalDate.of(2026, 10, 15),
@@ -815,9 +827,21 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 calendarEntry(5, "Write the history list", APP, "2026-10-15T09:00", "2026-10-15T10:30", task = "Design", unsent = true),
                 calendarEntry(6, "Code review", WALL, "2026-10-15T10:45", "2026-10-15T11:50", unsent = true),
                 calendarEntry(7, "Calendar grid", APP, "2026-10-15T11:15", stop = null, unsent = true),
+                calendarEntry(8, "Team offsite", WALL, "2026-10-15T00:00", "2026-10-15T04:00", allDay = true),
             ),
             week = WeekSource.Cached,
+            allDayOffered = true,
         )
+
+        /** Edits nothing: the capture only needs the calendar's controls on. */
+        val INERT_EDITING = object : CalendarEditing {
+            override fun create(day: LocalDate, fromMinute: Int, toMinute: Int) = Unit
+            override fun move(entry: CalendarEntry, day: LocalDate, deltaMinutes: Int, dayMode: Boolean) = Unit
+            override fun resize(entry: CalendarEntry, edge: ResizeEdge, deltaMinutes: Int) = Unit
+            override fun edit(entry: CalendarEntry) = Unit
+            override fun add(day: LocalDate) = Unit
+            override fun addAllDay(day: LocalDate) = Unit
+        }
 
         /** Rows match each visible fixture, including the Calendar's single running entry. */
         val HISTORY_ROWS = HISTORY.days.flatMap { it.entries }.map { entry ->
@@ -827,7 +851,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
         val CALENDAR_ROWS = CALENDAR.entries.map { entry ->
             CachedTimeEntry(entry.id, 1, null, null, entry.description,
-                entry.start, entry.stop, false, emptyList(), emptyList())
+                entry.start, entry.stop, false, emptyList(), emptyList(), allDay = entry.allDay, day = entry.day)
         }
 
         /** The timer with nothing running, in the account's workspace. */
@@ -913,6 +937,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             stop: String?,
             task: String? = null,
             unsent: Boolean = false,
+            allDay: Boolean = false,
         ) = CalendarEntry(
             id = id,
             description = description,
@@ -922,6 +947,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             start = Instant.parse("$start:00Z"),
             stop = stop?.let { Instant.parse("$it:00Z") },
             unsent = unsent,
+            allDay = allDay,
+            day = if (allDay) LocalDate.parse(start.substringBefore('T')) else null,
         )
 
         /** An entry of [DETAILED] from October [startDay] at [start] to [stopDay] at [stop], in UTC. */

@@ -6,6 +6,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.Instant
+import java.time.LocalDate
 
 // The queue of changes the server has not received yet (docs/PRD.md O1). It lives in the cache's
 // database, so a change and its effect on the cached rows commit together, and both survive the
@@ -56,6 +57,9 @@ enum class ChangeKind {
  *   rest of the queue goes on.
  * @property refusal the server's reason for refusing a [held] change, such as "Time entries can
  *   not be longer than 999 hours", or null when its answer gave none.
+ * @property allDay the change leaves a no-time entry, as [CachedTimeEntry.allDay]. Changes queued
+ *   before database version 10 read false.
+ * @property day the no-time entry's day, as [CachedTimeEntry.day].
  */
 @Entity(tableName = "pending_changes", indices = [Index("entryId")])
 data class PendingChange(
@@ -78,6 +82,8 @@ data class PendingChange(
     /** The immutable tap instant for a captured PATCH Stop. Null on pre-migration queued stops. */
     val capturedStop: Instant? = null,
     @ColumnInfo(defaultValue = "0") val shortStop: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val allDay: Boolean = false,
+    val day: LocalDate? = null,
 ) {
 
     /** The cache row this change leaves, or null for a delete or short Stop. */
@@ -85,7 +91,7 @@ data class PendingChange(
 
     /** The entry as this change has it: for a delete, as it was when the delete was queued. */
     fun entry(): CachedTimeEntry =
-        CachedTimeEntry(entryId, workspaceId, projectId, taskId, description, start, stop, billable, tags, tagIds)
+        CachedTimeEntry(entryId, workspaceId, projectId, taskId, description, start, stop, billable, tags, tagIds, allDay, day)
 
     companion object {
         /** A change of [kind] that leaves [entry] as it is given. */
@@ -101,6 +107,8 @@ data class PendingChange(
             billable = entry.billable,
             tags = entry.tags,
             tagIds = entry.tagIds,
+            allDay = entry.allDay,
+            day = entry.day,
         )
     }
 }

@@ -8,11 +8,16 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.cache.noTimeDay
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
+import com.github.e0ipso.tokkl.time.MAX_ALL_DAY_SECONDS
+import com.github.e0ipso.tokkl.time.NoTimeDuration
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.formatDuration
+import com.github.e0ipso.tokkl.time.isTimeResolution
+import com.github.e0ipso.tokkl.time.noTimeDuration
 import com.github.e0ipso.tokkl.time.parseDuration
 import com.github.e0ipso.tokkl.time.parseTimeOfDay
 import java.time.Clock
@@ -27,6 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,24 +40,36 @@ import kotlinx.coroutines.launch
 /** A time field of the entry form. */
 enum class TimeField { START, END, DURATION }
 
-/** Why the entry form cannot save its times. Each shows as text under its [TimeField]. */
-enum class TimeMistake {
+/**
+ * Why the entry form cannot save its times. Each shows as text under its [TimeField]. The no-time
+ * ones are the messages of [noTimeDuration], the web app's noTimeDuration.ts.
+ */
+sealed interface TimeMistake {
     /** The edit screen cannot read the start or the end, as the web app's editor says it. */
-    TIMES,
+    data object TIMES : TimeMistake
 
     /** The manual entry form cannot read the start or the end, as the web app's manual mode says it. */
-    MANUAL_TIMES,
+    data object MANUAL_TIMES : TimeMistake
 
-    DURATION,
+    data object DURATION : TimeMistake
 
     /** The entry would stop before it starts. */
-    END_BEFORE_START,
+    data object END_BEFORE_START : TimeMistake
 
     /** The entry would be longer than the 999 hours Tokkl and Toggl store. */
-    TOO_LONG,
+    data object TOO_LONG : TimeMistake
 
     /** The typed span is too short at the account's time resolution. */
-    TOO_SHORT,
+    data object TOO_SHORT : TimeMistake
+
+    /** A no-time entry's duration cannot be read, or is zero on an account without a time resolution. */
+    data object NO_TIME_DURATION : TimeMistake
+
+    /** A no-time entry's duration rounds to zero at the account's time resolution of [minutes]. */
+    data class NoTimeRoundsToZero(val minutes: Int) : TimeMistake
+
+    /** A no-time entry would last more than a day. */
+    data object NO_TIME_TOO_LONG : TimeMistake
 }
 
 /** What the entry form shows. */
@@ -79,14 +97,18 @@ sealed interface EntryFormState {
      *   workspace, which is null until the phone has read it. The fields and Save wait for it.
      * @property original the project, task and tags the entry had, which the picker keeps on offer
      *   when they are archived.
-     * @property date the day the start falls on, in the account's timezone.
+     * @property date the day the start falls on, in the account's timezone, or a no-time entry's day.
      * @property start what the start field holds: a clock time as typed, such as `9`, `930` or `4pm`.
      * @property end as [start], for the end. An end earlier than the start is on the next day.
      * @property duration what the duration field holds, such as `1h 30m`, `90` or `1,5h`.
      * @property endsOn the day the entry ends on, when that is not [date], as far as the fields can be read.
+     *   Null for a no-time entry.
      * @property saving the change is being written to the phone.
      * @property confirmDelete Delete is waiting for a yes, on a server that cannot restore.
      * @property deleteFailed the last Delete could not be queued.
+     * @property noTimes the entry is a no-time one, with [date] and [duration] and no start or end.
+     * @property noTimesOffered the form shows the No times switch: the server stores no-time entries
+     *   and the entry does not run.
      */
     data class Open(
         val editing: Boolean,
@@ -104,6 +126,8 @@ sealed interface EntryFormState {
         val confirmDelete: Boolean = false,
         val deleteFailed: Boolean = false,
         val running: Boolean = false,
+        val noTimes: Boolean = false,
+        val noTimesOffered: Boolean = false,
     ) : EntryFormState
 }
 
@@ -124,6 +148,11 @@ sealed interface EntryFormState {
  * edited on the phone only until the send and the refresh after it, so a form opened on that copy
  * saves as on the older days' copy once the cache has dropped it.
  *
+ * With No times on, the entry is a no-time one, as in the web app's EntryEditor.tsx: a date and a
+ * duration. The server stores it from midnight on that date in the account's timezone, with the
+ * duration rounded to the time resolution. A no-time entry opens with No times on, and
+ * [newAllDay] opens a new one for the calendar's All day row.
+ *
  * Save checks the times. A field that cannot be read, or a span the server would refuse, gets a
  * [TimeMistake] and nothing is queued. Otherwise the change goes to [changes], the change queue,
  * with every field, so it is on the phone at once, works offline, and the last write to reach the
@@ -135,6 +164,8 @@ sealed interface EntryFormState {
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param clock where now comes from, which a start without AM or PM is guessed against.
+ * @param allDay whether the server stores no-time entries, as `Capabilities.allDay` says, which
+ *   decides whether the form offers the No times switch.
  */
 class EntryFormModel(
     private val entries: Flow<List<EntryWithSendState>>,
@@ -144,6 +175,7 @@ class EntryFormModel(
     private val changes: EntryChanges,
     private val scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),
+    allDay: Flow<Boolean> = flowOf(false),
 ) {
 
     private val phase = MutableStateFlow<Phase>(Phase.Closed)
@@ -151,8 +183,8 @@ class EntryFormModel(
     private val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
 
-    val state: StateFlow<EntryFormState> = combine(phase, catalog, accountSettings) { current, names, settings ->
-        current.shown(names, settings)
+    val state: StateFlow<EntryFormState> = combine(phase, catalog, accountSettings, allDay) { current, names, settings, offered ->
+        current.shown(names, settings, offered)
     }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormState.Closed)
 
     /** Whether a form is open, or opening. False after [close], and in a new process. */
@@ -170,6 +202,9 @@ class EntryFormModel(
 
     /** Opens the form for a manual entry on [date], or on today's date in the account's timezone. */
     fun new(date: LocalDate? = null) = open(Opening.New(date))
+
+    /** Opens the form for a no-time entry on [day], as the calendar's All day row adds one. */
+    fun newAllDay(day: LocalDate) = open(Opening.New(day, noTimes = true))
 
     fun close() {
         phase.value = Phase.Closed
@@ -190,22 +225,42 @@ class EntryFormModel(
 
     fun setDuration(text: String) = change { it.copy(duration = text, durationSeconds = null, mistakes = it.mistakes - TimeField.DURATION) }
 
-    /** The start or the end lost focus: the duration follows them when both can be read and one changed. */
-    fun timesDone() = changeWithTime { form, settings, time ->
-        if (form.target is Target.Running) return@changeWithTime form
-        val range = resolveRange(form.date, form.start, form.end, time, settings.twelveHour, nowMinutes(time))
-        if (range == null || !(form.startChanged() || form.endChanged())) return@changeWithTime form
-        val text = formatDuration(snappedSeconds(range.start, range.stop, time))
-        form.copy(duration = text, syncedDuration = text, durationSeconds = null)
+    /**
+     * Turns No times on or off, never for a running entry. On, the date stays and the duration
+     * keeps what the form shows, read from the start and the end when only those were typed. Off,
+     * the start and the end come back as they were, and the end follows a duration changed
+     * meanwhile. An entry that was a no-time one gets midnight on the date as its start and the
+     * end its duration later, for the user to change.
+     */
+    fun setNoTimes(on: Boolean) = changeWithTime { form, settings, time ->
+        val unmarked = form.mistakes - TimeField.START - TimeField.END - TimeField.DURATION
+        when {
+            form.target is Target.Running || form.noTimes == on -> form
+            on -> {
+                // Times typed and not left yet give the duration, as leaving them would.
+                val shown = if (form.timesTyped() && !form.durationChanged()) form.followTimes(settings, time) else form
+                shown.copy(noTimes = true, mistakes = unmarked)
+            }
+            form.target is Target.Edit && form.target.snapshot.allDay -> form.timesFromMidnight(settings, time).copy(mistakes = unmarked)
+            else -> form.followDuration(settings, time).copy(noTimes = false, mistakes = unmarked)
+        }
     }
 
-    /** The duration lost focus: once it differs from what the form derived, the end follows it. */
+    /** The start or the end lost focus: the duration follows them when both can be read and one changed. */
+    fun timesDone() = changeWithTime { form, settings, time ->
+        if (form.target is Target.Running || form.noTimes) form else form.followTimes(settings, time)
+    }
+
+    /**
+     * The duration lost focus: once it differs from what the form derived, the end follows it. A
+     * no-time entry's duration shows what the server will store, once it is one the server takes.
+     */
     fun durationDone() = changeWithTime { form, settings, time ->
-        if (form.target is Target.Running || !form.durationChanged()) return@changeWithTime form
-        val seconds = form.durationSeconds ?: parseDuration(form.duration) ?: return@changeWithTime form
-        val start = form.startInstant(settings, time) ?: return@changeWithTime form
-        val stop = start.plusSecondsOrNull(seconds) ?: return@changeWithTime form
-        form.copy(end = settings.formatTime(stop, time.zone), duration = formatDuration(snappedSeconds(start, stop, time)), durationSeconds = seconds)
+        when {
+            form.noTimes -> form.withStoredNoTimeDuration(settings)
+            form.target is Target.Running -> form
+            else -> form.followDuration(settings, time)
+        }
     }
 
     /** Checks the times and queues the entry, or marks what keeps it from saving. */
@@ -226,15 +281,15 @@ class EntryFormModel(
         scope.launch {
             val saved = when (val target = form.target) {
                 Target.New -> {
-                    changes.create(workspaceId, form.fields, span.start, requireNotNull(span.stop))
+                    changes.create(workspaceId, form.fields, span.start, requireNotNull(span.stop), span.noTimeDay)
                     true
                 }
                 is Target.Running -> changes.updateRunning(target.identity, form.fields, span.start)
                 is Target.Edit -> when {
-                    target.onPhone && changes.update(target.entryId, form.fields, span.start, span.stop) -> true
+                    target.onPhone && changes.update(target.entryId, form.fields, span.start, span.stop, span.noTimeDay) -> true
                     // An older entry goes whole, also one whose copy the refresh after its send dropped.
                     !target.onPhone || target.start < HistoryWindow.endingToday(time).start -> {
-                        changes.updateOlder(target.entryId, target.workspaceId, form.fields, span.start, requireNotNull(span.stop))
+                        changes.updateOlder(target.entryId, target.workspaceId, form.fields, span.start, requireNotNull(span.stop), span.noTimeDay)
                         true
                     }
                     else -> false
@@ -294,7 +349,7 @@ class EntryFormModel(
             val next = when (val time = settings.time(clock)) {
                 null -> Phase.NoAccountTime
                 else -> when (opening) {
-                    is Opening.New -> Phase.Open(newForm(time, opening.date))
+                    is Opening.New -> Phase.Open(newForm(time, opening.date, opening.noTimes))
                     is Opening.Running -> {
                         val entry = changes.runningEntry(opening.identity)
                         entry?.let { Phase.Open(runningForm(it, opening.identity, settings, time)) } ?: Phase.Missing
@@ -314,8 +369,17 @@ class EntryFormModel(
         }
     }
 
-    private fun newForm(time: AccountTime, date: LocalDate?): Form =
-        Form(target = Target.New, fields = EntryFields(), date = date ?: time.today(), start = "", end = "", duration = "", syncedDuration = "")
+    private fun newForm(time: AccountTime, date: LocalDate?, noTimes: Boolean): Form =
+        Form(
+            target = Target.New,
+            fields = EntryFields(),
+            date = date ?: time.today(),
+            start = "",
+            end = "",
+            duration = "",
+            syncedDuration = "",
+            noTimes = noTimes,
+        )
 
     private fun runningForm(entry: CachedTimeEntry, identity: RunningEntryIdentity, settings: AccountSettings, time: AccountTime): Form {
         val date = time.local(entry.start).toLocalDate()
@@ -333,6 +397,7 @@ class EntryFormModel(
     private fun editForm(cached: EntryWithSendState, settings: AccountSettings, time: AccountTime, onPhone: Boolean): Form? {
         val entry = cached.entry
         val stop = entry.stop ?: return null
+        if (entry.allDay) return noTimeForm(entry, stop, time, onPhone)
         // Keep rejected/legacy entries editable at their actual times, still marked unsent by the
         // history. A null prediction is never a replacement stored span.
         val predicted = if (cached.unsent && !stop.isBefore(entry.start)) time.snapUnsent(entry.start, stop) else null
@@ -347,11 +412,25 @@ class EntryFormModel(
     }
 
     /**
+     * The form on the no-time [entry]: its day, and its duration rounded to the time resolution as
+     * the server rounds it. The server keeps its start at midnight, so it has no times to show and
+     * no span to predict. Its times open as empty texts, so times the user gives it count as typed.
+     */
+    private fun noTimeForm(entry: CachedTimeEntry, stop: Instant, time: AccountTime, onPhone: Boolean): Form {
+        val date = entry.noTimeDay(time.zone)
+        val duration = formatDuration(time.snapDuration(stop.epochSecond - entry.start.epochSecond))
+        val fields = entry.fields()
+        val target = Target.Edit(entry.id, entry.workspaceId, entry.start, stop, date, startText = "", endText = "", fields.picked, onPhone, entry)
+        return Form(target, fields, date, start = "", end = "", duration, syncedDuration = duration, noTimes = true)
+    }
+
+    /**
      * The span to save, or the mistakes that keep [form] from saving. The start must be read. A
      * duration that differs from the derived one sets the stop, and otherwise the end does, read
      * after the start. A field left as it opened keeps the entry's instant.
      */
     private fun check(form: Form, settings: AccountSettings, time: AccountTime): Checked {
+        if (form.noTimes) return checkNoTimes(form, settings, time)
         val unreadable = if (form.target == Target.New) TimeMistake.MANUAL_TIMES else TimeMistake.TIMES
         val start = form.startInstant(settings, time) ?: return Checked.Invalid(TimeField.START, unreadable)
         if (form.target is Target.Running) return Checked.Valid(start, stop = null)
@@ -375,6 +454,25 @@ class EntryFormModel(
         else Checked.Valid(start, stop)
     }
 
+    /**
+     * The span a no-time [form] saves: midnight on its date in the account's timezone, and the
+     * duration the server will store, as the web app's noTimeDuration.ts reads it. Only the
+     * duration can be wrong.
+     */
+    private fun checkNoTimes(form: Form, settings: AccountSettings, time: AccountTime): Checked {
+        // A no-time entry saved with its day and duration as they opened keeps its stored span,
+        // as the web app's noTimeEdit.ts does, so renaming one off the grid never rounds it.
+        val target = form.target as? Target.Edit
+        if (target != null && target.snapshot.allDay && form.date == target.date && !form.durationChanged()) {
+            return Checked.Valid(target.start, target.stop, noTimeDay = form.date)
+        }
+        val read = noTimeDuration(form.duration, settings.timeResolutionMinutes)
+        val seconds = read.seconds
+        if (read.error != null || seconds == null) return Checked.Invalid(TimeField.DURATION, read.mistake(settings.timeResolutionMinutes))
+        val span = time.noTimeSpan(form.date, seconds)
+        return Checked.Valid(span.start, span.stop, noTimeDay = form.date)
+    }
+
     /** The start [Form.start] means: the entry's own while the date and the start are as they opened. */
     private fun Form.startInstant(settings: AccountSettings, time: AccountTime): Instant? {
         val minutes = parseTimeOfDay(start, twelveHour = settings.twelveHour, reference = nowMinutes(time)) ?: return null
@@ -387,6 +485,53 @@ class EntryFormModel(
 
     private fun nowMinutes(time: AccountTime): Int = time.minutesOfDay(clock.instant())
 
+    /** The duration of the span the start and the end give, when both can be read and one changed. */
+    private fun Form.followTimes(settings: AccountSettings, time: AccountTime): Form {
+        val range = resolveRange(date, start, end, time, settings.twelveHour, nowMinutes(time))
+        if (range == null || !(startChanged() || endChanged())) return this
+        val text = formatDuration(snappedSeconds(range.start, range.stop, time))
+        return copy(duration = text, syncedDuration = text, durationSeconds = null)
+    }
+
+    /** The end the start and a changed duration give, with the duration the server will store. */
+    private fun Form.followDuration(settings: AccountSettings, time: AccountTime): Form {
+        if (!durationChanged()) return this
+        val seconds = durationSeconds ?: parseDuration(duration) ?: return this
+        val start = startInstant(settings, time) ?: return this
+        val stop = start.plusSecondsOrNull(seconds) ?: return this
+        return copy(end = settings.formatTime(stop, time.zone), duration = formatDuration(snappedSeconds(start, stop, time)), durationSeconds = seconds)
+    }
+
+    /** The no-time duration as the server will store it, when the server takes it. */
+    private fun Form.withStoredNoTimeDuration(settings: AccountSettings): Form {
+        val read = noTimeDuration(duration, settings.timeResolutionMinutes)
+        val seconds = read.seconds?.takeIf { read.error == null } ?: return this
+        return copy(duration = formatDuration(seconds))
+    }
+
+    /**
+     * Times for a no-time entry: midnight on its date, and an end its duration later. Where that
+     * end reads as another span, as midnight again after 24 hours, the duration sets the stop,
+     * as after [durationDone].
+     */
+    private fun Form.timesFromMidnight(settings: AccountSettings, time: AccountTime): Form {
+        val start = time.instantAt(date, 0)
+        val startText = settings.formatTime(start, time.zone)
+        val seconds = parseDuration(duration)
+        val stop = seconds?.let { start.plusSecondsOrNull(it) } ?: return copy(noTimes = false, start = startText, end = "")
+        val endText = settings.formatTime(stop, time.zone)
+        val text = formatDuration(snappedSeconds(start, stop, time))
+        val endSaysIt = resolveRange(date, startText, endText, time, settings.twelveHour, nowMinutes(time))?.stop == stop
+        return copy(
+            noTimes = false,
+            start = startText,
+            end = endText,
+            duration = text,
+            syncedDuration = text,
+            durationSeconds = seconds.takeUnless { endSaysIt },
+        )
+    }
+
     private fun change(edit: (Form) -> Form) {
         phase.update { current -> if (current is Phase.Open && !current.form.saving) Phase.Open(edit(current.form)) else current }
     }
@@ -397,7 +542,7 @@ class EntryFormModel(
         change { edit(it, settings, time) }
     }
 
-    private fun Phase.shown(names: Catalog, settings: AccountSettings?): EntryFormState = when (this) {
+    private fun Phase.shown(names: Catalog, settings: AccountSettings?, allDay: Boolean): EntryFormState = when (this) {
         Phase.Closed -> EntryFormState.Closed
         is Phase.Waiting -> EntryFormState.Loading
         Phase.Missing -> EntryFormState.Missing
@@ -408,13 +553,13 @@ class EntryFormModel(
             if (settings == null || time == null) {
                 settings?.let { EntryFormState.NoAccountTime(it.timeZone) } ?: EntryFormState.Loading
             } else {
-                form.shown(names, settings, time)
+                form.shown(names, settings, time, allDay)
             }
         }
     }
 
-    private fun Form.shown(names: Catalog, settings: AccountSettings, time: AccountTime): EntryFormState.Open {
-        val stop = (check(this, settings, time) as? Checked.Valid)?.stop
+    private fun Form.shown(names: Catalog, settings: AccountSettings, time: AccountTime, allDay: Boolean): EntryFormState.Open {
+        val stop = if (noTimes) null else (check(this, settings, time) as? Checked.Valid)?.stop
         val endsOn = stop?.let { time.local(it).toLocalDate() }?.takeIf { it != date }
         return EntryFormState.Open(
             editing = target != Target.New,
@@ -436,6 +581,8 @@ class EntryFormModel(
             saving = saving,
             confirmDelete = confirmDelete,
             deleteFailed = deleteFailed,
+            noTimes = noTimes,
+            noTimesOffered = allDay && target !is Target.Running,
         )
     }
 
@@ -470,6 +617,8 @@ class EntryFormModel(
         val saving: Boolean = false,
         val confirmDelete: Boolean = false,
         val deleteFailed: Boolean = false,
+        /** The entry is a no-time one; [start] and [end] stay, hidden, for when it gets times again. */
+        val noTimes: Boolean = false,
     ) {
         fun startChanged(): Boolean = when (target) {
             Target.New -> true
@@ -480,6 +629,13 @@ class EntryFormModel(
         fun endChanged(): Boolean = target !is Target.Edit || date != target.date || end != target.endText
 
         fun durationChanged(): Boolean = durationSeconds != null || duration != syncedDuration
+
+        /** The start or the end holds other text than the form opened with; a new date alone types neither. */
+        fun timesTyped(): Boolean = when (target) {
+            Target.New -> start.isNotEmpty() || end.isNotEmpty()
+            is Target.Edit -> start != target.startText || end != target.endText
+            is Target.Running -> false
+        }
     }
 
     private sealed interface Target {
@@ -518,7 +674,7 @@ class EntryFormModel(
     private sealed interface Opening {
         data class Running(val identity: RunningEntryIdentity) : Opening
 
-        data class New(val date: LocalDate?) : Opening
+        data class New(val date: LocalDate?, val noTimes: Boolean = false) : Opening
 
         data class Edit(val entryId: Long, val older: CachedTimeEntry?) : Opening
     }
@@ -539,7 +695,8 @@ class EntryFormModel(
     }
 
     private sealed interface Checked {
-        data class Valid(val start: Instant, val stop: Instant?) : Checked
+        /** [noTimeDay] is the day of a no-time entry, and null for a timed one. */
+        data class Valid(val start: Instant, val stop: Instant?, val noTimeDay: LocalDate? = null) : Checked
 
         data class Invalid(val mistakes: Map<TimeField, TimeMistake>) : Checked {
             constructor(field: TimeField, mistake: TimeMistake) : this(mapOf(field to mistake))
@@ -553,5 +710,20 @@ class EntryFormModel(
 
         /** The longest entry Tokkl and Toggl store: 999 hours, MAX_DURATION_SECONDS in ../tokkl/packages/common/duration.ts. */
         const val MAX_ENTRY_SECONDS = 999L * 3600
+    }
+}
+
+/**
+ * The mistake for a duration [noTimeDuration] refused, by its rules: one it cannot read, one over a
+ * day, or one that rounds to zero at the time resolution [minutes]. Without a resolution a zero
+ * gets the message for a duration it cannot read, as in the web app.
+ */
+private fun NoTimeDuration.mistake(minutes: Double?): TimeMistake {
+    val resolution = minutes?.takeIf(::isTimeResolution)
+    return when {
+        seconds == null -> TimeMistake.NO_TIME_DURATION
+        seconds > MAX_ALL_DAY_SECONDS -> TimeMistake.NO_TIME_TOO_LONG
+        resolution != null -> TimeMistake.NoTimeRoundsToZero(resolution.toInt())
+        else -> TimeMistake.NO_TIME_DURATION
     }
 }

@@ -50,6 +50,10 @@ class ServerTask(
  * A time entry from `GET /api/v9/me/time_entries`. [start] and [stop] are RFC 3339 timestamps,
  * and [stop] is null while the entry runs. A data class, because the timer state holds the running
  * entry in this shape and compares states by value.
+ *
+ * @property allDay true for a no-time entry, which has a day and a duration but no times; the
+ *   server keeps its start at local midnight of the account's timezone. Null when the server
+ *   leaves the key out, as Toggl Track and Tokkl before 1.11.0 do.
  */
 @Serializable
 data class ServerTimeEntry(
@@ -64,6 +68,7 @@ data class ServerTimeEntry(
     val tags: List<String>? = null,
     @SerialName("tag_ids") val tagIds: List<Long>? = null,
     @SerialName("server_deleted_at") val serverDeletedAt: String? = null,
+    @SerialName("all_day") val allDay: Boolean? = null,
 )
 
 /** `GET /api/v9/me/preferences`. Tokkl leaves `favorites` out until the user saves one. */

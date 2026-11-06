@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import java.security.SecureRandom
 import java.time.Instant
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -68,6 +69,24 @@ object TestAccounts {
                 put("description", description)
                 put("start", start.toString())
                 if (stop == null) put("duration", -1) else put("stop", stop.toString())
+            }
+            return client.send("POST", entries(), body, JsonObject.serializer())
+                .orFail("POST /api/v9/workspaces/<id>/time_entries")
+                .getValue("id").jsonPrimitive.long
+        }
+
+        /**
+         * Creates a no-time entry on [day] of [seconds], as Tokkl 2.1.0 takes it, and returns its
+         * id. The server stores it from local midnight of [day] in the account's timezone.
+         */
+        fun createNoTimeEntry(description: String, day: LocalDate, seconds: Long): Long {
+            val body = buildJsonObject {
+                put("workspace_id", workspaceId)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                put("all_day", true)
+                put("start_date", day.toString())
+                put("duration", seconds)
             }
             return client.send("POST", entries(), body, JsonObject.serializer())
                 .orFail("POST /api/v9/workspaces/<id>/time_entries")

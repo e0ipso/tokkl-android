@@ -8,16 +8,22 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.TouchInjectionScope
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.swipeLeft
@@ -51,9 +57,13 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -467,6 +477,49 @@ class CalendarServerTest {
         }
     }
 
+    /**
+     * A no-time entry the server stores sits as a chip in the All day row, read as its description
+     * and duration, and has no block in the hour grid. The + of its day opens the form in No times
+     * mode on that day, and saving 90 minutes makes the server store a no-time entry on it.
+     */
+    @Test
+    fun aNoTimeEntryShowsInTheAllDayRowAndItsPlusAddsOneOnThatDay() {
+        val day = today.minusDays(1)
+        account.createNoTimeEntry("Team offsite", day, 7_200)
+        refresh()
+
+        withCalendar { model ->
+            show(model, day)
+
+            awaitBlock("Team offsite, ${spokenDuration(context.resources, 7_200)}")
+            assertTrue("no block of it in the hour grid", !exists(hasContentDescription("Team offsite, from ", substring = true)))
+
+            composeRule.onNode(allDayPlus(day)).performScrollTo().performClick()
+            composeRule.waitUntil("the form opens for a new entry", LOAD_TIMEOUT_MS) {
+                exists(hasText(string(R.string.entry_form_new)) and isHeading())
+            }
+            composeRule.onNode(hasText(string(R.string.entry_no_times)) and isToggleable()).assertIsOn()
+            assertTrue("the form is on $day", exists(hasContentDescription(spokenDate(day)) and hasClickAction()))
+            assertTrue("a no-time entry has no start", !exists(hasSetTextAction() and hasText(string(R.string.entry_start))))
+            composeRule.waitUntil("the account's workspace is known", LOAD_TIMEOUT_MS) {
+                composeRule.onAllNodes(hasSetTextAction() and hasText(string(R.string.entry_description))).fetchSemanticsNodes()
+                    .singleOrNull()?.config?.contains(SemanticsProperties.Disabled) == false
+            }
+            composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description))).performTextInput("Added from the plus")
+            composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_duration))).performScrollTo().performTextInput("90m")
+            composeRule.onNode(hasText(string(R.string.entry_save)) and hasClickAction()).performScrollTo().performClick()
+            composeRule.waitUntil("the form closes", LOAD_TIMEOUT_MS) {
+                !exists(hasText(string(R.string.entry_form_new)) and isHeading())
+            }
+
+            sendTheQueue()
+            val stored = serverEntry("Added from the plus", day)
+            assertTrue("the server stores a no-time entry", stored.getValue("all_day").jsonPrimitive.boolean)
+            assertEquals(5_400L, stored.getValue("duration").jsonPrimitive.long)
+            assertEquals("from midnight of the day it was added on", instant(day.atStartOfDay()), OffsetDateTime.parse(stored.getValue("start").jsonPrimitive.content).toInstant())
+        }
+    }
+
     private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
 
     /**
@@ -535,6 +588,32 @@ class CalendarServerTest {
         composeRule.waitUntil("the refresh drops the entry from the phone", LOAD_TIMEOUT_MS) {
             runBlocking { app.cache.entries.first() }.none { it.entry.id == id }
         }
+    }
+
+    /** The entry described [description] that starts within two days of [day], as the server keeps it. */
+    private fun serverEntry(description: String, day: LocalDate): JsonObject {
+        val url = account.client.server.api("me", "time_entries").newBuilder()
+            .addQueryParameter("start_date", day.minusDays(2).toString() + "T00:00:00Z")
+            .addQueryParameter("end_date", day.plusDays(2).toString() + "T00:00:00Z")
+            .build()
+        return account.client.get(url, JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
+            .map { it.jsonObject }
+            .single { it.getValue("description").jsonPrimitive.content == description }
+    }
+
+    /** The + of [day]'s All day cell, named by the day as TalkBack reads it. */
+    private fun allDayPlus(day: LocalDate): SemanticsMatcher {
+        val words = DateWords(context.resources)
+        val label = context.getString(R.string.history_day, words.weekday(day), words.short(day))
+        return hasContentDescription(context.getString(R.string.calendar_add_all_day_on, label)) and hasClickAction()
+    }
+
+    /** What TalkBack reads for the form's date button on [date]: Date: Mon, 19 Oct 2026. */
+    private fun spokenDate(date: LocalDate): String {
+        val weekday = context.resources.getStringArray(R.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
+        val month = context.resources.getStringArray(R.array.reports_months_short)[date.monthValue - 1]
+        val value = context.getString(R.string.entry_date_value, weekday, context.getString(R.string.reports_date_year, date.dayOfMonth, month, date.year))
+        return context.getString(R.string.entry_date_spoken, value)
     }
 
     private fun instant(at: LocalDateTime): Instant = at.atZone(zone).toInstant()

@@ -66,6 +66,18 @@ class CapabilitiesSource(initial: Capabilities?, private val save: (Capabilities
         if (current.trash || current.restore) update(current.copy(trash = false, restore = false))
     }
 
+    /**
+     * A Tokkl time entry list lacked the `all_day` key, as Tokkl before 1.11.0 sends it. Turns
+     * no-time entries off for good and stores that. A flag that is not on, false or not known yet
+     * as after a sign-out, stays as it is and unwritten. Writes to the disk, so call it off the
+     * main thread.
+     */
+    @Synchronized
+    fun allDayMissing() {
+        val current = mutableState.value
+        if (current.allDay == true) update(current.copy(allDay = false))
+    }
+
     private fun update(next: Capabilities): Capabilities {
         if (next != stored) {
             try {

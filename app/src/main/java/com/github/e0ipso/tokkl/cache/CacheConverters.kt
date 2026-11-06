@@ -2,11 +2,12 @@ package com.github.e0ipso.tokkl.cache
 
 import androidx.room.TypeConverter
 import java.time.Instant
+import java.time.LocalDate
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
-/** Stores instants as epoch milliseconds and lists as JSON arrays. */
+/** Stores instants as epoch milliseconds, dates as ISO `YYYY-MM-DD` text and lists as JSON arrays. */
 internal class CacheConverters {
 
     @TypeConverter
@@ -14,6 +15,12 @@ internal class CacheConverters {
 
     @TypeConverter
     fun fromInstant(instant: Instant?): Long? = instant?.toEpochMilli()
+
+    @TypeConverter
+    fun toDate(text: String?): LocalDate? = text?.let(LocalDate::parse)
+
+    @TypeConverter
+    fun fromDate(date: LocalDate?): String? = date?.toString()
 
     @TypeConverter
     fun toNames(json: String): List<String> = Json.decodeFromString(NAMES, json)

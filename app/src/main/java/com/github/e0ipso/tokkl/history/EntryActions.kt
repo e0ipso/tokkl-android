@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.cache.noTimeDay
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entry.SplitHalves
 import com.github.e0ipso.tokkl.entry.SplitProblem
@@ -189,24 +190,32 @@ class EntryActionsModel(
      * `duplicate` of ../tokkl/packages/web/src/components/EntryList.tsx and of EntryEditor.tsx,
      * which post the source's own start and stop. The copy goes to the source's workspace through
      * the change queue, so it shows at once, also offline. A running entry or one the cache no
-     * longer holds makes no copy, as the web app duplicates only a stopped one.
+     * longer holds makes no copy, as the web app duplicates only a stopped one. A no-time source
+     * makes a no-time copy on its day; without an account timezone to read that day in, it makes none.
      */
     fun duplicate(entryId: Long) {
         scope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
             val stop = source.stop ?: return@launch
-            changes.create(source.workspaceId, source.fields(), source.start, stop)
+            val noTimeDay = if (source.allDay) {
+                source.day ?: accountSettings.value?.time(clock)?.zone?.let(source::noTimeDay) ?: return@launch
+            } else {
+                null
+            }
+            changes.create(source.workspaceId, source.fields(), source.start, stop, noTimeDay)
             mutableState.update { it.copy(notice = EntryNotice.Duplicated(++serial)) }
         }
     }
 
     /**
      * Opens the split dialog on the cached stopped entry [entryId]. A running entry, one the cache
-     * no longer holds, or an account timezone the phone cannot resolve opens nothing.
+     * no longer holds, a no-time entry, which has no time to cut at, or an account timezone the
+     * phone cannot resolve opens nothing.
      */
     fun split(entryId: Long) {
         scope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
+            if (source.allDay) return@launch
             val stop = source.stop?.takeIf { !it.isBefore(source.start) } ?: return@launch
             val time = accountSettings.value?.time(clock) ?: return@launch
             val span = time.snapUnsent(source.start, stop) ?: return@launch

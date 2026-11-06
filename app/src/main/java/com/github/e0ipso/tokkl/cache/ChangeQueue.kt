@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.cache
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -29,23 +30,35 @@ data class RunningEntryIdentity(val entryId: Long, val workspaceId: Long, val st
  * The changes screens make to time entries, as [ChangeQueue] makes them: on the phone at once,
  * then queued for the server. A screen's model takes this, so a JVM test can stand in for the
  * database. See [ChangeQueue] for what each call does.
+ *
+ * A non-null `noTimeDay` on [create], [update] and [updateOlder] makes a no-time entry on that
+ * day. The caller passes the day's local midnight in the account's zone as the start
+ * (`AccountTime.instantAt(day, 0)`) and the start plus the snapped duration as the stop. A null
+ * one makes a timed entry, also when the entry was a no-time one.
  */
 interface EntryChanges {
     suspend fun start(workspaceId: Long, fields: EntryFields): Long
 
     suspend fun stop(entryId: Long, fields: EntryFields? = null): Boolean
 
-    suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long
+    suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate? = null): Long
 
-    suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean
+    suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate? = null): Boolean
 
     /**
      * Sets every field of the stopped entry [entryId] in [workspaceId], whether the phone holds it
      * or not, such as an entry from the older days the history pages from the server. A stand-in
      * with no cache of its own treats it as [update].
      */
-    suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) {
-        update(entryId, fields, start, stop)
+    suspend fun updateOlder(
+        entryId: Long,
+        workspaceId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant,
+        noTimeDay: LocalDate? = null,
+    ) {
+        update(entryId, fields, start, stop, noTimeDay)
     }
 
     /** Reads this exact active segment, resolving a phone-made id after its create was sent. */
@@ -82,6 +95,10 @@ interface EntryChanges {
  *
  * An entry created on the phone gets a negative local id. The calls take it, before and after the
  * server has answered the create with its own id.
+ *
+ * A no-time entry's change carries its flag and day ([CachedTimeEntry.allDay] and
+ * [CachedTimeEntry.day]), and so does every cache row or queued change rebuilt from it. Running
+ * entries are never no-time ones.
  *
  * Pause, Resume and Pomodoro sessions belong to the server's timer state and never pass through
  * the queue (docs/PRD.md T1). A queued Stop of the server's resumed clone or of its open pomodoro
@@ -165,25 +182,29 @@ class ChangeQueue(
     suspend fun dismissShortStop(entryId: Long) = withContext(io) { dao.deleteShortStop(resolve(entryId)) }
 
     /**
-     * Creates a stopped entry in [workspaceId], as a manual entry does. Returns its local id. Pass
-     * the account's `AccountSettings.defaultWorkspaceId`, as for [start].
+     * Creates a stopped entry in [workspaceId], as a manual entry does, or a no-time entry on
+     * [noTimeDay] (see [EntryChanges]). Returns its local id. Pass the account's
+     * `AccountSettings.defaultWorkspaceId`, as for [start].
      */
-    override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+    override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
         require(!stop.isBefore(start)) { "The stop comes before the start." }
-        return queue { queueCreate(workspaceId, fields, start, stop) }
+        return queue { queueCreate(workspaceId, fields, start, stop, noTimeDay) }
     }
 
     /**
      * Sets every field of the cached entry [entryId]. A null [stop] makes it run, and a stopped
-     * entry made to run stops the running one at its start first, as a Start would. Returns false
-     * when the entry is not cached.
+     * entry made to run stops the running one at its start first, as a Start would. With
+     * [noTimeDay] it is a no-time entry on that day (see [EntryChanges]), which never runs.
+     * Without it the entry is timed, so a null [noTimeDay] turns a no-time entry's times on, with
+     * the caller's real [start] and [stop]. Returns false when the entry is not cached.
      */
-    override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+    override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
         require(stop == null || !stop.isBefore(start)) { "The stop comes before the start." }
+        require(noTimeDay == null || stop != null) { "A no-time entry never runs." }
         return queue {
             val current = dao.entry(resolve(entryId)) ?: return@queue false
             if (current.stop != null && stop == null) dao.runningEntries().forEach { stopAt(it, start) }
-            enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop))
+            enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop, noTimeDay))
             true
         }
     }
@@ -215,13 +236,20 @@ class ChangeQueue(
      * goes to the queue with every field, so the sender's PUT sends it as it is, and the cache
      * holds the entry from now on, marked unsent until the server has it. A refresh drops it again
      * when it starts before the cache's window. The workspace of a cached entry wins over
-     * [workspaceId].
+     * [workspaceId]. [noTimeDay] is as for [update].
      */
-    override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) {
+    override suspend fun updateOlder(
+        entryId: Long,
+        workspaceId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant,
+        noTimeDay: LocalDate?,
+    ) {
         require(!stop.isBefore(start)) { "The stop comes before the start." }
         queue {
             val id = resolve(entryId)
-            enqueue(ChangeKind.UPDATE, entry(id, dao.entry(id)?.workspaceId ?: workspaceId, fields, start, stop))
+            enqueue(ChangeKind.UPDATE, entry(id, dao.entry(id)?.workspaceId ?: workspaceId, fields, start, stop, noTimeDay))
         }
     }
 
@@ -320,12 +348,13 @@ class ChangeQueue(
 
     /**
      * Queues a create, with the server's entries the phone holds around its start, which a lost
-     * post's lookup must not take for it (see [PendingChange.existingIds]).
+     * post's lookup must not take for it (see [PendingChange.existingIds]). A no-time entry's
+     * start is local midnight of [noTimeDay].
      */
-    private fun queueCreate(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant?): Long {
+    private fun queueCreate(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate? = null): Long {
         val margin = ChangeSender.LOOKUP_MARGIN
         val existing = dao.serverEntryIds(start.minus(margin), start.plus(margin))
-        return enqueue(ChangeKind.CREATE, entry(id = 0, workspaceId, fields, start, stop), existing)
+        return enqueue(ChangeKind.CREATE, entry(id = 0, workspaceId, fields, start, stop, noTimeDay), existing)
     }
 
     /**
@@ -391,7 +420,15 @@ class ChangeQueue(
         return folded.entryId
     }
 
-    private fun entry(id: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant?): CachedTimeEntry {
+    /** The entry with [fields], [start] and [stop]. It is a no-time one on [noTimeDay] when given, else timed. */
+    private fun entry(
+        id: Long,
+        workspaceId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant?,
+        noTimeDay: LocalDate? = null,
+    ): CachedTimeEntry {
         val tags = fields.tags.distinct()
         val known = dao.tags(workspaceId).associate { it.name to it.id }
         return CachedTimeEntry(
@@ -405,6 +442,8 @@ class ChangeQueue(
             billable = fields.billable,
             tags = tags,
             tagIds = tags.mapNotNull(known::get),
+            allDay = noTimeDay != null,
+            day = noTimeDay,
         )
     }
 

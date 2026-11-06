@@ -75,7 +75,55 @@ class CapabilitiesTest {
         assertEquals("Toggl Track has no summary CSV route", false, capabilities.summaryCsv)
         assertEquals("Toggl Track has no detailed CSV route", false, capabilities.detailedCsv)
         assertFalse("Toggl Track answers 404 to /api/app/timer", capabilities.timerState)
+        assertEquals("Toggl Track has no no-time entries", false, capabilities.allDay)
         assertTrue(capabilities.timeResolution)
+    }
+
+    /** No probe: Tokkl's `role` offers no-time entries before any entry has been read. */
+    @Test
+    fun noTimeEntriesAreOfferedOnTokklWithoutAProbe() {
+        answers[TRASH] = json("[]")
+        answers[TIMER] = json(TIMER_STATE)
+
+        val capabilities = source().refresh(client, me(TOKKL_ME))
+
+        assertEquals(true, capabilities.allDay)
+        assertEquals("the trash and the timer, nothing for no-time entries", listOf(TRASH, TIMER), server.requests())
+        assertNull("hidden before the first refresh", Capabilities.NONE.allDay)
+    }
+
+    /** A Tokkl before 1.11.0 sent an entry without `all_day`, so later refreshes keep it off. */
+    @Test
+    fun aRecordedMissingAllDayStaysOffAcrossRefreshes() {
+        answers[TRASH] = json("[]")
+        answers[TIMER] = json(TIMER_STATE)
+        val source = source(initial = ALL.copy(allDay = false))
+
+        assertEquals(false, source.refresh(client, me(TOKKL_ME)).allDay)
+        assertEquals(false, source.refresh(client, me(TOKKL_ME)).allDay)
+    }
+
+    @Test
+    fun aMissingAllDayTurnsTheFlagOffAndStoresItOnce() {
+        val source = source(initial = ALL)
+
+        source.allDayMissing()
+        source.allDayMissing()
+
+        val expected = ALL.copy(allDay = false)
+        assertEquals(expected, source.state.value)
+        assertEquals("one write", listOf(expected), saved)
+    }
+
+    /** Before the first refresh, or after a sign-out, nothing is offered and nothing is written. */
+    @Test
+    fun aMissingAllDayWritesNothingWhenTheFlagIsNotOn() {
+        val source = source()
+
+        source.allDayMissing()
+
+        assertEquals(Capabilities.NONE, source.state.value)
+        assertTrue("nothing was written", saved.isEmpty())
     }
 
     @Test
@@ -293,6 +341,7 @@ class CapabilitiesTest {
             summaryCsv = true,
             detailedCsv = true,
             timerState = true,
+            allDay = true,
         )
     }
 

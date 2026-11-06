@@ -17,7 +17,9 @@ import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -27,6 +29,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -546,6 +549,32 @@ class ChangeQueueServerTest {
         assertEquals("the source and its copy: $entries", 2, entries.size)
         assertTrue("the copy is an entry of its own", serverId(copy) != source)
         assertEquals(setOf(source, serverId(copy)), entries.map { it.getValue("id").jsonPrimitive.long }.toSet())
+    }
+
+    /**
+     * A no-time entry queued while the server cannot be reached stays queued with its flag and
+     * day, and arrives as a no-time entry on that day once the server can be reached.
+     */
+    @Test
+    fun aNoTimeCreateQueuedWhileTheServerIsUnreachableArrivesOnItsDay() {
+        assertEquals("the server stores no-time entries", true, app.capabilities.state.value.allDay)
+        val day = LocalDate.now(ZoneId.of("Europe/Madrid")).minusDays(1)
+        val span = time().noTimeSpan(day, 5_400)
+        relay.hang()
+        val id = runBlocking {
+            app.changes.create(workspace, EntryFields(description = "Logged offline, no times"), span.start, span.stop, noTimeDay = day)
+        }
+        runBlocking { app.sender.send().join() }
+        assertEquals("the create stays queued", 1, unsentCount())
+        relay.release()
+        drainUntilEmpty()
+
+        val stored = serverEntry(serverId(id))
+        assertEquals("Logged offline, no times", stored.string("description"))
+        assertTrue("the server stores a no-time entry", stored.getValue("all_day").jsonPrimitive.boolean)
+        assertEquals(5_400L, stored.getValue("duration").jsonPrimitive.long)
+        assertEquals("from midnight of its day", span.start, stored.instant("start"))
+        assertEquals("nothing needs attention", 0, runBlocking { app.changes.heldCount.first() })
     }
 
     /**

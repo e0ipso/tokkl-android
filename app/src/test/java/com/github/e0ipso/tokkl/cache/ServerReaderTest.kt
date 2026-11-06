@@ -1,11 +1,15 @@
 package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
+import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Me
 import com.github.e0ipso.tokkl.session.MePreferences
@@ -15,6 +19,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
@@ -82,6 +87,61 @@ class ServerReaderTest {
             ),
             snapshot.timeEntries,
         )
+    }
+
+    /**
+     * Tokkl 1.11.0 and later send `all_day` on every entry; Toggl Track and older Tokkl leave it
+     * out. The wire model keeps a missing key apart from false, and the cache stores both as timed.
+     */
+    @Test
+    fun noTimeEntriesAreCachedAsNoTimeAndAMissingFlagStaysApartFromFalse() {
+        val body = """[{"id":1,"workspace_id":7,"description":"Workshop","start":"2026-10-17T00:00:00+00:00",
+                         "stop":"2026-10-17T01:30:00+00:00","duration":5400,"all_day":true,"duronly":true},
+                        {"id":2,"workspace_id":7,"description":"Timed","start":"2026-10-17T09:00:00+00:00",
+                         "stop":"2026-10-17T10:00:00+00:00","duration":3600,"all_day":false,"duronly":true},
+                        {"id":3,"workspace_id":7,"description":"Toggl","start":"2026-10-17T11:00:00Z",
+                         "stop":"2026-10-17T12:00:00Z","duration":3600}]"""
+        answers["/api/v9/me/time_entries"] = json(body)
+
+        val snapshot = readServerSnapshot(client, me("UTC"), preferences("{}"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+
+        val wire = ApiJson.decodeFromString(ListSerializer(ServerTimeEntry.serializer()), body)
+        assertEquals(listOf(true, false, null), wire.map { it.allDay })
+        assertEquals(mapOf(1L to true, 2L to false, 3L to false), snapshot.timeEntries?.associate { it.id to it.allDay })
+        assertEquals("a server row leaves the day to its start", listOf(null, null, null), snapshot.timeEntries?.map { it.day })
+    }
+
+    /**
+     * Tokkl before 1.11.0 lists entries without `all_day`, so no-time entries go off for good.
+     * Toggl Track leaves the key out too, but its flag is off already, and a Tokkl that sends the
+     * key keeps it on.
+     */
+    @Test
+    fun aTokklEntryListWithoutAllDayTurnsNoTimeEntriesOff() {
+        val old = """[{"id":1,"workspace_id":7,"description":"Old","start":"2026-10-17T09:00:00+00:00","stop":"2026-10-17T10:00:00+00:00"}]"""
+        val current = """[{"id":1,"workspace_id":7,"description":"New","start":"2026-10-17T09:00:00+00:00","stop":"2026-10-17T10:00:00+00:00","all_day":false}]"""
+        fun refresh(body: String, me: Me): Pair<ServerSnapshot, Int> {
+            answers["/api/v9/me/time_entries"] = json(body)
+            var missing = 0
+            val snapshot = readServerSnapshot(
+                client, me, preferences("{}"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true, onAllDayMissing = { missing++ },
+            )
+            return snapshot to missing
+        }
+
+        assertEquals("Toggl Track", 0, refresh(old, me("UTC")).second)
+        assertEquals("a Tokkl that sends the key", 0, refresh(current, me("UTC", role = "user")).second)
+        val (snapshot, missing) = refresh(old, me("UTC", role = "user"))
+        assertEquals("an older Tokkl", 1, missing)
+        assertEquals("the entries are cached all the same", listOf("Old"), snapshot.timeEntries?.map { it.description })
+
+        val capabilities = CapabilitiesSource(Capabilities.NONE.copy(favorites = true, allDay = true)) {}
+        answers["/api/v9/me/time_entries"] = json(old)
+        readServerSnapshot(
+            client, me("UTC", role = "user"), preferences("{}"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true,
+            onAllDayMissing = capabilities::allDayMissing,
+        )
+        assertEquals(false, capabilities.state.value.allDay)
     }
 
     /** Tokkl leaves `favorites` out of /me/preferences until the user saves one. */
@@ -176,11 +236,14 @@ class ServerReaderTest {
         throw AssertionError("no request to $path")
     }
 
-    private fun me(zone: String): Me =
-        Json { ignoreUnknownKeys = true }.decodeFromString(
+    /** Toggl Track's `/me`, or Tokkl's with a [role]. */
+    private fun me(zone: String, role: String? = null): Me {
+        val tokkl = if (role == null) "" else ",\"role\":\"$role\""
+        return Json { ignoreUnknownKeys = true }.decodeFromString(
             Me.serializer(),
-            """{"id":1,"timezone":"$zone","beginning_of_week":1}""",
+            """{"id":1,"timezone":"$zone","beginning_of_week":1$tokkl}""",
         )
+    }
 
     private fun preferences(body: String) = MePreferences(Json.parseToJsonElement(body).jsonObject)
 

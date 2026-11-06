@@ -449,11 +449,87 @@ class CalendarModelTest {
         assertEquals(emptyList<String>(), changes.calls)
     }
 
+    /**
+     * A no-time entry has no hour on the grid. It is in no block, sits in the All day map under its
+     * day, and counts its full duration in that day's total and the week's.
+     */
+    @Test
+    fun aNoTimeEntryIsOutOfTheBlocksInTheAllDayMapAndInTheTotals() {
+        val timed = entry(4, "2026-10-20T09:00:00Z", "2026-10-20T10:00:00Z")
+        val noTime = noTimeEntry(6, "2026-10-20T00:00:00Z", seconds = 5400)
+        val model = model(cached = listOf(timed, noTime))
+
+        val state = shown(model) { it.entries.size == 2 }
+        val now = CLOCK.instant()
+
+        assertEquals(listOf(4L), calendarBlocks(state.entries, state.weekDays, state.zone, now).map { it.entry.id })
+        assertEquals(mapOf(OCTOBER_20 to listOf(6L)), state.allDay.mapValues { (_, entries) -> entries.map { it.id } })
+        assertEquals(3600L + 5400L, dayTotalSeconds(state.entries, OCTOBER_20, state.zone, now))
+        assertEquals(3600L + 5400L, state.weekDays.sumOf { dayTotalSeconds(state.entries, it, state.zone, now) })
+    }
+
+    @Test
+    fun allDayEntriesKeepOnlyTheShownDaysInAStableOrder() {
+        val first = noTimeCalendarEntry(9, OCTOBER_20)
+        val second = noTimeCalendarEntry(3, OCTOBER_20)
+        val other = noTimeCalendarEntry(5, OCTOBER_25)
+        val outside = noTimeCalendarEntry(7, OCTOBER_5)
+        val timed = noTimeCalendarEntry(8, OCTOBER_20).copy(allDay = false, day = null)
+
+        val byDay = allDayEntries(listOf(first, other, outside, timed, second), listOf(OCTOBER_20, OCTOBER_25), ZoneOffset.UTC)
+
+        assertEquals(mapOf(OCTOBER_20 to listOf(3L, 9L), OCTOBER_25 to listOf(5L)), byDay.mapValues { (_, entries) -> entries.map { it.id } })
+    }
+
+    /** A queued no-time entry shows the duration the server will store, from midnight of its day. */
+    @Test
+    fun anUnsentNoTimeEntryShowsASnappedDurationAtMidnight() {
+        val queued = noTimeEntry(6, "2026-10-20T00:00:00Z", seconds = 4000).copy(day = OCTOBER_20)
+        val model = model(cached = listOf(queued), settings = DRAG_SETTINGS, cache = flowOf(listOf(EntryWithSendState(queued, unsent = true))))
+
+        val shown = shown(model) { true }.entries.single()
+
+        assertEquals(Instant.parse("2026-10-20T00:00:00Z") to Instant.parse("2026-10-20T01:05:00Z"), shown.start to shown.stop)
+        assertEquals(OCTOBER_20, shown.day)
+        assertEquals(true, shown.unsent)
+    }
+
+    /** A no-time entry has no time to drag, so a move or a resize queues nothing. */
+    @Test
+    fun aMoveAndAResizeLeaveANoTimeEntryAlone() {
+        val noTime = noTimeEntry(6, "2026-10-20T00:00:00Z", seconds = 5400)
+        val model = model(cached = listOf(noTime), settings = DRAG_SETTINGS)
+        val block = shown(model) { true }.entries.single()
+
+        model.move(block, OCTOBER_20, deltaMinutes = 60, dayMode = true)
+        model.resize(block, ResizeEdge.END, deltaMinutes = 30)
+        model.resize(block, ResizeEdge.START, deltaMinutes = -45)
+
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
+    /** A drag that creates an entry still makes a timed one. */
+    @Test
+    fun aCreateDragStaysTimedWhenAllDayIsOffered() {
+        val model = model(cached = emptyList(), settings = DRAG_SETTINGS, allDayOffered = true)
+
+        model.create(OCTOBER_20, fromMinute = 600, toMinute = 690)
+
+        assertEquals(listOf("create 7 ${EntryFields()} 2026-10-20T10:00:00Z 2026-10-20T11:30:00Z"), changes.calls)
+    }
+
+    @Test
+    fun theAllDayRowIsOfferedOnlyWhenTheServerStoresNoTimeEntries() {
+        assertEquals(false, shown(model(cached = emptyList())) { true }.allDayOffered)
+        assertEquals(true, shown(model(cached = emptyList(), allDayOffered = true)) { true }.allDayOffered)
+    }
+
     private fun model(
         cached: List<CachedTimeEntry>,
         settings: AccountSettings = SETTINGS,
         cache: Flow<List<EntryWithSendState>> = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
         io: CoroutineContext = Dispatchers.Unconfined,
+        allDayOffered: Boolean = false,
     ) = CalendarModel(
         entries = cache,
         projects = flowOf(emptyList()),
@@ -464,6 +540,7 @@ class CalendarModelTest {
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = io,
         clock = CLOCK,
+        allDayOffered = flowOf(allDayOffered),
     )
 
     private fun shown(model: CalendarModel, condition: (CalendarState.Shown) -> Boolean): CalendarState.Shown = runBlocking {
@@ -483,6 +560,23 @@ class CalendarModelTest {
         tags = emptyList(),
     )
 
+    /** A no-time entry as the server stores it: local midnight [start] and [seconds] long. */
+    private fun noTimeEntry(id: Long, start: String, seconds: Long) =
+        entry(id, start, null).copy(stop = Instant.parse(start).plusSeconds(seconds), allDay = true)
+
+    private fun noTimeCalendarEntry(id: Long, day: LocalDate) = CalendarEntry(
+        id = id,
+        description = "e$id",
+        project = null,
+        projectColor = null,
+        task = null,
+        start = day.atStartOfDay(ZoneOffset.UTC).toInstant(),
+        stop = day.atStartOfDay(ZoneOffset.UTC).toInstant().plusSeconds(3600),
+        unsent = false,
+        allDay = true,
+        day = day,
+    )
+
     /** Stopped entries as `GET /api/v9/me/time_entries` lists them: id, start and stop. */
     private fun json(vararg entries: Triple<Long, String, String>) = entries.joinToString(",", "[", "]") { (id, start, stop) ->
         """{"id":$id,"workspace_id":1,"description":"e$id","start":"$start","stop":"$stop","duration":60,"tag_ids":[],"billable":false}"""
@@ -492,17 +586,17 @@ class CalendarModelTest {
     private class RecordingChanges : EntryChanges {
         val calls = CopyOnWriteArrayList<String>()
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long {
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
             calls += "create $workspaceId $fields $start $stop"
             return LOCAL_ID
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
             calls += "update $entryId $fields $start $stop"
             return true
         }
 
-        override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant) {
+        override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?) {
             calls += "updateOlder $entryId $workspaceId $fields $start $stop"
         }
 

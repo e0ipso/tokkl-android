@@ -123,7 +123,9 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             val settings = app.accountSettings.state.value!!
             val earlier = settings.formatTime(original.start.minusSeconds(600), settings.time()!!.zone)
             compose.onNode(hasText(context.getString(R.string.entry_start)) and hasSetTextAction()).performTextInput(earlier)
-            compose.onNodeWithText(context.getString(R.string.entry_save)).performScrollTo().performClick()
+            // At the largest font the form outgrows the room the keyboard leaves, so Save comes into
+            // view only by a scroll made after the keyboard has finished sliding in.
+            compose.tapWhenStill(compose.onNodeWithText(context.getString(R.string.entry_save)))
             awaitFocused()
             assertEquals(original.id, (fixture.shown() as TimerControls.Running).entry.id)
             assertTrue((fixture.shown() as TimerControls.Running).entry.start < original.start)

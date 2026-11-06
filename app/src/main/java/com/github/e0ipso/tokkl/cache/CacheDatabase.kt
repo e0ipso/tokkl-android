@@ -23,7 +23,8 @@ import androidx.room.migration.AutoMigrationSpec
  * added `pause_chain` and `timer_session` for the phone's own Pause and Resume, and version 8
  * `pomodoro_session` for the phone's own Pomodoro. Version 9 drops those three tables, as the
  * server now keeps the pause chain and the session, and carries nothing from them. It leaves the
- * queue, the id mappings and the short Stop Undo records as they are.
+ * queue, the id mappings and the short Stop Undo records as they are. Version 10 adds `allDay` and
+ * `day` to time entries, queued changes and short Stop Undo records; existing rows read as timed.
  */
 @Database(
     entities = [
@@ -37,7 +38,7 @@ import androidx.room.migration.AutoMigrationSpec
         EntryIdMapping::class,
         ShortStopUndo::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -48,6 +49,7 @@ import androidx.room.migration.AutoMigrationSpec
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8),
         AutoMigration(from = 8, to = 9, spec = CacheDatabase.DropLocalTimerTables::class),
+        AutoMigration(from = 9, to = 10),
     ],
 )
 @TypeConverters(CacheConverters::class)

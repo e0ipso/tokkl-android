@@ -10,6 +10,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -109,6 +110,50 @@ class HistoryRowsTest {
 
         assertEquals(listOf(2L, 1L), rows.map { it.key })
         assertFalse(rows.any { it.grouped })
+    }
+
+    /** EntryList.tsx rangeLabel: the range spans the timed members' start and stop only. */
+    @Test
+    fun aGroupsRangeIgnoresNoTimeMembersButItsTotalCountsThem() {
+        val day = LocalDate.of(2026, 10, 18)
+        val midnight = at(day, 0)
+        val rows = rowsForDay(
+            listOf(
+                entry(1, "Work").copy(start = at(day, 9), stop = at(day, 10)),
+                entry(2, "Work").copy(start = at(day, 11), stop = at(day, 12)),
+                entry(3, "Work").copy(start = midnight, stop = midnight.plusSeconds(7200), allDay = true),
+            ).sortedByDescending { it.start },
+            collapse = true,
+        )
+
+        val group = rows.single()
+
+        assertEquals(HistoryRange(at(day, 9), at(day, 12)), group.range)
+        assertEquals("the total counts every member", 3600L + 3600L + 7200L, group.seconds)
+    }
+
+    @Test
+    fun theRangeEndsAtTheLatestStopNotTheNewestMembersStop() {
+        val day = LocalDate.of(2026, 10, 18)
+        val group = rowsForDay(
+            listOf(
+                entry(1, "Work").copy(start = at(day, 12), stop = at(day, 13)),
+                entry(2, "Work").copy(start = at(day, 9), stop = at(day, 15)),
+            ),
+            collapse = true,
+        ).single()
+
+        assertEquals(HistoryRange(at(day, 9), at(day, 15)), group.range)
+    }
+
+    @Test
+    fun aRowOfOnlyNoTimeMembersHasNoRange() {
+        val day = LocalDate.of(2026, 10, 18)
+        val midnight = at(day, 0)
+        val noTime = entry(1, "Work").copy(start = midnight, stop = midnight.plusSeconds(1800), allDay = true)
+
+        assertNull(rowsForDay(listOf(noTime), collapse = false).single().range)
+        assertNull(rowsForDay(listOf(noTime, noTime.copy(id = 2)), collapse = true).single().range)
     }
 
     private fun days(entries: List<CachedTimeEntry>, collapse: Boolean): List<HistoryDay> {

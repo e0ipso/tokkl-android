@@ -555,6 +555,74 @@ class EntryFormServerTest {
         assertEquals(legacy.string("stop"), saved.string("stop"))
     }
 
+    /**
+     * A no-time entry added from the Timer page with the No times switch reaches the server as one
+     * on that day with its duration. Opened from the history, its description, day and duration
+     * change, and the server keeps the new day and the duration it snaps, from midnight.
+     */
+    @Test
+    fun aNoTimeEntryAddedWithTheSwitchIsEditedByDescriptionDayAndDuration() {
+        val today = ZonedDateTime.now(MADRID).toLocalDate()
+        // Another day of the same month, so the date picker shows it without turning the page.
+        val newDay = if (today.dayOfMonth > 1) today.minusDays(1) else today.plusDays(1)
+        var id = 0L
+        launch {
+            addNoTimeEntry("Plan the offsite", duration = "90m")
+            drainUntilEmpty()
+            assertNothingHeld()
+            val added = serverEntry("Plan the offsite", today)
+            id = added.getValue("id").jsonPrimitive.long
+            assertNoTimeEntry(added, today, 5_400)
+
+            openEntry("Plan the offsite", noTimes = true)
+            composeRule.onNode(noTimesSwitch()).assertIsOn()
+            assertFalse("a no-time entry has no start field", shows(field(R.string.entry_start)))
+            replace(R.string.entry_description, "Plan the offsite, moved")
+            dateButton().performScrollTo().performClick()
+            dayInPicker(newDay).performClick()
+            composeRule.onNode(hasText(string(R.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+            awaitShows("the new date shows") { composeRule.onNode(hasContentDescription(spokenDate(newDay)) and hasClickAction()) }
+            replace(R.string.entry_duration, "2h")
+            save()
+            drainUntilEmpty()
+            assertNothingHeld()
+        }
+
+        val saved = web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET the entry")
+        assertEquals("Plan the offsite, moved", saved.string("description"))
+        assertNoTimeEntry(saved, newDay, 7_200)
+    }
+
+    /**
+     * Turning No times off and giving a start and an end queues one change. Sent, the server
+     * stores a timed entry with those times, and nothing is held for attention.
+     */
+    @Test
+    fun turningNoTimesOffWithAStartAndAnEndSendsOneUpdateTheServerAccepts() {
+        val entry = account.createNoTimeEntry("Offsite hours", day, 5_400)
+        launch {
+            openEntry("Offsite hours", noTimes = true)
+            composeRule.onNode(noTimesSwitch()).assertIsOn()
+            AirplaneMode.set(true, web)
+            composeRule.onNode(noTimesSwitch()).performScrollTo().performClick()
+            awaitShows("the start field comes back") { field(R.string.entry_start) }
+            replace(R.string.entry_start, "9")
+            replace(R.string.entry_end, "10:30")
+            save()
+            assertEquals("one change is queued", 1, runBlocking { app.changes.unsentCount.first() })
+
+            AirplaneMode.set(false, web)
+            drainUntilEmpty()
+            assertNothingHeld()
+        }
+
+        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        assertFalse("the entry has times now", saved.getValue("all_day").jsonPrimitive.boolean)
+        assertEquals(at(day, 9, 0), instant(saved.string("start")))
+        assertEquals(at(day, 10, 30), instant(saved.string("stop")))
+        assertEquals(5_400L, saved.getValue("duration").jsonPrimitive.long)
+    }
+
     private fun setResolution(minutes: Long) {
         val admin = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
         val url = admin.server.app("admin", "settings")
@@ -637,12 +705,15 @@ class EntryFormServerTest {
         Session(context).save(server, token)
     }
 
-    /** Opens the form from the history row of the entry described as [description]. */
-    private fun openEntry(description: String) {
+    /**
+     * Opens the form from the history row of the entry described as [description]. A no-time
+     * entry's form has no start field, so it is the duration field that shows it is open.
+     */
+    private fun openEntry(description: String, noTimes: Boolean = false) {
         val row = historyRow(description)
         composeRule.waitUntil("the entry shows in the history", NETWORK_TIMEOUT.toMillis()) { shows(composeRule.onNode(row)) }
         composeRule.onNode(row).performClick()
-        awaitShows("the form opens") { field(R.string.entry_start) }
+        awaitShows("the form opens") { field(if (noTimes) R.string.entry_duration else R.string.entry_start) }
     }
 
     /** Scrolls the history to its end until the older day of the entry [entryId] has loaded and shows it. */
@@ -672,6 +743,35 @@ class EntryFormServerTest {
         end?.let { replace(R.string.entry_end, it) }
         duration?.let { replace(R.string.entry_duration, it) }
         save(R.string.entry_form_new)
+    }
+
+    /**
+     * Opens the form for a past entry from the Timer page, on today's date, turns No times on and
+     * saves [description] for [duration].
+     */
+    private fun addNoTimeEntry(description: String, duration: String) {
+        composeRule.onNode(hasText(string(R.string.timer_add_entry)) and hasClickAction()).performClick()
+        awaitShows("the form for a past entry opens") { composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()) }
+        composeRule.waitUntil("the account's workspace is known", NETWORK_TIMEOUT.toMillis()) { field(R.string.entry_description).isEnabled() }
+        composeRule.onNode(noTimesSwitch()).performScrollTo().performClick()
+        awaitShows("the duration is the only time field") { field(R.string.entry_duration) }
+        assertFalse("a no-time entry has no start field", shows(field(R.string.entry_start)))
+        field(R.string.entry_description).performTextInput(description)
+        replace(R.string.entry_duration, duration)
+        save(R.string.entry_form_new)
+    }
+
+    private fun noTimesSwitch(): SemanticsMatcher = hasText(string(R.string.entry_no_times)) and isToggleable()
+
+    /** The server stores [entry] as a no-time one on [day], from midnight in the account's zone, of [seconds]. */
+    private fun assertNoTimeEntry(entry: JsonObject, day: LocalDate, seconds: Long) {
+        assertTrue("the server stores a no-time entry", entry.getValue("all_day").jsonPrimitive.boolean)
+        assertEquals(seconds, entry.getValue("duration").jsonPrimitive.long)
+        assertEquals("from midnight on $day", day.atStartOfDay(MADRID).toInstant(), instant(entry.string("start")))
+    }
+
+    private fun assertNothingHeld() {
+        assertEquals("nothing needs attention", 0, runBlocking { app.changes.heldCount.first() })
     }
 
     /** Taps Save, which queues the change at once and closes the form, titled [title]. */

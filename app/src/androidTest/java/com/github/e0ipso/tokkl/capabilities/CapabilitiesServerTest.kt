@@ -79,6 +79,7 @@ class CapabilitiesServerTest {
             summaryCsv = true,
             detailedCsv = true,
             timerState = true,
+            allDay = true,
         )
     }
 }

@@ -24,7 +24,9 @@ import kotlinx.serialization.builtins.ListSerializer
  * `GET /api/v9/me/preferences`, which carries the favorites, or null when that request failed. On
  * top of them comes one request, `GET /api/v9/me/time_entries` for the history window, counted in
  * the account's timezone. A failed request leaves its list null. Without [favorites], as on Toggl
- * Track, the favorites are an empty list.
+ * Track, the favorites are an empty list. On Tokkl, where `/me` has `role`, an entry without
+ * `all_day`, as Tokkl before 1.11.0 sends them, calls [onAllDayMissing], so the app can turn
+ * no-time entries off. Toggl Track leaves the key out too, and has them off already.
  *
  * Blocks on the network, so call it off the main thread.
  */
@@ -34,11 +36,12 @@ fun readServerSnapshot(
     preferences: MePreferences?,
     clock: Clock,
     favorites: Boolean,
+    onAllDayMissing: () -> Unit = {},
 ): ServerSnapshot {
     val history = me.accountSettings()?.time(clock)?.let(HistoryWindow::endingToday)
     return ServerSnapshot(
         history = history,
-        timeEntries = history?.let { readTimeEntries(api, it) },
+        timeEntries = history?.let { readTimeEntries(api, it, tokkl = me.role != null, onAllDayMissing) },
         projects = me.projects?.map { it.toCached() },
         clients = me.clients?.map { it.toCached() },
         tags = me.tags?.map { it.toCached() },
@@ -49,15 +52,23 @@ fun readServerSnapshot(
 
 /**
  * Entries that start within [history]. Sends both ends as instants, which Tokkl and Toggl read the
- * same way, so neither server's idea of the day matters.
+ * same way, so neither server's idea of the day matters. On Tokkl ([tokkl]), an entry without
+ * `all_day` calls [onAllDayMissing].
  */
-private fun readTimeEntries(api: TogglApiClient, history: HistoryWindow): List<CachedTimeEntry>? {
+private fun readTimeEntries(
+    api: TogglApiClient,
+    history: HistoryWindow,
+    tokkl: Boolean,
+    onAllDayMissing: () -> Unit,
+): List<CachedTimeEntry>? {
     val url = api.server.api("me", "time_entries").newBuilder()
         .addQueryParameter("start_date", history.start.toString())
         .addQueryParameter("end_date", history.end.toString())
         .build()
-    val entries = api.get(url, ListSerializer(ServerTimeEntry.serializer()))
-    return (entries as? ApiResult.Success)?.value?.mapNotNull { it.toCached() }
+    val read = api.get(url, ListSerializer(ServerTimeEntry.serializer()))
+    val entries = (read as? ApiResult.Success)?.value ?: return null
+    if (tokkl && entries.any { it.allDay == null }) onAllDayMissing()
+    return entries.mapNotNull { it.toCached() }
 }
 
 /**
@@ -89,6 +100,7 @@ internal fun ServerTimeEntry.toCached(): CachedTimeEntry? {
         billable = billable ?: false,
         tags = tags.orEmpty(),
         tagIds = tagIds.orEmpty(),
+        allDay = allDay == true,
     )
 }
 

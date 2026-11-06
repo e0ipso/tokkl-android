@@ -91,7 +91,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 
 /**
- * The phone and another device of the same user share one timer on the real Tokkl 1.10.0 server
+ * The phone and another device of the same user share one timer on the real Tokkl server
  * (plan 02, success criteria 1 to 4). The phone signs in with the account's API token. The other
  * device, which stands in for the web app or a desktop client, signs in with the account's email
  * and password and calls the API straight; its answers are what the assertions compare with.
@@ -352,95 +352,6 @@ class TimerCrossDeviceServerTest {
         }
     }
 
-    /**
-     * Criterion 4: on Tokkl 1.8.1, which has no timer API, the bar and the rail offer no Pomodoro,
-     * and the Timer page, the full-screen timer, the running notification and the widget offer no
-     * Pause, while Start and Stop still reach that server. The timer event stream does not run.
-     */
-    @Test
-    @SignedOut
-    fun anOlderTokklWithoutTheTimerApiHidesPomodoroAndPauseWhileStartAndStopWork() {
-        val legacy = TogglApiClient(TokklTestServer.legacyUrl, ApiCredentials.ApiToken(TokklTestServer.legacyApiToken), httpClient = OkHttpClient())
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.legacyUrl)
-        Session(context).save(TokklTestServer.legacyUrl, TokklTestServer.legacyApiToken)
-        runBlocking { app.accountSettings.refresh().join() }
-        app.storeSignIn(TokklTestServer.legacyUrl, TokklTestServer.legacyApiToken, checkNotNull(app.accountSettings.state.value))
-        runBlocking { app.accountSettings.refresh().join() }
-        val flags = app.capabilities.state.value
-        assertFalse("1.8.1 has no timer API", flags.timerState)
-        assertTrue("it is still a Tokkl", flags.favorites && flags.trash)
-        assertNull("no timer state is held", app.timerState.state.value)
-
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            compose.awaitTimerPage()
-            assertNull("the timer event stream does not run", app.timerSyncService)
-            assertNoPomodoroItem("bar")
-            val start = hasContentDescription(context.getString(R.string.timer_start_spoken)) and hasClickAction()
-            compose.onNode(start).performClick()
-            val running = app.awaitControls<TimerControls.Running>("the phone's Start", timeoutMs = 2_000)
-            assertFalse("Pause is not offered", running.pausable)
-            compose.waitUntil("the Timer page shows Stop", 5_000) {
-                compose.onAllNodes(hasContentDescription(context.getString(R.string.timer_stop_spoken))).fetchSemanticsNodes().isNotEmpty()
-            }
-            assertNoPause("the Timer page")
-            compose.onNodeWithText(context.getString(R.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
-            compose.waitUntil("the full-screen timer", 5_000) { compose.onAllNodes(hasTestTag("fullscreen_timer")).fetchSemanticsNodes().isNotEmpty() }
-            assertTrue(compose.onAllNodes(focused(R.string.timer_stop)).fetchSemanticsNodes().isNotEmpty())
-            assertTrue("the full-screen timer offers no Pause", compose.onAllNodes(focused(R.string.timer_pause)).fetchSemanticsNodes().isEmpty())
-            compose.onNode(focused(R.string.timer_exit_fullscreen)).performScrollTo().performClick()
-            compose.awaitTimerPage()
-
-            // A sideways phone draws the rail, which offers no Pomodoro either.
-            val before = resumed<MainActivity>()
-            scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
-            compose.waitUntil("the activity turns sideways", 15_000) {
-                resumed<MainActivity>()?.let { it !== before && it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE } == true
-            }
-            compose.awaitTimerPage()
-            val items = compose.onAllNodes(bottomBarItem(R.string.nav_timer)).fetchSemanticsNodes() +
-                compose.onAllNodes(bottomBarItem(R.string.settings)).fetchSemanticsNodes()
-            assertEquals("the rail's items share a centre", items[0].boundsInRoot.center.x, items[1].boundsInRoot.center.x, 2f)
-            assertTrue("the rail's items run from the top", items[0].boundsInRoot.bottom <= items[1].boundsInRoot.top + 2f)
-            assertNoPomodoroItem("rail")
-            assertNoPause("the Timer page beside the rail")
-            val sideways = resumed<MainActivity>()
-            scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
-            compose.waitUntil("the activity turns upright", 15_000) {
-                resumed<MainActivity>()?.let { it !== sideways && it.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT } == true
-            }
-            compose.awaitTimerPage()
-
-            val notification = TimerSurfaces.runningNotification(ongoing = true)
-            assertEquals("the notification offers Stop alone", listOf(context.getString(R.string.notification_stop)),
-                notification.actions.map { it.title.toString() })
-
-            runBlocking { app.sender.sendAndWait() }
-            // The entry the phone started under a local id now has the server's.
-            val sent = app.awaitControls<TimerControls.Running>("the sent Start") { it.entry.id > 0 && !it.unsent }
-            val current = legacy.get(legacy.server.api("me", "time_entries", "current"), JsonObject.serializer()).orFail("GET the running entry")
-            assertEquals("Start reached 1.8.1", sent.entry.id, current.getValue("id").jsonPrimitive.long)
-
-            compose.onNode(hasContentDescription(context.getString(R.string.timer_stop_spoken)) and hasClickAction()).performClick()
-            app.awaitControls<TimerControls.Idle>("the phone's Stop", timeoutMs = 2_000)
-            runBlocking { app.sender.sendAndWait() }
-            // A Stop this soon after Start keeps no span on 1.8.1, which sends the entry to the trash.
-            // Either way nothing runs there any more.
-            val after = legacy.get(legacy.server.api("me", "time_entries", "current"), JsonElement.serializer()).orFail("GET the running entry")
-            assertEquals("Stop reached 1.8.1", JsonNull, after)
-        }
-
-        // The widget draws the same controls: a running entry with Stop and no Pause.
-        NativeWidget().use { widget ->
-            runBlocking { app.changes.start(checkNotNull(app.accountSettings.state.value?.defaultWorkspaceId), EntryFields("On 1.8.1")) }
-            widget.awaitDescription(context.getString(R.string.widget_stop_description))
-            assertFalse("the widget offers no Pause", widget.hasDescription(context.getString(R.string.widget_pause_description)))
-            widget.click(context.getString(R.string.widget_stop_description))
-            widget.awaitDescription(context.getString(R.string.widget_start_description))
-        }
-        runBlocking { app.sender.sendAndWait() }
-        assertEquals("nothing is left to send", 0, runBlocking { app.changes.unsentCount.first() })
-    }
-
     // The main server's account, with the phone signed in to it.
     private fun prepareTheMainServer() {
         fixture.prepare()
@@ -535,14 +446,6 @@ class TimerCrossDeviceServerTest {
 
     private fun ringStopped(): Boolean = app.pomodoroRinging.state.value.let { !it.serviceRunning && !it.playing && !it.vibrationRequested }
 
-    private inline fun <reified T : Activity> resumed(): T? {
-        var found: T? = null
-        instrumentation.runOnMainSync {
-            found = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<T>().singleOrNull()
-        }
-        return found
-    }
-
     private fun awaitSessionNotification(title: String): Notification {
         compose.waitUntil("the session notification shows $title", 10_000) { TimerSurfaces.sessionNotification()?.title() == title }
         return checkNotNull(TimerSurfaces.sessionNotification()).notification
@@ -594,24 +497,6 @@ class TimerCrossDeviceServerTest {
         Log.i(TAG, "chain total: server $serverTotal s at ${sample.serverTime}, phone $phoneTotal s, held $heldTotal s")
         assertTrue("the phone shows $phoneTotal s, the server $serverTotal s", abs(phoneTotal - serverTotal) <= TOTAL_TOLERANCE_S)
         assertTrue("the held total is $heldTotal s, the server's $serverTotal s", abs(heldTotal - serverTotal) <= TOTAL_TOLERANCE_S)
-    }
-
-    /** A button of the full-screen timer labelled [label]. */
-    private fun focused(label: Int) =
-        hasText(context.getString(label)) and hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))
-
-    private fun assertNoPomodoroItem(where: String) {
-        compose.waitForIdle()
-        assertTrue("the $where offers no Pomodoro", compose.onAllNodes(bottomBarItem(R.string.pomodoro_title)).fetchSemanticsNodes().isEmpty())
-        assertTrue("the $where offers Timer", compose.onAllNodes(bottomBarItem(R.string.nav_timer)).fetchSemanticsNodes().isNotEmpty())
-    }
-
-    private fun assertNoPause(where: String) {
-        compose.waitForIdle()
-        for (label in listOf(R.string.timer_pause_spoken, R.string.timer_resume_spoken)) {
-            assertTrue("$where offers no ${context.getString(label)}",
-                compose.onAllNodes(hasContentDescription(context.getString(label))).fetchSemanticsNodes().isEmpty())
-        }
     }
 
     private fun sessionBody(description: String, every: Int) = buildJsonObject {

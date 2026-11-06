@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.io.File
 import java.time.Instant
+import java.time.LocalDate
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -175,10 +176,10 @@ class TileControlsTest {
             return true
         }
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
             throw AssertionError("nothing is created")
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
             throw AssertionError("nothing is edited")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")

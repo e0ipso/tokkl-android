@@ -11,6 +11,9 @@ import java.time.ZoneId
  *   received, the start the server will store, snapped on the phone, as the history shows it.
  * @property stop as [start], or null while the entry runs.
  * @property unsent the queue holds a change to the entry that the server has not received.
+ * @property allDay a no-time entry: a day and a duration. It sits in the All day row, never in the
+ *   hour grid. [start] is local midnight of its day and [stop] is [start] plus the duration.
+ * @property day the no-time entry's day in the account's timezone, null for a timed entry.
  */
 data class CalendarEntry(
     val id: Long,
@@ -21,6 +24,8 @@ data class CalendarEntry(
     val start: Instant,
     val stop: Instant?,
     val unsent: Boolean,
+    val allDay: Boolean = false,
+    val day: LocalDate? = null,
 ) {
     val running: Boolean get() = stop == null
 
@@ -79,7 +84,7 @@ private fun clockMinutes(instant: Instant, zone: ZoneId): Double {
  * cluster's width in lanes, each taking the first lane free at its top.
  */
 fun calendarBlocks(entries: List<CalendarEntry>, days: List<LocalDate>, zone: ZoneId, now: Instant): List<CalendarBlock> {
-    val ordered = entries.sortedWith(compareBy<CalendarEntry> { it.start }.thenBy { it.id })
+    val ordered = entries.filter { !it.allDay }.sortedWith(entryOrder)
     return days.flatMap { day ->
         val onDay = ordered
             .mapNotNull { entry ->
@@ -90,6 +95,25 @@ fun calendarBlocks(entries: List<CalendarEntry>, days: List<LocalDate>, zone: Zo
             .sortedBy { it.top }
         lanesOf(onDay).map { (placed, lane, lanes) -> CalendarBlock(placed.entry, day, placed.top, placed.bottom, lane, lanes) }
     }
+}
+
+private val entryOrder = compareBy<CalendarEntry> { it.start }.thenBy { it.id }
+
+/** The day of a no-time [CalendarEntry]: its stored [CalendarEntry.day], or the date of its start in [zone]. */
+private fun CalendarEntry.noTimeDayIn(zone: ZoneId): LocalDate = day ?: start.atZone(zone).toLocalDate()
+
+/**
+ * Each of [days] that has no-time entries, with those entries by their stored day, as the web
+ * app's splitAllDay does. Entries on a day that is not shown are in no list, and a day without
+ * entries has no key. Each list is in the order of start, then id.
+ */
+fun allDayEntries(entries: List<CalendarEntry>, days: List<LocalDate>, zone: ZoneId): Map<LocalDate, List<CalendarEntry>> {
+    val shown = days.toSet()
+    return entries
+        .filter { it.allDay }
+        .sortedWith(entryOrder)
+        .groupBy { it.noTimeDayIn(zone) }
+        .filterKeys { it in shown }
 }
 
 private class Placed(val entry: CalendarEntry, val top: Double, val bottom: Double)
@@ -125,7 +149,8 @@ private fun lanesOf(blocks: List<Placed>): List<Triple<Placed, Int, Int>> {
 
 /**
  * The seconds of the [entries] that start on [day] in [zone], running ones up to [now], as the
- * web app's dayTotal. An entry across midnight counts on the day it starts.
+ * web app's dayTotal. An entry across midnight counts on the day it starts. A no-time entry counts
+ * its whole duration on its stored day.
  */
 fun dayTotalSeconds(entries: List<CalendarEntry>, day: LocalDate, zone: ZoneId, now: Instant): Long =
-    entries.filter { it.start.atZone(zone).toLocalDate() == day }.sumOf { it.seconds(now) }
+    entries.filter { (if (it.allDay) it.noTimeDayIn(zone) else it.start.atZone(zone).toLocalDate()) == day }.sumOf { it.seconds(now) }

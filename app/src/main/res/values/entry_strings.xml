@@ -51,6 +51,15 @@
     <!-- What TalkBack says a tap on a history row or a calendar block does. -->
     <string name="entry_edit_action">Edit entry</string>
     <string name="entry_mistake_too_short">This entry is too short for your time resolution. Choose a longer span.</string>
+    <!-- A no-time entry has a date and a duration but no start or end, as the web app's "No times" switch. -->
+    <string name="entry_no_times">No times</string>
+    <!-- The duration field's example while a no-time entry's duration is empty, as in the web app. -->
+    <string name="entry_no_time_duration_hint">e.g. 1:30 or 90m</string>
+    <!-- The mistakes Save marks under a no-time entry's duration, as the web app's noTimeDuration.ts words them. -->
+    <string name="entry_mistake_no_time_duration">Enter a duration like 1:30 or 90m</string>
+    <!-- %1$d is the account's time resolution in minutes, such as 15. -->
+    <string name="entry_mistake_no_time_rounds_to_zero">The duration rounds to zero at the %1$d-minute time resolution</string>
+    <string name="entry_mistake_no_time_too_long">No-time entries can be at most 24 hours</string>
     <!-- Shown when Delete could not be written to the phone. -->
     <string name="entry_delete_failed">Couldn\'t queue the deletion. Try again.</string>
 </resources>

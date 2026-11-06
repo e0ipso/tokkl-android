@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
@@ -600,7 +601,7 @@ class TimerModelTest {
             return true
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
             calls += "update $entryId $fields"
             gate.await()
             val current = running.value?.entry?.takeIf { it.id == entryId } ?: return false
@@ -622,7 +623,7 @@ class TimerModelTest {
         override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean =
             update(identity.entryId, fields, start, stop = null)
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
             throw AssertionError("the timer creates no stopped entry")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the timer deletes nothing")

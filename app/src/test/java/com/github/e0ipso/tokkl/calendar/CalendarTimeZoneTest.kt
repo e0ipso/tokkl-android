@@ -75,6 +75,44 @@ class CalendarTimeZoneTest {
         assertEquals(0L, dayTotalSeconds(state.entries, LocalDate.of(2026, 10, 14), state.zone, NOW.instant()))
     }
 
+    /**
+     * A queued no-time entry keeps its stored day. Its midnight instant may be stale after a
+     * timezone change, so the entry sits on its day, not on the date of that instant, and shows
+     * the midnight of the account's zone.
+     */
+    @Test
+    fun aQueuedNoTimeEntryStaysOnItsStoredDayWhenItsMidnightIsStale() = runBlocking {
+        // 10:00 UTC on the 10th is 19:00 on the 10th in Tokyo, a day before the entry's day.
+        val stale = LATE_CALL.copy(
+            id = 2,
+            start = Instant.parse("2026-10-10T10:00:00Z"),
+            stop = Instant.parse("2026-10-10T11:30:00Z"),
+            allDay = true,
+            day = LocalDate.of(2026, 10, 11),
+        )
+        val model = CalendarModel(
+            entries = flowOf(listOf(EntryWithSendState(stale, unsent = true))),
+            projects = flowOf(emptyList()),
+            tasks = flowOf(emptyList()),
+            accountSettings = MutableStateFlow(TOKYO_SUNDAY),
+            changes = NoChanges,
+            client = { null },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
+            clock = NOW,
+        )
+
+        val state = model.state.first { it is CalendarState.Shown } as CalendarState.Shown
+
+        val entry = state.entries.single()
+        // Midnight on the 11th in Tokyo is 15:00 UTC on the 10th.
+        assertEquals(Instant.parse("2026-10-10T15:00:00Z") to Instant.parse("2026-10-10T16:30:00Z"), entry.start to entry.stop)
+        assertEquals(listOf(LocalDate.of(2026, 10, 11)), state.allDay.keys.toList())
+        assertEquals(emptyList<CalendarBlock>(), calendarBlocks(state.entries, state.weekDays, state.zone, NOW.instant()))
+        assertEquals(5400L, dayTotalSeconds(state.entries, LocalDate.of(2026, 10, 11), state.zone, NOW.instant()))
+        assertEquals(0L, dayTotalSeconds(state.entries, LocalDate.of(2026, 10, 10), state.zone, NOW.instant()))
+    }
+
     private companion object {
         val TOKYO_SUNDAY = AccountSettings("Asia/Tokyo", DayOfWeek.SUNDAY, timeResolutionMinutes = null)
 
@@ -101,10 +139,10 @@ class CalendarTimeZoneTest {
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("nothing stops")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant): Long =
+        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
             throw AssertionError("nothing is created")
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?): Boolean =
+        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
             throw AssertionError("nothing is edited")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")

@@ -15,6 +15,11 @@
     <string name="calendar_running_spoken">from %1$s, running</string>
     <!-- TalkBack's action on a day's head. %1$s is the day, such as "Tue, 20 Oct". -->
     <string name="calendar_add_entry">Add an entry on %1$s</string>
+    <!-- The label of the row of no-time entries, above the hour grid. -->
+    <string name="calendar_all_day">All day</string>
+    <!-- The + in each day of the All day row, and TalkBack's action on the day: opens the form for an entry with a day and a duration but no times. -->
+    <string name="calendar_add_all_day">Add all-day entry</string>
+    <string name="calendar_add_all_day_on">Add all-day entry on %1$s</string>
     <string name="calendar_loading">Loading the week…</string>
     <string name="calendar_offline_title">This week needs the server</string>
     <string name="calendar_offline_message">This phone keeps this week and last week. Other weeks load from the server once it can be reached.</string>
