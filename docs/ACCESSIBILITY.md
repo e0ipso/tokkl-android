@@ -90,7 +90,7 @@ that it displays that state. Verify only states actually presented there.
 | Running: notification/reminder | `notification/RunningNotifier.kt`: stopwatch notification, elapsed clock, Stop; `reminder/ReminderNotifier.kt`: running reminder text and Stop/Keep running actions |
 | Running: widget | `widget/TokklWidget.kt`: idle/running words and play/stop controls; verify signed-out/no-favourite states too |
 | Running: tile | `tile/RunningTileLook.kt`: state-specific label/subtitle/icon/content description for running, continue and unavailable |
-| Billable: timer and entry field editors | `entry/EntryFieldsEditor.kt` `BillableToggle`: check/dollar icon, Billable label, checkbox role and checked state |
+| Billable: timer and entry field editors | `entryfields/EntryFieldButtons.kt` `BillableToggle`: check/dollar icon, Billable label, checkbox role and checked state |
 | Billable: history individual/group/member | `history/HistoryList.kt`: Billable words on the presented entry; inspect expanded and collapsed groups |
 | Billable: project list and form | `projects/ProjectsScreen.kt`: Billable text; `projects/ProjectForm.kt`: labelled checked option row |
 | Billable: report totals/chart/filter | `reports/SummaryContent.kt`: Billable time text and striped non-billable chart portion; `reports/FilterControl.kt`: named radio choices and textual active-filter summary |

@@ -39,30 +39,16 @@ import kotlinx.coroutines.launch
 
 /**
  * The timer on the Timer page (docs/PRD.md T1): Start, Pause, Resume, Stop and the running entry's
- * fields. Start, Stop of a running entry, Continue, favorites and edits of the running entry go to
- * [changes], the change queue, which changes the cache on the phone and queues the change for the
- * server, so they never wait for the network (docs/PRD.md principle 2). The timer shows what the
- * [controls] say, and from such a tap until the cache shows it, what the tap did. Taps in between
- * are ignored, so a double tap starts one entry.
+ * fields.
  *
- * Pause, Resume and Stop while paused belong to the server's pause chain and go to [pauseChain]
- * at once. They wait for the server's answer, and until it shows, the timer keeps what it showed
- * and ignores other taps. Resume and Stop while paused send the server revision the paused timer
- * was shown at, so a stale tap gets a refusal. A refusal or no answer leaves the timer as the
- * server's state says and becomes a [notice]. Without [pauseChain] they do nothing.
+ * Start, Stop of a running entry, Continue, favorites and field edits go to [changes], the change
+ * queue, so they never wait for the network (docs/PRD.md principle 2). From such a tap until the
+ * cache shows it, the timer shows what the tap did and ignores other taps, so a double tap starts
+ * one entry. A start stops a cached running entry first, as the server does, so one entry runs at
+ * a time, offline too. Pause, Resume and Stop while paused go to the server ([PauseChainTaps]),
+ * and field edits are [RunningFieldEdits].
  *
- * Start starts the draft that the idle timer holds, and [continueEntry] starts a timer from a past
- * entry. The cache keeps one running entry, and a start on the phone stops a cached running entry
- * first, as the server does, so one entry runs at a time, offline too. Any start other than
- * Resume ends the server's chain once the server has it.
- *
- * A pick of project, task or tags, and billable, goes to the queue at once. A description goes
- * once typing ends, with [descriptionDone], Pause or Stop, so the queue does not get a change for
- * every letter. Until the cache has an edit, the timer shows it over the cache's entry, so a
- * refresh cannot take back what is being typed. A paused timer's fields are read-only, as the
- * server and the web app keep them.
- *
- * Call the tap handlers on the main thread. The running clock is the screen's: it counts from
+ * Call the tap handlers on the main thread. The running clock counts from
  * [TimerState.Running.start] on the phone and never asks the server (principle 3).
  *
  * @param controls the running entry or paused chain, as the app's shared timer controls give them.
