@@ -3,23 +3,16 @@ package com.github.e0ipso.tokkl.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.api.ApiError
-import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
-import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Clock
 import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeParseException
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,60 +26,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-
-/** What the history shows. */
-sealed interface HistoryState {
-
-    /** The cache or the account settings are not read yet. */
-    data object Loading : HistoryState
-
-    /** The phone cannot resolve the account's timezone, [timeZone], so it cannot tell the days apart. */
-    data class NoAccountTime(val timeZone: String) : HistoryState
-
-    /**
-     * The [days] with entries, newest first, as of [today] in the account's timezone [zone], and
-     * what comes after them.
-     */
-    data class Shown(
-        val days: List<HistoryDay>,
-        val today: LocalDate,
-        val zone: ZoneId,
-        val settings: AccountSettings,
-        val older: OlderDays,
-    ) : HistoryState
-}
-
-/** The end of the history: the days before the ones shown. */
-sealed interface OlderDays {
-
-    /**
-     * Older days may have entries. With [auto], they load once the end of the list shows. After a
-     * page without entries from a server that does not say where its history starts, as Toggl
-     * Track, only a tap loads more, so scrolling never walks back through empty weeks on its own.
-     */
-    data class More(val auto: Boolean) : OlderDays
-
-    data object Loading : OlderDays
-
-    /** The server has no entries before the days shown. */
-    data object End : OlderDays
-
-    /** No answer: the phone is offline, or the server or the proxy in front of it is down. */
-    data object Unreachable : OlderDays
-
-    /** The server refused the stored API token, or the phone could not read it. */
-    data object AuthFailed : OlderDays
-
-    /** The app sends nothing to the server until the user answers its trust prompt. */
-    data object TrustRefused : OlderDays
-
-    /** Any other answer. [status] is the HTTP status, or null when the body was not a list of entries. */
-    data class Failed(val status: Int?) : OlderDays
-}
 
 /**
  * The history on the Timer page (docs/PRD.md H1): the cached two weeks from the phone, which
@@ -139,7 +78,7 @@ class HistoryViewModel(
     private val pages = combine(older, reconciliation) { loaded, overrides -> loaded to overrides }
 
     /** Where the account's history starts, once the server has said or shown that it cannot. */
-    private var bounds: Bounds? = null
+    private var bounds: HistoryBounds? = null
 
     /** Online updates since the view model opened, including one arriving during an older-page read. */
     private var reconnects = 0L
@@ -218,12 +157,12 @@ class HistoryViewModel(
         val known = bounds
         val reconnectsBefore = reconnects
         viewModelScope.launch {
-            val (page, read) = withContext(io) { fetch(time, before, known) }
+            val (page, read) = withContext(io) { fetchOlderPage(client, time, before, known) }
             bounds = read
             val loaded = older.value
             older.value = when (page) {
-                is Page.Loaded -> Older(loaded.entries + page.entries, page.from, loaded.until ?: before, page.status)
-                is Page.NotLoaded -> loaded.copy(
+                is OlderPage.Loaded -> Older(loaded.entries + page.entries, page.from, loaded.until ?: before, page.status)
+                is OlderPage.NotLoaded -> loaded.copy(
                     // The server's word that no entry comes before the cache fixes where the older days end too.
                     until = loaded.until ?: before.takeIf { page.status == OlderDays.End },
                     status = page.status,
@@ -231,7 +170,7 @@ class HistoryViewModel(
             }
             // The request may still have used the old route when an online update arrived.
             // Retry that failure once for the newer event; a successful page never pages on.
-            if (page is Page.NotLoaded && page.status == OlderDays.Unreachable && reconnects != reconnectsBefore) loadOlder()
+            if (page is OlderPage.NotLoaded && page.status == OlderDays.Unreachable && reconnects != reconnectsBefore) loadOlder()
         }
     }
 
@@ -288,56 +227,6 @@ class HistoryViewModel(
         return if (edits.isEmpty()) pages else pages.map { edits[it.id] ?: it }
     }
 
-    /** The page of days before [before], and where the history starts, [known] or read now. */
-    private fun fetch(time: AccountTime, before: LocalDate, known: Bounds?): Pair<Page, Bounds?> {
-        val api = client() ?: return Page.NotLoaded(OlderDays.AuthFailed) to known
-        val bounds = known ?: when (val answer = readBounds(api)) {
-            is BoundsAnswer.Read -> answer.bounds
-            is BoundsAnswer.Failed -> return Page.NotLoaded(answer.status) to null
-        }
-        if (bounds.nothingBefore(before)) return Page.NotLoaded(OlderDays.End) to bounds
-        val from = before.minusDays(PAGE_DAYS)
-        val start = from.atStartOfDay(time.zone).toInstant()
-        val end = before.atStartOfDay(time.zone).toInstant()
-        val url = api.server.api("me", "time_entries").newBuilder()
-            .addQueryParameter("start_date", start.toString())
-            .addQueryParameter("end_date", end.toString())
-            .build()
-        val page = when (val answer = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
-            is ApiResult.Failure -> Page.NotLoaded(statusOf(answer.error))
-            is ApiResult.Success -> {
-                val entries = answer.value.mapNotNull { it.toCached() }.filter { it.start >= start && it.start < end }
-                val status = when {
-                    bounds.nothingBefore(from) -> OlderDays.End
-                    else -> OlderDays.More(auto = entries.isNotEmpty() || bounds is Bounds.Known)
-                }
-                Page.Loaded(from, entries, status)
-            }
-        }
-        return page to bounds
-    }
-
-    /** `GET /api/app/bounds`, Tokkl's first and last day with an entry in the account's timezone. */
-    private fun readBounds(api: TogglApiClient): BoundsAnswer =
-        when (val answer = api.get(api.server.app("bounds"), JsonObject.serializer())) {
-            is ApiResult.Success -> BoundsAnswer.Read(boundsOf(answer.value))
-            is ApiResult.Failure -> when (val status = statusOf(answer.error)) {
-                OlderDays.Unreachable, OlderDays.AuthFailed, OlderDays.TrustRefused -> BoundsAnswer.Failed(status)
-                // A 404 from a server without it, or any other answer: page without knowing.
-                else -> BoundsAnswer.Read(Bounds.Unknown)
-            }
-        }
-
-    private fun statusOf(error: ApiError): OlderDays = when (error) {
-        is ApiError.Network -> OlderDays.Unreachable
-        // A reverse proxy answers these while the server behind it is down.
-        is ApiError.UnexpectedStatus -> if (error.status in PROXY_UNREACHABLE) OlderDays.Unreachable else OlderDays.Failed(error.status)
-        ApiError.AuthFailed -> OlderDays.AuthFailed
-        is ApiError.TrustRefused -> OlderDays.TrustRefused
-        is ApiError.RateLimited -> OlderDays.Failed(error.status)
-        is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> OlderDays.Failed(null)
-    }
-
     /**
      * The older days loaded so far: their [entries], from the day [from] on, and what comes next.
      * They end the day before [until], the cache's first day when the first page loaded or the
@@ -350,29 +239,6 @@ class HistoryViewModel(
         val status: OlderDays = OlderDays.More(auto = true),
     )
 
-    private sealed interface Page {
-        data class Loaded(val from: LocalDate, val entries: List<CachedTimeEntry>, val status: OlderDays) : Page
-
-        /** Nothing new: the days stay as they were, with [status] at the end. */
-        data class NotLoaded(val status: OlderDays) : Page
-    }
-
-    private sealed interface Bounds {
-        /** The account's first entry starts on [first], or the account has none when null. */
-        data class Known(val first: LocalDate?) : Bounds
-
-        data object Unknown : Bounds
-
-        /** True when the server said that no entry starts before [day]. */
-        fun nothingBefore(day: LocalDate): Boolean = this is Known && (first == null || first >= day)
-    }
-
-    private sealed interface BoundsAnswer {
-        data class Read(val bounds: Bounds) : BoundsAnswer
-
-        data class Failed(val status: OlderDays) : BoundsAnswer
-    }
-
     init {
         viewModelScope.launch { overrides.collect(::reconcile) }
         viewModelScope.launch { appEvents.collect { if (it == AppEvent.ONLINE) reconnected() } }
@@ -382,28 +248,10 @@ class HistoryViewModel(
         /** How many days one request for older entries covers, as the web app's "Show 14 more days". */
         const val PAGE_DAYS = 14L
 
-        /** Bad gateway, service unavailable and gateway timeout. */
-        private val PROXY_UNREACHABLE = setOf(502, 503, 504)
-
         /** How long the state keeps following the cache after the last screen stops reading it. */
         private const val STOP_TIMEOUT_MS = 5_000L
 
         /** The first day of the cached two weeks, today and the 13 days before it. */
         private fun firstCachedDay(time: AccountTime): LocalDate = time.today().minusDays(HistoryWindow.DAYS - 1)
-
-        /**
-         * The bounds' `first_date`. A body without a readable one says nothing about where the
-         * history starts, while a null says the account has no entries.
-         */
-        private fun boundsOf(body: JsonObject): Bounds {
-            val first = body["first_date"] as? JsonPrimitive ?: return Bounds.Unknown
-            if (first is JsonNull) return Bounds.Known(null)
-            if (!first.isString) return Bounds.Unknown
-            return try {
-                Bounds.Known(LocalDate.parse(first.content))
-            } catch (e: DateTimeParseException) {
-                Bounds.Unknown
-            }
-        }
     }
 }
