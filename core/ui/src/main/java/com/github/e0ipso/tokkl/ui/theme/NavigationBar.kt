@@ -90,7 +90,7 @@ internal fun navigationIndicator(scheme: ColorScheme, hue: SectionHue) = Navigat
  * The weight of an item's label. The active one is bold, 700, so that the weight and the
  * indicator's shape mark it without colour. An inactive label keeps the weight it inherits.
  */
-internal fun navigationBarLabelWeight(selected: Boolean): FontWeight? =
+fun navigationBarLabelWeight(selected: Boolean): FontWeight? =
     if (selected) FontWeight.Bold else null
 
 /** What a screen needs to build a bar or rail item from [NavigationBarItem] or [NavigationRailItem] in Tokkl's colours. */

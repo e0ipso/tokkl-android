@@ -238,10 +238,10 @@ private fun colorScheme(t: Tokens, other: Tokens, surfaceBright: Color, surfaceD
         onTertiaryFixedVariant = Light.text,
     )
 
-internal val TokklLightColorScheme =
+val TokklLightColorScheme =
     colorScheme(Light, other = Dark, surfaceBright = Light.surface, surfaceDim = Light.surface2)
 
-internal val TokklDarkColorScheme =
+val TokklDarkColorScheme =
     colorScheme(Dark, other = Light, surfaceBright = Dark.surface2, surfaceDim = Dark.bg)
 
 /**
@@ -309,7 +309,7 @@ class TokklExtraColors(
     val projectMix: Color,
 )
 
-internal val TokklLightExtraColors = TokklExtraColors(
+val TokklLightExtraColors = TokklExtraColors(
     primaryFill = Light.primary,
     onPrimaryFill = Light.onPrimary,
     running = Light.stateRunning,
@@ -330,7 +330,7 @@ internal val TokklLightExtraColors = TokklExtraColors(
     projectMix = Light.projectMix,
 )
 
-internal val TokklDarkExtraColors = TokklExtraColors(
+val TokklDarkExtraColors = TokklExtraColors(
     primaryFill = Dark.primary,
     onPrimaryFill = Dark.onPrimary,
     running = Dark.stateRunning,

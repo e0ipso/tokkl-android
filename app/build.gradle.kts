@@ -158,6 +158,7 @@ room {
 dependencies {
     implementation(project(":core:api"))
     implementation(project(":core:time"))
+    implementation(project(":core:ui"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.adaptive)
@@ -184,6 +185,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(testFixtures(project(":core:api")))
+    testImplementation(testFixtures(project(":core:ui")))
     testImplementation(libs.mockwebserver3)
     testImplementation(platform(libs.koin.bom))
     testImplementation(libs.koin.test)

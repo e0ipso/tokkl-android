@@ -28,7 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklSpectrum
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme

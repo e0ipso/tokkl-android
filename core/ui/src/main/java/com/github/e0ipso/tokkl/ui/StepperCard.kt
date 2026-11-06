@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.PluralsRes
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -48,7 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
@@ -62,10 +63,15 @@ enum class StepperUnit(@PluralsRes val compact: Int, @PluralsRes val spoken: Int
 }
 
 // The number's text field and the buttons. They sit under the card's one semantics node, so only
-// the unmerged tree has them.
-internal const val STEPPER_VALUE_TAG = "stepper_value"
-internal const val STEPPER_DECREASE_TAG = "stepper_decrease"
-internal const val STEPPER_INCREASE_TAG = "stepper_increase"
+// the unmerged tree has them. The app's instrumented tests find them by these tags.
+@VisibleForTesting
+const val STEPPER_VALUE_TAG = "stepper_value"
+
+@VisibleForTesting
+const val STEPPER_DECREASE_TAG = "stepper_decrease"
+
+@VisibleForTesting
+const val STEPPER_INCREASE_TAG = "stepper_increase"
 
 /** A disabled button's frame, at the alpha Material gives disabled content. */
 private const val DisabledFrameAlpha = 0.38f

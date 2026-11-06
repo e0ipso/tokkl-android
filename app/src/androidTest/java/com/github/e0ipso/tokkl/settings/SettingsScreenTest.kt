@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.awaitText
@@ -183,7 +184,7 @@ class SettingsScreenTest {
 
         row.performClick()
         composeRule.awaitText(string(R.string.licence_anybody_title))
-        composeRule.onNodeWithContentDescription(string(R.string.back)).performClick()
+        composeRule.onNodeWithContentDescription(string(UiR.string.back)).performClick()
         settingsHeading().assertIsDisplayed()
 
         licencesRow().performScrollTo().performClick()

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -72,7 +73,7 @@ class LaunchScreenTest {
         val drawn = mutableListOf<TextLayoutResult>()
         heading.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(drawn) }
         assertEquals(title.uppercase(), drawn.single().layoutInput.text.text)
-        composeRule.onAllNodes(hasContentDescription(string(R.string.app_name))).assertCountEquals(0)
+        composeRule.onAllNodes(hasContentDescription(string(UiR.string.app_name))).assertCountEquals(0)
     }
 
     private fun string(@StringRes id: Int): String = composeRule.activity.getString(id)

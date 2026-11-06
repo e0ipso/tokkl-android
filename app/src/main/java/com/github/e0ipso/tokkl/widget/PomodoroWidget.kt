@@ -29,6 +29,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
@@ -310,7 +311,7 @@ private fun EntryChips(context: Context, entry: PomodoroWidgetEntry, width: Floa
 private fun Clock(context: Context, state: PomodoroWidgetState.Active, width: Float, requested: Float, now: Instant, ticking: Boolean) {
     val clock = pomodoroWidgetClock(state, now, SystemClock.elapsedRealtime())
     val metrics = context.resources.displayMetrics
-    val paint = Paint().apply { typeface = context.resources.getFont(R.font.anybody_wdth_wght); fontFeatureSettings = "tnum" }
+    val paint = Paint().apply { typeface = context.resources.getFont(UiR.font.anybody_wdth_wght); fontFeatureSettings = "tnum" }
     var sp = requested
     while (sp > 6f) {
         paint.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, metrics)

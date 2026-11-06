@@ -53,6 +53,7 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -600,9 +601,9 @@ class RunningEntryEditorServerTest {
     }
 
     private fun spokenDate(date: LocalDate): String {
-        val weekday = context.resources.getStringArray(R.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
-        val month = context.resources.getStringArray(R.array.reports_months_short)[date.monthValue - 1]
-        val value = string(R.string.entry_date_value, weekday, string(R.string.reports_date_year, date.dayOfMonth, month, date.year))
+        val weekday = context.resources.getStringArray(UiR.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
+        val month = context.resources.getStringArray(UiR.array.reports_months_short)[date.monthValue - 1]
+        val value = string(R.string.entry_date_value, weekday, string(UiR.string.reports_date_year, date.dayOfMonth, month, date.year))
         return string(R.string.entry_date_spoken, value)
     }
 

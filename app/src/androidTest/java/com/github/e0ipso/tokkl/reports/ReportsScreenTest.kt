@@ -20,6 +20,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -209,7 +210,7 @@ class ReportsScreenTest {
             val day = "${words.bucket(point.start, Resolution.DAY)}: ${spokenDuration(context.resources, point.seconds)}"
             assertTrue("the chart reads \"$day\": $description", description.contains(day))
         }
-        assertTrue("an empty day reads as no time: $description", report.series.none { it.seconds == 0L } || description.contains(string(R.string.reports_spoken_no_time)))
+        assertTrue("an empty day reads as no time: $description", report.series.none { it.seconds == 0L } || description.contains(string(UiR.string.reports_spoken_no_time)))
     }
 
     @Test

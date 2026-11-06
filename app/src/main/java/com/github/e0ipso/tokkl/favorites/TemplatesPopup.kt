@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.problemText
@@ -167,7 +168,7 @@ internal fun TemplateFeedback(state: FavoritesState, offline: Boolean, saved: Bo
 @Composable
 internal fun TemplateNotice(text: String, modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2)) {
-        Icon(painterResource(R.drawable.ic_warning), contentDescription = null)
+        Icon(painterResource(UiR.drawable.ic_warning), contentDescription = null)
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,

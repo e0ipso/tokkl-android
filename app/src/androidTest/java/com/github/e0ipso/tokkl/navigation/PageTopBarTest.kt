@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -85,7 +86,7 @@ class PageTopBarTest {
         openForm(R.string.projects_new)
         assertTopBar(R.string.project_form_new, back = true)
 
-        composeRule.onNode(hasContentDescription(string(R.string.back)) and hasClickAction()).performClick()
+        composeRule.onNode(hasContentDescription(string(UiR.string.back)) and hasClickAction()).performClick()
         assertTopBar(R.string.nav_projects, back = false)
 
         composeRule.onNode(barItem(R.string.nav_more)).performClick()
@@ -118,7 +119,7 @@ class PageTopBarTest {
             assertTrue("$name's title ends at ${headingBounds.bottom}, inside a part that scrolls from $top", headingBounds.bottom <= top + SLACK)
         }
 
-        val backs = composeRule.onAllNodes(hasContentDescription(string(R.string.back)) and hasClickAction())
+        val backs = composeRule.onAllNodes(hasContentDescription(string(UiR.string.back)) and hasClickAction())
         if (back) {
             backs.assertCountEquals(1)
             val button = backs[0].assertIsDisplayed().getBoundsInRoot()
@@ -130,7 +131,7 @@ class PageTopBarTest {
             backs.assertCountEquals(0)
         }
 
-        composeRule.onAllNodes(hasContentDescription(string(R.string.app_name))).assertCountEquals(0)
+        composeRule.onAllNodes(hasContentDescription(string(UiR.string.app_name))).assertCountEquals(0)
     }
 
     private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()

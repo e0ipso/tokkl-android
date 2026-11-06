@@ -35,6 +35,7 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -616,9 +617,9 @@ class CalendarServerTest {
 
     /** What TalkBack reads for the form's date button on [date]: Date: Mon, 19 Oct 2026. */
     private fun spokenDate(date: LocalDate): String {
-        val weekday = context.resources.getStringArray(R.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
-        val month = context.resources.getStringArray(R.array.reports_months_short)[date.monthValue - 1]
-        val value = context.getString(R.string.entry_date_value, weekday, context.getString(R.string.reports_date_year, date.dayOfMonth, month, date.year))
+        val weekday = context.resources.getStringArray(UiR.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
+        val month = context.resources.getStringArray(UiR.array.reports_months_short)[date.monthValue - 1]
+        val value = context.getString(R.string.entry_date_value, weekday, context.getString(UiR.string.reports_date_year, date.dayOfMonth, month, date.year))
         return context.getString(R.string.entry_date_spoken, value)
     }
 

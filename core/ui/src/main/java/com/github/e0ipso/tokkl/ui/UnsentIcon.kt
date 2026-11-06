@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R
 
 /**
  * The unsent icon, an arrow up to a line, as tall as a line of [style] and in the text colour.

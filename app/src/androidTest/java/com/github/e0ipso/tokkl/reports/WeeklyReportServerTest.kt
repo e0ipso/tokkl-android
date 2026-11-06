@@ -18,6 +18,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -158,7 +159,7 @@ class WeeklyReportServerTest {
             R.string.reports_weekly_cell_description,
             sparse.title.ifBlank { string(R.string.reports_without_project) },
             words.bucket(weekly.days[emptyDay], Resolution.DAY),
-            string(R.string.reports_spoken_no_time),
+            string(UiR.string.reports_spoken_no_time),
         )
         assertTrue("an empty cell reads \"$empty\"", exists(hasContentDescription(empty)))
         assertTrue(exists(hasContentDescription(weekTotal(weekly))))

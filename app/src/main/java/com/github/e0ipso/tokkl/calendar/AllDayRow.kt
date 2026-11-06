@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.takeOrElse
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.compactHeightWindow
@@ -133,7 +134,7 @@ private fun AllDayCell(
             val words = remember(resources) { DateWords(resources) }
             val dayLabel = resources.getString(R.string.history_day, words.weekday(day), words.short(day))
             IconButton(onClick = { editing.addAllDay(day) }) {
-                Icon(painterResource(R.drawable.ic_plus), contentDescription = stringResource(R.string.calendar_add_all_day_on, dayLabel))
+                Icon(painterResource(UiR.drawable.ic_plus), contentDescription = stringResource(R.string.calendar_add_all_day_on, dayLabel))
             }
         }
     }

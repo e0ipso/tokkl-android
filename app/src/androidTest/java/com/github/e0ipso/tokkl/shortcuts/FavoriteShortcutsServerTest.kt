@@ -17,6 +17,7 @@ import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TestAccounts
@@ -269,7 +270,7 @@ class FavoriteShortcutsServerTest {
 
     /** The app's icon among the launcher's apps, which open with a swipe up on the home screen. */
     private fun appIcon(device: UiDevice, launcher: String): UiObject2 {
-        val name = context.getString(R.string.app_name)
+        val name = context.getString(UiR.string.app_name)
         device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 4, device.displayWidth / 2, device.displayHeight / 4, SWIPE_STEPS)
         repeat(MAX_SCROLLS) {
             device.wait(Until.findObject(By.pkg(launcher).text(name)), SHORT_WAIT.toMillis())?.let { return it }

@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.StickerCard
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -68,7 +69,7 @@ fun ServerNeededNotice(title: String, message: String, onRetry: () -> Unit, modi
             modifier = Modifier.padding(TokklTheme.spacing.space4),
             horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
         ) {
-            Icon(painter = painterResource(R.drawable.ic_warning), contentDescription = null)
+            Icon(painter = painterResource(UiR.drawable.ic_warning), contentDescription = null)
             Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
                 Text(
                     text = title,

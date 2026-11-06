@@ -42,7 +42,7 @@ fun syncApplicationNightMode(context: Context, modes: Flow<ThemeMode>, scope: Co
  * [syncApplicationNightMode]. The first frame has to know the theme, or launch would show the other
  * mode's colours first, and Android needs the mode for the starting window of the next launch.
  */
-internal fun themeSettingsWithNightMode(
+fun themeSettingsWithNightMode(
     context: Context,
     store: ThemeSettingsStore,
     scope: CoroutineScope,

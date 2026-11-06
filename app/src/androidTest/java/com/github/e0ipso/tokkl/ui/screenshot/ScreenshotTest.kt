@@ -47,6 +47,7 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.ServerCertificate
@@ -302,7 +303,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun pomodoroLimitError() = showPomodoro(IDLE_POMODORO.copy(lengths = IDLE_POMODORO.lengths.copy(work = "200"))) {
         awaitLengthCards()
-        composeRule.onNode(hasText(string(R.string.stepper_limit_max, PomodoroDefaults.WORK_MINUTES.last)), useUnmergedTree = true)
+        composeRule.onNode(hasText(string(UiR.string.stepper_limit_max, PomodoroDefaults.WORK_MINUTES.last)), useUnmergedTree = true)
             .assertIsDisplayed()
         assertScreen("pomodoro-limit-error")
     }

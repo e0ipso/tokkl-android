@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.ui.theme
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.graphics.Shape
@@ -20,7 +21,8 @@ private val RadiusLarge = RoundedCornerShape(16.dp)
  * draws Tokkl's 2dp frame, [FrameWidth] wide in [androidx.compose.material3.ColorScheme.outline],
  * and the hard offset shadow under it. A dialog draws the frame with its own border.
  */
-internal val TokklShapes = Shapes(
+@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+val TokklShapes = Shapes(
     extraSmall = RadiusMedium,
     small = RadiusMedium,
     medium = RadiusLarge,

@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Tokkl</string>
-    <string name="back">Back</string>
     <string name="licences">Licences</string>
     <string name="licence_anybody_title">Anybody font</string>
     <string name="licence_anybody_licence">SIL Open Font License 1.1</string>
@@ -138,41 +136,11 @@
         <item quantity="other">%d selected</item>
     </plurals>
 
-    <!-- 13 Oct: the day of the month and the month's short name. -->
-    <string name="reports_date">%1$d %2$s</string>
-    <!-- 13 Oct 2026 -->
-    <string name="reports_date_year">%1$d %2$s %3$d</string>
     <!-- 13 Oct to 19 Oct -->
     <string name="reports_range">%1$s to %2$s</string>
-    <!-- Mon 13 Oct: a weekday's short name and a date. -->
-    <string name="reports_bucket_day">%1$s %2$s</string>
     <string name="reports_bucket_week">Week of %1$s</string>
     <!-- Oct 2026: a month's short name and the year. -->
     <string name="reports_bucket_month">%1$s %2$d</string>
-    <!-- Monday first, as java.time numbers the days. -->
-    <string-array name="reports_weekdays_short">
-        <item>Mon</item>
-        <item>Tue</item>
-        <item>Wed</item>
-        <item>Thu</item>
-        <item>Fri</item>
-        <item>Sat</item>
-        <item>Sun</item>
-    </string-array>
-    <string-array name="reports_months_short">
-        <item>Jan</item>
-        <item>Feb</item>
-        <item>Mar</item>
-        <item>Apr</item>
-        <item>May</item>
-        <item>Jun</item>
-        <item>Jul</item>
-        <item>Aug</item>
-        <item>Sep</item>
-        <item>Oct</item>
-        <item>Nov</item>
-        <item>Dec</item>
-    </string-array>
 
     <string name="reports_loading">Loading the report…</string>
     <string name="reports_offline_title">Reports need the server</string>
@@ -211,19 +179,6 @@
     <string name="reports_mixed_currencies">Amounts per project are hidden because this report mixes currencies.</string>
     <!-- 45.0% -->
     <string name="reports_percent">%1$s%%</string>
-    <string name="reports_spoken_no_time">no time</string>
-    <plurals name="reports_spoken_hours">
-        <item quantity="one">%d hour</item>
-        <item quantity="other">%d hours</item>
-    </plurals>
-    <plurals name="reports_spoken_minutes">
-        <item quantity="one">%d minute</item>
-        <item quantity="other">%d minutes</item>
-    </plurals>
-    <plurals name="reports_spoken_seconds">
-        <item quantity="one">%d second</item>
-        <item quantity="other">%d seconds</item>
-    </plurals>
     <string name="reports_share">Share CSV</string>
     <string name="reports_export_preparing">Preparing CSV…</string>
     <string name="reports_export_no_targets">No app can receive a CSV file. Install a compatible app and try again.</string>

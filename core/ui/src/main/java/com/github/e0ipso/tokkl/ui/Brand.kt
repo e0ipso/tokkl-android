@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.ui
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -18,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
@@ -30,7 +31,8 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  * come from.
  */
 enum class BrandSize(
-    internal val wordmarkWidth: Dp,
+    @get:VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+    val wordmarkWidth: Dp,
     @DrawableRes internal val wordmark: Int,
 ) {
     /** Tokkl's lg, on its own above a screen's content, as on sign-in. */

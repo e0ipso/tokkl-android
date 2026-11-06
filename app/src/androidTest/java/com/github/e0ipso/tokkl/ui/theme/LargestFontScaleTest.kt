@@ -40,6 +40,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
@@ -126,7 +127,7 @@ class LargestFontScaleTest {
 
         assertFitWhenScrolledTo(
             pinned = listOf(
-                "back button" to composeRule.onNode(hasContentDescription(string(R.string.back)) and hasClickAction()),
+                "back button" to composeRule.onNode(hasContentDescription(string(UiR.string.back)) and hasClickAction()),
                 "heading" to composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()),
             ),
             blocks = listOf(
@@ -207,7 +208,7 @@ class LargestFontScaleTest {
         for (field in PomodoroDefaultField.entries) {
             button(field.label).performScrollTo().performClick()
             // The line under the card's number, such as "min · 1–180", in the unmerged tree.
-            val range = string(R.string.stepper_unit_range, "", field.range.first, field.range.last).substringAfter(' ')
+            val range = string(UiR.string.stepper_unit_range, "", field.range.first, field.range.last).substringAfter(' ')
             assertDialogFits(
                 blocks = listOf(
                     "title" to composeRule.onNode(hasText(string(R.string.settings_pomodoro_edit)) and isHeading()),
@@ -258,7 +259,7 @@ class LargestFontScaleTest {
         composeRule.awaitText(string(R.string.licence_anybody_title))
 
         assertFitWithoutOverlap(
-            "Back button" to composeRule.onNodeWithContentDescription(string(R.string.back)),
+            "Back button" to composeRule.onNodeWithContentDescription(string(UiR.string.back)),
             text(R.string.licences),
             heading(R.string.licence_anybody_title),
             text(R.string.licence_anybody_licence),
@@ -904,7 +905,7 @@ class LargestFontScaleTest {
 
     /** The brand, which TalkBack reads by its wordmark's description, the app's name. */
     private fun brand(): Pair<String, SemanticsNodeInteraction> =
-        "brand" to composeRule.onNodeWithContentDescription(string(R.string.app_name))
+        "brand" to composeRule.onNodeWithContentDescription(string(UiR.string.app_name))
 
     /**
      * Checks the open dialog, whose text scrolls between a fixed title and fixed buttons. Each

@@ -3,11 +3,7 @@ package com.github.e0ipso.tokkl.ui.theme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.github.e0ipso.tokkl.projects.ProjectPalette
 import com.github.e0ipso.tokkl.ui.projectMark
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -227,8 +223,9 @@ class ThemeContrastTest {
      * surface and on the bar track, which is chartBand. A bar's billable part is solid
      * chartBillable, and the chartOther stripes draw a non-billable part's edge; the stripes on
      * their wash are texture inside one part and need no ratio. A project's dot is its colour mixed
-     * with projectMix, as the reports screen draws it, for every colour of [ProjectPalette], the
-     * palette the project form offers, and for the muted dot of a project without one.
+     * with projectMix, as the reports screen draws it. Here it is the muted dot of a project
+     * without a colour; the app module's ProjectDotContrastTest checks the dot of every colour the
+     * project form offers.
      */
     private fun reportPairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
         val marks = listOf(
@@ -237,11 +234,8 @@ class ThemeContrastTest {
             Pair("chartBillable on the bar track, chartBand", x.chartBillable, x.chartBand, Kind.NON_TEXT),
             Pair("chartOther on the bar track, chartBand", x.chartOther, x.chartBand, Kind.NON_TEXT),
         )
-        val dots = (ProjectPalette.entries.map { it.hex } + null).map { hex ->
-            val dot = projectMark(hex, x.projectMix, s.onSurfaceVariant)
-            Pair("project dot ${hex ?: "without a colour"} on surface", dot, s.surface, Kind.NON_TEXT)
-        }
-        return marks + dots
+        val dot = Pair("project dot without a colour on surface", projectMark(null, x.projectMix, s.onSurfaceVariant), s.surface, Kind.NON_TEXT)
+        return marks + dot
     }
 
     private fun assertPairsPass(scheme: String, colours: ColorScheme, extra: TokklExtraColors) {
@@ -254,22 +248,6 @@ class ThemeContrastTest {
             }
         }
         assertTrue("$scheme scheme pairs below WCAG AA:\n" + failures.joinToString("\n"), failures.isEmpty())
-    }
-
-    /** The WCAG 2 contrast ratio, from the relative luminance of each sRGB colour. */
-    private fun contrast(a: Color, b: Color): Double {
-        val la = luminance(a)
-        val lb = luminance(b)
-        return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
-    }
-
-    private fun luminance(colour: Color): Double {
-        val argb = colour.toArgb()
-        fun channel(shift: Int): Double {
-            val c = ((argb shr shift) and 0xFF) / 255.0
-            return if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
-        }
-        return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
     }
 
     private companion object {

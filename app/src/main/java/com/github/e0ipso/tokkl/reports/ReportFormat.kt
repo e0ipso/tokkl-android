@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import android.content.res.Resources
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.jsShortestDecimal
 import com.github.e0ipso.tokkl.ui.DateWords
 import java.math.BigDecimal
@@ -66,7 +67,7 @@ internal fun DateWords.range(range: ReportRange, today: LocalDate): String {
 
 /** A bar's label: `Mon 13 Oct` for a day, `Week of 13 Oct` for a week, `Oct 2026` for a month. */
 internal fun DateWords.bucket(start: LocalDate, resolution: Resolution): String = when (resolution) {
-    Resolution.DAY -> resources.getString(R.string.reports_bucket_day, weekday(start), short(start))
+    Resolution.DAY -> resources.getString(UiR.string.reports_bucket_day, weekday(start), short(start))
     Resolution.WEEK -> resources.getString(R.string.reports_bucket_week, short(start))
     Resolution.MONTH -> resources.getString(R.string.reports_bucket_month, month(start), start.year)
 }

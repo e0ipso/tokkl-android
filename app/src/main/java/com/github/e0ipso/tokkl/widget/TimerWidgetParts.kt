@@ -30,6 +30,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.glance.color.ColorProvider
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.time.formatDurationWithoutSeconds
@@ -74,7 +75,7 @@ internal fun DayClock(context: Context, day: WidgetDayReport?, size: Float, widt
 
 /** Measure at the effective system font scale, then give the RemoteViews child its exact width. */
 internal fun clockPaint(context: Context, size: Float): Paint = Paint().apply {
-    typeface = context.resources.getFont(R.font.anybody_wdth_wght)
+    typeface = context.resources.getFont(UiR.font.anybody_wdth_wght)
     fontVariationSettings = "'wght' 600, 'wdth' 85"
     textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, size, context.resources.displayMetrics)
     fontFeatureSettings = "tnum"

@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.ui
 
 import android.content.res.Resources
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R
 import java.time.LocalDate
 
 /** Dates in the words of the string resources, such as `13 Oct` and `Mon 13 Oct`. */
