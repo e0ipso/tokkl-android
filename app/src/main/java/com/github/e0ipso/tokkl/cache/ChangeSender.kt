@@ -5,21 +5,12 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
-import com.github.e0ipso.tokkl.time.jsTrim
-import com.github.e0ipso.tokkl.trash.TrashEntry
-import java.io.InterruptedIOException
-import java.net.ConnectException
-import java.net.NoRouteToHostException
-import java.net.UnknownHostException
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -30,15 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import okhttp3.HttpUrl
 
 /**
  * Sends the queue to the configured server, oldest change first (docs/PRD.md O1). A failure the
@@ -47,40 +30,19 @@ import okhttp3.HttpUrl
  * or [DEFAULT_RETRY_AFTER] when the header is missing. The wait is kept in memory, and the queue
  * itself on disk.
  *
- * Each other refusal has its own outcome (docs/PRD.md O6):
- * - A 409 on a captured Stop is reconciled against the exact server span or Trash row. A legacy
- *   queued Stop without a captured instant retains its pre-migration handling.
- * - A 404 on an update or a legacy stop, when the server no longer has the entry, takes every queued
- *   change to it out of the queue and the entry out of the cache, and [onDiscarded] counts them
- *   for the discard notice. A 404 on a delete that may already have reached the server counts
- *   as sent. Any other 404, such as a create or
- *   an update whose project the server no longer has, is held as a 400 is.
- * - A 400, and any other 4xx, is held for the user with the server's message
- *   ([ChangeStore.hold]). Later changes to the same entry wait behind it, and the rest of the
- *   queue goes on.
- * - A 403, or a 401, pauses the whole queue and discards nothing: [signInNeeded] turns true, and
- *   no drain sends anything until [resume], which signing in again calls.
+ * Each other refusal has its own outcome, as [refusal] describes (docs/PRD.md O6). An entry the
+ * server no longer has takes every queued change to it out of the queue and the entry out of the
+ * cache, and [onDiscarded] counts them for the discard notice. A 404 on a delete that may already
+ * have reached the server counts as sent. A held change waits for the user with the server's
+ * message ([ChangeStore.hold]); later changes to the same entry wait behind it, and the rest of the
+ * queue goes on. A 403, or a 401, pauses the whole queue and discards nothing: [signInNeeded]
+ * turns true, and no drain sends anything until [resume], which signing in again calls.
  *
- * A queued start is the exception to "the change that reaches the server last wins" (O3), because
- * Tokkl stops the running entry when a new one starts. Before posting it, the sender reads the
- * running entry, one GET per start. When that entry started after the queued start, the start goes
- * as an entry stopped where the later timer starts, and the later timer keeps running (see
- * [ChangeStore.endBefore]). Otherwise the start goes as queued, and the server stops an earlier
- * timer itself.
- *
- * A create reaches the server once. Before posting it, the sender marks it [PendingChange.maybeSent]
- * on disk, and clears the mark when a failure shows the server stored nothing, such as a 4xx or
- * no route. Neither Tokkl nor Toggl takes an idempotency key on a create, so before posting a
- * marked create again the sender reads the entries around its start, one more GET, and when one
- * that the phone did not know when it queued the create matches it ([couldHaveMade]) it takes
- * that entry's id instead of posting.
- *
- * Each try sends its change once: creates, updates and deletes go out with `resend` false, so
- * OkHttp does not send one again on a new connection by itself, and a lost answer always reaches
- * the sender, whose marks account for its own retries. The sender's reads may still go out again.
- * When a try's connection fails after the request left the phone ([worthAnotherTryAtOnce]), such
- * as a pooled connection the server had closed while it sat idle, the drain tries that change once
- * more at once, on a new connection, before it stops.
+ * [ChangeTries] sends each change once and says how a queued start goes when a later timer runs
+ * (O3) and how a create that may have reached the server is found instead of posted again. When a
+ * try's connection fails after the request left the phone ([worthAnotherTryAtOnce]), such as a
+ * pooled connection the server had closed while it sat idle, the drain tries that change once
+ * more at once, on a new connection, before it stops. The sender's reads may still go out again.
  *
  * [send] runs when a change is queued and after each refresh, and once more when a 429's wait
  * ends. When the network returns, [BackgroundSend]'s worker calls [sendAndWait], also with the
@@ -120,6 +82,8 @@ class ChangeSender(
     private val spans: ServerSpans = ServerSpans.Unsnapped,
     private val allDay: () -> Boolean = { false },
 ) : AccountRefreshListener {
+
+    private val tries = ChangeTries(store, spans, allDay)
 
     /** What one [drain] did. */
     sealed interface Outcome {
@@ -367,170 +331,11 @@ class ChangeSender(
     }
 
     /** Sends [change], or returns null when it left the queue before it went out. */
-    private fun send(api: TogglApiClient, change: PendingChange): ApiResult<Sent>? {
-        if (change.kind == ChangeKind.CREATE) return create(api, change)
-        if (change.kind == ChangeKind.DELETE) return delete(api, change)
-        if (change.kind == ChangeKind.STOP && change.capturedStop != null) return capturedStop(api, change)
-        val request = change.request(api.server, allDay())
-        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
-            is ApiResult.Success -> ApiResult.Success(Sent(change, result.value.id, result.value.toCached()))
-            is ApiResult.Failure -> result
-        }
-    }
-
-    /** A captured Stop may already have reached the server even when its reply was lost. */
-    private fun capturedStop(api: TogglApiClient, change: PendingChange): ApiResult<Sent> {
-        if (change.maybeSent) {
-            when (val found = stoppedOnServer(api, change)) {
-                is ApiResult.Success -> if (found.value) return ApiResult.Success(Sent(change, change.entryId, if (change.shortStop) null else change.entry()))
-                is ApiResult.Failure -> return found
-            }
-        }
-        store.maybeSent(change, true)
-        val request = change.request(api.server, allDay())
-        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
-            is ApiResult.Success -> if (result.value.matchesStop(change)) {
-                ApiResult.Success(Sent(change, result.value.id, if (change.shortStop) null else result.value.toCached()))
-            } else {
-                ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The server stored a different Stop outcome"))
-            }
-            is ApiResult.Failure -> result
-        }
-    }
-
-    /** True only after reading the exact stopped row, including a short row hidden in Trash. */
-    private fun stoppedOnServer(api: TogglApiClient, change: PendingChange): ApiResult<Boolean> {
-        val url = api.server.api("me", "time_entries", change.entryId.toString())
-        return when (val result = api.get(url, ServerTimeEntry.serializer())) {
-            is ApiResult.Success -> when {
-                result.value.stop == null -> ApiResult.Success(false)
-                result.value.matchesStop(change) -> ApiResult.Success(true)
-                else -> ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The server stopped this entry differently"))
-            }
-            is ApiResult.Failure -> if (change.shortStop && (result.error as? ApiError.Http)?.status == NOT_FOUND) {
-                when (val trash = api.get(api.server.app("trash"), ListSerializer(TrashEntry.serializer()))) {
-                    is ApiResult.Success -> if (trash.value.any { it.matchesStop(change) }) ApiResult.Success(true)
-                        else ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The short Stop is not in Trash"))
-                    is ApiResult.Failure -> trash
-                }
-            } else result
-        }
-    }
-
-    /**
-     * Posts the queued create [queued] once: when an earlier post may have stored it, the entry
-     * that post made stands for it instead. A start goes as [endBeforeALaterTimer] has it.
-     */
-    private fun create(api: TogglApiClient, queued: PendingChange): ApiResult<Sent> {
-        if (queued.maybeSent) {
-            when (val found = earlierCopy(api, queued)) {
-                is ApiResult.Success -> found.value?.let { return ApiResult.Success(Sent(queued, it.id, it.toCached())) }
-                is ApiResult.Failure -> return found
-            }
-        }
-        val change = if (queued.stop == null) {
-            when (val result = endBeforeALaterTimer(api, queued)) {
-                is ApiResult.Success -> result.value
-                is ApiResult.Failure -> return result
-            }
-        } else {
-            queued
-        }
-        if (!change.maybeSent) store.maybeSent(change, true)
-        val request = change.request(api.server, allDay())
-        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
-            is ApiResult.Success -> ApiResult.Success(Sent(change, result.value.id, result.value.toCached()))
-            is ApiResult.Failure -> {
-                if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
-                result
-            }
-        }
-    }
-
-    /**
-     * Sends the queued delete [change], marked [PendingChange.maybeSent] first, or returns null
-     * when Undo took it back before then. A 404 on a retry counts as sent: the server no longer has the
-     * entry, because an earlier try or another client deleted it, which is what the delete asked
-     * for (docs/PRD.md O6). On a first try, the mark clears when another failure shows that the
-     * server deleted nothing. Once a try may have reached the server, the mark stays whatever
-     * later tries get, so Undo goes through the server.
-     */
-    private fun delete(api: TogglApiClient, change: PendingChange): ApiResult<Sent>? =
-        synchronized(deletes) {
-            if (!store.maybeSent(change, true)) return null
-            val request = change.request(api.server, allDay())
-            when (val result = api.sendNoContent(request.method, request.url, request.body, resend = false)) {
-                is ApiResult.Success -> ApiResult.Success(Sent(change, change.entryId, entry = null))
-                is ApiResult.Failure -> when {
-                    (result.error as? ApiError.Http)?.status == NOT_FOUND && change.maybeSent -> ApiResult.Success(Sent(change, change.entryId, entry = null))
-                    !change.maybeSent -> {
-                        if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
-                        result
-                    }
-                    else -> result
-                }
-            }
-        }
-
-    /**
-     * What the drain does with [change], which the server, or the way to it, refused with [error]
-     * (docs/PRD.md O6). A 404 on an update or a stop reads the entry, one GET, to tell an entry
-     * the server no longer has from a value it no longer has, such as a deleted project.
-     */
-    private fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError): Refusal {
-        if (error == ApiError.AuthFailed) return Refusal.SignInAgain
-        val refused = error as? ApiError.UnexpectedStatus ?: return Refusal.Wait(error)
-        val status = refused.status
-        return when {
-            status == UNAUTHORIZED -> Refusal.SignInAgain
-            status !in 400..499 || status == REQUEST_TIMEOUT -> Refusal.Wait(error)
-            status == CONFLICT && change.kind == ChangeKind.STOP && change.capturedStop == null -> Refusal.AlreadyDone
-            change.kind == ChangeKind.STOP && change.capturedStop != null && status in setOf(CONFLICT, NOT_FOUND) ->
-                when (val found = stoppedOnServer(api, change)) {
-                    is ApiResult.Success -> if (found.value) Refusal.AlreadyDone else Refusal.Hold(refused.message)
-                    is ApiResult.Failure -> if (found.error is ApiError.Http && found.error.status in 400..499) {
-                        Refusal.Hold(refused.message ?: "Captured Stop could not be verified")
-                    } else Refusal.Wait(found.error)
-                }
-            status == NOT_FOUND && change.kind != ChangeKind.CREATE -> when (val entry = entryOnServer(api, change.entryId)) {
-                is ApiResult.Success -> if (entry.value) Refusal.Hold(refused.message) else Refusal.EntryGone
-                is ApiResult.Failure -> if (entry.error == ApiError.AuthFailed || (entry.error as? ApiError.Http)?.status == UNAUTHORIZED) {
-                    Refusal.SignInAgain
-                } else {
-                    Refusal.Wait(entry.error)
-                }
-            }
-            else -> Refusal.Hold(refused.message)
-        }
-    }
-
-    /** Whether the server has the entry [id], preserving a failed lookup's retry or sign-in outcome. */
-    private fun entryOnServer(api: TogglApiClient, id: Long): ApiResult<Boolean> =
-        when (val result = api.get(api.server.api("me", "time_entries", id.toString()), JsonObject.serializer())) {
-            is ApiResult.Success -> ApiResult.Success(true)
-            is ApiResult.Failure -> when {
-                (result.error as? ApiError.Http)?.status == NOT_FOUND -> ApiResult.Success(false)
-                result.error is ApiError.InvalidResponse -> ApiResult.Success(true)
-                else -> result
-            }
-        }
-
-    /** What the drain does with a refused change. */
-    private sealed interface Refusal {
-        /** The failure may pass: stop the drain and keep the change. */
-        data class Wait(val error: ApiError) : Refusal
-
-        /** The server refused the token: pause the queue until the user signs in again. */
-        data object SignInAgain : Refusal
-
-        /** The server has what the change asked for already: it leaves the queue. */
-        data object AlreadyDone : Refusal
-
-        /** The server no longer has the entry: every change to it leaves the queue, counted. */
-        data object EntryGone : Refusal
-
-        /** Only the user can settle it: hold it with the server's [reason]. */
-        data class Hold(val reason: String?) : Refusal
+    private fun send(api: TogglApiClient, change: PendingChange): ApiResult<SentChange>? {
+        if (change.kind == ChangeKind.CREATE) return tries.create(api, change)
+        if (change.kind == ChangeKind.DELETE) return synchronized(deletes) { tries.delete(api, change) }
+        if (change.kind == ChangeKind.STOP && change.capturedStop != null) return tries.capturedStop(api, change)
+        return tries.update(api, change)
     }
 
     /**
@@ -577,51 +382,6 @@ class ChangeSender(
         }
     }
 
-    /**
-     * The entry an earlier post of [create] made, or null when the server has none: one that
-     * [couldHaveMade] it, among the entries that start within [LOOKUP_MARGIN] of its start (for a
-     * no-time create, its stored local midnight), that the server did not hold already when the
-     * create was queued ([PendingChange.existingIds]), such as a duplicate's source, and that no
-     * other create from the phone maps to already.
-     */
-    private fun earlierCopy(api: TogglApiClient, create: PendingChange): ApiResult<ServerTimeEntry?> {
-        val start = create.start.truncatedTo(ChronoUnit.SECONDS)
-        val url = api.server.api("me", "time_entries").newBuilder()
-            .addQueryParameter("start_date", start.minus(LOOKUP_MARGIN).toString())
-            .addQueryParameter("end_date", start.plus(LOOKUP_MARGIN).toString())
-            .build()
-        val entries = when (val result = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
-            is ApiResult.Success -> result.value
-            is ApiResult.Failure -> return result
-        }
-        val starts = setOf(start, spans.start(start))
-        return ApiResult.Success(
-            entries.firstOrNull { create.couldHaveMade(it, starts) && it.id !in create.existingIds && !store.isMapped(it.id) },
-        )
-    }
-
-    /**
-     * The queued [start] as it goes to the server: as queued while nothing runs there or the
-     * running entry started at the same time or earlier, or ended where the running entry started
-     * when that came later (docs/PRD.md O3).
-     */
-    private fun endBeforeALaterTimer(api: TogglApiClient, start: PendingChange): ApiResult<PendingChange> {
-        RunningCheck.currentRequestDiagnostic?.invoke(
-            "producer=ChangeSender current.enter host=${api.server.api("me").host} port=${api.server.api("me").port}",
-        )
-        val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
-        RunningCheck.currentRequestDiagnostic?.invoke("producer=ChangeSender current.return success=${current is ApiResult.Success}")
-        val running = when (current) {
-            is ApiResult.Success -> current.value?.toCached()
-            is ApiResult.Failure -> return current
-        }
-        val later = running?.takeIf { it.stop == null && it.start.isAfter(start.start.truncatedTo(ChronoUnit.SECONDS)) }
-        return ApiResult.Success(if (later == null) start else store.endBefore(start, later, spans::switched))
-    }
-
-    /** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */
-    private class Sent(val change: PendingChange, val serverId: Long, val entry: CachedTimeEntry?)
-
     companion object {
         /** How long to wait after a 429 that names no whole number of seconds. */
         val DEFAULT_RETRY_AFTER: Duration = Duration.ofSeconds(60)
@@ -631,158 +391,5 @@ class ChangeSender(
 
         /** Bad gateway, service unavailable and gateway timeout, which a proxy answers while its server is down. */
         private val PROXY_UNREACHABLE = setOf(502, 503, 504)
-
-        /** What Tokkl answers to a delete of an entry it does not have, or has in the trash. */
-        private const val NOT_FOUND = 404
-
-        /** What a server may answer to a token it does not take, where Tokkl answers 403. */
-        private const val UNAUTHORIZED = 401
-
-        /** The server gave up waiting for the request, which a later try may get past. */
-        private const val REQUEST_TIMEOUT = 408
-
-        /** What a server answers to a stop of an entry stopped already, as Tokkl's stop endpoint does. */
-        private const val CONFLICT = 409
-    }
-}
-
-/**
- * True when [entry] could be the one this create made: same workspace, description, project, task
- * and tags, the tags as [tagKey] compares them, and a start among [starts], the create's own and
- * where the server snaps it. Tokkl leaves `created_with` out of its answers, so that cannot tell
- * entries apart. Billable and the stop do not count, so the entry still matches after the server
- * or another client changed them.
- *
- * A no-time create also matches a no-time entry whose start lies within
- * [ChangeSender.LOOKUP_MARGIN] of its own. Tokkl puts that entry at midnight of its day in the
- * account's timezone as the server has it, which need not be the midnight the phone stored. One
- * sent while no-time entries were off went with its times, so it still matches by its start.
- */
-internal fun PendingChange.couldHaveMade(entry: ServerTimeEntry, starts: Set<Instant>): Boolean {
-    val made = entry.toCached() ?: return false
-    return made.workspaceId == workspaceId &&
-        made.description == description &&
-        made.projectId == projectId &&
-        made.taskId == taskId &&
-        made.tags.mapTo(HashSet(), ::tagKey) == tags.mapTo(HashSet(), ::tagKey) &&
-        (made.start in starts || allDay && made.allDay && made.start.near(start))
-}
-
-/** True when this instant lies within [ChangeSender.LOOKUP_MARGIN] of [start], in whole seconds. */
-private fun Instant.near(start: Instant): Boolean =
-    Duration.between(start.truncatedTo(ChronoUnit.SECONDS), this).abs() <= ChangeSender.LOOKUP_MARGIN
-
-/**
- * The tag [name] as Tokkl matches it to a tag it has: trimmed, with A to Z in lower case. Tokkl
- * 1.3.1 trims each name a create sends (`requireName` in packages/api/src/lib/values.ts) and looks
- * it up with SQLite's `COLLATE NOCASE` (`findByName` in packages/api/src/models/tags.ts), which
- * folds ASCII letters only. So an entry queued with "work" comes back tagged "Work" when the
- * server has that tag.
- */
-private fun tagKey(name: String): String =
-    buildString { name.jsTrim().forEach { append(if (it in 'A'..'Z') it.lowercaseChar() else it) } }
-
-/**
- * True when the request that failed with this error cannot have changed anything on the server:
- * the server refused it with a 4xx, or it never left the phone, as with no route or a trust
- * refusal. A 5xx, a timeout, a dropped connection or a 2xx the phone could not read may come after
- * the server stored it.
- */
-internal fun ApiError.leftNothingOnTheServer(): Boolean =
-    when (this) {
-        is ApiError.Http -> status in 400..499
-        is ApiError.Network -> cause is ConnectException || cause is UnknownHostException || cause is NoRouteToHostException
-        is ApiError.InvalidResponse -> false
-        is ApiError.HostNotAllowed, is ApiError.TrustRefused -> true
-    }
-
-/**
- * True when a request that failed with this error is worth sending again at once: its connection
- * failed after the request left the phone, as a pooled connection does when the server closed it
- * while it sat idle. Tokkl closes one after Node's keep-alive timeout of 5 seconds, and OkHttp
- * checks a pooled connection only after 10. A timeout would wait as long again, and a server the
- * phone cannot reach at all stays unreachable a moment later.
- */
-internal fun ApiError.worthAnotherTryAtOnce(): Boolean =
-    this is ApiError.Network && cause !is InterruptedIOException && !leftNothingOnTheServer()
-
-/** One change as an HTTP request. */
-internal class ChangeRequest(val method: String, val url: HttpUrl, val body: JsonObject?)
-
-/** What the app names itself as in a created entry's `created_with`, which Toggl requires. */
-internal const val CREATED_WITH = "Tokkl for Android"
-
-/**
- * The Toggl API v9 request for this change, under [server]. A create is a POST, an update and a
- * legacy stop a PUT with every field; a new Stop sends its frozen tap instant as PATCH. A delete is
- * a DELETE and a short Stop's Undo is a POST restore. Times go in whole seconds, the precision
- * the server stores; a running entry sends `duration: -1`, and a stopped one the duration that
- * matches its start and stop. Tags go by name. With [allDay], the server stores no-time entries,
- * and a create or update says whether it is one, as [body] describes. Without it no request
- * carries `all_day`.
- */
-internal fun PendingChange.request(server: ServerUrl, allDay: Boolean = false): ChangeRequest {
-    val collection = server.api("workspaces", workspaceId.toString(), "time_entries")
-    val url = if (kind == ChangeKind.CREATE) collection else collection.newBuilder().addPathSegment(entryId.toString()).build()
-    return when (kind) {
-        ChangeKind.CREATE -> ChangeRequest("POST", url, body(allDay))
-        ChangeKind.UPDATE -> ChangeRequest("PUT", url, body(allDay))
-        // A legacy stop ends a running entry, which is never a no-time one.
-        ChangeKind.STOP -> if (capturedStop == null) ChangeRequest("PUT", url, body(allDay = false)) else
-            ChangeRequest("PATCH", url.newBuilder().addPathSegment("stop").build(), buildJsonObject {
-                put("stop", capturedStop.truncatedTo(ChronoUnit.SECONDS).toString())
-            })
-        ChangeKind.RESTORE -> ChangeRequest("POST", server.app("time_entries", entryId.toString(), "restore"), JsonObject(emptyMap()))
-        ChangeKind.DELETE -> ChangeRequest("DELETE", url, body = null)
-    }
-}
-
-// Android 12's Instant.parse rejects Tokkl's +00:00 timestamps; OffsetDateTime accepts them.
-private fun ServerTimeEntry.matchesStop(change: PendingChange): Boolean =
-    id == change.entryId && workspaceId == change.workspaceId &&
-        runCatching { OffsetDateTime.parse(start).toInstant() }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
-        stop?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS) &&
-        (serverDeletedAt != null) == change.shortStop
-
-private fun TrashEntry.matchesStop(change: PendingChange): Boolean =
-    id == change.entryId && deletedAt != null &&
-        runCatching { OffsetDateTime.parse(start).toInstant() }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
-        stop?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS)
-
-/**
- * The entry's fields. With [allDay] on, a no-time change sends `all_day: true`, its day as
- * `start_date` and its duration, and neither `start` nor `stop`: Tokkl refuses a start that is not
- * local midnight and a stop that is not the one it anchors. Without a stored day it sends its
- * local midnight as `start`, whose date Tokkl reads in the account's timezone. Every other change
- * sends its times, and `all_day: false` when [allDay] is on, which turns a no-time entry back into
- * a timed one.
- */
-private fun PendingChange.body(allDay: Boolean): JsonObject {
-    val start = start.truncatedTo(ChronoUnit.SECONDS)
-    val stop = stop?.truncatedTo(ChronoUnit.SECONDS)
-    val noTime = allDay && this.allDay
-    return buildJsonObject {
-        put("workspace_id", workspaceId)
-        if (kind == ChangeKind.CREATE) put("created_with", CREATED_WITH)
-        put("description", description)
-        put("project_id", projectId)
-        put("task_id", taskId)
-        put("tags", JsonArray(tags.map(::JsonPrimitive)))
-        put("billable", billable)
-        if (noTime && stop != null) {
-            put("all_day", true)
-            if (day != null) put("start_date", day.toString()) else put("start", start.toString())
-            put("duration", stop.epochSecond - start.epochSecond)
-        } else {
-            put("start", start.toString())
-            if (stop == null) {
-                put("stop", JsonNull)
-                put("duration", -1)
-            } else {
-                put("stop", stop.toString())
-                put("duration", stop.epochSecond - start.epochSecond)
-            }
-            if (allDay) put("all_day", false)
-        }
     }
 }
