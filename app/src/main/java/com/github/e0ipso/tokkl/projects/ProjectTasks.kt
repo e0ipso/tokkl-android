@@ -4,7 +4,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -26,7 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -36,9 +34,10 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.catalog.CatalogChange
+import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
@@ -47,9 +46,8 @@ import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
-import com.github.e0ipso.tokkl.ui.TokklGhostButton
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.TokklIconButton
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /** What the task list's controls do. */
 internal class TaskActions(
@@ -188,11 +186,7 @@ private fun NewTaskField(name: String, nameMissing: Boolean, enabled: Boolean, o
 /** One task, with Done under a done one: a tap on it opens its form, and Delete asks first. Both stay off while nothing can change. */
 @Composable
 private fun TaskRow(task: ProjectTask, canChange: Boolean, actions: TaskActions) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
-    ) {
+    CatalogListRow {
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -277,16 +271,7 @@ private fun TaskDialog(
                 problem?.let { ErrorBanner(problemText(it)) }
             }
         },
-        confirmButton = {
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)
-                }
-                TokklButton(onClick = save, enabled = canSave, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.project_task_save), textAlign = TextAlign.Center)
-                }
-            }
-        },
+        confirmButton = { CancelAndConfirm(stringResource(R.string.project_task_save), onConfirm = save, onCancel = onCancel, enabled = canSave) },
     )
 }
 

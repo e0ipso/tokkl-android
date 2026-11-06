@@ -22,13 +22,11 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.entry.SplitProblem
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
-import com.github.e0ipso.tokkl.ui.TokklButton
-import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
@@ -87,16 +85,7 @@ internal fun SplitEntryDialog(
                 )
             }
         },
-        confirmButton = {
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)
-                }
-                TokklButton(onClick = onConfirm, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.history_split_confirm), textAlign = TextAlign.Center)
-                }
-            }
-        },
+        confirmButton = { CancelAndConfirm(stringResource(R.string.history_split_confirm), onConfirm = onConfirm, onCancel = onCancel) },
     )
 }
 

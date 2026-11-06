@@ -52,18 +52,26 @@ fun ConfirmDialog(
                 problem?.let { ErrorBanner(problemText(it)) }
             }
         },
-        confirmButton = {
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)
-                }
-                val label = @Composable { Text(confirmLabel, textAlign = TextAlign.Center) }
-                if (danger) {
-                    TokklDangerButton(onClick = onConfirm, enabled = canConfirm, modifier = Modifier.fillMaxWidth()) { label() }
-                } else {
-                    TokklButton(onClick = onConfirm, enabled = canConfirm, modifier = Modifier.fillMaxWidth()) { label() }
-                }
-            }
-        },
+        confirmButton = { CancelAndConfirm(confirmLabel, onConfirm = onConfirm, onCancel = onCancel, enabled = canConfirm, danger = danger) },
     )
+}
+
+/**
+ * A dialog's Cancel and [confirmLabel] in one slot, stacked at full width, so they cannot overlap
+ * at any font scale. [enabled] turns the confirm button off; a [danger] confirm gets the danger
+ * colours.
+ */
+@Composable
+internal fun CancelAndConfirm(confirmLabel: String, onConfirm: () -> Unit, onCancel: () -> Unit, enabled: Boolean = true, danger: Boolean = false) {
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+        TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)
+        }
+        val label = @Composable { Text(confirmLabel, textAlign = TextAlign.Center) }
+        if (danger) {
+            TokklDangerButton(onClick = onConfirm, enabled = enabled, modifier = Modifier.fillMaxWidth()) { label() }
+        } else {
+            TokklButton(onClick = onConfirm, enabled = enabled, modifier = Modifier.fillMaxWidth()) { label() }
+        }
+    }
 }

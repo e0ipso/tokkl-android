@@ -4,12 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,7 +26,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -36,11 +34,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.CachedTag
+import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.catalog.CatalogChange
+import com.github.e0ipso.tokkl.catalog.CatalogEmpty
+import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
@@ -51,9 +51,8 @@ import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
-import com.github.e0ipso.tokkl.ui.TokklGhostButton
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.TokklIconButton
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
  * The tags page (docs/PRD.md P4): the workspace's tags from the server, with a field to add one,
@@ -156,10 +155,7 @@ internal fun TagsContent(
             }
             if (state.data != null && rows.isEmpty()) {
                 item(key = "empty") {
-                    Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                        Text(stringResource(R.string.tags_empty_title), style = MaterialTheme.typography.titleMedium)
-                        Text(stringResource(R.string.tags_empty_message), style = MaterialTheme.typography.bodyLarge)
-                    }
+                    CatalogEmpty(stringResource(R.string.tags_empty_title), stringResource(R.string.tags_empty_message))
                 }
             }
             itemsIndexed(rows, key = { _, row -> row.tag.id }) { index, row ->
@@ -234,11 +230,7 @@ private fun NewTagField(name: String, nameMissing: Boolean, enabled: Boolean, on
 private fun TagListRow(row: TagRow, canChange: Boolean, actions: TagsActions) {
     val tag = row.tag
     val enabled = canChange && row.fromServer
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
-    ) {
+    CatalogListRow {
         Text(
             text = tag.name,
             style = MaterialTheme.typography.bodyLarge,
@@ -314,16 +306,7 @@ private fun RenameDialog(tag: Tag, canSave: Boolean, problem: ServerProblem?, on
                 problem?.let { ErrorBanner(problemText(it)) }
             }
         },
-        confirmButton = {
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)
-                }
-                TokklButton(onClick = save, enabled = canSave, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.tags_rename_save), textAlign = TextAlign.Center)
-                }
-            }
-        },
+        confirmButton = { CancelAndConfirm(stringResource(R.string.tags_rename_save), onConfirm = save, onCancel = onCancel, enabled = canSave) },
     )
 }
 

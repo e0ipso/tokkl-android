@@ -2,13 +2,13 @@ package com.github.e0ipso.tokkl.trash
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
@@ -36,8 +37,8 @@ import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.time.formatTime
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.TokklIconButton
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
@@ -138,10 +139,7 @@ internal fun TrashContent(
             }
             if (entries != null && entries.isEmpty()) {
                 item(key = "empty") {
-                    Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                        Text(stringResource(R.string.trash_empty_title), style = MaterialTheme.typography.titleMedium)
-                        Text(stringResource(R.string.trash_empty_message), style = MaterialTheme.typography.bodyLarge)
-                    }
+                    CatalogEmpty(stringResource(R.string.trash_empty_title), stringResource(R.string.trash_empty_message))
                 }
             }
             if (!entries.isNullOrEmpty()) {

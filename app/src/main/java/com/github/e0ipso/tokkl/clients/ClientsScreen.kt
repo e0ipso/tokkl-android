@@ -4,28 +4,25 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.CachedClient
+import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
 import com.github.e0ipso.tokkl.catalog.CatalogChange
+import com.github.e0ipso.tokkl.catalog.CatalogEmpty
+import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
@@ -183,35 +180,10 @@ private fun ClientList(
             onRetry = actions.onRetry,
         )
         if (state.data != null && rows.isEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                Text(stringResource(R.string.clients_empty_title), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.clients_empty_message), style = MaterialTheme.typography.bodyLarge)
-            }
+            CatalogEmpty(stringResource(R.string.clients_empty_title), stringResource(R.string.clients_empty_message))
         }
         val (active, archived) = rows.partition { !it.client.archived }
-        if (active.isNotEmpty()) ClientRows(active, canChange, actions)
-        if (archived.isNotEmpty()) {
-            Column {
-                Text(
-                    text = stringResource(R.string.clients_archived),
-                    style = TokklTheme.sectionHeadingTextStyle,
-                    modifier = Modifier
-                        .padding(bottom = TokklTheme.spacing.inGroup)
-                        .semantics { heading() },
-                )
-                ClientRows(archived, canChange, actions)
-            }
-        }
-    }
-}
-
-@Composable
-private fun ClientRows(rows: List<ClientRow>, canChange: Boolean, actions: ClientsActions) {
-    Column {
-        rows.forEachIndexed { index, row ->
-            if (index > 0) HorizontalDivider()
-            ClientListRow(row, canChange, actions)
-        }
+        ActiveThenArchived(active, archived, stringResource(R.string.clients_archived)) { ClientListRow(it, canChange, actions) }
     }
 }
 
@@ -224,11 +196,7 @@ private fun ClientRows(rows: List<ClientRow>, canChange: Boolean, actions: Clien
 private fun ClientListRow(row: ClientRow, canChange: Boolean, actions: ClientsActions) {
     val client = row.client
     val enabled = canChange && row.fromServer
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
-    ) {
+    CatalogListRow {
         Column(
             modifier = Modifier
                 .weight(1f)

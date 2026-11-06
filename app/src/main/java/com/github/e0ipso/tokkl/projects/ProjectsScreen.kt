@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,18 +21,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
+import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
+import com.github.e0ipso.tokkl.catalog.CatalogEmpty
+import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.DetailLine
-import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -203,34 +202,9 @@ private fun ProjectList(
         )
         val (active, archived) = rows.partition { it.active }
         if (state.data != null && rows.isEmpty()) {
-            Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                Text(stringResource(R.string.projects_empty_title), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.projects_empty_message), style = MaterialTheme.typography.bodyLarge)
-            }
+            CatalogEmpty(stringResource(R.string.projects_empty_title), stringResource(R.string.projects_empty_message))
         }
-        if (active.isNotEmpty()) ProjectRows(active, canChange, actions)
-        if (archived.isNotEmpty()) {
-            Column {
-                Text(
-                    text = stringResource(R.string.projects_archived),
-                    style = TokklTheme.sectionHeadingTextStyle,
-                    modifier = Modifier
-                        .padding(bottom = TokklTheme.spacing.inGroup)
-                        .semantics { heading() },
-                )
-                ProjectRows(archived, canChange, actions)
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProjectRows(rows: List<ProjectRow>, canChange: Boolean, actions: ProjectsActions) {
-    Column {
-        rows.forEachIndexed { index, row ->
-            if (index > 0) HorizontalDivider()
-            ProjectListRow(row, canChange, actions)
-        }
+        ActiveThenArchived(active, archived, stringResource(R.string.projects_archived)) { ProjectListRow(it, canChange, actions) }
     }
 }
 
@@ -243,11 +217,7 @@ private fun ProjectRows(rows: List<ProjectRow>, canChange: Boolean, actions: Pro
 private fun ProjectListRow(row: ProjectRow, canChange: Boolean, actions: ProjectsActions) {
     val project = row.project
     val enabled = canChange && project != null
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
-    ) {
+    CatalogListRow {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
