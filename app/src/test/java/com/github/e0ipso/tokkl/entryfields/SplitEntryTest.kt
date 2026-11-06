@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.entry
+package com.github.e0ipso.tokkl.entryfields
 
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.DayOfWeek

@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.finishOnce
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
-import com.github.e0ipso.tokkl.timer.showTimerActionFailure
+import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
 import java.io.IOException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

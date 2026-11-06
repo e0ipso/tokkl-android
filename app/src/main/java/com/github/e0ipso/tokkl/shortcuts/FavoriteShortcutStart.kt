@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.shortcuts
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.favorites.fields
+import com.github.e0ipso.tokkl.cache.fields
 
 /** What a tap on a favorite shortcut did. */
 sealed interface ShortcutStart {

@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.compose.ui.graphics.Color
 import com.github.e0ipso.tokkl.time.jsToFixed
+import com.github.e0ipso.tokkl.ui.projectMark
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

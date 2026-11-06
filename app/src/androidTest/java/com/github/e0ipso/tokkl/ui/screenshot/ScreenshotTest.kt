@@ -64,7 +64,7 @@ import com.github.e0ipso.tokkl.calendar.WeekSource
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsContent
-import com.github.e0ipso.tokkl.entry.EntryLabels
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.history.HistoryDay
 import com.github.e0ipso.tokkl.history.HistoryEntry
@@ -103,10 +103,6 @@ import com.github.e0ipso.tokkl.reports.SummaryReport
 import com.github.e0ipso.tokkl.reports.WeeklyReport
 import com.github.e0ipso.tokkl.reports.WeeklyRow
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.settings.ThemeMode
-import com.github.e0ipso.tokkl.settings.ThemeSettings
-import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
-import com.github.e0ipso.tokkl.settings.applicationNightMode
 import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import com.github.e0ipso.tokkl.sync.SyncStatus
@@ -120,7 +116,11 @@ import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
+import com.github.e0ipso.tokkl.ui.theme.ThemeMode
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.theme.applicationNightMode
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant

@@ -1,8 +1,8 @@
-package com.github.e0ipso.tokkl.timer
+package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.entry.fields
+import com.github.e0ipso.tokkl.cache.fields
 
 // Continue (docs/PRD.md T2), as continueEntry and the "c" shortcut in
 // ../tokkl/packages/web/src/pages/TimerPage.tsx at tokkl commit 0031de3: a new running entry with

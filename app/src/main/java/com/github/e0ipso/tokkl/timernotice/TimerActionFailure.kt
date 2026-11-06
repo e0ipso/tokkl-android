@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.timer
+package com.github.e0ipso.tokkl.timernotice
 
 import android.content.Context
 import android.os.Handler
@@ -14,7 +14,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerActionResult
  * Resume, Stop while paused, Next phase and End session this way. None of them has a screen of its
  * own, and Android shows a text toast from the background. What the surface shows stays as it was.
  */
-internal fun showTimerActionFailure(context: Context, result: TimerActionResult) {
+fun showTimerActionFailure(context: Context, result: TimerActionResult) {
     if (result == TimerActionResult.Done) return
     val app = context.applicationContext
     val text = timerNoticeText(app.resources, TimerNotice.ActionFailed(result, 0))

@@ -39,10 +39,10 @@ import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.picker.rememberOffline
-import com.github.e0ipso.tokkl.reports.DateWords
-import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.daySticker
+import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.LocalDate
 

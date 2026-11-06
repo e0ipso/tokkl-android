@@ -1,9 +1,8 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.entry.EntryLabels
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import java.time.Duration
 import java.time.Instant
@@ -65,23 +64,6 @@ sealed interface TimerState {
         val original: Picked,
         val target: TimerTarget? = null,
     ) : TimerState
-}
-
-/**
- * What the timer's screens say about it: a Pause, Resume or Stop while paused that did not
- * happen, and a pomodoro the server discarded as too short. The navigation host shows them in one
- * place, whichever of the timer's pages is on screen.
- */
-sealed interface TimerNotice {
-
-    /**
-     * A pause chain action the server refused, or that got no answer, as [result] says.
-     * [number] tells two failures with the same result apart.
-     */
-    data class ActionFailed(val result: TimerActionResult, val number: Long) : TimerNotice
-
-    /** The server discarded the pomodoro [entryId] as too short to save. */
-    data class PomodoroDiscarded(val entryId: Long) : TimerNotice
 }
 
 /** No durable target during an optimistic transition; stale controls cannot act on its successor. */

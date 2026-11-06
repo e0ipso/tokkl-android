@@ -1,11 +1,7 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.widgetClock
-import com.github.e0ipso.tokkl.components.widgetState
-import androidx.activity.compose.setContent
 import android.os.SystemClock
+import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -15,9 +11,13 @@ import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.cache.RunningCheck
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.widgetClock
+import com.github.e0ipso.tokkl.components.widgetState
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timer.TimerTotals
-import com.github.e0ipso.tokkl.timer.timerPeriodTotals
+import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.*
 import kotlinx.coroutines.flow.first

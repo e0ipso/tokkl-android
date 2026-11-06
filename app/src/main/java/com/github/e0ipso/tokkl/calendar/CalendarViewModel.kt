@@ -10,10 +10,10 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
-import com.github.e0ipso.tokkl.entry.TimeRange
-import com.github.e0ipso.tokkl.entry.fields
-import com.github.e0ipso.tokkl.history.reconcileEntryRows
-import com.github.e0ipso.tokkl.history.resolveEntryOverrides
+import com.github.e0ipso.tokkl.cache.fields
+import com.github.e0ipso.tokkl.cache.reconcileEntryRows
+import com.github.e0ipso.tokkl.cache.resolveEntryOverrides
+import com.github.e0ipso.tokkl.entryfields.TimeRange
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime

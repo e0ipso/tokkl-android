@@ -4,11 +4,11 @@ import android.content.Context
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timer.SurfaceTap
-import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
-import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
+import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
+import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import kotlinx.coroutines.flow.first
 
 /**

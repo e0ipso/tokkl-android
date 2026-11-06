@@ -69,10 +69,6 @@ internal fun favoritesBody(favorites: List<EntryFields>): JsonObject = buildJson
     )
 }
 
-/** What a tap on this favorite starts. */
-fun CachedFavorite.fields(): EntryFields =
-    EntryFields(description = description, projectId = projectId, taskId = taskId, tags = tags, billable = billable)
-
 private fun EntryFields.toFavorite(position: Int) = CachedFavorite(
     position = position,
     description = description,

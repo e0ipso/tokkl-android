@@ -1,8 +1,7 @@
-package com.github.e0ipso.tokkl.entry
+package com.github.e0ipso.tokkl.entryfields
 
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.picker.Picked
 
@@ -41,7 +40,3 @@ fun EntryFields.withPicked(picked: Picked, projects: List<CachedProject>): Entry
         billable = billable || (projectPicked && project?.billable == true),
     )
 }
-
-/** The fields of the cached [this] that the user picks. */
-fun CachedTimeEntry.fields(): EntryFields =
-    EntryFields(description = description, projectId = projectId, taskId = taskId, tags = tags, billable = billable)

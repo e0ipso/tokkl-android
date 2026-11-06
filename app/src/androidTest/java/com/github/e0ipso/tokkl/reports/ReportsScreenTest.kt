@@ -37,6 +37,8 @@ import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.ui.DateWords
+import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import java.time.DayOfWeek
 import java.time.LocalDate

@@ -29,11 +29,8 @@ import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerState
@@ -41,7 +38,6 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.followTimerSync
@@ -63,10 +59,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
-import com.github.e0ipso.tokkl.session.ServerTrustStore
-import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
-import com.github.e0ipso.tokkl.widget.NativeWidget
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime

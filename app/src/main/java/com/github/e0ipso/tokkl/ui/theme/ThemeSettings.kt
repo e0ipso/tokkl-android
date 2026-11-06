@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.settings
+package com.github.e0ipso.tokkl.ui.theme
 
 /** Light, dark, or whatever the system uses (docs/PRD.md G1). */
 enum class ThemeMode {

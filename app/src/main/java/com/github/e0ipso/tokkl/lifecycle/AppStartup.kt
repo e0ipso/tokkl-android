@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl
+package com.github.e0ipso.tokkl.lifecycle
 
 import android.content.Context
 import com.github.e0ipso.tokkl.api.ConfiguredServer

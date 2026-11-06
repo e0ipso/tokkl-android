@@ -2,10 +2,10 @@ package com.github.e0ipso.tokkl.signin
 
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import java.io.IOException
@@ -22,7 +22,7 @@ internal class AccountSessionWriter(
     private val accountSettings: AccountSettingsSource,
     private val timerStates: AccountTimerStates,
     private val session: Session,
-    private val pomodoroNotification: AccountPomodoroNotification,
+    private val signedIn: SignedInListener,
     private val sender: ChangeSender,
     private val timerSync: TimerSyncFollower,
 ) : SessionWriter {
@@ -32,7 +32,7 @@ internal class AccountSessionWriter(
         accountSettings.store(settings)
         timerStates.renew()
         session.save(server, token)
-        pomodoroNotification.current.start()
+        signedIn.signedIn()
         if (sender.signInNeeded.value) sender.resume()
         // Signing in again over a refused token keeps the capability: the stream restarts for the
         // new source now. A first sign-in starts it once its refresh has learned the capability.

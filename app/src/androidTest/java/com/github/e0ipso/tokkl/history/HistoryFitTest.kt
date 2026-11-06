@@ -42,8 +42,8 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.entry.SplitHalves
-import com.github.e0ipso.tokkl.entry.SplitProblem
+import com.github.e0ipso.tokkl.entryfields.SplitHalves
+import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale

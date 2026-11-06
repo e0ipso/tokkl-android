@@ -4,7 +4,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.github.e0ipso.tokkl.projects.ProjectPalette
-import com.github.e0ipso.tokkl.reports.projectMark
+import com.github.e0ipso.tokkl.ui.projectMark
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow

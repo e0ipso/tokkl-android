@@ -1,9 +1,10 @@
-package com.github.e0ipso.tokkl.entry
+package com.github.e0ipso.tokkl.entryfields
 
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.time.jsTrim
 
 /**

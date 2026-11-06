@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.calendar
 
-import com.github.e0ipso.tokkl.entry.TimeRange
-import com.github.e0ipso.tokkl.entry.snappedInstant
+import com.github.e0ipso.tokkl.entryfields.TimeRange
+import com.github.e0ipso.tokkl.entryfields.snappedInstant
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.addClockMinutes
 import java.time.DayOfWeek

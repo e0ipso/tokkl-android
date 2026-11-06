@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.settings
+package com.github.e0ipso.tokkl.ui.theme
 
 import android.content.Context
 import android.content.SharedPreferences

@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.reports.DateWords
+import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent

@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroRinging
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
 import org.koin.android.ext.koin.androidContext
@@ -65,5 +66,5 @@ internal val pomodoroModule = module {
         )
     } bind AccountDataOwner::class
 
-    single { AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), get(), get(), get(), io()) } bind AccountDataOwner::class
+    single { AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), get(), get(), get(), io()) } binds arrayOf(AccountDataOwner::class, SignedInListener::class)
 }

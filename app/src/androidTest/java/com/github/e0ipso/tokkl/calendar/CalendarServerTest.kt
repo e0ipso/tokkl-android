@@ -52,9 +52,9 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.timerPageViewModels
 import com.github.e0ipso.tokkl.orFail
-import com.github.e0ipso.tokkl.reports.DateWords
-import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.ui.DateWords
+import com.github.e0ipso.tokkl.ui.spokenDuration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime

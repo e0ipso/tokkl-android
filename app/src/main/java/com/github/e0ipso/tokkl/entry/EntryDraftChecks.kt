@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.entry
 
+import com.github.e0ipso.tokkl.entryfields.resolveRange
+import com.github.e0ipso.tokkl.entryfields.snappedSeconds
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.MAX_ALL_DAY_SECONDS

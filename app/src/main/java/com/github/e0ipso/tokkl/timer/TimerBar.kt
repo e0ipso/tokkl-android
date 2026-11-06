@@ -19,10 +19,10 @@ import androidx.compose.ui.res.stringResource
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.entry.DescriptionSuggestion
-import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
-import com.github.e0ipso.tokkl.entry.EntryLabels
-import com.github.e0ipso.tokkl.entry.descriptionSuggestions
+import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestion
+import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.entryfields.descriptionSuggestions
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.TemplatesPopup
 import com.github.e0ipso.tokkl.picker.EntityPicker

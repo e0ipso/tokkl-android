@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.di
 
-import com.github.e0ipso.tokkl.AppStartup
+import com.github.e0ipso.tokkl.lifecycle.AppStartup
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module

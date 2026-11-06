@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.timer
+package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.timerstate.PauseActions

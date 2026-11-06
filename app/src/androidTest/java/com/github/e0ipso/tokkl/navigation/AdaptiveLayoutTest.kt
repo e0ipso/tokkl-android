@@ -45,7 +45,7 @@ import com.github.e0ipso.tokkl.clients.ClientsOverlay
 import com.github.e0ipso.tokkl.entry.EntryFormActions
 import com.github.e0ipso.tokkl.entry.EntryFormContent
 import com.github.e0ipso.tokkl.entry.EntryFormState
-import com.github.e0ipso.tokkl.entry.EntryLabels
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.picker.Picked
@@ -62,7 +62,6 @@ import com.github.e0ipso.tokkl.reports.ReportsState
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.settings.SettingsContent
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
-import com.github.e0ipso.tokkl.settings.ThemeSettings
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.signin.SignInScreen
@@ -78,6 +77,7 @@ import com.github.e0ipso.tokkl.trash.TrashContent
 import com.github.e0ipso.tokkl.trash.TrashState
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.screenshot.ScreenshotTest
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.LocalDate

@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl
 
 import android.app.Application
 import com.github.e0ipso.tokkl.di.appModules
+import com.github.e0ipso.tokkl.lifecycle.AppStartup
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.koin.workManagerFactory

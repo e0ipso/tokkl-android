@@ -1,12 +1,12 @@
 package com.github.e0ipso.tokkl.di
 
-import com.github.e0ipso.tokkl.MainActivityForeground
 import com.github.e0ipso.tokkl.account.AccountRefreshPipeline
 import com.github.e0ipso.tokkl.account.SendThenRefresh
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
+import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -24,8 +24,6 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
-import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
-import com.github.e0ipso.tokkl.settings.themeSettingsWithNightMode
 import com.github.e0ipso.tokkl.signin.AccountSessionWriter
 import com.github.e0ipso.tokkl.signin.SessionWriter
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
@@ -34,6 +32,8 @@ import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
+import com.github.e0ipso.tokkl.ui.theme.themeSettingsWithNightMode
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module

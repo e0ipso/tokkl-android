@@ -2,13 +2,13 @@ package com.github.e0ipso.tokkl.tile
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.timer.SurfaceTap
-import com.github.e0ipso.tokkl.timer.TimerSurfaceAction
-import com.github.e0ipso.tokkl.timer.TimerSurfaceActions
-import com.github.e0ipso.tokkl.timer.continueEntry
-import com.github.e0ipso.tokkl.timer.lastStopped
+import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.continueEntry
+import com.github.e0ipso.tokkl.timerstate.lastStopped
 
 /**
  * What the Quick Settings tile shows (docs/PRD.md N4), read from the phone's cache and the

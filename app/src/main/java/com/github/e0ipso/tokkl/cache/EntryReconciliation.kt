@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.history
+package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryWithSendState

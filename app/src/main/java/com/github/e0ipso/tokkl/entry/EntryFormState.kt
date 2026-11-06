@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.entry
 
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
 import java.time.LocalDate
 

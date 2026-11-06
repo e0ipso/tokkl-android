@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.entry
+package com.github.e0ipso.tokkl.entryfields
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.picker.Picked
-import com.github.e0ipso.tokkl.reports.projectMark
+import com.github.e0ipso.tokkl.ui.projectMark
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 

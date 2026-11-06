@@ -15,13 +15,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
+import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
 import com.github.e0ipso.tokkl.navigation.NavigationRequest
 import com.github.e0ipso.tokkl.navigation.NavigationRequests
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
 import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
-import com.github.e0ipso.tokkl.settings.ThemeSettingsRepository
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.widget.WidgetPage
 import com.github.e0ipso.tokkl.widget.takeWidgetPage

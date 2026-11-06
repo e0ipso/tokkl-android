@@ -5,11 +5,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalResources
-import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.catalog.ServerProblem
-import com.github.e0ipso.tokkl.catalog.problemText
-import com.github.e0ipso.tokkl.catalog.toServerProblem
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timernotice.timerNoticeText
 import kotlinx.coroutines.flow.filterNotNull
 
 /**
@@ -30,20 +26,5 @@ fun TimerNotices(model: TimerViewModel, host: SnackbarHostState) {
                 model.noticeShown(claimed)
             }
         }
-    }
-}
-
-/**
- * What [notice] says, in a sentence: the action's own message for a refusal or no answer, and
- * otherwise why the server failed, as the catalog pages say it.
- */
-internal fun timerNoticeText(resources: Resources, notice: TimerNotice): String = when (notice) {
-    is TimerNotice.PomodoroDiscarded -> resources.getString(R.string.timer_pomodoro_too_short)
-    is TimerNotice.ActionFailed -> when (val result = notice.result) {
-        TimerActionResult.Refused -> resources.getString(TimerActionResult.Refused.message)
-        TimerActionResult.Offline -> resources.getString(TimerActionResult.Offline.message)
-        is TimerActionResult.Failed -> problemText(resources, result.error.toServerProblem())
-        // The model never makes a notice of an action that went through.
-        TimerActionResult.Done -> problemText(resources, ServerProblem.Unexpected(null))
     }
 }

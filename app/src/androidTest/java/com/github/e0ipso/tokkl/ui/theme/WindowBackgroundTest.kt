@@ -11,13 +11,9 @@ import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.settings.DefaultThemeSettings
-import com.github.e0ipso.tokkl.settings.ThemeMode
-import com.github.e0ipso.tokkl.settings.ThemeSettings
-import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import org.junit.Assert.assertEquals
 import org.junit.Rule

@@ -16,6 +16,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.ui.theme.ThemeMode
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import java.io.File
 import org.junit.rules.ExternalResource
 

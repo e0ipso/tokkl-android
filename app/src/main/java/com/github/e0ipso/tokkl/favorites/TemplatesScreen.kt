@@ -22,18 +22,18 @@ import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.CatalogPage
-import com.github.e0ipso.tokkl.entry.EntryFieldsEditor
-import com.github.e0ipso.tokkl.entry.EntryPicker
-import com.github.e0ipso.tokkl.entry.entryLabels
-import com.github.e0ipso.tokkl.entry.picked
-import com.github.e0ipso.tokkl.entry.withPicked
+import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
+import com.github.e0ipso.tokkl.entryfields.EntryPicker
+import com.github.e0ipso.tokkl.entryfields.entryLabels
+import com.github.e0ipso.tokkl.entryfields.picked
+import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.TokklIconButton
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
  * More > Timer templates (docs/PRD.md T5). Ordered rows, and New or Edit forms for the

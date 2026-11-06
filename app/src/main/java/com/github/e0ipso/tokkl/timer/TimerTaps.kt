@@ -5,9 +5,9 @@ import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.entry.EntryLabels
-import com.github.e0ipso.tokkl.entry.entryLabels
-import com.github.e0ipso.tokkl.entry.fields
+import com.github.e0ipso.tokkl.cache.fields
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget

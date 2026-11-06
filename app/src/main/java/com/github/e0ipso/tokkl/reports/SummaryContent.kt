@@ -37,7 +37,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.StickerCard
+import com.github.e0ipso.tokkl.ui.projectMark
+import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklExtraColors
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.text.NumberFormat
@@ -322,21 +325,6 @@ private fun ShareBar(part: Long, whole: Long) {
         if (whole > 0) drawRect(fill, size = Size(size.width * (part.toFloat() / whole).coerceIn(0f, 1f), size.height))
     }
 }
-
-/**
- * A project's dot colour: its hex mixed 60% with [mix] in sRGB, as styles.css does, so it shows
- * against the card. A project without a colour, or with one that is not `#rrggbb`, takes [fallback].
- */
-internal fun projectMark(hex: String?, mix: Color, fallback: Color): Color {
-    val colour = hex?.takeIf { HEX.matches(it) }?.let { Color(0xFF000000 or it.substring(1).toLong(16)) } ?: fallback
-    return Color(
-        red = colour.red * 0.6f + mix.red * 0.4f,
-        green = colour.green * 0.6f + mix.green * 0.4f,
-        blue = colour.blue * 0.6f + mix.blue * 0.4f,
-    )
-}
-
-private val HEX = Regex("#[0-9a-fA-F]{6}")
 
 private val BAR_HEIGHT = 12.dp
 private val SEGMENT_GAP = 2.dp

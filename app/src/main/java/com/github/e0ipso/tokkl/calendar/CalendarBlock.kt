@@ -45,10 +45,10 @@ import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.reports.projectMark
-import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.UnsentIcon
+import com.github.e0ipso.tokkl.ui.projectMark
+import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SmallCorner
 import com.github.e0ipso.tokkl.ui.theme.SmallCornerShape
