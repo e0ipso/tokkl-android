@@ -28,6 +28,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
@@ -124,7 +126,7 @@ private fun TileControlsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(description, modifier = Modifier.semantics { heading() }) },
-        text = { Text(stringResource(if (panel.paused) R.string.timer_paused else R.string.timer_running)) },
+        text = { Text(stringResource(if (panel.paused) SharedR.string.timer_paused else SharedR.string.timer_running)) },
         confirmButton = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -146,19 +148,19 @@ private fun TileControlButton(action: TimerSurfaceAction, onClick: () -> Unit) {
     @DrawableRes val icon: Int
     when (action) {
         TimerSurfaceAction.Pause -> {
-            label = R.string.timer_pause
-            spoken = R.string.timer_pause_spoken
-            icon = R.drawable.ic_pause
+            label = SharedR.string.timer_pause
+            spoken = SharedR.string.timer_pause_spoken
+            icon = UiR.drawable.ic_pause
         }
         TimerSurfaceAction.Resume -> {
-            label = R.string.timer_resume
-            spoken = R.string.timer_resume_spoken
-            icon = R.drawable.ic_play
+            label = SharedR.string.timer_resume
+            spoken = SharedR.string.timer_resume_spoken
+            icon = UiR.drawable.ic_play
         }
         TimerSurfaceAction.Stop -> {
-            label = R.string.timer_stop
-            spoken = R.string.timer_stop_spoken
-            icon = R.drawable.ic_stop
+            label = SharedR.string.timer_stop
+            spoken = SharedR.string.timer_stop_spoken
+            icon = UiR.drawable.ic_stop
         }
     }
     val description = stringResource(spoken)

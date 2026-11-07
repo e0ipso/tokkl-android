@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.projectMark
@@ -115,7 +116,7 @@ internal fun GroupRow(row: HistoryRow, zone: ZoneId, settings: AccountSettings, 
             val top = buttonTop(firstLineMiddle)
             Box(Modifier.padding(top = top).size(MENU_BUTTON_SIZE), contentAlignment = Alignment.Center) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_chevron_right),
+                    painter = painterResource(UiR.drawable.ic_chevron_right),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.rotate(if (expanded) 90f else 0f),
@@ -142,7 +143,7 @@ private fun ContinueButton(entry: HistoryEntry, callbacks: EntryCallbacks, first
     val name = entry.description.ifBlank { stringResource(R.string.history_no_description) }
     IconButton(onClick = { callbacks.onContinue(entry.id) }, modifier = Modifier.padding(top = buttonTop(firstLineMiddle))) {
         Icon(
-            painter = painterResource(R.drawable.ic_play),
+            painter = painterResource(UiR.drawable.ic_play),
             contentDescription = stringResource(R.string.history_continue, name),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -197,7 +198,7 @@ private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineM
             }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.history_delete)) },
-                leadingIcon = { Icon(painterResource(R.drawable.ic_nav_trash), contentDescription = null) },
+                leadingIcon = { Icon(painterResource(UiR.drawable.ic_nav_trash), contentDescription = null) },
                 onClick = {
                     open = false
                     callbacks.onDelete(entry.id)

@@ -4,12 +4,8 @@
     <!-- The timer panel's icon, and what TalkBack reads for it. -->
     <string name="favorites_open">Timer templates</string>
     <string name="favorites_empty">No timer templates yet.</string>
-    <!-- A template with neither a description nor a project, as the web app names a favorite. -->
-    <string name="favorites_untitled">Untitled</string>
     <!-- What TalkBack reads for a template in the popup: Start Write the report, Website -->
     <string name="favorites_start_spoken">Start %1$s</string>
-    <!-- A template's description and its project: Write the report, Website -->
-    <string name="favorites_with_project">%1$s, %2$s</string>
     <string name="favorites_save">Save as template</string>
     <string name="favorites_manage">Manage templates</string>
     <string name="favorites_new">New template</string>

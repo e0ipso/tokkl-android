@@ -17,6 +17,8 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestion
@@ -232,25 +234,25 @@ fun TimerBarContent(
                         onEditRunning()
                     }
                     if (running.pausable) {
-                        TimerButton(R.drawable.ic_pause, R.string.timer_pause, R.string.timer_pause_spoken, TimerButtonLook.Neutral, enabled = true) {
+                        TimerButton(UiR.drawable.ic_pause, SharedR.string.timer_pause, SharedR.string.timer_pause_spoken, TimerButtonLook.Neutral, enabled = true) {
                             onPause()
                             focusManager.clearFocus()
                         }
                     }
-                    TimerButton(R.drawable.ic_stop, R.string.timer_stop, R.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
+                    TimerButton(UiR.drawable.ic_stop, SharedR.string.timer_stop, SharedR.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
                 }
                 paused != null -> {
                     PausedLabel()
                     PausedClock(paused.seconds)
-                    TimerButton(R.drawable.ic_play, R.string.timer_resume, R.string.timer_resume_spoken, TimerButtonLook.Primary, enabled = true) {
+                    TimerButton(UiR.drawable.ic_play, SharedR.string.timer_resume, SharedR.string.timer_resume_spoken, TimerButtonLook.Primary, enabled = true) {
                         onResume()
                         focusManager.clearFocus()
                     }
-                    TimerButton(R.drawable.ic_stop, R.string.timer_stop, R.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
+                    TimerButton(UiR.drawable.ic_stop, SharedR.string.timer_stop, SharedR.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
                 }
                 else -> {
                     IdleClock()
-                    TimerButton(R.drawable.ic_play, R.string.timer_start, R.string.timer_start_spoken, TimerButtonLook.Primary, enabled = workspaceId != null) {
+                    TimerButton(UiR.drawable.ic_play, R.string.timer_start, R.string.timer_start_spoken, TimerButtonLook.Primary, enabled = workspaceId != null) {
                         onStart()
                         focusManager.clearFocus()
                     }

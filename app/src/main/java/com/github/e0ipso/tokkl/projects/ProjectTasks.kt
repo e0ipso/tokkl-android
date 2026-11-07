@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogListRow
@@ -205,7 +206,7 @@ private fun TaskRow(task: ProjectTask, canChange: Boolean, actions: TaskActions)
         }
         val label = stringResource(R.string.project_task_delete_named, task.name)
         TokklIconButton(
-            icon = R.drawable.ic_nav_trash,
+            icon = UiR.drawable.ic_nav_trash,
             description = label,
             onClick = { actions.onAskToDelete(task) },
             enabled = canChange,

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -48,7 +49,7 @@ class LaunchScreenTest {
         val labels = tabs.map { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { text -> text.text } }
         val expected = listOf(
             R.string.nav_timer,
-            R.string.pomodoro_title,
+            SharedR.string.pomodoro_title,
             R.string.nav_projects,
             R.string.settings,
             R.string.nav_more,

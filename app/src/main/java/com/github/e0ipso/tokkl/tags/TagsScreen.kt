@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -247,7 +248,7 @@ private fun TagListRow(row: TagRow, canChange: Boolean, actions: TagsActions) {
         )
         val label = stringResource(R.string.tags_delete_named, tag.name)
         TokklIconButton(
-            icon = R.drawable.ic_nav_trash,
+            icon = UiR.drawable.ic_nav_trash,
             description = label,
             onClick = { actions.onAskToDelete(tag) },
             enabled = enabled,

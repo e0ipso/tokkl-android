@@ -18,6 +18,7 @@ import androidx.test.uiautomator.UiDevice
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -109,9 +110,9 @@ class PomodoroSessionNotificationServerTest {
         val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
         // ActivityScenario starts a new Activity with the same immutable intent the posted tap owns.
         ActivityScenario.launch<MainActivity>(pomodoroSessionOpenIntent(context, identity, phase)).use { scenario ->
-            awaitHeading(R.string.pomodoro_title)
+            awaitHeading(SharedR.string.pomodoro_title)
             scenario.recreate()
-            awaitHeading(R.string.pomodoro_title)
+            awaitHeading(SharedR.string.pomodoro_title)
             compose.onNodeWithText("Notification acceptance").performScrollTo().assertIsDisplayed()
         }
     }
@@ -122,7 +123,7 @@ class PomodoroSessionNotificationServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.openBarPage(R.string.settings)
             posted.contentIntent.send()
-            awaitHeading(R.string.pomodoro_title)
+            awaitHeading(SharedR.string.pomodoro_title)
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             awaitHeading(R.string.nav_timer)
             compose.openBarPage(R.string.settings)
@@ -145,7 +146,7 @@ class PomodoroSessionNotificationServerTest {
             // The server stops the regular timer at the session start.
             startSession()
             awaitSessionNotification().contentIntent.send()
-            awaitHeading(R.string.pomodoro_title)
+            awaitHeading(SharedR.string.pomodoro_title)
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             awaitHeading(R.string.nav_timer)

@@ -388,7 +388,7 @@ class FavoritesServerTest {
         composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.entry_description)))
 
     private fun stopButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction())
+        composeRule.onNode(hasContentDescription(string(SharedR.string.timer_stop_spoken)) and hasClickAction())
 
     private fun isEnabled(): SemanticsMatcher = SemanticsMatcher.keyNotDefined(SemanticsProperties.Disabled)
 

@@ -18,6 +18,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.PhaseKind
@@ -66,17 +67,17 @@ abstract class PomodoroWidgetScreenshotTest(private val dark: Boolean, private v
                         when (state) {
                             is PomodoroWidgetState.Active -> {
                                 if (width >= 196) assertPhaseWordsFit()
-                                assertTrue("$filename has a clock", host.hasDescription(context.getString(if (state.ended) R.string.pomodoro_overtime else R.string.pomodoro_remaining)))
-                                if (width >= 260) assertCompleteControl(context.getString(R.string.pomodoro_end))
+                                assertTrue("$filename has a clock", host.hasDescription(context.getString(if (state.ended) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining)))
+                                if (width >= 260) assertCompleteControl(context.getString(SharedR.string.pomodoro_end))
                                 val next = context.getString(when (state.session.upcomingPhase) {
-                                    PhaseKind.WORK -> R.string.pomodoro_start_work
-                                    PhaseKind.SHORT_REST -> R.string.pomodoro_start_short_rest
-                                    PhaseKind.LONG_REST -> R.string.pomodoro_start_long_rest
+                                    PhaseKind.WORK -> SharedR.string.pomodoro_start_work
+                                    PhaseKind.SHORT_REST -> SharedR.string.pomodoro_start_short_rest
+                                    PhaseKind.LONG_REST -> SharedR.string.pomodoro_start_long_rest
                                 })
                                 assertCompleteControl(next, if (width < 180) 36 else 48)
                             }
                             is PomodoroWidgetState.Idle -> {
-                                assertCompleteControl(context.getString(R.string.pomodoro_start), if (width < 180) 36 else 48)
+                                assertCompleteControl(context.getString(SharedR.string.pomodoro_start), if (width < 180) 36 else 48)
                                 if (width >= 260) assertCompleteControl(context.getString(R.string.pomodoro_widget_edit_description))
                             }
                             else -> Unit

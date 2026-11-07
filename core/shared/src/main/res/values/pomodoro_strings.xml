@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    A Pomodoro session's phases, lengths and buttons, as the Pomodoro page, the Pomodoro settings
+    and the Pomodoro widget show them.
+-->
+<resources>
+    <string name="pomodoro_alarm_waiting">Choose the next phase or end the session.</string>
+    <string name="pomodoro_title">Pomodoro</string>
+    <!-- The short labels on the stepper cards of the four lengths. -->
+    <string name="pomodoro_card_work">Work</string>
+    <string name="pomodoro_card_short_rest">Short rest</string>
+    <string name="pomodoro_card_long_rest">Long rest</string>
+    <string name="pomodoro_card_long_rest_every">Long rest every</string>
+    <string name="pomodoro_start">Start session</string>
+    <string name="pomodoro_end">End session</string>
+    <string name="pomodoro_work">Work</string>
+    <string name="pomodoro_short_rest">Short rest</string>
+    <string name="pomodoro_long_rest">Long rest</string>
+    <string name="pomodoro_number">Pomodoro %1$d of %2$d</string>
+    <string name="pomodoro_start_work">Start work</string>
+    <string name="pomodoro_start_short_rest">Start short rest</string>
+    <string name="pomodoro_start_long_rest">Start long rest</string>
+    <string name="pomodoro_remaining">Time remaining</string>
+    <string name="pomodoro_overtime">Overtime</string>
+</resources>

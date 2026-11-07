@@ -51,6 +51,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -190,7 +191,7 @@ private fun DateDialog(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismis
                     modifier = Modifier.padding(horizontal = TokklTheme.spacing.space1),
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.entry_cancel))
+                        Icon(painterResource(UiR.drawable.ic_close), contentDescription = stringResource(R.string.entry_cancel))
                     }
                     Text(
                         text = stringResource(R.string.entry_date),

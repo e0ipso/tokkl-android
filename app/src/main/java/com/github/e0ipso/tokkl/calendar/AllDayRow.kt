@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.takeOrElse
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
@@ -132,7 +133,7 @@ private fun AllDayCell(
             // The day in the label tells the week's seven buttons apart, as the web app's do.
             val resources = LocalResources.current
             val words = remember(resources) { DateWords(resources) }
-            val dayLabel = resources.getString(R.string.history_day, words.weekday(day), words.short(day))
+            val dayLabel = resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
             IconButton(onClick = { editing.addAllDay(day) }) {
                 Icon(painterResource(UiR.drawable.ic_plus), contentDescription = stringResource(R.string.calendar_add_all_day_on, dayLabel))
             }

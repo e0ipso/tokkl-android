@@ -16,6 +16,7 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -142,7 +143,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             // Offline, Pause needs the server: it says so, queues nothing and the entry runs on.
             val queued = runBlocking { app.changes.unsentCount.first() }
             assertTrue("the start edit waits in the queue", queued > 0)
-            focusedButton(R.string.timer_pause).performScrollTo().performClick()
+            focusedButton(SharedR.string.timer_pause).performScrollTo().performClick()
             awaitNotice(DataR.string.timer_action_offline)
             assertEquals(original.id, awaitRunning().entry.id)
             assertActions(running = true)
@@ -150,7 +151,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             AirplaneMode.set(false, fixture.account.client)
             fixture.drain()
             // Online, the server pauses it and the paused fields are read-only.
-            focusedButton(R.string.timer_pause).performScrollTo().performClick()
+            focusedButton(SharedR.string.timer_pause).performScrollTo().performClick()
             val paused = awaitPaused()
             assertActions(running = false)
             compose.onAllNodes(hasSetTextAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))).assertCountEquals(0)
@@ -164,16 +165,16 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             assertEquals(paused.target, shownTarget())
             // Offline, Resume and Stop while paused need the server too, and the pause stays as it was.
             AirplaneMode.set(true, fixture.account.client)
-            focusedButton(R.string.timer_resume).performScrollTo().performClick()
+            focusedButton(SharedR.string.timer_resume).performScrollTo().performClick()
             awaitNotice(DataR.string.timer_action_offline)
             assertEquals(paused, awaitPaused())
-            focusedButton(R.string.timer_stop).performScrollTo().performClick()
+            focusedButton(SharedR.string.timer_stop).performScrollTo().performClick()
             awaitNotice(DataR.string.timer_action_offline)
             assertEquals(paused, awaitPaused())
             assertActions(running = false)
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })
             AirplaneMode.set(false, fixture.account.client)
-            focusedButton(R.string.timer_resume).performScrollTo().performClick()
+            focusedButton(SharedR.string.timer_resume).performScrollTo().performClick()
             val resumed = awaitRunning()
             assertActions(running = true)
             assertNotEquals(original.id, resumed.entry.id)
@@ -183,7 +184,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             assertEquals("Pause fixture", runBlocking { app.cache.timeEntries.first() }.first { it.id == original.id }.description)
             // A clone's Stop is an ordinary queued Stop, offline too, and the focused timer leaves.
             AirplaneMode.set(true, fixture.account.client)
-            focusedButton(R.string.timer_stop).performScrollTo().performClick()
+            focusedButton(SharedR.string.timer_stop).performScrollTo().performClick()
             awaitIdle()
             compose.awaitTimerPage()
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
@@ -201,7 +202,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             scenario.onActivity { assertEquals(fontScale, it.resources.configuration.fontScale, 0f) }
             for (paused in listOf(false, true)) {
                 if (paused) {
-                    focusedButton(R.string.timer_pause).performScrollTo().performClick()
+                    focusedButton(SharedR.string.timer_pause).performScrollTo().performClick()
                     awaitPaused()
                 }
                 val token = shownTarget()
@@ -222,19 +223,19 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                     assertTrue(layouts.isNotEmpty())
                     assertTrue("enlarged clock text is not clipped", layouts.none { it.didOverflowHeight })
                     assertEquals(token, shownTarget())
-                    focusedButton(R.string.timer_stop).performScrollTo().assertIsDisplayed()
+                    focusedButton(SharedR.string.timer_stop).performScrollTo().assertIsDisplayed()
                     if (paused) {
-                        focusedButton(R.string.timer_resume).performScrollTo().assertIsDisplayed()
+                        focusedButton(SharedR.string.timer_resume).performScrollTo().assertIsDisplayed()
                         focusedButton(R.string.timer_focused_edit).assertDoesNotExist()
                     } else {
-                        focusedButton(R.string.timer_pause).performScrollTo().assertIsDisplayed()
+                        focusedButton(SharedR.string.timer_pause).performScrollTo().assertIsDisplayed()
                         focusedButton(R.string.timer_focused_edit).performScrollTo().assertIsDisplayed()
                     }
                     focusedButton(R.string.timer_exit_fullscreen).performScrollTo().assertIsDisplayed()
                 }
             }
             // Stop while paused ends the chain on the server, and the focused timer leaves.
-            focusedButton(R.string.timer_stop).performScrollTo().performClick()
+            focusedButton(SharedR.string.timer_stop).performScrollTo().performClick()
             awaitIdle()
             compose.awaitTimerPage()
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
@@ -356,7 +357,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 // is what the phone holds and shows before anything is counted.
                 val pauseRequests = requests.count
                 val linesBeforePause = requests.lines.size
-                focusedButton(R.string.timer_pause).performScrollTo().performClick()
+                focusedButton(SharedR.string.timer_pause).performScrollTo().performClick()
                 val paused = awaitPaused()
                 val held = app.timerState.state.value!!.state
                 val pause = held.pause!!
@@ -475,11 +476,11 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
      */
     private fun assertActions(running: Boolean) {
         compose.waitUntil("shared focused controls settle", 5_000) {
-            compose.onAllNodes(hasText(context.getString(if (running) R.string.timer_pause else R.string.timer_resume)) and hasClickAction()).fetchSemanticsNodes().size == 1
+            compose.onAllNodes(hasText(context.getString(if (running) SharedR.string.timer_pause else SharedR.string.timer_resume)) and hasClickAction()).fetchSemanticsNodes().size == 1
         }
-        focusedButton(if (running) R.string.timer_pause else R.string.timer_resume).assertExists()
-        compose.onNode(hasText(context.getString(if (running) R.string.timer_resume else R.string.timer_pause)) and hasClickAction()).assertDoesNotExist()
-        focusedButton(R.string.timer_stop).assertExists()
+        focusedButton(if (running) SharedR.string.timer_pause else SharedR.string.timer_resume).assertExists()
+        compose.onNode(hasText(context.getString(if (running) SharedR.string.timer_resume else SharedR.string.timer_pause)) and hasClickAction()).assertDoesNotExist()
+        focusedButton(SharedR.string.timer_stop).assertExists()
         if (running) focusedButton(R.string.timer_focused_edit).assertExists() else focusedButton(R.string.timer_focused_edit).assertDoesNotExist()
         focusedButton(R.string.timer_exit_fullscreen).assertExists()
         compose.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))).assertCountEquals(if (running) 4 else 3)

@@ -65,10 +65,10 @@ class PomodoroPageFontScaleTest {
     @Test
     fun allFourLabelledLengthInputsAndEntryControlsAreReachableWithTheKeyboard() {
         show()
-        compose.onNode(hasText(context.getString(R.string.pomodoro_title)) and isHeading()).assertIsDisplayed()
+        compose.onNode(hasText(context.getString(SharedR.string.pomodoro_title)) and isHeading()).assertIsDisplayed()
         for ((label, value) in listOf(
-            R.string.pomodoro_card_work to "180", R.string.pomodoro_card_short_rest to "60",
-            R.string.pomodoro_card_long_rest to "60", R.string.pomodoro_card_long_rest_every to "12",
+            SharedR.string.pomodoro_card_work to "180", SharedR.string.pomodoro_card_short_rest to "60",
+            SharedR.string.pomodoro_card_long_rest to "60", SharedR.string.pomodoro_card_long_rest_every to "12",
         )) {
             val name = context.getString(label)
             compose.lengthCard(name).performScrollTo().assertIsDisplayed().assertIsEnabled()
@@ -87,7 +87,7 @@ class PomodoroPageFontScaleTest {
         compose.onNode(hasText(context.getString(SharedR.string.entry_billable)) and isToggleable())
             .performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
         assertTrue(state.fields.billable)
-        button(R.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp)
+        button(SharedR.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp)
             .assertIsEnabled().performClick()
         assertEquals(1, starts)
         assertEquals(PomodoroLengths("180", "60", "60", "12"), state.lengths)
@@ -97,12 +97,12 @@ class PomodoroPageFontScaleTest {
     fun runningOvertimeHasASpokenClockAndBothActionsFitAtTheLargestFontScale() {
         state = state.copy(held = heldSession(phaseStart = at, description = "Current work"), fields = EntryFields(description = "Current work"))
         show(Clock.fixed(at.plusSeconds(25 * 60 + 65), ZoneOffset.UTC))
-        compose.onNodeWithText(context.getString(R.string.pomodoro_overtime)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(context.getString(SharedR.string.pomodoro_overtime)).performScrollTo().assertIsDisplayed()
         val duration = state.account!!.formatDuration(65)
         compose.onNode(hasContentDescription(context.getString(R.string.pomodoro_overtime_clock, duration)))
             .performScrollTo().assertIsDisplayed()
         readable(compose.onNodeWithText(duration, useUnmergedTree = true))
-        for (label in listOf(R.string.pomodoro_start_short_rest, R.string.pomodoro_end)) {
+        for (label in listOf(SharedR.string.pomodoro_start_short_rest, SharedR.string.pomodoro_end)) {
             val action = button(label)
             action.performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
             readable(compose.onNodeWithText(context.getString(label), useUnmergedTree = true))
@@ -126,7 +126,7 @@ class PomodoroPageFontScaleTest {
             notice.performScrollTo().assertIsDisplayed()
             readable(notice)
         }
-        button(R.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertIsEnabled()
+        button(SharedR.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertIsEnabled()
     }
 
     private fun show(clock: Clock = Clock.fixed(at, ZoneOffset.UTC)) {

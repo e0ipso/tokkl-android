@@ -778,11 +778,11 @@ class LargestFontScaleTest {
         assertEquals("refused session has no loaded capabilities", Capabilities.NONE, app.capabilities.state.value)
         assertNull("refused session has no loaded account settings", app.accountSettings.state.value)
         // Without the capabilities the bar cannot know of the server's timer API, so it offers no Pomodoro.
-        composeRule.onNode(bottomBarItem(R.string.pomodoro_title)).assertDoesNotExist()
+        composeRule.onNode(bottomBarItem(SharedR.string.pomodoro_title)).assertDoesNotExist()
         assertTimerPageFits(
             timerPageParts(),
             over = listOf(text(message), "review button" to button(SharedR.string.trust_refused_review)),
-            bar = BAR_LABELS - R.string.pomodoro_title,
+            bar = BAR_LABELS - SharedR.string.pomodoro_title,
         )
         val label = inside(SharedR.string.trust_refused_review, hasClickAction())
         label.second.textLayout()?.let { assertFalse("text is cut off: ${label.first}", it.didOverflowHeight) }
@@ -1007,7 +1007,7 @@ class LargestFontScaleTest {
         val MIN_TOUCH_TARGET = 48.dp
 
         /** The bottom bar's items, in order. */
-        val BAR_LABELS = listOf(R.string.nav_timer, R.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val BAR_LABELS = listOf(R.string.nav_timer, SharedR.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
 
         /** The subject of the certificate that scripts/instrumented-tests.sh makes. */
         const val CERTIFICATE_SUBJECT = "CN=Tokkl instrumented tests"

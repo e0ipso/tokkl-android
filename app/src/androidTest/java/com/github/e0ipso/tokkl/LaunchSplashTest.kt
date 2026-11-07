@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.util.TypedValue
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.core.ui.R
 import kotlin.math.abs
 import kotlin.math.hypot
 import org.junit.Assert.assertEquals

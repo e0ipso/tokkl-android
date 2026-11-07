@@ -122,7 +122,7 @@ class ContinueServerTest {
 
             composeRule.waitUntil("the timer runs the continued entry at once, offline", LOAD_TIMEOUT_MS) {
                 runBlocking { app.cache.running.first() }?.entry?.description == "Paint the wall" &&
-                    composeRule.onAllNodes(hasContentDescription(context.getString(R.string.timer_stop_spoken)) and hasClickAction())
+                    composeRule.onAllNodes(hasContentDescription(context.getString(SharedR.string.timer_stop_spoken)) and hasClickAction())
                         .fetchSemanticsNodes().size == 1
             }
             val continued = runBlocking { app.cache.running.first() }!!.entry

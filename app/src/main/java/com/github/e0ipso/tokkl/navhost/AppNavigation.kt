@@ -46,6 +46,7 @@ import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
@@ -62,7 +63,7 @@ import kotlinx.coroutines.launch
 val TopLevelPage.label: Int
     get() = when (this) {
         TopLevelPage.TIMER -> R.string.nav_timer
-        TopLevelPage.POMODORO -> R.string.pomodoro_title
+        TopLevelPage.POMODORO -> SharedR.string.pomodoro_title
         TopLevelPage.REPORTS -> R.string.reports
         TopLevelPage.PROJECTS -> R.string.nav_projects
         TopLevelPage.TEMPLATES -> R.string.nav_templates
@@ -83,7 +84,7 @@ val TopLevelPage.icon: Int
         TopLevelPage.TEMPLATES -> R.drawable.ic_nav_templates
         TopLevelPage.CLIENTS -> R.drawable.ic_nav_clients
         TopLevelPage.TAGS -> SharedR.drawable.ic_nav_tags
-        TopLevelPage.TRASH -> R.drawable.ic_nav_trash
+        TopLevelPage.TRASH -> UiR.drawable.ic_nav_trash
         TopLevelPage.SETTINGS -> R.drawable.ic_nav_settings
     }
 
@@ -267,7 +268,7 @@ private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: 
                         .semantics { heading() },
                 )
                 IconButton(onClick = hide) {
-                    Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.nav_more_close))
+                    Icon(painterResource(UiR.drawable.ic_close), contentDescription = stringResource(R.string.nav_more_close))
                 }
             }
             Column(

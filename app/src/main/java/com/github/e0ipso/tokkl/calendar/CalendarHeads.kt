@@ -37,6 +37,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.daySticker
@@ -52,9 +54,9 @@ internal fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant,
     val resources = LocalResources.current
     val words = remember(resources) { DateWords(resources) }
     val range = if (dayMode) {
-        resources.getString(R.string.history_day, words.weekday(state.selected), words.short(state.selected))
+        resources.getString(SharedR.string.history_day, words.weekday(state.selected), words.short(state.selected))
     } else {
-        resources.getString(R.string.reports_range, words.short(state.weekStart), words.short(state.weekStart.plusDays(6)))
+        resources.getString(SharedR.string.reports_range, words.short(state.weekStart), words.short(state.weekStart.plusDays(6)))
     }
     val weekSeconds = state.weekDays.sumOf { dayTotalSeconds(state.entries, it, state.zone, now) }
     val weekTotal = stringResource(R.string.calendar_week_total, state.settings.formatDuration(weekSeconds))
@@ -67,7 +69,7 @@ internal fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant,
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { onStep(-1) }) {
                 Icon(
-                    painterResource(R.drawable.ic_chevron_left),
+                    painterResource(UiR.drawable.ic_chevron_left),
                     contentDescription = stringResource(if (dayMode) R.string.calendar_previous_day else R.string.calendar_previous_week),
                 )
             }
@@ -76,7 +78,7 @@ internal fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant,
             }
             IconButton(onClick = { onStep(1) }) {
                 Icon(
-                    painterResource(R.drawable.ic_chevron_right),
+                    painterResource(UiR.drawable.ic_chevron_right),
                     contentDescription = stringResource(if (dayMode) R.string.calendar_next_day else R.string.calendar_next_week),
                 )
             }
@@ -133,7 +135,7 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
     val locale = LocalConfiguration.current.locales[0]
     val words = remember(resources) { DateWords(resources) }
     val hue = TokklTheme.sectionHue
-    val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(R.string.history_day, words.weekday(day), words.short(day))
+    val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
     val spoken = totalSeconds?.let { stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it)) } ?: label
     val addAction = addEntryAction(day, editing)
     Column(
@@ -185,7 +187,7 @@ internal fun addEntryAction(day: LocalDate, editing: CalendarEditing?): CustomAc
     if (editing == null) return null
     val resources = LocalResources.current
     val words = remember(resources) { DateWords(resources) }
-    val label = stringResource(R.string.calendar_add_entry, resources.getString(R.string.history_day, words.weekday(day), words.short(day)))
+    val label = stringResource(R.string.calendar_add_entry, resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day)))
     return CustomAccessibilityAction(label) {
         editing.add(day)
         true

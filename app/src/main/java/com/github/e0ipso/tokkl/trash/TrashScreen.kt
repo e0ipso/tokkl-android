@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
@@ -242,14 +243,14 @@ private fun TrashRow(
         ) {
             val restoreLabel = stringResource(R.string.trash_restore_named, name)
             TokklIconButton(
-                icon = R.drawable.ic_restore,
+                icon = UiR.drawable.ic_restore,
                 description = restoreLabel,
                 onClick = { actions.onRestore(entry.id) },
                 enabled = canChange,
             )
             val purgeLabel = stringResource(R.string.trash_purge_named, name)
             TokklIconButton(
-                icon = R.drawable.ic_nav_trash,
+                icon = UiR.drawable.ic_nav_trash,
                 description = purgeLabel,
                 onClick = { actions.onPurge(entry.id) },
                 enabled = canChange,

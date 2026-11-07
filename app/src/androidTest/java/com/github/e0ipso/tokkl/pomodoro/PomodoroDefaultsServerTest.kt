@@ -12,6 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -120,7 +121,7 @@ class PomodoroDefaultsServerTest {
             assertEquals(expected, saved.pomodoroDefaults())
             assertEquals(JsonPrimitive("list"), saved["timerView"])
             scenario.recreate()
-            compose.openBarPage(R.string.pomodoro_title, TIMEOUT_MS)
+            compose.openBarPage(SharedR.string.pomodoro_title, TIMEOUT_MS)
             for ((field, value) in inputs) {
                 val card = context.getString(field.cardLabel)
                 compose.lengthCard(card).performScrollTo()

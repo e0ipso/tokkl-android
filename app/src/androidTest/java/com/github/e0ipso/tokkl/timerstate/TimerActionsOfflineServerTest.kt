@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.api.TimerState
@@ -131,7 +132,7 @@ class TimerActionsOfflineServerTest {
             AirplaneMode.set(true, fixture.account.client)
             val running = snapshot()
 
-            tapOnTheTimerPage(R.string.timer_pause_spoken)
+            tapOnTheTimerPage(SharedR.string.timer_pause_spoken)
             awaitNotice()
             assertUnchanged("Pause on the Timer page", running)
             toast("Pause on the notification") { TimerSurfaces.runningNotification(ongoing = true).action(R.string.notification_pause).actionIntent.send() }
@@ -146,10 +147,10 @@ class TimerActionsOfflineServerTest {
             val paused = snapshot()
             pausedOffline = paused
 
-            tapOnTheTimerPage(R.string.timer_resume_spoken)
+            tapOnTheTimerPage(SharedR.string.timer_resume_spoken)
             awaitNotice()
             assertUnchanged("Resume on the Timer page", paused)
-            tapOnTheTimerPage(R.string.timer_stop_spoken)
+            tapOnTheTimerPage(SharedR.string.timer_stop_spoken)
             awaitNotice()
             assertUnchanged("Stop while paused on the Timer page", paused)
             toast("Resume on the notification") { TimerSurfaces.runningNotification(ongoing = false).action(R.string.notification_resume).actionIntent.send() }
@@ -186,7 +187,7 @@ class TimerActionsOfflineServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
             app.awaitControls<TimerControls.Running>("the other device's entry") { it.entry.id == first && it.pausable }
-            tapOnTheTimerPage(R.string.timer_pause_spoken)
+            tapOnTheTimerPage(SharedR.string.timer_pause_spoken)
             val paused = app.awaitControls<TimerControls.Paused>("the phone's Pause")
             val resumed = postTimer("timer", "resume", revision = other.timerState().revision)
             val clone = checkNotNull(resumed.pause?.cloneEntryId)
@@ -194,7 +195,7 @@ class TimerActionsOfflineServerTest {
             assertEquals(0, unsent())
 
             AirplaneMode.set(true, fixture.account.client)
-            tapOnTheTimerPage(R.string.timer_stop_spoken)
+            tapOnTheTimerPage(SharedR.string.timer_stop_spoken)
             app.awaitControls<TimerControls.Idle>("the clone's Stop, at once", timeoutMs = AT_ONCE_MS)
             assertEquals("the Stop waits in the queue", 1, unsent())
             assertEquals("the server has not heard of it", clone, held()?.pause?.cloneEntryId)
@@ -214,7 +215,7 @@ class TimerActionsOfflineServerTest {
             val started = app.awaitControls<TimerControls.Running>("Start, at once", timeoutMs = AT_ONCE_MS)
             assertEquals(1, unsent())
             assertFalse("a local entry is no clone", started.entry.id == clone)
-            tapOnTheTimerPage(R.string.timer_stop_spoken)
+            tapOnTheTimerPage(SharedR.string.timer_stop_spoken)
             app.awaitControls<TimerControls.Idle>("Stop, at once", timeoutMs = AT_ONCE_MS)
             assertEquals(2, unsent())
             assertNoNotice()
@@ -234,7 +235,7 @@ class TimerActionsOfflineServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.awaitTimerPage()
             compose.awaitPomodoroOffered(15_000)
-            compose.openBarPage(R.string.pomodoro_title)
+            compose.openBarPage(SharedR.string.pomodoro_title)
             var model: PomodoroViewModel? = null
             scenario.onActivity { model = sessionViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
@@ -246,23 +247,23 @@ class TimerActionsOfflineServerTest {
 
             AirplaneMode.set(true, fixture.account.client)
             val idle = snapshot()
-            tapOnThePage(R.string.pomodoro_start)
+            tapOnThePage(SharedR.string.pomodoro_start)
             awaitProblem(page, PomodoroAction.START)
             assertUnchanged("Start session on the page", idle)
             assertNull(page.state.value.pomodoro)
 
             AirplaneMode.set(false, fixture.account.client)
-            tapOnThePage(R.string.pomodoro_start)
+            tapOnThePage(SharedR.string.pomodoro_start)
             compose.waitUntil("the server started the session", 15_000) { page.state.value.pomodoro != null && !page.state.value.busy }
             val session = checkNotNull(other.timerState().pomodoro)
             compose.waitUntil("the session notification", 10_000) { TimerSurfaces.sessionNotification() != null }
 
             AirplaneMode.set(true, fixture.account.client)
             val work = snapshot()
-            tapOnThePage(R.string.pomodoro_start_short_rest)
+            tapOnThePage(SharedR.string.pomodoro_start_short_rest)
             awaitProblem(page, PomodoroAction.NEXT)
             assertUnchanged("Next phase on the page", work)
-            tapOnThePage(R.string.pomodoro_end)
+            tapOnThePage(SharedR.string.pomodoro_end)
             awaitProblem(page, PomodoroAction.END)
             assertUnchanged("End session on the page", work)
 

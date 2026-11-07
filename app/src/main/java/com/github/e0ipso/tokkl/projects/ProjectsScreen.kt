@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
@@ -245,7 +246,7 @@ private fun ProjectListRow(row: ProjectRow, canChange: Boolean, actions: Project
         }
         val label = stringResource(if (row.active) R.string.projects_archive_named else R.string.projects_restore_named, row.name)
         TokklIconButton(
-            icon = if (row.active) R.drawable.ic_archive else R.drawable.ic_restore,
+            icon = if (row.active) UiR.drawable.ic_archive else UiR.drawable.ic_restore,
             description = label,
             onClick = { if (project != null) actions.onSetActive(project, !row.active) },
             enabled = enabled,

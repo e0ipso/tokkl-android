@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
@@ -90,7 +91,7 @@ fun TemplatesPopup(
                                 }
                             }
                         },
-                        leadingIcon = { Icon(painterResource(R.drawable.ic_play), contentDescription = null) },
+                        leadingIcon = { Icon(painterResource(UiR.drawable.ic_play), contentDescription = null) },
                         onClick = {
                             open = false
                             onStart(template.fields)
@@ -123,12 +124,12 @@ fun TemplatesPopup(
 /** The description, else the project, else Untitled. */
 @Composable
 internal fun templateName(template: FavoriteItem): String =
-    template.fields.description.ifEmpty { template.labels.project ?: stringResource(R.string.favorites_untitled) }
+    template.fields.description.ifEmpty { template.labels.project ?: stringResource(SharedR.string.favorites_untitled) }
 
 /** What TalkBack reads for a template: its name, and its project when the name is the description. */
 @Composable
 internal fun templateSpoken(name: String, project: String?): String =
-    project?.let { stringResource(R.string.favorites_with_project, name, it) } ?: name
+    project?.let { stringResource(SharedR.string.favorites_with_project, name, it) } ?: name
 
 /** What TalkBack reads for starting [template]. */
 @Composable

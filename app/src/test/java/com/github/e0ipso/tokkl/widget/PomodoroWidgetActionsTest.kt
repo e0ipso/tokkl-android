@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.ServerTimerStates
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.timerstate.SessionActions

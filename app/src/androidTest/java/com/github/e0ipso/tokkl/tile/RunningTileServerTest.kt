@@ -13,6 +13,8 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
@@ -298,28 +300,28 @@ class RunningTileServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
         val press = openCompactControls(fields.description)
 
-        press(R.string.timer_pause_spoken)
+        press(SharedR.string.timer_pause_spoken)
         val paused = app.awaitControls<TimerControls.Paused>("the long press Pause")
         assertEquals("the server's frozen total", checkNotNull(web.timerState().pause).seconds, paused.seconds)
         assertEquals("Pause stopped the entry on the server", null, runBlocking { app.cache.running.first() })
 
-        press(R.string.timer_resume_spoken)
+        press(SharedR.string.timer_resume_spoken)
         val resumed = app.awaitControls<TimerControls.Running>("the long press Resume") { it.accumulatedSeconds == paused.seconds }
         assertNotEquals("Resume creates a new segment", first, resumed.entry.id)
         assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
         assertEquals(fields.description, resumed.entry.description)
 
-        press(R.string.timer_pause_spoken)
+        press(SharedR.string.timer_pause_spoken)
         app.awaitControls<TimerControls.Paused>("the second long press Pause")
         // A Stop drawn for the running clone acts on nothing once it is paused, so wait for the redraw.
-        awaitControl(R.string.timer_resume_spoken)
-        press(R.string.timer_stop_spoken)
+        awaitControl(SharedR.string.timer_resume_spoken)
+        press(SharedR.string.timer_stop_spoken)
         app.awaitControls<TimerControls.Idle>("the long press Stop while paused")
         assertEquals("Stop while paused ended the chain on the server", null, web.timerState().pause)
         assertEquals("nothing went through the queue", 0, unsentCount())
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         assertTrue("Stop closes the compact dialog", device.wait(Until.gone(By.pkg(context.packageName)
-            .desc(context.getString(R.string.timer_stop_spoken))), TIMEOUT_MS))
+            .desc(context.getString(SharedR.string.timer_stop_spoken))), TIMEOUT_MS))
     }
 
     @Test
@@ -331,11 +333,11 @@ class RunningTileServerTest {
         val press = openCompactControls(fields.description)
         val queued = unsentCount()
 
-        TimerActionToasts.await(TimerActionToasts.offline) { press(R.string.timer_pause_spoken) }
+        TimerActionToasts.await(TimerActionToasts.offline) { press(SharedR.string.timer_pause_spoken) }
         assertEquals("the timer runs on", id, (runBlocking { app.timerControls.first() } as TimerControls.Running).entry.id)
         assertEquals("Pause queues nothing", queued, unsentCount())
 
-        press(R.string.timer_stop_spoken)
+        press(SharedR.string.timer_stop_spoken)
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it == null } } }
         assertNotNull(runBlocking { app.cache.timeEntries.first() }.single { it.id == id }.stop)
         assertEquals("Stop of the running entry waits in the queue", queued + 1, unsentCount())
@@ -452,19 +454,19 @@ class RunningTileServerTest {
         assertEquals(Tile.STATE_ACTIVE, running.state)
         assertEquals("Looked at", running.label)
         assertEquals("Running · Hold for controls", running.subtitle)
-        assertEquals(R.drawable.ic_stop, running.icon)
+        assertEquals(UiR.drawable.ic_stop, running.icon)
         assertEquals("Timer running: Looked at. Tap to stop. Hold for controls.", running.contentDescription)
         assertEquals(Tile.STATE_INACTIVE, stopped.state)
         assertEquals("Continue last entry", stopped.label)
         assertEquals("Looked at", stopped.subtitle)
-        assertEquals(R.drawable.ic_play, stopped.icon)
+        assertEquals(UiR.drawable.ic_play, stopped.icon)
         assertEquals("No timer running. Tap to continue Looked at.", stopped.contentDescription)
         assertEquals(Tile.STATE_UNAVAILABLE, nothing.state)
         assertEquals("No entry to continue", nothing.subtitle)
         assertEquals(Tile.STATE_INACTIVE, paused.state)
         assertEquals("Looked at", paused.label)
         assertEquals("Paused · Hold for controls", paused.subtitle)
-        assertEquals(R.drawable.ic_play, paused.icon)
+        assertEquals(UiR.drawable.ic_play, paused.icon)
         assertEquals("Timer paused: Looked at. Tap to resume. Hold for controls.", paused.contentDescription)
         assertEquals(
             "No description",

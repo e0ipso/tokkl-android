@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.os.Build
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.api.PhaseKind
 
 /** A native countdown crosses zero into negative elapsed overtime without app ticks. */
@@ -61,8 +62,8 @@ internal class PomodoroSessionNotifier(private val context: Context) {
             .setOnlyAlertOnce(true)
             .setCategory(Notification.CATEGORY_STOPWATCH)
             .setContentIntent(open)
-            .addAction(action(R.drawable.ic_play, R.string.pomodoro_session_next, PomodoroSessionActionReceiver.NEXT, content, account))
-            .addAction(action(R.drawable.ic_stop, R.string.pomodoro_session_end, PomodoroSessionActionReceiver.END, content, account))
+            .addAction(action(UiR.drawable.ic_play, R.string.pomodoro_session_next, PomodoroSessionActionReceiver.NEXT, content, account))
+            .addAction(action(UiR.drawable.ic_stop, R.string.pomodoro_session_end, PomodoroSessionActionReceiver.END, content, account))
             .build()
     }
 

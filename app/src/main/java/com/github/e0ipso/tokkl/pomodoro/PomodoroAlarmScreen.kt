@@ -30,6 +30,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
 import com.github.e0ipso.tokkl.timernotice.timerNoticeText
 import com.github.e0ipso.tokkl.ui.ErrorBanner
@@ -69,7 +70,7 @@ internal fun PomodoroAlarmContent(
             }
             if (ring != null) {
                 Text(stringResource(alarmTransitionLabel(ring.sound)), style = MaterialTheme.typography.titleLarge)
-                Text(stringResource(R.string.pomodoro_number, ring.number, ring.longRestEvery))
+                Text(stringResource(SharedR.string.pomodoro_number, ring.number, ring.longRestEvery))
                 var now by remember(clock, ring.phase) { mutableStateOf(clock.instant()) }
                 LaunchedEffect(clock, ring.phase, lifecycle) {
                     lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -85,7 +86,7 @@ internal fun PomodoroAlarmContent(
                     if (reading.overtime) R.string.pomodoro_overtime_clock else R.string.pomodoro_remaining_clock,
                     duration,
                 )
-                Text(stringResource(if (reading.overtime) R.string.pomodoro_overtime else R.string.pomodoro_remaining))
+                Text(stringResource(if (reading.overtime) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining))
                 Text(duration, style = TokklTheme.clockTextStyle,
                     modifier = Modifier.fillMaxWidth().semantics { contentDescription = spoken })
             }

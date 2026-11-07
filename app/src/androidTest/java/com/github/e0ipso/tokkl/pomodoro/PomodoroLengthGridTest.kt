@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
@@ -67,16 +68,16 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         val running = mutableStateOf(true)
         show {
             SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = running.value) {
-                Text(context.getString(R.string.pomodoro_title))
+                Text(context.getString(SharedR.string.pomodoro_title))
             }
         }
-        val marker = bottomBarItem(R.string.pomodoro_title) and
+        val marker = bottomBarItem(SharedR.string.pomodoro_title) and
             SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.nav_pomodoro_running))
         compose.onNode(marker).assertIsDisplayed()
         assertVisibleTextFits()
         compose.runOnIdle { running.value = false }
         assertEquals(0, compose.onAllNodes(marker).fetchSemanticsNodes().size)
-        compose.onNode(bottomBarItem(R.string.pomodoro_title)).assertIsDisplayed()
+        compose.onNode(bottomBarItem(SharedR.string.pomodoro_title)).assertIsDisplayed()
         compose.checkAccessibility()
     }
 

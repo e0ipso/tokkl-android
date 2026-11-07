@@ -161,7 +161,7 @@ class TimerServerTest {
                 click()
             }
             started.await("Stop shows") { displayedAfterNextFrame(stopMatcher()) }
-            started.await("the running state shows in words") { displayedAfterNextFrame(hasText(string(R.string.timer_running))) }
+            started.await("the running state shows in words") { displayedAfterNextFrame(hasText(string(SharedR.string.timer_running))) }
             assertEquals("Start stays queued unsent", 1, runBlocking { app.changes.unsentCount.first() })
             assertTrue("the clock starts at zero: ${clockText()}", clockText().startsWith("0:00:0"))
             composeRule.waitUntil("Start reaches the hanging connection", NETWORK_TIMEOUT.toMillis()) { relay.hungConnections > 0 }
@@ -397,7 +397,7 @@ class TimerServerTest {
 
     private fun startMatcher(): SemanticsMatcher = hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()
 
-    private fun stopMatcher(): SemanticsMatcher = hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction()
+    private fun stopMatcher(): SemanticsMatcher = hasContentDescription(string(SharedR.string.timer_stop_spoken)) and hasClickAction()
 
     private fun startButton(): SemanticsNodeInteraction = composeRule.onNode(startMatcher())
 

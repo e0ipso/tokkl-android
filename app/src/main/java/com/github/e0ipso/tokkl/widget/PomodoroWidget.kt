@@ -112,7 +112,7 @@ private fun IdleStrip(context: Context, state: PomodoroWidgetState.Idle, width: 
                     description = defaultsDescription(context, state))
             }
         }
-        Icon(context.getString(R.string.pomodoro_start), R.drawable.ic_play, startPomodoroWidget(state), if (tiny) 36f else 48f)
+        Icon(context.getString(SharedR.string.pomodoro_start), UiR.drawable.ic_play, startPomodoroWidget(state), if (tiny) 36f else 48f)
     }
 }
 
@@ -138,7 +138,7 @@ private fun SessionStrip(context: Context, state: PomodoroWidgetState.Active, wi
 private fun ColumnScope.IdleCard(context: Context, state: PomodoroWidgetState.Idle, width: Float, height: Float, large: Boolean) {
     val scale = context.resources.configuration.fontScale
     Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Label(context.getString(R.string.pomodoro_title), 16f, modifier = GlanceModifier.defaultWeight())
+        Label(context.getString(SharedR.string.pomodoro_title), 16f, modifier = GlanceModifier.defaultWeight())
         Label(context.getString(R.string.pomodoro_widget_idle), 12f, muted = true)
     }
     Spacer(GlanceModifier.height(10.dp))
@@ -158,7 +158,7 @@ private fun ColumnScope.IdleCard(context: Context, state: PomodoroWidgetState.Id
         if (large) EntryChips(context, state.entry, width, scale)
     }
     Spacer(GlanceModifier.defaultWeight())
-    Actions(context.getString(R.string.pomodoro_start), startPomodoroWidget(state),
+    Actions(context.getString(SharedR.string.pomodoro_start), startPomodoroWidget(state),
         context.getString(R.string.pomodoro_widget_edit), context.getString(R.string.pomodoro_widget_edit_description), openPomodoro(context), width, scale)
 }
 
@@ -187,7 +187,7 @@ private fun ColumnScope.SessionCard(context: Context, state: PomodoroWidgetState
         Spacer(GlanceModifier.height(4.dp))
         Clock(context, state, width, if (large && scale > 1.5f) 28f else if (large) 52f else 40f, now, ticking)
         if (scale <= 1.5f) {
-            Label(if (state.ended) context.getString(R.string.pomodoro_overtime) else
+            Label(if (state.ended) context.getString(SharedR.string.pomodoro_overtime) else
                 context.getString(R.string.pomodoro_widget_left_of, formatDuration(Duration.between(state.start, state.end).seconds).removePrefix("0:")), 12f, muted = true)
         }
         Spacer(GlanceModifier.height(6.dp))
@@ -200,12 +200,12 @@ private fun ColumnScope.SessionCard(context: Context, state: PomodoroWidgetState
                 EntryChips(context, state.entry, width, scale)
             } else if (scale <= 1.5f) {
                 Spacer(GlanceModifier.height(8.dp))
-                Label(if (state.ended) context.getString(R.string.pomodoro_alarm_waiting) else entryLine(context, state.entry), 13f, muted = true)
+                Label(if (state.ended) context.getString(SharedR.string.pomodoro_alarm_waiting) else entryLine(context, state.entry), 13f, muted = true)
             }
         }
     }
     Actions(nextLabel(context, state), phasePomodoroWidget(state),
-        context.getString(if (large) R.string.pomodoro_end else R.string.pomodoro_widget_end), context.getString(R.string.pomodoro_end),
+        context.getString(if (large) SharedR.string.pomodoro_end else R.string.pomodoro_widget_end), context.getString(SharedR.string.pomodoro_end),
         phasePomodoroWidget(state, end = true), width, scale, state.ended)
 }
 
@@ -214,10 +214,10 @@ private fun Actions(primary: String, action: Action, secondary: String, secondar
     Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         // At 200%, keep the full action name for TalkBack and use an icon where the words cannot fit.
         if (scale > 1.5f) {
-            Icon(primary, if (primary == LocalContext.current.getString(R.string.pomodoro_start)) R.drawable.ic_play else R.drawable.ic_widget_next,
+            Icon(primary, if (primary == LocalContext.current.getString(SharedR.string.pomodoro_start)) UiR.drawable.ic_play else R.drawable.ic_widget_next,
                 action, 48f, if (ended) Running else PrimaryFill)
             Spacer(GlanceModifier.defaultWeight())
-            Icon(secondaryDescription, if (secondaryDescription == LocalContext.current.getString(R.string.pomodoro_end)) R.drawable.ic_close else R.drawable.ic_edit,
+            Icon(secondaryDescription, if (secondaryDescription == LocalContext.current.getString(SharedR.string.pomodoro_end)) UiR.drawable.ic_close else UiR.drawable.ic_edit,
                 secondaryAction, 48f, GlanceTheme.colors.surface, GlanceTheme.colors.onSurface)
         } else {
             Box(GlanceModifier.defaultWeight().height(48.dp).cornerRadius(12.dp).background(if (ended) Running else PrimaryFill)
@@ -326,7 +326,7 @@ private fun Clock(context: Context, state: PomodoroWidgetState.Active, width: Fl
         setColorInt(R.id.widget_chronometer, "setTextColor",
             (if (state.ended) TokklLightExtraColors.running else TokklLightColorScheme.onSurface).toArgb(),
             (if (state.ended) TokklDarkExtraColors.running else TokklDarkColorScheme.onSurface).toArgb())
-        setContentDescription(R.id.widget_chronometer, context.getString(if (state.ended) R.string.pomodoro_overtime else R.string.pomodoro_remaining))
+        setContentDescription(R.id.widget_chronometer, context.getString(if (state.ended) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining))
         if (!ticking) {
             val seconds = Duration.between(if (state.ended) state.end else now, if (state.ended) now else state.end).seconds.coerceAtLeast(0)
             setTextViewText(R.id.widget_chronometer, (if (state.ended) "+" else "") + formatDuration(seconds).removePrefix("0:"))
@@ -335,7 +335,7 @@ private fun Clock(context: Context, state: PomodoroWidgetState.Active, width: Fl
     paint.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, metrics)
     val clockHeight = (paint.fontMetrics.bottom - paint.fontMetrics.top) / metrics.density + 4f
     AndroidRemoteViews(views, modifier = GlanceModifier.fillMaxWidth().height(clockHeight.dp).semantics {
-        contentDescription = context.getString(if (state.ended) R.string.pomodoro_overtime else R.string.pomodoro_remaining)
+        contentDescription = context.getString(if (state.ended) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining)
     })
 }
 
@@ -348,17 +348,17 @@ private fun Label(text: String, size: Float, modifier: GlanceModifier = GlanceMo
 }
 
 private fun phaseLabel(context: Context, state: PomodoroWidgetState.Active) = context.getString(when (state.session.phase.kind) {
-    PhaseKind.WORK -> if (state.ended) R.string.pomodoro_widget_work_done else R.string.pomodoro_work
-    PhaseKind.SHORT_REST -> if (state.ended) R.string.pomodoro_widget_short_done else R.string.pomodoro_short_rest
-    PhaseKind.LONG_REST -> if (state.ended) R.string.pomodoro_widget_long_done else R.string.pomodoro_long_rest
+    PhaseKind.WORK -> if (state.ended) R.string.pomodoro_widget_work_done else SharedR.string.pomodoro_work
+    PhaseKind.SHORT_REST -> if (state.ended) R.string.pomodoro_widget_short_done else SharedR.string.pomodoro_short_rest
+    PhaseKind.LONG_REST -> if (state.ended) R.string.pomodoro_widget_long_done else SharedR.string.pomodoro_long_rest
 })
 
 private fun phaseColor(state: PomodoroWidgetState.Active) = if (state.ended) Running else if (state.session.phase.kind == PhaseKind.WORK) ColorProvider(TokklLightColorScheme.primary, TokklDarkColorScheme.primary) else RestText
-private fun number(context: Context, state: PomodoroWidgetState.Active) = context.getString(R.string.pomodoro_number, state.session.number, state.session.longRestEvery)
+private fun number(context: Context, state: PomodoroWidgetState.Active) = context.getString(SharedR.string.pomodoro_number, state.session.number, state.session.longRestEvery)
 private fun nextLabel(context: Context, state: PomodoroWidgetState.Active) = context.getString(when (state.session.upcomingPhase) {
-    PhaseKind.WORK -> R.string.pomodoro_start_work
-    PhaseKind.SHORT_REST -> R.string.pomodoro_start_short_rest
-    PhaseKind.LONG_REST -> R.string.pomodoro_start_long_rest
+    PhaseKind.WORK -> SharedR.string.pomodoro_start_work
+    PhaseKind.SHORT_REST -> SharedR.string.pomodoro_start_short_rest
+    PhaseKind.LONG_REST -> SharedR.string.pomodoro_start_long_rest
 })
 private fun defaultsLine(context: Context, state: PomodoroWidgetState.Idle) = state.defaults.run { context.getString(R.string.pomodoro_widget_defaults, workMinutes, shortRestMinutes, longRestMinutes, longRestEvery) }
 private fun defaultsDescription(context: Context, state: PomodoroWidgetState.Idle) = state.defaults.run { context.getString(R.string.pomodoro_widget_defaults_description, workMinutes, shortRestMinutes, longRestMinutes, longRestEvery) }

@@ -24,6 +24,7 @@ import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.PhaseKind
@@ -67,7 +68,7 @@ class PomodoroAlarmContentTest {
             val shown = compose.onNodeWithText(context.getString(label))
             shown.performScrollTo().assertIsDisplayed()
             readable(shown)
-            val number = compose.onNodeWithText(context.getString(R.string.pomodoro_number, 3, 4))
+            val number = compose.onNodeWithText(context.getString(SharedR.string.pomodoro_number, 3, 4))
             number.performScrollTo().assertIsDisplayed()
             readable(number)
             compose.onAllNodes(hasClickAction()).assertCountEquals(2)

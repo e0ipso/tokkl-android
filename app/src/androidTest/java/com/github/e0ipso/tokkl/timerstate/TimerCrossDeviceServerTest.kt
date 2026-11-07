@@ -28,6 +28,7 @@ import androidx.test.uiautomator.UiDevice
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -180,7 +181,7 @@ class TimerCrossDeviceServerTest {
             assertEquals(PhaseKind.WORK, session.phase.kind)
             assertEquals(1, session.number)
             assertEquals(2, session.longRestEvery)
-            assertCountsDownTo(notification, session, held, R.string.pomodoro_short_rest)
+            assertCountsDownTo(notification, session, held, SharedR.string.pomodoro_short_rest)
 
             // The server's one-minute work phase ends, and the phone rings from its planned end.
             val work = awaitRingAtItsEnd(session)
@@ -235,7 +236,7 @@ class TimerCrossDeviceServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.awaitTimerPage()
             compose.awaitPomodoroOffered(15_000)
-            compose.openBarPage(R.string.pomodoro_title)
+            compose.openBarPage(SharedR.string.pomodoro_title)
             var model: PomodoroViewModel? = null
             scenario.onActivity { model = sessionViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
@@ -244,7 +245,7 @@ class TimerCrossDeviceServerTest {
                 page.editLengths(PomodoroLengths(work = "1", shortRest = "2", longRest = "3", every = "3"))
                 page.editFields(fields, entryId = null)
             }
-            compose.onNode(hasText(context.getString(R.string.pomodoro_start)) and hasClickAction()).performScrollTo().performClick()
+            compose.onNode(hasText(context.getString(SharedR.string.pomodoro_start)) and hasClickAction()).performScrollTo().performClick()
             compose.waitUntil("the server started the session", 15_000) { page.state.value.pomodoro != null && !page.state.value.busy }
 
             val server = other.timerState()

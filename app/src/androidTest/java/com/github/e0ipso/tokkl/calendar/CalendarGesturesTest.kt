@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
@@ -285,7 +286,7 @@ class CalendarGesturesTest {
 
     private fun dayLabel(day: LocalDate): String {
         val words = DateWords(context.resources)
-        return context.getString(R.string.history_day, words.weekday(day), words.short(day))
+        return context.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
     }
 
     private fun addLabel(day: LocalDate): String = context.getString(R.string.calendar_add_entry, dayLabel(day))

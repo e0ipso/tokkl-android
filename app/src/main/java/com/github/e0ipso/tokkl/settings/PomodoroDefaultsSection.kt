@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.ui.StepperCard
 import com.github.e0ipso.tokkl.ui.StepperUnit
@@ -109,10 +110,10 @@ internal val PomodoroDefaultField.label: Int get() = when (this) {
 /** The short label on the field's stepper card, as the Pomodoro page's length cards have it. */
 @get:StringRes
 internal val PomodoroDefaultField.cardLabel: Int get() = when (this) {
-    PomodoroDefaultField.WORK -> R.string.pomodoro_card_work
-    PomodoroDefaultField.SHORT_REST -> R.string.pomodoro_card_short_rest
-    PomodoroDefaultField.LONG_REST -> R.string.pomodoro_card_long_rest
-    PomodoroDefaultField.EVERY -> R.string.pomodoro_card_long_rest_every
+    PomodoroDefaultField.WORK -> SharedR.string.pomodoro_card_work
+    PomodoroDefaultField.SHORT_REST -> SharedR.string.pomodoro_card_short_rest
+    PomodoroDefaultField.LONG_REST -> SharedR.string.pomodoro_card_long_rest
+    PomodoroDefaultField.EVERY -> SharedR.string.pomodoro_card_long_rest_every
 }
 
 internal val PomodoroDefaultField.unit: StepperUnit get() =

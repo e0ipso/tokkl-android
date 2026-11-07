@@ -21,10 +21,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.navhost.label
 import kotlin.math.abs
 import org.junit.Assert.assertTrue
@@ -50,7 +51,7 @@ class PageTopBarTest {
         composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
         assertTopBar(R.string.nav_timer, back = false)
 
-        for (page in listOf(R.string.pomodoro_title, R.string.nav_projects, R.string.settings)) {
+        for (page in listOf(SharedR.string.pomodoro_title, R.string.nav_projects, R.string.settings)) {
             composeRule.onNode(barItem(page)).performClick()
             assertTopBar(page, back = false)
         }

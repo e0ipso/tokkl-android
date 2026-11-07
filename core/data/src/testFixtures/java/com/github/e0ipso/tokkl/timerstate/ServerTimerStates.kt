@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl
+package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
@@ -9,9 +9,6 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.TimerControls
-import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import java.time.Duration
 import java.time.Instant
 
@@ -20,7 +17,7 @@ import java.time.Instant
  * app builds from them with the cache's running entry, as [serverTimerControls] does for every
  * surface.
  */
-internal object ServerTimerStates {
+object ServerTimerStates {
 
     /** The account name the controls carry in these checks. */
     const val ACCOUNT = "the signed-in account"

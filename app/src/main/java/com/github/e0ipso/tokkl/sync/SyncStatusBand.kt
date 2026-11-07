@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -110,7 +111,7 @@ private fun lastAnsweredText(resources: Resources, label: LastAnsweredLabel): St
         1L -> resources.getString(R.string.sync_last_answered_yesterday, label.time)
         else -> {
             val words = DateWords(resources)
-            val day = resources.getString(R.string.history_day, words.weekday(label.day), words.shortWithYear(label.day))
+            val day = resources.getString(SharedR.string.history_day, words.weekday(label.day), words.shortWithYear(label.day))
             resources.getString(R.string.sync_last_answered_day, day, label.time)
         }
     }

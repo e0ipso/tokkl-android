@@ -26,6 +26,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -122,7 +124,7 @@ private fun HeldChange(
         FlowRow {
             if (change.kind != ChangeKind.DELETE) {
                 TokklIconButton(
-                    icon = R.drawable.ic_edit,
+                    icon = UiR.drawable.ic_edit,
                     description = stringResource(R.string.needs_attention_edit_named, change.description.ifBlank { stringResource(R.string.needs_attention_no_description) }),
                     onClick = onEdit,
                 )
@@ -146,7 +148,7 @@ private fun spanText(resources: Resources, change: PendingChange, settings: Acco
     val time = settings?.time() ?: return null
     val start = time.local(change.start).toLocalDate()
     val words = DateWords(resources)
-    val day = resources.getString(R.string.history_day, words.weekday(start), words.shortWithYear(start))
+    val day = resources.getString(SharedR.string.history_day, words.weekday(start), words.shortWithYear(start))
     val from = settings.formatTime(change.start, time.zone)
     val stop = change.stop ?: return resources.getString(R.string.needs_attention_running, day, from)
     return resources.getString(R.string.needs_attention_span, day, from, settings.formatTime(stop, time.zone))

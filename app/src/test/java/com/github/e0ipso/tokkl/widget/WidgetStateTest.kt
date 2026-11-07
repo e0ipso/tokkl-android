@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.ServerTimerStates
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask

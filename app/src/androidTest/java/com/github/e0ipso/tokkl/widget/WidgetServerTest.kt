@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
@@ -317,7 +318,7 @@ class WidgetServerTest {
 
             compose.onNodeWithContentDescription(context.getString(R.string.timer_start_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)
-            compose.onNodeWithContentDescription(context.getString(R.string.timer_stop_spoken)).performClick()
+            compose.onNodeWithContentDescription(context.getString(SharedR.string.timer_stop_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
         }
         val fields = EntryFields("Tile to widget")

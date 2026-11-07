@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.ServerTimerStates
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry

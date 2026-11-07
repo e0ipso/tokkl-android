@@ -612,7 +612,7 @@ class CalendarServerTest {
     /** The + of [day]'s All day cell, named by the day as TalkBack reads it. */
     private fun allDayPlus(day: LocalDate): SemanticsMatcher {
         val words = DateWords(context.resources)
-        val label = context.getString(R.string.history_day, words.weekday(day), words.short(day))
+        val label = context.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
         return hasContentDescription(context.getString(R.string.calendar_add_all_day_on, label)) and hasClickAction()
     }
 
@@ -681,7 +681,7 @@ class CalendarServerTest {
     /** The day of the week's strip that TalkBack reads as [day] with [minutes] in total, once the week has loaded. */
     private fun stripDay(day: LocalDate, minutes: Long): SemanticsMatcher {
         val words = DateWords(context.resources)
-        val label = context.getString(R.string.history_day, words.weekday(day), words.short(day))
+        val label = context.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
         val spoken = context.getString(R.string.history_day_spoken, label, spokenDuration(context.resources, minutes * 60))
         return hasContentDescription(spoken) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
     }

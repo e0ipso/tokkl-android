@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.notification
 
-import com.github.e0ipso.tokkl.ServerTimerStates
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry

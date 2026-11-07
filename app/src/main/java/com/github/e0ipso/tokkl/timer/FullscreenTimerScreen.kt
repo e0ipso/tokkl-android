@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -100,7 +101,7 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                 Text(stringResource(R.string.timer_exit_fullscreen))
             }
             if (token != null && (running != null || paused != null)) {
-                Text(stringResource(if (paused != null) R.string.timer_paused else R.string.timer_running), style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(if (paused != null) SharedR.string.timer_paused else SharedR.string.timer_running), style = MaterialTheme.typography.titleLarge)
                 val spoken = stringResource(if (paused != null) R.string.timer_paused_elapsed_spoken else R.string.timer_elapsed_spoken, spokenDuration(LocalResources.current, seconds))
                 Text(
                     formatDuration(seconds), style = TokklTheme.clockTextStyle.copy(fontSize = 56.sp, lineHeight = 64.sp),
@@ -114,31 +115,31 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                 if (fields.tags.isNotEmpty()) Text(fields.tags.joinToString(", "), style = MaterialTheme.typography.bodyLarge)
                 if (fields.billable) Text(stringResource(SharedR.string.entry_billable), style = MaterialTheme.typography.bodyLarge)
                 if (running?.unsent == true) Text(stringResource(R.string.history_unsent), style = MaterialTheme.typography.labelLarge)
-                val stopAction = stringResource(R.string.timer_stop_spoken)
+                val stopAction = stringResource(SharedR.string.timer_stop_spoken)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
                     verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
                 ) {
                     if (paused != null) {
-                        val resumeAction = stringResource(R.string.timer_resume_spoken)
+                        val resumeAction = stringResource(SharedR.string.timer_resume_spoken)
                         TokklButton(modifier = Modifier.semantics { contentDescription = resumeAction }, onClick = {
                             actions.onResume(token)
                             focus.clearFocus()
-                        }) { Text(stringResource(R.string.timer_resume)) }
+                        }) { Text(stringResource(SharedR.string.timer_resume)) }
                     } else if (running?.pausable == true) {
-                        val pauseAction = stringResource(R.string.timer_pause_spoken)
+                        val pauseAction = stringResource(SharedR.string.timer_pause_spoken)
                         TokklButton(modifier = Modifier.semantics { contentDescription = pauseAction }, onClick = {
                             actions.onPause(token)
                             focus.clearFocus()
-                        }) { Text(stringResource(R.string.timer_pause)) }
+                        }) { Text(stringResource(SharedR.string.timer_pause)) }
                     }
                     TokklDangerButton(modifier = Modifier.semantics { contentDescription = stopAction }, onClick = {
                         actions.onStop(token)
                         focus.clearFocus()
-                    }) { Text(stringResource(R.string.timer_stop)) }
+                    }) { Text(stringResource(SharedR.string.timer_stop)) }
                     if (running != null) {
                         TokklIconButton(
-                            icon = R.drawable.ic_edit,
+                            icon = UiR.drawable.ic_edit,
                             description = stringResource(R.string.timer_focused_edit),
                             onClick = {
                                 if (actions.isShown(token)) {

@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.tile
 
 import android.service.quicksettings.TileService
 import com.github.e0ipso.tokkl.MergedManifest
-import com.github.e0ipso.tokkl.ServerTimerStates
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.androidAttribute
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges

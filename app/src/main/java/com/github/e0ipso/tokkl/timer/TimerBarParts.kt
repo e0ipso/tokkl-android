@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
@@ -45,7 +46,7 @@ internal fun RunningLabel(unsent: Boolean) {
     val colour = TokklTheme.extraColors.running
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2)) {
         Canvas(Modifier.size(TokklTheme.spacing.space2)) { drawCircle(colour) }
-        Text(stringResource(R.string.timer_running), style = MaterialTheme.typography.labelLarge, color = colour)
+        Text(stringResource(SharedR.string.timer_running), style = MaterialTheme.typography.labelLarge, color = colour)
         if (unsent) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
                 UnsentIcon(TokklTheme.smallCapsLabelTextStyle)
@@ -89,7 +90,7 @@ internal fun IdleClock() {
 /** "Paused" in the muted colour, as the web app says it beside the frozen clock. */
 @Composable
 internal fun PausedLabel() {
-    Text(stringResource(R.string.timer_paused), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(SharedR.string.timer_paused), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 /** The paused total, which stands still, and which TalkBack reads as "1 hour elapsed, paused". */

@@ -69,3 +69,4 @@ room = { id = "androidx.room", version.ref = "room" }
 tokkl-android-application = { id = "tokkl.android.application" }
 tokkl-android-library = { id = "tokkl.android.library" }
 tokkl-android-library-compose = { id = "tokkl.android.library.compose" }
+tokkl-android-feature = { id = "tokkl.android.feature" }

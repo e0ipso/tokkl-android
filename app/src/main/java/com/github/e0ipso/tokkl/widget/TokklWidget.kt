@@ -26,6 +26,7 @@ import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.unit.ColorProvider
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
@@ -140,10 +141,10 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
         }
         Spacer(GlanceModifier.width(8.dp))
         if (state.running?.pausable == true) {
-            Control(context.getString(R.string.widget_pause_description), R.drawable.ic_pause, pauseTimer(state.running.target), 48f, GlanceTheme.colors.surfaceVariant, GlanceTheme.colors.onSurface)
+            Control(context.getString(R.string.widget_pause_description), UiR.drawable.ic_pause, pauseTimer(state.running.target), 48f, GlanceTheme.colors.surfaceVariant, GlanceTheme.colors.onSurface)
             Spacer(GlanceModifier.width(8.dp))
         } else if (state.paused != null) {
-            Control(context.getString(R.string.widget_stop_description), R.drawable.ic_stop, stopTimer(state.paused.target), 48f, GlanceTheme.colors.surfaceVariant, GlanceTheme.colors.onSurface)
+            Control(context.getString(R.string.widget_stop_description), UiR.drawable.ic_stop, stopTimer(state.paused.target), 48f, GlanceTheme.colors.surfaceVariant, GlanceTheme.colors.onSurface)
             Spacer(GlanceModifier.width(8.dp))
         }
         PrimaryControl(context, state, 48f)

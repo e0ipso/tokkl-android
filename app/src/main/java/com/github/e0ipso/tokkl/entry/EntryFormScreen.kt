@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
@@ -284,7 +285,7 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
         ) {
             if (state.editing && !state.running) {
                 TokklIconButton(
-                    icon = R.drawable.ic_nav_trash,
+                    icon = UiR.drawable.ic_nav_trash,
                     description = stringResource(R.string.history_delete),
                     onClick = actions.onDelete,
                     enabled = !state.saving,

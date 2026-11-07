@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The timer's Pause, Resume and Stop and its running and paused states, as the Timer page and the
+    Quick Settings tile show them.
+-->
+<resources>
+    <!-- The timer's buttons, and what TalkBack reads for them. -->
+    <string name="timer_pause">Pause</string>
+    <string name="timer_pause_spoken">Pause timer</string>
+    <string name="timer_resume">Resume</string>
+    <string name="timer_resume_spoken">Resume timer</string>
+    <!-- The state while paused, said in words beside the frozen clock. -->
+    <string name="timer_paused">Paused</string>
+    <string name="timer_stop">Stop</string>
+    <string name="timer_stop_spoken">Stop timer</string>
+    <!-- Beside the clock while a timer runs, so colour is not the only sign. -->
+    <string name="timer_running">Running</string>
+</resources>

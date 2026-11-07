@@ -22,5 +22,9 @@ gradlePlugin {
             id = "tokkl.android.library.compose"
             implementationClass = "AndroidLibraryComposeConventionPlugin"
         }
+        register("androidFeature") {
+            id = "tokkl.android.feature"
+            implementationClass = "AndroidFeatureConventionPlugin"
+        }
     }
 }

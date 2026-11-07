@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
@@ -89,7 +90,7 @@ internal fun RangeControl(
 
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()) {
         IconButton(onClick = { onShift(-1) }, enabled = enabled) {
-            Icon(painterResource(R.drawable.ic_chevron_left), contentDescription = stringResource(R.string.reports_previous_period))
+            Icon(painterResource(UiR.drawable.ic_chevron_left), contentDescription = stringResource(R.string.reports_previous_period))
         }
         OutlinedButton(
             onClick = { presetsOpen = true },
@@ -117,7 +118,7 @@ internal fun RangeControl(
             }
         }
         IconButton(onClick = { onShift(1) }, enabled = enabled) {
-            Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = stringResource(R.string.reports_next_period))
+            Icon(painterResource(UiR.drawable.ic_chevron_right), contentDescription = stringResource(R.string.reports_next_period))
         }
     }
 
@@ -201,7 +202,7 @@ private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (
                     modifier = Modifier.padding(horizontal = TokklTheme.spacing.space1),
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.reports_cancel))
+                        Icon(painterResource(UiR.drawable.ic_close), contentDescription = stringResource(R.string.reports_cancel))
                     }
                     Text(
                         text = stringResource(R.string.reports_custom_range_title),

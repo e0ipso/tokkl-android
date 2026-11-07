@@ -23,6 +23,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -228,12 +229,12 @@ class BottomBarTest {
         val account = signInToNewAccount()
         launch { scenario ->
             composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
-            val marker = barItemMatcher(R.string.pomodoro_title) and
+            val marker = barItemMatcher(SharedR.string.pomodoro_title) and
                 SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.nav_pomodoro_running))
             assertEquals(0, composeRule.onAllNodes(marker).fetchSemanticsNodes().size)
-            barItem(R.string.pomodoro_title).performClick()
-            heading(R.string.pomodoro_title).assertIsDisplayed()
-            barItem(R.string.pomodoro_title).assertIsSelected()
+            barItem(SharedR.string.pomodoro_title).performClick()
+            heading(SharedR.string.pomodoro_title).assertIsDisplayed()
+            barItem(SharedR.string.pomodoro_title).assertIsSelected()
             // Another device starts the session; the phone's own action answers go to the same holder.
             assertEquals(TimerActionResult.Done, runBlocking {
                 app.timerActions.startSession(account.workspaceId, EntryFields(description = "Navigation session"), SessionLengths(25, 5, 15, 4))
@@ -254,7 +255,7 @@ class BottomBarTest {
             composeRule.waitUntil("Pomodoro drops its running state", TIMEOUT_MS) {
                 composeRule.onAllNodes(marker).fetchSemanticsNodes().isEmpty()
             }
-            barItem(R.string.pomodoro_title).assertIsDisplayed().assertIsNotSelected()
+            barItem(SharedR.string.pomodoro_title).assertIsDisplayed().assertIsNotSelected()
         }
     }
 

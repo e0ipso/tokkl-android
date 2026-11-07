@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.widget
 import android.os.SystemClock
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -15,6 +16,7 @@ import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.signin.SessionWriter
@@ -38,9 +40,9 @@ class PomodoroWidgetServerTest {
     private val app get() = fixture.app
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private lateinit var host: NativeWidget
-    private val startLabel get() = context.getString(R.string.pomodoro_start)
-    private val endLabel get() = context.getString(R.string.pomodoro_end)
-    private val nextLabel get() = context.getString(R.string.pomodoro_start_short_rest)
+    private val startLabel get() = context.getString(SharedR.string.pomodoro_start)
+    private val endLabel get() = context.getString(SharedR.string.pomodoro_end)
+    private val nextLabel get() = context.getString(SharedR.string.pomodoro_start_short_rest)
 
     @Before fun prepare() {
         fixture.prepare()
@@ -68,8 +70,8 @@ class PomodoroWidgetServerTest {
         fixture.refresh()
         val remote = remoteStart(project, task)
         host.awaitText("Remote widget focus", 1_000)
-        host.awaitText(context.getString(R.string.pomodoro_number, 1, 4))
-        host.awaitDescription(context.getString(R.string.pomodoro_remaining))
+        host.awaitText(context.getString(SharedR.string.pomodoro_number, 1, 4))
+        host.awaitDescription(context.getString(SharedR.string.pomodoro_remaining))
         val active = active()
         val end = remote.pomodoro!!.phase.plannedEnd.minus(app.timerState.state.value!!.clockOffset)
         assertEquals(end, active.end)
@@ -93,7 +95,7 @@ class PomodoroWidgetServerTest {
         assertEquals(project, entry.projectId); assertEquals(task, entry.taskId)
         assertEquals(listOf("focus"), entry.tags); assertEquals(true, entry.billable)
         host.click(nextLabel)
-        host.awaitText(context.getString(R.string.pomodoro_short_rest), 1_000)
+        host.awaitText(context.getString(SharedR.string.pomodoro_short_rest), 1_000)
         assertEquals(PhaseKind.SHORT_REST, api.timerState().pomodoro!!.phase.kind)
         host.click(endLabel)
         host.awaitDescription(startLabel, 1_000)
@@ -189,17 +191,17 @@ class PomodoroWidgetServerTest {
 
     @Test fun liveDeadlineRedrawsOvertimeWithinASecondWithoutAnAlarmOrRing() {
         val real = remoteStart()
-        host.awaitDescription(context.getString(R.string.pomodoro_remaining))
+        host.awaitDescription(context.getString(SharedR.string.pomodoro_remaining))
         // Use the real server phase with a changed server clock offset, rather than waiting 25 minutes.
         // A far higher revision prevents the real SSE state replacing this controlled boundary.
         val held = HeldPhases.hold(real.copy(revision = real.revision + 1_000_000, serverTime = real.pomodoro!!.phase.plannedEnd.minusSeconds(5)))
         val boundary = active().end
-        host.awaitDescription(context.getString(R.string.pomodoro_remaining))
+        host.awaitDescription(context.getString(SharedR.string.pomodoro_remaining))
         runBlocking { app.pomodoroAlarm.follow() }
         app.pomodoroAlarms.cancel()
         val before = host.updates.get()
         val untilBoundary = Duration.between(Instant.now(), boundary).toMillis().coerceAtLeast(0)
-        host.awaitDescription(context.getString(R.string.pomodoro_overtime), untilBoundary + 1_000)
+        host.awaitDescription(context.getString(SharedR.string.pomodoro_overtime), untilBoundary + 1_000)
         assertFalse("redraw is not early", Instant.now().isBefore(boundary))
         assertTrue(host.updates.get() > before)
         assertFalse(app.pomodoroRinging.state.value.serviceRunning)

@@ -47,6 +47,8 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.ServerCertificate
@@ -64,8 +66,6 @@ import com.github.e0ipso.tokkl.calendar.WeekSource
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsContent
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.history.HistoryDay
@@ -341,7 +341,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun pomodoroIdleActions() = showPomodoro(IDLE_POMODORO) {
-        composeRule.onNode(hasText(string(R.string.pomodoro_start)) and hasClickAction())
+        composeRule.onNode(hasText(string(SharedR.string.pomodoro_start)) and hasClickAction())
             .performScrollTo().assertIsDisplayed().assertIsEnabled()
         assertScreen("pomodoro-idle-actions")
     }
@@ -360,9 +360,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun pomodoroOvertimeActions() = showPomodoro(RUNNING_POMODORO) {
-        composeRule.onNode(hasText(string(R.string.pomodoro_end)) and hasClickAction())
+        composeRule.onNode(hasText(string(SharedR.string.pomodoro_end)) and hasClickAction())
             .performScrollTo().assertIsDisplayed().assertIsEnabled()
-        composeRule.onNode(hasText(string(R.string.pomodoro_start_short_rest)) and hasClickAction())
+        composeRule.onNode(hasText(string(SharedR.string.pomodoro_start_short_rest)) and hasClickAction())
             .assertIsDisplayed().assertIsEnabled()
         assertScreen("pomodoro-overtime-actions")
     }
@@ -563,7 +563,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
     /** Waits for the first stepper card, since the cards show a short label no other text repeats. */
     private fun awaitLengthCards() {
-        val work = string(R.string.pomodoro_card_work)
+        val work = string(SharedR.string.pomodoro_card_work)
         composeRule.waitUntil("the $work stepper card shows", TIMEOUT_MS) {
             composeRule.onAllNodes(lengthCardMatcher(work)).fetchSemanticsNodes().isNotEmpty()
         }
@@ -583,7 +583,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             if (window == null) page() else DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(window)) { page() }
         }) {
-            composeRule.awaitText(string(R.string.pomodoro_title))
+            composeRule.awaitText(string(SharedR.string.pomodoro_title))
             steps()
         }
     }

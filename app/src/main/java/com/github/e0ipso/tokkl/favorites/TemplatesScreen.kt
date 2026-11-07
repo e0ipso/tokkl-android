@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
@@ -187,9 +188,9 @@ private fun TemplateRow(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
             RowButton(R.drawable.ic_chevron_up, stringResource(R.string.favorites_move_up, name), canMoveUp, onMoveUp)
             RowButton(R.drawable.ic_chevron_down, stringResource(R.string.favorites_move_down, name), canMoveDown, onMoveDown)
-            RowButton(R.drawable.ic_edit, stringResource(R.string.favorites_edit_spoken, name), canChange, onEdit)
+            RowButton(UiR.drawable.ic_edit, stringResource(R.string.favorites_edit_spoken, name), canChange, onEdit)
             TokklIconButton(
-                icon = R.drawable.ic_nav_trash,
+                icon = UiR.drawable.ic_nav_trash,
                 description = stringResource(R.string.favorites_delete, name),
                 onClick = onDelete,
                 enabled = canChange,

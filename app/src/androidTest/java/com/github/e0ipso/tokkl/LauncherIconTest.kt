@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -28,7 +29,7 @@ class LauncherIconTest {
         assertTrue("the icon is a ${icon.javaClass.name}", icon is AdaptiveIconDrawable)
         icon as AdaptiveIconDrawable
         // The app's own layers, not a platform wrapper around a legacy icon.
-        assertEquals(context.getColor(R.color.ic_launcher_background), (icon.background as? ColorDrawable)?.color)
+        assertEquals(context.getColor(UiR.color.ic_launcher_background), (icon.background as? ColorDrawable)?.color)
         val artwork = (context.getDrawable(R.mipmap.ic_launcher_foreground) as BitmapDrawable).bitmap
         val foreground = (icon.foreground as? BitmapDrawable)?.bitmap
         assertTrue("the foreground is not Tokkl's artwork", foreground?.sameAs(artwork) == true)

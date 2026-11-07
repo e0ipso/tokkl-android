@@ -118,8 +118,6 @@
         <item quantity="other">%d selected</item>
     </plurals>
 
-    <!-- 13 Oct to 19 Oct -->
-    <string name="reports_range">%1$s to %2$s</string>
     <string name="reports_bucket_week">Week of %1$s</string>
     <!-- Oct 2026: a month's short name and the year. -->
     <string name="reports_bucket_month">%1$s %2$d</string>

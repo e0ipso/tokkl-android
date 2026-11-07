@@ -169,7 +169,7 @@ class DescriptionSuggestionsServerTest {
             )
 
             composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()).performClick()
-            awaitShown("Stop") { composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction()) }
+            awaitShown("Stop") { composeRule.onNode(hasContentDescription(string(SharedR.string.timer_stop_spoken)) and hasClickAction()) }
             AirplaneMode.set(false, web)
             drainUntilEmpty()
         }

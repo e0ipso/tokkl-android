@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -192,7 +193,7 @@ private fun dayLabel(date: LocalDate, today: LocalDate, resources: Resources, wo
     today -> resources.getString(R.string.history_today)
     today.minusDays(1) -> resources.getString(R.string.history_yesterday)
     else -> resources.getString(
-        R.string.history_day,
+        SharedR.string.history_day,
         words.weekday(date),
         if (date.year == today.year) words.short(date) else words.shortWithYear(date),
     )

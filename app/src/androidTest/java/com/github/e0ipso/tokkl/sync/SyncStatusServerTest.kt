@@ -257,7 +257,7 @@ class SyncStatusServerTest {
 
     private fun startButton(): SemanticsMatcher = hasContentDescription(context.getString(R.string.timer_start_spoken)) and hasClickAction()
 
-    private fun stopButton(): SemanticsMatcher = hasContentDescription(context.getString(R.string.timer_stop_spoken)) and hasClickAction()
+    private fun stopButton(): SemanticsMatcher = hasContentDescription(context.getString(SharedR.string.timer_stop_spoken)) and hasClickAction()
 
     private fun shows(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
 

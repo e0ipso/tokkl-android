@@ -9,6 +9,8 @@ import android.content.Intent
 import android.graphics.drawable.Icon
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 
@@ -47,7 +49,7 @@ internal class PomodoroRingingNotifier(private val context: Context) {
         val builder = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(DataR.drawable.ic_nav_timer)
             .setContentTitle(context.getString(R.string.pomodoro_alarm_title))
-            .setContentText(context.getString(R.string.pomodoro_alarm_waiting))
+            .setContentText(context.getString(SharedR.string.pomodoro_alarm_waiting))
             .setCategory(Notification.CATEGORY_ALARM)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -61,14 +63,14 @@ internal class PomodoroRingingNotifier(private val context: Context) {
         if (ring != null) {
             builder
                 .setContentText(context.getString(alarmTransitionLabel(ring.sound)))
-                .setSubText(context.getString(R.string.pomodoro_number, ring.number, ring.longRestEvery))
+                .setSubText(context.getString(SharedR.string.pomodoro_number, ring.number, ring.longRestEvery))
                 // The native clock counts the overtime up from the planned end, with no app ticks.
                 .setWhen(ring.end.toEpochMilli())
                 .setShowWhen(true)
                 .setUsesChronometer(true)
                 .setDeleteIntent(actionIntent(PomodoroRingingActionReceiver.REPOST, ring))
-                .addAction(action(R.drawable.ic_play, R.string.pomodoro_alarm_next, PomodoroRingingActionReceiver.NEXT, ring))
-                .addAction(action(R.drawable.ic_stop, R.string.pomodoro_alarm_end, PomodoroRingingActionReceiver.END, ring))
+                .addAction(action(UiR.drawable.ic_play, R.string.pomodoro_alarm_next, PomodoroRingingActionReceiver.NEXT, ring))
+                .addAction(action(UiR.drawable.ic_stop, R.string.pomodoro_alarm_end, PomodoroRingingActionReceiver.END, ring))
         }
         return builder.build()
     }

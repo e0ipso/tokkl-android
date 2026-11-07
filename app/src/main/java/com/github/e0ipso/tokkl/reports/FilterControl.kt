@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.jsTrim
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
@@ -148,7 +149,7 @@ private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply:
                     modifier = Modifier.padding(horizontal = TokklTheme.spacing.space1),
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.reports_cancel))
+                        Icon(painterResource(UiR.drawable.ic_close), contentDescription = stringResource(R.string.reports_cancel))
                     }
                     Text(
                         text = stringResource(R.string.reports_filters),

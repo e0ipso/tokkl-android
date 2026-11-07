@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.spokenDuration
@@ -132,7 +133,7 @@ private fun StripDay(
     val locale = LocalConfiguration.current.locales[0]
     val words = remember(resources) { DateWords(resources) }
     val scheme = MaterialTheme.colorScheme
-    val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(R.string.history_day, words.weekday(day), words.short(day))
+    val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
     val spoken = totalSeconds?.let { stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it)) } ?: label
     val frame = if (selected) {
         Modifier

@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.pomodoro.*
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey

@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.tile
 
-import com.github.e0ipso.tokkl.ServerTimerStates
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields

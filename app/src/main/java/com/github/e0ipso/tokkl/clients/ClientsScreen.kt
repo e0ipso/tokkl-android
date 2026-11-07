@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -229,7 +230,7 @@ private fun ClientListRow(row: ClientRow, canChange: Boolean, actions: ClientsAc
         }
         val label = stringResource(if (client.archived) R.string.clients_restore_named else R.string.clients_archive_named, client.name)
         TokklIconButton(
-            icon = if (client.archived) R.drawable.ic_restore else R.drawable.ic_archive,
+            icon = if (client.archived) UiR.drawable.ic_restore else UiR.drawable.ic_archive,
             description = label,
             onClick = { if (client.archived) actions.onRestore(client) else actions.onAskToArchive(client) },
             enabled = enabled,

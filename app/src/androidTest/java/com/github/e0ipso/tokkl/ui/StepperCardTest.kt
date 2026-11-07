@@ -47,7 +47,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults

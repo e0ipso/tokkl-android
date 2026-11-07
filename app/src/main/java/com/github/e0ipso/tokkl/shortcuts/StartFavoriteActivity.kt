@@ -10,6 +10,7 @@ import android.os.Looper
 import android.view.WindowManager
 import android.widget.Toast
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
@@ -101,6 +102,6 @@ class StartFavoriteActivity : Activity() {
 /** The fixed words in a favorite's label, in the app's language now. */
 internal fun favoriteNames(context: Context): FavoriteNames =
     FavoriteNames(
-        untitled = context.getString(R.string.favorites_untitled),
-        withProject = { name, project -> context.getString(R.string.favorites_with_project, name, project) },
+        untitled = context.getString(SharedR.string.favorites_untitled),
+        withProject = { name, project -> context.getString(SharedR.string.favorites_with_project, name, project) },
     )

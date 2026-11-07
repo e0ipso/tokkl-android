@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Pause and Resume on every timer surface (docs/PRD.md T1), worded as the web app's timer. -->
 <resources>
-    <!-- The timer's buttons, and what TalkBack reads for them. -->
-    <string name="timer_pause">Pause</string>
-    <string name="timer_pause_spoken">Pause timer</string>
-    <string name="timer_resume">Resume</string>
-    <string name="timer_resume_spoken">Resume timer</string>
-    <!-- The state while paused, said in words beside the frozen clock. -->
-    <string name="timer_paused">Paused</string>
     <!-- What TalkBack reads for the frozen clock: 1 hour, 5 minutes elapsed, paused -->
     <string name="timer_paused_elapsed_spoken">%1$s elapsed, paused</string>
     <!--

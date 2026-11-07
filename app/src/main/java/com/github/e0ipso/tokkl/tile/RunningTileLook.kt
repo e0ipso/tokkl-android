@@ -4,6 +4,7 @@ import android.content.Context
 import android.service.quicksettings.Tile
 import androidx.annotation.DrawableRes
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * How the Quick Settings tile draws [RunningTileContent]: its [state] (a `Tile.STATE_*`), the
@@ -28,7 +29,7 @@ fun runningTileLook(content: RunningTileContent, context: Context): RunningTileL
                 state = Tile.STATE_ACTIVE,
                 label = description,
                 subtitle = context.getString(R.string.tile_running_subtitle),
-                icon = R.drawable.ic_stop,
+                icon = UiR.drawable.ic_stop,
                 contentDescription = context.getString(R.string.tile_running_description, description),
             )
         }
@@ -38,7 +39,7 @@ fun runningTileLook(content: RunningTileContent, context: Context): RunningTileL
                 state = Tile.STATE_INACTIVE,
                 label = description,
                 subtitle = context.getString(R.string.tile_paused_subtitle),
-                icon = R.drawable.ic_play,
+                icon = UiR.drawable.ic_play,
                 contentDescription = context.getString(R.string.tile_paused_description, description),
             )
         }
@@ -48,7 +49,7 @@ fun runningTileLook(content: RunningTileContent, context: Context): RunningTileL
                 state = Tile.STATE_INACTIVE,
                 label = context.getString(R.string.tile_continue),
                 subtitle = description,
-                icon = R.drawable.ic_play,
+                icon = UiR.drawable.ic_play,
                 contentDescription = context.getString(R.string.tile_continue_description, description),
             )
         }
@@ -56,7 +57,7 @@ fun runningTileLook(content: RunningTileContent, context: Context): RunningTileL
             state = Tile.STATE_UNAVAILABLE,
             label = context.getString(R.string.tile_name),
             subtitle = context.getString(R.string.tile_nothing_subtitle),
-            icon = R.drawable.ic_play,
+            icon = UiR.drawable.ic_play,
             contentDescription = context.getString(R.string.tile_nothing_description),
         )
     }

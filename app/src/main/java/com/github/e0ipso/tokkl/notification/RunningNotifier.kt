@@ -14,6 +14,7 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.toArgb
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
@@ -64,8 +65,8 @@ class RunningNotifier(context: Context) {
                 .setContentText(pausedText(content))
                 .setShowWhen(false)
                 .setOngoing(false)
-                .addAction(action(R.drawable.ic_play, R.string.notification_resume, StopTimerReceiver.ACTION_RESUME, content))
-                .addAction(action(R.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content))
+                .addAction(action(UiR.drawable.ic_play, R.string.notification_resume, StopTimerReceiver.ACTION_RESUME, content))
+                .addAction(action(UiR.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content))
                 .build()
         }
         builder
@@ -75,8 +76,8 @@ class RunningNotifier(context: Context) {
             .setUsesChronometer(true)
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_STOPWATCH)
-        if (content.pausable) builder.addAction(action(R.drawable.ic_pause, R.string.notification_pause, StopTimerReceiver.ACTION_PAUSE, content))
-        builder.addAction(action(R.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content))
+        if (content.pausable) builder.addAction(action(UiR.drawable.ic_pause, R.string.notification_pause, StopTimerReceiver.ACTION_PAUSE, content))
+        builder.addAction(action(UiR.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content))
         // Standard style, ongoing, a title and a non-minimal channel meet the promotion rules.
         // Keep the same notification when the user or the device declines promotion.
         // https://developer.android.com/develop/ui/views/notifications/live-update

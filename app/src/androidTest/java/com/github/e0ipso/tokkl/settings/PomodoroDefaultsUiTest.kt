@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
@@ -112,8 +113,8 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
     fun savingOneDefaultKeepsARefreshOfTheOtherDefaults() {
         show(shared = true)
         open(PomodoroDefaultField.WORK)
-        compose.lengthCard(string(R.string.pomodoro_card_work)).performScrollTo()
-        compose.lengthValue(string(R.string.pomodoro_card_work)).performTextReplacement("45")
+        compose.lengthCard(string(SharedR.string.pomodoro_card_work)).performScrollTo()
+        compose.lengthValue(string(SharedR.string.pomodoro_card_work)).performTextReplacement("45")
         compose.runOnIdle { defaults = PomodoroDefaults(50, 10, 30, 3) }
         button(R.string.settings_pomodoro_save).performClick()
         assertEquals(PomodoroDefaults(45, 10, 30, 3), defaults)

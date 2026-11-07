@@ -41,9 +41,9 @@ import java.time.Instant
 @Composable
 internal fun PrimaryControl(context: Context, state: WidgetState.Ready, size: Float) {
     when {
-        state.running != null -> Control(context.getString(R.string.widget_stop_description), R.drawable.ic_stop, stopTimer(state.running.target), size, GlanceTheme.colors.error, GlanceTheme.colors.onError)
-        state.paused != null -> Control(context.getString(R.string.widget_resume_description), R.drawable.ic_play, resumeTimer(state.paused.target), size, PrimaryFill, OnPrimaryFill)
-        else -> Control(context.getString(R.string.widget_start_description), R.drawable.ic_play, startTimer(), size, PrimaryFill, OnPrimaryFill)
+        state.running != null -> Control(context.getString(R.string.widget_stop_description), UiR.drawable.ic_stop, stopTimer(state.running.target), size, GlanceTheme.colors.error, GlanceTheme.colors.onError)
+        state.paused != null -> Control(context.getString(R.string.widget_resume_description), UiR.drawable.ic_play, resumeTimer(state.paused.target), size, PrimaryFill, OnPrimaryFill)
+        else -> Control(context.getString(R.string.widget_start_description), UiR.drawable.ic_play, startTimer(), size, PrimaryFill, OnPrimaryFill)
     }
 }
 
@@ -185,7 +185,7 @@ internal fun TemplateChips(context: Context, favorites: List<WidgetFavorite>, wi
             val label = if (project == null) context.getString(R.string.widget_start_favorite, description) else context.getString(R.string.widget_start_favorite_project, description, project)
             Row(GlanceModifier.defaultWeight().height(48.dp).background(ImageProvider(R.drawable.widget_chip_background), colorFilter = ColorFilter.tint(GlanceTheme.colors.surfaceVariant))
                 .clickable(startTimer(favorite.fields)).padding(horizontal = 8.dp).semantics { contentDescription = label }, verticalAlignment = Alignment.CenterVertically) {
-                Image(ImageProvider(R.drawable.ic_play), null, GlanceModifier.size(12.dp), colorFilter = ColorFilter.tint(GlanceTheme.colors.primary))
+                Image(ImageProvider(UiR.drawable.ic_play), null, GlanceModifier.size(12.dp), colorFilter = ColorFilter.tint(GlanceTheme.colors.primary))
                 Spacer(GlanceModifier.width(4.dp))
                 Label(description, 12f)
             }

@@ -12,6 +12,7 @@ import androidx.glance.appwidget.compose
 import androidx.glance.appwidget.provideContent
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.PhaseKind
@@ -48,7 +49,7 @@ class PomodoroWidgetClockTest {
                 val before = SystemClock.elapsedRealtime() + Duration.between(Instant.now(), end).toMillis()
                 val views = runBlocking { Fixture(state).compose(context, size = DpSize(298.dp, 222.dp)) }
                 host.showInConfiguration(views, Configuration(context.resources.configuration))
-                host.awaitDescription(context.getString(if (ended) R.string.pomodoro_overtime else R.string.pomodoro_remaining))
+                host.awaitDescription(context.getString(if (ended) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining))
                 assertEquals("the native clock uses the corrected planned end", before.toDouble(), host.clockBases().values.single().toDouble(), 150.0)
                 host.assertTextFitsVertically()
                 host.assertClockTicksWithoutUpdates()

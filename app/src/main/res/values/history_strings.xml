@@ -3,8 +3,6 @@
 <resources>
     <string name="history_today">Today</string>
     <string name="history_yesterday">Yesterday</string>
-    <!-- A day's header, as the web app's dayLabel: Mon, 13 Oct -->
-    <string name="history_day">%1$s, %2$s</string>
     <!-- What TalkBack reads for a day's header: Today, 3 hours, 20 minutes in total -->
     <string name="history_day_spoken">%1$s, %2$s in total</string>
     <string name="history_no_description">No description</string>

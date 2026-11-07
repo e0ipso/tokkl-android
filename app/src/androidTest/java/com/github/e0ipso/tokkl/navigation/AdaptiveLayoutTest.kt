@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.SharedHttpClient
@@ -140,7 +141,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         fun marked(label: Int, state: Int) = navigationItem(label) and
             SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(state))
         fun count(matcher: SemanticsMatcher) = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
-        val pomodoro = marked(R.string.pomodoro_title, R.string.nav_pomodoro_running)
+        val pomodoro = marked(SharedR.string.pomodoro_title, R.string.nav_pomodoro_running)
         val timer = marked(R.string.nav_timer, R.string.nav_timer_running)
         assertEquals(1, count(pomodoro))
         assertEquals(0, count(timer))
@@ -431,7 +432,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         val SHORT_HEIGHT = 360.dp
 
         /** The bar's and the rail's items, in order. */
-        val NAVIGATION_LABELS = listOf(R.string.nav_timer, R.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val NAVIGATION_LABELS = listOf(R.string.nav_timer, SharedR.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
 
         /** Anything a person reads or uses. */
         val CONTROL_OR_TEXT: SemanticsMatcher = hasClickAction() or hasSetTextAction() or isToggleable() or isSelectable() or

@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
@@ -64,7 +65,7 @@ class TemplatesUiTest {
         composeRule.waitForIdle()
         openPopup()
         val expected = listOf(
-            string(R.string.favorites_start_spoken, string(R.string.favorites_with_project, "Write the report", "Website")),
+            string(R.string.favorites_start_spoken, string(SharedR.string.favorites_with_project, "Write the report", "Website")),
             string(R.string.favorites_start_spoken, "Website"),
         )
         assertEquals(expected, startLabels())
