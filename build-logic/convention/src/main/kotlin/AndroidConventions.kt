@@ -38,11 +38,19 @@ internal fun Project.configureAndroid(android: CommonExtension) {
     configureDetekt()
 }
 
-/** Turns on Compose for an Android module and adds the Compose BOM. */
+/**
+ * Turns on Compose for an Android module and adds the Compose BOM and the preview tooling. The
+ * previews are private functions that nothing calls, so R8 drops them from the release build, and
+ * the tooling that renders them in the IDE is in debug builds only.
+ */
 internal fun Project.configureCompose(android: CommonExtension) {
     pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
     android.buildFeatures.compose = true
-    dependencies.add("implementation", dependencies.platform(libs.findLibrary("androidx-compose-bom").get()))
+    val bom = dependencies.platform(libs.findLibrary("androidx-compose-bom").get())
+    dependencies.add("implementation", bom)
+    dependencies.add("implementation", libs.findLibrary("androidx-compose-ui-tooling-preview").get())
+    dependencies.add("debugImplementation", bom)
+    dependencies.add("debugImplementation", libs.findLibrary("androidx-compose-ui-tooling").get())
 }
 
 internal val Project.libs: VersionCatalog
