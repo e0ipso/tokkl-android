@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
@@ -121,6 +122,9 @@ internal val accountModule = module {
 
     signOutSteps()
 
+    // Where each account begins and ends, which the timer state and the navigation follow.
+    single { AccountLifetime() }
+
     // Sign-out (docs/PRD.md S6): every [AccountDataOwner], phase by phase in [SignOutPhase] order.
-    single { SignOut(owners = getAll(), io = io()) }
+    single { SignOut(owners = getAll(), lifetime = get(), io = io()) }
 }

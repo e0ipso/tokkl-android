@@ -203,7 +203,7 @@ class AppGraphTest {
             "sign-out-http-calls" to SignOutPhase.STOP_WORK,
             "AccountRefresh" to SignOutPhase.FINISH_REFRESH,
             "ChangeSender" to SignOutPhase.FINISH_SENDING,
-            "sign-out-cache" to SignOutPhase.CLEAR_CACHE,
+            "AccountCache" to SignOutPhase.CLEAR_CACHE,
             "TimerStateStore" to SignOutPhase.CLEAR_DATA,
             "PomodoroWidgetFieldsStore" to SignOutPhase.CLEAR_DATA,
             "ReminderSync" to SignOutPhase.CLEAR_DATA,

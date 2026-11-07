@@ -14,6 +14,7 @@ import java.io.IOException
 class SignOutTest {
 
     private val ran = mutableListOf<String>()
+    private val lifetime = AccountLifetime()
 
     private fun step(name: String, phase: SignOutPhase, fails: () -> Boolean = { false }) = SignOutStep(phase) {
         ran += name
@@ -21,7 +22,7 @@ class SignOutTest {
     }
 
     @Test
-    fun runsThePhasesInOrderAndCountsTheSignOut() {
+    fun runsThePhasesInOrderAndEndsTheAccount() {
         val signOut = SignOut(
             listOf(
                 step("cache", SignOutPhase.CLEAR_CACHE),
@@ -32,13 +33,14 @@ class SignOutTest {
                 step("refresh", SignOutPhase.FINISH_REFRESH),
                 step("timer state", SignOutPhase.RETIRE_STATE),
             ),
+            lifetime,
             Dispatchers.Unconfined,
         )
 
         assertTrue(runBlocking { signOut.run() })
 
         assertEquals(listOf("session", "timer state", "stream", "refresh", "sender", "cache", "settings"), ran)
-        assertEquals(1, signOut.finished.value)
+        assertEquals(1, lifetime.signOuts.value)
     }
 
     @Test
@@ -52,6 +54,7 @@ class SignOutTest {
                 },
                 step("cache", SignOutPhase.CLEAR_CACHE),
             ),
+            lifetime,
             Dispatchers.Unconfined,
         )
 
@@ -68,6 +71,7 @@ class SignOutTest {
     fun stepsOfOnePhaseAllRun() {
         val signOut = SignOut(
             listOf(step("a", SignOutPhase.CLEAR_DATA), step("b", SignOutPhase.CLEAR_DATA)),
+            lifetime,
             Dispatchers.Unconfined,
         )
 
@@ -78,20 +82,21 @@ class SignOutTest {
     }
 
     @Test
-    fun aFailedStepDoesNotStopTheOthersButTheSignOutDoesNotCount() {
+    fun aFailedStepDoesNotStopTheOthersButTheAccountDoesNotEnd() {
         val signOut = SignOut(
             listOf(
                 step("session", SignOutPhase.FORGET_SESSION),
                 step("sender", SignOutPhase.FINISH_SENDING, fails = { true }),
                 step("cache", SignOutPhase.CLEAR_CACHE),
             ),
+            lifetime,
             Dispatchers.Unconfined,
         )
 
         assertFalse(runBlocking { signOut.run() })
 
         assertEquals(listOf("session", "sender", "cache"), ran)
-        assertEquals(0, signOut.finished.value)
+        assertEquals(0, lifetime.signOuts.value)
     }
 
     @Test
@@ -102,6 +107,7 @@ class SignOutTest {
                 step("session", SignOutPhase.FORGET_SESSION),
                 step("cache", SignOutPhase.CLEAR_CACHE, fails = { failing }),
             ),
+            lifetime,
             Dispatchers.Unconfined,
         )
 
@@ -110,7 +116,7 @@ class SignOutTest {
         assertTrue(runBlocking { signOut.run() })
 
         assertEquals(listOf("session", "cache", "session", "cache"), ran)
-        assertEquals(1, signOut.finished.value)
+        assertEquals(1, lifetime.signOuts.value)
     }
 
     /**

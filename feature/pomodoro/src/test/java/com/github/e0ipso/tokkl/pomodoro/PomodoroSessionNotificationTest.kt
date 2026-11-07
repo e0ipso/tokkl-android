@@ -250,6 +250,56 @@ class PomodoroSessionNotificationTest {
         assertTrue(next.server.calls.isEmpty())
     }
 
+    @Test fun aSignInAfterSignOutFollowsTheNewAccountUnderANewIdentity() = runBlocking {
+        val f = Fixture()
+        f.sync.refresh()
+        val oldAccount = checkNotNull(f.saved).account
+        f.sync.forget()
+
+        f.sync.signedIn()
+        f.changes.emit(Unit)
+
+        val newAccount = checkNotNull(f.saved).account
+        assertNotEquals(oldAccount, newAccount)
+        assertEquals(2, f.posts.size)
+        assertNull(f.sync.act(oldAccount, key, revision = 3, end = true))
+        assertFalse(f.sync.acceptsTap(oldAccount, key))
+        assertTrue(f.sync.acceptsTap(newAccount, key))
+        assertTrue(f.server.calls.isEmpty())
+    }
+
+    @Test fun aSignInAgainWithoutASignOutKeepsWhatIsShown() = runBlocking {
+        val f = Fixture()
+        f.sync.refresh()
+        val shown = f.saved
+
+        f.sync.signedIn()
+        f.changes.emit(Unit)
+
+        assertEquals(shown, f.saved)
+        assertEquals(1, f.posts.size)
+    }
+
+    @Test fun signOutDropsTheAlarmAndTheNotificationBeforeTheSharedIdAlsoAfterAFailure() = runBlocking {
+        val f = Fixture()
+        f.alarm.ringNow()
+        f.sync.refresh()
+        val cancelsBefore = f.alarm.alarms.cancels
+        val removesBefore = f.removes
+        var seenAtIdCancel: Pair<Int, Int>? = null
+        f.writeFailure = true
+        val signOut = PomodoroSignOut(f.alarm.alarm, f.sync) {
+            seenAtIdCancel = f.alarm.alarms.cancels - cancelsBefore to f.removes - removesBefore
+        }
+
+        assertTrue(runCatching { signOut.forgetAccount() }.exceptionOrNull() is IOException)
+
+        // The alarm was cancelled and the notification removed before the shared ID, although
+        // the notification's write failed.
+        assertEquals(1 to 1, seenAtIdCancel)
+        assertFalse(f.alarm.output.audio)
+    }
+
     private class Fixture(held: HeldTimerState? = heldState(revision = 3)) {
         val alarm = AlarmFixture(held)
         val server = FakeServer(MutableStateFlow(held))

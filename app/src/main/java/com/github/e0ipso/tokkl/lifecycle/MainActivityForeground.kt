@@ -11,7 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
-import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
@@ -38,7 +38,7 @@ internal class MainActivityForeground(
     private val events: AppEvents,
     private val timerSync: TimerSyncFollower,
     private val runningNotification: RunningNotificationSync,
-    private val pomodoroNotification: AccountPomodoroNotification,
+    private val pomodoroNotification: PomodoroSessionNotificationSync,
     private val http: SharedHttpClient,
     defaultNetwork: DefaultNetwork,
     private val scope: CoroutineScope,
@@ -71,7 +71,7 @@ internal class MainActivityForeground(
         notificationsAllowed = true
         scope.launch(io) {
             runningNotification.repost()
-            pomodoroNotification.current.refresh(force = true)
+            pomodoroNotification.refresh(force = true)
         }
     }
 

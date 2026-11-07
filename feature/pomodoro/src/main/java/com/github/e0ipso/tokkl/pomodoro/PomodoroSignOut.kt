@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.session.SignOutPhase
  */
 internal class PomodoroSignOut(
     private val alarm: PomodoroPhaseAlarm,
-    private val notification: AccountPomodoroNotification,
+    private val notification: PomodoroSessionNotificationSync,
     private val cancelSharedId: () -> Unit,
 ) : AccountDataOwner {
 
@@ -24,7 +24,7 @@ internal class PomodoroSignOut(
             alarm.release()
         } finally {
             try {
-                notification.current.forget()
+                notification.forget()
             } finally {
                 cancelSharedId()
             }

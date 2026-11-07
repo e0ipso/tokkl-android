@@ -4,8 +4,8 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
-import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSync
 import com.github.e0ipso.tokkl.session.AccountRefresh
@@ -32,7 +32,7 @@ internal class AppStartup(
     private val held: Lazy<HeldTimerFlows>,
     private val capabilities: Lazy<CapabilitiesSource>,
     private val pomodoroAlarm: Lazy<PomodoroPhaseAlarm>,
-    private val pomodoroNotification: Lazy<AccountPomodoroNotification>,
+    private val pomodoroNotification: Lazy<PomodoroSessionNotificationSync>,
     private val reminder: Lazy<ReminderSync>,
     private val reminderSettings: Lazy<ReminderSetting>,
     private val cache: Lazy<AccountCache>,
@@ -56,7 +56,7 @@ internal class AppStartup(
             combine(held.value.held, flow { emitAll(capabilities.value.state) }) { _, _ -> Unit }
                 .collect { pomodoroAlarm.value.follow() }
         }
-        pomodoroNotification.value.current.start()
+        pomodoroNotification.value.start()
         reminder.value.follow(
             combine(
                 cache.value.running,

@@ -19,6 +19,9 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -71,8 +74,28 @@ val pomodoroFeatureModule = module {
         )
     }
 
+    // The session notification, made at process start, which restores what the last process
+    // showed. It starts following each account that signs in.
     single {
-        AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), get(), get(), get(), io())
+        val store = PomodoroSessionNotificationStore(androidContext())
+        val notifier = PomodoroSessionNotifier(androidContext())
+        val held = get<HeldTimerFlows>()
+        val capabilities = get<CapabilitiesSource>()
+        val ringing = get<ServicePomodoroRinging>()
+        val session = get<Session>()
+        PomodoroSessionNotificationSync(
+            alarm = get(),
+            actions = get<TimerActions>(),
+            changes = combine(held.held, flow { emitAll(capabilities.state) }, ringing.state) { _, _, _ -> Unit },
+            isSignedIn = session::isSignedIn,
+            serviceRunning = { ringing.state.value.serviceRunning },
+            load = store::load,
+            save = store::save,
+            post = notifier::post,
+            remove = notifier::remove,
+            scope = get(),
+            io = io(),
+        )
     } bind SignedInListener::class
 
     // Sign-out: the alarm, the session notification and the notification ID they share.

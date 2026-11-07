@@ -24,13 +24,13 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.NavigationStores
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.contentKey
-import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSync
+import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
@@ -100,8 +100,7 @@ val TokklApplication.timerControls: Flow<TimerControls> get() = component<TimerC
 val TokklApplication.widgetState: Flow<WidgetState> get() = component<WidgetStateSource>().state
 internal val TokklApplication.pomodoroWidgetState: Flow<PomodoroWidgetState>
     get() = component<PomodoroWidgetStateSource>().state
-internal val TokklApplication.pomodoroSessionNotification: PomodoroSessionNotificationSync
-    get() = component<AccountPomodoroNotification>().current
+internal val TokklApplication.pomodoroSessionNotification: PomodoroSessionNotificationSync get() = component()
 
 /** [TimerSyncService] while it runs in the foreground. */
 val TokklApplication.timerSyncService: TimerSyncService? get() = component<TimerSyncServiceSlot>().service
@@ -109,7 +108,11 @@ val TokklApplication.timerSyncService: TimerSyncService? get() = component<Timer
 /** The app's clock, which [com.github.e0ipso.tokkl.TestTokklApplication] makes a [TestClock]. */
 val TokklApplication.testClock: TestClock get() = component<Clock>() as TestClock
 
-fun TokklApplication.renewTimerState() = component<AccountTimerStates>().renew()
+/** Clears the timer state and begins a new account, as a sign-in does, so the next read makes a new source. */
+fun TokklApplication.renewTimerState() {
+    component<AccountTimerStates>().clearForSignIn()
+    component<AccountLifetime>().begin()
+}
 
 fun TokklApplication.followTimerSync() = component<TimerSyncFollower>().follow()
 

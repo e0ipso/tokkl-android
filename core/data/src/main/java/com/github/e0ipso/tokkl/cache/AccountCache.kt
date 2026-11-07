@@ -4,7 +4,9 @@ import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.flow.Flow
 import java.time.Clock
 
@@ -17,7 +19,12 @@ import java.time.Clock
  * source of truth.
  */
 class AccountCache(private val database: CacheDatabase, private val clock: Clock = Clock.systemUTC()) :
-    CurrentEntryCache {
+    CurrentEntryCache,
+    AccountDataOwner {
+
+    override val signOutPhase = SignOutPhase.CLEAR_CACHE
+
+    override suspend fun forgetAccount() = clear()
 
     private val dao = database.cache()
 
@@ -139,8 +146,8 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     }
 
     /**
-     * Deletes every cached row and the queue of unsent changes. Signing out calls this, together
-     * with clearing the stored session and settings. Blocks, so call it off the main thread.
+     * Deletes every cached row and the queue of unsent changes. Signing out calls this, before it
+     * clears what follows the cache. Blocks, so call it off the main thread.
      */
     fun clear() {
         database.clearAllTables()

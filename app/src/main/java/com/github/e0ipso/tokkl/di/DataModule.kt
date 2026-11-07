@@ -32,7 +32,7 @@ internal val dataModule = module {
     single { CacheDatabase.open(androidContext()) }
 
     // The offline cache.
-    single { AccountCache(get()) }
+    single { AccountCache(get()) } bind AccountDataOwner::class
 
     single<ChangeStore> { RoomChangeStore(get()) }
 

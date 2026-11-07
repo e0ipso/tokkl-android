@@ -1,10 +1,6 @@
 package com.github.e0ipso.tokkl.session
 
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -16,20 +12,11 @@ import kotlin.coroutines.CoroutineContext
  *
  * Each of [owners] forgets its part on [io], phase by phase in [SignOutPhase] order. A failed
  * step does not stop the ones after it, and the next [run] runs them all again, since each clears
- * what is there.
+ * what is there. A sign-out whose every step succeeded ends the account's [lifetime].
  */
-class SignOut(owners: List<AccountDataOwner>, private val io: CoroutineContext) {
+class SignOut(owners: List<AccountDataOwner>, private val lifetime: AccountLifetime, private val io: CoroutineContext) {
 
     private val steps: List<AccountDataOwner> = owners.sortedBy { it.signOutPhase }
-
-    private val mutableFinished = MutableStateFlow(0)
-
-    /**
-     * How many sign-outs have finished in this process with every step done. The navigation
-     * starts over at sign-in and drops its view models, and with them what each screen holds in
-     * memory, when this changes.
-     */
-    val finished: StateFlow<Int> = mutableFinished.asStateFlow()
 
     private val running = Mutex()
 
@@ -46,7 +33,7 @@ class SignOut(owners: List<AccountDataOwner>, private val io: CoroutineContext) 
                     cleared = false
                 }
             }
-            if (cleared) mutableFinished.update { it + 1 }
+            if (cleared) lifetime.end()
             cleared
         }
     }

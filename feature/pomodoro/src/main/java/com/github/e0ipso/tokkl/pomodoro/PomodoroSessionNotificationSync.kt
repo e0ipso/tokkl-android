@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.platform.SingleFlight
+import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -21,8 +22,10 @@ import kotlin.coroutines.CoroutineContext
  * shared id.
  *
  * Next phase and End session go to the server with the revision the notification showed, and
- * only for the account and the phase it was posted for. All publication and actions belong to one
- * account for this observer's lifetime; sign-out [forget]s it.
+ * only for the account and the phase it was posted for. Publication and actions belong to the
+ * account signed in: sign-out [forget]s it, after which it shows and sends nothing until the next
+ * account [signedIn], which it follows under a new identity, so no button of the account before
+ * acts on it.
  *
  * @param alarm the phase alarm, which holds the held state and knows whether its phase rings.
  * @param actions the server's session actions.
@@ -32,7 +35,7 @@ class PomodoroSessionNotificationSync internal constructor(
     private val alarm: PomodoroPhaseAlarm,
     private val actions: SessionActions,
     private val changes: Flow<Unit>,
-    private val signedIn: () -> Boolean,
+    private val isSignedIn: () -> Boolean,
     private val serviceRunning: () -> Boolean,
     private val load: () -> PomodoroNotificationDisplay?,
     private val save: (PomodoroNotificationDisplay?) -> Unit,
@@ -40,7 +43,7 @@ class PomodoroSessionNotificationSync internal constructor(
     private val remove: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) {
+) : SignedInListener {
     private val lock = Mutex()
     private var display: PomodoroNotificationDisplay? = null
     private var loaded = false
@@ -51,6 +54,19 @@ class PomodoroSessionNotificationSync internal constructor(
     @Synchronized fun start() {
         if (retired) return
         observing.launch { changes.collect { refresh() } }
+    }
+
+    /**
+     * Starts following the account that has just signed in. After a sign-out it shows nothing
+     * yet and makes a new identity on first use, as the first process after a sign-out does.
+     */
+    @Synchronized override fun signedIn() {
+        if (retired) {
+            display = null
+            loaded = true
+            retired = false
+        }
+        start()
     }
 
     private fun readDisplay(): PomodoroNotificationDisplay {
@@ -80,7 +96,7 @@ class PomodoroSessionNotificationSync internal constructor(
         if (retired) return@withLock
         alarm.withState { held, ringing ->
             if (retired) return@withState
-            if (!signedIn()) {
+            if (!isSignedIn()) {
                 display = null
                 loaded = true
                 remove()
@@ -113,14 +129,14 @@ class PomodoroSessionNotificationSync internal constructor(
      * null. Otherwise returns what the server action came to.
      */
     suspend fun act(account: String, phase: PomodoroPhaseKey, revision: Long, end: Boolean): TimerActionResult? {
-        val accepted = lock.withLock { !retired && signedIn() && account == readDisplay().account }
+        val accepted = lock.withLock { !retired && isSignedIn() && account == readDisplay().account }
         if (!accepted) return null
         return alarm.sendPhaseAction(actions, phase, revision, end)
     }
 
     /** Whether a tap on the notification of [account] and [phase] may open the Pomodoro page. */
     suspend fun acceptsTap(account: String, phase: PomodoroPhaseKey): Boolean = lock.withLock {
-        if (retired || !signedIn() || account != readDisplay().account) return@withLock false
+        if (retired || !isSignedIn() || account != readDisplay().account) return@withLock false
         alarm.current()?.phase == phase
     }
 

@@ -19,7 +19,7 @@ import org.koin.dsl.module
 val signInFeatureModule = module {
     single { SignInCooldownStore(androidContext()) } bind SignInCooldowns::class
 
-    single { AccountSessionWriter(get(), get(), get(), get(), get(), get()) } bind SessionWriter::class
+    single { AccountSessionWriter(get(), get(), get(), get(), get(), get(), get()) } bind SessionWriter::class
 
     viewModel { params ->
         SignInViewModel(

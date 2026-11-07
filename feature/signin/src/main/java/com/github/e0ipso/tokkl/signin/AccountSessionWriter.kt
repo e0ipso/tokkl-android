@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.signin
 
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
@@ -12,8 +13,9 @@ import java.io.IOException
 import java.security.GeneralSecurityException
 
 /**
- * Stores what a sign-in got from the server: the account settings first, then a new, empty
- * timer state, then the server and its token. If the session write fails, the app stays
+ * Stores what a sign-in got from the server: the account settings first, then it clears the
+ * timer state and begins the account in the [lifetime], which gives it a new, empty timer state,
+ * then it stores the server and its token. If the session write fails, the app stays
  * signed out and the next sign-in replaces the settings. A sign-in again after a refused token
  * then lifts the queue's pause, and the changes that waited go out (docs/PRD.md O6). Blocks on
  * disk I/O.
@@ -21,6 +23,7 @@ import java.security.GeneralSecurityException
 internal class AccountSessionWriter(
     private val accountSettings: AccountSettingsSource,
     private val timerStates: AccountTimerStates,
+    private val lifetime: AccountLifetime,
     private val session: Session,
     private val signedIn: SignedInListener,
     private val sender: ChangeSender,
@@ -30,7 +33,8 @@ internal class AccountSessionWriter(
     @Throws(GeneralSecurityException::class, IOException::class)
     override fun save(server: ServerUrl, token: String, settings: AccountSettings) {
         accountSettings.store(settings)
-        timerStates.renew()
+        timerStates.clearForSignIn()
+        lifetime.begin()
         session.save(server, token)
         signedIn.signedIn()
         if (sender.signInNeeded.value) sender.resume()

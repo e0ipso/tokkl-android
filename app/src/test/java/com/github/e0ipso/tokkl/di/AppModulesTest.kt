@@ -84,7 +84,7 @@ class AppModulesTest {
         /** Each owner by its class, or by its Koin name for a step of no single component. */
         val SIGN_OUT_OWNERS = listOf(
             "Session", "AccountTimerStates", "PomodoroSignOut", "TimerSyncFollower", "BackgroundSend",
-            "RunningCheck", "sign-out-http-calls", "AccountRefresh", "ChangeSender", "sign-out-cache",
+            "RunningCheck", "sign-out-http-calls", "AccountRefresh", "ChangeSender", "AccountCache",
             "TimerStateStore", "PomodoroWidgetFieldsStore", "ReminderSync", "ReminderSetting",
             "RunningNotificationSync", "FavoriteShortcutSync", "AccountSettingsStore", "sign-out-capabilities",
             "TimerViewSetting", "PomodoroDefaultsSetting", "ServerTrustStore", "SessionTrust", "LastAnswer",

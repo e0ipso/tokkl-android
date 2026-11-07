@@ -26,7 +26,7 @@ class HeldTimerFlows(
 
     /** The signed-in account's held timer state, or null without one. */
     val held: Flow<HeldTimerState?> =
-        timerStates.renewals.flatMapLatest { flow { emitAll(timerStates.source.state) } }.flowOn(io)
+        timerStates.states.flatMapLatest { it.source.state }.flowOn(io)
 
     /**
      * [held] while the account's server offers the timer API, and null otherwise: what the
@@ -44,5 +44,5 @@ class HeldTimerFlows(
 
     /** The too-short pomodoro of the signed-in account's timer state that no screen has shown yet. */
     val discardNotice: Flow<DiscardedPomodoro?> =
-        timerStates.renewals.flatMapLatest { flow { emitAll(timerStates.source.discardNotice) } }.flowOn(io)
+        timerStates.states.flatMapLatest { it.source.discardNotice }.flowOn(io)
 }

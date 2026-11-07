@@ -32,7 +32,7 @@ import org.koin.dsl.module
 internal val timerModule = module {
     single { TimerStateStore(androidContext()) } bind AccountDataOwner::class
 
-    single { AccountTimerStates(get(), get(), get(), get()) } bind AccountDataOwner::class
+    single { AccountTimerStates(get(), get(), get(), get(), get()) } bind AccountDataOwner::class
     single { HeldTimerFlows(get(), get(), io()) }
     single { TimerControlsSource(get(), get(), get(), io()) }
 

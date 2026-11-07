@@ -10,8 +10,8 @@ import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.platform.IoDispatcher
-import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.widget.WidgetPage
@@ -69,7 +69,7 @@ internal fun NavigationRequestEffects(
 ) {
     val session: Session = koinInject()
     val io: CoroutineDispatcher = koinInject(IoDispatcher)
-    val pomodoroNotification: AccountPomodoroNotification = koinInject()
+    val pomodoroNotification: PomodoroSessionNotificationSync = koinInject()
     val currentUnavailable by rememberUpdatedState(unavailable)
     for (request in requests.pending) {
         key(request) {
@@ -98,7 +98,7 @@ internal fun NavigationRequestEffects(
 
                 is NavigationRequest.Pomodoro -> LaunchedEffect(request) {
                     val accepted = withContext(io) {
-                        pomodoroNotification.current.acceptsTap(request.tap.account, request.tap.phase)
+                        pomodoroNotification.acceptsTap(request.tap.account, request.tap.phase)
                     }
                     if (accepted) navigator.open(TopLevelPage.POMODORO, currentUnavailable)
                     requests.handled(request)

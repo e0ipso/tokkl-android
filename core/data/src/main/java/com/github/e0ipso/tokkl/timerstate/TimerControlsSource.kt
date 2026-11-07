@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -33,7 +32,7 @@ class TimerControlsSource(
 
     val controls: Flow<TimerControls> = run {
         val dao = database.changes()
-        val heldStates = timerStates.renewals.flatMapLatest { flow { emitAll(timerStates.source.state) } }
+        val heldStates = timerStates.states.flatMapLatest { it.source.state }
         combine(
             database.invalidationTracker.createFlow("time_entries", "pending_changes"),
             heldStates,

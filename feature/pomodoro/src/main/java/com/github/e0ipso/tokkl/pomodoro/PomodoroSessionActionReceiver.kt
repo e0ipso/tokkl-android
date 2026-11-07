@@ -22,7 +22,7 @@ import java.util.concurrent.CountDownLatch
 class PomodoroSessionActionReceiver :
     BroadcastReceiver(),
     KoinComponent {
-    private val notification: AccountPomodoroNotification by inject()
+    private val notification: PomodoroSessionNotificationSync by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
 
@@ -32,14 +32,14 @@ class PomodoroSessionActionReceiver :
         val phase = intent.phaseKey() ?: return
         val revision = intent.shownRevision() ?: return
         val app = context.applicationContext
-        // Capture this account's observer before launching. Sign-out retires this instance.
-        val sync = notification.current
+        // A button of an account signed out since sends nothing: its identity is gone.
         val done = completed
         // The broadcast ends before the request, so a server slow to answer cannot hold it past
         // its time limit. The timer sync service keeps the process alive while a session runs.
         scope.launch(io) {
             try {
-                sync.act(account, phase, revision, end = intent.action == END)?.let { showTimerActionFailure(app, it) }
+                val result = notification.act(account, phase, revision, end = intent.action == END)
+                result?.let { showTimerActionFailure(app, it) }
             } finally {
                 done?.countDown()
             }

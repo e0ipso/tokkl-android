@@ -37,8 +37,8 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.session.SignOut
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -74,7 +74,7 @@ internal fun TokklNavHost(
     onNotificationsAllow: () -> Unit = {},
     stores: NavigationStores = viewModel { NavigationStores() },
 ) {
-    val signOuts by koinInject<SignOut>().finished.collectAsState()
+    val signOuts by koinInject<AccountLifetime>().signOuts.collectAsState()
     val discarded = remember(stores, signOuts) { stores.after(signOuts) }
     LaunchedEffect(signOuts) {
         // A tap from before the sign-out opens nothing for the next account.

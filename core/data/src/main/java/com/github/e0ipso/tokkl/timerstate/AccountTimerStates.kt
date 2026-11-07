@@ -2,12 +2,11 @@ package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.SignOutPhase
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.io.IOException
 
 /** The account's [TimerStateSource], and the name its timer controls carry in their targets. */
@@ -15,27 +14,28 @@ class AccountTimerState(val source: TimerStateSource, val account: String)
 
 /**
  * The account's timer state from a Tokkl server with the timer API, which every timer request,
- * action and event feeds. Loaded on first use from the stored state, a small file. Sign-out
- * retires it and sign-in replaces it, so take it once per request or stream and give its
- * answer to the same source: an answer kept for a retired source changes nothing.
+ * action and event feeds. Each account of the [lifetime] gets its own, made on first use: the
+ * first one of the process from the stored state, a small file, and each one after a sign-in
+ * from nothing. Sign-out retires it. Take it once per request or stream and give its answer to
+ * the same source: an answer kept for a retired source changes nothing.
  */
 class AccountTimerStates(
     private val store: TimerStateStore,
     private val lastFields: HeldFieldsMemory,
     private val cache: AccountCache,
     private val refreshes: AccountRefreshRequests,
+    private val lifetime: AccountLifetime,
 ) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.RETIRE_STATE
 
     override suspend fun forgetAccount() = source.retire()
 
-    private val lock = Any()
-    private var forAccount = newTimerState(restore = true)
-    private val renewalCount = MutableStateFlow(0)
+    /** The timer state of one account of the [lifetime], made on first use. */
+    private class ForAccount(val account: Int, val state: Lazy<AccountTimerState>)
 
-    /** Counts the replacements of [source], so flows of its state follow the new account's source. */
-    val renewals: StateFlow<Int> = renewalCount.asStateFlow()
+    private val lock = Any()
+    private var forAccount = ForAccount(lifetime.accounts.value, lazy { newTimerState(restore = true) })
 
     /** The signed-in account's source. */
     val source: TimerStateSource
@@ -47,23 +47,35 @@ class AccountTimerStates(
     /** The name the signed-in account's timer controls carry in their targets. */
     fun account(): String = current().account
 
-    /** The source and the account name, read together under the holder's lock. */
-    fun current(): AccountTimerState = synchronized(lock) { forAccount.value }
+    /** The source and the account name of the account signed in now, read together. */
+    fun current(): AccountTimerState {
+        val account = lifetime.accounts.value
+        val state = synchronized(lock) {
+            if (forAccount.account != account) forAccount = ForAccount(account, lazy { newTimerState(restore = false) })
+            forAccount.state
+        }
+        return state.value
+    }
 
     /**
-     * Retires the timer state source and clears its store, then installs a new, empty source for
-     * the account signing in. Blocks on disk I/O.
+     * The signed-in account's timer state, and a new one after each sign-in. The first value
+     * loads the stored state, so collect it off the main thread.
+     */
+    val states: Flow<AccountTimerState> = lifetime.accounts.map { current() }
+
+    /**
+     * Retires the source and clears its store and the remembered Start fields, so the account
+     * signing in starts from nothing. Sign-in calls it before it begins the account. Blocks on
+     * disk I/O.
      */
     @Throws(IOException::class)
-    fun renew() {
+    fun clearForSignIn() {
         source.retire()
         lastFields.clear()
         store.clear()
-        synchronized(lock) { forAccount = newTimerState(restore = false) }
-        renewalCount.update { it + 1 }
     }
 
-    private fun newTimerState(restore: Boolean): Lazy<AccountTimerState> = lazy {
+    private fun newTimerState(restore: Boolean): AccountTimerState {
         val account = store.account()
         val initial = if (restore) store.load() else null
         // A pre-widget held session is already sufficient to seed its idle Start fields.
@@ -72,7 +84,7 @@ class AccountTimerStates(
         } catch (_: IOException) {
             // A later accepted state retries, as the timer state's own store does.
         }
-        AccountTimerState(
+        return AccountTimerState(
             TimerStateSource(
                 initial = initial,
                 save = { stored ->
