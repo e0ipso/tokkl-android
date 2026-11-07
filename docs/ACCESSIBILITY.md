@@ -85,7 +85,7 @@ that it displays that state. Verify only states actually presented there.
 | State and every identified presentation | Source cue and audit location |
 | --- | --- |
 | Running: Timer bar | `timer/TimerBar.kt` `RunningLabel`: running text, Stop action and elapsed clock |
-| Running: bar and rail | `navigation/AppNavigation.kt`: badge shape and Timer `stateDescription` |
+| Running: bar and rail | `navhost/AppNavigation.kt`: badge shape and Timer `stateDescription` |
 | Running: calendar block/day | `calendar/WeekCalendar.kt`: dashed outline and `spokenBlock` running words; check narrow blocks too |
 | Running: notification/reminder | `notification/RunningNotifier.kt`: stopwatch notification, elapsed clock, Stop; `reminder/ReminderNotifier.kt`: running reminder text and Stop/Keep running actions |
 | Running: widget | `widget/TokklWidget.kt`: idle/running words and play/stop controls; verify signed-out/no-favourite states too |

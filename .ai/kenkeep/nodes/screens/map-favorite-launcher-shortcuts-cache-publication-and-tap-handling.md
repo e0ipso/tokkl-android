@@ -18,7 +18,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`app/src/main/java/com/github/e0ipso/tokkl/shortcuts/` owns dynamic favorite shortcuts. `FavoriteShortcutSync` follows cached favorites, projects and capabilities from process start, preserving favorite order and the launcher limit. It avoids republishing an unchanged list because Android limits background shortcut updates. Sign-out and loss of favorites capability remove published shortcuts.
+`feature/shortcuts/src/main/java/com/github/e0ipso/tokkl/shortcuts/` owns dynamic favorite shortcuts. `FavoriteShortcutSync` follows cached favorites, projects and capabilities from process start, preserving favorite order and the launcher limit. It avoids republishing an unchanged list because Android limits background shortcut updates. Sign-out and loss of favorites capability remove published shortcuts.
 
 A shortcut carries only a hash-derived favorite ID. `StartFavoriteActivity` resolves that ID against the current cached favorites and capability before starting through `ChangeQueue`. A removed favorite or stale pinned shortcut starts nothing. The transparent activity keeps the offline queue write alive and stays foreground until its confirmation toast can appear, then finishes without opening the main app.
 
