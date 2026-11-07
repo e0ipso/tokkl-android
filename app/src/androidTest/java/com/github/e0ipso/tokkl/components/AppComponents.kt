@@ -12,6 +12,7 @@ import androidx.work.Configuration
 import androidx.work.DelegatingWorkerFactory
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.github.e0ipso.tokkl.TestClock
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.AccountCache
@@ -51,7 +52,6 @@ import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
-import com.github.e0ipso.tokkl.widget.WidgetClock
 import com.github.e0ipso.tokkl.widget.WidgetState
 import com.github.e0ipso.tokkl.widget.WidgetStateSource
 import java.time.Clock
@@ -102,15 +102,8 @@ internal val TokklApplication.pomodoroSessionNotification: PomodoroSessionNotifi
 /** [TimerSyncService] while it runs in the foreground. */
 val TokklApplication.timerSyncService: TimerSyncService? get() = component<TimerSyncServiceSlot>().service
 
-/**
- * The clock the widget reads on each event. Setting it replaces the app's [WidgetClock]
- * definition, which the widget state resolves again on its next event.
- */
-var TokklApplication.widgetClock: Clock
-    get() = component(WidgetClock)
-    set(value) {
-        GlobalContext.get().declare(value, WidgetClock, allowOverride = true)
-    }
+/** The app's clock, which [com.github.e0ipso.tokkl.TestTokklApplication] makes a [TestClock]. */
+val TokklApplication.testClock: TestClock get() = component<Clock>() as TestClock
 
 fun TokklApplication.renewTimerState() = component<AccountTimerStates>().renew()
 

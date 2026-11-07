@@ -6,7 +6,7 @@ import androidx.test.runner.AndroidJUnitRunner
 import com.github.e0ipso.tokkl.StepAwareShardingFilter
 
 /** Keep View checks on for every Espresso action, including hosted widget Views. */
-class AccessibilityTestRunner : AndroidJUnitRunner() {
+open class AccessibilityTestRunner : AndroidJUnitRunner() {
     override fun onCreate(arguments: Bundle) {
         shardStepsTogether(arguments)
         super.onCreate(arguments)

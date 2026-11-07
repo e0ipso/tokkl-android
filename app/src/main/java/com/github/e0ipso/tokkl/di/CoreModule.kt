@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.trust.SessionTrust
+import java.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +21,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
-/** Dispatchers, the application scope and the signed-in [Session]. */
+/** Dispatchers, the application scope, the wall clock and the signed-in [Session]. */
 internal val coreModule = module {
     single<CoroutineDispatcher>(IoDispatcher) { Dispatchers.IO }
     single<CoroutineDispatcher>(DefaultDispatcher) { Dispatchers.Default }
@@ -30,6 +31,9 @@ internal val coreModule = module {
      * main thread. Nothing cancels it, so it lasts as long as the process.
      */
     single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
+
+    /** The wall clock, for components that read the time on each event, such as the widget's day. */
+    single<Clock> { Clock.systemUTC() }
 
     single { ServerConfigStore(androidContext()) }
     single { ApiTokenStore(androidContext()) }

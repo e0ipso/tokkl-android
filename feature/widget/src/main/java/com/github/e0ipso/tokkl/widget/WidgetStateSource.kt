@@ -37,7 +37,7 @@ class WidgetStateSource(
     accountSettings: AccountSettingsSource,
     capabilities: CapabilitiesSource,
     timerControls: TimerControlsSource,
-    clock: () -> Clock,
+    clock: Clock,
     io: CoroutineContext,
 ) {
 
@@ -76,7 +76,7 @@ class WidgetStateSource(
             val (entries, mappings) = history
             widgetState(
                 settings?.defaultWorkspaceId, controls, favorites, flags.favorites, projects, tasks,
-                entries = entries, settings = settings, now = clock().instant(), serverIdOf = mappings,
+                entries = entries, settings = settings, now = clock.instant(), serverIdOf = mappings,
             )
         }.flowOn(io).distinctUntilChanged()
     }

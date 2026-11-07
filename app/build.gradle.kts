@@ -96,7 +96,7 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
 
-        testInstrumentationRunner = "com.github.e0ipso.tokkl.accessibility.AccessibilityTestRunner"
+        testInstrumentationRunner = "com.github.e0ipso.tokkl.TokklTestRunner"
     }
 
     signingConfigs {

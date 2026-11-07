@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.widgetClock
+import com.github.e0ipso.tokkl.components.testClock
 import com.github.e0ipso.tokkl.components.widgetState
 import com.github.e0ipso.tokkl.feature.widget.R
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
@@ -34,7 +34,7 @@ class WidgetMidnightServerTest {
     private val fixture = TimerAcceptanceFixture()
     private val app get() = fixture.app
     @Before fun prepare() = fixture.prepare()
-    @After fun cleanup() { app.widgetClock = Clock.systemUTC(); fixture.cleanup() }
+    @After fun cleanup() { app.testClock.at = null; fixture.cleanup() }
 
     @Test fun unchangedRealRunningCheckRollsTheAccountDayAndMatchesTimerTotalsWithoutIdleWork() {
         // Clock injection avoids SET_TIME and leaves OS alarm/network time untouched.
@@ -42,8 +42,8 @@ class WidgetMidnightServerTest {
         val time = settings.time()!!
         val day = time.today()
         val midnight = day.plusDays(1).atStartOfDay(time.zone).toInstant()
-        val clock = AdvancingClock(midnight.minusSeconds(2))
-        app.widgetClock = clock
+        val clock = app.testClock
+        clock.at = midnight.minusSeconds(2)
         fixture.account.createEntry("Stopped today", day.atTime(10, 0).atZone(time.zone).toInstant(), day.atTime(11, 0).atZone(time.zone).toInstant())
         // Native Chronometers use real wall time. Keep the start in the past for both
         // clocks, including CI runs before noon in the account's timezone.
@@ -100,9 +100,4 @@ class WidgetMidnightServerTest {
         }
     }
     private fun ready() = runBlocking { app.widgetState.first() } as WidgetState.Ready
-    private class AdvancingClock(@Volatile var at: Instant) : Clock() {
-        override fun getZone(): ZoneId = ZoneOffset.UTC
-        override fun withZone(zone: ZoneId): Clock = this
-        override fun instant(): Instant = at
-    }
 }
