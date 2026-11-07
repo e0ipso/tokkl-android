@@ -1,9 +1,6 @@
 package com.github.e0ipso.tokkl.catalog
 
-import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -76,7 +73,7 @@ interface CatalogPageEvents {
 
 /**
  * The state of a page that manages one kind of the account's items on the server: projects,
- * clients or tags (docs/PRD.md P2 to P4). It loads them with [fetch] each time the page opens and
+ * clients or tags (docs/PRD.md P2 to P4). It loads them from [repository] each time the page opens and
  * each time the app comes back to the foreground with the page open, and sends each change at
  * once. Nothing is queued: offline, or with the server out of reach, nothing changes. After each
  * change the server accepts, [refreshCache] reloads the offline cache, so the picker, the history
@@ -84,19 +81,17 @@ interface CatalogPageEvents {
  *
  * Call every function on the main thread.
  *
- * @param client the signed-in account's API client, or null when signed out. Runs on [io].
+ * @param repository finds the workspace and reads the page's data from it. Runs on [io].
  * @param workspaceId the account's default workspace from the stored settings, or null when they
  *   do not have it.
  * @param refreshCache starts a refresh of the cache that reads the server after the change.
- * @param fetch reads the page's data from the workspace. Runs on [io].
  */
 class CatalogModel<D, O>(
-    private val client: ApiClientProvider,
+    private val repository: CatalogRepository<D>,
     private val workspaceId: () -> Long?,
     private val refreshCache: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val fetch: suspend (TogglApiClient, Long) -> ApiResult<D>,
 ) : CatalogPageEvents {
 
     private val mutableState = MutableStateFlow(CatalogState<D, O>())
@@ -178,25 +173,18 @@ class CatalogModel<D, O>(
     }
 
     /**
-     * Sends [request] to the workspace, unless a change cannot go now. Once the server accepts it,
+     * Sends [request] to the workspace, unless a change cannot go now. It runs on [io]. Once the server accepts it,
      * [apply] puts the answer into the data, the overlay closes and [done] says what happened, and
      * the cache refreshes. A refusal keeps the overlay open with the reason. An unreachable server
      * turns every action off until a load gets through. Once sent, the change reaches the server
      * also when the page's scope is cancelled meanwhile.
      */
-    fun <R> send(
-        request: suspend (TogglApiClient, Long) -> ApiResult<R>,
-        apply: (D, R) -> D,
-        done: (R) -> CatalogChange,
-    ) {
+    fun <R> send(request: suspend (workspace: Long) -> ApiResult<R>, apply: (D, R) -> D, done: (R) -> CatalogChange) {
         val workspace = workspace ?: return
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         scope.launch {
-            val answer = withContext(io + NonCancellable) {
-                val api = client() ?: return@withContext ApiResult.Failure(ApiError.AuthFailed)
-                request(api, workspace)
-            }
+            val answer = withContext(io + NonCancellable) { request(workspace) }
             // The page closed while the request ran. What the server accepted still reaches the cache.
             if (!opened) {
                 if (answer is ApiResult.Success) refreshCache()
@@ -254,12 +242,11 @@ class CatalogModel<D, O>(
     private class NotLoaded(val problem: ServerProblem) : Answer<Nothing>
 
     private suspend fun read(stored: Long?): Answer<D> {
-        val api = client() ?: return NotLoaded(ServerProblem.AuthFailed)
-        val workspace = when (val answer = managedWorkspace(api, stored)) {
+        val workspace = when (val answer = repository.workspace(stored)) {
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return NotLoaded(answer.error.toServerProblem())
         }
-        return when (val answer = fetch(api, workspace)) {
+        return when (val answer = repository.load(workspace)) {
             is ApiResult.Success -> Loaded(workspace, answer.value)
             is ApiResult.Failure -> NotLoaded(answer.error.toServerProblem())
         }

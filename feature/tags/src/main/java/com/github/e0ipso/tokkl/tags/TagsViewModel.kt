@@ -2,9 +2,6 @@ package com.github.e0ipso.tokkl.tags
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
@@ -42,10 +39,11 @@ typealias TagsState = CatalogState<TagsData, TagsOverlay>
  * the page opens or the app comes back to it, and the changes the page sends at once, as
  * [CatalogModel] describes.
  *
+ * @param repository the workspace's tags on the server.
  * @param cachedTags the tags on the phone, which the page lists while the server's do not load.
  */
 class TagsViewModel(
-    client: ApiClientProvider,
+    private val repository: TagsRepository,
     workspaceId: () -> Long?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,
@@ -55,12 +53,11 @@ class TagsViewModel(
     CatalogPageEvents {
 
     private val catalog = CatalogModel<TagsData, TagsOverlay>(
-        client,
+        repository,
         workspaceId,
         refreshCache,
         viewModelScope,
         io,
-        ::read,
     )
 
     val state: StateFlow<TagsState> = catalog.state
@@ -93,7 +90,7 @@ class TagsViewModel(
         val trimmed = name.trim()
         val known = state.value.data?.tags.orEmpty().mapTo(HashSet()) { it.id }
         catalog.send(
-            request = { api, workspace -> TagsServer(api, workspace).create(trimmed, known) },
+            request = { workspace -> repository.create(workspace, trimmed, known) },
             apply = TagsData::with,
             done = { CatalogChange.Created(it.name) },
         )
@@ -104,7 +101,7 @@ class TagsViewModel(
         val tag = (state.value.overlay as? TagsOverlay.Rename)?.tag ?: return
         val trimmed = name.trim()
         catalog.send(
-            request = { api, workspace -> TagsServer(api, workspace).rename(tag.id, trimmed) },
+            request = { workspace -> repository.rename(workspace, tag.id, trimmed) },
             apply = TagsData::with,
             done = { CatalogChange.Renamed(it.name) },
         )
@@ -114,22 +111,13 @@ class TagsViewModel(
     fun delete() {
         val tag = (state.value.overlay as? TagsOverlay.ConfirmDelete)?.tag ?: return
         catalog.send(
-            request = { api, workspace -> TagsServer(api, workspace).delete(tag.id) },
+            request = { workspace -> repository.delete(workspace, tag.id) },
             apply = { data, _ -> data.without(tag.id) },
             done = { CatalogChange.Deleted(tag.name) },
         )
     }
-
-    private suspend fun read(api: TogglApiClient, workspace: Long): ApiResult<TagsData> =
-        when (val answer = TagsServer(api, workspace).list()) {
-            is ApiResult.Success -> ApiResult.Success(
-                TagsData(answer.value.filter { it.workspaceId == workspace }.sortedForList()),
-            )
-
-            is ApiResult.Failure -> answer
-        }
 }
 
 /** By name, ignoring case, as Tokkl sorts them. */
-private fun List<Tag>.sortedForList(): List<Tag> =
+internal fun List<Tag>.sortedForList(): List<Tag> =
     sortedWith(compareBy<Tag, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id })

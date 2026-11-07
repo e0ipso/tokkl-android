@@ -2,9 +2,6 @@ package com.github.e0ipso.tokkl.projects
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -43,12 +40,15 @@ typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
  * each time the page opens or the app comes back to it, and the changes the page sends at once,
  * as [CatalogModel] describes. The form of a project the server sent lists its [tasks] (P5).
  *
+ * @param repository the workspace's projects on the server.
+ * @param tasksRepository the tasks of the project the form edits, on the server.
  * @param cachedProjects the projects on the phone, which the page lists while the server's do not
  *   load.
  * @param cachedClients the clients on the phone, which the form offers and the list names.
  */
 class ProjectsViewModel(
-    client: ApiClientProvider,
+    private val repository: ProjectsRepository,
+    tasksRepository: TasksRepository,
     workspaceId: () -> Long?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,
@@ -59,16 +59,15 @@ class ProjectsViewModel(
     CatalogPageEvents {
 
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(
-        client,
+        repository,
         workspaceId,
         refreshCache,
         viewModelScope,
         io,
-        ::read,
     )
 
     /** The task list of the project the form edits. */
-    val tasks = TasksModel(client, workspaceId, refreshCache, viewModelScope, io)
+    val tasks = TasksModel(tasksRepository, workspaceId, refreshCache, viewModelScope, io)
 
     val state: StateFlow<ProjectsState> = catalog.state
 
@@ -111,11 +110,10 @@ class ProjectsViewModel(
         val form = state.value.overlay ?: return
         val known = state.value.data?.projects.orEmpty().mapTo(HashSet()) { it.id }
         catalog.send(
-            request = { api, workspace ->
-                val server = ProjectsServer(api, workspace)
+            request = { workspace ->
                 when (form) {
-                    ProjectForm.New -> server.create(fields, known)
-                    is ProjectForm.Edit -> server.update(form.project.id, fields)
+                    ProjectForm.New -> repository.create(workspace, fields, known)
+                    is ProjectForm.Edit -> repository.update(workspace, form.project.id, fields)
                 }
             },
             apply = ProjectsData::with,
@@ -134,7 +132,7 @@ class ProjectsViewModel(
     /** Archives [project] when [active] is false, and restores it when true. */
     fun setActive(project: Project, active: Boolean) {
         catalog.send(
-            request = { api, workspace -> ProjectsServer(api, workspace).setActive(project.id, active) },
+            request = { workspace -> repository.setActive(workspace, project.id, active) },
             apply = ProjectsData::with,
             done = { saved ->
                 if (saved.active) {
@@ -147,23 +145,8 @@ class ProjectsViewModel(
             },
         )
     }
-
-    /** The workspace's projects and, for the form's hints only, its defaults, which may fail alone. */
-    private suspend fun read(api: TogglApiClient, workspace: Long): ApiResult<ProjectsData> {
-        val server = ProjectsServer(api, workspace)
-        return when (val projects = server.list()) {
-            is ApiResult.Success -> ApiResult.Success(
-                ProjectsData(
-                    projects = projects.value.filter { it.workspaceId == workspace }.sortedForList(),
-                    defaults = (server.defaults() as? ApiResult.Success)?.value,
-                ),
-            )
-
-            is ApiResult.Failure -> projects
-        }
-    }
 }
 
 /** By name, ignoring case, as Tokkl sorts them. */
-private fun List<Project>.sortedForList(): List<Project> =
+internal fun List<Project>.sortedForList(): List<Project> =
     sortedWith(compareBy<Project, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id })

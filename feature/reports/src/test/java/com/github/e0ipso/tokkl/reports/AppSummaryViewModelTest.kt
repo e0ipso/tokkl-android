@@ -86,7 +86,7 @@ class AppSummaryViewModelTest {
             accountSettings = MutableStateFlow(
                 AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
             ),
-            client = { testApi.client(url, ApiCredentials.ApiToken("test-token")) },
+            repository = ServerReportsRepository { testApi.client(url, ApiCredentials.ApiToken("test-token")) },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = io,
             clock = Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
@@ -170,7 +170,7 @@ class AppSummaryViewModelTest {
             accountSettings = MutableStateFlow(
                 AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
             ),
-            client = { testApi.client(url, ApiCredentials.ApiToken("test-token")) },
+            repository = ServerReportsRepository { testApi.client(url, ApiCredentials.ApiToken("test-token")) },
             scope = liveScope,
             io = Dispatchers.IO,
         )

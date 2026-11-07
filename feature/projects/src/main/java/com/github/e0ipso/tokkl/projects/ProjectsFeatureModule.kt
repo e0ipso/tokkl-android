@@ -11,13 +11,17 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** The Projects page: its view model and its screen. */
+/** The Projects page: its repositories, its view model and its screen. */
 val projectsFeatureModule = module {
+    single<ProjectsRepository> { ServerProjectsRepository(get<Session>()) }
+    single<TasksRepository> { ServerTasksRepository(get<Session>()) }
+
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
         val cache = get<AccountCache>()
         ProjectsViewModel(
-            client = get<Session>(),
+            repository = get(),
+            tasksRepository = get(),
             workspaceId = accountSettings::defaultWorkspaceId,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = viewModelCoroutineScope(),

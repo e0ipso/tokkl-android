@@ -1,10 +1,7 @@
 package com.github.e0ipso.tokkl.catalog
 
-import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -13,33 +10,38 @@ import org.junit.Test
 import java.io.IOException
 
 /**
- * The background and foreground pair of a catalog page's model, with a fetch that answers from
- * [server] and counts the loads. The page's activity calls [CatalogModel.wentToBackground] when it
+ * The background and foreground pair of a catalog page's model, with a repository that answers
+ * from [server] and counts the loads. The page's activity calls [CatalogModel.wentToBackground] when it
  * stops for a trip to the background, never for a configuration change, and
  * [CatalogModel.cameToForeground] on every start. Unconfined runs each load to the end inside the
  * call.
  */
 class CatalogModelTest {
 
-    private val testApi = TestApi(null)
-
     /** What the server lists, or null when it is out of reach. */
     private var server: List<String>? = listOf("Website")
     private var loads = 0
 
-    private val url = ServerUrl.parse("http://127.0.0.1:9/")!!
+    private val repository = object : CatalogRepository<List<String>> {
+        override suspend fun workspace(stored: Long?): ApiResult<Long> = ApiResult.Success(checkNotNull(stored))
+
+        override suspend fun load(workspace: Long): ApiResult<List<String>> {
+            assertEquals(7L, workspace)
+            loads++
+            return server?.let {
+                ApiResult.Success(
+                    it,
+                )
+            } ?: ApiResult.Failure(ApiError.Network(IOException("unreachable")))
+        }
+    }
 
     private val model = CatalogModel<List<String>, String>(
-        client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+        repository = repository,
         workspaceId = { 7L },
         refreshCache = {},
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = Dispatchers.Unconfined,
-        fetch = { _, workspace ->
-            assertEquals(7L, workspace)
-            loads++
-            server?.let { ApiResult.Success(it) } ?: ApiResult.Failure(ApiError.Network(IOException("unreachable")))
-        },
     )
 
     @Test

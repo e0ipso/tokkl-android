@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.trash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
@@ -68,11 +67,11 @@ data class TrashState(
  *
  * Call every function on the main thread.
  *
- * @param client the signed-in account's API client, or null when signed out. Runs on [io].
+ * @param repository the account's trash on the server. Runs on [io].
  * @param settings the account settings, for the times, dates and durations the page shows.
  */
 class TrashViewModel(
-    private val client: ApiClientProvider,
+    private val repository: TrashRepository,
     private val refreshCache: () -> Unit,
     private val trashMissing: () -> Unit,
     scope: CoroutineScope,
@@ -182,7 +181,7 @@ class TrashViewModel(
      * reaches the server also when the view model is cleared meanwhile.
      */
     private fun <R> send(
-        request: suspend (TrashServer) -> ApiResult<R>,
+        request: suspend (TrashRepository) -> ApiResult<R>,
         apply: (List<TrashEntry>, R) -> List<TrashEntry>,
         done: (R) -> TrashChange,
         restored: Boolean = false,
@@ -190,10 +189,7 @@ class TrashViewModel(
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         viewModelScope.launch {
-            val answer = withContext(io + NonCancellable) {
-                val api = client() ?: return@withContext ApiResult.Failure(ApiError.AuthFailed)
-                request(TrashServer(api))
-            }
+            val answer = withContext(io + NonCancellable) { request(repository) }
             if (answer is ApiResult.Success && restored) refreshCache()
             // The page closed while the request ran.
             if (!opened) return@launch
@@ -228,8 +224,7 @@ class TrashViewModel(
         loading = viewModelScope.launch {
             // A cancelled load cancels its request and drops its answer.
             val answer = withContext(io) {
-                val api = client() ?: return@withContext ApiResult.Failure(ApiError.AuthFailed)
-                TrashServer(api).list().also { if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing() }
+                repository.list().also { if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing() }
             }
             when (answer) {
                 is ApiResult.Success -> mutableState.update {

@@ -108,7 +108,8 @@ class ProjectsServerTest {
         }.orFail("archive Gone")
         runBlocking { app.accountRefresh.refresh().join() }
         model = ProjectsViewModel(
-            client = Session(context)::client,
+            repository = ServerProjectsRepository(Session(context)::client),
+            tasksRepository = ServerTasksRepository(Session(context)::client),
             workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
             refreshCache = { refreshes += app.accountRefresh.refreshAfterChange() },
             scope = scope,

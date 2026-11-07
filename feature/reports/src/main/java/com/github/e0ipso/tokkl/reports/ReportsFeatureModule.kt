@@ -17,8 +17,12 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import java.io.File
 
-/** Reports: the report CSV files, which a sign-out deletes, the view model and the screen. */
+/**
+ * Reports: the Reports API repository, the report CSV files, which a sign-out deletes, the view model
+ * and the screen.
+ */
 val reportsFeatureModule = module {
+    single<ReportsRepository> { ServerReportsRepository(get<Session>()) }
     single { ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)) } bind ExportFiles::class
 
     viewModel {
@@ -30,7 +34,7 @@ val reportsFeatureModule = module {
         val scope = viewModelCoroutineScope()
         ReportsViewModel(
             accountSettings = accountSettings.state,
-            client = session,
+            repository = get(),
             exportCapabilities = capabilities.state,
             exporter = ReportExportController(
                 client = session,

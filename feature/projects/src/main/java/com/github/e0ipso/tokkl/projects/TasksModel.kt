@@ -1,11 +1,10 @@
 package com.github.e0ipso.tokkl.projects
 
-import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
+import com.github.e0ipso.tokkl.catalog.CatalogRepository
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -37,9 +36,11 @@ typealias TasksState = CatalogState<TasksData, TaskOverlay>
  * each time a project's form opens or the app comes back to it, and the changes the list sends at
  * once, as [CatalogModel] describes. Nothing is queued, and after each change the server accepts,
  * [refreshCache] reloads the offline cache, so the entry editor's picker offers the change.
+ *
+ * @param repository the project's tasks on the server.
  */
 class TasksModel(
-    client: ApiClientProvider,
+    private val repository: TasksRepository,
     workspaceId: () -> Long?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,
@@ -50,7 +51,7 @@ class TasksModel(
     @Volatile
     private var project: Long? = null
 
-    private val catalog = CatalogModel<TasksData, TaskOverlay>(client, workspaceId, refreshCache, scope, io, ::read)
+    private val catalog = CatalogModel<TasksData, TaskOverlay>(OpenProject(), workspaceId, refreshCache, scope, io)
 
     val state: StateFlow<TasksState> = catalog.state
 
@@ -91,7 +92,7 @@ class TasksModel(
         val trimmed = name.trim()
         val known = state.value.data?.tasks.orEmpty().mapTo(HashSet()) { it.id }
         catalog.send(
-            request = { api, workspace -> TasksServer(api, workspace, project).create(trimmed, known) },
+            request = { workspace -> repository.create(workspace, project, trimmed, known) },
             apply = TasksData::with,
             done = { CatalogChange.Created(it.name) },
         )
@@ -103,7 +104,7 @@ class TasksModel(
         val task = (state.value.overlay as? TaskOverlay.Edit)?.task ?: return
         val trimmed = name.trim()
         catalog.send(
-            request = { api, workspace -> TasksServer(api, workspace, project).update(task.id, trimmed, done) },
+            request = { workspace -> repository.update(workspace, project, task.id, trimmed, done) },
             apply = TasksData::with,
             done = { CatalogChange.Saved(it.name) },
         )
@@ -114,28 +115,27 @@ class TasksModel(
         val project = project ?: return
         val task = (state.value.overlay as? TaskOverlay.ConfirmDelete)?.task ?: return
         catalog.send(
-            request = { api, workspace -> TasksServer(api, workspace, project).delete(task.id) },
+            request = { workspace -> repository.delete(workspace, project, task.id) },
             apply = { data, _ -> data.without(task.id) },
             done = { CatalogChange.Deleted(task.name) },
         )
     }
 
-    private suspend fun read(api: TogglApiClient, workspace: Long): ApiResult<TasksData> {
-        val project = project ?: return ApiResult.Failure(
-            ApiError.InvalidResponse(IllegalArgumentException("no project is open")),
-        )
-        return when (val answer = TasksServer(api, workspace, project).list()) {
-            is ApiResult.Success -> ApiResult.Success(
-                TasksData(answer.value.filter { it.projectId == project }.sortedForList()),
-            )
+    /** The tasks of the project open now, which the list loads. */
+    private inner class OpenProject : CatalogRepository<TasksData> {
+        override suspend fun workspace(stored: Long?): ApiResult<Long> = repository.workspace(stored)
 
-            is ApiResult.Failure -> answer
+        override suspend fun load(workspace: Long): ApiResult<TasksData> {
+            val project = project ?: return ApiResult.Failure(
+                ApiError.InvalidResponse(IllegalArgumentException("no project is open")),
+            )
+            return repository.load(workspace, project)
         }
     }
 }
 
 /** Open tasks before done ones, each by name ignoring case, as the web app lists them. */
-private fun List<ProjectTask>.sortedForList(): List<ProjectTask> = sortedWith(
+internal fun List<ProjectTask>.sortedForList(): List<ProjectTask> = sortedWith(
     compareBy<ProjectTask> { !it.active }
         .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name }
         .thenBy { it.id },

@@ -38,7 +38,7 @@ class TrashViewModelTest {
 
     private val model by lazy {
         TrashViewModel(
-            client = { client },
+            repository = ServerTrashRepository { client },
             refreshCache = { cacheRefreshes++ },
             trashMissing = { missing++ },
             scope = CoroutineScope(Dispatchers.Unconfined),

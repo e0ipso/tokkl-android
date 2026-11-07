@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.capabilities.Capabilities
@@ -35,7 +34,7 @@ import kotlin.coroutines.CoroutineContext
  * Call every function on the main thread.
  *
  * @param accountSettings the account's timezone, week start and duration format.
- * @param client the signed-in account's API client, or null when signed out. Runs on [io].
+ * @param repository the Reports API calls. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
  * @param filterOptions the projects, clients and tags the filter sheet offers, from the phone's cache.
  * @param exporter the CSV export, which runs on [scope] and is cancelled when this view model is.
@@ -43,7 +42,7 @@ import kotlin.coroutines.CoroutineContext
  */
 class ReportsViewModel(
     val accountSettings: StateFlow<AccountSettings?>,
-    private val client: ApiClientProvider,
+    private val repository: ReportsRepository,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock = Clock.systemUTC(),
@@ -269,15 +268,13 @@ class ReportsViewModel(
         filters: ReportFilters,
     ): Pair<ReportsState, ReportWorkspace?> {
         val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone) to known
-        val api = client() ?: return ReportsState.Failed(selection, ReportFailure.AuthFailed) to known
-        val server = ReportsServer(api)
-        val workspace = known ?: when (val answer = server.workspace()) {
+        val workspace = known ?: when (val answer = repository.workspace()) {
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return ReportsState.Failed(selection, failureOf(answer.error)) to null
         }
         val shown = when (tab) {
             ReportTab.SUMMARY -> when (
-                val answer = server.summary(
+                val answer = repository.summary(
                     workspace,
                     selection.range,
                     time.zone,
@@ -290,7 +287,7 @@ class ReportsViewModel(
             }
 
             ReportTab.DETAILED -> when (
-                val answer = server.detailedPage(
+                val answer = repository.detailedPage(
                     workspace,
                     selection.range,
                     time.zone,
@@ -306,7 +303,7 @@ class ReportsViewModel(
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
 
-            ReportTab.WEEKLY -> when (val answer = server.weekly(workspace, selection.range.from, filters)) {
+            ReportTab.WEEKLY -> when (val answer = repository.weekly(workspace, selection.range.from, filters)) {
                 is ApiResult.Success -> ReportsState.Loaded(
                     selection,
                     WeeklyReport.of(selection.range.from, answer.value),
@@ -327,12 +324,7 @@ class ReportsViewModel(
         filters: ReportFilters,
     ): ReportsState {
         val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone)
-        val api = client() ?: return ReportsState.Failed(selection, ReportFailure.AuthFailed)
-        return when (
-            val answer = ReportsServer(
-                api,
-            ).detailedPage(workspace, selection.range, time.zone, next, filters)
-        ) {
+        return when (val answer = repository.detailedPage(workspace, selection.range, time.zone, next, filters)) {
             is ApiResult.Success -> ReportsState.Loaded(
                 selection,
                 DetailedReport(report.entries + answer.value.entries, answer.value.nextRow),

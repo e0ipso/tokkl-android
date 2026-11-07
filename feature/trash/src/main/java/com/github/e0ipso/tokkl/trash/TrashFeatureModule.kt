@@ -11,12 +11,14 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** The Trash page: its view model and its screen. */
+/** The Trash page: its repository, its view model and its screen. */
 val trashFeatureModule = module {
+    single<TrashRepository> { ServerTrashRepository(get<Session>()) }
+
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
         TrashViewModel(
-            client = get<Session>(),
+            repository = get(),
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             trashMissing = get<CapabilitiesSource>()::trashMissing,
             scope = viewModelCoroutineScope(),

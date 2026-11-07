@@ -11,12 +11,14 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** The Tags page: its view model and its screen. */
+/** The Tags page: its repository, its view model and its screen. */
 val tagsFeatureModule = module {
+    single<TagsRepository> { ServerTagsRepository(get<Session>()) }
+
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
         TagsViewModel(
-            client = get<Session>(),
+            repository = get(),
             workspaceId = accountSettings::defaultWorkspaceId,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = viewModelCoroutineScope(),

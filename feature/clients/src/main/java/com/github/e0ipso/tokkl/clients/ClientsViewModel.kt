@@ -2,9 +2,6 @@ package com.github.e0ipso.tokkl.clients
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
@@ -51,11 +48,12 @@ typealias ClientsState = CatalogState<ClientsData, ClientsOverlay>
  * [CatalogModel] describes.
  * Archiving a client archives its projects, and restoring it restores them, as in the web app.
  *
+ * @param repository the workspace's clients on the server.
  * @param cachedClients the clients on the phone, which the page lists while the server's do not
  *   load.
  */
 class ClientsViewModel(
-    client: ApiClientProvider,
+    private val repository: ClientsRepository,
     workspaceId: () -> Long?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,
@@ -65,12 +63,11 @@ class ClientsViewModel(
     CatalogPageEvents {
 
     private val catalog = CatalogModel<ClientsData, ClientsOverlay>(
-        client,
+        repository,
         workspaceId,
         refreshCache,
         viewModelScope,
         io,
-        ::read,
     )
 
     val state: StateFlow<ClientsState> = catalog.state
@@ -112,9 +109,12 @@ class ClientsViewModel(
         val note = notes.trim().ifEmpty { null }
         val known = state.value.data?.clients.orEmpty().mapTo(HashSet()) { it.id }
         catalog.send(
-            request = { api, workspace ->
-                val server = ClientsServer(api, workspace)
-                if (editing == null) server.create(trimmed, note, known) else server.update(editing.id, trimmed, note)
+            request = { workspace ->
+                if (editing == null) {
+                    repository.create(workspace, trimmed, note, known)
+                } else {
+                    repository.update(workspace, editing.id, trimmed, note)
+                }
             },
             apply = ClientsData::with,
             done = { saved ->
@@ -133,7 +133,7 @@ class ClientsViewModel(
     fun archive() {
         val client = (state.value.overlay as? ClientsOverlay.ConfirmArchive)?.client ?: return
         catalog.send(
-            request = { api, workspace -> ClientsServer(api, workspace).archive(client.id) },
+            request = { workspace -> repository.archive(workspace, client.id) },
             apply = { data, _ -> data.with(client.copy(archived = true)) },
             done = { CatalogChange.Archived(client.name) },
         )
@@ -142,27 +142,13 @@ class ClientsViewModel(
     /** Restores [client] with its projects. */
     fun restore(client: Client) {
         catalog.send(
-            request = { api, workspace -> ClientsServer(api, workspace).restore(client.id) },
+            request = { workspace -> repository.restore(workspace, client.id) },
             apply = ClientsData::with,
             done = { saved -> CatalogChange.Restored(saved.name) },
         )
     }
-
-    /** The workspace's clients and the number of projects each has. */
-    private suspend fun read(api: TogglApiClient, workspace: Long): ApiResult<ClientsData> {
-        val server = ClientsServer(api, workspace)
-        val clients = when (val answer = server.list()) {
-            is ApiResult.Success -> answer.value.filter { it.workspaceId == workspace }.sortedForList()
-            is ApiResult.Failure -> return answer
-        }
-        val counts = when (val answer = server.projects()) {
-            is ApiResult.Success -> answer.value.mapNotNull { it.clientId }.groupingBy { it }.eachCount()
-            is ApiResult.Failure -> return answer
-        }
-        return ApiResult.Success(ClientsData(clients, counts))
-    }
 }
 
 /** By name, ignoring case, as Tokkl sorts them. */
-private fun List<Client>.sortedForList(): List<Client> =
+internal fun List<Client>.sortedForList(): List<Client> =
     sortedWith(compareBy<Client, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id })

@@ -88,7 +88,7 @@ class ReportTabsViewModelTest {
         testApi.trust = InMemoryServerTrust(url)
         model = ReportsViewModel(
             settings,
-            { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            ServerReportsRepository { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             CoroutineScope(Dispatchers.Unconfined),
             io,
             Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
