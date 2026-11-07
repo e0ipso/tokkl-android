@@ -92,8 +92,7 @@ Compose:
       - LocalSectionHue
       - LocalTokklExtraColors
       - LocalOuterTopGone
-  # CatalogPageEffects runs a catalog page's open, close, reconnect and background events, which
-  # each catalog view model has through the CatalogPageEvents interface. TimerBarCore is the part
-  # of TimerBar that wires the timer view model's events into TimerBarContent.
+  # TimerBarCore is the part of TimerBar that wires the timer view model's events into
+  # TimerBarContent.
   ViewModelForwarding:
-    allowedForwarding: ['CatalogPageEffects', 'TimerBarCore']
+    allowedForwarding: ['TimerBarCore']

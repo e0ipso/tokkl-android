@@ -11,8 +11,8 @@ import java.io.IOException
 
 /**
  * The background and foreground pair of a catalog page's model, with a repository that answers
- * from [server] and counts the loads. The page's activity calls [CatalogModel.wentToBackground] when it
- * stops for a trip to the background, never for a configuration change, and
+ * from [server] and counts the loads. AppEvents calls [CatalogModel.wentToBackground] when
+ * MainActivity stops for a trip to the background, never for a configuration change, and
  * [CatalogModel.cameToForeground] on every start. Unconfined runs each load to the end inside the
  * call.
  */

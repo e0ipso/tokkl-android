@@ -2,10 +2,13 @@ package com.github.e0ipso.tokkl.trash
 
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.picker.offlineIn
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.Session
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -17,13 +20,16 @@ val trashFeatureModule = module {
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
+        val scope = viewModelCoroutineScope()
         TrashViewModel(
             repository = get(),
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             trashMissing = get<CapabilitiesSource>()::trashMissing,
-            scope = viewModelCoroutineScope(),
+            scope = scope,
             io = io(),
             settings = accountSettings.state,
+            offline = get<DefaultNetwork>().offlineIn(scope),
+            appEvents = get<AppEvents>().events,
         )
     }
 

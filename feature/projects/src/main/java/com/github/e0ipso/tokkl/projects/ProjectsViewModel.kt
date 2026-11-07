@@ -1,17 +1,26 @@
 package com.github.e0ipso.tokkl.projects
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
-import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.CatalogState
+import com.github.e0ipso.tokkl.catalog.PageEvents
+import com.github.e0ipso.tokkl.catalog.followTrips
+import com.github.e0ipso.tokkl.platform.whileShown
+import com.github.e0ipso.tokkl.session.AppEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.CoroutineContext
 
 /** The project form: a new project, or [Edit] of one the server sent. */
@@ -36,6 +45,21 @@ data class ProjectsData(val projects: List<Project>, val defaults: WorkspaceDefa
 typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
 
 /**
+ * The projects page: what the server sent and the form open over it in [catalog], whether the
+ * phone is [offline], the projects and clients on the phone of the page's workspace, which the
+ * page lists while the server's do not load and the form offers, and the [tasks] of the project
+ * the form edits.
+ */
+@Immutable
+data class ProjectsPageState(
+    val catalog: ProjectsState = ProjectsState(),
+    val offline: Boolean = false,
+    val cachedProjects: List<CachedProject> = emptyList(),
+    val clients: List<CachedClient> = emptyList(),
+    val tasks: TasksState = TasksState(),
+)
+
+/**
  * The projects page's state (docs/PRD.md P2): the workspace's projects from the server, loaded
  * each time the page opens or the app comes back to it, and the changes the page sends at once,
  * as [CatalogModel] describes. The form of a project the server sent lists its [tasks] (P5).
@@ -45,6 +69,8 @@ typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
  * @param cachedProjects the projects on the phone, which the page lists while the server's do not
  *   load.
  * @param cachedClients the clients on the phone, which the form offers and the list names.
+ * @param offline whether the phone is offline, when nothing can change.
+ * @param appEvents MainActivity's trips to the background and back, which load the page again.
  */
 class ProjectsViewModel(
     private val repository: ProjectsRepository,
@@ -53,10 +79,12 @@ class ProjectsViewModel(
     refreshCache: () -> Unit,
     scope: CoroutineScope,
     io: CoroutineContext,
-    val cachedProjects: Flow<List<CachedProject>> = flowOf(emptyList()),
-    val cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
+    cachedProjects: Flow<List<CachedProject>> = flowOf(emptyList()),
+    cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
+    offline: StateFlow<Boolean> = MutableStateFlow(false),
+    appEvents: Flow<AppEvent> = emptyFlow(),
 ) : ViewModel(scope),
-    CatalogPageEvents {
+    PageEvents {
 
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(
         repository,
@@ -70,6 +98,28 @@ class ProjectsViewModel(
     val tasks = TasksModel(tasksRepository, workspaceId, refreshCache, viewModelScope, io)
 
     val state: StateFlow<ProjectsState> = catalog.state
+
+    /** What the page shows, while it reads it. The cached rows are empty until the cache is read. */
+    val page: StateFlow<ProjectsPageState> = combine(
+        state,
+        offline,
+        cachedProjects.onStart { emit(emptyList()) },
+        cachedClients.onStart { emit(emptyList()) },
+        tasks.state,
+    ) { shown, isOffline, projects, clients, taskList ->
+        val workspace = workspace()
+        ProjectsPageState(
+            catalog = shown,
+            offline = isOffline,
+            cachedProjects = projects.filter { workspace == null || it.workspaceId == workspace },
+            clients = clients.filter { workspace == null || it.workspaceId == workspace },
+            tasks = taskList,
+        )
+    }.stateIn(viewModelScope, whileShown, ProjectsPageState(state.value, offline.value, tasks = tasks.state.value))
+
+    init {
+        followTrips(appEvents, viewModelScope)
+    }
 
     fun workspace(): Long? = catalog.workspace()
 

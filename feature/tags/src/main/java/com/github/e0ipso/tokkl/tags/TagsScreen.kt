@@ -43,13 +43,12 @@ import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
-import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
+import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.feature.tags.R
-import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
@@ -65,15 +64,13 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 @Composable
 fun TagsScreen(model: TagsViewModel, modifier: Modifier = Modifier) {
-    val offline = rememberOffline()
-    CatalogPageEffects(model, offline)
-    val state by model.state.collectAsStateWithLifecycle()
-    val cachedTags by model.cachedTags.collectAsStateWithLifecycle(initialValue = emptyList())
-    val workspace = model.workspace()
+    PageVisitEffect(onOpen = model::open, onClose = model::close)
+    val page by model.page.collectAsStateWithLifecycle()
+    LaunchedEffect(page.offline) { if (!page.offline) model.reconnected() }
     TagsContent(
-        state = state,
-        offline = offline,
-        cachedTags = cachedTags.filter { workspace == null || it.workspaceId == workspace },
+        state = page.catalog,
+        offline = page.offline,
+        cachedTags = page.cachedTags,
         actions = TagsActions(
             onRetry = model::retry,
             onCreate = model::create,

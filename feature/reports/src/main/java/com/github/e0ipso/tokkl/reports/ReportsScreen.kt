@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.reports
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
@@ -26,11 +25,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -38,8 +34,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.currentStateAsState
+import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -61,36 +59,18 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
  */
 @Composable
 fun ReportsScreen(model: ReportsViewModel, modifier: Modifier = Modifier) {
-    val activity = LocalActivity.current
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    DisposableEffect(model) {
-        model.open()
-        onDispose { if (activity?.isChangingConfigurations != true) model.close() }
-    }
-    DisposableEffect(model, lifecycle) {
-        // Adding the observer replays ON_START at once, which the model ignores until a stop.
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_STOP -> if (activity?.isChangingConfigurations != true) model.wentToBackground()
-                Lifecycle.Event.ON_START -> model.cameToForeground()
-                else -> Unit
-            }
-        }
-        lifecycle.addObserver(observer)
-        onDispose { lifecycle.removeObserver(observer) }
-    }
+    PageVisitEffect(onOpen = model::open, onClose = model::close)
     val context = LocalContext.current
     val shareTitle = stringResource(R.string.reports_share)
-    val exportState by model.exportState.collectAsState()
-    val capabilities by model.exportCapabilities.collectAsState()
-    val lifecycleState by lifecycle.currentStateFlow.collectAsState()
+    val page by model.page.collectAsStateWithLifecycle()
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val chooser = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         // The chooser may return RESULT_CANCELED even after a selection. Files stay bounded
         // and readable for receivers that open their stream after the chooser has closed.
         model.exportShareFinished()
     }
-    LaunchedEffect(exportState, lifecycleState) {
-        if (exportState is ReportExportState.Ready && lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
+    LaunchedEffect(page.exportState, lifecycleState) {
+        if (page.exportState is ReportExportState.Ready && lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
             model.launchExportShare { file ->
                 try {
                     val send = ReportCsvShare.intent(context, file)
@@ -109,19 +89,13 @@ fun ReportsScreen(model: ReportsViewModel, modifier: Modifier = Modifier) {
             }
         }
     }
-    val state by model.state.collectAsState()
-    val tab by model.tab.collectAsState()
-    val settings by model.accountSettings.collectAsState()
-    val time = remember(settings) { model.accountTime() }
-    val filters by model.filters.collectAsState()
-    val filterOptions by model.filterOptions.collectAsState()
     ReportsContent(
-        state = state,
-        tab = tab,
-        settings = settings,
-        time = time,
-        filters = filters,
-        filterOptions = filterOptions,
+        state = page.report,
+        tab = page.tab,
+        settings = page.settings,
+        time = page.time,
+        filters = page.filters,
+        filterOptions = page.filterOptions,
         onTab = model::selectTab,
         onShift = model::shift,
         onPreset = model::select,
@@ -129,8 +103,8 @@ fun ReportsScreen(model: ReportsViewModel, modifier: Modifier = Modifier) {
         onFilters = model::applyFilters,
         onRetry = model::retry,
         onLoadMore = model::loadMore,
-        exportSupported = tab.csvKind()?.let(capabilities::supports) == true,
-        exportState = exportState,
+        exportSupported = page.exportSupported,
+        exportState = page.exportState,
         onExport = model::exportCsv,
         modifier = modifier,
     )

@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.catalog.PageEvents
+import com.github.e0ipso.tokkl.catalog.PageReloads
+import com.github.e0ipso.tokkl.catalog.followTrips
+import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -14,7 +18,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -38,7 +44,8 @@ import kotlin.coroutines.CoroutineContext
  * @param clock where today comes from, in the account's timezone.
  * @param filterOptions the projects, clients and tags the filter sheet offers, from the phone's cache.
  * @param exporter the CSV export, which runs on [scope] and is cancelled when this view model is.
- * @param appEvents the network's returns, each of which calls [reconnected].
+ * @param appEvents MainActivity's trips to the background and back, which ask again for the range
+ *   on screen, and the network's returns, each of which calls [reconnected].
  */
 class ReportsViewModel(
     val accountSettings: StateFlow<AccountSettings?>,
@@ -50,7 +57,8 @@ class ReportsViewModel(
     val exportCapabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
     private val exporter: ReportExportController? = null,
     appEvents: Flow<AppEvent> = emptyFlow(),
-) : ViewModel(scope) {
+) : ViewModel(scope),
+    PageEvents {
 
     val exportState: StateFlow<ReportExportState> = exporter?.state ?: MutableStateFlow(ReportExportState.Idle)
 
@@ -100,28 +108,46 @@ class ReportsViewModel(
     /** The filters every tab's report applies. They stay when the screen closes and opens again, as the tab does. */
     val filters: StateFlow<ReportFilters> = mutableFilters.asStateFlow()
 
+    /** What the screen shows, while it reads it. */
+    val page: StateFlow<ReportsPageState> = combine(
+        combine(state, tab, filters, ::Triple),
+        accountSettings,
+        filterOptions,
+        exportState,
+        exportCapabilities,
+    ) { (report, shownTab, shownFilters), settings, options, export, capabilities ->
+        ReportsPageState(
+            report = report,
+            tab = shownTab,
+            settings = settings,
+            time = settings?.time(clock),
+            filters = shownFilters,
+            filterOptions = options,
+            exportSupported = shownTab.csvKind()?.let(capabilities::supports) == true,
+            exportState = export,
+        )
+    }.stateIn(viewModelScope, whileShown, pageNow())
+
     /** The account's workspace and rounding, read once each time the screen opens. */
     private var workspace: ReportWorkspace? = null
 
     private var loading: Job? = null
 
-    /** The app went to the background with the screen open, so what it shows may be old. */
-    private var backgrounded = false
+    /** The screen loads this week when it opens, and the range on screen after a trip to the background. */
+    private val reloads = PageReloads(open = { select(RangePreset.THIS_WEEK) }, reload = ::retry)
 
     /**
      * Opens the screen on this week. Does nothing while the screen is open, so a configuration
      * change keeps the report it shows instead of asking the server again.
      */
-    fun open() {
-        if (state.value == ReportsState.Closed) select(RangePreset.THIS_WEEK)
-    }
+    override fun open() = reloads.open()
 
     /** Opens the widget day report. */
     fun openToday() {
         // Weekly expands a one-day range to a week. Widget totals always describe one day.
         mutableTab.value = ReportTab.SUMMARY
         mutableFilters.value = ReportFilters()
-        backgrounded = false
+        reloads.openLoading()
         select(RangePreset.TODAY)
     }
 
@@ -186,40 +212,34 @@ class ReportsViewModel(
     }
 
     /**
-     * The app went to the background with the screen open. Call it when the activity stops, but
-     * not for a configuration change, which is no trip to the background.
+     * The app went to the background with the screen open. It is not called for a configuration
+     * change, which is no trip to the background.
      */
-    fun wentToBackground() {
-        if (state.value != ReportsState.Closed) backgrounded = true
-    }
+    override fun wentToBackground() = reloads.wentToBackground()
 
     /**
      * The app came back to the foreground. After [wentToBackground], asks again for the range on
      * screen, and shows no numbers until the answer comes, so a phone that lost its connection in
      * the background says that reports need the server instead of showing old numbers.
      */
-    fun cameToForeground() {
-        if (!backgrounded) return
-        backgrounded = false
-        retry()
-    }
+    override fun cameToForeground() = reloads.cameToForeground()
 
     /**
      * The network came back while the app is in the foreground. A report that failed for want of
      * an answer asks again; any other state asks nothing.
      */
-    fun reconnected() {
+    override fun reconnected() {
         val failed = state.value as? ReportsState.Failed ?: return
         if (failed.failure == ReportFailure.Unreachable) load(failed.selection)
     }
 
     /** Closes the screen: stops waiting for an answer and forgets the report and the workspace. */
-    fun close() {
+    override fun close() {
         exporter?.cancel()
         loading?.cancel()
         loading = null
         workspace = null
-        backgrounded = false
+        reloads.close()
         mutableState.value = ReportsState.Closed
     }
 
@@ -336,7 +356,20 @@ class ReportsViewModel(
 
     private fun failureOf(error: ApiError): ReportFailure = reportFailureOf(error)
 
+    /** What [page] starts with, from the flows as they are now. */
+    private fun pageNow() = ReportsPageState(
+        report = state.value,
+        tab = tab.value,
+        settings = accountSettings.value,
+        time = accountTime(),
+        filters = filters.value,
+        filterOptions = filterOptions.value,
+        exportSupported = tab.value.csvKind()?.let(exportCapabilities.value::supports) == true,
+        exportState = exportState.value,
+    )
+
     init {
+        followTrips(appEvents, viewModelScope)
         viewModelScope.launch { appEvents.collect { if (it == AppEvent.RECONNECTED) reconnected() } }
     }
 }

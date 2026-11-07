@@ -2,10 +2,13 @@ package com.github.e0ipso.tokkl.tags
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.picker.offlineIn
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.Session
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -17,13 +20,16 @@ val tagsFeatureModule = module {
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
+        val scope = viewModelCoroutineScope()
         TagsViewModel(
             repository = get(),
             workspaceId = accountSettings::defaultWorkspaceId,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
-            scope = viewModelCoroutineScope(),
+            scope = scope,
             io = io(),
             cachedTags = get<AccountCache>().tags,
+            offline = get<DefaultNetwork>().offlineIn(scope),
+            appEvents = get<AppEvents>().events,
         )
     }
 

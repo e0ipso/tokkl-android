@@ -1,16 +1,25 @@
 package com.github.e0ipso.tokkl.clients
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
-import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.CatalogState
+import com.github.e0ipso.tokkl.catalog.PageEvents
+import com.github.e0ipso.tokkl.catalog.followTrips
+import com.github.e0ipso.tokkl.platform.whileShown
+import com.github.e0ipso.tokkl.session.AppEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.CoroutineContext
 
 /** What the clients page opens over its list. */
@@ -43,6 +52,18 @@ data class ClientsData(val clients: List<Client>, val projectCounts: Map<Long, I
 typealias ClientsState = CatalogState<ClientsData, ClientsOverlay>
 
 /**
+ * The clients page: what the server sent and what is open over it in [catalog], whether the
+ * phone is [offline], and the clients on the phone of the page's workspace, which the page lists
+ * while the server's do not load.
+ */
+@Immutable
+data class ClientsPageState(
+    val catalog: ClientsState = ClientsState(),
+    val offline: Boolean = false,
+    val cachedClients: List<CachedClient> = emptyList(),
+)
+
+/**
  * The clients page's state (docs/PRD.md P3): the workspace's clients from the server, loaded each
  * time the page opens or the app comes back to it, and the changes the page sends at once, as
  * [CatalogModel] describes.
@@ -51,6 +72,8 @@ typealias ClientsState = CatalogState<ClientsData, ClientsOverlay>
  * @param repository the workspace's clients on the server.
  * @param cachedClients the clients on the phone, which the page lists while the server's do not
  *   load.
+ * @param offline whether the phone is offline, when nothing can change.
+ * @param appEvents MainActivity's trips to the background and back, which load the page again.
  */
 class ClientsViewModel(
     private val repository: ClientsRepository,
@@ -58,9 +81,11 @@ class ClientsViewModel(
     refreshCache: () -> Unit,
     scope: CoroutineScope,
     io: CoroutineContext,
-    val cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
+    cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
+    offline: StateFlow<Boolean> = MutableStateFlow(false),
+    appEvents: Flow<AppEvent> = emptyFlow(),
 ) : ViewModel(scope),
-    CatalogPageEvents {
+    PageEvents {
 
     private val catalog = CatalogModel<ClientsData, ClientsOverlay>(
         repository,
@@ -71,6 +96,20 @@ class ClientsViewModel(
     )
 
     val state: StateFlow<ClientsState> = catalog.state
+
+    /** What the page shows, while it reads it. The cached rows are empty until the cache is read. */
+    val page: StateFlow<ClientsPageState> = combine(
+        state,
+        offline,
+        cachedClients.onStart { emit(emptyList()) },
+    ) { shown, isOffline, cached ->
+        val workspace = workspace()
+        ClientsPageState(shown, isOffline, cached.filter { workspace == null || it.workspaceId == workspace })
+    }.stateIn(viewModelScope, whileShown, ClientsPageState(state.value, offline.value))
+
+    init {
+        followTrips(appEvents, viewModelScope)
+    }
 
     fun workspace(): Long? = catalog.workspace()
 

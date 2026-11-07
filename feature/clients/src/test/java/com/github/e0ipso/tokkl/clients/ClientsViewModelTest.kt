@@ -4,9 +4,15 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -124,9 +130,39 @@ class ClientsViewModelTest {
         assertEquals("sorted by name", listOf("Acme", "Surf school"), model.state.value.data!!.clients.map { it.name })
     }
 
+    @Test
+    fun thePageListsTheCachedClientsOfItsWorkspaceAndSaysWhenThePhoneIsOffline() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        val offline = MutableStateFlow(false)
+        val page = ClientsViewModel(
+            repository = ServerClientsRepository {
+                testApi.client(checkNotNull(testApi.stored), ApiCredentials.ApiToken("tok-123"))
+            },
+            workspaceId = { 7L },
+            refreshCache = {},
+            scope = scope,
+            io = Dispatchers.Unconfined,
+            cachedClients = MutableStateFlow(listOf(CACHED_ACME, CachedClient(9, 8, "Elsewhere", archived = false))),
+            offline = offline,
+        )
+        val reader = scope.launch { page.page.collect {} }
+        page.open()
+        offline.value = true
+
+        val shown = page.page.first { it.offline }
+        assertEquals(listOf(CACHED_ACME), shown.cachedClients)
+        assertEquals(listOf("Acme"), shown.catalog.data!!.clients.map { it.name })
+        reader.cancel()
+        scope.cancel()
+    }
+
     private fun json(body: String) = MockResponse.Builder()
         .code(200)
         .addHeader("Content-Type", "application/json")
         .body(body)
         .build()
+
+    private companion object {
+        val CACHED_ACME = CachedClient(1, 7, "Acme", archived = false)
+    }
 }

@@ -1,7 +1,10 @@
 package com.github.e0ipso.tokkl.reports
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.HttpStatus
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.time.AccountTime
 
 /** A range and the preset it came from, null for a custom range or one stepped to. */
 data class RangeSelection(val range: ReportRange, val preset: RangePreset?)
@@ -81,3 +84,21 @@ internal fun reportFailureOf(error: ApiError): ReportFailure = when (error) {
 /** What a reverse proxy answers while the Tokkl server behind it is down. */
 private val PROXY_ANSWERS_SERVER_DOWN =
     setOf(HttpStatus.BAD_GATEWAY, HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.GATEWAY_TIMEOUT)
+
+/**
+ * Everything the reports screen shows: the [report] of the [tab] on screen, the account
+ * [settings] and their [time], null when the phone cannot resolve the account's timezone, the
+ * [filters] and what the filter sheet offers in [filterOptions], and the CSV export, which shows
+ * only where the server offers the tab's export ([exportSupported]).
+ */
+@Immutable
+data class ReportsPageState(
+    val report: ReportsState = ReportsState.Closed,
+    val tab: ReportTab = ReportTab.SUMMARY,
+    val settings: AccountSettings? = null,
+    val time: AccountTime? = null,
+    val filters: ReportFilters = ReportFilters(),
+    val filterOptions: FilterOptions = FilterOptions.NONE,
+    val exportSupported: Boolean = false,
+    val exportState: ReportExportState = ReportExportState.Idle,
+)

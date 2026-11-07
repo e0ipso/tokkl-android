@@ -14,6 +14,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -26,12 +27,11 @@ import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
-import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
+import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.feature.trash.R
-import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -55,14 +55,13 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 @Composable
 fun TrashScreen(model: TrashViewModel, modifier: Modifier = Modifier) {
-    val offline = rememberOffline()
-    CatalogPageEffects(model, offline)
-    val state by model.state.collectAsStateWithLifecycle()
-    val settings by model.settings.collectAsStateWithLifecycle()
+    PageVisitEffect(onOpen = model::open, onClose = model::close)
+    val page by model.page.collectAsStateWithLifecycle()
+    LaunchedEffect(page.offline) { if (!page.offline) model.reconnected() }
     TrashContent(
-        state = state,
-        offline = offline,
-        settings = settings,
+        state = page.trash,
+        offline = page.offline,
+        settings = page.settings,
         actions = TrashActions(
             onRetry = model::retry,
             onRestore = model::restore,

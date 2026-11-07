@@ -1,16 +1,25 @@
 package com.github.e0ipso.tokkl.tags
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
-import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.CatalogState
+import com.github.e0ipso.tokkl.catalog.PageEvents
+import com.github.e0ipso.tokkl.catalog.followTrips
+import com.github.e0ipso.tokkl.platform.whileShown
+import com.github.e0ipso.tokkl.session.AppEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.CoroutineContext
 
 /** What the tags page opens over its list. */
@@ -35,12 +44,26 @@ data class TagsData(val tags: List<Tag>) {
 typealias TagsState = CatalogState<TagsData, TagsOverlay>
 
 /**
+ * The tags page: what the server sent and what is open over it in [catalog], whether the phone
+ * is [offline], and the tags on the phone of the page's workspace, which the page lists while
+ * the server's do not load.
+ */
+@Immutable
+data class TagsPageState(
+    val catalog: TagsState = TagsState(),
+    val offline: Boolean = false,
+    val cachedTags: List<CachedTag> = emptyList(),
+)
+
+/**
  * The tags page's state (docs/PRD.md P4): the workspace's tags from the server, loaded each time
  * the page opens or the app comes back to it, and the changes the page sends at once, as
  * [CatalogModel] describes.
  *
  * @param repository the workspace's tags on the server.
  * @param cachedTags the tags on the phone, which the page lists while the server's do not load.
+ * @param offline whether the phone is offline, when nothing can change.
+ * @param appEvents MainActivity's trips to the background and back, which load the page again.
  */
 class TagsViewModel(
     private val repository: TagsRepository,
@@ -48,9 +71,11 @@ class TagsViewModel(
     refreshCache: () -> Unit,
     scope: CoroutineScope,
     io: CoroutineContext,
-    val cachedTags: Flow<List<CachedTag>> = flowOf(emptyList()),
+    cachedTags: Flow<List<CachedTag>> = flowOf(emptyList()),
+    offline: StateFlow<Boolean> = MutableStateFlow(false),
+    appEvents: Flow<AppEvent> = emptyFlow(),
 ) : ViewModel(scope),
-    CatalogPageEvents {
+    PageEvents {
 
     private val catalog = CatalogModel<TagsData, TagsOverlay>(
         repository,
@@ -61,6 +86,20 @@ class TagsViewModel(
     )
 
     val state: StateFlow<TagsState> = catalog.state
+
+    /** What the page shows, while it reads it. The cached rows are empty until the cache is read. */
+    val page: StateFlow<TagsPageState> = combine(
+        state,
+        offline,
+        cachedTags.onStart { emit(emptyList()) },
+    ) { shown, isOffline, cached ->
+        val workspace = workspace()
+        TagsPageState(shown, isOffline, cached.filter { workspace == null || it.workspaceId == workspace })
+    }.stateIn(viewModelScope, whileShown, TagsPageState(state.value, offline.value))
+
+    init {
+        followTrips(appEvents, viewModelScope)
+    }
 
     fun workspace(): Long? = catalog.workspace()
 

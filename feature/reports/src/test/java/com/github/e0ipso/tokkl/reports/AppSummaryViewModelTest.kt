@@ -175,9 +175,11 @@ class AppSummaryViewModelTest {
             io = Dispatchers.IO,
         )
         try {
+            // The view model's own jobs, such as the one that shares its page state, are not the load.
+            val idle = liveScope.coroutineContext[Job]!!.children.toSet()
             live.open()
             assertTrue(withContext(Dispatchers.IO) { entered.await(5, TimeUnit.SECONDS) })
-            val loading = liveScope.coroutineContext[Job]!!.children.single()
+            val loading = (liveScope.coroutineContext[Job]!!.children.toSet() - idle).single()
             live.close()
             assertEquals(ReportsState.Closed, live.state.value)
             release.countDown()

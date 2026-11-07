@@ -16,6 +16,7 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,13 +31,12 @@ import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
-import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.DetailLine
+import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.picker.projectColor
-import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -52,20 +52,21 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 @Composable
 fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
-    val offline = rememberOffline()
-    CatalogPageEffects(model, offline)
-    val state by model.state.collectAsStateWithLifecycle()
-    val cachedProjects by model.cachedProjects.collectAsStateWithLifecycle(initialValue = emptyList())
-    val cachedClients by model.cachedClients.collectAsStateWithLifecycle(initialValue = emptyList())
-    val tasks by model.tasks.state.collectAsStateWithLifecycle()
-    TaskListEffect(model.tasks, (state.overlay as? ProjectForm.Edit)?.project?.id)
-    val workspace = model.workspace()
+    PageVisitEffect(onOpen = model::open, onClose = model::close)
+    val page by model.page.collectAsStateWithLifecycle()
+    val state = page.catalog
+    LaunchedEffect(page.offline) { if (!page.offline) model.reconnected() }
+    TaskListEffect(
+        project = (state.overlay as? ProjectForm.Edit)?.project?.id,
+        onOpen = model.tasks::open,
+        onClose = model.tasks::close,
+    )
     BackHandler(enabled = state.overlay != null) { model.closeForm() }
     ProjectsContent(
         state = state,
-        offline = offline,
-        cachedProjects = cachedProjects.filter { workspace == null || it.workspaceId == workspace },
-        clients = cachedClients.filter { workspace == null || it.workspaceId == workspace },
+        offline = page.offline,
+        cachedProjects = page.cachedProjects,
+        clients = page.clients,
         actions = ProjectsActions(
             onRetry = model::retry,
             onNew = model::newProject,
@@ -75,7 +76,7 @@ fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
             onCloseForm = model::closeForm,
             onDoneShow = model::doneShown,
         ),
-        tasks = tasks,
+        tasks = page.tasks,
         taskActions = TaskActions(
             onRetry = model.tasks::retry,
             onCreate = model.tasks::create,

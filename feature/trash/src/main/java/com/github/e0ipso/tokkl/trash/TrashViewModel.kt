@@ -1,21 +1,30 @@
 package com.github.e0ipso.tokkl.trash
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TrashEntry
-import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
+import com.github.e0ipso.tokkl.catalog.PageEvents
+import com.github.e0ipso.tokkl.catalog.PageReloads
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.catalog.followTrips
 import com.github.e0ipso.tokkl.catalog.toServerProblem
+import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.AppEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,6 +51,7 @@ sealed interface TrashChange {
  * @property changeProblem why the server refused the last change, or null.
  * @property done the change the server last accepted, until the page has said so.
  */
+@Immutable
 data class TrashState(
     val entries: List<TrashEntry>? = null,
     val loading: Boolean = false,
@@ -54,6 +64,17 @@ data class TrashState(
     /** Whether a change can go to the server now, as far as the page knows. */
     val canChange: Boolean get() = entries != null && loadProblem == null && !sending
 }
+
+/**
+ * The trash page: what the server sent and what is open over it in [trash], whether the phone is
+ * [offline], and the account [settings] that its times, dates and durations follow.
+ */
+@Immutable
+data class TrashPageState(
+    val trash: TrashState = TrashState(),
+    val offline: Boolean = false,
+    val settings: AccountSettings? = null,
+)
 
 /**
  * The trash page's state (docs/PRD.md H7): the deleted entries from `GET /api/app/trash`, loaded
@@ -69,6 +90,8 @@ data class TrashState(
  *
  * @param repository the account's trash on the server. Runs on [io].
  * @param settings the account settings, for the times, dates and durations the page shows.
+ * @param offline whether the phone is offline, when nothing can change.
+ * @param appEvents MainActivity's trips to the background and back, which load the page again.
  */
 class TrashViewModel(
     private val repository: TrashRepository,
@@ -76,53 +99,48 @@ class TrashViewModel(
     private val trashMissing: () -> Unit,
     scope: CoroutineScope,
     private val io: CoroutineContext,
-    val settings: StateFlow<AccountSettings?> = MutableStateFlow(null),
+    settings: StateFlow<AccountSettings?> = MutableStateFlow(null),
+    offline: StateFlow<Boolean> = MutableStateFlow(false),
+    appEvents: Flow<AppEvent> = emptyFlow(),
 ) : ViewModel(scope),
-    CatalogPageEvents {
+    PageEvents {
 
     private val mutableState = MutableStateFlow(TrashState())
     val state: StateFlow<TrashState> = mutableState.asStateFlow()
 
-    private var opened = false
+    /** What the page shows, while it reads it. */
+    val page: StateFlow<TrashPageState> = combine(state, offline, settings, ::TrashPageState)
+        .stateIn(viewModelScope, whileShown, TrashPageState(state.value, offline.value, settings.value))
+
+    private val reloads = PageReloads(::load)
+    private val opened: Boolean get() = reloads.isOpen
     private var loading: Job? = null
 
-    /** The app went to the background with the page open, so the list may be old. */
-    private var backgrounded = false
+    init {
+        followTrips(appEvents, viewModelScope)
+    }
 
     /** Loads the trash. Does nothing while the page is open, so turning the phone sends no request. */
-    override fun open() {
-        if (opened) return
-        opened = true
-        load()
-    }
+    override fun open() = reloads.open()
 
     /** Loads the trash again, as after a failure. */
-    fun retry() {
-        if (opened) load()
-    }
+    fun retry() = reloads.retry()
 
     /** The network came back. Loads again when the server could not be reached. */
     override fun reconnected() {
         if (opened && state.value.loadProblem != null) load()
     }
 
-    override fun wentToBackground() {
-        if (opened) backgrounded = true
-    }
+    override fun wentToBackground() = reloads.wentToBackground()
 
     /** After [wentToBackground], loads the trash again, which may have changed meanwhile. */
-    override fun cameToForeground() {
-        if (!backgrounded) return
-        backgrounded = false
-        load()
-    }
+    override fun cameToForeground() = reloads.cameToForeground()
 
     /** Closes the page: stops waiting and forgets what it loaded. A change already sent still lands. */
     override fun close() {
         loading?.cancel()
         loading = null
-        opened = false
-        backgrounded = false
+        reloads.close()
         mutableState.value = TrashState()
     }
 

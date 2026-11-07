@@ -40,10 +40,10 @@ import kotlin.coroutines.CoroutineContext
  * The model's work off the main thread waits in [io] until a test runs it, so a test sees what
  * the screen shows while the answer is on its way.
  *
- * Coming back to the foreground: [ReportsScreen] calls [ReportsViewModel.wentToBackground] on every
- * stop that is not a configuration change, and [ReportsViewModel.cameToForeground] on every start,
- * including the one Android replays when the screen starts observing. ReportsForegroundTest
- * checks the rotation on the emulator; these tests check the model's half.
+ * Coming back to the foreground: AppEvents calls [ReportsViewModel.wentToBackground] on every stop
+ * that is not a configuration change, and [ReportsViewModel.cameToForeground] on every start,
+ * a rotation's too. ReportsForegroundTest checks the rotation on the emulator; these tests check
+ * the model's half.
  */
 class ReportsViewModelTest {
 

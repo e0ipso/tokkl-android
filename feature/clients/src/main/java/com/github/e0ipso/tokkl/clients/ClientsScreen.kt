@@ -11,6 +11,7 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -25,13 +26,12 @@ import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
-import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
+import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.feature.clients.R
-import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -48,18 +48,17 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 @Composable
 fun ClientsScreen(model: ClientsViewModel, modifier: Modifier = Modifier) {
-    val offline = rememberOffline()
-    CatalogPageEffects(model, offline)
-    val state by model.state.collectAsStateWithLifecycle()
-    val cachedClients by model.cachedClients.collectAsStateWithLifecycle(initialValue = emptyList())
-    val workspace = model.workspace()
+    PageVisitEffect(onOpen = model::open, onClose = model::close)
+    val page by model.page.collectAsStateWithLifecycle()
+    val state = page.catalog
+    LaunchedEffect(page.offline) { if (!page.offline) model.reconnected() }
     BackHandler(
         enabled = state.overlay is ClientsOverlay.New || state.overlay is ClientsOverlay.Edit,
     ) { model.dismiss() }
     ClientsContent(
         state = state,
-        offline = offline,
-        cachedClients = cachedClients.filter { workspace == null || it.workspaceId == workspace },
+        offline = page.offline,
+        cachedClients = page.cachedClients,
         actions = ClientsActions(
             onRetry = model::retry,
             onNew = model::newClient,

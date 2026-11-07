@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -51,15 +52,18 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * Opens [project]'s task list while its form is on screen, and closes it when the form goes, but
- * not for a configuration change, so turning the phone sends no request.
+ * Opens [project]'s task list with [onOpen] while its form is on screen, and closes it with
+ * [onClose] when the form goes, but not for a configuration change, so turning the phone sends no
+ * request.
  */
 @Composable
-internal fun TaskListEffect(tasks: TasksModel, project: Long?) {
+internal fun TaskListEffect(project: Long?, onOpen: (Long) -> Unit, onClose: () -> Unit) {
     val activity = LocalActivity.current
-    DisposableEffect(tasks, project) {
-        if (project != null) tasks.open(project)
-        onDispose { if (project != null && activity?.isChangingConfigurations != true) tasks.close() }
+    val opened by rememberUpdatedState(onOpen)
+    val closed by rememberUpdatedState(onClose)
+    DisposableEffect(project) {
+        if (project != null) opened(project)
+        onDispose { if (project != null && activity?.isChangingConfigurations != true) closed() }
     }
 }
 
