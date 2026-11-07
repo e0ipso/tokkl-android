@@ -110,9 +110,13 @@ jobs:
   # supports, so it catches a call to an API newer than the device. The
   # screenshot tests do not run there, since their references come from API 36.
   #
+  # The script runs the app's tests and those of every feature or core module
+  # with a src/androidTest directory, each module in a test APK of its own.
+  #
   # One emulator running every test was about 74 minutes of device time and
   # the whole CI critical path. AndroidJUnitRunner's numShards splits it
-  # across six emulators per API level, and every test runs once. A name hash puts at most about 16 minutes of tests on one shard,
+  # across six emulators per API level, and every test runs once. Each module
+  # splits its own tests, so a shard can hold none of a small module's. A name hash puts at most about 16 minutes of tests on one shard,
   # and booting the emulator plus starting the server adds about 15, so a
   # shard finishes near 35 minutes.
   instrumented-tests:
@@ -181,6 +185,10 @@ jobs:
             app/build/outputs/androidTest-results/connected/
             app/build/reports/androidTests/connected/
             app/build/outputs/connected_android_test_additional_output/
+            core/*/build/outputs/androidTest-results/connected/
+            core/*/build/reports/androidTests/connected/
+            feature/*/build/outputs/androidTest-results/connected/
+            feature/*/build/reports/androidTests/connected/
           if-no-files-found: ignore
 
   # Lints the commit messages and runs the tests of the commitlint rules. The

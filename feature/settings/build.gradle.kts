@@ -6,4 +6,8 @@ plugins {
 dependencies {
     implementation(project(":core:shared"))
     implementation(project(":core:navigation"))
+
+    // PomodoroDefaultsUiTest draws edge to edge through androidx.core's WindowCompat, which
+    // comes with activity.
+    androidTestImplementation(libs.androidx.activity.compose)
 }

@@ -23,14 +23,15 @@
 #    that only the shell user can read. Before that it deletes the
 #    credentials files that killed runs left behind, once they are older than
 #    any run lasts.
-# 5. Runs connectedDebugAndroidTest with the http, the three https and the
+# 5. Runs connectedDebugAndroidTest of the app and of every module with
+#    instrumented tests (see below) with the http, the three https and the
 #    prefixed URLs, the SHA-256 fingerprints of both
 #    self-signed proxy certificates, the email and that file's path as
 #    instrumentation arguments. The emulator reaches the host's 127.0.0.1 as
 #    10.0.2.2. The credentials work only on these containers. The run fails
 #    when a test device goes away during it, even if Gradle reports success.
 # 6. Removes the two containers, the certificates' keys, the credentials
-#    file, the test filter file, if any (see below), and the user CA, if it
+#    file, the test filter files, if any (see below), and the user CA, if it
 #    installed one, also when a step fails.
 #
 # On an emulator it boots, the script installs this run's CA as a user CA, as
@@ -122,6 +123,12 @@
 # Without a user manager, as in CI, the emulator starts as a plain child
 # process with no memory limit.
 #
+# The app's instrumented tests live in app/src/androidTest. A feature or core
+# module keeps the tests that need none of the app, such as a screen's
+# composables under createComposeRule(), in its own src/androidTest, and its
+# tests run in a test APK of its own. Every module with a src/androidTest
+# directory is a test module of the run.
+#
 # Arguments go to Gradle, for example to run one class:
 #   scripts/instrumented-tests.sh \
 #     -Pandroid.testInstrumentationRunnerArguments.class=com.github.e0ipso.tokkl.api.ServerSmokeTest
@@ -136,10 +143,17 @@
 # AGP hands the test runner all its arguments in one string of key=value pairs
 # joined with commas, and splits that string at every comma. A value with a
 # comma lost everything after its first comma, so class=A,B ran only A and
-# still passed. So the script writes a class= or package= list to a file on
-# each test device, one entry per line, and passes the runner its path as
+# still passed. So the script writes the class= or package= entries to a file
+# on each test device, one entry per line, and passes the runner its path as
 # testFile instead. It refuses a comma in any other runner argument, and a
-# testFile argument of your own beside a list.
+# testFile argument of your own beside a filter.
+#
+# A test APK fails a class it does not hold, so each entry goes only to the
+# test modules that hold it: a class to the module whose test sources declare
+# it, a package to every module with test sources in it. The script refuses an
+# entry that no test module holds, before it takes a slot. With a filter, it
+# runs Gradle once for each module the filter names, each with a filter file of
+# its own. Without one, it runs every test module in one Gradle run.
 #
 # Use either class= or package= in a run, never both, including single values.
 # AndroidJUnitRunner 1.7.0 discovers tests in packages only when no explicit
@@ -174,9 +188,9 @@ readonly STALE_CREDENTIALS_HOURS=6
 # The most memory the emulator's scope may use, swap included. A full run
 # peaks below 4 GB on tokkl-api36.
 readonly EMULATOR_MEMORY_MAX=6G
-# Where Gradle puts the JUnit XML results of a run, one file for each test
-# device.
-readonly RESULTS='app/build/outputs/androidTest-results/connected/debug'
+# Where Gradle puts a module's JUnit XML results of a run, one file for each
+# test device, below the module's directory.
+readonly RESULTS='build/outputs/androidTest-results/connected/debug'
 # Where Android keeps the CAs that user 0 installed (see the header).
 readonly USER_CA_DIR='/data/misc/user/0/cacerts-added'
 # The annotation of the tests that need this run's CA as a user CA.
@@ -221,7 +235,7 @@ for arg in "$@"; do
         "-P$RUNNER_ARGS.package="*) package_requested=1 ;;
     esac
     case $arg in
-        "-P$RUNNER_ARGS.class="*,* | "-P$RUNNER_ARGS.package="*,*)
+        "-P$RUNNER_ARGS.class="* | "-P$RUNNER_ARGS.package="*)
             IFS=, read -ra entries <<<"${arg#*=}"
             for entry in "${entries[@]}"; do
                 if [ -n "$entry" ]; then test_filter+=("$entry"); fi
@@ -242,12 +256,67 @@ if [ "${#test_filter[@]}" -gt 0 ]; then
     for arg in "${gradle_args[@]}"; do
         case $arg in
             *"$RUNNER_ARGS.testFile="*)
-                echo "$0: $arg cannot go with a class= or package= list, which the script passes as testFile." >&2
+                echo "$0: $arg cannot go with a class= or package= filter, which the script passes as testFile." >&2
                 exit 2
                 ;;
         esac
     done
 fi
+# The test modules (see the header), as Gradle paths, the app first.
+mapfile -t test_modules < <(
+    echo :app
+    find core feature -mindepth 3 -maxdepth 3 -path '*/src/androidTest' -type d 2>/dev/null |
+        sed 's|/src/androidTest$||; s|/|:|g; s|^|:|' | sort
+)
+
+# The directory of the module at Gradle path $1.
+module_dir() {
+    local path=${1#:}
+    echo "${path//://}"
+}
+
+# Prints each test module that holds $1, a class= entry (with or without
+# #method) or, when package_requested is set, a package= entry.
+modules_holding() {
+    local entry=$1 module dir sources name class package
+    for module in "${test_modules[@]}"; do
+        dir=$(module_dir "$module")
+        for sources in "$dir/src/androidTest/java" "$dir/src/androidTest/kotlin" "$dir/src/notificationPermissionTest/java"; do
+            [ -d "$sources" ] || continue
+            if [ -n "$package_requested" ]; then
+                if [ -d "$sources/${entry//.//}" ]; then echo "$module"; break; fi
+            else
+                name=${entry%%#*}
+                name=${name%%\$*}
+                class=${name##*.}
+                package=${name%.*}
+                if grep -qsE "^[[:space:]]*([a-z]+[[:space:]]+)*(class|object)[[:space:]]+$class\b" "$sources/${package//.//}"/*.kt; then
+                    echo "$module"
+                    break
+                fi
+            fi
+        done
+    done
+}
+
+# The filter's entries for each test module that holds one, as newline-joined
+# lists by module, in the order of test_modules.
+declare -A module_filter=()
+filtered_modules=()
+for entry in "${test_filter[@]}"; do
+    mapfile -t holders < <(modules_holding "$entry")
+    if [ "${#holders[@]}" -eq 0 ]; then
+        echo "$0: no test module holds $entry. Name a test class or package of app/src/androidTest or of a module's src/androidTest. No test device has been allocated." >&2
+        exit 2
+    fi
+    for module in "${holders[@]}"; do
+        module_filter[$module]+="$entry"$'\n'
+    done
+done
+for module in "${test_modules[@]}"; do
+    if [ -n "${module_filter[$module]:-}" ]; then filtered_modules+=("$module"); fi
+done
+
 # A native permission probe runs alone, with permission reset before its test process starts.
 # Keep this validation before device allocation, like the selector checks above.
 fresh_notification_permission=${TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION:-0}
@@ -398,7 +467,8 @@ emulator_pid=''
 emulator_serial=''
 emulator_unit=''
 credentials_on_device=''
-filter_on_device=''
+# The filter file of each module of the run on the test devices, by module.
+declare -A filters_on_device=()
 user_ca_on_device=''
 devices_with_credentials=()
 # The devices this run installed its CA on as a user CA.
@@ -445,13 +515,14 @@ report_emulator_log() {
     cat /proc/pressure/memory >&2 2>/dev/null || true
 }
 
-# Deletes the credentials file, and the test list if any, from each device
+# Deletes the credentials file, and the test lists if any, from each device
 # they went to. sync writes the deletion to disk before an emulator this script
 # booted is killed. Without it, the file was back on the next boot.
 remove_device_files() {
+    local files="$credentials_on_device ${filters_on_device[*]}"
     for device in "${devices_with_credentials[@]}"; do
-        adb -s "$device" shell "rm -f $credentials_on_device $filter_on_device && sync" >/dev/null 2>&1 ||
-            echo "$0: could not remove $credentials_on_device${filter_on_device:+ or $filter_on_device} from $device" >&2
+        adb -s "$device" shell "rm -f $files && sync" >/dev/null 2>&1 ||
+            echo "$0: could not remove $files from $device" >&2
     done
     devices_with_credentials=()
 }
@@ -1159,11 +1230,11 @@ if [ -n "${ANDROID_SERIAL:-}" ]; then
 else
     mapfile -t devices < <(attached_devices)
 fi
-filter="$work_dir/test-filter.txt"
-
-# Copies the credentials file to each test device, and the test list in
-# $filter too once filter_on_device names its place there.
+# Copies the credentials file to each test device, and each module's test
+# list, which $work_dir/test-filter-<n>.txt holds, to its place in
+# filters_on_device.
 push_to_devices() {
+    local module
     for device in "${devices[@]}"; do
         remove_stale_credentials "$device"
         devices_with_credentials+=("$device")
@@ -1171,12 +1242,20 @@ push_to_devices() {
         # adb push keeps this machine's modification time. touch sets the
         # device's own, the clock its stale file check reads.
         adb -s "$device" shell "chmod 600 $credentials_on_device && touch $credentials_on_device"
-        # The test runner reads the list in the app's process, so every user
-        # may read it. It names test classes and nothing secret.
-        if [ -n "$filter_on_device" ]; then
-            adb -s "$device" push "$filter" "$filter_on_device" >/dev/null
-            adb -s "$device" shell "chmod 644 $filter_on_device"
-        fi
+        # The test runner reads the list in the process under test, so every
+        # user may read it. It names test classes and nothing secret.
+        for module in "${filtered_modules[@]}"; do
+            adb -s "$device" push "$(local_filter "$module")" "${filters_on_device[$module]}" >/dev/null
+            adb -s "$device" shell "chmod 644 ${filters_on_device[$module]}"
+        done
+    done
+}
+
+# The file on this machine that holds the test list of module $1.
+local_filter() {
+    local n
+    for n in "${!filtered_modules[@]}"; do
+        if [ "${filtered_modules[$n]}" = "$1" ]; then echo "$work_dir/test-filter-$n.txt"; return; fi
     done
 }
 
@@ -1217,16 +1296,28 @@ print('TOKKL_DEVICE_BUILD '+json.dumps(dict(serial=sys.argv[1], avd=sys.argv[2],
 PY
 }
 
-# Runs the tests once on every test device. Fails when Gradle fails, when a
-# test device went away during the run, and when Gradle passed without running
-# the tests on every device.
+# Runs the tests of the test modules named after $1 once on every test device,
+# in one Gradle run. $1 is the place on the devices of the filter file for the
+# run, or empty without a filter. Fails when Gradle fails, when a test device
+# went away during the run, and when Gradle passed without running the tests on
+# every device.
 run_tests() {
-    local status=0 device xml tests
-    local -a gone=() results=()
+    local filter_file=$1 status=0 device xml tests module total=0 sharded=''
+    shift
+    local -a modules=("$@") tasks=() gone=() results=() args=("${gradle_args[@]}")
+    for module in "${modules[@]}"; do tasks+=("$module:connectedDebugAndroidTest"); done
+    if [ -n "$filter_file" ]; then args+=("-P$RUNNER_ARGS.testFile=$filter_file"); fi
+    for arg in "${args[@]}"; do
+        case $arg in "-P$RUNNER_ARGS.numShards="*) sharded=1 ;; esac
+    done
     if [ -n "$emulator_serial" ]; then emit_owned_build; fi
     # A run that stops before its tests must not count the last run's results.
-    rm -rf "$RESULTS"
-    ./gradlew --no-daemon connectedDebugAndroidTest \
+    for module in "${modules[@]}"; do rm -rf "$(module_dir "$module")/$RESULTS"; done
+    # Each test module's test APK holds every library the module uses. With 8
+    # workers, merging the dex files of the app's and six feature modules'
+    # test APKs at once ran the 2 GB Gradle heap out of memory on 2026-11-07;
+    # with 2 workers it passed.
+    ./gradlew --no-daemon --max-workers=2 "${tasks[@]}" \
         "-P$RUNNER_ARGS.tokklBaseUrl=http://10.0.2.2:$host_port" \
         "-P$RUNNER_ARGS.tokklTlsBaseUrl=https://10.0.2.2:$tls_port" \
         "-P$RUNNER_ARGS.tokklPrefixedBaseUrl=http://10.0.2.2:$prefix_port/tokkl" \
@@ -1236,7 +1327,7 @@ run_tests() {
         "-P$RUNNER_ARGS.tokklUserCaTlsBaseUrl=https://10.0.2.2:$user_ca_port" \
         "-P$RUNNER_ARGS.tokklEmail=$EMAIL" \
         "-P$RUNNER_ARGS.tokklCredentialsFile=$credentials_on_device" \
-        "${gradle_args[@]}" {slot_fd}>&- {device_fd}>&- {boot_fd}>&- 2>&1 | tee "$work_dir/gradle.log" || status=$?
+        "${args[@]}" {slot_fd}>&- {device_fd}>&- {boot_fd}>&- 2>&1 | tee "$work_dir/gradle.log" || status=$?
     # AGP's test task can pass when a device dies between two tests. With the
     # emulator killed a second into the run, Gradle printed BUILD SUCCESSFUL
     # and had run none of the 32 tests. So every test device must still be
@@ -1259,19 +1350,27 @@ run_tests() {
         return 1
     fi
     # A class= list entry that names no test, such as a mistyped method, runs
-    # nothing and Gradle passes.
-    mapfile -t results < <(find "$RESULTS" -maxdepth 1 -name 'TEST-*.xml' 2>/dev/null)
-    if [ "${#results[@]}" -lt "${#devices[@]}" ]; then
-        echo "$0: Gradle passed, but $RESULTS holds results for ${#results[@]} of the ${#devices[@]} test devices, so this run fails." >&2
-        return 1
-    fi
-    for xml in "${results[@]}"; do
-        tests=$(sed -n 's/^<testsuites [^>]*\btests="\([0-9]*\)".*/\1/p;T;q' "$xml")
-        if [ "${tests:-0}" -eq 0 ]; then
-            echo "$0: Gradle passed, but $xml reports no test run, so this run fails." >&2
+    # nothing and Gradle passes. A shard can hold none of a small module's
+    # tests, so in a sharded run only the run as a whole must have run some.
+    for module in "${modules[@]}"; do
+        mapfile -t results < <(find "$(module_dir "$module")/$RESULTS" -maxdepth 1 -name 'TEST-*.xml' 2>/dev/null)
+        if [ "${#results[@]}" -lt "${#devices[@]}" ]; then
+            echo "$0: Gradle passed, but $(module_dir "$module")/$RESULTS holds results for ${#results[@]} of the ${#devices[@]} test devices, so this run fails." >&2
             return 1
         fi
+        for xml in "${results[@]}"; do
+            tests=$(sed -n 's/^<testsuites [^>]*\btests="\([0-9]*\)".*/\1/p;T;q' "$xml")
+            total=$((total + ${tests:-0}))
+            if [ "${tests:-0}" -eq 0 ] && [ -z "$sharded" ]; then
+                echo "$0: Gradle passed, but $xml reports no test run, so this run fails." >&2
+                return 1
+            fi
+        done
     done
+    if [ "$total" -eq 0 ]; then
+        echo "$0: Gradle passed, but no module reports a test run, so this run fails." >&2
+        return 1
+    fi
 }
 
 echo "Tokkl is ready on $server, which the emulator reaches as http://10.0.2.2:$host_port"
@@ -1279,11 +1378,12 @@ echo "The TLS proxy is ready on https://127.0.0.1:$tls_port, with certificate SH
 echo "It serves its second certificate on https://127.0.0.1:$new_key_port, with SHA-256 $new_key_fingerprint"
 echo "It serves the certificate this run's CA signed on https://127.0.0.1:$user_ca_port"
 echo "The proxy serves Tokkl under $prefixed, which the emulator reaches as http://10.0.2.2:$prefix_port/tokkl"
-if [ "${#test_filter[@]}" -gt 0 ]; then
-    printf '%s\n' "${test_filter[@]}" >"$filter"
-    filter_on_device="$CREDENTIALS_DIR/$FILTER_PREFIX$(random_hex 4).txt"
-    gradle_args+=("-P$RUNNER_ARGS.testFile=$filter_on_device")
-fi
+run_id=$(random_hex 4)
+for n in "${!filtered_modules[@]}"; do
+    module=${filtered_modules[$n]}
+    printf '%s' "${module_filter[$module]}" >"$work_dir/test-filter-$n.txt"
+    filters_on_device[$module]="$CREDENTIALS_DIR/$FILTER_PREFIX$run_id-$n.txt"
+done
 if [ "${#user_ca_devices[@]}" -gt 0 ]; then
     for device in "${user_ca_devices[@]}"; do
         install_user_ca "$device"
@@ -1313,4 +1413,14 @@ if [ "$fresh_notification_permission" = 1 ]; then
     adb -s "$emulator_serial" shell pm clear-permission-flags com.canpicasoft.tokkl android.permission.POST_NOTIFICATIONS user-set user-fixed
     echo "Reset notification permission before instrumentation on $emulator_serial"
 fi
-run_tests
+if [ "${#filtered_modules[@]}" -eq 0 ]; then
+    run_tests '' "${test_modules[@]}"
+else
+    # Each module's test APK gets the entries it holds, in a Gradle run of its own.
+    failed=0
+    for module in "${filtered_modules[@]}"; do
+        echo "Running the filtered tests of $module"
+        run_tests "${filters_on_device[$module]}" "$module" || failed=$?
+    done
+    exit "$failed"
+fi
