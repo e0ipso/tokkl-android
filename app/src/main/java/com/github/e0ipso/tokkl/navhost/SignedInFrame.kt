@@ -22,7 +22,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
@@ -194,14 +193,18 @@ internal fun SignedInFrame(
     }
 }
 
-/** The prompt for a refused request, or after a cancel the notice that reopens it. */
+/** The prompt for [state]'s refused request, or after a cancel the notice that reopens it. */
 @Composable
-internal fun SessionTrustPrompts(sessionTrust: SessionTrust) {
-    val state by sessionTrust.state.collectAsState()
+internal fun SessionTrustPrompts(
+    state: SessionTrust.State,
+    onAccept: () -> Unit,
+    onCancel: () -> Unit,
+    onReopen: () -> Unit,
+) {
     val refusal = state.refusal ?: return
     if (state.promptOpen && refusal is ApiError.TrustQuestion) {
-        TrustPrompt(refusal, onAccept = sessionTrust::accept, onCancel = sessionTrust::cancel)
+        TrustPrompt(refusal, onAccept = onAccept, onCancel = onCancel)
     } else {
-        TrustRefusedNotice(refusal, onReview = sessionTrust::reopen)
+        TrustRefusedNotice(refusal, onReview = onReopen)
     }
 }

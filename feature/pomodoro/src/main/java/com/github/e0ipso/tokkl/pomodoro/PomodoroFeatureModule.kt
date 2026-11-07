@@ -1,10 +1,14 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import android.app.NotificationManager
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.picker.offlineIn
+import com.github.e0ipso.tokkl.picker.pickerSource
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
@@ -112,6 +116,7 @@ val pomodoroFeatureModule = module {
         val changes = get<ChangeQueue>()
         val sender = get<ChangeSender>()
         val alarms = get<PomodoroAlarmScheduler>()
+        val scope = viewModelCoroutineScope()
         PomodoroViewModel(
             held = get<HeldTimerFlows>().held,
             controls = get<TimerControlsSource>().controls,
@@ -121,9 +126,11 @@ val pomodoroFeatureModule = module {
             settings = get<AccountSettingsSource>().state,
             unsent = changes.unsentCount,
             refused = changes.held,
-            scope = viewModelCoroutineScope(),
+            scope = scope,
             sendQueued = sender::sendAndWait,
             alarmProbe = alarms::permissionDenied,
+            picker = get<AccountCache>().pickerSource(),
+            offline = get<DefaultNetwork>().offlineIn(scope),
         )
     }
     viewModel {

@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.NavigationStores
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.contentKey
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
@@ -88,6 +89,7 @@ val TokklApplication.discarded: DiscardedChanges get() = component()
 val TokklApplication.signOut: SignOut get() = component()
 val TokklApplication.signOutConfirmation: SignOutConfirmation get() = component()
 val TokklApplication.timerActions: TimerActions get() = component()
+val TokklApplication.defaultNetwork: DefaultNetwork get() = component()
 val TokklApplication.timerSync: TimerSync<TimerStateSource> get() = component()
 val TokklApplication.pomodoroAlarms: PomodoroAlarmScheduler get() = component()
 internal val TokklApplication.pomodoroAlarm: PomodoroPhaseAlarm get() = component()

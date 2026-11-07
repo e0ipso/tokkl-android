@@ -46,8 +46,8 @@ internal val startupModule = module {
 }
 
 /**
- * Every module of the app, for `startKoin`: the shell's, which wire the core modules and the
- * process start, and each feature's own.
+ * Every module of the app, for `startKoin`: the shell's, which wire the core modules, the process
+ * start and the navigation host, and each feature's own.
  */
 internal val appModules: List<Module> = listOf(
     coreModule,
@@ -56,6 +56,7 @@ internal val appModules: List<Module> = listOf(
     timerModule,
     workerModule,
     startupModule,
+    navigationModule,
     signInFeatureModule,
     timerFeatureModule,
     pomodoroFeatureModule,

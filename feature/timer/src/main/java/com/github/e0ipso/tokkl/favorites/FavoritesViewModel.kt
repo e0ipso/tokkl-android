@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.favorites
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiResult
@@ -12,6 +13,8 @@ import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.entryfields.entryLabels
+import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.platform.whileShown
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,7 +30,21 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 /** One favorite as the Timer page shows it: what a tap starts, and its project's and task's names. */
+@Immutable
 data class FavoriteItem(val fields: EntryFields, val labels: EntryLabels)
+
+/**
+ * The timer templates page: the templates in [favorites], what the form's picker offers in
+ * [picker], whether the phone is [offline], and the account's default workspace, null until the
+ * settings have it.
+ */
+@Immutable
+data class TemplatesPageState(
+    val favorites: FavoritesState = FavoritesState(),
+    val picker: PickerSource = PickerSource(),
+    val offline: Boolean = false,
+    val workspaceId: Long? = null,
+)
 
 /** Why the last change to the favorites did not happen. */
 sealed interface FavoritesProblem {
@@ -46,6 +64,7 @@ sealed interface FavoritesProblem {
  * @property saving a change is on its way to the server, so no other change starts.
  * @property problem why the last change did not happen, until the next change.
  */
+@Immutable
 data class FavoritesState(
     val available: Boolean = false,
     val favorites: List<FavoriteItem> = emptyList(),
@@ -68,6 +87,9 @@ data class FavoritesState(
  * @param available whether the server keeps Tokkl's favorites, from the capabilities.
  * @param save posts the list and caches it. It runs on [io], and the save reaches the server and
  *   the cache also when the view model is cleared meanwhile.
+ * @param picker the cached projects, clients, tasks and tags, which the templates page's picker offers.
+ * @param offline whether the phone is offline, when no change can reach the server.
+ * @param workspaceId the account's default workspace, whose projects the templates page offers.
  */
 class FavoritesViewModel(
     favorites: Flow<List<CachedFavorite>>,
@@ -77,6 +99,9 @@ class FavoritesViewModel(
     private val save: suspend (List<EntryFields>) -> ApiResult<Unit>,
     scope: CoroutineScope,
     private val io: CoroutineContext,
+    picker: Flow<PickerSource> = flowOf(PickerSource()),
+    offline: StateFlow<Boolean> = MutableStateFlow(false),
+    workspaceId: Flow<Long?> = flowOf(null),
 ) : ViewModel(scope),
     TemplateAdder {
 
@@ -103,6 +128,10 @@ class FavoritesViewModel(
             problem = edits.problem,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FavoritesState())
+
+    /** What the timer templates page shows: [state], the picker's rows, the network and the workspace. */
+    val page: StateFlow<TemplatesPageState> = combine(state, picker, offline, workspaceId, ::TemplatesPageState)
+        .stateIn(viewModelScope, whileShown, TemplatesPageState(offline = offline.value))
 
     /**
      * Adds [fields] at the end of the list, as the web app's Pin as favorite does, unless it is

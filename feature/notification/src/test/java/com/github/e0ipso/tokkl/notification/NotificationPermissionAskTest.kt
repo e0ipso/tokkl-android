@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.coroutines.EmptyCoroutineContext
 
 /** When a timer start made in the app asks for the notification permission (docs/PRD.md N5). */
 class NotificationPermissionAskTest {
@@ -22,7 +23,7 @@ class NotificationPermissionAskTest {
 
     private var granted = false
 
-    private fun ask(sdkInt: Int) = NotificationPermissionAsk(sdkInt, record) { granted }
+    private fun ask(sdkInt: Int) = NotificationPermissionAsk(sdkInt, record, EmptyCoroutineContext) { granted }
 
     @Test
     fun theFirstStartOnAndroid13AndLaterAsksAndLaterStartsDoNot() {

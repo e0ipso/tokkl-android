@@ -111,7 +111,7 @@ import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
-import com.github.e0ipso.tokkl.timer.TimerTotals
+import com.github.e0ipso.tokkl.timer.TimerTotalsOf
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trust.CertificatePrompt
 import com.github.e0ipso.tokkl.trust.CleartextWarning
@@ -736,7 +736,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 onAddEntry = {},
                 picker = { _, _, _, _, _ -> },
             )
-            TimerTotals(entries, account, clock = TODAY)
+            TimerTotalsOf(entries, account, clock = TODAY)
         }
     }
 

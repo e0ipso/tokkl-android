@@ -20,7 +20,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +29,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import com.github.e0ipso.tokkl.cache.AccountCache
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
@@ -61,7 +60,7 @@ typealias EntryFormPicker =
     ) -> Unit
 
 /**
- * The entry form from [model], over the cached projects, tasks and tags of [cache] in its picker:
+ * The entry form from [model], with the cached projects, tasks and tags it follows in its picker:
  * a running segment or an entry from the history to edit, or a past entry to add. [onClose] leaves
  * it after Save has queued the change, on Back, on Cancel, and when the form is not open, as after the
  * process was restarted.
@@ -69,14 +68,15 @@ typealias EntryFormPicker =
 @Composable
 fun EntryFormScreen(
     model: EntryFormViewModel,
-    cache: AccountCache,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     canRestore: () -> Boolean = { false },
     onEntryDelete: (CachedTimeEntry, Boolean) -> Unit = { _, _ -> },
 ) {
     LaunchedEffect(model) { if (!model.isOpen) onClose() }
-    val state by model.state.collectAsState()
+    val state by model.state.collectAsStateWithLifecycle()
+    val picker by model.picker.collectAsStateWithLifecycle()
+    val offline by model.offline.collectAsStateWithLifecycle()
     val close = { if ((state as? EntryFormState.Open)?.saving != true) onClose() }
     BackHandler(onBack = close)
     LaunchedEffect(state) { if (state == EntryFormState.Saved) onClose() }
@@ -100,7 +100,7 @@ fun EntryFormScreen(
             onClose = close,
         ),
         picker = { workspaceId, original, picked, onPickedChange, pickerModifier ->
-            EntityPicker(cache, workspaceId, original, picked, onPickedChange, pickerModifier)
+            EntityPicker(picker, offline, workspaceId, original, picked, onPickedChange, pickerModifier)
         },
         modifier = modifier,
     )

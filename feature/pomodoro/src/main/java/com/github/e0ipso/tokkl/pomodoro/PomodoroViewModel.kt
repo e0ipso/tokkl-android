@@ -10,6 +10,8 @@ import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -25,6 +27,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -51,6 +55,9 @@ import kotlinx.coroutines.withTimeoutOrNull
  * @param controls what the shared timer controls show: the cache's running entry, with queued edits.
  * @param sendQueued sends the change queue now and waits for it.
  * @param alarmProbe whether exact alarms are refused, until the page reports the grants itself.
+ * @param picker the cached projects, clients, tasks and tags, which the page's picker offers and
+ *   its project and task are named from.
+ * @param offline whether the phone is offline, which the picker says.
  */
 class PomodoroViewModel(
     held: Flow<HeldTimerState?>,
@@ -64,6 +71,8 @@ class PomodoroViewModel(
     scope: CoroutineScope,
     private val sendQueued: suspend () -> Unit = {},
     private val alarmProbe: () -> Boolean = { false },
+    picker: Flow<PickerSource> = flowOf(PickerSource()),
+    val offline: StateFlow<Boolean> = MutableStateFlow(false),
 ) : ViewModel(scope) {
     private val modelScope = CoroutineScope(
         viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]),
@@ -72,6 +81,9 @@ class PomodoroViewModel(
         PomodoroPageState(lengths = PomodoroLengths.from(defaults.value), account = settings.value),
     )
     val state: StateFlow<PomodoroPageState> = mutableState.asStateFlow()
+
+    /** What the page's picker offers, while the page reads it. */
+    val picker: StateFlow<PickerSource> = picker.stateIn(viewModelScope, whileShown, PickerSource())
 
     /** Commands to the server run one at a time, in tap order. */
     private val commands = Mutex()

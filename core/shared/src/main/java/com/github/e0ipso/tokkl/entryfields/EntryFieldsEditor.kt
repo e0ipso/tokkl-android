@@ -78,7 +78,7 @@ typealias EntryPicker = @Composable (
  * [onDescriptionFinish] when it loses focus or the keyboard's Done is pressed. The picker opens in a
  * full-screen dialog, and closing it hands what was picked to [onPick], once, when it changed.
  *
- * With [suggestions], the description field lists what they give for the text typed so far
+ * With [suggestions], the description field lists those that match the text typed so far
  * while it has focus, under it, and a pick hands the suggestion to [onSuggestion].
  *
  * @param original what the entry had when editing started, for the picker's archived items.
@@ -99,7 +99,7 @@ fun EntryFieldsEditor(
     picker: EntryPicker,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    suggestions: ((String) -> List<DescriptionSuggestion>)? = null,
+    suggestions: DescriptionSuggestions? = null,
     onSuggestion: (DescriptionSuggestion) -> Unit = {},
     trailing: @Composable FlowRowScope.() -> Unit = {},
 ) {
@@ -157,7 +157,7 @@ private fun DescriptionField(
     enabled: Boolean,
     onChange: (String) -> Unit,
     onDone: () -> Unit,
-    suggestions: ((String) -> List<DescriptionSuggestion>)?,
+    suggestions: DescriptionSuggestions?,
     onSuggestion: (DescriptionSuggestion) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -205,7 +205,7 @@ private fun DescriptionField(
         field(modifier)
         return
     }
-    val shown = if (focused && !closed && enabled) suggestions(typed.text) else emptyList()
+    val shown = if (focused && !closed && enabled) suggestions.forQuery(typed.text) else emptyList()
     Column(modifier, verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
         field(Modifier.fillMaxWidth())
         if (shown.isNotEmpty()) {

@@ -13,39 +13,25 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
-import com.github.e0ipso.tokkl.platform.IoDispatcher
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.sync.DiscardNotice
-import com.github.e0ipso.tokkl.sync.DiscardedChanges
-import com.github.e0ipso.tokkl.sync.SyncStatusSource
 import com.github.e0ipso.tokkl.timer.TimerNotices
 import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerViewModel
-import com.github.e0ipso.tokkl.timer.TimerViewSetting
-import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.ui.windowWidth
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.koin.compose.koinInject
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
@@ -79,27 +65,17 @@ internal fun SignedInHost(
     notificationPermission: NotificationPermissionAsk?,
     onNotificationsAllow: () -> Unit,
 ) {
-    val io: CoroutineDispatcher = koinInject(IoDispatcher)
+    val model = sessionViewModel<SignedInViewModel>()
     val timer = sessionViewModel<TimerViewModel>()
-    val cache: AccountCache = koinInject()
-    val held: HeldTimerFlows = koinInject()
-    val changes: ChangeQueue = koinInject()
-    val discarded: DiscardedChanges = koinInject()
-    val servers: ServerConfigStore = koinInject()
-    val accountSettings: AccountSettingsSource = koinInject()
+    val state by model.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     LaunchedEffect(unavailable) {
         if (stack.holdsAnyOf(unavailable)) navigator.open(TopLevelPage.TIMER)
     }
-    val view by koinInject<TimerViewSetting>().view.collectAsState()
-    val runningFlow = remember(cache) { cache.running.map { it != null }.distinctUntilChanged() }
-    val running by runningFlow.collectAsState(initial = false)
-    // The server's session, from the held timer state.
-    val pomodoroRunningFlow = remember(held) { held.held.map { it?.state?.pomodoro != null }.distinctUntilChanged() }
-    val pomodoroRunning by pomodoroRunningFlow.collectAsState(initial = false)
-    val status by koinInject<SyncStatusSource>().status.collectAsState(initial = null)
     val width = windowWidth()
     val focused = navigator.focused
+    // Collected while stopped too, so a timer stopped outside the app has closed these screens by
+    // the first frame back.
     val timerState by timer.state.collectAsState()
     LaunchedEffect(focused, timerState) {
         // A notification may have opened Pomodoro before this old focused effect runs.
@@ -109,8 +85,7 @@ internal fun SignedInHost(
             navigator.downToTimer()
         }
     }
-    val discardedCount by discarded.state.collectAsState()
-    val shortUndo by changes.shortStopUndo.collectAsState(initial = null)
+    val shortUndo = state.shortStopUndo
     // The short Stop's Undo and the timer's notices share one host, so they queue, never overlap.
     val shortHost = remember { SnackbarHostState() }
     val shortMessage = stringResource(R.string.timer_short_stop_trashed)
@@ -125,9 +100,9 @@ internal fun SignedInHost(
             duration = SnackbarDuration.Long,
         )
         if (result == SnackbarResult.ActionPerformed) {
-            changes.undoShortStop(pending.entryId)
+            model.undoShortStop(pending.entryId)
         } else {
-            changes.dismissShortStop(pending.entryId)
+            model.dismissShortStop(pending.entryId)
         }
     }
     val permissionStarts = remember(timer, prompts) { merge(timer.starts, prompts.pomodoroStarts.receiveAsFlow()) }
@@ -136,35 +111,39 @@ internal fun SignedInHost(
         current = stack.currentPage(),
         showNavigation = !focused,
         onOpen = { page -> navigator.open(page, unavailable) },
-        timerRunning = running,
-        pomodoroRunning = pomodoroRunning,
+        timerRunning = state.timerRunning,
+        pomodoroRunning = state.pomodoroRunning,
         hidden = unavailable,
-        syncStatus = status,
+        syncStatus = state.syncStatus,
         onOpenNeedsAttention = navigator::openNeedsAttention,
         onSignInAgain = {
             scope.launch {
-                // Reads the stored server, off the main thread.
-                val account = withContext(io) {
-                    servers.load()?.let { server -> SignInAgain(server, accountSettings.state.value?.userId) }
-                } ?: return@launch
+                val account = model.signInAgain() ?: return@launch
                 navigator.push(Route.SignIn.again(account))
             }
         },
         width = width,
-        notice = { SessionTrustPrompts(koinInject()) },
+        notice = {
+            SessionTrustPrompts(
+                state = state.trust,
+                onAccept = model::acceptTrust,
+                onCancel = model::cancelTrust,
+                onReopen = model::reopenTrust,
+            )
+        },
     ) {
         if (top == Route.FullscreenTimer) {
             entries.Show(top)
         } else {
             SignedInPanes(
                 top = top,
-                entryBeside = showsEntryBeside(width, view, stack),
+                entryBeside = showsEntryBeside(width, state.timerView, stack),
             ) { route -> entries.Show(route) }
         }
-        if (discardedCount > 0) {
+        if (state.discardedCount > 0) {
             DiscardNotice(
-                discardedCount,
-                onDismiss = discarded::dismiss,
+                state.discardedCount,
+                onDismiss = model::dismissDiscarded,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }

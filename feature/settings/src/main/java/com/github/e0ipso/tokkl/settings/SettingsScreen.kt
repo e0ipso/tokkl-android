@@ -24,7 +24,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,61 +32,47 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
-import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
-import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
-import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The app's settings: theme, Pomodoro defaults, reminders, the account's sign-out ([signOut]),
- * then About, which opens
- * the licences through [onOpenLicences]. Every theme change applies at once. It is a page of the
- * bottom bar, so it has no back button; system Back goes to Timer.
+ * The app's settings: theme, Pomodoro defaults, reminders, the account's sign-out, then About,
+ * which opens the licences through [onOpenLicences]. Every change applies at once. It is a page
+ * of the bottom bar, so it has no back button; system Back goes to Timer.
  */
 @Composable
-fun SettingsScreen(
-    model: ThemeSettingsRepository,
-    signOut: SignOutConfirmation,
-    onOpenLicences: () -> Unit,
-    modifier: Modifier = Modifier,
-    reminder: ReminderSetting? = null,
-    pomodoro: PomodoroDefaultsSetting? = null,
-    pomodoroSharedWithWeb: Boolean = false,
-) {
-    val reminderPreferences = reminder?.state?.collectAsState()?.value ?: ReminderPreferences()
-    val pomodoroDefaults = pomodoro?.defaults?.collectAsState()?.value ?: PomodoroDefaults.DEFAULT
-    val settings by model.state.collectAsState()
-    val signOutState by signOut.state.collectAsState()
+fun SettingsScreen(model: SettingsViewModel, onOpenLicences: () -> Unit, modifier: Modifier = Modifier) {
+    val state by model.state.collectAsStateWithLifecycle()
     SettingsContent(
-        settings = settings,
-        onModeChange = model::onModeChange,
-        onDynamicColorChange = model::onDynamicColorChange,
-        signOut = signOutState,
-        onSignOut = signOut::signOut,
-        onConfirmSignOut = signOut::confirm,
-        onCancelSignOut = signOut::cancel,
+        settings = state.theme,
+        onModeChange = model::changeMode,
+        onDynamicColorChange = model::changeDynamicColor,
+        signOut = state.signOut,
+        onSignOut = model::signOut,
+        onConfirmSignOut = model::confirmSignOut,
+        onCancelSignOut = model::cancelSignOut,
         onOpenLicences = onOpenLicences,
         modifier = modifier,
-        reminder = reminderPreferences,
-        onReminderChange = { reminder?.change(it) },
-        pomodoro = pomodoroDefaults,
-        pomodoroSharedWithWeb = pomodoroSharedWithWeb,
-        onPomodoroChange = { pomodoro?.change(it) },
+        reminder = state.reminder,
+        onReminderChange = model::changeReminder,
+        pomodoro = state.pomodoro,
+        pomodoroSharedWithWeb = state.pomodoroSharedWithWeb,
+        onPomodoroChange = model::changePomodoro,
     )
 }
 
-/** [SettingsScreen] without its models. */
+/** [SettingsScreen] without its model. */
 @Composable
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun SettingsContent(

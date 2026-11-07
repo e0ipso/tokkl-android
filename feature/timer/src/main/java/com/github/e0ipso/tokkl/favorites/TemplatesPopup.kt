@@ -31,7 +31,6 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
@@ -42,7 +41,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * templates in [state], in saved order. Choosing one dismisses the popup and calls [onStart].
  * Save as template stores [timerFields]. Manage templates calls [onManage]. Without the
  * capability, nothing shows. [onSave]'s callback hears how the save went, as [FavoritesViewModel.add]
- * reports it.
+ * reports it. While [offline], saving says that it needs the server.
  */
 @Composable
 fun TemplatesPopup(
@@ -51,8 +50,8 @@ fun TemplatesPopup(
     onStart: (EntryFields) -> Unit,
     onSave: (EntryFields, (FavoritesProblem?) -> Unit) -> Unit,
     onManage: () -> Unit,
+    offline: Boolean,
     modifier: Modifier = Modifier,
-    offline: Boolean = rememberOffline(),
 ) {
     if (!state.available) return
     var open by remember { mutableStateOf(false) }

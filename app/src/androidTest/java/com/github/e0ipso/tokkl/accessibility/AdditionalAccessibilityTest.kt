@@ -30,6 +30,7 @@ import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
+import com.github.e0ipso.tokkl.sync.NeedsAttentionViewModel
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.CoroutineScope
@@ -118,7 +119,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         )
         var edited: Long? = null
         var resent: Long? = null
-        val model = NeedsAttention(
+        val attention = NeedsAttention(
             held = held,
             release = {
                 resent = it
@@ -131,8 +132,9 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
             afterDiscard = {},
             scope = scope,
         )
+        val model = NeedsAttentionViewModel(attention, settings, scope)
         show {
-            NeedsAttentionScreen(model, settings, onEdit = { edited = it }, onBack = {})
+            NeedsAttentionScreen(model, onEdit = { edited = it }, onBack = {})
         }
         compose.onNodeWithText(context.getString(SyncR.string.needs_attention_empty)).assertIsDisplayed()
         assertVisibleTextFits()

@@ -1,12 +1,11 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
@@ -17,6 +16,7 @@ import com.github.e0ipso.tokkl.history.EntryActionsHost
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryViewModel
+import com.github.e0ipso.tokkl.history.pinAction
 import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -26,9 +26,8 @@ import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.navigation.route
 import com.github.e0ipso.tokkl.navigation.routes
 import com.github.e0ipso.tokkl.navigation.sessionViewModel
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -36,21 +35,14 @@ import org.koin.core.parameter.parametersOf
  * The Timer page, the fullscreen timer, the entry form and the timer templates. Each screen takes
  * its view models: its own, which live in its back stack entry and go when it closes, or the
  * signed-in session's ([sessionViewModel]) when other screens share them or their state outlives
- * the page.
+ * the page. The screens get plain state from them and send their events back.
  */
 internal object TimerEntries : FeatureEntries {
     override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
         route(Route.Timer) { TimerPage(host.navigator) }
         route(Route.FullscreenTimer) { FullscreenTimer(host.navigator) }
         routes<Route.Entry> { route -> EntryForm(route, host.navigator) }
-        route(Route.Templates) {
-            val account by koinInject<AccountSettingsSource>().state.collectAsState()
-            TemplatesScreen(
-                model = sessionViewModel<FavoritesViewModel>(),
-                cache = koinInject(),
-                workspaceId = account?.defaultWorkspaceId,
-            )
-        }
+        route(Route.Templates) { TemplatesScreen(model = sessionViewModel<FavoritesViewModel>()) }
     }
 }
 
@@ -58,52 +50,41 @@ internal object TimerEntries : FeatureEntries {
  * The Timer page. Its history and calendar live in its entry, which stays at the bottom of every
  * signed-in back stack, and apply the entry actions' deletes and restores. A tap on an entry in
  * the history, or on the button for a past entry, opens the entry form above the page, and an
- * entry's Continue starts the timer with its fields.
+ * entry's Continue starts the timer with its fields. Each part reads its own state, so a state
+ * that changes often, such as the ticking totals, redraws only its part.
  */
 @Composable
 private fun TimerPage(navigator: Navigator) {
     val timer = sessionViewModel<TimerViewModel>()
     val favorites = sessionViewModel<FavoritesViewModel>()
     val actions = sessionViewModel<EntryActionsViewModel>()
+    val page = koinViewModel<TimerPageViewModel>()
     val history = koinViewModel<HistoryViewModel>(parameters = { parametersOf(actions.reconciliation) })
     val calendar = koinViewModel<CalendarViewModel>(parameters = { parametersOf(actions.reconciliation) })
-    val timerView = koinInject<TimerViewSetting>()
-    val view by timerView.view.collectAsState()
-    val cache = koinInject<AccountCache>()
-    val settings = koinInject<AccountSettingsSource>().state
-    val timerState by timer.state.collectAsState()
+    val pageState by page.state.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
     TimerScreen(
-        view = view,
-        onViewChange = timerView::choose,
+        view = pageState.view,
+        onViewChange = page::chooseView,
         timer = {
+            val timerState by timer.state.collectAsStateWithLifecycle()
+            val totals by page.totals.collectAsStateWithLifecycle()
+            val templates by favorites.state.collectAsStateWithLifecycle()
             TimerBar(
-                timer,
-                cache,
-                favorites = favorites,
-                onManageTemplates = { navigator.open(TopLevelPage.TEMPLATES) },
-                onOpenFullscreen = {
-                    if (navigator.top == Route.Timer && timerState.target != null) navigator.push(Route.FullscreenTimer)
-                },
-                onAddEntry = { navigator.openEntry(EntryOpening.New()) },
-                onEditRunning = {
-                    scope.launch {
-                        val identity = timer.runningForEdit() ?: return@launch
-                        val top = navigator.top
-                        if (top == Route.Timer || top is Route.Entry) {
-                            navigator.openEntry(
-                                EntryOpening.Running.of(identity),
-                            )
-                        }
-                    }
-                },
+                state = timerState,
+                page = pageState,
+                totals = totals,
+                templates = templates,
+                actions = timerBarActions(timer, favorites, navigator, scope),
             )
         },
         listContent = {
+            val historyState by history.state.collectAsStateWithLifecycle()
+            val templates by favorites.state.collectAsStateWithLifecycle()
             HistoryList(
-                history,
-                actions,
+                state = historyState,
+                onLoadOlder = history::loadOlder,
                 onEdit = { entryId -> navigator.openEntry(EntryOpening.Edit(entryId), older = history.entry(entryId)) },
                 onContinue = { entryId ->
                     history.entry(entryId)?.let { source ->
@@ -111,20 +92,21 @@ private fun TimerPage(navigator: Navigator) {
                         settleDescription(focusManager)
                     }
                 },
-                favorites = favorites,
-                showActions = false,
+                onDuplicate = actions::duplicate,
+                onSplit = actions::split,
+                onDelete = actions::delete,
+                pin = pinAction(templates) { entryId -> actions.pin(entryId, favorites, pageState.offline) },
             )
         },
         feedback = {
-            val actionsState by actions.state.collectAsState()
-            val account by settings.collectAsState()
+            val actionsState by actions.state.collectAsStateWithLifecycle()
             EntryActionsHost(
                 state = actionsState,
                 onUndo = actions::undo,
                 onNoticeEnd = actions::noticeDone,
                 onConfirmDelete = actions::confirmDelete,
                 onCancelDelete = actions::cancelDelete,
-                settings = account,
+                settings = pageState.settings,
                 onSplitTextChange = actions::setSplitText,
                 onConfirmSplit = actions::confirmSplit,
                 onCancelSplit = actions::cancelSplit,
@@ -140,6 +122,39 @@ private fun TimerPage(navigator: Navigator) {
         },
     )
 }
+
+/** What the Timer page's timer does: [timer]'s taps, [favorites]' templates, and the screens it opens. */
+private fun timerBarActions(
+    timer: TimerViewModel,
+    favorites: FavoritesViewModel,
+    navigator: Navigator,
+    scope: CoroutineScope,
+) = TimerBarActions(
+    onShown = timer::shown,
+    onDescriptionChange = timer::editDescription,
+    onDescriptionFinish = timer::descriptionDone,
+    onPick = timer::pick,
+    onBillableChange = timer::setBillable,
+    onFill = timer::fill,
+    onStart = timer::start,
+    onStop = timer::stop,
+    onPause = timer::pause,
+    onResume = timer::resume,
+    onStartTemplate = timer::startFrom,
+    onSaveTemplate = { fields, onDone -> favorites.add(fields, onDone) },
+    onManageTemplates = { navigator.open(TopLevelPage.TEMPLATES) },
+    onAddEntry = { navigator.openEntry(EntryOpening.New()) },
+    onEditRunning = {
+        scope.launch {
+            val identity = timer.runningForEdit() ?: return@launch
+            val top = navigator.top
+            if (top == Route.Timer || top is Route.Entry) navigator.openEntry(EntryOpening.Running.of(identity))
+        }
+    },
+    onOpenFullscreen = {
+        if (navigator.top == Route.Timer && timer.state.value.target != null) navigator.push(Route.FullscreenTimer)
+    },
+)
 
 /** The running timer on its own. Its edit button opens the entry form on the segment it shows. */
 @Composable
@@ -171,7 +186,6 @@ private fun EntryForm(route: Route.Entry, navigator: Navigator) {
     val actions = sessionViewModel<EntryActionsViewModel>()
     EntryFormScreen(
         model = model,
-        cache = koinInject(),
         canRestore = actions::canRestoreDelete,
         onEntryDelete = actions::deleted,
         onClose = { navigator.close(route) },

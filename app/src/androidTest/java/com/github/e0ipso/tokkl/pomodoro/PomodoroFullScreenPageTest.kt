@@ -17,7 +17,6 @@ import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.koinViewModels
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -56,7 +55,7 @@ class PomodoroFullScreenPageTest {
         DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT deny")
         val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java]
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
-        compose.setContent { TokklTheme { PomodoroScreen(model, app.cache) } }
+        compose.setContent { TokklTheme { PomodoroScreen(model) } }
         compose.onNodeWithText(
             context.getString(R.string.pomodoro_fullscreen_denied),
         ).performScrollTo().assertIsDisplayed()
@@ -76,7 +75,7 @@ class PomodoroFullScreenPageTest {
     fun olderAndroidShowsThePageWithoutAnUnsupportedFullScreenSettingsButton() {
         assertTrue(Build.VERSION.SDK_INT in 31..33)
         val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java]
-        compose.setContent { TokklTheme { PomodoroScreen(model, app.cache) } }
+        compose.setContent { TokklTheme { PomodoroScreen(model) } }
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_denied)).assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_settings)).assertDoesNotExist()
     }

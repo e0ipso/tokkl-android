@@ -129,7 +129,7 @@ class TimerTotalsServerTest {
                         scenario.onActivity {
                             it.setContent {
                                 TokklTheme {
-                                    TimerTotals(
+                                    TimerTotalsOf(
                                         app.cache.timeEntries,
                                         app.accountSettings.state,
                                     )
@@ -222,7 +222,7 @@ class TimerTotalsServerTest {
             Session(context).save(requests.url, fixture.account.apiToken)
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()
-                scenario.onActivity { it.setContent { TokklTheme { TimerTotals(input, settings, clock = clock) } } }
+                scenario.onActivity { it.setContent { TokklTheme { TimerTotalsOf(input, settings, clock = clock) } } }
                 awaitTotal("timer_totals_today", "0:00:10")
                 val before = requests.count
                 clock.at = start.plusSeconds(1)

@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import com.github.e0ipso.tokkl.storage.PreferencesFile
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Whether a timer start asks for the notification permission (docs/PRD.md N5). Android 13 and
@@ -16,10 +19,12 @@ import com.github.e0ipso.tokkl.storage.PreferencesFile
  * @param sdkInt the device's Android version, [Build.VERSION.SDK_INT].
  * @param record whether the app has dealt with its one question.
  * @param granted whether the user allows the app's notifications now.
+ * @param io where [askAtStart] and [recordRequest] read and write [record].
  */
 class NotificationPermissionAsk(
     private val sdkInt: Int,
     private val record: AskRecord,
+    private val io: CoroutineContext,
     private val granted: () -> Boolean,
 ) {
 
@@ -39,6 +44,12 @@ class NotificationPermissionAsk(
     /** Records that the platform request launched, whatever the eventual answer. Writes the disk. */
     fun requested() = record.markAsked()
 
+    /** [atStartInApp] on [io]. */
+    suspend fun askAtStart(): Boolean = withContext(io) { atStartInApp() }
+
+    /** [requested] on [io], also when the caller is cancelled meanwhile, as by a rotation. */
+    suspend fun recordRequest() = withContext(NonCancellable + io) { requested() }
+
     /** Whether the app has asked for the notification permission. */
     interface AskRecord {
         fun asked(): Boolean
@@ -47,10 +58,10 @@ class NotificationPermissionAsk(
     }
 
     companion object {
-        /** The question as the app asks it on this device. */
-        fun forApp(context: Context): NotificationPermissionAsk {
+        /** The question as the app asks it on this device, with its record read and written on [io]. */
+        fun forApp(context: Context, io: CoroutineContext): NotificationPermissionAsk {
             val app = context.applicationContext
-            return NotificationPermissionAsk(Build.VERSION.SDK_INT, NotificationPermissionStore(app)) {
+            return NotificationPermissionAsk(Build.VERSION.SDK_INT, NotificationPermissionStore(app), io) {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                     app.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
             }

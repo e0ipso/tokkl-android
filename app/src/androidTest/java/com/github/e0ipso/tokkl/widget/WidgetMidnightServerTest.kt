@@ -20,7 +20,7 @@ import com.github.e0ipso.tokkl.components.widgetState
 import com.github.e0ipso.tokkl.feature.widget.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
-import com.github.e0ipso.tokkl.timer.TimerTotals
+import com.github.e0ipso.tokkl.timer.TimerTotalsOf
 import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.first
@@ -91,7 +91,7 @@ class WidgetMidnightServerTest {
                 scenario.onActivity {
                     it.setContent {
                         TokklTheme {
-                            TimerTotals(
+                            TimerTotalsOf(
                                 app.cache.timeEntries,
                                 app.accountSettings.state,
                                 clock = clock,
@@ -143,7 +143,7 @@ class WidgetMidnightServerTest {
                 scenario.onActivity {
                     it.setContent {
                         TokklTheme {
-                            TimerTotals(
+                            TimerTotalsOf(
                                 app.cache.timeEntries,
                                 app.accountSettings.state,
                                 clock = clock,

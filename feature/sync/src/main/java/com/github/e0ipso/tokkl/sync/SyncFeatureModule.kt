@@ -2,9 +2,12 @@ package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefresh
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -34,6 +37,14 @@ val syncFeatureModule = module {
             drop = changes::discard,
             afterDiscard = get<AccountRefresh>()::refresh,
             scope = get(),
+        )
+    }
+
+    viewModel {
+        NeedsAttentionViewModel(
+            attention = get(),
+            settings = get<AccountSettingsSource>().state,
+            scope = viewModelCoroutineScope(),
         )
     }
 

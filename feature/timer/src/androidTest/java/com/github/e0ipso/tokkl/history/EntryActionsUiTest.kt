@@ -320,6 +320,7 @@ class EntryActionsUiTest {
         composeRule.setContent {
             TokklTheme {
                 val state by model.state.collectAsState()
+                val templates = favorites?.page?.collectAsState()?.value
                 Box(Modifier.fillMaxSize()) {
                     HistoryContent(
                         state = HISTORY,
@@ -327,7 +328,13 @@ class EntryActionsUiTest {
                         onDuplicate = model::duplicate,
                         onSplit = model::split,
                         onDelete = model::delete,
-                        pin = favorites?.let { pinAction(model, it) },
+                        pin = if (favorites != null && templates != null) {
+                            pinAction(templates.favorites) { entryId ->
+                                model.pin(entryId, favorites, templates.offline)
+                            }
+                        } else {
+                            null
+                        },
                     )
                     EntryActionsHost(
                         state = state,

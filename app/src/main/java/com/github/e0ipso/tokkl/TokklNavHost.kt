@@ -18,11 +18,12 @@ import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
+import com.github.e0ipso.tokkl.navhost.AppNavigationViewModel
 import com.github.e0ipso.tokkl.navhost.NavigationRequestEffects
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
+import com.github.e0ipso.tokkl.navhost.NavigationSession
 import com.github.e0ipso.tokkl.navhost.NavigationStores
 import com.github.e0ipso.tokkl.navhost.Show
 import com.github.e0ipso.tokkl.navhost.SignedInHost
@@ -36,14 +37,8 @@ import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
-import com.github.e0ipso.tokkl.platform.IoDispatcher
-import com.github.e0ipso.tokkl.session.AccountLifetime
-import com.github.e0ipso.tokkl.session.Session
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.withContext
-import org.koin.compose.getKoin
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * The app's navigation host: a Navigation 3 back stack of [Route]s that survives configuration
@@ -64,17 +59,21 @@ import org.koin.compose.koinInject
  *
  * Each feature adds the entries of its routes ([FeatureEntries]). Each route's screen takes its
  * own view models, which go when the route leaves the stack. The ones that several screens share
- * live in the signed-in session's store ([NavigationStores]).
+ * live in the signed-in session's store ([NavigationStores]). [model] reads the sign-outs, the
+ * capabilities and the stored session.
  */
 @Composable
 internal fun TokklNavHost(
     requests: NavigationRequests = remember { NavigationRequests() },
-    capabilities: StateFlow<Capabilities> = koinInject<CapabilitiesSource>().state,
+    model: AppNavigationViewModel = koinViewModel(),
+    capabilities: StateFlow<Capabilities> = model.capabilities,
     notificationPermission: NotificationPermissionAsk? = null,
     onNotificationsAllow: () -> Unit = {},
     stores: NavigationStores = viewModel { NavigationStores() },
 ) {
-    val signOuts by koinInject<AccountLifetime>().signOuts.collectAsState()
+    // Collected while stopped too, so a sign-out that finished in the background shows sign-in
+    // from the first frame back.
+    val signOuts by model.signOuts.collectAsState()
     val discarded = remember(stores, signOuts) { stores.after(signOuts) }
     LaunchedEffect(signOuts) {
         // A tap from before the sign-out opens nothing for the next account.
@@ -83,7 +82,15 @@ internal fun TokklNavHost(
     // A sign-out starts the navigation over, at sign-in, with a back stack of its own.
     key(signOuts) {
         CompositionLocalProvider(LocalSignedInSession provides stores.session) {
-            Navigation(stores, requests, capabilities, notificationPermission, onNotificationsAllow)
+            Navigation(
+                stores = stores,
+                requests = requests,
+                capabilities = capabilities,
+                features = model.features,
+                session = NavigationSession(model::isSignedIn, model::acceptsPomodoroTap),
+                notificationPermission = notificationPermission,
+                onNotificationsAllow = onNotificationsAllow,
+            )
         }
     }
 }
@@ -93,19 +100,17 @@ private fun Navigation(
     stores: NavigationStores,
     requests: NavigationRequests,
     capabilities: StateFlow<Capabilities>,
+    features: List<FeatureEntries>,
+    session: NavigationSession,
     notificationPermission: NotificationPermissionAsk?,
     onNotificationsAllow: () -> Unit,
 ) {
-    val session: Session = koinInject()
-    val io: CoroutineDispatcher = koinInject(IoDispatcher)
     val backStack = rememberSerializable(
         serializer = NavBackStackSerializer(Route.serializer()),
     ) { NavBackStack<Route>() }
     val savedStates = rememberSaveableStateHolder()
     val navigator = remember(backStack, stores) { Navigator(backStack, stores.entryOpenings) }
     val prompts = remember { NotificationPrompts() }
-    val koin = getKoin()
-    val features = remember(koin) { koin.getAll<FeatureEntries>() }
     val entryProvider = remember(features, navigator, prompts, capabilities) {
         val host = NavigationHost(navigator, prompts, capabilities)
         entryProvider<Route> { features.forEach { feature -> with(feature) { addEntries(host) } } }
@@ -124,24 +129,23 @@ private fun Navigation(
     val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && it !is Route.SignIn } }
     if (restoredSignedIn) {
         LaunchedEffect(Unit) {
-            val signedIn = withContext(io) { session.isSignedIn() }
-            if (!signedIn) navigator.signIn()
+            if (!session.isSignedIn()) navigator.signIn()
         }
     }
     if (backStack.isEmpty()) {
         // Shows the window background, which matches the theme, while the
         // stores are read off the main thread.
         LaunchedEffect(Unit) {
-            val signedIn = withContext(io) { session.isSignedIn() }
-            backStack.add(if (signedIn) Route.Timer else Route.SignIn())
+            backStack.add(if (session.isSignedIn()) Route.Timer else Route.SignIn())
         }
         return
     }
+    // Collected while stopped too: a page the server lost never shows, not even on the first frame back.
     val flags by capabilities.collectAsState()
     val unavailable = unavailablePages(flags)
     // A page the server lacks never shows, not even for the frame before the stack is corrected.
     val top = backStack.last().orTimerIfUnavailable(unavailable)
-    NavigationRequestEffects(requests, navigator, unavailable, onSignIn = top is Route.SignIn)
+    NavigationRequestEffects(requests, navigator, session, unavailable, onSignIn = top is Route.SignIn)
     BackHandler(enabled = backStack.size > 1) { navigator.back() }
     if (top is Route.SignIn) {
         LaunchedEffect(Unit) { savedStates.removeState(Route.Timer.contentKey) }

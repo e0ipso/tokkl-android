@@ -16,9 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
@@ -29,7 +26,7 @@ import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
-import com.github.e0ipso.tokkl.picker.rememberOffline
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
@@ -41,27 +38,18 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * description, project, task, tags and billable. Save and Cancel, Delete, and Move up and
  * down. Changes need the server: offline, or while a save is on its way, the actions are off.
  * Cancel drops the form and leaves the saved list as it was. A failed save leaves that list
- * too, and says why. The project picker uses [workspaceId], the account's default workspace;
- * a template does not store a workspace of its own.
+ * too, and says why. The project picker offers the account's default workspace; a template does
+ * not store a workspace of its own.
  */
 @Composable
-fun TemplatesScreen(
-    model: FavoritesViewModel,
-    cache: AccountCache,
-    workspaceId: Long?,
-    modifier: Modifier = Modifier,
-) {
-    val state by model.state.collectAsStateWithLifecycle()
-    val projects by cache.projects.collectAsStateWithLifecycle(initialValue = emptyList())
-    val tasks by cache.tasks.collectAsStateWithLifecycle(initialValue = emptyList())
-    val offline = rememberOffline()
+fun TemplatesScreen(model: FavoritesViewModel, modifier: Modifier = Modifier) {
+    val page by model.page.collectAsStateWithLifecycle()
     val savedText = stringResource(R.string.favorites_saved)
     var done by remember { mutableStateOf<String?>(null) }
     TemplatesContent(
-        state = state,
-        projects = projects,
-        tasks = tasks,
-        offline = offline,
+        state = page.favorites,
+        catalog = page.picker,
+        offline = page.offline,
         done = done,
         onDoneShow = { done = null },
         onAdd = { fields, onDone ->
@@ -79,21 +67,22 @@ fun TemplatesScreen(
         onRemove = model::remove,
         onMove = model::move,
         picker = { original, picked, onPicked, pickerModifier ->
-            if (workspaceId != null) EntityPicker(cache, workspaceId, original, picked, onPicked, pickerModifier)
+            page.workspaceId?.let { workspaceId ->
+                EntityPicker(page.picker, page.offline, workspaceId, original, picked, onPicked, pickerModifier)
+            }
         },
         modifier = modifier,
     )
 }
 
 /**
- * [TemplatesScreen] without its model. [picker] supplies the project, task and tag picker.
- * [done] is the snackbar after a save the server stored.
+ * [TemplatesScreen] without its model. [catalog] names the form's project and task, and [picker]
+ * supplies the project, task and tag picker. [done] is the snackbar after a save the server stored.
  */
 @Composable
 fun TemplatesContent(
     state: FavoritesState,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
+    catalog: PickerSource,
     offline: Boolean,
     done: String?,
     onDoneShow: () -> Unit,
@@ -143,8 +132,7 @@ fun TemplatesContent(
         } else {
             TemplateForm(
                 draft = editing,
-                projects = projects,
-                tasks = tasks,
+                catalog = catalog,
                 enabled = canChange,
                 canSave = canChange && (editing.index != null || !state.full),
                 canCancel = !state.saving,
@@ -215,8 +203,7 @@ private fun TemplateRow(
 @Composable
 private fun TemplateForm(
     draft: TemplateDraft,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
+    catalog: PickerSource,
     enabled: Boolean,
     canSave: Boolean,
     canCancel: Boolean,
@@ -228,12 +215,12 @@ private fun TemplateForm(
     val fields = draft.fields
     EntryFieldsEditor(
         fields = fields,
-        labels = entryLabels(fields, projects, tasks),
+        labels = entryLabels(fields, catalog.projects, catalog.tasks),
         original = draft.original,
         descriptionHint = stringResource(R.string.favorites_description_hint),
         onDescriptionChange = { text -> onDraft(draft.copy(fields = fields.copy(description = text))) },
         onDescriptionFinish = {},
-        onPick = { picked -> onDraft(draft.copy(fields = fields.withPicked(picked, projects))) },
+        onPick = { picked -> onDraft(draft.copy(fields = fields.withPicked(picked, catalog.projects))) },
         onBillableChange = { billable -> onDraft(draft.copy(fields = fields.copy(billable = billable))) },
         picker = picker,
         enabled = enabled,

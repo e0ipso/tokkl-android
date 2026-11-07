@@ -9,15 +9,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.navigation.sessionViewModel
-import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
-import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
-import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.widget.WidgetPage
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
-import org.koin.compose.koinInject
 
 /** A page that a tap outside the app asks MainActivity to open. */
 sealed interface NavigationRequest {
@@ -55,6 +49,15 @@ class NavigationRequests {
 }
 
 /**
+ * What the navigation reads of the stored session: whether somebody [isSignedIn], and whether a
+ * Pomodoro notification's tap still [acceptsPomodoroTap], as [AppNavigationViewModel] answers them.
+ */
+internal class NavigationSession(
+    val isSignedIn: suspend () -> Boolean,
+    val acceptsPomodoroTap: suspend (PomodoroNotificationTap) -> Boolean,
+)
+
+/**
  * Opens what [requests] ask for, each as soon as it can. A widget's page opens when somebody is
  * signed in, and sign-in opens otherwise. A Pomodoro notification's tap opens Pomodoro when the
  * notification still belongs to the signed-in account and its phase. A reminder's tap opens
@@ -64,12 +67,10 @@ class NavigationRequests {
 internal fun NavigationRequestEffects(
     requests: NavigationRequests,
     navigator: Navigator,
+    session: NavigationSession,
     unavailable: Set<TopLevelPage>,
     onSignIn: Boolean,
 ) {
-    val session: Session = koinInject()
-    val io: CoroutineDispatcher = koinInject(IoDispatcher)
-    val pomodoroNotification: PomodoroSessionNotificationSync = koinInject()
     val currentUnavailable by rememberUpdatedState(unavailable)
     for (request in requests.pending) {
         key(request) {
@@ -77,8 +78,7 @@ internal fun NavigationRequestEffects(
                 is NavigationRequest.Widget -> {
                     val reports = if (request.page == WidgetPage.TODAY) sessionViewModel<ReportsViewModel>() else null
                     LaunchedEffect(request) {
-                        val signedIn = withContext(io) { session.isSignedIn() }
-                        if (!signedIn) {
+                        if (!session.isSignedIn()) {
                             navigator.signIn()
                         } else {
                             when (request.page) {
@@ -97,10 +97,9 @@ internal fun NavigationRequestEffects(
                 }
 
                 is NavigationRequest.Pomodoro -> LaunchedEffect(request) {
-                    val accepted = withContext(io) {
-                        pomodoroNotification.acceptsTap(request.tap.account, request.tap.phase)
+                    if (session.acceptsPomodoroTap(request.tap)) {
+                        navigator.open(TopLevelPage.POMODORO, currentUnavailable)
                     }
-                    if (accepted) navigator.open(TopLevelPage.POMODORO, currentUnavailable)
                     requests.handled(request)
                 }
 

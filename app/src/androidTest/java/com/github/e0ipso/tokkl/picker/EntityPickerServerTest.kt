@@ -39,6 +39,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.defaultNetwork
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.orFail
@@ -215,8 +216,9 @@ class EntityPickerServerTest {
         picked = original
         composeRule.setContent {
             TokklTheme {
-                EntityPicker(
+                CachedEntityPicker(
                     cache = app.cache,
+                    network = app.defaultNetwork,
                     workspaceId = seed.workspace,
                     original = original,
                     picked = picked,

@@ -26,10 +26,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,18 +41,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import kotlinx.coroutines.flow.combine
 
 /**
  * The project, task and tag picker for one entry (docs/PRD.md P1), which the timer and the entry
- * edit screens share. It reads only the offline [cache], so search and selection work with no
- * connection. Offline it says that creating a project, client or task needs one. A tag typed by
- * name joins the entry by name, online or offline, and the queue sends it so the server creates
- * it. Give the picker a bounded height: its list scrolls.
+ * edit screens share. It offers only what [source] holds, the offline cache's rows, so search and
+ * selection work with no connection. While [offline] it says that creating a project, client or
+ * task needs one. A tag typed by name joins the entry by name, online or offline, and the queue
+ * sends it so the server creates it. Give the picker a bounded height: its list scrolls.
  *
  * @param original what the entry had when editing started. Its archived project and task, and
  *   its done task, stay on offer with an "Archived" label; no other archived item is offered.
@@ -62,20 +58,14 @@ import kotlinx.coroutines.flow.combine
  */
 @Composable
 fun EntityPicker(
-    cache: AccountCache,
+    source: PickerSource,
+    offline: Boolean,
     workspaceId: Long,
     original: Picked,
     picked: Picked,
     onPickedChange: (Picked) -> Unit,
     modifier: Modifier = Modifier,
-    offline: Boolean = rememberOffline(),
 ) {
-    val rows = remember(cache) {
-        combine(cache.projects, cache.clients, cache.tasks, cache.tags) { projects, clients, tasks, tags ->
-            PickerSource(projects, clients, tasks, tags)
-        }
-    }
-    val source by rows.collectAsState(initial = PickerSource())
     var query by rememberSaveable { mutableStateOf("") }
     EntityPickerContent(
         options = pickerOptions(workspaceId, original, picked, query, source),

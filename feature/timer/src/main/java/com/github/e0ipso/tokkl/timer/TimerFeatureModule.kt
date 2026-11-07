@@ -14,6 +14,9 @@ import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.picker.offlineIn
+import com.github.e0ipso.tokkl.picker.pickerSource
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -31,6 +34,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.parameter.ParametersHolder
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /**
@@ -51,7 +55,7 @@ val timerFeatureModule = module {
             scope = get(),
             io = io(),
         )
-    } bind AccountDataOwner::class
+    } binds arrayOf(AccountDataOwner::class, TimerViewChoice::class)
 
     // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
@@ -121,27 +125,47 @@ val timerFeatureModule = module {
     }
     viewModel {
         val cache = get<AccountCache>()
+        val scope = viewModelCoroutineScope()
         FavoritesViewModel(
             favorites = cache.favorites,
             projects = cache.projects,
             tasks = cache.tasks,
             available = get<CapabilitiesSource>().state.map { it.favorites },
             save = FavoritesServer(client = get<Session>(), cache = cache)::save,
-            scope = viewModelCoroutineScope(),
+            scope = scope,
             io = io(),
+            picker = cache.pickerSource(),
+            offline = get<DefaultNetwork>().offlineIn(scope),
+            workspaceId = get<AccountSettingsSource>().state.map { it?.defaultWorkspaceId },
         )
     }
     viewModel { params ->
         val cache = get<AccountCache>()
+        val scope = viewModelCoroutineScope()
         EntryFormViewModel(
             entries = cache.entries,
             projects = cache.projects,
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
-            scope = viewModelCoroutineScope(),
+            scope = scope,
             allDay = get<CapabilitiesSource>().state.map { it.allDay == true },
+            picker = cache.pickerSource(),
+            offline = get<DefaultNetwork>().offlineIn(scope),
         ).also { form -> params.getOrNull<EntryFormRequest>()?.openIn(form) }
+    }
+    viewModel {
+        val cache = get<AccountCache>()
+        val scope = viewModelCoroutineScope()
+        TimerPageViewModel(
+            views = get(),
+            entries = cache.timeEntries,
+            picker = cache.pickerSource(),
+            settings = get<AccountSettingsSource>().state,
+            offline = get<DefaultNetwork>().offlineIn(scope),
+            clock = get(),
+            scope = scope,
+        )
     }
 
     single { TimerEntries } bind FeatureEntries::class

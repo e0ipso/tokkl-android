@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -251,8 +252,7 @@ class TemplatesUiTest {
             TokklTheme {
                 TemplatesContent(
                     state = state,
-                    projects = emptyList(),
-                    tasks = emptyList(),
+                    catalog = PickerSource(),
                     offline = offline,
                     done = null,
                     onDoneShow = {},

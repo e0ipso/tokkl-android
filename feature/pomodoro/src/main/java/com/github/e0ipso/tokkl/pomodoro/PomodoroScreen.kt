@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,11 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
@@ -49,6 +46,7 @@ import com.github.e0ipso.tokkl.entryfields.picked
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.picker.EntityPicker
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.time.SECONDS_PER_MINUTE
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
@@ -67,15 +65,14 @@ import com.github.e0ipso.tokkl.core.shared.R as SharedR
 @Composable
 fun PomodoroScreen(
     model: PomodoroViewModel,
-    cache: AccountCache,
     modifier: Modifier = Modifier,
     onNotificationStart: () -> Unit = {},
     onNotificationRetry: () -> Unit = {},
     notificationPermissionRevision: Int = 0,
 ) {
-    val state by model.state.collectAsState()
-    val projects by cache.projects.collectAsState(initial = emptyList())
-    val tasks by cache.tasks.collectAsState(initial = emptyList())
+    val state by model.state.collectAsStateWithLifecycle()
+    val catalog by model.picker.collectAsStateWithLifecycle()
+    val offline by model.offline.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val context = LocalContext.current
     var fullScreenSettingsUnavailable by remember { mutableStateOf(false) }
@@ -107,11 +104,10 @@ fun PomodoroScreen(
         },
         onNext = { model.next(displayed) },
         onEnd = { model.end(displayed) },
-        projects = projects,
-        tasks = tasks,
+        catalog = catalog,
         picker = { original, picked, onPicked, pickerModifier ->
             state.workspaceId?.let { workspace ->
-                EntityPicker(cache, workspace, original, picked, onPicked, pickerModifier)
+                EntityPicker(catalog, offline, workspace, original, picked, onPicked, pickerModifier)
             }
         },
         modifier = modifier,
@@ -155,8 +151,7 @@ fun PomodoroContent(
     onNext: () -> Unit,
     onEnd: () -> Unit,
     modifier: Modifier = Modifier,
-    projects: List<CachedProject> = emptyList(),
-    tasks: List<CachedTask> = emptyList(),
+    catalog: PickerSource = PickerSource(),
     picker: EntryPicker = { _, _, _, _ -> },
     clock: Clock = Clock.systemUTC(),
     onFullScreenSettings: () -> Unit = {},
@@ -254,12 +249,12 @@ fun PomodoroContent(
                 }
                 EntryFieldsEditor(
                     fields = state.fields,
-                    labels = entryLabels(state.fields, projects, tasks),
+                    labels = entryLabels(state.fields, catalog.projects, catalog.tasks),
                     original = state.fields.picked,
                     descriptionHint = stringResource(R.string.pomodoro_description_hint),
                     onDescriptionChange = { onDescription(state.fields.copy(description = it)) },
                     onDescriptionFinish = onDescriptionFinish,
-                    onPick = { onFields(state.fields.withPicked(it, projects)) },
+                    onPick = { onFields(state.fields.withPicked(it, catalog.projects)) },
                     onBillableChange = { onFields(state.fields.copy(billable = it)) },
                     picker = picker,
                     enabled = !state.busy && state.workspaceId != null,

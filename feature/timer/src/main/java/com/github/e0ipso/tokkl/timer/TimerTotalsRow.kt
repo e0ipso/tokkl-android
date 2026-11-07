@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.annotation.StringRes
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,45 +23,38 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.timerstate.nextTotalsDelay
-import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-/** Effective Room rows include queued changes and remaps; the pause-chain clock is not added. */
+/**
+ * The Today and This week row for [state], which [timerTotals] makes. It shows nothing until
+ * the account settings and the cache are read, and says so when the phone cannot resolve the
+ * account's timezone.
+ */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun TimerTotals(
-    entries: Flow<List<CachedTimeEntry>>,
-    settings: StateFlow<AccountSettings?>,
-    modifier: Modifier = Modifier,
-    clock: Clock = Clock.systemUTC(),
-) {
-    val current by settings.collectAsState()
-    val cached: List<CachedTimeEntry>? by entries.collectAsState(initial = null)
-    val now = rememberTotalsNow(clock, current, cached?.any { it.stop == null } == true)
-    val account = current ?: return
-    val rows = cached ?: return
-    val totals = timerPeriodTotals(rows, account, now)
-    if (totals == null) {
-        Text(
-            stringResource(R.string.history_unknown_time_zone, account.timeZone),
+fun TimerTotals(state: TimerTotalsState, modifier: Modifier = Modifier) {
+    when (state) {
+        TimerTotalsState.Hidden -> Unit
+
+        is TimerTotalsState.UnknownZone -> Text(
+            stringResource(R.string.history_unknown_time_zone, state.timeZone),
             style = MaterialTheme.typography.bodyLarge,
             modifier = modifier,
         )
-        return
+
+        is TimerTotalsState.Shown -> TimerTotalsRow(
+            state.today,
+            state.week,
+            state.todaySeconds,
+            state.weekSeconds,
+            modifier,
+        )
     }
-    val text = totals.formatted(account)
-    TimerTotalsRow(text.today, text.week, totals.todaySeconds, totals.weekSeconds, modifier)
 }
 
 /**
@@ -102,29 +93,6 @@ private fun TimerTotal(
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.titleMedium)
     }
-}
-
-/**
- * The instant the totals use. While an entry runs it moves each whole second. Otherwise it
- * waits until account midnight, so an idle page still rolls the day and the week. With no
- * [settings] zone there is nothing to roll.
- */
-@Composable
-private fun rememberTotalsNow(clock: Clock, settings: AccountSettings?, hasRunning: Boolean): Instant {
-    var now by remember(clock) { mutableStateOf(clock.instant()) }
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val time = settings?.time()
-    LaunchedEffect(clock, lifecycle, time?.zone, time?.firstDayOfWeek, hasRunning) {
-        val accountTime = time ?: return@LaunchedEffect
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (true) {
-                val current = clock.instant()
-                now = current
-                delay(nextTotalsDelay(current, accountTime, hasRunning))
-            }
-        }
-    }
-    return now
 }
 
 /**

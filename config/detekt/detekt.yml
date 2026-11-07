@@ -92,7 +92,3 @@ Compose:
       - LocalSectionHue
       - LocalTokklExtraColors
       - LocalOuterTopGone
-  # TimerBarCore is the part of TimerBar that wires the timer view model's events into
-  # TimerBarContent.
-  ViewModelForwarding:
-    allowedForwarding: ['TimerBarCore']

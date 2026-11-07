@@ -18,13 +18,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.feature.sync.R
@@ -35,7 +35,6 @@ import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
-import kotlinx.coroutines.flow.StateFlow
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
@@ -48,14 +47,33 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 @Composable
 fun NeedsAttentionScreen(
-    model: NeedsAttention,
-    settings: StateFlow<AccountSettings?>,
+    model: NeedsAttentionViewModel,
     onEdit: (entryId: Long) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val held by model.held.collectAsState(initial = emptyList())
-    val account by settings.collectAsState()
+    val state by model.state.collectAsStateWithLifecycle()
+    NeedsAttentionContent(
+        state = state,
+        onEdit = onEdit,
+        onSendAgain = model::sendAgain,
+        onDiscard = model::discard,
+        onBack = onBack,
+        modifier = modifier,
+    )
+}
+
+/** [NeedsAttentionScreen] for [state], without its model. */
+@Composable
+fun NeedsAttentionContent(
+    state: NeedsAttentionState,
+    onEdit: (entryId: Long) -> Unit,
+    onSendAgain: (PendingChange) -> Unit,
+    onDiscard: (PendingChange) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val held = state.held
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { TokklTopBar(stringResource(R.string.needs_attention), onBack = onBack) },
@@ -83,10 +101,10 @@ fun NeedsAttentionScreen(
                 HorizontalDivider()
                 HeldChange(
                     change = change,
-                    settings = account,
+                    settings = state.settings,
                     onEdit = { onEdit(change.entryId) },
-                    onSendAgain = { model.sendAgain(change) },
-                    onDiscard = { model.discard(change) },
+                    onSendAgain = { onSendAgain(change) },
+                    onDiscard = { onDiscard(change) },
                 )
             }
         }

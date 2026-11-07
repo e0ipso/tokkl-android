@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.coroutines.EmptyCoroutineContext
 
 /** The Timer page and the Pomodoro page ask for the notification permission once between them. */
 class SharedPermissionQuestionTest {
@@ -11,15 +12,15 @@ class SharedPermissionQuestionTest {
         for (sdk in listOf(33, 34, 36)) {
             val disk = Record()
             var granted = false
-            val pomodoro = NotificationPermissionAsk(sdk, disk) { granted }
+            val pomodoro = NotificationPermissionAsk(sdk, disk, EmptyCoroutineContext) { granted }
             assertTrue(pomodoro.atStartInApp())
             pomodoro.requested()
-            val recreatedTimer = NotificationPermissionAsk(sdk, disk) { granted }
+            val recreatedTimer = NotificationPermissionAsk(sdk, disk, EmptyCoroutineContext) { granted }
             assertFalse(recreatedTimer.atStartInApp())
             granted = true
             assertFalse(pomodoro.atStartInApp())
             granted = false
-            assertFalse(NotificationPermissionAsk(sdk, disk) { granted }.atStartInApp())
+            assertFalse(NotificationPermissionAsk(sdk, disk, EmptyCoroutineContext) { granted }.atStartInApp())
             assertEquals(1, disk.writes)
         }
     }
@@ -27,9 +28,9 @@ class SharedPermissionQuestionTest {
     @Test fun timerFirstAndAlreadyGrantedStartsConsumeTheSharedQuestion() {
         for (initiallyGranted in listOf(false, true)) {
             val disk = Record()
-            val timer = NotificationPermissionAsk(33, disk) { initiallyGranted }
+            val timer = NotificationPermissionAsk(33, disk, EmptyCoroutineContext) { initiallyGranted }
             if (timer.atStartInApp()) timer.requested()
-            assertFalse(NotificationPermissionAsk(33, disk) { false }.atStartInApp())
+            assertFalse(NotificationPermissionAsk(33, disk, EmptyCoroutineContext) { false }.atStartInApp())
             assertEquals(1, disk.writes)
         }
     }

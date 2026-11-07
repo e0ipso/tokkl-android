@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import org.junit.Assert.assertEquals
@@ -82,7 +83,7 @@ class PomodoroPermissionPromptTest {
     }
 
     private fun show(granted: Boolean = false) {
-        val ask = NotificationPermissionAsk(Build.VERSION.SDK_INT, record) { granted }
+        val ask = NotificationPermissionAsk(Build.VERSION.SDK_INT, record, Dispatchers.IO) { granted }
         val owner = object : ActivityResultRegistryOwner {
             override val activityResultRegistry = registry
         }

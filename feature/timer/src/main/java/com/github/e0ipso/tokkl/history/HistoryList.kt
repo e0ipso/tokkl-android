@@ -24,7 +24,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -38,9 +37,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
+import com.github.e0ipso.tokkl.favorites.FavoritesState
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.daySticker
@@ -50,52 +48,37 @@ import java.time.LocalDate
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
- * The history in the Timer page's List view: the days with entries, newest first, each with its
- * total, and at the end the older days, which load from the server as the end shows. A tap on an
- * entry hands its id to [onEdit] (docs/PRD.md H2), also on the older days. The menu of an entry the
- * phone holds duplicates, splits or deletes it through [actions], whose messages show at the
- * bottom of the list (H3, H5, H6). When the server keeps Tokkl's [favorites], the menu also saves
- * the entry as a timer template (T5). Its Continue button, on every entry and group, hands the entry's id to
- * [onContinue] (T2).
+ * The history in the Timer page's List view, for [state]: the days with entries, newest first,
+ * each with its total, and at the end the older days, which [onLoadOlder] loads from the server
+ * as the end shows. A tap on an entry hands its id to [onEdit] (docs/PRD.md H2), also on the older
+ * days. The menu of an entry the phone holds duplicates, splits or deletes it through
+ * [onDuplicate], [onSplit] and [onDelete] (H3, H5, H6). With [pin], when the server keeps Tokkl's
+ * timer templates, the menu also saves the entry as one (T5). Its Continue button, on every entry
+ * and group, hands the entry's id to [onContinue] (T2).
  */
 @Composable
 fun HistoryList(
-    model: HistoryViewModel,
-    actions: EntryActionsViewModel,
+    state: HistoryState,
+    onLoadOlder: () -> Unit,
     onEdit: (Long) -> Unit,
     onContinue: (Long) -> Unit,
+    onDuplicate: (Long) -> Unit,
+    onSplit: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    favorites: FavoritesViewModel? = null,
-    showActions: Boolean = true,
+    pin: PinAction? = null,
 ) {
-    val state by model.state.collectAsState()
-    val actionsState by actions.state.collectAsState()
-    val pin = favorites?.let { pinAction(actions, it) }
     Box(modifier.fillMaxSize()) {
         HistoryContent(
             state = state,
-            onLoadOlder = model::loadOlder,
+            onLoadOlder = onLoadOlder,
             onEdit = onEdit,
             onContinue = onContinue,
-            onDuplicate = actions::duplicate,
-            onSplit = actions::split,
-            onDelete = actions::delete,
+            onDuplicate = onDuplicate,
+            onSplit = onSplit,
+            onDelete = onDelete,
             pin = pin,
         )
-        if (showActions) {
-            EntryActionsHost(
-                state = actionsState,
-                onUndo = actions::undo,
-                onNoticeEnd = actions::noticeDone,
-                onConfirmDelete = actions::confirmDelete,
-                onCancelDelete = actions::cancelDelete,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                settings = (state as? HistoryState.Shown)?.settings,
-                onSplitTextChange = actions::setSplitText,
-                onConfirmSplit = actions::confirmSplit,
-                onCancelSplit = actions::cancelSplit,
-            )
-        }
     }
 }
 
@@ -106,14 +89,9 @@ fun HistoryList(
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PinAction(val enabled: Boolean, val onPin: (Long) -> Unit)
 
-/** Save as template through [favorites], or null when the server keeps no timer templates. */
-@Composable
-internal fun pinAction(actions: EntryActionsViewModel, favorites: FavoritesViewModel): PinAction? {
-    val shown by favorites.state.collectAsState()
-    val offline = rememberOffline()
-    if (!shown.available) return null
-    return PinAction(enabled = !shown.saving) { entryId -> actions.pin(entryId, favorites, offline) }
-}
+/** Save as template through [onPin], or null when the server keeps no timer [templates]. */
+fun pinAction(templates: FavoritesState, onPin: (Long) -> Unit): PinAction? =
+    if (templates.available) PinAction(enabled = !templates.saving, onPin = onPin) else null
 
 /** [HistoryList] without its models. Without [pin], the menu offers no Save as template. */
 @Composable

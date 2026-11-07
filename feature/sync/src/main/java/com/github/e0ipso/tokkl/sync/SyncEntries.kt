@@ -6,8 +6,7 @@ import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.route
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 /** The changes the server refused. Editing one opens the entry form on it. */
 internal object SyncEntries : FeatureEntries {
@@ -15,8 +14,7 @@ internal object SyncEntries : FeatureEntries {
         val navigator = host.navigator
         route(Route.NeedsAttention) {
             NeedsAttentionScreen(
-                model = koinInject(),
-                settings = koinInject<AccountSettingsSource>().state,
+                model = koinViewModel(),
                 onEdit = { entryId -> navigator.openEntry(EntryOpening.Edit(entryId)) },
                 onBack = { navigator.close(Route.NeedsAttention) },
             )

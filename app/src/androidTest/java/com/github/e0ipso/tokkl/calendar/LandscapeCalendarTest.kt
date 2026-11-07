@@ -41,7 +41,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
-import com.github.e0ipso.tokkl.timer.TimerTotals
+import com.github.e0ipso.tokkl.timer.TimerTotalsOf
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
@@ -255,7 +255,7 @@ private fun CalendarPage() {
                         onAddEntry = {},
                         picker = { _, _, _, _, _ -> },
                     )
-                    TimerTotals(
+                    TimerTotalsOf(
                         entries = TOTAL_ROWS,
                         settings = TOTAL_SETTINGS,
                         clock = Clock.fixed(NOON, ZoneOffset.UTC),

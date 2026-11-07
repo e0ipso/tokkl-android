@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
 import com.github.e0ipso.tokkl.navhost.NavigationRequest
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
 import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
@@ -26,12 +27,14 @@ import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.widget.WidgetPage
 import com.github.e0ipso.tokkl.widget.takeWidgetPage
+import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
 
     private val themeSettings: ThemeSettingsRepository by inject()
     private val foreground: MainActivityForeground by inject()
+    private val io: CoroutineDispatcher by inject(IoDispatcher)
 
     /** The pages that taps outside the app asked to open, until the navigation opens them. */
     private val requests = NavigationRequests()
@@ -60,7 +63,7 @@ class MainActivity : ComponentActivity() {
                 WindowFollowsTheme(darkTheme)
                 TokklNavHost(
                     requests = requests,
-                    notificationPermission = remember { NotificationPermissionAsk.forApp(this) },
+                    notificationPermission = remember { NotificationPermissionAsk.forApp(this, io) },
                     onNotificationsAllow = foreground::notificationsGranted,
                 )
             }

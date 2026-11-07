@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.defaultNetwork
 import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -78,8 +79,9 @@ class EntityPickerFontScaleTest {
         picked = original
         composeRule.setContent {
             TokklTheme {
-                EntityPicker(
+                CachedEntityPicker(
                     cache = app.cache,
+                    network = app.defaultNetwork,
                     workspaceId = WORKSPACE,
                     original = original,
                     picked = picked,

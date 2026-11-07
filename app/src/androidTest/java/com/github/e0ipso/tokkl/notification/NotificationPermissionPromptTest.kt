@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -82,7 +83,7 @@ class NotificationPermissionPromptTest {
         val owner = object : ActivityResultRegistryOwner {
             override val activityResultRegistry: ActivityResultRegistry = registry
         }
-        val ask = NotificationPermissionAsk(Build.VERSION.SDK_INT, record) { false }
+        val ask = NotificationPermissionAsk(Build.VERSION.SDK_INT, record, Dispatchers.IO) { false }
         compose.setContent {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
                 NotificationPermissionPrompt(

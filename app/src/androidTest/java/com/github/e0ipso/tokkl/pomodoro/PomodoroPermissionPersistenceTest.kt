@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
+import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,11 +36,11 @@ class PomodoroPermissionPersistenceTest {
 
     @Test fun diskRecordSurvivesFreshStoreAndCoordinatorInstances() {
         // Explicit API value exercises durable request history even on the API 31 test device.
-        val first = NotificationPermissionAsk(33, NotificationPermissionStore(context)) { false }
+        val first = ask(NotificationPermissionStore(context))
         assertTrue(first.atStartInApp())
         first.requested()
         val recreatedContext = context.createPackageContext(context.packageName, 0)
-        val restarted = NotificationPermissionAsk(33, NotificationPermissionStore(recreatedContext)) { false }
+        val restarted = ask(NotificationPermissionStore(recreatedContext))
         assertFalse(restarted.atStartInApp())
         assertTrue(NotificationPermissionStore(recreatedContext).asked())
     }
@@ -48,6 +49,9 @@ class PomodoroPermissionPersistenceTest {
         NotificationPermissionStore(context).markAsked()
         SessionRule.signOut()
         assertTrue(NotificationPermissionStore(context).asked())
-        assertFalse(NotificationPermissionAsk(33, NotificationPermissionStore(context)) { false }.atStartInApp())
+        assertFalse(ask(NotificationPermissionStore(context)).atStartInApp())
     }
+
+    /** The question on Android 13, before notifications are allowed, with its record in [store]. */
+    private fun ask(store: NotificationPermissionStore) = NotificationPermissionAsk(33, store, Dispatchers.IO) { false }
 }

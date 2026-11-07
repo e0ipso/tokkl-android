@@ -11,6 +11,8 @@ import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import kotlinx.coroutines.CancellationException
@@ -64,6 +66,8 @@ import java.time.LocalDate
  * @param clock where now comes from, which a start without AM or PM is guessed against.
  * @param allDay whether the server stores no-time entries, as `Capabilities.allDay` says, which
  *   decides whether the form offers the No times switch.
+ * @param picker the cached projects, clients, tasks and tags, which the form's picker offers.
+ * @param offline whether the phone is offline, which the picker says.
  */
 class EntryFormViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
@@ -74,6 +78,8 @@ class EntryFormViewModel(
     scope: CoroutineScope,
     private val clock: Clock = Clock.systemUTC(),
     allDay: Flow<Boolean> = flowOf(false),
+    picker: Flow<PickerSource> = flowOf(PickerSource()),
+    val offline: StateFlow<Boolean> = MutableStateFlow(false),
 ) : ViewModel(scope) {
 
     private val phase = MutableStateFlow<Phase>(Phase.Closed)
@@ -89,6 +95,9 @@ class EntryFormViewModel(
     ) { current, names, settings, offered ->
         current.shown(names, settings, offered)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormState.Closed)
+
+    /** What the form's picker offers, while the form reads it. */
+    val picker: StateFlow<PickerSource> = picker.stateIn(viewModelScope, whileShown, PickerSource())
 
     /** Whether a form is open, or opening. False after [close], and in a new process. */
     val isOpen: Boolean get() = phase.value != Phase.Closed

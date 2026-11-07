@@ -246,7 +246,7 @@ class PomodoroPageServerTest {
             TokklTheme {
                 SignedInPanes(Route.Pomodoro, entryBeside = false) { route ->
                     check(route == Route.Pomodoro)
-                    PomodoroScreen(model, app.cache)
+                    PomodoroScreen(model)
                 }
             }
         }

@@ -65,7 +65,7 @@ class TimerTotalsLargeTextTest {
                                         TimerState.Idle(EntryFields(), EntryLabels(), 1), 0,
                                         {}, {}, {}, {}, {}, {}, {}, { _, _, _, _, _ -> },
                                     )
-                                    TimerTotals(
+                                    TimerTotalsOf(
                                         rows,
                                         settings,
                                         clock = Clock.fixed(Instant.parse("2026-10-25T12:00:00Z"), ZoneOffset.UTC),

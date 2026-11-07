@@ -1,9 +1,13 @@
 package com.github.e0ipso.tokkl.picker
 
+import androidx.compose.runtime.Immutable
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.cache.CachedTask
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 /**
  * What an entry has picked: a project or none, a task of that project or none, and tags by name.
@@ -25,13 +29,20 @@ data class Picked(val projectId: Long? = null, val taskId: Long? = null, val tag
     }
 }
 
-/** The cached rows the picker offers. */
+/**
+ * The cached rows the picker offers, which a screen's view model follows ([pickerSource]) and the
+ * screen hands to [EntityPicker]. The lists are read-only copies from the cache.
+ */
+@Immutable
 data class PickerSource(
     val projects: List<CachedProject> = emptyList(),
     val clients: List<CachedClient> = emptyList(),
     val tasks: List<CachedTask> = emptyList(),
     val tags: List<CachedTag> = emptyList(),
 )
+
+/** The cache's projects, clients, tasks and tags, each time one of them changes. */
+fun AccountCache.pickerSource(): Flow<PickerSource> = combine(projects, clients, tasks, tags, ::PickerSource)
 
 /** The projects of one client, or of none when [clientName] is null. */
 data class ProjectGroup(val clientName: String?, val clientArchived: Boolean, val projects: List<ProjectOption>)

@@ -17,9 +17,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    // rememberOffline takes the app's DefaultNetwork from Koin.
-    implementation(platform(libs.koin.bom))
-    implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver3)
