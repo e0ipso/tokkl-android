@@ -16,19 +16,19 @@ import com.github.e0ipso.tokkl.ui.STEPPER_VALUE_TAG
 // "Long rest every" are told apart by the comma.
 
 /** The card for [label] as TalkBack sees it, one node that takes text. */
-internal fun lengthCardMatcher(label: String): SemanticsMatcher =
+fun lengthCardMatcher(label: String): SemanticsMatcher =
     SemanticsMatcher("length card \"$label\"") { node ->
         SemanticsActions.SetText in node.config &&
             node.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull()?.startsWith("$label, ") == true
     }
 
-internal fun SemanticsNodeInteractionsProvider.lengthCard(label: String): SemanticsNodeInteraction =
+fun SemanticsNodeInteractionsProvider.lengthCard(label: String): SemanticsNodeInteraction =
     onNode(lengthCardMatcher(label))
 
 /** The number's text field inside the card for [label], which only the unmerged tree has. */
-internal fun SemanticsNodeInteractionsProvider.lengthValue(label: String): SemanticsNodeInteraction =
+fun SemanticsNodeInteractionsProvider.lengthValue(label: String): SemanticsNodeInteraction =
     onNode(hasTestTag(STEPPER_VALUE_TAG) and hasAnyAncestor(lengthCardMatcher(label)), useUnmergedTree = true)
 
 /** The visible label text inside the card for [label]. */
-internal fun SemanticsNodeInteractionsProvider.lengthLabel(label: String): SemanticsNodeInteraction =
+fun SemanticsNodeInteractionsProvider.lengthLabel(label: String): SemanticsNodeInteraction =
     onNode(hasText(label) and hasAnyAncestor(lengthCardMatcher(label)), useUnmergedTree = true)

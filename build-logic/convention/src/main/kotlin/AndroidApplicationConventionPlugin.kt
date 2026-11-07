@@ -10,6 +10,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         extensions.configure<ApplicationExtension> {
             configureAndroid(this)
             configureCompose(this)
+            defaultConfig.targetSdk = TARGET_SDK
         }
     }
 }

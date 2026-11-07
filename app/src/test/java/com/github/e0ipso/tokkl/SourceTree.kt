@@ -6,12 +6,16 @@ import java.io.File
  * The Gradle modules of the checkout, read from settings.gradle.kts and each module's build file,
  * and the app packages their main sources declare and use. Gradle runs the app module's unit tests
  * in the app module's directory, so the checkout is the nearest directory above it with
- * settings.gradle.kts.
+ * settings.gradle.kts. The test support modules ([TEST_SUPPORT]) hold no app code: only
+ * androidTest source sets depend on them, so they stay out of the module graph.
  */
 internal object SourceTree {
 
     const val APP = "com.github.e0ipso.tokkl"
     const val ROOT = "<root>"
+
+    /** The modules whose main sources only the instrumented tests of other modules use. */
+    val TEST_SUPPORT = setOf(":core:testing")
 
     /** A use of [target], an app package, in [file]. */
     data class Use(val target: String, val file: String)
@@ -44,6 +48,7 @@ internal object SourceTree {
     val modules: List<Module> by lazy {
         INCLUDE.findAll(File(root, "settings.gradle.kts").readText())
             .map { it.groupValues[1] }
+            .filterNot { it in TEST_SUPPORT }
             .map { path -> Module(path, File(root, path.removePrefix(":").replace(':', '/'))) }
             .toList()
     }

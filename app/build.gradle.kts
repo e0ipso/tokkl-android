@@ -84,15 +84,13 @@ val releaseSigning: Map<String, String>? = run {
 
 android {
     namespace = "com.github.e0ipso.tokkl"
-    // compileSdk, buildToolsVersion, minSdk, Java 17 and Compose come from the
-    // tokkl.android.application plugin in build-logic.
+    // compileSdk, buildToolsVersion, minSdk, targetSdk, Java 17 and Compose come
+    // from the tokkl.android.application plugin in build-logic.
 
     defaultConfig {
         // The ID F-Droid lists the app under. The code keeps the namespace's
         // package, so only installed-app lookups use this one.
         applicationId = "com.canpicasoft.tokkl"
-        // The API level of the test emulator.
-        targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
 
@@ -194,6 +192,8 @@ dependencies {
     // AppModulesTest names the workers' parameters.
     testImplementation(libs.androidx.work.runtime)
 
+    // The test runner, the compose rules with their accessibility checks and the device rules.
+    androidTestImplementation(project(":core:testing"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)

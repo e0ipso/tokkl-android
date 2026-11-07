@@ -6,8 +6,9 @@ import org.gradle.kotlin.dsl.dependencies
 
 /**
  * A feature module, `:feature:<name>`: [AndroidLibraryComposeConventionPlugin] with the namespace
- * `com.github.e0ipso.tokkl.feature.<name>`, and the libraries every feature's screens and Koin
- * module use. Each feature's build file names the core modules it depends on itself, so that
+ * `com.github.e0ipso.tokkl.feature.<name>`, the libraries every feature's screens and Koin
+ * module use, and instrumented tests run as the app runs its own ([configureInstrumentedTests]).
+ * Each feature's build file names the core modules it depends on itself, so that
  * ModuleLayersTest reads the module graph from the build files.
  */
 class AndroidFeatureConventionPlugin : Plugin<Project> {
@@ -15,6 +16,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
         pluginManager.apply("tokkl.android.library.compose")
         extensions.configure<LibraryExtension> {
             namespace = "com.github.e0ipso.tokkl.feature.${name.replace('-', '_')}"
+            configureInstrumentedTests(this)
         }
         dependencies {
             add("implementation", libs.findLibrary("androidx-compose-material3").get())

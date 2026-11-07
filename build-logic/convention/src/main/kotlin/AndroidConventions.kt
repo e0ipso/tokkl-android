@@ -7,6 +7,13 @@ import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.withType
 
+/**
+ * The app's targetSdk, the API level of the test emulator tokkl-api36. Raise it together with the
+ * emulator image. The feature modules' test APKs target it too, so their tests draw the way the
+ * app does, edge to edge included.
+ */
+internal const val TARGET_SDK = 36
+
 /** The settings every Android module of the app shares, the app included. */
 internal fun Project.configureAndroid(android: CommonExtension) {
     android.apply {
