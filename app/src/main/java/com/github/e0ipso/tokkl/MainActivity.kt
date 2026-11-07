@@ -9,12 +9,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
 import com.github.e0ipso.tokkl.navhost.NavigationRequest
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
             (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         showSystemBarIconsFor(darkTheme = themeSettings.state.value.mode.isDark(systemIsDark))
         setContent {
-            val settings by themeSettings.state.collectAsState()
+            val settings by themeSettings.state.collectAsStateWithLifecycle()
             val darkTheme = settings.mode.isDark(systemIsDark = isSystemInDarkTheme())
             TokklTheme(darkTheme = darkTheme, dynamicColor = settings.dynamicColor) {
                 WindowFollowsTheme(darkTheme)

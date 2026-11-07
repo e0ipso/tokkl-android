@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
@@ -44,7 +45,8 @@ class PomodoroAlarmActivity : ComponentActivity() {
             }
         }
         setContent {
-            val theme by themes.state.collectAsState()
+            val theme by themes.state.collectAsStateWithLifecycle()
+            // Collected while stopped too, so the buttons act on the phase the screen shows from the first frame back.
             val state by holder.state.collectAsState()
             val dark = theme.mode.isDark(isSystemInDarkTheme())
             TokklTheme(darkTheme = dark, dynamicColor = theme.dynamicColor) {

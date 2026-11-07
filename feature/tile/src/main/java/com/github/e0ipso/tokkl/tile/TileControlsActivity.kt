@@ -69,6 +69,7 @@ class TileControlsActivity : ComponentActivity() {
             return
         }
         setContent {
+            // Collected while stopped too, so a press acts on the timer the dialog shows from the first frame back.
             val controls: TimerControls? by timerControls.controls.collectAsState(initial = null as TimerControls?)
             TokklTheme {
                 val shown = controls

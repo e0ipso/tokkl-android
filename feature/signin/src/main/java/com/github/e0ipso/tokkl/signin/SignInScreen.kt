@@ -56,6 +56,8 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun SignInScreen(model: SignInViewModel, onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
+    // Collected while stopped too, so a sign-in that finished in the background moves on from the
+    // first frame back.
     val state by model.state.collectAsState()
     LaunchedEffect(state.signedIn) {
         if (state.signedIn) onSignedIn()

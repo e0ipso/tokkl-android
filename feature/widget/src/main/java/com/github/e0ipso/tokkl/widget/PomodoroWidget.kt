@@ -77,6 +77,7 @@ class PomodoroWidget :
         val states = get<PomodoroWidgetStateSource>().state
         val initial = states.first()
         provideContent {
+            // Glance has no lifecycle owner, so collectAsStateWithLifecycle cannot run here.
             val state by states.collectAsState(initial)
             GlanceTheme(colors = PomodoroColors) { PomodoroWidgetContent(state) }
         }

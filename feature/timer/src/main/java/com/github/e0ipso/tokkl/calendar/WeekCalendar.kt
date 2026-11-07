@@ -33,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,6 +57,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.feature.timer.R
@@ -126,7 +126,7 @@ fun WeekCalendar(
             override fun addAllDay(day: LocalDate) = addAllDay(day)
         }
     }
-    val state by model.state.collectAsState()
+    val state by model.state.collectAsStateWithLifecycle()
     when (val current = state) {
         // The cache reads in moments, so this shows nothing rather than a flash of a spinner.
         CalendarState.Loading -> Unit
@@ -139,7 +139,7 @@ fun WeekCalendar(
         }
 
         is CalendarState.Shown -> {
-            val foregrounds by model.foregrounds.collectAsState()
+            val foregrounds by model.foregrounds.collectAsStateWithLifecycle()
             // Showing a week is the event that loads what the phone does not keep, and so is
             // coming back to the foreground with the week on screen.
             LaunchedEffect(current.weekStart, foregrounds) { model.loadWeek(current.weekStart) }
