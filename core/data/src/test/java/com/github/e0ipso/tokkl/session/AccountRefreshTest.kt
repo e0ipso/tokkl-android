@@ -1,10 +1,9 @@
 package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -35,6 +34,8 @@ import kotlin.coroutines.CoroutineContext
 /** Refreshes against a MockWebServer that answers `GET /api/v9/me` and `GET /api/v9/me/preferences`. */
 class AccountRefreshTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private val saved = mutableListOf<AccountSettings>()
     private lateinit var client: TogglApiClient
@@ -44,16 +45,14 @@ class AccountRefreshTest {
         server.start()
         val configured = ServerUrl.parse(server.url("/").toString())!!
         // The shared client sends requests only to the configured server.
-        ConfiguredServer.readStoredFrom { configured }
+        testApi.stored = configured
         // The user has confirmed the MockWebServer's plain http URL.
-        ConfiguredTrust.readFrom(InMemoryServerTrust(configured))
-        client = TogglApiClient(configured, ApiCredentials.ApiToken("tok-123"))
+        testApi.trust = InMemoryServerTrust(configured)
+        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

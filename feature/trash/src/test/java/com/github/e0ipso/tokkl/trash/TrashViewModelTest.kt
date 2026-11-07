@@ -1,10 +1,9 @@
 package com.github.e0ipso.tokkl.trash
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.ServerProblem
@@ -27,6 +26,8 @@ import org.junit.Test
  * each request to its end inside the call.
  */
 class TrashViewModelTest {
+
+    private val testApi = TestApi(null)
 
     private val server = MockWebServer()
     private lateinit var client: TogglApiClient
@@ -56,15 +57,13 @@ class TrashViewModelTest {
         }
         server.start()
         val configured = ServerUrl.parse(server.url("/").toString())!!
-        ConfiguredServer.readStoredFrom { configured }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(configured))
-        client = TogglApiClient(configured, ApiCredentials.ApiToken("tok-123"))
+        testApi.stored = configured
+        testApi.trust = InMemoryServerTrust(configured)
+        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.api
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import kotlinx.serialization.json.JsonArray
@@ -24,7 +25,7 @@ import java.util.UUID
  */
 class ServerSmokeTest {
 
-    private val client = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+    private val client = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
 
     private val servers = ServerConfigStore(InstrumentationRegistry.getInstrumentation().targetContext)
 
@@ -65,12 +66,12 @@ class ServerSmokeTest {
     fun emailAndPasswordAuthenticateWithGetMe() {
         val credentials = ApiCredentials.EmailPassword(TokklTestServer.email, TokklTestServer.password)
 
-        assertEquals(TokklTestServer.email, email(TogglApiClient(TokklTestServer.url, credentials)))
+        assertEquals(TokklTestServer.email, email(appApiClient(TokklTestServer.url, credentials)))
     }
 
     @Test
     fun wrongApiTokenGets403() {
-        val client = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken("not-the-api-token"))
+        val client = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken("not-the-api-token"))
 
         val result = client.get(client.server.api("me"), JsonObject.serializer())
 

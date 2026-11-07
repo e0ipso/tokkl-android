@@ -1,11 +1,9 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +40,8 @@ import kotlin.coroutines.CoroutineContext
  * a test can look at the state while they wait.
  */
 class ReportTabsViewModelTest {
+
+    private val testApi = TestApi(null)
 
     private val server = MockWebServer()
     private val searches = CopyOnWriteArrayList<JsonObject>()
@@ -83,12 +83,12 @@ class ReportTabsViewModelTest {
         server.start()
         val url = ServerUrl.parse(server.url("/").toString())!!
         // The shared client sends requests only to the configured server.
-        ConfiguredServer.readStoredFrom { url }
+        testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
+        testApi.trust = InMemoryServerTrust(url)
         model = ReportsViewModel(
             settings,
-            { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             CoroutineScope(Dispatchers.Unconfined),
             io,
             Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
@@ -97,8 +97,6 @@ class ReportTabsViewModelTest {
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

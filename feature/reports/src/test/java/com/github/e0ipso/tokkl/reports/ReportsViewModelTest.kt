@@ -1,11 +1,9 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -48,6 +46,8 @@ import kotlin.coroutines.CoroutineContext
  * checks the rotation on the emulator; these tests check the model's half.
  */
 class ReportsViewModelTest {
+
+    private val testApi = TestApi(null)
     private val server = MockWebServer()
     private val searches = CopyOnWriteArrayList<JsonObject>()
     private val io = QueuedDispatcher()
@@ -83,11 +83,11 @@ class ReportsViewModelTest {
         }
         server.start()
         val url = ServerUrl.parse(server.url("/").toString())!!
-        ConfiguredServer.readStoredFrom { url }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
+        testApi.stored = url
+        testApi.trust = InMemoryServerTrust(url)
         model = ReportsViewModel(
             accountSettings = settings,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("token")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("token")) },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = io,
             clock = CLOCK,
@@ -96,8 +96,6 @@ class ReportsViewModelTest {
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

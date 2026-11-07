@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.api
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import kotlinx.serialization.json.JsonObject
@@ -26,7 +27,7 @@ class PinnedCertificateTest {
     private val trust = ServerTrustStore(context)
     private val server = TokklTestServer.tlsUrl
     private val me = server.api("me")
-    private val client = TogglApiClient(server, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+    private val client = appApiClient(server, ApiCredentials.ApiToken(TokklTestServer.apiToken))
 
     @Before
     fun configureTheServer() {

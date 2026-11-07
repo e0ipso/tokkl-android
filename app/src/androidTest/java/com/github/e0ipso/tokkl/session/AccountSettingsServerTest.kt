@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.orFail
@@ -36,7 +36,7 @@ class AccountSettingsServerTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-    private val client = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+    private val client = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
 
     @After
     fun restoreTheAccount() {

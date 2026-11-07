@@ -1,11 +1,9 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +40,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 class AppSummaryViewModelTest {
+
+    private val testApi = TestApi(null)
     private val http = MockWebServer()
     private val requests = CopyOnWriteArrayList<JsonObject>()
     private val paths = CopyOnWriteArrayList<String>()
@@ -80,13 +80,13 @@ class AppSummaryViewModelTest {
         }
         http.start()
         val url = ServerUrl.parse(http.url("/").toString())!!
-        ConfiguredServer.readStoredFrom { url }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
+        testApi.stored = url
+        testApi.trust = InMemoryServerTrust(url)
         model = ReportsViewModel(
             accountSettings = MutableStateFlow(
                 AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
             ),
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("test-token")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("test-token")) },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = io,
             clock = Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
@@ -96,8 +96,6 @@ class AppSummaryViewModelTest {
     @After
     fun tearDown() {
         model.close()
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         http.close()
     }
 
@@ -172,7 +170,7 @@ class AppSummaryViewModelTest {
             accountSettings = MutableStateFlow(
                 AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
             ),
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("test-token")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("test-token")) },
             scope = liveScope,
             io = Dispatchers.IO,
         )

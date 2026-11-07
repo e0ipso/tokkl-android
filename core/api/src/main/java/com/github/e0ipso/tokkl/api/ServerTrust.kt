@@ -30,31 +30,3 @@ interface ServerTrust {
     @Throws(IOException::class)
     fun pinCertificate(certificate: ServerCertificate)
 }
-
-/**
- * Where [SharedHttpClient] reads the user's trust decisions from. The app sets
- * this once at start. Until then nothing is trusted, so every request to a
- * plain `http://` server is refused, and only certificates that a system or
- * user CA signed pass.
- */
-object ConfiguredTrust {
-
-    @Volatile
-    var current: ServerTrust = TrustNothing
-        private set
-
-    fun readFrom(trust: ServerTrust) {
-        current = trust
-    }
-
-    private object TrustNothing : ServerTrust {
-        override fun isCleartextConfirmed(server: ServerUrl): Boolean = false
-
-        override fun confirmCleartext(server: ServerUrl): Unit = throw IOException("No trust store is configured")
-
-        override fun pinnedSha256(host: String, port: Int): String? = null
-
-        override fun pinCertificate(certificate: ServerCertificate): Unit =
-            throw IOException("No trust store is configured")
-    }
-}

@@ -4,12 +4,10 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.stopSpan
 import kotlinx.coroutines.CoroutineScope
@@ -50,6 +48,8 @@ import java.util.concurrent.TimeUnit
 
 class ChangeSenderTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private val store = InMemoryChangeStore()
     private val clock = MutableClock(TAP)
@@ -62,11 +62,11 @@ class ChangeSenderTest {
     fun setUp() {
         server.start()
         url = ServerUrl.parse(server.url("/").toString())!!
-        ConfiguredServer.readStoredFrom { url }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
+        testApi.stored = url
+        testApi.trust = InMemoryServerTrust(url)
         sender = ChangeSender(
             store,
-            client = { if (signedIn) TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) else null },
+            client = { if (signedIn) testApi.client(url, ApiCredentials.ApiToken("tok-123")) else null },
             scope = scope,
             io = Dispatchers.IO,
             clock = clock,
@@ -76,8 +76,6 @@ class ChangeSenderTest {
     @After
     fun tearDown() {
         scope.cancel()
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
@@ -593,7 +591,7 @@ class ChangeSenderTest {
         var discarded = 0
         sender = ChangeSender(
             store,
-            { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope,
             Dispatchers.IO,
             onDiscarded = { discarded += it },
@@ -726,7 +724,7 @@ class ChangeSenderTest {
     fun sendTriesAgainByItselfOnceRetryAfterHasPassed() {
         val realTime = ChangeSender(
             store,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
         )
@@ -780,7 +778,7 @@ class ChangeSenderTest {
         lateinit var withOnSent: ChangeSender
         withOnSent = ChangeSender(
             store,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onSent = {
@@ -815,7 +813,7 @@ class ChangeSenderTest {
         var calls = 0
         val withOnSent = ChangeSender(
             store,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onSent = { calls++ },
@@ -841,7 +839,7 @@ class ChangeSenderTest {
         val calls = mutableListOf<String>()
         val withOnEmptied = ChangeSender(
             store,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onSent = { synchronized(calls) { calls += "onSent" } },
@@ -874,7 +872,7 @@ class ChangeSenderTest {
         val finishCleanup = CountDownLatch(1)
         val withCleanup = ChangeSender(
             store,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onEmptied = {
@@ -1066,7 +1064,7 @@ class ChangeSenderTest {
     fun aQueuedStartAndItsLaterChangesEndOnTheGridWhereTheLaterTimersStartSnaps() {
         val gridded = ChangeSender(
             store,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             clock = clock,
@@ -1239,7 +1237,7 @@ class ChangeSenderTest {
     fun aLostCreateMatchesTheStartWhereTheServerSnappedIt() {
         val snapping = ChangeSender(
             store,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             clock = clock,
@@ -1618,7 +1616,7 @@ class ChangeSenderTest {
         val refreshes = java.util.concurrent.atomic.AtomicInteger()
         val refreshing = ChangeSender(
             store,
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onSent = { refreshes.incrementAndGet() },
@@ -1653,7 +1651,7 @@ class ChangeSenderTest {
                 .onResponseEnd(SocketEffect.CloseSocket())
                 .build(),
         )
-        val read = TogglApiClient(url, ApiCredentials.ApiToken("tok-123")).get(url.api("me"), JsonObject.serializer())
+        val read = testApi.client(url, ApiCredentials.ApiToken("tok-123")).get(url.api("me"), JsonObject.serializer())
         assertTrue(read.toString(), read is ApiResult.Success)
         assertEquals("GET", server.takeRequest().method)
     }
@@ -1696,7 +1694,7 @@ class ChangeSenderTest {
     /** A sender for a server that stores no-time entries, as `Capabilities.allDay` says. */
     private fun noTimeSender() = ChangeSender(
         store,
-        client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+        client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
         scope = scope,
         io = Dispatchers.IO,
         clock = clock,

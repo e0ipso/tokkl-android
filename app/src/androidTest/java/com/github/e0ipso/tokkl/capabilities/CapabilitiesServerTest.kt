@@ -6,7 +6,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.orFail
@@ -43,7 +43,7 @@ class CapabilitiesServerTest {
         SessionRule.signOut()
         ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
-        val api = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+        val api = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
         val preferences = api.get(
             api.server.api("me", "preferences"),
             JsonObject.serializer(),

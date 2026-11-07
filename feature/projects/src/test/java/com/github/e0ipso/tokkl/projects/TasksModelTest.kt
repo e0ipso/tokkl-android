@@ -1,11 +1,9 @@
 package com.github.e0ipso.tokkl.projects
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +25,8 @@ import java.util.concurrent.CopyOnWriteArrayList
  * each request to the end inside the call.
  */
 class TasksModelTest {
+
+    private val testApi = TestApi(null)
 
     private val server = MockWebServer()
 
@@ -74,11 +74,11 @@ class TasksModelTest {
         server.start()
         val url = ServerUrl.parse(server.url("/").toString())!!
         // The shared client sends requests only to the configured server.
-        ConfiguredServer.readStoredFrom { url }
+        testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
+        testApi.trust = InMemoryServerTrust(url)
         model = TasksModel(
-            client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             workspaceId = { 7L },
             refreshCache = { refreshes++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
@@ -88,8 +88,6 @@ class TasksModelTest {
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

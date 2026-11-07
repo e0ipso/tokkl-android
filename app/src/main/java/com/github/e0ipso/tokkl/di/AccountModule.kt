@@ -100,6 +100,7 @@ internal val accountModule = module {
             timerSync = get(),
             runningNotification = get(),
             pomodoroNotification = get(),
+            http = get(),
             scope = get(),
             io = io(),
         )

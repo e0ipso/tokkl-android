@@ -38,6 +38,7 @@ internal class MainActivityForeground(
     private val timerSync: TimerSyncFollower,
     private val runningNotification: RunningNotificationSync,
     private val pomodoroNotification: AccountPomodoroNotification,
+    private val http: SharedHttpClient,
     private val scope: CoroutineScope,
     private val io: CoroutineDispatcher,
 ) : DefaultLifecycleObserver {
@@ -81,7 +82,7 @@ internal class MainActivityForeground(
         // A kept connection went with the network. A request on it would fail only after it was
         // written, so the queue could not tell whether a delete reached the server, and Undo
         // would need the server. Without one, the request fails before it leaves the phone.
-        if (!online) SharedHttpClient.instance.connectionPool.evictAll()
+        if (!online) http.dropIdleConnections()
         val returned = refresh.networkChanged(online) {
             // A cellular route can appear before it works, followed by Wi-Fi without an
             // offline interval. Retry failed history days and calendar weeks on each online

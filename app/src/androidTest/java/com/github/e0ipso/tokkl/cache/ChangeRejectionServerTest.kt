@@ -9,6 +9,9 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.appApiClient
+import com.github.e0ipso.tokkl.appConfiguredServer
+import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.signin.SignIn
@@ -183,7 +186,11 @@ class ChangeRejectionServerTest {
         token = newToken
         assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), sender.drain())
         assertEquals(2, count())
-        val signIn = SignIn(session = { _, accepted, _ -> token = accepted })
+        val signIn = SignIn(
+            session = { _, accepted, _ -> token = accepted },
+            httpClient = appHttp.instance,
+            configured = appConfiguredServer,
+        )
         assertEquals(
             SignInResult.SignedIn,
             signIn.attempt(
@@ -196,7 +203,7 @@ class ChangeRejectionServerTest {
         assertFalse(sender.signInNeeded.value)
         assertEquals(0, count())
         assertEquals(0, discarded)
-        val accepted = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(newToken))
+        val accepted = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(newToken))
         assertEquals(
             "After reset",
             accepted.get(
@@ -211,7 +218,7 @@ class ChangeRejectionServerTest {
         RoomChangeStore(database),
         client = {
             if (http == null) {
-                TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token))
+                appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token))
             } else {
                 TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token), httpClient = http)
             }

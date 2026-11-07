@@ -1,11 +1,9 @@
 package com.github.e0ipso.tokkl.calendar
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
@@ -47,6 +45,8 @@ import kotlin.coroutines.CoroutineContext
  */
 class CalendarViewModelTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
 
     /** Each request's `start_date` and `end_date`. */
@@ -77,15 +77,13 @@ class CalendarViewModelTest {
         server.start()
         url = ServerUrl.parse(server.url("/").toString())!!
         // The shared client sends requests only to the configured server.
-        ConfiguredServer.readStoredFrom { url }
+        testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
+        testApi.trust = InMemoryServerTrust(url)
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
@@ -582,7 +580,7 @@ class CalendarViewModelTest {
         tasks = flowOf(emptyList()),
         accountSettings = MutableStateFlow(settings),
         changes = changes,
-        client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+        client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = io,
         clock = CLOCK,

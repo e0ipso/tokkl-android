@@ -17,19 +17,23 @@ import javax.net.ssl.X509TrustManager
  * and security settings apply everywhere. SingleHttpClientTest fails when
  * other app code builds an HTTP client.
  *
- * Every request and redirect must stay on [ConfiguredServer.current], and a
- * plain `http://` server needs the user's confirmation in
- * [ConfiguredTrust.current]; see [ConfiguredServerGuard]. TLS goes through
- * [PinningTrustManager]: the platform's CAs first, then the certificate the
- * user pinned. OkHttp's own host name check stays on. Later security
- * settings go into [build], never into a second client.
+ * The app makes one, so every request shares one connection pool and one
+ * dispatcher.
+ *
+ * Every request and redirect must stay on [server]'s current server, and a
+ * plain `http://` server needs the user's confirmation in [trust]; see
+ * [ConfiguredServerGuard]. TLS goes through [PinningTrustManager]: the
+ * platform's CAs first, then the certificate the user pinned. OkHttp's own
+ * host name check stays on. Later security settings go into [build], never
+ * into a second client.
  *
  * A request tagged [StreamingRead] reads its body with no read timeout, for
  * an event stream that waits between events by design. Every other setting
  * stays as it is for it.
  */
-object SharedHttpClient {
+class SharedHttpClient(private val server: ConfiguredServer, private val trust: ServerTrust) {
 
+    /** The client. Built on first use, which loads the platform's CAs, so first use it off the main thread. */
     val instance: OkHttpClient by lazy { build() }
 
     /**
@@ -41,18 +45,16 @@ object SharedHttpClient {
     }
 
     /**
-     * [client] made to send each request once. OkHttp sends a request again on a new connection
-     * when one fails, also after the server has answered, so a request whose answer was lost
-     * would reach the server twice and its caller would read only the second answer. The derived
-     * client fails the call instead, and leaves recovery to the caller, also from a stale pooled
-     * connection. It shares the rest with [client]: connection pool, dispatcher, interceptors and
-     * trust checks, so the guard, the pinning and [cancelAll] cover it as they cover [client].
+     * Closes every idle pooled connection. Call it when the network drops: a request on a
+     * connection kept from the old network would fail only after it was written.
      */
-    fun sendingOnce(client: OkHttpClient): OkHttpClient = client.newBuilder().retryOnConnectionFailure(false).build()
+    fun dropIdleConnections() {
+        instance.connectionPool.evictAll()
+    }
 
     private fun build(): OkHttpClient {
         val trustManager = PinningTrustManager(platformTrustManager()) { host, port ->
-            ConfiguredTrust.current.pinnedSha256(host, port)
+            trust.pinnedSha256(host, port)
         }
         val tls = SSLContext.getInstance("TLS").apply { init(null, arrayOf(trustManager), null) }
         return OkHttpClient.Builder()
@@ -62,23 +64,34 @@ object SharedHttpClient {
             .followSslRedirects(false)
             .sslSocketFactory(tls.socketFactory, trustManager)
             .addInterceptor(StreamingReads)
-            .addInterceptor(
-                ConfiguredServerGuard(configured = { ConfiguredServer.current }, trust = { ConfiguredTrust.current }),
-            )
+            .addInterceptor(ConfiguredServerGuard(server, trust))
             .build()
     }
 
-    /** OkHttp's default. */
-    private const val MAX_IDLE_CONNECTIONS = 5
+    companion object {
+        /**
+         * [client] made to send each request once. OkHttp sends a request again on a new connection
+         * when one fails, also after the server has answered, so a request whose answer was lost
+         * would reach the server twice and its caller would read only the second answer. The derived
+         * client fails the call instead, and leaves recovery to the caller, also from a stale pooled
+         * connection. It shares the rest with [client]: connection pool, dispatcher, interceptors and
+         * trust checks, so the guard, the pinning and [cancelAll] cover it as they cover [client].
+         */
+        fun sendingOnce(client: OkHttpClient): OkHttpClient =
+            client.newBuilder().retryOnConnectionFailure(false).build()
 
-    /**
-     * How long an idle connection stays in the pool. Tokkl runs on Node, which closes a keep-alive
-     * connection after 5 idle seconds, and OkHttp reuses one idle for less than 10 seconds without
-     * checking it. A request [sendingOnce] sent on such a connection failed, so a timer action a few
-     * seconds after the last request said there was no connection. Under 5 seconds the pool drops
-     * the connection first, and the request opens a new one.
-     */
-    private const val IDLE_CONNECTION_SECONDS = 4L
+        /** OkHttp's default. */
+        private const val MAX_IDLE_CONNECTIONS = 5
+
+        /**
+         * How long an idle connection stays in the pool. Tokkl runs on Node, which closes a keep-alive
+         * connection after 5 idle seconds, and OkHttp reuses one idle for less than 10 seconds without
+         * checking it. A request [sendingOnce] sent on such a connection failed, so a timer action a
+         * few seconds after the last request said there was no connection. Under 5 seconds the pool
+         * drops the connection first, and the request opens a new one.
+         */
+        private const val IDLE_CONNECTION_SECONDS = 4L
+    }
 
     /** Lifts the read timeout, and only that, for a request tagged [StreamingRead]. */
     private object StreamingReads : Interceptor {

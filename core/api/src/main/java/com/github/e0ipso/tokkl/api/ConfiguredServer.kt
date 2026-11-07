@@ -1,14 +1,19 @@
 package com.github.e0ipso.tokkl.api
 
+/** Where [ConfiguredServer] reads the stored server from, on every request. */
+fun interface StoredServer {
+    /** The stored server, or null when there is none. May read the disk. */
+    fun load(): ServerUrl?
+}
+
 /**
  * The one server the app may send requests to (docs/PRD.md principle 1).
  * [SharedHttpClient] refuses every request and every redirect whose scheme,
- * host or port differs from [current].
+ * host or port differs from [current]. The app makes one, with the stored
+ * server as [stored], so every process sends requests only to the stored
+ * server from its first request on.
  */
-object ConfiguredServer {
-
-    @Volatile
-    private var stored: () -> ServerUrl? = { null }
+class ConfiguredServer(private val stored: StoredServer) {
 
     @Volatile
     private var signInCandidate: ServerUrl? = null
@@ -20,12 +25,7 @@ object ConfiguredServer {
      * when there is neither, which refuses every request.
      */
     val current: ServerUrl?
-        get() = signInCandidate ?: stored()
-
-    /** Where [current] reads the stored server from. The app sets this once at start. */
-    fun readStoredFrom(source: () -> ServerUrl?) {
-        stored = source
-    }
+        get() = signInCandidate ?: stored.load()
 
     /**
      * Runs [attempt] with [candidate] as the configured server, since sign-in

@@ -3,14 +3,12 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -41,6 +39,8 @@ import java.util.concurrent.TimeUnit
  */
 class TimerActionsTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private val credentials = ApiCredentials.ApiToken("tok-123")
     private val cache = RecordingCache()
@@ -56,12 +56,12 @@ class TimerActionsTest {
         server.start()
         // The server sits under a path, as a Tokkl behind a reverse proxy can.
         url = ServerUrl.parse(server.url("/tokkl/").toString())!!
-        ConfiguredServer.readStoredFrom { url }
+        testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
+        testApi.trust = InMemoryServerTrust(url)
         holder = TimerStateSource(initial = null, save = { saves++ }, cache = cache)
         actions = TimerActions(
-            client = { if (signedIn) TogglApiClient(url, credentials, trustListener = trustListener) else null },
+            client = { if (signedIn) testApi.client(url, credentials, trustListener = trustListener) else null },
             source = { holder },
             io = Dispatchers.IO,
         )
@@ -69,8 +69,6 @@ class TimerActionsTest {
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
@@ -255,7 +253,7 @@ class TimerActionsTest {
 
             override fun answered() = Unit
         }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
+        testApi.trust = InMemoryServerTrust()
         val requestsBefore = server.requestCount
         assertEquals(TimerActionResult.Failed(ApiError.CleartextNotConfirmed(url)), runBlocking { actions.discard(2) })
         assertEquals(listOf<ApiError.TrustRefused>(ApiError.CleartextNotConfirmed(url)), refusals)

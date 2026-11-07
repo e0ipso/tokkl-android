@@ -3,11 +3,9 @@ package com.github.e0ipso.tokkl.reports
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.serialization.json.Json
@@ -28,6 +26,8 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 class AppSummaryServerTest {
+
+    private val testApi = TestApi(null)
     private val http = MockWebServer()
     private lateinit var server: ReportsServer
     private val range = ReportRange(LocalDate.parse("2026-10-21"), LocalDate.parse("2026-10-27"))
@@ -46,15 +46,13 @@ class AppSummaryServerTest {
     fun setUp() {
         http.start()
         val url = ServerUrl.parse(http.url("/prefix/tokkl/").toString())!!
-        ConfiguredServer.readStoredFrom { url }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
-        server = ReportsServer(TogglApiClient(url, ApiCredentials.ApiToken("test-token")))
+        testApi.stored = url
+        testApi.trust = InMemoryServerTrust(url)
+        server = ReportsServer(testApi.client(url, ApiCredentials.ApiToken("test-token")))
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         http.close()
     }
 

@@ -19,6 +19,8 @@ import org.junit.Test
 /** The shared client sends requests, redirects included, only to the configured server. */
 class ConfiguredServerGuardTest {
 
+    private val testApi = TestApi(null)
+
     @Serializable
     private data class Me(val id: Long)
 
@@ -34,17 +36,15 @@ class ConfiguredServerGuardTest {
         configured.start()
         other.start()
         server = ServerUrl.parse(configured.url("/tokkl/").toString())!!
-        ConfiguredServer.readStoredFrom { server }
+        testApi.stored = server
         // The user has confirmed the MockWebServer's plain http URL.
         trust = InMemoryServerTrust(server)
-        ConfiguredTrust.readFrom(trust)
-        client = TogglApiClient(server, credentials)
+        testApi.trust = trust
+        client = testApi.client(server, credentials)
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         configured.close()
         other.close()
     }
@@ -96,7 +96,7 @@ class ConfiguredServerGuardTest {
                 .build()
 
             val refusal = try {
-                SharedHttpClient.instance.newCall(request).execute().close()
+                testApi.http.instance.newCall(request).execute().close()
                 fail("the request to another host went through")
                 return
             } catch (e: HostNotAllowedException) {
@@ -104,7 +104,7 @@ class ConfiguredServerGuardTest {
             }
 
             assertNull(refusal.cause)
-            val apiError = failure(TogglApiClient(server, credentials).get(request.url, Me.serializer()))
+            val apiError = failure(testApi.client(server, credentials).get(request.url, Me.serializer()))
             val printed = listOf(refusal.toString(), refusal.stackTraceToString(), refusal.origin, apiError.toString())
             for (text in printed) {
                 assertFalse("the refusal holds the Authorization header", credentials.authorizationHeader in text)
@@ -162,7 +162,7 @@ class ConfiguredServerGuardTest {
 
     @Test
     fun withoutAConfiguredServerEveryRequestIsRefused() {
-        ConfiguredServer.readStoredFrom { null }
+        testApi.stored = null
 
         assertEquals(
             ApiError.HostNotAllowed(origin(server.api("me"))),
@@ -173,10 +173,10 @@ class ConfiguredServerGuardTest {
 
     @Test
     fun signInMakesTheUrlBeingTriedTheConfiguredServerUntilItReturns() {
-        ConfiguredServer.readStoredFrom { null }
+        testApi.stored = null
         configured.enqueue(me())
 
-        val during = ConfiguredServer.signingIn(server) { client.get(server.api("me"), Me.serializer()) }
+        val during = testApi.configured.signingIn(server) { client.get(server.api("me"), Me.serializer()) }
         val after = client.get(server.api("me"), Me.serializer())
 
         assertEquals(ApiResult.Success(Me(7)), during)
@@ -205,10 +205,10 @@ class ConfiguredServerGuardTest {
     @Test
     fun confirmationCoversOnlyTheUrlTheUserConfirmed() {
         val elsewhere = ServerUrl.parse(configured.url("/other/").toString())!!
-        ConfiguredServer.readStoredFrom { elsewhere }
+        testApi.stored = elsewhere
         configured.enqueue(me())
 
-        val result = TogglApiClient(elsewhere, credentials).get(elsewhere.api("me"), Me.serializer())
+        val result = testApi.client(elsewhere, credentials).get(elsewhere.api("me"), Me.serializer())
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(elsewhere)), result)
         assertEquals(0, configured.requestCount)
@@ -222,9 +222,9 @@ class ConfiguredServerGuardTest {
         val https = ServerUrl.parse(
             configured.url("/").newBuilder().scheme("https").port(configured.port).build().toString(),
         )!!
-        ConfiguredServer.readStoredFrom { https }
+        testApi.stored = https
 
-        val error = failure(TogglApiClient(https, credentials).get(https.api("me"), Me.serializer()))
+        val error = failure(testApi.client(https, credentials).get(https.api("me"), Me.serializer()))
 
         assertTrue(error.toString(), error is ApiError.Network)
     }

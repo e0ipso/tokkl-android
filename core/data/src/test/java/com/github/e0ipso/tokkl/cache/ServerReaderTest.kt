@@ -2,12 +2,11 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiJson
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
@@ -37,6 +36,8 @@ import java.time.ZoneOffset
 /** What a refresh reads from a MockWebServer that answers like Tokkl. */
 class ServerReaderTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private lateinit var client: TogglApiClient
     private val answers = mutableMapOf<String, MockResponse>()
@@ -49,15 +50,13 @@ class ServerReaderTest {
         }
         server.start()
         val configured = ServerUrl.parse(server.url("/").toString())!!
-        ConfiguredServer.readStoredFrom { configured }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(configured))
-        client = TogglApiClient(configured, ApiCredentials.ApiToken("tok-123"))
+        testApi.stored = configured
+        testApi.trust = InMemoryServerTrust(configured)
+        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

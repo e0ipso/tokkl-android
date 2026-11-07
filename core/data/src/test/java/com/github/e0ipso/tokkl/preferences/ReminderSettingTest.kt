@@ -1,10 +1,9 @@
 package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
@@ -28,6 +27,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class ReminderSettingTest {
+
+    private val testApi = TestApi(null)
     private val server = MockWebServer()
     private val saved = mutableListOf<StoredReminderPreferences>()
     private lateinit var client: TogglApiClient
@@ -35,15 +36,15 @@ class ReminderSettingTest {
     @Before fun setUp() {
         server.start()
         val url = ServerUrl.parse(server.url("/").toString())!!
-        ConfiguredServer.readStoredFrom { url }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
-        client = TogglApiClient(url, ApiCredentials.ApiToken("test"))
+        testApi.stored = url
+        testApi.trust = InMemoryServerTrust(url)
+        client = testApi.client(url, ApiCredentials.ApiToken("test"))
     }
 
     @After fun cleanUp() {
         server.close()
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
+        testApi.stored = null
+        testApi.trust = InMemoryServerTrust()
     }
     private fun setting(initial: StoredReminderPreferences? = null) = ReminderSetting(
         InMemoryValueStore(initial) { saved += it },

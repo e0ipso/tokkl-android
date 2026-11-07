@@ -40,7 +40,10 @@ internal fun Module.signOutSteps() {
         val context = androidContext()
         return@step { RunningCheck.cancelAndWait(context) }
     }
-    step(SignOutOrder.HTTP_CALLS) { { SharedHttpClient.cancelAll() } }
+    step(SignOutOrder.HTTP_CALLS) {
+        val http = get<SharedHttpClient>()
+        return@step { http.cancelAll() }
+    }
     // A new Pomodoro notification only once the cache is empty.
     step(SignOutOrder.CACHE) {
         val cache = get<AccountCache>()

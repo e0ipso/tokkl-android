@@ -17,9 +17,11 @@ import java.util.concurrent.TimeUnit
 /**
  * The queue sends creates, updates and deletes through [SharedHttpClient.sendingOnce] (TKA-0208),
  * so a request whose connection drops goes out once per try, and the client shares everything
- * else with [SharedHttpClient.instance].
+ * else with [testApi.http.instance].
  */
 class SharedHttpClientTest {
+
+    private val testApi = TestApi(null)
 
     private val server = MockWebServer()
     private val credentials = ApiCredentials.ApiToken("tok-123")
@@ -30,15 +32,13 @@ class SharedHttpClientTest {
     fun setUp() {
         server.start()
         url = ServerUrl.parse(server.url("/").toString())!!
-        ConfiguredServer.readStoredFrom { url }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
-        client = TogglApiClient(url, credentials)
+        testApi.stored = url
+        testApi.trust = InMemoryServerTrust(url)
+        client = testApi.client(url, credentials)
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
@@ -76,7 +76,7 @@ class SharedHttpClientTest {
 
     @Test
     fun sendingOnceKeepsThePoolDispatcherInterceptorsAndTrustOfTheSharedClient() {
-        val shared = SharedHttpClient.instance
+        val shared = testApi.http.instance
         val once = SharedHttpClient.sendingOnce(shared)
 
         assertTrue(shared.retryOnConnectionFailure)
@@ -102,14 +102,14 @@ class SharedHttpClientTest {
 
     @Test
     fun aQueueRequestStillMeetsTheGuardAndTheCleartextCheck() {
-        ConfiguredServer.readStoredFrom { ServerUrl.parse("https://elsewhere.example/")!! }
+        testApi.stored = ServerUrl.parse("https://elsewhere.example/")!!
         for (method in METHODS) {
             val refused = call(method, resend = false)
             assertEquals(method, ApiResult.Failure(ApiError.HostNotAllowed(url.api().origin())), refused)
         }
 
-        ConfiguredServer.readStoredFrom { url }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
+        testApi.stored = url
+        testApi.trust = InMemoryServerTrust()
         for (method in METHODS) {
             assertEquals(method, ApiResult.Failure(ApiError.CleartextNotConfirmed(url)), call(method, resend = false))
         }

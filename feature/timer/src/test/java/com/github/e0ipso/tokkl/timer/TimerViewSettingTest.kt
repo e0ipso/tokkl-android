@@ -1,10 +1,9 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
@@ -27,6 +26,8 @@ import org.junit.Test
  */
 class TimerViewSettingTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private val saved = mutableListOf<StoredTimerView>()
     private lateinit var client: TogglApiClient
@@ -36,16 +37,14 @@ class TimerViewSettingTest {
         server.start()
         val configured = ServerUrl.parse(server.url("/").toString())!!
         // The shared client sends requests only to the configured server.
-        ConfiguredServer.readStoredFrom { configured }
+        testApi.stored = configured
         // The user has confirmed the MockWebServer's plain http URL.
-        ConfiguredTrust.readFrom(InMemoryServerTrust(configured))
-        client = TogglApiClient(configured, ApiCredentials.ApiToken("tok-123"))
+        testApi.trust = InMemoryServerTrust(configured)
+        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 

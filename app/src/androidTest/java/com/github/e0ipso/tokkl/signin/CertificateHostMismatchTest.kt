@@ -16,7 +16,8 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
-import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.appConfiguredServer
+import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -54,14 +55,18 @@ class CertificateHostMismatchTest {
     @Before
     fun showTheSignInScreen() {
         SessionRule.signOut()
-        val client = SharedHttpClient.instance.newBuilder()
+        val client = appHttp.instance.newBuilder()
             .dns(object : Dns {
                 override fun lookup(hostname: String): List<InetAddress> =
                     if (hostname == HOST) InetAddress.getAllByName(proxy.host).toList() else Dns.SYSTEM.lookup(hostname)
             })
             .build()
         val model = SignInViewModel(
-            signIn = SignIn(session = { _, _, _ -> saved = true }, httpClient = client),
+            signIn = SignIn(
+                session = { _, _, _ -> saved = true },
+                httpClient = client,
+                configured = appConfiguredServer,
+            ),
             trust = ServerTrustStore(context),
             cooldowns = SignInCooldownStore(context),
             scope = scope,

@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -37,7 +36,7 @@ object TestAccounts {
      * [create] made in this process.
      */
     class Account(val id: Long, val email: String, val apiToken: String, private val password: String? = null) {
-        val client: TogglApiClient get() = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(apiToken))
+        val client: TogglApiClient get() = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(apiToken))
 
         /**
          * Another device of the same user, such as the web app or a desktop client: it signs in
@@ -143,14 +142,14 @@ object TestAccounts {
             .header("X-Tokkl-Csrf", "1")
             .post(account.toString().toRequestBody("application/json".toMediaType()))
             .build()
-        SharedHttpClient.instance.newCall(accept).execute().use { response ->
+        appHttp.instance.newCall(accept).execute().use { response ->
             if (!response.isSuccessful) {
                 throw AssertionError(
                     "POST /api/app/invites/<token> failed: HTTP ${response.code}",
                 )
             }
         }
-        val me = TogglApiClient(TokklTestServer.url, ApiCredentials.EmailPassword(email, password))
+        val me = appApiClient(TokklTestServer.url, ApiCredentials.EmailPassword(email, password))
             .get(TokklTestServer.url.api("me"), NewMe.serializer())
             .orFail("GET /api/v9/me")
         return Account(me.id, email, me.apiToken, password)

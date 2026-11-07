@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.session
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.StoredServer
 import java.io.IOException
 
 /**
@@ -12,12 +13,12 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so make calls off the main thread.
  */
-class ServerConfigStore(context: Context) {
+class ServerConfigStore(context: Context) : StoredServer {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
     /** The stored server, or null when there is none or it no longer parses. */
-    fun load(): ServerUrl? = preferences.getString(KEY_BASE_URL, null)?.let(ServerUrl::parse)
+    override fun load(): ServerUrl? = preferences.getString(KEY_BASE_URL, null)?.let(ServerUrl::parse)
 
     @Throws(IOException::class)
     fun save(server: ServerUrl) {

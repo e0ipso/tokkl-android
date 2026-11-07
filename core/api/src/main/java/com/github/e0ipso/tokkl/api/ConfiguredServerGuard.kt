@@ -36,14 +36,14 @@ class CleartextNotConfirmedException(val server: ServerUrl) :
  * guard refuses it with [CleartextNotConfirmedException]. A redirect stays on
  * the same origin, and so on the same scheme.
  */
-internal class ConfiguredServerGuard(private val configured: () -> ServerUrl?, private val trust: () -> ServerTrust) :
+internal class ConfiguredServerGuard(private val configured: ConfiguredServer, private val trust: ServerTrust) :
     Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         var request = chain.request()
         // One server for the whole call, redirects included.
-        val server = requireAllowed(configured(), request.url)
-        if (server.isCleartext && !trust().isCleartextConfirmed(server)) throw CleartextNotConfirmedException(server)
+        val server = requireAllowed(configured.current, request.url)
+        if (server.isCleartext && !trust.isCleartextConfirmed(server)) throw CleartextNotConfirmedException(server)
         var followUps = 0
         while (true) {
             val response = chain.proceed(request)

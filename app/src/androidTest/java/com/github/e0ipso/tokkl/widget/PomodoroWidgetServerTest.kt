@@ -9,6 +9,8 @@ import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.appConfiguredServer
+import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
@@ -243,7 +245,7 @@ class PomodoroWidgetServerTest {
             ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
             assertEquals(
                 SignInResult.SignedIn,
-                SignIn(SessionWriter(app::storeSignIn)).attempt(
+                SignIn(SessionWriter(app::storeSignIn), appHttp.instance, appConfiguredServer).attempt(
                     TokklTestServer.url,
                     SignInCredentials.ApiToken(replacement.apiToken),
                 ),

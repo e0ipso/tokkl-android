@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.signin
 
+import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.platform.io
@@ -25,6 +26,8 @@ val signInFeatureModule = module {
             // Runs on the IO thread, since the stores touch the disk.
             signIn = SignIn(
                 session = get<SessionWriter>(),
+                httpClient = get<SharedHttpClient>().instance,
+                configured = get(),
                 signedInAccount = StoredSignInAccount(get(), get())::current,
             ),
             trust = get<ServerTrustStore>(),

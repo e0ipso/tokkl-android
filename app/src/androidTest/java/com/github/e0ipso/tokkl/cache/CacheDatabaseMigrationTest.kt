@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.appApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -460,7 +460,7 @@ class CacheDatabaseMigrationTest {
 
                 val sender = ChangeSender(
                     RoomChangeStore(database),
-                    client = { TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken)) },
+                    client = { appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken)) },
                     scope = scope,
                     io = Dispatchers.IO,
                 )

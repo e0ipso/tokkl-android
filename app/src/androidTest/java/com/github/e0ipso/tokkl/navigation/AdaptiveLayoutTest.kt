@@ -34,8 +34,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
-import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TrashEntry
+import com.github.e0ipso.tokkl.appConfiguredServer
+import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
@@ -387,7 +388,11 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     private inner class ScreenScope {
         private val signInModel by lazy {
             SignInViewModel(
-                signIn = SignIn(session = { _, _, _ -> }, httpClient = SharedHttpClient.instance),
+                signIn = SignIn(
+                    session = { _, _, _ -> },
+                    httpClient = appHttp.instance,
+                    configured = appConfiguredServer,
+                ),
                 trust = ServerTrustStore(context),
                 cooldowns = SignInCooldownStore(context),
                 scope = scope,

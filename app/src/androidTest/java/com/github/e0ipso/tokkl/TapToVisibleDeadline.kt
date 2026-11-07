@@ -108,7 +108,7 @@ internal object BlackholeDiagnostics {
      */
     fun recordHttpCalls() {
         if (!active) return
-        val dispatcher = com.github.e0ipso.tokkl.api.SharedHttpClient.instance.dispatcher
+        val dispatcher = appHttp.instance.dispatcher
         val calls = dispatcher.runningCalls() + dispatcher.queuedCalls()
         record("http.calls=" + calls.joinToString { it.request().url.encodedPath })
         record("http.producers=" + producersInCalls().joinToString())

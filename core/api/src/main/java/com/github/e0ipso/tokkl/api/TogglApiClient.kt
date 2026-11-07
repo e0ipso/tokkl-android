@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 class TogglApiClient(
     val server: ServerUrl,
     private val credentials: ApiCredentials,
-    private val httpClient: OkHttpClient = SharedHttpClient.instance,
+    private val httpClient: OkHttpClient,
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
 ) {

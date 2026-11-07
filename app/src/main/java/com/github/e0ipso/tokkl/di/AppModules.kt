@@ -27,8 +27,6 @@ internal val startupModule = module {
     single {
         AppStartup(
             context = androidContext(),
-            servers = get(),
-            trust = get(),
             refreshRequests = get(),
             accountRefresh = inject(),
             runningNotification = inject(),

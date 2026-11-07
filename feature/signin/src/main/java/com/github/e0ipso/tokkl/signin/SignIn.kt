@@ -7,7 +7,6 @@ import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -113,10 +112,14 @@ fun interface SessionWriter {
  * the password is used for this one request and never written anywhere.
  *
  * The call blocks, so make it off the main thread.
+ *
+ * @param httpClient the shared HTTP client, whose guard lets the request through to [configured]'s
+ *   sign-in candidate.
  */
 class SignIn(
     private val session: SessionWriter,
-    private val httpClient: OkHttpClient = SharedHttpClient.instance,
+    private val httpClient: OkHttpClient,
+    private val configured: ConfiguredServer,
     private val signedInAccount: () -> SignInAgain? = { null },
 ) {
 
@@ -129,7 +132,7 @@ class SignIn(
         if (account != null && server != account.server) return SignInResult.OtherAccount
         val client = TogglApiClient(server, credentials.toApiCredentials(), httpClient)
         // Until the server is stored, the URL being tried is the configured server.
-        val result = ConfiguredServer.signingIn(server) { client.get(server.api("me"), Me.serializer()) }
+        val result = configured.signingIn(server) { client.get(server.api("me"), Me.serializer()) }
         val me = when (result) {
             is ApiResult.Success -> result.value
             is ApiResult.Failure -> return result.error.toSignInResult()

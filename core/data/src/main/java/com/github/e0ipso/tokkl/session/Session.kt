@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.session
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrustListener
@@ -16,6 +17,7 @@ import java.security.GeneralSecurityException
  *
  * Calls do disk and Keystore I/O, so make them off the main thread.
  *
+ * @param http the shared HTTP client, which every [client] sends through.
  * @param trustListener hears every request of [client] that the trust checks
  *   refuse, so the app can prompt from any screen.
  * @param successListener hears every 2xx answer to [client]'s requests.
@@ -23,6 +25,7 @@ import java.security.GeneralSecurityException
 class Session(
     private val servers: ServerConfigStore,
     private val tokens: ApiTokenStore,
+    private val http: SharedHttpClient,
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
     private val clearExports: () -> Unit = {},
@@ -56,6 +59,7 @@ class Session(
             TogglApiClient(
                 server,
                 ApiCredentials.ApiToken(token),
+                http.instance,
                 trustListener = trustListener,
                 successListener = successListener,
             )

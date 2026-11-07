@@ -4,14 +4,11 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
@@ -39,6 +36,8 @@ import java.util.concurrent.TimeUnit
  */
 class TimerEventStreamTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private val credentials = ApiCredentials.ApiToken("tok-123")
     private val cache = RecordingCache()
@@ -51,16 +50,14 @@ class TimerEventStreamTest {
         server.start()
         // The server sits under a path, as a Tokkl behind a reverse proxy can.
         url = ServerUrl.parse(server.url("/tokkl/").toString())!!
-        ConfiguredServer.readStoredFrom { url }
+        testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
-        ConfiguredTrust.readFrom(InMemoryServerTrust(url))
+        testApi.trust = InMemoryServerTrust(url)
         holder = TimerStateSource(initial = null, save = {}, cache = cache)
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
@@ -207,8 +204,8 @@ class TimerEventStreamTest {
     @Test
     fun theStreamUsesTheAccountsServerPathAndCredentialWithNoReadTimeout() {
         // Same settings as the shared client, with a read timeout far shorter than the body's delay.
-        val impatient = SharedHttpClient.instance.newBuilder().readTimeout(200, TimeUnit.MILLISECONDS).build()
-        val api = TogglApiClient(url, credentials, impatient)
+        val impatient = testApi.http.instance.newBuilder().readTimeout(200, TimeUnit.MILLISECONDS).build()
+        val api = testApi.client(url, credentials, impatient)
         server.enqueue(eventStream(timerEvent(state(12))).bodyDelay(600, TimeUnit.MILLISECONDS).build())
         // The same delay times out a plain request on that client.
         server.enqueue(eventStream("{}").bodyDelay(600, TimeUnit.MILLISECONDS).build())
@@ -230,7 +227,7 @@ class TimerEventStreamTest {
 
     @Test
     fun aRefusedCredentialEndsTheStreamBeforeAnyEventAndOtherFailuresRetry() {
-        val api = TogglApiClient(url, credentials)
+        val api = testApi.client(url, credentials)
         server.enqueue(answer(403, "application/json", "\"Incorrect username and/or password\""))
         server.enqueue(answer(401, "text/html", "<p>Unauthorized</p>"))
         server.enqueue(answer(502, "text/html", "<p>Bad gateway</p>"))

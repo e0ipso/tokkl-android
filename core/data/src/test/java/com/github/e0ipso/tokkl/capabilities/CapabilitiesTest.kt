@@ -1,11 +1,10 @@
 package com.github.e0ipso.tokkl.capabilities
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
@@ -30,6 +29,8 @@ import java.io.IOException
 /** The capability flags from `/me`, the trash probe and the timer state probe, against a MockWebServer. */
 class CapabilitiesTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private lateinit var client: TogglApiClient
     private val answers = mutableMapOf<String, MockResponse>()
@@ -44,15 +45,13 @@ class CapabilitiesTest {
         }
         server.start()
         val configured = ServerUrl.parse(server.url("/").toString())!!
-        ConfiguredServer.readStoredFrom { configured }
-        ConfiguredTrust.readFrom(InMemoryServerTrust(configured))
-        client = TogglApiClient(configured, ApiCredentials.ApiToken("tok-123"))
+        testApi.stored = configured
+        testApi.trust = InMemoryServerTrust(configured)
+        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
@@ -289,8 +288,8 @@ class CapabilitiesTest {
     @Test
     fun anUnreachableServerKeepsAPresentFlagForAnOfflinePhone() {
         val unreachable = ServerUrl.parse("http://127.0.0.1:1/")!!
-        ConfiguredTrust.readFrom(InMemoryServerTrust(unreachable))
-        val offline = TogglApiClient(unreachable, ApiCredentials.ApiToken("tok-123"))
+        testApi.trust = InMemoryServerTrust(unreachable)
+        val offline = testApi.client(unreachable, ApiCredentials.ApiToken("tok-123"))
 
         assertTrue(source(initial = ALL).refresh(offline, me(TOKKL_ME)).timerState)
     }

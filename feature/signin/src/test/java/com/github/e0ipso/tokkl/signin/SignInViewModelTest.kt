@@ -1,12 +1,11 @@
 package com.github.e0ipso.tokkl.signin
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
 import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -36,6 +35,8 @@ import javax.net.ssl.SSLHandshakeException
  */
 class SignInViewModelTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private val saved = mutableListOf<Pair<ServerUrl, String>>()
     private val savedSettings = mutableListOf<AccountSettings>()
@@ -50,17 +51,16 @@ class SignInViewModelTest {
         server.start()
         // Most tests sign in to the MockWebServer's plain http URLs, which the user has confirmed here.
         trust = InMemoryServerTrust(ServerUrl.parse(baseUrl("/"))!!, ServerUrl.parse(baseUrl("/tokkl"))!!)
-        ConfiguredTrust.readFrom(trust)
+        testApi.trust = trust
         model = model(trust)
     }
 
     @After
     fun tearDown() {
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
-    private fun model(trust: ServerTrust, httpClient: OkHttpClient = SharedHttpClient.instance): SignInViewModel {
+    private fun model(trust: ServerTrust, httpClient: OkHttpClient = testApi.http.instance): SignInViewModel {
         val signIn = SignIn(
             session = { url, token, settings ->
                 saveFailure?.let { throw it }
@@ -68,6 +68,7 @@ class SignInViewModelTest {
                 savedSettings += settings
             },
             httpClient = httpClient,
+            configured = testApi.configured,
         )
         // Unconfined runs each attempt to the end inside submit().
         return SignInViewModel(
@@ -195,6 +196,8 @@ class SignInViewModelTest {
         val url = ServerUrl.parse(baseUrl("/"))!!
         val signIn = SignIn(
             session = { _, _, _ -> error("must not replace the existing account") },
+            httpClient = testApi.http.instance,
+            configured = testApi.configured,
             signedInAccount = { SignInAgain(url, 7) },
         )
         server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
@@ -208,6 +211,8 @@ class SignInViewModelTest {
     fun aRestoredFormStillChecksThePersistedAccountBeforeStoringCredentials() {
         val signIn = SignIn(
             session = { _, _, _ -> error("must not replace the existing account") },
+            httpClient = testApi.http.instance,
+            configured = testApi.configured,
             signedInAccount = { SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7) },
         )
         server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
@@ -528,21 +533,20 @@ class SignInViewModelTest {
      * handshake with a server presenting [certificate] fails unless the user
      * pinned it, as PinningTrustManager makes it fail.
      */
-    private fun handshakeAsIfServing(certificate: ServerCertificate): OkHttpClient =
-        SharedHttpClient.instance.newBuilder()
-            .addInterceptor { chain ->
-                val pin = trust.pinnedSha256(certificate.host, certificate.port)
-                if (pin != certificate.sha256) {
-                    val refusal = UntrustedCertificateException(
-                        certificate,
-                        pinChanged = pin != null,
-                        cause = CertificateException("no trust anchor"),
-                    )
-                    throw SSLHandshakeException("handshake failed").apply { initCause(refusal) }
-                }
-                chain.proceed(chain.request())
+    private fun handshakeAsIfServing(certificate: ServerCertificate): OkHttpClient = testApi.http.instance.newBuilder()
+        .addInterceptor { chain ->
+            val pin = trust.pinnedSha256(certificate.host, certificate.port)
+            if (pin != certificate.sha256) {
+                val refusal = UntrustedCertificateException(
+                    certificate,
+                    pinChanged = pin != null,
+                    cause = CertificateException("no trust anchor"),
+                )
+                throw SSLHandshakeException("handshake failed").apply { initCause(refusal) }
             }
-            .build()
+            chain.proceed(chain.request())
+        }
+        .build()
 
     @Test
     fun plainHttpServerShowsTheWarningAndSendsNothingUntilTheUserConfirms() {
@@ -598,7 +602,7 @@ class SignInViewModelTest {
     @Test
     fun httpsServerNeverShowsTheWarning() {
         val nothingConfirmed = InMemoryServerTrust()
-        ConfiguredTrust.readFrom(nothingConfirmed)
+        testApi.trust = nothingConfirmed
         model = model(nothingConfirmed)
         // The MockWebServer speaks plain HTTP, so the TLS handshake fails.
         model.onServerUrlChange(server.url("/").newBuilder().scheme("https").port(server.port).build().toString())
@@ -621,7 +625,7 @@ class SignInViewModelTest {
 
             override fun pinCertificate(certificate: ServerCertificate) = throw IOException("disk full")
         }
-        ConfiguredTrust.readFrom(failing)
+        testApi.trust = failing
         model = model(failing)
         fillApiToken()
         model.submit()

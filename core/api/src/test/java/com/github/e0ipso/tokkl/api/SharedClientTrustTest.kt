@@ -10,9 +10,11 @@ import org.junit.Test
  */
 class SharedClientTrustTest {
 
+    private val testApi = TestApi(null)
+
     @Test
     fun sharedClientUsesThePinningTrustManagerAndOkHttpsHostNameCheck() {
-        val client = SharedHttpClient.instance
+        val client = testApi.http.instance
 
         assertTrue(client.x509TrustManager is PinningTrustManager)
         assertEquals("okhttp3.internal.tls.OkHostnameVerifier", client.hostnameVerifier.javaClass.name)

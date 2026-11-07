@@ -3,14 +3,11 @@ package com.github.e0ipso.tokkl.trust
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.SharedHttpClient
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +31,8 @@ import javax.net.ssl.SSLHandshakeException
  */
 class SessionTrustTest {
 
+    private val testApi = TestApi(null)
+
     private val server = MockWebServer()
     private val trust = InMemoryServerTrust()
     private lateinit var url: ServerUrl
@@ -45,15 +44,13 @@ class SessionTrustTest {
         server.start()
         url = ServerUrl.parse(server.url("/").toString())!!
         // A stored http session whose confirmation is missing.
-        ConfiguredServer.readStoredFrom { url }
-        ConfiguredTrust.readFrom(trust)
+        testApi.stored = url
+        testApi.trust = trust
         model = model(trust)
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
@@ -174,29 +171,28 @@ class SessionTrustTest {
     )
 
     /** The signed-in session's client, as Session builds it. */
-    private fun client(httpClient: OkHttpClient = SharedHttpClient.instance) =
-        TogglApiClient(url, ApiCredentials.ApiToken(TOKEN), httpClient, trustListener = model)
+    private fun client(httpClient: OkHttpClient = testApi.http.instance) =
+        testApi.client(url, ApiCredentials.ApiToken(TOKEN), httpClient, trustListener = model)
 
     /**
      * The shared client with a step that stands in for its trust manager: the
      * handshake with a server presenting [certificate] fails unless the user
      * pinned it, as PinningTrustManager makes it fail.
      */
-    private fun handshakeAsIfServing(certificate: ServerCertificate): OkHttpClient =
-        SharedHttpClient.instance.newBuilder()
-            .addInterceptor { chain ->
-                val pin = trust.pinnedSha256(certificate.host, certificate.port)
-                if (pin != certificate.sha256) {
-                    val refusal = UntrustedCertificateException(
-                        certificate,
-                        pinChanged = pin != null,
-                        cause = CertificateException("no trust anchor"),
-                    )
-                    throw SSLHandshakeException("handshake failed").apply { initCause(refusal) }
-                }
-                chain.proceed(chain.request())
+    private fun handshakeAsIfServing(certificate: ServerCertificate): OkHttpClient = testApi.http.instance.newBuilder()
+        .addInterceptor { chain ->
+            val pin = trust.pinnedSha256(certificate.host, certificate.port)
+            if (pin != certificate.sha256) {
+                val refusal = UntrustedCertificateException(
+                    certificate,
+                    pinChanged = pin != null,
+                    cause = CertificateException("no trust anchor"),
+                )
+                throw SSLHandshakeException("handshake failed").apply { initCause(refusal) }
             }
-            .build()
+            chain.proceed(chain.request())
+        }
+        .build()
 
     private fun me() = MockResponse.Builder()
         .code(200)

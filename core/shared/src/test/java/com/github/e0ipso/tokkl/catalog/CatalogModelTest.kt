@@ -4,7 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TestApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -21,6 +21,8 @@ import java.io.IOException
  */
 class CatalogModelTest {
 
+    private val testApi = TestApi(null)
+
     /** What the server lists, or null when it is out of reach. */
     private var server: List<String>? = listOf("Website")
     private var loads = 0
@@ -28,7 +30,7 @@ class CatalogModelTest {
     private val url = ServerUrl.parse("http://127.0.0.1:9/")!!
 
     private val model = CatalogModel<List<String>, String>(
-        client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+        client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
         workspaceId = { 7L },
         refreshCache = {},
         scope = CoroutineScope(Dispatchers.Unconfined),

@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit
 
 class TogglApiClientTest {
 
+    private val testApi = TestApi(null)
+
     @Serializable
     private data class Me(val id: Long, val email: String)
 
@@ -29,16 +31,14 @@ class TogglApiClientTest {
         server.start()
         val configured = serverUrl()
         // The shared client sends requests only to the configured server.
-        ConfiguredServer.readStoredFrom { configured }
+        testApi.stored = configured
         // The user has confirmed the MockWebServer's plain http URL.
-        ConfiguredTrust.readFrom(InMemoryServerTrust(configured))
-        client = TogglApiClient(configured, credentials)
+        testApi.trust = InMemoryServerTrust(configured)
+        client = testApi.client(configured, credentials)
     }
 
     @After
     fun tearDown() {
-        ConfiguredServer.readStoredFrom { null }
-        ConfiguredTrust.readFrom(InMemoryServerTrust())
         server.close()
     }
 
@@ -158,7 +158,7 @@ class TogglApiClientTest {
         val url = serverUrl()
         server.close()
 
-        val error = failure(TogglApiClient(url, credentials).sendNoContent("DELETE", url.api("me")))
+        val error = failure(testApi.client(url, credentials).sendNoContent("DELETE", url.api("me")))
 
         assertTrue(error.toString(), error is ApiError.Network)
     }
@@ -168,7 +168,7 @@ class TogglApiClientTest {
         val url = serverUrl()
         server.close()
 
-        val error = failure(TogglApiClient(url, credentials).get(url.api("me"), Me.serializer()))
+        val error = failure(testApi.client(url, credentials).get(url.api("me"), Me.serializer()))
 
         assertTrue(error.toString(), error is ApiError.Network)
         assertFalse(error is ApiError.Http)
@@ -187,10 +187,10 @@ class TogglApiClientTest {
     fun timeoutIsANetworkError() {
         server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.Stall).build())
         // Same settings as the shared client, with a read timeout short enough for a test.
-        val impatient = SharedHttpClient.instance.newBuilder().readTimeout(200, TimeUnit.MILLISECONDS).build()
+        val impatient = testApi.http.instance.newBuilder().readTimeout(200, TimeUnit.MILLISECONDS).build()
         val url = serverUrl()
 
-        val error = failure(TogglApiClient(url, credentials, impatient).get(url.api("me"), Me.serializer()))
+        val error = failure(testApi.client(url, credentials, impatient).get(url.api("me"), Me.serializer()))
 
         assertTrue(error.toString(), error is ApiError.Network && error.cause is SocketTimeoutException)
     }
@@ -198,7 +198,7 @@ class TogglApiClientTest {
     @Test
     fun onlyA2xxAnswerReachesTheSuccessListener() {
         var successes = 0
-        val counting = TogglApiClient(serverUrl(), credentials, successListener = { successes++ })
+        val counting = testApi.client(serverUrl(), credentials, successListener = { successes++ })
         server.enqueue(json(200, """{"id":1,"email":"ana@example.com"}"""))
         server.enqueue(json(500, "\"down\""))
         server.enqueue(json(403, "\"Incorrect username and/or password\""))

@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -116,7 +117,7 @@ class CatalogForegroundTest {
         assertEquals("opening loads once", 1, counter.count)
 
         val activity = BackgroundTrip.leave()
-        rename("projects", id, "Web site", api = TogglApiClient(counter.url, ApiCredentials.ApiToken(account.apiToken)))
+        rename("projects", id, "Web site", api = appApiClient(counter.url, ApiCredentials.ApiToken(account.apiToken)))
         BackgroundTrip.comeBack(activity)
 
         awaitText("Web site")
