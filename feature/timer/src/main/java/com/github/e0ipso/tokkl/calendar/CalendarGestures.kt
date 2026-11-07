@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.calendar
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.geometry.Offset
@@ -14,7 +13,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /** What the calendar's taps, drags and TalkBack actions do. Without it the calendar only shows entries. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 interface CalendarEditing {
     /** Creates the entry that a drag from clock minute [fromMinute] to [toMinute] on [day] makes. */
     fun create(day: LocalDate, fromMinute: Int, toMinute: Int)

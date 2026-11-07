@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.calendar
 
 import android.content.Context
 import android.provider.Settings
-import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -168,7 +167,6 @@ fun WeekCalendar(
  * calendar only shows them.
  */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun CalendarContent(
     state: CalendarState.Shown,
     now: Instant,

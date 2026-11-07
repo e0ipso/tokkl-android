@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.settings
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -74,7 +73,6 @@ fun SettingsScreen(model: SettingsViewModel, onOpenLicences: () -> Unit, modifie
 
 /** [SettingsScreen] without its model. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun SettingsContent(
     settings: ThemeSettings,
     onModeChange: (ThemeMode) -> Unit,

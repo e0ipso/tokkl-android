@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.clients
 
 import androidx.activity.compose.BackHandler
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -75,7 +74,6 @@ fun ClientsScreen(model: ClientsViewModel, modifier: Modifier = Modifier) {
 }
 
 /** What the page's controls do. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ClientsActions(
     val onRetry: () -> Unit = {},
     val onNew: () -> Unit = {},
@@ -90,7 +88,6 @@ class ClientsActions(
 
 /** [ClientsScreen] without its model. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun ClientsContent(
     state: ClientsState,
     offline: Boolean,

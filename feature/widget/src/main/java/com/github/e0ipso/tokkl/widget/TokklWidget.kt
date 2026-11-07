@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
-import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -81,7 +80,6 @@ private val BillableColor = ColorProvider(TokklLightExtraColors.billable, TokklD
 
 /** Also used by native-host screenshot tests, with fixed cached state. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun TimerWidgetContent(state: WidgetState, modifier: GlanceModifier = GlanceModifier) {
     val context = LocalContext.current
     val size = LocalSize.current

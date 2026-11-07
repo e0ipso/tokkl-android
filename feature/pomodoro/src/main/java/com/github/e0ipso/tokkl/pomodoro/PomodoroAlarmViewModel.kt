@@ -24,7 +24,6 @@ import java.time.Clock
  * @property problem why the last Next phase or End session did not go through, or null.
  * @property closed the screen has nothing to show and finishes.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 @Immutable
 data class PomodoroAlarmState(
     val ring: PomodoroRing? = null,

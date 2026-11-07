@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.entry
 
 import androidx.activity.compose.BackHandler
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -107,7 +106,6 @@ fun EntryFormScreen(
 }
 
 /** What the form's controls do. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class EntryFormActions(
     val onDescriptionChange: (String) -> Unit = {},
     val onPick: (Picked) -> Unit = {},
@@ -133,7 +131,6 @@ class EntryFormActions(
  * the keyboard, so every field can be reached at the largest font scale.
  */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun EntryFormContent(
     state: EntryFormState,
     actions: EntryFormActions,

@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.annotation.StringRes
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,7 +49,6 @@ import com.github.e0ipso.tokkl.core.shared.R as SharedR
  * standard message, and the alarm keeps ringing.
  */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun PomodoroAlarmContent(
     state: PomodoroAlarmState,
     onNext: () -> Unit,

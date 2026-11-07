@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.projects
 
 import androidx.activity.compose.BackHandler
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -92,7 +91,6 @@ fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
 }
 
 /** What the page's controls do. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ProjectsActions(
     val onRetry: () -> Unit = {},
     val onNew: () -> Unit = {},
@@ -105,7 +103,6 @@ class ProjectsActions(
 
 /** [ProjectsScreen] without its model. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun ProjectsContent(
     state: ProjectsState,
     offline: Boolean,

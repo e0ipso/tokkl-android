@@ -98,7 +98,6 @@ private val RestText = ColorProvider(Color(0xFF007A7A), TokklDarkColorScheme.sec
 
 /** The same content is rendered in a native RemoteViews host for deterministic layout references. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun PomodoroWidgetContent(
     state: PomodoroWidgetState,
     modifier: GlanceModifier = GlanceModifier,

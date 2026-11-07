@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.tags
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -86,7 +85,6 @@ fun TagsScreen(model: TagsViewModel, modifier: Modifier = Modifier) {
 }
 
 /** What the page's controls do. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class TagsActions(
     val onRetry: () -> Unit = {},
     val onCreate: (String) -> Unit = {},
@@ -100,7 +98,6 @@ class TagsActions(
 
 /** [TagsScreen] without its model. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun TagsContent(
     state: TagsState,
     offline: Boolean,

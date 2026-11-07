@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.history
 
 import android.content.res.Resources
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -86,7 +85,6 @@ fun HistoryList(
  * The menu's Save as template: [onPin] gets the entry's id, and [enabled] is false while another
  * change to the templates is on its way to the server.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PinAction(val enabled: Boolean, val onPin: (Long) -> Unit)
 
 /** Save as template through [onPin], or null when the server keeps no timer [templates]. */
@@ -95,7 +93,6 @@ fun pinAction(templates: FavoritesState, onPin: (Long) -> Unit): PinAction? =
 
 /** [HistoryList] without its models. Without [pin], the menu offers no Save as template. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun HistoryContent(
     state: HistoryState,
     onLoadOlder: () -> Unit,

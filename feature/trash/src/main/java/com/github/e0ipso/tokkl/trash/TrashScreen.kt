@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.trash
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -76,7 +75,6 @@ fun TrashScreen(model: TrashViewModel, modifier: Modifier = Modifier) {
 }
 
 /** What the page's controls do. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class TrashActions(
     val onRetry: () -> Unit = {},
     val onRestore: (Long) -> Unit = {},
@@ -89,7 +87,6 @@ class TrashActions(
 
 /** [TrashScreen] without its model. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun TrashContent(
     state: TrashState,
     offline: Boolean,
