@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl.sync
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 import java.time.Instant
@@ -15,7 +15,8 @@ import java.time.Instant
  */
 class LastAnswerStore(context: Context) : ValueStore<Instant?> {
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     override fun load(): Instant? =
         preferences.getLong(KEY_ANSWERED, NONE).takeIf { it != NONE }?.let(Instant::ofEpochMilli)
@@ -30,12 +31,8 @@ class LastAnswerStore(context: Context) : ValueStore<Instant?> {
         if (value != null) {
             preferences.edit { putLong(KEY_ANSWERED, value.toEpochMilli()) }
         } else {
-            commit { remove(KEY_ANSWERED) }
+            file.commit { remove(KEY_ANSWERED) }
         }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
     }
 
     private companion object {

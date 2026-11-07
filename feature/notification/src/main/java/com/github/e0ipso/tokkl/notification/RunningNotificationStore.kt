@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.notification
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
@@ -14,7 +14,8 @@ import java.io.IOException
  */
 class RunningNotificationStore(context: Context) : ValueStore<FollowedEntry?> {
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     override fun load(): FollowedEntry? {
         val key = preferences.getString(KEY_SHOWN, null) ?: return null
@@ -24,14 +25,10 @@ class RunningNotificationStore(context: Context) : ValueStore<FollowedEntry?> {
 
     @Throws(IOException::class)
     override fun save(value: FollowedEntry?) {
-        commit {
+        file.commit {
             if (value == null) remove(KEY_SHOWN) else putString(KEY_SHOWN, value.key)
             if (value?.entryId == null) remove(KEY_SHOWN_ENTRY) else putLong(KEY_SHOWN_ENTRY, value.entryId)
         }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
     }
 
     private companion object {

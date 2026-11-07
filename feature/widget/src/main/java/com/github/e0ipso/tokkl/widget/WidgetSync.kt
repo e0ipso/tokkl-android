@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -75,13 +75,13 @@ class WidgetSync(
  */
 class WidgetStore(context: Context, private val keyName: String = TIMER_KEY) : ValueStore<String> {
 
-    private val preferences: SharedPreferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
 
-    override fun load(): String? = preferences.getString(keyName, null)
+    override fun load(): String? = file.preferences.getString(keyName, null)
 
     @Throws(IOException::class)
     override fun save(value: String) {
-        if (!preferences.edit().putString(keyName, value).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { putString(keyName, value) }
     }
 
     companion object {

@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.session
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import java.io.IOException
@@ -21,7 +21,8 @@ class AccountSettingsStore(context: Context) :
 
     override suspend fun forgetAccount() = clear()
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     /** The stored settings, or null when none are stored. */
     override fun load(): AccountSettings? {
@@ -55,7 +56,7 @@ class AccountSettingsStore(context: Context) :
     /** Replaces the stored settings in one write. */
     @Throws(IOException::class)
     override fun save(value: AccountSettings) {
-        commit {
+        file.commit {
             putString(KEY_TIME_ZONE, value.timeZone)
             putInt(KEY_BEGINNING_OF_WEEK, value.beginningOfWeek.togglNumber)
             val timeResolution = value.timeResolutionMinutes
@@ -83,11 +84,7 @@ class AccountSettingsStore(context: Context) :
 
     @Throws(IOException::class)
     fun clear() {
-        commit { clear() }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { clear() }
     }
 
     internal companion object {

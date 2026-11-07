@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.session
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.StoredServer
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
 
 /**
@@ -18,23 +18,20 @@ class ServerConfigStore(context: Context) :
     StoredServer,
     ClearableStore<ServerUrl> {
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     /** The stored server, or null when there is none or it no longer parses. */
     override fun load(): ServerUrl? = preferences.getString(KEY_BASE_URL, null)?.let(ServerUrl::parse)
 
     @Throws(IOException::class)
     override fun save(value: ServerUrl) {
-        commit { putString(KEY_BASE_URL, value.toString()) }
+        file.commit { putString(KEY_BASE_URL, value.toString()) }
     }
 
     @Throws(IOException::class)
     override fun clear() {
-        commit { remove(KEY_BASE_URL) }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { remove(KEY_BASE_URL) }
     }
 
     internal companion object {

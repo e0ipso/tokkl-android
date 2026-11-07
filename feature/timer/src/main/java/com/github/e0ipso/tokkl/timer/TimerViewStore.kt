@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl.timer
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
 
 /**
@@ -14,7 +14,8 @@ import java.io.IOException
  */
 class TimerViewStore(context: Context) : ClearableStore<StoredTimerView> {
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     /** The stored view, or null when none is stored or it names a view this version lacks. */
     override fun load(): StoredTimerView? {
@@ -26,7 +27,7 @@ class TimerViewStore(context: Context) : ClearableStore<StoredTimerView> {
     /** Replaces the stored view in one write. */
     @Throws(IOException::class)
     override fun save(value: StoredTimerView) {
-        commit {
+        file.commit {
             putString(KEY_VIEW, value.view.name)
             putBoolean(KEY_UNSENT, value.unsent)
         }
@@ -34,11 +35,7 @@ class TimerViewStore(context: Context) : ClearableStore<StoredTimerView> {
 
     @Throws(IOException::class)
     override fun clear() {
-        commit { clear() }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { clear() }
     }
 
     private companion object {

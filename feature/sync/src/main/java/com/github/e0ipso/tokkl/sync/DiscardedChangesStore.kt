@@ -1,9 +1,9 @@
 package com.github.e0ipso.tokkl.sync
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
 
 /**
@@ -14,7 +14,8 @@ import java.io.IOException
  */
 class DiscardedChangesStore(context: Context) : ClearableStore<Int> {
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     override fun load(): Int = preferences.getInt(KEY_COUNT, 0)
 
@@ -26,11 +27,7 @@ class DiscardedChangesStore(context: Context) : ClearableStore<Int> {
     /** Forgets the count at once, for a sign-out. */
     @Throws(IOException::class)
     override fun clear() {
-        commit { clear() }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { clear() }
     }
 
     private companion object {

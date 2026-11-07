@@ -1,12 +1,12 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.IsoInstantSerializer
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.io.IOException
@@ -52,7 +52,8 @@ class TimerStateStore(context: Context) : AccountDataOwner {
 
     override suspend fun forgetAccount() = clear()
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     /** The stored state, or null when none is stored or the file does not decode. */
     fun load(): StoredTimerState? = preferences.getString(KEY_STATE, null)?.let(::decodeStoredTimerState)
@@ -60,7 +61,7 @@ class TimerStateStore(context: Context) : AccountDataOwner {
     /** Replaces the stored state in one write. */
     @Throws(IOException::class)
     fun save(stored: StoredTimerState) {
-        commit { putString(KEY_STATE, encodeStoredTimerState(stored)) }
+        file.commit { putString(KEY_STATE, encodeStoredTimerState(stored)) }
     }
 
     /**
@@ -74,7 +75,7 @@ class TimerStateStore(context: Context) : AccountDataOwner {
         preferences.getString(KEY_ACCOUNT, null)?.let { return it }
         val made = UUID.randomUUID().toString()
         try {
-            commit { putString(KEY_ACCOUNT, made) }
+            file.commit { putString(KEY_ACCOUNT, made) }
         } catch (_: IOException) {
             // Kept in memory: see above.
         }
@@ -83,11 +84,7 @@ class TimerStateStore(context: Context) : AccountDataOwner {
 
     @Throws(IOException::class)
     fun clear() {
-        commit { clear() }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { clear() }
     }
 
     internal companion object {

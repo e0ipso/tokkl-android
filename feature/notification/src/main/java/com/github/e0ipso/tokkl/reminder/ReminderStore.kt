@@ -1,16 +1,18 @@
 package com.github.e0ipso.tokkl.reminder
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.preferences.StoredReminderPreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
-import java.io.IOException
 
 /** Account-scoped, excluded from backups with the other private stores. */
 class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences> {
-    private val preferences = context.getSharedPreferences("long_timer_reminder", Context.MODE_PRIVATE)
+    private val file = PreferencesFile(context, "long_timer_reminder")
+
+    // Opens the file as the store is made, which starts loading it from disk.
+    private val preferences = file.preferences
 
     override fun load(): StoredReminderPreferences? = if (!preferences.contains(
             "hours",
@@ -28,7 +30,7 @@ class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences
         )
     }
 
-    override fun save(value: StoredReminderPreferences) = commit {
+    override fun save(value: StoredReminderPreferences) = file.commit {
         putBoolean("enabled", value.preferences.enabled)
         putInt("hours", value.preferences.clamped().hours)
         putBoolean("unsent", value.unsent)
@@ -53,7 +55,7 @@ class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences
         )
     }
 
-    fun saveTimer(timer: ReminderTimer?) = commit {
+    fun saveTimer(timer: ReminderTimer?) = file.commit {
         if (timer == null) {
             remove("timer_id")
             remove("timer_start")
@@ -67,9 +69,5 @@ class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences
         }
     }
 
-    override fun clear() = commit { clear() }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write long_timer_reminder")
-    }
+    override fun clear() = file.commit { clear() }
 }

@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
 
 /**
@@ -16,7 +16,8 @@ import java.io.IOException
  */
 class PomodoroDefaultsStore(context: Context) : ClearableStore<StoredPomodoroDefaults> {
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     /** The stored values, or null when none are stored or one of them is missing. */
     override fun load(): StoredPomodoroDefaults? {
@@ -34,7 +35,7 @@ class PomodoroDefaultsStore(context: Context) : ClearableStore<StoredPomodoroDef
     @Throws(IOException::class)
     override fun save(value: StoredPomodoroDefaults) {
         val defaults = value.defaults.clamped()
-        commit {
+        file.commit {
             putInt(KEY_WORK_MINUTES, defaults.workMinutes)
             putInt(KEY_SHORT_REST_MINUTES, defaults.shortRestMinutes)
             putInt(KEY_LONG_REST_MINUTES, defaults.longRestMinutes)
@@ -45,11 +46,7 @@ class PomodoroDefaultsStore(context: Context) : ClearableStore<StoredPomodoroDef
 
     @Throws(IOException::class)
     override fun clear() {
-        commit { clear() }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { clear() }
     }
 
     private companion object {

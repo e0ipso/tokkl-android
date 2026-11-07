@@ -1,12 +1,10 @@
 package com.github.e0ipso.tokkl.notification
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
-import java.io.IOException
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 
 /**
  * Whether a timer start asks for the notification permission (docs/PRD.md N5). Android 13 and
@@ -69,19 +67,12 @@ class NotificationPermissionAsk(
  */
 class NotificationPermissionStore(context: Context) : NotificationPermissionAsk.AskRecord {
 
-    private val preferences: SharedPreferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
 
-    override fun asked(): Boolean = preferences.getBoolean(KEY_ASKED, false)
+    override fun asked(): Boolean = file.preferences.getBoolean(KEY_ASKED, false)
 
-    @SuppressLint("UseKtx") // The KTX helper discards the commit result; a failed write must be reported.
     override fun markAsked() {
-        if (!preferences.edit().putBoolean(
-                KEY_ASKED,
-                true,
-            ).commit()
-        ) {
-            throw IOException("Could not record the notification permission request")
-        }
+        file.commit("Could not record the notification permission request") { putBoolean(KEY_ASKED, true) }
     }
 
     private companion object {

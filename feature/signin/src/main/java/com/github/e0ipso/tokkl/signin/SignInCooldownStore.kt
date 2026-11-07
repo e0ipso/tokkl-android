@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.signin
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
 
 /**
@@ -14,23 +14,20 @@ import java.io.IOException
  */
 class SignInCooldownStore(context: Context) : SignInCooldowns {
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     override fun load(): Map<String, Long> =
         preferences.all.mapNotNull { (origin, deadline) -> (deadline as? Long)?.let { origin to it } }.toMap()
 
     @Throws(IOException::class)
     override fun save(origin: String, deadline: Long) {
-        commit { putLong(origin, deadline) }
+        file.commit { putLong(origin, deadline) }
     }
 
     @Throws(IOException::class)
     override fun clear(origin: String) {
-        commit { remove(origin) }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { remove(origin) }
     }
 
     companion object {

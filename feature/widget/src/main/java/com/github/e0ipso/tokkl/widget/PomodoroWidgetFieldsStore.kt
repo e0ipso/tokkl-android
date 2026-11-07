@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import kotlinx.serialization.Serializable
@@ -64,7 +65,8 @@ class PomodoroWidgetFieldsStore(context: Context) :
 
     override suspend fun forgetAccount() = clear()
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     fun load(account: String): RememberedPomodoroFields? =
         preferences.getString(KEY_FIELDS, null)?.let { decodeRememberedPomodoroFields(it, account) }
@@ -75,12 +77,12 @@ class PomodoroWidgetFieldsStore(context: Context) :
         val fields = rememberedPomodoroFields(account, held) ?: return
         val encoded = encodeRememberedPomodoroFields(fields)
         if (preferences.getString(KEY_FIELDS, null) == encoded) return
-        if (!preferences.edit().putString(KEY_FIELDS, encoded).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { putString(KEY_FIELDS, encoded) }
     }
 
     @Throws(IOException::class)
     override fun clear() {
-        if (!preferences.edit().clear().commit()) throw IOException("Could not clear $FILE_NAME")
+        file.commit("Could not clear $FILE_NAME") { clear() }
     }
 
     private companion object {

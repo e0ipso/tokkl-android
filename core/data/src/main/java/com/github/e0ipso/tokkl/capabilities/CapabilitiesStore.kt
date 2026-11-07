@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.capabilities
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 
@@ -14,7 +15,8 @@ import java.io.IOException
  */
 class CapabilitiesStore(context: Context) : ValueStore<Capabilities> {
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     /** The stored capabilities, or null when none are stored. */
     override fun load(): Capabilities? {
@@ -39,7 +41,7 @@ class CapabilitiesStore(context: Context) : ValueStore<Capabilities> {
     /** Replaces the stored capabilities in one write. */
     @Throws(IOException::class)
     override fun save(value: Capabilities) {
-        commit {
+        file.commit {
             putBoolean(KEY_TRASH, value.trash)
             putBoolean(KEY_RESTORE, value.restore)
             putBoolean(KEY_FAVORITES, value.favorites)
@@ -54,15 +56,11 @@ class CapabilitiesStore(context: Context) : ValueStore<Capabilities> {
 
     @Throws(IOException::class)
     fun clear() {
-        commit { clear() }
+        file.commit { clear() }
     }
 
     private fun SharedPreferences.Editor.putOptional(key: String, value: Boolean?) {
         if (value == null) remove(key) else putBoolean(key, value)
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
     }
 
     internal companion object {

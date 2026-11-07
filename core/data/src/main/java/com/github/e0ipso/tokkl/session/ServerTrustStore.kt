@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.session
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
 
 /**
@@ -26,14 +26,15 @@ class ServerTrustStore(context: Context) :
 
     override suspend fun forgetAccount() = clear()
 
-    private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
+    private val file = PreferencesFile(context, FILE_NAME)
+    private val preferences get() = file.preferences
 
     override fun isCleartextConfirmed(server: ServerUrl): Boolean =
         server.isCleartext && preferences.getString(KEY_CLEARTEXT_URL, null) == server.toString()
 
     @Throws(IOException::class)
     override fun confirmCleartext(server: ServerUrl) {
-        commit { putString(KEY_CLEARTEXT_URL, server.toString()) }
+        file.commit { putString(KEY_CLEARTEXT_URL, server.toString()) }
     }
 
     override fun pinnedSha256(host: String, port: Int): String? =
@@ -42,7 +43,7 @@ class ServerTrustStore(context: Context) :
 
     @Throws(IOException::class)
     override fun pinCertificate(certificate: ServerCertificate) {
-        commit {
+        file.commit {
             putString(KEY_PIN_HOST, certificate.host)
             putInt(KEY_PIN_PORT, certificate.port)
             putString(KEY_PIN_SHA256, certificate.sha256)
@@ -52,11 +53,7 @@ class ServerTrustStore(context: Context) :
     /** Forgets every decision, so each server asks again. */
     @Throws(IOException::class)
     fun clear() {
-        commit { clear() }
-    }
-
-    private fun commit(change: SharedPreferences.Editor.() -> Unit) {
-        if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
+        file.commit { clear() }
     }
 
     internal companion object {
