@@ -16,8 +16,10 @@ import com.github.e0ipso.tokkl.TestClock
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.BackgroundSendRuns
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.NavigationStores
 import com.github.e0ipso.tokkl.navigation.Route
@@ -78,6 +80,8 @@ val TokklApplication.themeSettings: ThemeSettingsRepository get() = component()
 val TokklApplication.pomodoroDefaults: PomodoroDefaultsSetting get() = component()
 val TokklApplication.reminderSettings: ReminderSetting get() = component()
 val TokklApplication.reminder: ReminderSync get() = component()
+val TokklApplication.runningCheck: RunningCheck get() = component()
+val TokklApplication.backgroundSendRuns: BackgroundSendRuns get() = component()
 val TokklApplication.sessionTrust: SessionTrust get() = component()
 val TokklApplication.lastAnswer: LastAnswer get() = component()
 val TokklApplication.discarded: DiscardedChanges get() = component()

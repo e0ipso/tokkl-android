@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderStore
+import com.github.e0ipso.tokkl.reminder.ReminderWork
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.reminder.accountReminderSync
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -39,10 +40,12 @@ val notificationFeatureModule = module {
     // Shared reminder settings where both keys exist, account-local on older servers.
     single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), io()) } bind AccountDataOwner::class
 
-    // The running entry's reminder, followed independently of any screen.
+    // The running entry's reminder, followed independently of any screen, with its delay in WorkManager.
+    single { ReminderWork(get()) }
     single {
         accountReminderSync(
             androidContext(),
+            get(),
             get(),
             get(),
             get(),

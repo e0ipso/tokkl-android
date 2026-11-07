@@ -7,7 +7,7 @@ import android.os.SystemClock
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.RunningCheck
+import com.github.e0ipso.tokkl.cache.RunningCheckResults
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.reachesInternet
@@ -26,6 +26,7 @@ internal class TileRefresh(
     private val context: Context,
     private val session: Session,
     private val cache: AccountCache,
+    private val results: RunningCheckResults,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -33,7 +34,7 @@ internal class TileRefresh(
 
     fun onStartListening() {
         scope.launch(io) {
-            val generation = RunningCheck.results.generation()
+            val generation = results.generation()
             val online = context.getSystemService(ConnectivityManager::class.java).reachesInternet()
             if (!online) return@launch
             val api = session.client() ?: return@launch
@@ -47,7 +48,7 @@ internal class TileRefresh(
                 )
                 if (current is ApiResult.Success) {
                     // Reuse the background check's sign-out, queued-change and newer-write guards.
-                    RunningCheck.results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
+                    results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
                     succeeded = true
                 }
             } catch (_: SQLiteException) {

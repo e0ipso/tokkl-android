@@ -4,32 +4,35 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 
 /** A single inexact delayed wakeup, with neither a network constraint nor an exact-alarm permission. */
-object ReminderWork {
-    const val NAME = "long-timer-reminder"
-    const val ID = "entry_id"
-    const val START = "entry_start"
-    const val DUE = "entry_due"
+class ReminderWork(private val workManager: CurrentWorkManager) {
 
-    fun schedule(context: Context, timer: ReminderTimer) {
+    fun schedule(timer: ReminderTimer) {
         val delay = Duration.between(Instant.now(), Instant.ofEpochMilli(timer.due)).coerceAtLeast(Duration.ZERO)
         val request = OneTimeWorkRequestBuilder<ReminderWorker>()
             .setInitialDelay(delay)
             .setInputData(workDataOf(ID to timer.id, START to timer.start, DUE to timer.due))
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(NAME, ExistingWorkPolicy.KEEP, request).result.get()
+        workManager.get().enqueueUniqueWork(NAME, ExistingWorkPolicy.KEEP, request).result.get()
     }
 
-    fun cancel(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork(NAME).result.get()
+    fun cancel() {
+        workManager.get().cancelUniqueWork(NAME).result.get()
+    }
+
+    companion object {
+        const val NAME = "long-timer-reminder"
+        const val ID = "entry_id"
+        const val START = "entry_start"
+        const val DUE = "entry_due"
     }
 }
 

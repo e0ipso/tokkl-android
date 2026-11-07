@@ -3,11 +3,11 @@ package com.github.e0ipso.tokkl.widget
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import kotlinx.coroutines.channels.awaitClose
@@ -37,6 +37,7 @@ class WidgetStateSource(
     accountSettings: AccountSettingsSource,
     capabilities: CapabilitiesSource,
     timerControls: TimerControlsSource,
+    workManager: CurrentWorkManager,
     clock: Clock,
     io: CoroutineContext,
 ) {
@@ -60,7 +61,7 @@ class WidgetStateSource(
         }
         val refreshes = merge(
             openings,
-            WorkManager.getInstance(application).getWorkInfosForUniqueWorkFlow(RunningCheck.WORK_NAME).map { Unit },
+            workManager.get().getWorkInfosForUniqueWorkFlow(RunningCheck.WORK_NAME).map { Unit },
         )
         val history = combine(
             cache.timeEntries,

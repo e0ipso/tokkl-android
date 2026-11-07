@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import androidx.annotation.VisibleForTesting
 import java.util.UUID
 import java.util.concurrent.ExecutionException
 
@@ -10,7 +9,6 @@ import java.util.concurrent.ExecutionException
  * a lock. A worker cancelled before registration must fail [join]'s [canJoin] check too.
  * Every callback may block on disk; call these methods off the main thread.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class BackgroundSendRuns {
     private val lock = Any()
     private val joined = mutableSetOf<UUID>()

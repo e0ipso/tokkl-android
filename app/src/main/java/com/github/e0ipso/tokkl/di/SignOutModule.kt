@@ -33,12 +33,12 @@ internal fun Module.signOutSteps() {
         }
     }
     step(SignOutOrder.BACKGROUND_SEND) {
-        val context = androidContext()
-        return@step { BackgroundSend.cancel(context) }
+        val background = get<BackgroundSend>()
+        return@step { background.cancel() }
     }
     step(SignOutOrder.RUNNING_CHECK) {
-        val context = androidContext()
-        return@step { RunningCheck.cancelAndWait(context) }
+        val check = get<RunningCheck>()
+        return@step { check.cancelAndWait() }
     }
     step(SignOutOrder.HTTP_CALLS) {
         val http = get<SharedHttpClient>()

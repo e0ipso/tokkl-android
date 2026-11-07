@@ -29,7 +29,9 @@ val widgetFeatureModule = module {
         )
     } binds arrayOf(HeldFieldsMemory::class, AccountDataOwner::class)
 
-    single { WidgetStateSource(androidApplication(), get(), get(), get(), get(), get(), clock = get(), io = io()) }
+    single {
+        WidgetStateSource(androidApplication(), get(), get(), get(), get(), get(), get(), clock = get(), io = io())
+    }
     single(TimerWidgetQualifier) { WidgetStore(androidContext()) }
 
     // Updates the widget whenever what it shows changes, whichever surface changed it, from

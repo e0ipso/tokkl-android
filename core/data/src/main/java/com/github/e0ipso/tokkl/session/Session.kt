@@ -21,6 +21,8 @@ import java.security.GeneralSecurityException
  * @param trustListener hears every request of [client] that the trust checks
  *   refuse, so the app can prompt from any screen.
  * @param successListener hears every 2xx answer to [client]'s requests.
+ * @param exports the report exports' account, which every change of account invalidates.
+ * @param exportFiles the finished exports, which every change of account deletes.
  */
 class Session(
     private val servers: ServerConfigStore,
@@ -28,7 +30,8 @@ class Session(
     private val http: SharedHttpClient,
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
-    private val clearExports: () -> Unit = {},
+    private val exports: ExportAccount,
+    private val exportFiles: ExportFiles,
 ) : ApiClientProvider,
     AccountDataOwner {
 
@@ -81,7 +84,7 @@ class Session(
     fun save(server: ServerUrl, token: String) {
         exports.change {
             servers.clear()
-            clearExports()
+            exportFiles.clear()
             tokens.save(token)
             servers.save(server)
         }
@@ -98,13 +101,8 @@ class Session(
                 servers.clear()
                 tokens.clear()
             } finally {
-                clearExports()
+                exportFiles.clear()
             }
         }
-    }
-
-    companion object {
-        /** Shared by every Session instance, so a report export never outlives the account it was made for. */
-        val exports = ExportAccount()
     }
 }

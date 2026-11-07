@@ -26,6 +26,7 @@ internal fun accountReminderSync(
     settings: ReminderSetting,
     controls: TimerControlsSource,
     surfaceActions: TimerSurfaceActions,
+    work: ReminderWork,
 ): ReminderSync {
     val notifier = ReminderNotifier(context)
 
@@ -38,8 +39,8 @@ internal fun accountReminderSync(
         latest = { ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.state.value) },
         currentId = changes::currentId,
         timers = store.timers,
-        schedule = { ReminderWork.schedule(context, it) },
-        cancel = { ReminderWork.cancel(context) },
+        schedule = work::schedule,
+        cancel = work::cancel,
         post = { timer -> notifier.post(timer, pausable = runningNow(changes.currentId(timer.id))?.pausable == true) },
         remove = notifier::remove,
         stop = changes::stop,

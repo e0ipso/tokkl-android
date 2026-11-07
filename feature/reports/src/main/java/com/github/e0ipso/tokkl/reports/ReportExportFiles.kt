@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.session.ExportFiles
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -12,7 +13,7 @@ import java.util.UUID
  * never exposed. At most four 16 MiB files in each area, pruned on export; files expire after a
  * day and sign-out removes both areas. The provider also refuses expired reads.
  */
-class ReportExportFiles(private val root: File, private val now: () -> Long = System::currentTimeMillis) {
+class ReportExportFiles(private val root: File, private val now: () -> Long = System::currentTimeMillis) : ExportFiles {
     class Pending internal constructor(val staging: File, val completed: File) : Closeable {
         override fun close() {
             staging.delete()
@@ -65,7 +66,7 @@ class ReportExportFiles(private val root: File, private val now: () -> Long = Sy
         }
     }
 
-    fun clear() = synchronized(LOCK) {
+    override fun clear() = synchronized(LOCK) {
         if (root.exists() && !root.deleteRecursively()) throw IOException("Cannot clear exports")
     }
 

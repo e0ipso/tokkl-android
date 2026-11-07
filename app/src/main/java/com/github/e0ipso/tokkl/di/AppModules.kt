@@ -18,7 +18,6 @@ import com.github.e0ipso.tokkl.trash.trashFeatureModule
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetQualifier
 import com.github.e0ipso.tokkl.widget.TimerWidgetQualifier
 import com.github.e0ipso.tokkl.widget.widgetFeatureModule
-import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -26,7 +25,6 @@ import org.koin.dsl.module
 internal val startupModule = module {
     single {
         AppStartup(
-            context = androidContext(),
             refreshRequests = get(),
             accountRefresh = inject(),
             runningNotification = inject(),
@@ -40,6 +38,7 @@ internal val startupModule = module {
             widgetSync = inject(TimerWidgetQualifier),
             pomodoroWidgetSync = inject(PomodoroWidgetQualifier),
             favoriteShortcuts = inject(),
+            runningCheck = inject(),
             scope = get(),
             io = io(),
         )

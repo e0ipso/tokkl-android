@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.lifecycle
 
-import android.content.Context
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
@@ -27,7 +26,6 @@ import kotlin.coroutines.CoroutineContext
  * and loads at the step that uses it, so the steps keep their order and their threads.
  */
 internal class AppStartup(
-    private val context: Context,
     private val refreshRequests: AccountRefreshRequests,
     private val accountRefresh: Lazy<AccountRefresh>,
     private val runningNotification: Lazy<RunningNotificationSync>,
@@ -41,6 +39,7 @@ internal class AppStartup(
     private val widgetSync: Lazy<WidgetSync>,
     private val pomodoroWidgetSync: Lazy<WidgetSync>,
     private val favoriteShortcuts: Lazy<FavoriteShortcutSync>,
+    private val runningCheck: Lazy<RunningCheck>,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -70,6 +69,6 @@ internal class AppStartup(
         pomodoroWidgetSync.value.start()
         favoriteShortcuts.value.start()
         // Check every 15 minutes while the cache holds a running entry.
-        RunningCheck.follow(context, cache.value.running.map { it != null }, scope, io)
+        runningCheck.value.follow(cache.value.running.map { it != null }, scope, io)
     }
 }

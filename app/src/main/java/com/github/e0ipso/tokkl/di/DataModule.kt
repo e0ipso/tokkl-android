@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.AccountServerSpans
+import com.github.e0ipso.tokkl.cache.BackgroundSend
+import com.github.e0ipso.tokkl.cache.BackgroundSendRuns
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.CancelWaitingSend
 import com.github.e0ipso.tokkl.cache.ChangeQueue
@@ -9,6 +11,8 @@ import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.ChangeStore
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.RoomChangeStore
+import com.github.e0ipso.tokkl.cache.RunningCheck
+import com.github.e0ipso.tokkl.cache.RunningCheckResults
 import com.github.e0ipso.tokkl.cache.SendOnQueue
 import com.github.e0ipso.tokkl.cache.ServerSpans
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
@@ -21,7 +25,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** The Room cache, and the change queue and its sender. */
+/** The Room cache, the change queue and its sender, and their background work. */
 internal val dataModule = module {
 
     // The file of the cache and the queue. It opens on the first query, which Room keeps off the main thread.
@@ -37,7 +41,9 @@ internal val dataModule = module {
     // Start, stop, create, edit and delete entries on the phone. The [ChangeSender] sends each
     // change at once, and [BackgroundSend] sends what is left when the network returns, also with
     // the app closed.
-    single { SendOnQueue(androidContext(), get()) }
+    single { BackgroundSendRuns() }
+    single { BackgroundSend(get(), get()) }
+    single { SendOnQueue(get(), get()) }
     single {
         ChangeQueue(
             get(),
@@ -52,7 +58,12 @@ internal val dataModule = module {
     // cache back. A drain that empties the queue cancels the background send's waiting retry.
     // Changes it discards because the server no longer has their entries count in
     // [DiscardedChanges].
-    single { CancelWaitingSend(androidContext(), get()) }
+    single { CancelWaitingSend(get(), get()) }
+
+    // The running entry's check every 15 minutes while a timer runs, and the guard that keeps a
+    // check's answer from landing after sign-out.
+    single { RunningCheckResults() }
+    single { RunningCheck(get(), get()) }
     single {
         ChangeSender(
             get(),

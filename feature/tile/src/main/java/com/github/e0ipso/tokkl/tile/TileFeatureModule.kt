@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 /** The Quick Settings tile's refreshes. */
 val tileFeatureModule = module {
-    single { TileRefresh(androidContext(), get(), get(), get(), io()) }
+    single { TileRefresh(androidContext(), get(), get(), get(), get(), io()) }
 }

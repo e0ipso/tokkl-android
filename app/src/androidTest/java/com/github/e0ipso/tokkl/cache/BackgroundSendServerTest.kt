@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.backgroundSendRuns
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.reminder
 import com.github.e0ipso.tokkl.components.sender
@@ -270,7 +271,7 @@ class BackgroundSendServerTest {
 
         driver.setAllConstraintsMet(work.id)
         awaitWork(work.id) { it.state == WorkInfo.State.RUNNING }
-        awaitCondition("the worker registered with the drain") { BackgroundSend.runs.hasJoined(work.id) }
+        awaitCondition("the worker registered with the drain") { app.backgroundSendRuns.hasJoined(work.id) }
         relay.releaseAnswer()
 
         assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)

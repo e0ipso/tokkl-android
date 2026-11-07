@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.content.Context
-import androidx.annotation.VisibleForTesting
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -9,10 +8,10 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.HttpStatus
+import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.util.concurrent.ExecutionException
@@ -23,32 +22,22 @@ import kotlin.coroutines.CoroutineContext
  * calls [schedule] from [ChangeQueue]'s onQueued, which runs only while the queue holds a change, and [cancelWaiting]
  * once a drain has emptied the queue. The work runs once, so nothing wakes the phone while the queue is empty, and no
  * periodic work comes from here: the only periodic job in the app is the running entry's check (TKA-0074).
+ *
+ * @param runs the workers that joined a drain, which [BackgroundSendWorker] registers with.
  */
-object BackgroundSend {
-
-    /** The unique work's name. One work by this name waits or runs at a time. */
-    const val WORK_NAME = "send-queue"
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    val runs = BackgroundSendRuns()
-
-    /**
-     * The wait before the first retry after a transient failure. Each later retry waits twice as
-     * long as the one before, up to WorkManager's cap of five hours.
-     */
-    val BACKOFF: Duration = Duration.ofSeconds(30)
+class BackgroundSend(private val workManager: CurrentWorkManager, private val runs: BackgroundSendRuns) {
 
     /**
      * Enqueues a one-time send that waits for a connected network. Work already waiting or running
      * stays, and this call adds none: that work drains the whole queue, this change included.
      * Returns at once; WorkManager writes the work on its own thread.
      */
-    fun schedule(context: Context) {
+    fun schedule() {
         val request = OneTimeWorkRequestBuilder<BackgroundSendWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF)
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
+        workManager.get().enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 
     /**
@@ -61,8 +50,8 @@ object BackgroundSend {
      * Worker registration and the cancel share a lock. Even when the state read becomes stale,
      * a worker that joined stays, and a worker cancelled before registration sends nothing.
      */
-    fun cancelWaiting(context: Context, queueEmpty: () -> Boolean) {
-        val workManager = WorkManager.getInstance(context)
+    fun cancelWaiting(queueEmpty: () -> Boolean) {
+        val workManager = workManager.get()
         runs.cancelWaiting(
             waiting = {
                 workManager.getWorkInfosForUniqueWork(
@@ -71,7 +60,7 @@ object BackgroundSend {
             },
             cancel = { workManager.cancelUniqueWork(WORK_NAME).result.get() },
             queueEmpty = queueEmpty,
-            schedule = { schedule(context) },
+            schedule = ::schedule,
         )
     }
 
@@ -79,8 +68,19 @@ object BackgroundSend {
      * Cancels the work, waiting or running, and returns once WorkManager has recorded that.
      * Signing out calls this. Blocks, so call it off the main thread.
      */
-    fun cancel(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME).result.get()
+    fun cancel() {
+        workManager.get().cancelUniqueWork(WORK_NAME).result.get()
+    }
+
+    companion object {
+        /** The unique work's name. One work by this name waits or runs at a time. */
+        const val WORK_NAME = "send-queue"
+
+        /**
+         * The wait before the first retry after a transient failure. Each later retry waits twice as
+         * long as the one before, up to WorkManager's cap of five hours.
+         */
+        val BACKOFF: Duration = Duration.ofSeconds(30)
     }
 }
 
@@ -93,13 +93,15 @@ class BackgroundSendWorker(
     context: Context,
     params: WorkerParameters,
     private val sender: ChangeSender,
+    private val runs: BackgroundSendRuns,
+    private val workManager: CurrentWorkManager,
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(io) {
-        val workManager = WorkManager.getInstance(applicationContext)
+        val workManager = workManager.get()
         val joined = try {
-            BackgroundSend.runs.join(id) {
+            runs.join(id) {
                 // Cancellation may be recorded before WorkManager delivers stop to this worker.
                 // Read its committed state under the same lock as cancelWaiting's cancellation.
                 !isStopped && workManager.getWorkInfoById(id).get()?.state == WorkInfo.State.RUNNING
@@ -115,7 +117,7 @@ class BackgroundSendWorker(
                 AfterBackgroundSend.GIVE_UP -> Result.failure()
             }
         } finally {
-            BackgroundSend.runs.leave(id)
+            runs.leave(id)
         }
     }
 }

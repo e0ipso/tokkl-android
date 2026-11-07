@@ -24,10 +24,10 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.runningCheck
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.feature.tile.R
@@ -593,7 +593,7 @@ class RunningTileServerTest {
      * first one for this session.
      */
     private fun signIn(server: ServerUrl, token: String) {
-        RunningCheck.cancelAndWait(context)
+        app.runningCheck.cancelAndWait()
         ServerTrustStore(context).confirmCleartext(server)
         Session(context).save(server, token)
     }

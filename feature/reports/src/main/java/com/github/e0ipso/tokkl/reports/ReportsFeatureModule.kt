@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AppEvents
+import com.github.e0ipso.tokkl.session.ExportFiles
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -18,7 +19,7 @@ import java.io.File
 
 /** Reports: the report CSV files, which a sign-out deletes, the view model and the screen. */
 val reportsFeatureModule = module {
-    single { ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)) }
+    single { ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)) } bind ExportFiles::class
 
     viewModel {
         val session = get<Session>()
@@ -33,8 +34,8 @@ val reportsFeatureModule = module {
             exportCapabilities = capabilities.state,
             exporter = ReportExportController(
                 client = session,
-                files = ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)),
-                account = Session.exports,
+                files = get(),
+                account = get(),
                 csvMissing = capabilities::csvMissing,
                 scope = scope,
                 io = io(),

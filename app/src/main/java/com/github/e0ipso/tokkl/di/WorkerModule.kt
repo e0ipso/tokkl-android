@@ -9,6 +9,6 @@ import org.koin.dsl.module
 
 /** The queue's WorkManager workers, which KoinWorkerFactory makes with their dependencies. */
 internal val workerModule = module {
-    worker { params -> BackgroundSendWorker(androidContext(), params.get(), get(), io()) }
-    worker { params -> RunningCheckWorker(androidContext(), params.get(), get(), get(), io()) }
+    worker { params -> BackgroundSendWorker(androidContext(), params.get(), get(), get(), get(), io()) }
+    worker { params -> RunningCheckWorker(androidContext(), params.get(), get(), get(), get(), io()) }
 }

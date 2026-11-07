@@ -25,6 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.koin.core.context.GlobalContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileNotFoundException
@@ -46,7 +47,7 @@ class ReportCsvServerTest {
         exporter = ReportExportController(
             client = { fixture.account.client },
             files = files,
-            account = Session.exports,
+            account = GlobalContext.get().get(),
             csvMissing = {},
             scope = scope,
             io = Dispatchers.IO,

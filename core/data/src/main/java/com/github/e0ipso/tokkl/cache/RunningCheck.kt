@@ -6,10 +6,10 @@ import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -27,54 +27,55 @@ import kotlin.coroutines.CoroutineContext
  * [follow] schedules the check while the cache holds a running entry and cancels it once none
  * runs, so no work waits while no timer runs (section 7, Battery). This is the app's only
  * periodic work.
+ *
+ * @param results serializes each check's cache write with sign-out, which [cancelAndWait] forgets.
  */
-object RunningCheck {
-
-    /** The unique work's name. One check by this name waits or runs at a time. */
-    const val WORK_NAME = "running-check"
-
-    val results = RunningCheckResults()
-
-    /**
-     * How often the check runs: the shortest period WorkManager allows. The first check waits one
-     * period too, since the start that schedules it has just reached the cache.
-     */
-    val INTERVAL: Duration = Duration.ofMinutes(15)
+class RunningCheck(private val workManager: CurrentWorkManager, private val results: RunningCheckResults) {
 
     /**
      * Schedules the check while [running] is true and cancels it while it is false, until [scope]
      * ends. Call once, at process start, with whether the cache holds a running entry. A start,
      * a stop and a refresh land in the cache from any surface, so following it covers them all.
      */
-    fun follow(context: Context, running: Flow<Boolean>, scope: CoroutineScope, io: CoroutineContext): Job =
-        scope.launch(io) {
-            running.distinctUntilChanged().collect { if (it) schedule(context) else cancel(context) }
-        }
+    fun follow(running: Flow<Boolean>, scope: CoroutineScope, io: CoroutineContext): Job = scope.launch(io) {
+        running.distinctUntilChanged().collect { if (it) schedule() else cancel() }
+    }
 
     /**
      * Enqueues the periodic check, which waits for a connected network. A check already waiting
      * or running stays, and this call adds none. Returns at once.
      */
-    fun schedule(context: Context) {
+    fun schedule() {
         val request = PeriodicWorkRequestBuilder<RunningCheckWorker>(INTERVAL)
             .setInitialDelay(INTERVAL)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+        workManager.get().enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
     }
 
     /** Cancels the check, waiting or running. Returns at once. */
-    fun cancel(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+    fun cancel() {
+        workManager.get().cancelUniqueWork(WORK_NAME)
     }
 
     /**
      * Cancels the check and returns once WorkManager has recorded that. Signing out calls this.
      * Blocks, so call it off the main thread.
      */
-    fun cancelAndWait(context: Context) {
+    fun cancelAndWait() {
         results.forget()
-        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME).result.get()
+        workManager.get().cancelUniqueWork(WORK_NAME).result.get()
+    }
+
+    companion object {
+        /** The unique work's name. One check by this name waits or runs at a time. */
+        const val WORK_NAME = "running-check"
+
+        /**
+         * How often the check runs: the shortest period WorkManager allows. The first check waits one
+         * period too, since the start that schedules it has just reached the cache.
+         */
+        val INTERVAL: Duration = Duration.ofMinutes(15)
     }
 }
 
@@ -89,11 +90,12 @@ class RunningCheckWorker(
     params: WorkerParameters,
     private val cache: AccountCache,
     private val session: Session,
+    private val results: RunningCheckResults,
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(io) {
-        val generation = RunningCheck.results.generation()
+        val generation = results.generation()
         val api = session.client() ?: return@withContext Result.success()
         val before = cache.runningCheckStart()
         val current = api.get(
@@ -101,7 +103,7 @@ class RunningCheckWorker(
             ServerTimeEntry.serializer().nullable,
         )
         if (current is ApiResult.Success) {
-            RunningCheck.results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
+            results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
         }
         Result.success()
     }
