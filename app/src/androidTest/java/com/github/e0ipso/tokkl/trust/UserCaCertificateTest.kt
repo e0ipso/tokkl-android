@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
@@ -65,7 +66,7 @@ class UserCaCertificateTest {
         assertNull("a pin for the server", ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
         assertEquals(TokklTestServer.userCaTlsUrl, ServerConfigStore(context).load())
         val client = Session(context).client() ?: throw AssertionError("no stored session")
-        val body = (client.get(endpoint, JsonObject.serializer()) as? ApiResult.Success)?.value
+        val body = (runBlocking { client.get(endpoint, JsonObject.serializer()) } as? ApiResult.Success)?.value
             ?: throw AssertionError("GET /api/v9/me failed without a pin")
         assertEquals(TokklTestServer.email, body.getValue("email").jsonPrimitive.content)
     }

@@ -149,7 +149,7 @@ class ClientsViewModel(
     }
 
     /** The workspace's clients and the number of projects each has. */
-    private fun read(api: TogglApiClient, workspace: Long): ApiResult<ClientsData> {
+    private suspend fun read(api: TogglApiClient, workspace: Long): ApiResult<ClientsData> {
         val server = ClientsServer(api, workspace)
         val clients = when (val answer = server.list()) {
             is ApiResult.Success -> answer.value.filter { it.workspaceId == workspace }.sortedForList()

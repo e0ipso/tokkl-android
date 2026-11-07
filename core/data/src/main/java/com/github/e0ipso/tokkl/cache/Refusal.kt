@@ -36,7 +36,7 @@ internal sealed interface Refusal {
  * - A 400, and any other 4xx, is held for the user with the server's message.
  * - A 403, or a 401, pauses the whole queue and discards nothing.
  */
-internal fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError): Refusal {
+internal suspend fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError): Refusal {
     if (error == ApiError.AuthFailed) return Refusal.SignInAgain
     val refused = error as? ApiError.UnexpectedStatus ?: return Refusal.Wait(error)
     val status = refused.status
@@ -57,7 +57,7 @@ internal fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError
 }
 
 /** A captured Stop the server refused: done when the server holds that stop, held or waiting otherwise. */
-private fun capturedStopRefusal(
+private suspend fun capturedStopRefusal(
     api: TogglApiClient,
     change: PendingChange,
     refused: ApiError.UnexpectedStatus,
@@ -72,7 +72,7 @@ private fun capturedStopRefusal(
 }
 
 /** A 404 for a change to an entry: gone when the server no longer has the entry. */
-private fun missingEntryRefusal(
+private suspend fun missingEntryRefusal(
     api: TogglApiClient,
     change: PendingChange,
     refused: ApiError.UnexpectedStatus,
@@ -89,7 +89,7 @@ private fun missingEntryRefusal(
 }
 
 /** Whether the server has the entry [id], preserving a failed lookup's retry or sign-in outcome. */
-private fun entryOnServer(api: TogglApiClient, id: Long): ApiResult<Boolean> =
+private suspend fun entryOnServer(api: TogglApiClient, id: Long): ApiResult<Boolean> =
     when (val result = api.get(api.server.api("me", "time_entries", id.toString()), JsonObject.serializer())) {
         is ApiResult.Success -> ApiResult.Success(true)
 

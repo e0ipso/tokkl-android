@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -95,7 +96,7 @@ class CatalogModel<D, O>(
     private val refreshCache: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val fetch: (TogglApiClient, Long) -> ApiResult<D>,
+    private val fetch: suspend (TogglApiClient, Long) -> ApiResult<D>,
 ) : CatalogPageEvents {
 
     private val mutableState = MutableStateFlow(CatalogState<D, O>())
@@ -180,14 +181,19 @@ class CatalogModel<D, O>(
      * Sends [request] to the workspace, unless a change cannot go now. Once the server accepts it,
      * [apply] puts the answer into the data, the overlay closes and [done] says what happened, and
      * the cache refreshes. A refusal keeps the overlay open with the reason. An unreachable server
-     * turns every action off until a load gets through.
+     * turns every action off until a load gets through. Once sent, the change reaches the server
+     * also when the page's scope is cancelled meanwhile.
      */
-    fun <R> send(request: (TogglApiClient, Long) -> ApiResult<R>, apply: (D, R) -> D, done: (R) -> CatalogChange) {
+    fun <R> send(
+        request: suspend (TogglApiClient, Long) -> ApiResult<R>,
+        apply: (D, R) -> D,
+        done: (R) -> CatalogChange,
+    ) {
         val workspace = workspace ?: return
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         scope.launch {
-            val answer = withContext(io) {
+            val answer = withContext(io + NonCancellable) {
                 val api = client() ?: return@withContext ApiResult.Failure(ApiError.AuthFailed)
                 request(api, workspace)
             }
@@ -228,7 +234,7 @@ class CatalogModel<D, O>(
         mutableState.update { it.copy(loading = true) }
         val stored = workspaceId()
         loading = scope.launch {
-            // A cancelled load drops its answer: withContext throws once it returns.
+            // A cancelled load cancels its requests and drops its answer.
             val answer = withContext(io) { read(stored) }
             when (answer) {
                 is Loaded -> {
@@ -247,7 +253,7 @@ class CatalogModel<D, O>(
 
     private class NotLoaded(val problem: ServerProblem) : Answer<Nothing>
 
-    private fun read(stored: Long?): Answer<D> {
+    private suspend fun read(stored: Long?): Answer<D> {
         val api = client() ?: return NotLoaded(ServerProblem.AuthFailed)
         val workspace = when (val answer = managedWorkspace(api, stored)) {
             is ApiResult.Success -> answer.value

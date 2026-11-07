@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -60,7 +61,7 @@ class AppSummaryServerTest {
     fun defaultWorkspaceAndRoleMakeACandidateWithoutHostnameOrVersionChecks() {
         http.enqueue(json("""{"default_workspace_id":7,"role":"user"}"""))
         http.enqueue(json("""{"rounding":1,"rounding_minutes":15}"""))
-        assertEquals(ApiResult.Success(workspace), server.workspace())
+        assertEquals(ApiResult.Success(workspace), runBlocking { server.workspace() })
         assertEquals("/prefix/tokkl/api/v9/me", http.takeRequest().url.encodedPath)
         assertEquals("/prefix/tokkl/api/v9/workspaces/7", http.takeRequest().url.encodedPath)
     }
@@ -68,7 +69,7 @@ class AppSummaryServerTest {
     @Test
     fun appPostPreservesPrefixFiltersAndInclusiveDatesButDoesNotOverrideCurrentRounding() {
         http.enqueue(json(APP_SUMMARY_FIXTURE))
-        val report = success(server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, filters))
+        val report = success(runBlocking { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, filters) })
         assertEquals(7317L, report.totals.seconds)
         val request = http.takeRequest()
         assertEquals("POST", request.method)
@@ -99,7 +100,7 @@ class AppSummaryServerTest {
         )
         for ((selected, expected) in cases) {
             http.enqueue(json(APP_SUMMARY_FIXTURE))
-            success(server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, selected))
+            success(runBlocking { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, selected) })
             val body = jsonObject(http.takeRequest().body!!.utf8())
             assertEquals(
                 jsonObject(expected),
@@ -113,7 +114,7 @@ class AppSummaryServerTest {
         for (status in listOf(404, 410)) {
             http.enqueue(MockResponse.Builder().code(status).build())
             http.enqueue(json(FALLBACK_ROWS))
-            val report = success(server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, filters))
+            val report = success(runBlocking { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, filters) })
             assertEquals(ReportTotals(1800, 1800, 2, listOf(Amount("EUR", 168))), report.totals)
             assertEquals(1800L, report.series.first().seconds)
             assertEquals(LocalDate.parse("2026-10-21"), report.series.first().start)
@@ -137,7 +138,14 @@ class AppSummaryServerTest {
     fun nonCandidateUsesExistingDetailedSearchWithoutAnAppProbe() {
         http.enqueue(json(FALLBACK_ROWS))
         val report = success(
-            server.summary(workspace.copy(appSummaryCandidate = false), range, zone, DayOfWeek.WEDNESDAY),
+            runBlocking {
+                server.summary(
+                    workspace.copy(appSummaryCandidate = false),
+                    range,
+                    zone,
+                    DayOfWeek.WEDNESDAY,
+                )
+            },
         )
         assertEquals(168L, report.totals.amounts.single().cents)
         assertEquals("/prefix/tokkl/reports/api/v3/workspace/7/search/time_entries", http.takeRequest().url.encodedPath)
@@ -154,7 +162,14 @@ class AppSummaryServerTest {
                 ).addHeader("Retry-After", "17").build()
             }
             val before = http.requestCount
-            val answer = server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY) as ApiResult.Failure
+            val answer = runBlocking {
+                server.summary(
+                    workspace,
+                    range,
+                    zone,
+                    DayOfWeek.WEDNESDAY,
+                )
+            } as ApiResult.Failure
             assertEquals(status, (answer.error as ApiError.Http).status)
             assertEquals(before + 1, http.requestCount)
             assertEquals("/prefix/tokkl/api/app/report", http.takeRequest().url.encodedPath)
@@ -168,7 +183,14 @@ class AppSummaryServerTest {
                 override fun dispatch(request: RecordedRequest) = json(body)
             }
             val before = http.requestCount
-            val answer = server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY) as ApiResult.Failure
+            val answer = runBlocking {
+                server.summary(
+                    workspace,
+                    range,
+                    zone,
+                    DayOfWeek.WEDNESDAY,
+                )
+            } as ApiResult.Failure
             assertTrue(answer.error is ApiError.InvalidResponse)
             assertEquals(before + 1, http.requestCount)
             assertEquals("/prefix/tokkl/api/app/report", http.takeRequest().url.encodedPath)
@@ -178,19 +200,19 @@ class AppSummaryServerTest {
     @Test
     fun unreachableServerStaysANetworkFailure() {
         http.close()
-        val answer = server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY) as ApiResult.Failure
+        val answer = runBlocking { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY) } as ApiResult.Failure
         assertTrue(answer.error is ApiError.Network)
     }
 
     @Test
     fun detailedWeeklyAndCsvKeepTheirExistingContractsForTokklCandidates() {
         http.enqueue(json("[]"))
-        server.detailedPage(workspace, range, zone, 1, filters)
+        runBlocking { server.detailedPage(workspace, range, zone, 1, filters) }
         val detailed = http.takeRequest()
         assertEquals("/prefix/tokkl/reports/api/v3/workspace/7/search/time_entries", detailed.url.encodedPath)
         assertEquals("DESC", jsonObject(detailed.body!!.utf8()).getValue("order_dir").toString().trim('"'))
         http.enqueue(json("[]"))
-        server.weekly(workspace, range.from, filters)
+        runBlocking { server.weekly(workspace, range.from, filters) }
         assertEquals("/prefix/tokkl/reports/api/v3/workspace/7/weekly/time_entries", http.takeRequest().url.encodedPath)
         for (kind in ReportCsvKind.entries) {
             val old = ReportCsvRequest(

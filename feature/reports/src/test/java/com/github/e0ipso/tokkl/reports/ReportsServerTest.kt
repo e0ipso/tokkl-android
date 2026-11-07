@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
@@ -52,7 +53,7 @@ class ReportsServerTest {
         server.enqueue(json("""{"id":1,"default_workspace_id":7,"timezone":"UTC","beginning_of_week":1}"""))
         server.enqueue(json("""{"id":7,"rounding":1,"rounding_minutes":15,"default_currency":"EUR"}"""))
 
-        assertEquals(ApiResult.Success(ReportWorkspace(7, 1, 15)), reports.workspace())
+        assertEquals(ApiResult.Success(ReportWorkspace(7, 1, 15)), runBlocking { reports.workspace() })
         assertEquals("/api/v9/me", server.takeRequest().url.encodedPath)
         assertEquals("/api/v9/workspaces/7", server.takeRequest().url.encodedPath)
     }
@@ -63,7 +64,7 @@ class ReportsServerTest {
         server.enqueue(json("[" + row(2, "2026-10-18T09:59:59+00:00", "null") + "]"))
         val range = ReportRange(LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-18"))
 
-        val answer = reports.entries(ReportWorkspace(7, -1, 30), range, ZoneId.of("Pacific/Kiritimati"))
+        val answer = runBlocking { reports.entries(ReportWorkspace(7, -1, 30), range, ZoneId.of("Pacific/Kiritimati")) }
 
         val entries = (answer as ApiResult.Success).value
         assertEquals(2, entries.size)
@@ -95,11 +96,13 @@ class ReportsServerTest {
             "time_entries":[{"id":1,"seconds":600,"start":"2026-10-12T09:00:00+00:00"},{"id":2,"seconds":300,"start":"2026-10-13T09:00:00+00:00"}]}"""
         server.enqueue(json("[$grouped]"))
 
-        val answer = reports.entries(
-            ReportWorkspace(7, 0, 0),
-            ReportRange(LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-18")),
-            ZoneId.of("UTC"),
-        )
+        val answer = runBlocking {
+            reports.entries(
+                ReportWorkspace(7, 0, 0),
+                ReportRange(LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-18")),
+                ZoneId.of("UTC"),
+            )
+        }
 
         val entries = (answer as ApiResult.Success).value
         assertEquals(listOf(600L, 300L), entries.map { it.seconds })
@@ -110,7 +113,7 @@ class ReportsServerTest {
     fun aNextRowThatDoesNotMoveForwardIsRefused() {
         server.enqueue(json("[]", NEXT_ROW to "1"))
 
-        val answer = reports.entries(ReportWorkspace(7, 0, 0), oneDay(), ZoneId.of("UTC"))
+        val answer = runBlocking { reports.entries(ReportWorkspace(7, 0, 0), oneDay(), ZoneId.of("UTC")) }
 
         assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
         assertEquals(1, server.requestCount)
@@ -121,7 +124,14 @@ class ReportsServerTest {
     fun aDetailedPageWhoseNextRowDoesNotMoveForwardIsRefused() {
         server.enqueue(json("[]", NEXT_ROW to "3"))
 
-        val answer = reports.detailedPage(ReportWorkspace(7, 0, 0), oneDay(), ZoneId.of("UTC"), firstRow = 3)
+        val answer = runBlocking {
+            reports.detailedPage(
+                ReportWorkspace(7, 0, 0),
+                oneDay(),
+                ZoneId.of("UTC"),
+                firstRow = 3,
+            )
+        }
 
         assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
         assertEquals(1, server.requestCount)
@@ -133,7 +143,7 @@ class ReportsServerTest {
             json("""[{"billable":false,"currency":"EUR","time_entries":[{"seconds":1,"start":"yesterday"}]}]"""),
         )
 
-        val answer = reports.entries(ReportWorkspace(7, 0, 0), oneDay(), ZoneId.of("UTC"))
+        val answer = runBlocking { reports.entries(ReportWorkspace(7, 0, 0), oneDay(), ZoneId.of("UTC")) }
 
         assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
     }

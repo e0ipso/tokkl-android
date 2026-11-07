@@ -99,11 +99,13 @@ class ProjectsServerTest {
         workspace = account.workspaceId
         acme = create("clients", buildJsonObject { put("name", "Acme") })
         val gone = create("clients", buildJsonObject { put("name", "Gone") })
-        account.client.sendNoContent(
-            "POST",
-            url("clients", gone.toString(), "archive"),
-            buildJsonObject {},
-        ).orFail("archive Gone")
+        runBlocking {
+            account.client.sendNoContent(
+                "POST",
+                url("clients", gone.toString(), "archive"),
+                buildJsonObject {},
+            )
+        }.orFail("archive Gone")
         runBlocking { app.accountRefresh.refresh().join() }
         model = ProjectsViewModel(
             client = Session(context)::client,
@@ -408,12 +410,14 @@ class ProjectsServerTest {
     @Test
     fun offlineEveryTaskActionIsOffAndTheListSaysTheyNeedTheServer() {
         val project = create("projects", buildJsonObject { put("name", "Website") })
-        account.client.send(
-            "POST",
-            url("projects", project.toString(), "tasks"),
-            buildJsonObject { put("name", "Design") },
-            JsonObject.serializer(),
-        )
+        runBlocking {
+            account.client.send(
+                "POST",
+                url("projects", project.toString(), "tasks"),
+                buildJsonObject { put("name", "Design") },
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST tasks")
         show()
         composeRule.awaitText("Website")
@@ -585,10 +589,12 @@ class ProjectsServerTest {
     private fun inDialog(): SemanticsMatcher = hasAnyAncestor(isDialog())
 
     /** The project's tasks on the server. */
-    private fun tasks(project: Long): List<JsonObject> = account.client.get(
-        url("projects", project.toString(), "tasks"),
-        ListSerializer(JsonObject.serializer()),
-    ).orFail("GET tasks")
+    private fun tasks(project: Long): List<JsonObject> = runBlocking {
+        account.client.get(
+            url("projects", project.toString(), "tasks"),
+            ListSerializer(JsonObject.serializer()),
+        )
+    }.orFail("GET tasks")
 
     private fun awaitTasksCache(message: String, check: (List<CachedTask>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
@@ -606,8 +612,12 @@ class ProjectsServerTest {
         ).jsonPrimitive.content == name
     }
 
-    private fun projects(): List<JsonObject> =
-        account.client.get(url("projects"), ListSerializer(JsonObject.serializer())).orFail("GET projects")
+    private fun projects(): List<JsonObject> = runBlocking {
+        account.client.get(
+            url("projects"),
+            ListSerializer(JsonObject.serializer()),
+        )
+    }.orFail("GET projects")
 
     private fun JsonObject.id() = getValue("id").jsonPrimitive.long
 
@@ -617,12 +627,14 @@ class ProjectsServerTest {
 
     private fun url(vararg path: String) = account.client.server.api("workspaces", workspace.toString(), *path)
 
-    private fun create(collection: String, body: JsonObject): Long = account.client.send(
-        "POST",
-        url(collection),
-        body,
-        JsonObject.serializer(),
-    ).orFail("POST $collection").getValue("id").jsonPrimitive.long
+    private fun create(collection: String, body: JsonObject): Long = runBlocking {
+        account.client.send(
+            "POST",
+            url(collection),
+            body,
+            JsonObject.serializer(),
+        )
+    }.orFail("POST $collection").getValue("id").jsonPrimitive.long
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 

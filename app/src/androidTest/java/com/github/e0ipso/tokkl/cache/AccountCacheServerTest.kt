@@ -93,7 +93,7 @@ class AccountCacheServerTest {
 
         runBlocking { app.accountRefresh.refresh().join() }
         setAirplaneMode(on = true)
-        val offline = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+        val offline = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
         assertTrue(
             "requests fail in airplane mode: $offline",
             (offline as? ApiResult.Failure)?.error is ApiError.Network,
@@ -146,7 +146,7 @@ class AccountCacheServerTest {
     }
 
     private fun serverAnswers(): Boolean {
-        val result = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+        val result = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
         return (result as? ApiResult.Failure)?.error !is ApiError.Network
     }
 
@@ -156,7 +156,12 @@ class AccountCacheServerTest {
     /** Data on the server: one client, three projects, two tags, a task, three entries and a favorite. */
     private class Seed(private val api: TogglApiClient) {
         val now: Instant = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        val workspace = api.get(api.server.api("me"), Me.serializer()).orFail("GET /api/v9/me").defaultWorkspaceId
+        val workspace = runBlocking {
+            api.get(
+                api.server.api("me"),
+                Me.serializer(),
+            )
+        }.orFail("GET /api/v9/me").defaultWorkspaceId
         val client = create("clients", buildJsonObject { put("name", "Acme") })
         val project = create(
             "projects",
@@ -184,12 +189,14 @@ class AccountCacheServerTest {
                 put("tags", buildJsonArray { add(JsonPrimitive("focus")) })
                 put("billable", false)
             }
-            api.send(
-                "POST",
-                api.server.api("me", "preferences"),
-                buildJsonObject { put("favorites", JsonArray(listOf(favorite))) },
-                JsonObject.serializer(),
-            ).orFail("POST /api/v9/me/preferences")
+            runBlocking {
+                api.send(
+                    "POST",
+                    api.server.api("me", "preferences"),
+                    buildJsonObject { put("favorites", JsonArray(listOf(favorite))) },
+                    JsonObject.serializer(),
+                )
+            }.orFail("POST /api/v9/me/preferences")
         }
 
         private fun entry(start: Instant, project: Long, task: Long?, tag: Long?): Long = create(
@@ -207,18 +214,20 @@ class AccountCacheServerTest {
         )
 
         private fun archive(project: Long) {
-            api.send(
-                "PUT",
-                api.server.api("workspaces", workspace.toString(), "projects", project.toString()),
-                buildJsonObject { put("active", false) },
-                JsonObject.serializer(),
-            ).orFail("PUT a project")
+            runBlocking {
+                api.send(
+                    "PUT",
+                    api.server.api("workspaces", workspace.toString(), "projects", project.toString()),
+                    buildJsonObject { put("active", false) },
+                    JsonObject.serializer(),
+                )
+            }.orFail("PUT a project")
         }
 
         /** POSTs [body] to a workspace collection such as `clients` and returns the new id. */
         private fun create(collection: String, body: JsonObject): Long {
             val url = api.server.api("workspaces", workspace.toString(), *collection.split('/').toTypedArray())
-            return api.send("POST", url, body, Created.serializer()).orFail("POST $collection").id
+            return runBlocking { api.send("POST", url, body, Created.serializer()) }.orFail("POST $collection").id
         }
     }
 

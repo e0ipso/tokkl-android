@@ -124,7 +124,7 @@ class TimerServerTest {
     @Before
     fun signInThroughTheRelay() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         relay = HangingRelay(TokklTestServer.url)
         signIn(relay.url, account.apiToken)
@@ -314,18 +314,20 @@ class TimerServerTest {
             // the page would then offer Stop for it. This test is about a start the phone has not
             // seen, as on Toggl Track or while the stream is down, so it runs without the stream.
             app.followNoTimerEvents()
-            val fromTheWeb = web.send(
-                "POST",
-                web.server.api("workspaces", workspace.toString(), "time_entries"),
-                buildJsonObject {
-                    put("workspace_id", workspace)
-                    put("created_with", "tokkl-android tests")
-                    put("description", "Started on the web")
-                    put("start", Instant.now().minus(1, ChronoUnit.HOURS).toString())
-                    put("duration", -1)
-                },
-                JsonObject.serializer(),
-            ).orFail("POST a running entry").getValue("id").jsonPrimitive.long
+            val fromTheWeb = runBlocking {
+                web.send(
+                    "POST",
+                    web.server.api("workspaces", workspace.toString(), "time_entries"),
+                    buildJsonObject {
+                        put("workspace_id", workspace)
+                        put("created_with", "tokkl-android tests")
+                        put("description", "Started on the web")
+                        put("start", Instant.now().minus(1, ChronoUnit.HOURS).toString())
+                        put("duration", -1)
+                    },
+                    JsonObject.serializer(),
+                )
+            }.orFail("POST a running entry").getValue("id").jsonPrimitive.long
             AirplaneMode.set(true, web)
             description().performTextInput("Started on the phone")
             start().performClick()
@@ -344,10 +346,12 @@ class TimerServerTest {
                 "the phone's entry shows running",
             ) { shows(composeRule.onNode(hasText("Started on the phone") and hasSetTextAction())) }
             assertTrue("the web's timer stopped", serverEntry(fromTheWeb)["stop"] !is JsonNull)
-            val current = web.get(
-                web.server.api("me", "time_entries", "current"),
-                JsonElement.serializer(),
-            ).orFail("GET the running entry")
+            val current = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries", "current"),
+                    JsonElement.serializer(),
+                )
+            }.orFail("GET the running entry")
             assertEquals("Started on the phone", current.jsonObject.string("description"))
         }
     }
@@ -402,12 +406,14 @@ class TimerServerTest {
         Session(context).save(server, token)
     }
 
-    private fun createProject(name: String): Long = web.send(
-        "POST",
-        web.server.api("workspaces", workspace.toString(), "projects"),
-        buildJsonObject { put("name", name) },
-        JsonObject.serializer(),
-    ).orFail("POST a project").getValue("id").jsonPrimitive.long
+    private fun createProject(name: String): Long = runBlocking {
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "projects"),
+            buildJsonObject { put("name", name) },
+            JsonObject.serializer(),
+        )
+    }.orFail("POST a project").getValue("id").jsonPrimitive.long
 
     private fun description(): SemanticsNodeInteraction =
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description)))
@@ -603,9 +609,13 @@ class TimerServerTest {
         runBlocking { app.accountRefresh.refreshAfterChange().join() }
     }
 
-    private fun serverEntries(): List<JsonObject> =
-        web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
-            .map { it.jsonObject }
+    private fun serverEntries(): List<JsonObject> = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries"),
+            JsonArray.serializer(),
+        )
+    }.orFail("GET /api/v9/me/time_entries")
+        .map { it.jsonObject }
 
     private fun localShortStop(): Boolean {
         val undo = runBlocking { app.changes.shortStopUndo.first() }
@@ -621,7 +631,12 @@ class TimerServerTest {
 
     private fun stoppedEntry(shortStop: Boolean): JsonObject {
         val kept = serverEntries()
-        val trashed = web.get(web.server.app("trash"), JsonArray.serializer()).orFail("GET /api/app/trash")
+        val trashed = runBlocking {
+            web.get(
+                web.server.app("trash"),
+                JsonArray.serializer(),
+            )
+        }.orFail("GET /api/app/trash")
             .map { it.jsonObject }
         assertEquals("the server has exactly one stopped entry", 1, kept.size + trashed.size)
         assertEquals("the server follows the offline short Stop prediction", shortStop, trashed.isNotEmpty())
@@ -637,8 +652,12 @@ class TimerServerTest {
         return entry
     }
 
-    private fun serverEntry(id: Long): JsonObject =
-        web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET a time entry")
+    private fun serverEntry(id: Long): JsonObject = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", id.toString()),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET a time entry")
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
 

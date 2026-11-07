@@ -11,9 +11,10 @@ android {
 }
 
 dependencies {
-    // The API's types and calls use OkHttp's and kotlinx.serialization's types.
+    // The API's types and calls use OkHttp's and kotlinx.serialization's types, and its calls suspend.
     api(libs.okhttp)
     api(libs.kotlinx.serialization.json)
+    api(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver3)

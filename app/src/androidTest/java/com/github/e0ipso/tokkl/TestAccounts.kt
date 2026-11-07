@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -56,7 +57,7 @@ object TestAccounts {
 
         /** The account's default workspace, where [createEntry] puts entries. */
         val workspaceId: Long by lazy {
-            client.get(client.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+            runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
                 .getValue("default_workspace_id").jsonPrimitive.long
         }
 
@@ -69,7 +70,7 @@ object TestAccounts {
                 put("start", start.toString())
                 if (stop == null) put("duration", -1) else put("stop", stop.toString())
             }
-            return client.send("POST", entries(), body, JsonObject.serializer())
+            return runBlocking { client.send("POST", entries(), body, JsonObject.serializer()) }
                 .orFail("POST /api/v9/workspaces/<id>/time_entries")
                 .getValue("id").jsonPrimitive.long
         }
@@ -87,21 +88,23 @@ object TestAccounts {
                 put("start_date", day.toString())
                 put("duration", seconds)
             }
-            return client.send("POST", entries(), body, JsonObject.serializer())
+            return runBlocking { client.send("POST", entries(), body, JsonObject.serializer()) }
                 .orFail("POST /api/v9/workspaces/<id>/time_entries")
                 .getValue("id").jsonPrimitive.long
         }
 
         /** The entry [id] as the server keeps it. */
         fun entry(id: Long): JsonObject =
-            client.get(client.server.api("me", "time_entries", id.toString()), JsonObject.serializer())
+            runBlocking { client.get(client.server.api("me", "time_entries", id.toString()), JsonObject.serializer()) }
                 .orFail("GET /api/v9/me/time_entries/<id>")
 
         fun deleteEntry(id: Long) {
-            client.sendNoContent(
-                "DELETE",
-                entries(id.toString()),
-            ).orFail("DELETE /api/v9/workspaces/<id>/time_entries/<id>")
+            runBlocking {
+                client.sendNoContent(
+                    "DELETE",
+                    entries(id.toString()),
+                )
+            }.orFail("DELETE /api/v9/workspaces/<id>/time_entries/<id>")
         }
 
         private fun entries(vararg path: String) =
@@ -119,14 +122,14 @@ object TestAccounts {
     }
 
     fun create(timezone: String): Account {
-        val invite = admin
-            .send(
+        val invite = runBlocking {
+            admin.send(
                 "POST",
                 TokklTestServer.url.app("admin", "invites"),
                 buildJsonObject { put("role", "user") },
                 JsonObject.serializer(),
             )
-            .orFail("POST /api/app/admin/invites")
+        }.orFail("POST /api/app/admin/invites")
         val token = invite.getValue("url").jsonPrimitive.content.substringAfterLast('/')
         val email = "cache-${hex(8)}@example.com"
         val password = hex(16)
@@ -149,16 +152,23 @@ object TestAccounts {
                 )
             }
         }
-        val me = appApiClient(TokklTestServer.url, ApiCredentials.EmailPassword(email, password))
-            .get(TokklTestServer.url.api("me"), NewMe.serializer())
-            .orFail("GET /api/v9/me")
+        val me = runBlocking {
+            appApiClient(TokklTestServer.url, ApiCredentials.EmailPassword(email, password))
+                .get(TokklTestServer.url.api("me"), NewMe.serializer())
+        }.orFail("GET /api/v9/me")
         return Account(me.id, email, me.apiToken, password)
     }
 
     /** Deletes [account] with its workspace and everything in it. */
     fun delete(account: Account) {
         val confirm = buildJsonObject { put("email", account.email) }
-        admin.sendNoContent("DELETE", TokklTestServer.url.app("admin", "users", account.id.toString()), confirm)
+        runBlocking {
+            admin.sendNoContent(
+                "DELETE",
+                TokklTestServer.url.app("admin", "users", account.id.toString()),
+                confirm,
+            )
+        }
             .orFail("DELETE /api/app/admin/users/<id>")
     }
 

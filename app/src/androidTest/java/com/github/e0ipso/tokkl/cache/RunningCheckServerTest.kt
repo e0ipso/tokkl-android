@@ -76,7 +76,7 @@ class RunningCheckServerTest {
     @Before
     fun signInToTheServer() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         signIn(TokklTestServer.url, account.apiToken)
         runBlocking { app.accountRefresh.refresh().join() }
@@ -150,11 +150,13 @@ class RunningCheckServerTest {
         RunningNotifications.awaitShown("the start")
         val check = awaitCheck("the start schedules a check") { it.state == WorkInfo.State.ENQUEUED }
 
-        web.sendNoContent(
-            "PATCH",
-            web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
-            buildJsonObject {},
-        )
+        runBlocking {
+            web.sendNoContent(
+                "PATCH",
+                web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
+                buildJsonObject {},
+            )
+        }
             .orFail("PATCH the entry's stop")
         assertNotNull("nothing but the check tells the phone", runBlocking { app.cache.running.first() })
         RequestCounter(TokklTestServer.url, "/api/v9/me/time_entries/current HTTP/1.1").use { requests ->
@@ -207,11 +209,13 @@ class RunningCheckServerTest {
         runBlocking { app.sender.sendAndWait() }
         assertEquals(1, unsentCount())
         signIn(TokklTestServer.url, account.apiToken)
-        web.sendNoContent(
-            "PATCH",
-            web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
-            buildJsonObject {},
-        )
+        runBlocking {
+            web.sendNoContent(
+                "PATCH",
+                web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
+                buildJsonObject {},
+            )
+        }
             .orFail("PATCH the entry's stop")
 
         runCheck(check.id)
@@ -236,18 +240,20 @@ class RunningCheckServerTest {
     }
 
     /** Starts a running entry on the server, as the web app does, which stops the one running there. */
-    private fun startOnTheWeb(description: String): Long = web.send(
-        "POST",
-        web.server.api("workspaces", workspace.toString(), "time_entries"),
-        buildJsonObject {
-            put("workspace_id", workspace)
-            put("created_with", "tokkl-android tests")
-            put("description", description)
-            put("start", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString())
-            put("duration", -1)
-        },
-        JsonObject.serializer(),
-    ).orFail("POST a running entry").getValue("id").jsonPrimitive.long
+    private fun startOnTheWeb(description: String): Long = runBlocking {
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                put("start", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString())
+                put("duration", -1)
+            },
+            JsonObject.serializer(),
+        )
+    }.orFail("POST a running entry").getValue("id").jsonPrimitive.long
 
     private fun android.service.notification.StatusBarNotification.title(): String? =
         notification.extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()

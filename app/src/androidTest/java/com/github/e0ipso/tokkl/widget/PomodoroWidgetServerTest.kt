@@ -32,6 +32,7 @@ import com.github.e0ipso.tokkl.signin.SignInResult
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -82,39 +83,45 @@ class PomodoroWidgetServerTest {
     @Test fun remoteStartArrivesWithCorrectedCountdownAndNativeStartUsesDefaultsAndLastFields() {
         val api = fixture.account.otherDevice
         val workspace = fixture.account.workspaceId
-        val project = api.send(
-            "POST",
-            api.server.api("workspaces", "$workspace", "projects"),
-            buildJsonObject {
-                put("name", "Widget focus")
-                put("billable", true)
-            },
-            JsonObject.serializer(),
-        ).orFail("create project").getValue("id").jsonPrimitive.long
-        val task = api.send(
-            "POST",
-            api.server.api(
-                "workspaces",
-                "$workspace",
-                "projects",
-                "$project",
-                "tasks",
-            ),
-            buildJsonObject {
-                put("name", "Acceptance")
-            },
-            JsonObject.serializer(),
-        ).orFail("create task").getValue("id").jsonPrimitive.long
-        api.sendNoContent(
-            "POST",
-            api.server.api("me", "preferences"),
-            buildJsonObject {
-                put("pomodoro_focus_interval_in_minutes", 40)
-                put("pomodoro_break_interval_in_minutes", 8)
-                put("pomodoro_long_break_interval_in_minutes", 20)
-                put("pomodoro_long_break_every", 3)
-            },
-        ).orFail("save defaults")
+        val project = runBlocking {
+            api.send(
+                "POST",
+                api.server.api("workspaces", "$workspace", "projects"),
+                buildJsonObject {
+                    put("name", "Widget focus")
+                    put("billable", true)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("create project").getValue("id").jsonPrimitive.long
+        val task = runBlocking {
+            api.send(
+                "POST",
+                api.server.api(
+                    "workspaces",
+                    "$workspace",
+                    "projects",
+                    "$project",
+                    "tasks",
+                ),
+                buildJsonObject {
+                    put("name", "Acceptance")
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("create task").getValue("id").jsonPrimitive.long
+        runBlocking {
+            api.sendNoContent(
+                "POST",
+                api.server.api("me", "preferences"),
+                buildJsonObject {
+                    put("pomodoro_focus_interval_in_minutes", 40)
+                    put("pomodoro_break_interval_in_minutes", 8)
+                    put("pomodoro_long_break_interval_in_minutes", 20)
+                    put("pomodoro_long_break_every", 3)
+                },
+            )
+        }.orFail("save defaults")
         fixture.refresh()
         val remote = remoteStart(project, task)
         host.awaitText("Remote widget focus", 1_000)
@@ -136,12 +143,14 @@ class PomodoroWidgetServerTest {
         assertEquals(task, remembered.taskId)
         assertEquals(listOf("focus"), remembered.tags)
         assertTrue(remembered.billable)
-        api.send(
-            "POST",
-            api.server.app("pomodoro", "end"),
-            buildJsonObject { put("revision", remote.revision) },
-            TimerState.serializer(),
-        ).orFail("remote end")
+        runBlocking {
+            api.send(
+                "POST",
+                api.server.app("pomodoro", "end"),
+                buildJsonObject { put("revision", remote.revision) },
+                TimerState.serializer(),
+            )
+        }.orFail("remote end")
         host.awaitDescription(startLabel, 1_000)
         host.awaitText(
             context.getString(WidgetR.string.pomodoro_widget_last, "Remote widget focus · Widget focus · Acceptance"),
@@ -245,10 +254,17 @@ class PomodoroWidgetServerTest {
             ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
             assertEquals(
                 SignInResult.SignedIn,
-                SignIn(SessionWriter(app::storeSignIn), appHttp.instance, appConfiguredServer).attempt(
-                    TokklTestServer.url,
-                    SignInCredentials.ApiToken(replacement.apiToken),
-                ),
+                runBlocking {
+                    SignIn(
+                        SessionWriter(app::storeSignIn),
+                        appHttp.instance,
+                        appConfiguredServer,
+                        Dispatchers.IO,
+                    ).attempt(
+                        TokklTestServer.url,
+                        SignInCredentials.ApiToken(replacement.apiToken),
+                    )
+                },
             )
             fixture.refresh()
             assertEquals(replacement.id, app.accountSettings.state.value?.userId)
@@ -300,16 +316,18 @@ class PomodoroWidgetServerTest {
             timer.awaitUpdatesSettled()
             val timerKey = WidgetStore(context).load()
             val oldPomodoroKey = WidgetStore(context, WidgetStore.POMODORO_KEY).load()
-            fixture.account.otherDevice.sendNoContent(
-                "POST",
-                TokklTestServer.url.api(
-                    "me",
-                    "preferences",
-                ),
-                buildJsonObject {
-                    put("pomodoro_focus_interval_in_minutes", 42)
-                },
-            ).orFail("change defaults")
+            runBlocking {
+                fixture.account.otherDevice.sendNoContent(
+                    "POST",
+                    TokklTestServer.url.api(
+                        "me",
+                        "preferences",
+                    ),
+                    buildJsonObject {
+                        put("pomodoro_focus_interval_in_minutes", 42)
+                    },
+                )
+            }.orFail("change defaults")
             fixture.refresh()
             host.await("Pomodoro independently persists its changed key") {
                 WidgetStore(context, WidgetStore.POMODORO_KEY).load() != oldPomodoroKey
@@ -328,41 +346,45 @@ class PomodoroWidgetServerTest {
     } as PomodoroWidgetState.Active
     private fun remoteStart(project: Long? = null, task: Long? = null): TimerState {
         val api = fixture.account.otherDevice
-        return api.send(
-            "POST",
-            api.server.app("pomodoro"),
-            buildJsonObject {
-                put("workspace_id", fixture.account.workspaceId)
-                put("description", "Remote widget focus")
-                put("project_id", project)
-                put("task_id", task)
-                put("billable", true)
-                put("tags", JsonArray(listOf(JsonPrimitive("focus"))))
-                put(
-                    "work_minutes",
-                    25,
-                )
-                put("short_rest_minutes", 5)
-                put("long_rest_minutes", 15)
-                put("long_rest_every", 4)
-            },
-            TimerState.serializer(),
-        ).orFail("remote session start")
+        return runBlocking {
+            api.send(
+                "POST",
+                api.server.app("pomodoro"),
+                buildJsonObject {
+                    put("workspace_id", fixture.account.workspaceId)
+                    put("description", "Remote widget focus")
+                    put("project_id", project)
+                    put("task_id", task)
+                    put("billable", true)
+                    put("tags", JsonArray(listOf(JsonPrimitive("focus"))))
+                    put(
+                        "work_minutes",
+                        25,
+                    )
+                    put("short_rest_minutes", 5)
+                    put("long_rest_minutes", 15)
+                    put("long_rest_every", 4)
+                },
+                TimerState.serializer(),
+            )
+        }.orFail("remote session start")
     }
     private fun editDescription(current: TimerState, description: String) {
         val api = fixture.account.otherDevice
-        api.send(
-            "PUT",
-            api.server.api(
-                "workspaces",
-                "${fixture.account.workspaceId}",
-                "time_entries",
-                "${current.runningEntry!!.id}",
-            ),
-            buildJsonObject {
-                put("description", description)
-            },
-            JsonObject.serializer(),
-        ).orFail("remote field edit")
+        runBlocking {
+            api.send(
+                "PUT",
+                api.server.api(
+                    "workspaces",
+                    "${fixture.account.workspaceId}",
+                    "time_entries",
+                    "${current.runningEntry!!.id}",
+                ),
+                buildJsonObject {
+                    put("description", description)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("remote field edit")
     }
 }

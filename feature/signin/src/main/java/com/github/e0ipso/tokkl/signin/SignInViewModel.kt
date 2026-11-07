@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.navigation.SignInAgain
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -161,7 +162,8 @@ class SignInViewModel(
                 return@launch
             }
             if (stored != null) forget(server.origin)
-            val result = withContext(io) { signIn.attempt(server, credentials, current.again) }
+            // A sign-in the server accepted is stored also when the form goes meanwhile.
+            val result = withContext(io + NonCancellable) { signIn.attempt(server, credentials, current.again) }
             val retryAt = when (result) {
                 is SignInResult.RateLimited ->
                     (clock() + (result.retryAfterSeconds ?: DEFAULT_RETRY_AFTER_SECONDS) * MILLIS_PER_SECOND)

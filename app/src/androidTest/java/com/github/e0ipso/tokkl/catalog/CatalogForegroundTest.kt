@@ -193,21 +193,29 @@ class CatalogForegroundTest {
     private fun shows(text: String): Boolean = compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
 
     /** Creates an item named [name] in the workspace's [collection] and returns its id. */
-    private fun create(collection: String, name: String): Long =
-        account.client.send("POST", url(collection), buildJsonObject { put("name", name) }, JsonObject.serializer())
-            .orFail("POST $collection").getValue("id").jsonPrimitive.long
+    private fun create(collection: String, name: String): Long = runBlocking {
+        account.client.send(
+            "POST",
+            url(collection),
+            buildJsonObject { put("name", name) },
+            JsonObject.serializer(),
+        )
+    }
+        .orFail("POST $collection").getValue("id").jsonPrimitive.long
 
     /**
      * Renames an item through [api]. While the app's stored server is the counter's relay, the
      * shared HTTP client sends only there, so the rename goes through the relay too.
      */
     private fun rename(collection: String, id: Long, name: String, api: TogglApiClient = account.client) {
-        api.send(
-            "PUT",
-            url(collection, id.toString(), api = api),
-            buildJsonObject { put("name", name) },
-            JsonObject.serializer(),
-        )
+        runBlocking {
+            api.send(
+                "PUT",
+                url(collection, id.toString(), api = api),
+                buildJsonObject { put("name", name) },
+                JsonObject.serializer(),
+            )
+        }
             .orFail("PUT $collection/$id")
     }
 

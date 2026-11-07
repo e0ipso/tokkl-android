@@ -70,7 +70,7 @@ class AccountSettingsServerTest {
     }
 
     private fun serverId(field: String): Long =
-        client.get(client.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue(field).jsonPrimitive.long
 
     private fun putMe(timezone: String, beginningOfWeek: Int) {
@@ -79,7 +79,7 @@ class AccountSettingsServerTest {
             put("beginning_of_week", beginningOfWeek)
         }
         // Fails with the error alone, so neither a response body nor a secret lands in the message.
-        val result = client.send("PUT", client.server.api("me"), body, JsonObject.serializer())
+        val result = runBlocking { client.send("PUT", client.server.api("me"), body, JsonObject.serializer()) }
         if (result is ApiResult.Failure) {
             val error = result.error
             val reason = if (error is ApiError.Http) "HTTP ${error.status}" else error::class.simpleName

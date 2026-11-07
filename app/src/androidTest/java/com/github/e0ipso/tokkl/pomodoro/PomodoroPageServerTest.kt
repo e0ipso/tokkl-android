@@ -68,17 +68,19 @@ class PomodoroPageServerTest {
     fun prepareAnAccountWithItsOwnDefaults() {
         fixture.prepare()
         val client = fixture.account.client
-        client.send(
-            "POST",
-            client.server.api("me", "preferences"),
-            buildJsonObject {
-                put("pomodoro_focus_interval_in_minutes", 40)
-                put("pomodoro_break_interval_in_minutes", 8)
-                put("pomodoro_long_break_interval_in_minutes", 20)
-                put("pomodoro_long_break_every", 3)
-            },
-            JsonObject.serializer(),
-        ).orFail("set Pomodoro defaults")
+        runBlocking {
+            client.send(
+                "POST",
+                client.server.api("me", "preferences"),
+                buildJsonObject {
+                    put("pomodoro_focus_interval_in_minutes", 40)
+                    put("pomodoro_break_interval_in_minutes", 8)
+                    put("pomodoro_long_break_interval_in_minutes", 20)
+                    put("pomodoro_long_break_every", 3)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("set Pomodoro defaults")
         fixture.refresh()
     }
 
@@ -147,12 +149,14 @@ class PomodoroPageServerTest {
         val drawn = model.state.value.shown!!
         // Another device confirms the phase first.
         val client = fixture.account.client
-        client.send(
-            "POST",
-            client.server.app("pomodoro", "next"),
-            buildJsonObject { put("revision", drawn.revision) },
-            TimerState.serializer(),
-        )
+        runBlocking {
+            client.send(
+                "POST",
+                client.server.app("pomodoro", "next"),
+                buildJsonObject { put("revision", drawn.revision) },
+                TimerState.serializer(),
+            )
+        }
             .orFail("POST /api/app/pomodoro/next")
 
         compose.runOnIdle { model.next(drawn) }
@@ -224,7 +228,12 @@ class PomodoroPageServerTest {
 
     private fun serverTimer(): TimerState {
         val client = fixture.account.client
-        return client.get(client.server.app("timer"), TimerState.serializer()).orFail("GET /api/app/timer")
+        return runBlocking {
+            client.get(
+                client.server.app("timer"),
+                TimerState.serializer(),
+            )
+        }.orFail("GET /api/app/timer")
     }
 
     private fun show() {

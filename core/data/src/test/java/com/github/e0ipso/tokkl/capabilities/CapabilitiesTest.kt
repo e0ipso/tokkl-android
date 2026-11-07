@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -323,7 +324,7 @@ class CapabilitiesTest {
         assertNull("a retired holder takes no state", timerStates.state.value)
     }
 
-    private fun CapabilitiesSource.refresh(api: TogglApiClient, me: Me) = refresh(api, me, timerStates)
+    private fun CapabilitiesSource.refresh(api: TogglApiClient, me: Me) = runBlocking { refresh(api, me, timerStates) }
 
     private fun MockWebServer.requests(): List<String> = List(requestCount) { takeRequest().url.encodedPath }
 

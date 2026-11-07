@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -177,10 +178,11 @@ class TrashViewModel(
      * Sends [request], unless a change cannot go now. Once the server accepts it, [apply] changes
      * the list, the question closes and [done] says what happened. A refusal keeps the question
      * open with the reason, and a 404, an entry no longer in the trash, loads the list again. An
-     * unreachable server turns every action off until a load gets through.
+     * unreachable server turns every action off until a load gets through. Once sent, the change
+     * reaches the server also when the view model is cleared meanwhile.
      */
     private fun <R> send(
-        request: (TrashServer) -> ApiResult<R>,
+        request: suspend (TrashServer) -> ApiResult<R>,
         apply: (List<TrashEntry>, R) -> List<TrashEntry>,
         done: (R) -> TrashChange,
         restored: Boolean = false,
@@ -188,7 +190,7 @@ class TrashViewModel(
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         viewModelScope.launch {
-            val answer = withContext(io) {
+            val answer = withContext(io + NonCancellable) {
                 val api = client() ?: return@withContext ApiResult.Failure(ApiError.AuthFailed)
                 request(TrashServer(api))
             }
@@ -224,7 +226,7 @@ class TrashViewModel(
         loading?.cancel()
         mutableState.update { it.copy(loading = true) }
         loading = viewModelScope.launch {
-            // A cancelled load drops its answer: withContext throws once it returns.
+            // A cancelled load cancels its request and drops its answer.
             val answer = withContext(io) {
                 val api = client() ?: return@withContext ApiResult.Failure(ApiError.AuthFailed)
                 TrashServer(api).list().also { if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing() }

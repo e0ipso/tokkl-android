@@ -27,10 +27,9 @@ class FavoritesServer(private val client: ApiClientProvider, private val cache: 
 
     /**
      * Posts [favorites], in order, to `POST /api/v9/me/preferences`, and once the server has
-     * stored them, puts them in the cache. Blocks on the network and the disk, so call it off the
-     * main thread.
+     * stored them, puts them in the cache. Blocks on the disk, so call it on the IO dispatcher.
      */
-    fun save(favorites: List<EntryFields>): ApiResult<Unit> {
+    suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
         return when (
             val answer = api.send(

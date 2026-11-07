@@ -353,18 +353,20 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.onNodeWithText("Remote replacement").assertExists()
             assertActions(running = true)
             val client = fixture.account.client
-            client.send(
-                "PATCH",
-                client.server.api(
-                    "workspaces",
-                    fixture.account.workspaceId.toString(),
-                    "time_entries",
-                    replacementId.toString(),
-                    "stop",
-                ),
-                buildJsonObject { put("stop", Instant.now().toString()) },
-                ServerTimeEntry.serializer(),
-            ).orFail("external Stop")
+            runBlocking {
+                client.send(
+                    "PATCH",
+                    client.server.api(
+                        "workspaces",
+                        fixture.account.workspaceId.toString(),
+                        "time_entries",
+                        replacementId.toString(),
+                        "stop",
+                    ),
+                    buildJsonObject { put("stop", Instant.now().toString()) },
+                    ServerTimeEntry.serializer(),
+                )
+            }.orFail("external Stop")
             runBlocking { app.accountRefresh.refresh().join() }
             awaitIdle()
             compose.awaitTimerPage()
@@ -507,18 +509,20 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertExists()
             val row = (fixture.shown() as TimerControls.Running).entry
             val client = fixture.account.client
-            client.send(
-                "PATCH",
-                client.server.api(
-                    "workspaces",
-                    fixture.account.workspaceId.toString(),
-                    "time_entries",
-                    row.id.toString(),
-                    "stop",
-                ),
-                buildJsonObject { put("stop", Instant.now().toString()) },
-                ServerTimeEntry.serializer(),
-            ).orFail("external Stop from editor")
+            runBlocking {
+                client.send(
+                    "PATCH",
+                    client.server.api(
+                        "workspaces",
+                        fixture.account.workspaceId.toString(),
+                        "time_entries",
+                        row.id.toString(),
+                        "stop",
+                    ),
+                    buildJsonObject { put("stop", Instant.now().toString()) },
+                    ServerTimeEntry.serializer(),
+                )
+            }.orFail("external Stop from editor")
             fixture.refresh()
             awaitIdle()
             compose.awaitTimerPage()

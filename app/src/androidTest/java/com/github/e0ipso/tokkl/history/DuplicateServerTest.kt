@@ -96,41 +96,49 @@ class DuplicateServerTest {
     @Test
     fun aDuplicateMadeInAirplaneModeReachesTheServerWhenTheNetworkReturns() {
         val workspace = account.workspaceId
-        val project = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Mural") },
-            JsonObject.serializer(),
-        ).orFail("POST a project").getValue("id").jsonPrimitive.long
-        val task = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects", project.toString(), "tasks"),
-            buildJsonObject { put("name", "Outline") },
-            JsonObject.serializer(),
-        ).orFail("POST a task").getValue("id").jsonPrimitive.long
+        val project = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "projects"),
+                buildJsonObject { put("name", "Mural") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a project").getValue("id").jsonPrimitive.long
+        val task = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "projects", project.toString(), "tasks"),
+                buildJsonObject { put("name", "Outline") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a task").getValue("id").jsonPrimitive.long
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS)
         val start = stop.minus(45, ChronoUnit.MINUTES)
-        val source = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", "Paint the wall")
-                put("project_id", project)
-                put("task_id", task)
-                put("tags", JsonArray(listOf(JsonPrimitive("outdoor"), JsonPrimitive("spray"))))
-                put("billable", true)
-                put("start", start.toString())
-                put("stop", stop.toString())
-            },
-            JsonObject.serializer(),
-        ).orFail("POST an entry").getValue("id").jsonPrimitive.long
+        val source = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", "Paint the wall")
+                    put("project_id", project)
+                    put("task_id", task)
+                    put("tags", JsonArray(listOf(JsonPrimitive("outdoor"), JsonPrimitive("spray"))))
+                    put("billable", true)
+                    put("start", start.toString())
+                    put("stop", stop.toString())
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST an entry").getValue("id").jsonPrimitive.long
         // The server snaps the times to the account's resolution, and the copy takes them as stored.
-        val stored = web.get(
-            web.server.api("me", "time_entries", source.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the source")
+        val stored = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", source.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the source")
         runBlocking { app.accountRefresh.refresh().join() }
         val unsent = context.getString(R.string.history_unsent)
 
@@ -224,7 +232,12 @@ class DuplicateServerTest {
             .addQueryParameter("start_date", day.minusDays(1).toString() + "T00:00:00Z")
             .addQueryParameter("end_date", day.plusDays(2).toString() + "T00:00:00Z")
             .build()
-        val entries = web.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+        val entries = runBlocking {
+            web.get(
+                url,
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/time_entries")
             .filter { it.string("description") == "Team offsite" }
         assertEquals("the source and its copy", 2, entries.size)
         val copy = entries.single { it.getValue("id").jsonPrimitive.long != source }
@@ -239,7 +252,12 @@ class DuplicateServerTest {
             .addQueryParameter("start_date", start.minus(1, ChronoUnit.DAYS).toString())
             .addQueryParameter("end_date", start.plus(1, ChronoUnit.DAYS).toString())
             .build()
-        return web.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+        return runBlocking {
+            web.get(
+                url,
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/time_entries")
     }
 
     /** Sends the queue until it is empty, as the next refresh would. */

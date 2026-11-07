@@ -94,14 +94,16 @@ class RunningTileServerTest {
     @Before
     fun signInAndAddTheTile() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
-        project = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Tile") },
-            Created.serializer(),
-        ).orFail("POST a project").id
+        project = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "projects"),
+                buildJsonObject { put("name", "Tile") },
+                Created.serializer(),
+            )
+        }.orFail("POST a project").id
         signIn(TokklTestServer.url, account.apiToken)
         runBlocking { app.accountRefresh.refresh().join() }
         QuickSettingsTile.add()

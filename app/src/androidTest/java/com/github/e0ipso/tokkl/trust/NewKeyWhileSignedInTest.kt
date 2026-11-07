@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
@@ -116,7 +117,7 @@ class NewKeyWhileSignedInTest {
     /** `GET /api/v9/me` with the stored session's client, as the app sends it. */
     private fun me(): ApiResult<JsonObject> {
         val client = Session(context).client() ?: throw AssertionError("no stored session")
-        return client.get(server.api("me"), JsonObject.serializer())
+        return runBlocking { client.get(server.api("me"), JsonObject.serializer()) }
     }
 
     private fun email(result: ApiResult<JsonObject>): String {

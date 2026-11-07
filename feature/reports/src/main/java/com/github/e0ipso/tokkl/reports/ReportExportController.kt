@@ -88,7 +88,7 @@ class ReportExportController(
      * Downloads [request] into a staged file and publishes it, on the IO dispatcher. [attempt]
      * records the files as they are made.
      */
-    private fun download(
+    private suspend fun download(
         request: ReportCsvRequest,
         lease: ExportAccount.Lease,
         cancellation: ApiCallCancellation,

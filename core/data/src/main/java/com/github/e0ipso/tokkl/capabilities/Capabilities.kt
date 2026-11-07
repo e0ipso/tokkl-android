@@ -119,8 +119,8 @@ enum class TrashProbe {
     UNKNOWN,
 }
 
-/** Sends `GET /api/app/trash` once. Blocks, so call it off the main thread. */
-fun probeTrash(api: TogglApiClient): TrashProbe =
+/** Sends `GET /api/app/trash` once. */
+suspend fun probeTrash(api: TogglApiClient): TrashProbe =
     when (val result = api.get(api.server.app("trash"), JsonArray.serializer())) {
         is ApiResult.Success -> TrashProbe.PRESENT
 
@@ -151,8 +151,8 @@ sealed interface TimerStateProbe {
     data object Unknown : TimerStateProbe
 }
 
-/** Sends `GET /api/app/timer` once. Blocks, so call it off the main thread. */
-fun probeTimerState(api: TogglApiClient): TimerStateProbe =
+/** Sends `GET /api/app/timer` once. */
+suspend fun probeTimerState(api: TogglApiClient): TimerStateProbe =
     when (val result = api.get(api.server.app("timer"), TimerState.serializer())) {
         is ApiResult.Success -> TimerStateProbe.Present(result.value)
 

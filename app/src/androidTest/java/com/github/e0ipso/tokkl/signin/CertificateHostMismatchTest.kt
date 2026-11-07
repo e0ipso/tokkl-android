@@ -66,6 +66,7 @@ class CertificateHostMismatchTest {
                 session = { _, _, _ -> saved = true },
                 httpClient = client,
                 configured = appConfiguredServer,
+                io = Dispatchers.IO,
             ),
             trust = ServerTrustStore(context),
             cooldowns = SignInCooldownStore(context),

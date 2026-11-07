@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.api
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -14,12 +16,17 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Client for the Toggl Track API v9 and Reports API v3, as served by Tokkl or
  * by Toggl Track. Build endpoint URLs with [server], then call [get], [send],
- * [sendRefusable], [sendWithHeaders] or [sendNoContent]. Calls block the
- * calling thread, so make them off the main thread.
+ * [sendRefusable], [sendWithHeaders] or [sendNoContent]. Each call suspends
+ * while OkHttp runs it on [io], so call it from any thread. Cancelling the
+ * caller cancels the OkHttp call, which then ends at once instead of waiting
+ * for the server: the call fails with the coroutine's cancellation, not with
+ * an [ApiResult]. A call cancelled after its request left the phone may still
+ * reach the server.
  */
 class TogglApiClient(
     val server: ServerUrl,
@@ -27,12 +34,13 @@ class TogglApiClient(
     private val httpClient: OkHttpClient,
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
+    private val io: CoroutineContext = Dispatchers.IO,
 ) {
 
     /** [httpClient] for calls with `resend` false. */
     private val sendingOnce: OkHttpClient by lazy { SharedHttpClient.sendingOnce(httpClient) }
 
-    fun <T> get(url: HttpUrl, deserializer: DeserializationStrategy<T>): ApiResult<T> =
+    suspend fun <T> get(url: HttpUrl, deserializer: DeserializationStrategy<T>): ApiResult<T> =
         send("GET", url, body = null, deserializer)
 
     /**
@@ -48,7 +56,7 @@ class TogglApiClient(
      * [resend] false the request goes out once, through
      * [SharedHttpClient.sendingOnce], and the caller gets the failure.
      */
-    fun <T> send(
+    suspend fun <T> send(
         method: String,
         url: HttpUrl,
         body: JsonElement?,
@@ -64,7 +72,7 @@ class TogglApiClient(
      * [ApiError.UnexpectedStatus] with that reason, as any other status is, and one whose body is
      * neither is [ApiError.InvalidResponse]. Other statuses fail as in [send].
      */
-    fun <T> sendRefusable(
+    suspend fun <T> sendRefusable(
         method: String,
         url: HttpUrl,
         body: JsonElement,
@@ -87,7 +95,7 @@ class TogglApiClient(
      * values in them, such as the Reports API's `X-Next-Row-Number`, the row
      * the next page of a detailed report starts at.
      */
-    fun <T> sendWithHeaders(
+    suspend fun <T> sendWithHeaders(
         method: String,
         url: HttpUrl,
         body: JsonElement?,
@@ -106,7 +114,7 @@ class TogglApiClient(
      * project id as JSON, which this method ignores too. Any 2xx is a success.
      * [resend] works as in [send].
      */
-    fun sendNoContent(
+    suspend fun sendNoContent(
         method: String,
         url: HttpUrl,
         body: JsonElement? = null,
@@ -118,7 +126,7 @@ class TogglApiClient(
      * staging stream and publishes it only after success. Content length and the byte limit are
      * checked while reading, including for chunked responses. No error body reaches the stream.
      */
-    fun downloadCsv(
+    suspend fun downloadCsv(
         url: HttpUrl,
         body: JsonElement,
         output: OutputStream,
@@ -169,7 +177,7 @@ class TogglApiClient(
      * [ApiError.InvalidResponse]. An [IOException] while reading, as when the connection drops or
      * the call is cancelled, is [ApiError.Network]. Other statuses fail as in [send].
      */
-    fun <T> stream(url: HttpUrl, cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
+    suspend fun <T> stream(url: HttpUrl, cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
         execute("GET", url, body = null, resend = true, cancellation = cancellation, streaming = true) { response ->
             val type = response.body.contentType()
             if (type == null || type.type != "text" || type.subtype != "event-stream") {
@@ -179,7 +187,8 @@ class TogglApiClient(
             }
         }
 
-    private fun <T> execute(
+    @Suppress("LongParameterList")
+    private suspend fun <T> execute(
         method: String,
         url: HttpUrl,
         body: JsonElement?,
@@ -188,7 +197,7 @@ class TogglApiClient(
         streaming: Boolean = false,
         onConflict: ((Response) -> ApiResult<T>)? = null,
         onSuccess: (Response) -> ApiResult<T>,
-    ): ApiResult<T> {
+    ): ApiResult<T> = withContext(io) {
         val json = body?.let { ApiJson.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) }
         val request = Request.Builder()
             .url(url)
@@ -201,9 +210,9 @@ class TogglApiClient(
         // A stream lasts as long as it is open, so it has none.
         if (cancellation != null && !streaming) call.timeout().timeout(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         cancellation?.attach(call)
-        return try {
+        try {
             cancellation?.check()
-            call.execute().use { response ->
+            call.executeCancellable { response ->
                 // The server answered, so it passed the trust checks.
                 trustListener?.answered()
                 when {

@@ -19,13 +19,13 @@ data class ProjectTask(
 )
 
 /**
- * The API v9 task calls of [project] in [workspace] on the configured server. Every call blocks,
- * so make them off the main thread.
+ * The API v9 task calls of [project] in [workspace] on the configured server. Each call suspends
+ * while its request runs.
  */
 class TasksServer(private val api: TogglApiClient, private val workspace: Long, private val project: Long) {
 
     /** Every task of the project, done ones included, sorted by name. */
-    fun list(): ApiResult<List<ProjectTask>> = api.get(url(), ListSerializer(ProjectTask.serializer()))
+    suspend fun list(): ApiResult<List<ProjectTask>> = api.get(url(), ListSerializer(ProjectTask.serializer()))
 
     /**
      * Creates the task once, as [createOnce] does. When the answer was lost, the project's task
@@ -33,7 +33,7 @@ class TasksServer(private val api: TogglApiClient, private val workspace: Long, 
      *
      * @param known the ids of the tasks the list shows, which the create cannot have made.
      */
-    fun create(name: String, known: Set<Long>): ApiResult<ProjectTask> = createOnce(
+    suspend fun create(name: String, known: Set<Long>): ApiResult<ProjectTask> = createOnce(
         create = {
             api.send(
                 "POST",
@@ -48,7 +48,7 @@ class TasksServer(private val api: TogglApiClient, private val workspace: Long, 
     )
 
     /** Renames the task and marks it done or not done, as the web app's task row does. */
-    fun update(id: Long, name: String, done: Boolean): ApiResult<ProjectTask> = api.send(
+    suspend fun update(id: Long, name: String, done: Boolean): ApiResult<ProjectTask> = api.send(
         "PUT",
         url(id.toString()),
         buildJsonObject {
@@ -59,7 +59,7 @@ class TasksServer(private val api: TogglApiClient, private val workspace: Long, 
     )
 
     /** Deletes the task. The server takes it off the time entries that had it, which stay. */
-    fun delete(id: Long): ApiResult<Unit> = api.sendNoContent("DELETE", url(id.toString()))
+    suspend fun delete(id: Long): ApiResult<Unit> = api.sendNoContent("DELETE", url(id.toString()))
 
     private fun url(vararg path: String) =
         api.server.api("workspaces", workspace.toString(), "projects", project.toString(), "tasks", *path)

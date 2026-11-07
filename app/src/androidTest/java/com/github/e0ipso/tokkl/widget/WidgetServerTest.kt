@@ -214,34 +214,40 @@ class WidgetServerTest {
 
     @Test
     fun favoritesResizeAndEachNativeTapQueuesAllItsFieldsOffline() {
-        val project = web.send(
-            "POST",
-            web.server.api("workspaces", "$workspace", "projects"),
-            buildJsonObject {
-                put("name", "Widget project")
-                put("billable", true)
-            },
-            JsonObject.serializer(),
-        ).orFail("create project")["id"]!!.jsonPrimitive.long
-        val task = web.send(
-            "POST",
-            web.server.api("workspaces", "$workspace", "projects", "$project", "tasks"),
-            buildJsonObject { put("name", "Widget task") },
-            JsonObject.serializer(),
-        ).orFail("create task")["id"]!!.jsonPrimitive.long
+        val project = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", "$workspace", "projects"),
+                buildJsonObject {
+                    put("name", "Widget project")
+                    put("billable", true)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("create project")["id"]!!.jsonPrimitive.long
+        val task = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", "$workspace", "projects", "$project", "tasks"),
+                buildJsonObject { put("name", "Widget task") },
+                JsonObject.serializer(),
+            )
+        }.orFail("create task")["id"]!!.jsonPrimitive.long
         val favorites = (1..3).map { index ->
             Json.parseToJsonElement(
                 """{"description":"Favorite $index","project_id":$project,"task_id":$task,"tags":["widget"]""" +
                     ""","billable":true}""",
             )
         }
-        web.sendNoContent(
-            "POST",
-            web.server.api("me", "preferences"),
-            buildJsonObject {
-                put("favorites", kotlinx.serialization.json.JsonArray(favorites))
-            },
-        ).orFail("save favorites")
+        runBlocking {
+            web.sendNoContent(
+                "POST",
+                web.server.api("me", "preferences"),
+                buildJsonObject {
+                    put("favorites", kotlinx.serialization.json.JsonArray(favorites))
+                },
+            )
+        }.orFail("save favorites")
         runBlocking { app.accountRefresh.refresh().join() }
         native.awaitText("Favorite 3")
 
@@ -316,19 +322,21 @@ class WidgetServerTest {
         val time = checkNotNull(app.accountSettings.state.value?.time())
         val start = time.instantAt(time.today(), 0)
         for ((billable, seconds) in listOf(true to 600L, false to 300L)) {
-            web.send(
-                "POST",
-                web.server.api("workspaces", "$workspace", "time_entries"),
-                buildJsonObject {
-                    put("workspace_id", workspace)
-                    put("created_with", "tokkl-android tests")
-                    put("description", "Stopped $billable")
-                    put("billable", billable)
-                    put("start", start.toString())
-                    put("stop", start.plusSeconds(seconds).toString())
-                },
-                JsonObject.serializer(),
-            ).orFail("seed stopped segment")
+            runBlocking {
+                web.send(
+                    "POST",
+                    web.server.api("workspaces", "$workspace", "time_entries"),
+                    buildJsonObject {
+                        put("workspace_id", workspace)
+                        put("created_with", "tokkl-android tests")
+                        put("description", "Stopped $billable")
+                        put("billable", billable)
+                        put("start", start.toString())
+                        put("stop", start.plusSeconds(seconds).toString())
+                    },
+                    JsonObject.serializer(),
+                )
+            }.orFail("seed stopped segment")
         }
         runBlocking { app.accountRefresh.refreshAfterChange().join() }
         signIn(NO_ROUTE, account.apiToken)
@@ -395,28 +403,32 @@ class WidgetServerTest {
         // The broadcast runs asynchronously. Wait for its commit before asking the sender to drain.
         runBlocking { withTimeout(1_000) { app.cache.running.filterNotNull().first() } }
         drain()
-        val current = web.get(
-            web.server.api("me", "time_entries", "current"),
-            JsonObject.serializer(),
-        ).orFail("read widget start")
+        val current = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", "current"),
+                JsonObject.serializer(),
+            )
+        }.orFail("read widget start")
         assertEquals("", current["description"]!!.jsonPrimitive.content)
         native.awaitDescription(context.getString(R.string.widget_stop_description))
         // Use an entry old enough for the existing Stop API. Exact captured short Stop is TKA-0259.
-        web.send(
-            "POST",
-            web.server.api("workspaces", "$workspace", "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", "Long entry stopped by widget")
-                put(
-                    "start",
-                    Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS).toString(),
-                )
-                put("duration", -1)
-            },
-            JsonObject.serializer(),
-        ).orFail("seed long entry")
+        runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", "$workspace", "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", "Long entry stopped by widget")
+                    put(
+                        "start",
+                        Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS).toString(),
+                    )
+                    put("duration", -1)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("seed long entry")
         // The sender's refresh may have read the earlier timer before this server write.
         runBlocking { app.accountRefresh.refreshAfterChange().join() }
         val id = runBlocking { app.cache.running.filterNotNull().first().entry.id }
@@ -424,10 +436,12 @@ class WidgetServerTest {
         native.click(context.getString(R.string.widget_stop_description))
         native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
         drain()
-        val entries = web.get(
-            web.server.api("me", "time_entries"),
-            ListSerializer(JsonObject.serializer()),
-        ).orFail("read stopped entry")
+        val entries = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries"),
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("read stopped entry")
         val stopped = entries.single { it["id"]!!.jsonPrimitive.long == id }
         assertTrue("the real server stored Stop", stopped["stop"] != null && stopped["stop"] != JsonNull)
     }
@@ -451,11 +465,13 @@ class WidgetServerTest {
                     .first { it.singleOrNull()?.state == WorkInfo.State.ENQUEUED }.single()
             }
         }
-        web.sendNoContent(
-            "PATCH",
-            web.server.api("workspaces", "$workspace", "time_entries", "$id", "stop"),
-            buildJsonObject {},
-        ).orFail("remote stop")
+        runBlocking {
+            web.sendNoContent(
+                "PATCH",
+                web.server.api("workspaces", "$workspace", "time_entries", "$id", "stop"),
+                buildJsonObject {},
+            )
+        }.orFail("remote stop")
         assertNotNull("the phone has not refreshed", runBlocking { app.cache.running.first() })
         RequestCounter(TokklTestServer.url, "/api/v9/me/time_entries/current HTTP/1.1").use { requests ->
             signIn(requests.url, account.apiToken)

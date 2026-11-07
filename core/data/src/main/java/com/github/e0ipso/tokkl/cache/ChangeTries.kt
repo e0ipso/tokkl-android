@@ -14,7 +14,8 @@ internal class SentChange(val change: PendingChange, val serverId: Long, val ent
  * One try at sending one queued change, by kind, for [ChangeSender]. Each try sends its change
  * once: creates, updates and deletes go out with `resend` false, so OkHttp does not send one again
  * on a new connection by itself, and a lost answer always reaches the sender, whose
- * [PendingChange.maybeSent] marks account for its own retries. Blocks on the network and the disk.
+ * [PendingChange.maybeSent] marks account for its own retries. Blocks on the disk, so call it on the
+ * IO dispatcher.
  *
  * @param spans where the server puts a start once the entry is stopped, which finds the entry a
  *   lost create made, and the span of a queued start ended before a later timer.
@@ -27,7 +28,7 @@ internal class ChangeTries(
 ) {
 
     /** Sends an update, a legacy stop or a restore as [request] builds it. */
-    fun update(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
+    suspend fun update(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
         val request = change.request(api.server, allDay())
         return when (
             val result = api.send(
@@ -44,7 +45,7 @@ internal class ChangeTries(
     }
 
     /** A captured Stop may already have reached the server even when its reply was lost. */
-    fun capturedStop(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
+    suspend fun capturedStop(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
         if (change.maybeSent) {
             when (val found = stoppedOnServer(api, change)) {
                 is ApiResult.Success -> if (found.value) {
@@ -86,7 +87,7 @@ internal class ChangeTries(
      * marked create again it reads the entries around its start ([earlierCopy]), and the entry an
      * earlier post made stands for it instead. A start goes as [endBeforeALaterTimer] has it.
      */
-    fun create(api: TogglApiClient, queued: PendingChange): ApiResult<SentChange> {
+    suspend fun create(api: TogglApiClient, queued: PendingChange): ApiResult<SentChange> {
         if (queued.maybeSent) {
             when (val found = earlierCopy(api, queued, spans, store)) {
                 is ApiResult.Success -> found.value?.let {
@@ -134,7 +135,7 @@ internal class ChangeTries(
      * clears when another failure shows that the server deleted nothing. Once a try may have
      * reached the server, the mark stays whatever later tries get, so Undo goes through the server.
      */
-    fun delete(api: TogglApiClient, change: PendingChange): ApiResult<SentChange>? {
+    suspend fun delete(api: TogglApiClient, change: PendingChange): ApiResult<SentChange>? {
         if (!store.maybeSent(change, true)) return null
         val request = change.request(api.server, allDay())
         return when (val result = api.sendNoContent(request.method, request.url, request.body, resend = false)) {
@@ -163,7 +164,7 @@ internal class ChangeTries(
      * the later timer keeps running ([ChangeStore.endBefore]). Otherwise the start goes as queued,
      * and the server stops an earlier timer itself.
      */
-    private fun endBeforeALaterTimer(api: TogglApiClient, start: PendingChange): ApiResult<PendingChange> {
+    private suspend fun endBeforeALaterTimer(api: TogglApiClient, start: PendingChange): ApiResult<PendingChange> {
         val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
         val running = when (current) {
             is ApiResult.Success -> current.value?.toCached()

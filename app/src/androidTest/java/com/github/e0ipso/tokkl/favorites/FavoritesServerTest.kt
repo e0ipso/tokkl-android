@@ -214,10 +214,12 @@ class FavoritesServerTest {
             }
         }
 
-        val preferences = web.get(
-            web.server.api("me", "preferences"),
-            JsonObject.serializer(),
-        ).orFail("GET /api/v9/me/preferences")
+        val preferences = runBlocking {
+            web.get(
+                web.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertEquals(
             Json.parseToJsonElement(
                 """[{"description": "Pinned on the phone", "project_id": null, "task_id": null, "tags": [],""" +
@@ -272,10 +274,12 @@ class FavoritesServerTest {
             }
         }
 
-        val preferences = web.get(
-            web.server.api("me", "preferences"),
-            JsonObject.serializer(),
-        ).orFail("GET /api/v9/me/preferences")
+        val preferences = runBlocking {
+            web.get(
+                web.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertEquals(
             Json.parseToJsonElement(
                 """
@@ -302,10 +306,12 @@ class FavoritesServerTest {
             val full = context.resources.getQuantityString(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
             awaitShown("the message") { composeRule.onNode(hasText(full)) }
         }
-        val stored = web.get(
-            web.server.api("me", "preferences"),
-            JsonObject.serializer(),
-        ).orFail("GET /api/v9/me/preferences")
+        val stored = runBlocking {
+            web.get(
+                web.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertEquals(MAX_FAVORITES, stored.getValue("favorites").jsonArray.size)
     }
 
@@ -325,10 +331,12 @@ class FavoritesServerTest {
             awaitShown("the message") { composeRule.onNode(hasText(string(R.string.history_pin_needs_server))) }
             AirplaneMode.set(false, web)
         }
-        val stored = web.get(
-            web.server.api("me", "preferences"),
-            JsonObject.serializer(),
-        ).orFail("GET /api/v9/me/preferences")
+        val stored = runBlocking {
+            web.get(
+                web.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertEquals(
             listOf("Write the report"),
             stored.getValue("favorites").jsonArray.map { it.jsonObject.getValue("description").jsonPrimitive.content },
@@ -354,7 +362,14 @@ class FavoritesServerTest {
     }
 
     private fun saveOnTheWeb(json: String) {
-        web.send("POST", web.server.api("me", "preferences"), Json.parseToJsonElement(json), JsonElement.serializer())
+        runBlocking {
+            web.send(
+                "POST",
+                web.server.api("me", "preferences"),
+                Json.parseToJsonElement(json),
+                JsonElement.serializer(),
+            )
+        }
             .orFail("POST /api/v9/me/preferences")
     }
 
@@ -363,31 +378,35 @@ class FavoritesServerTest {
         Session(context).save(server, account.apiToken)
     }
 
-    private fun createProject(name: String): Long = web.send(
-        "POST",
-        web.server.api("workspaces", workspace.toString(), "projects"),
-        buildJsonObject { put("name", name) },
-        JsonObject.serializer(),
-    ).orFail("POST a project").getValue("id").jsonPrimitive.long
+    private fun createProject(name: String): Long = runBlocking {
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "projects"),
+            buildJsonObject { put("name", name) },
+            JsonObject.serializer(),
+        )
+    }.orFail("POST a project").getValue("id").jsonPrimitive.long
 
     /** A stopped entry an hour ago with [description], [project], the tag `call` and billable. */
     private fun createEntry(description: String, project: Long?) {
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS)
-        web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", description)
-                if (project != null) put("project_id", project)
-                put("tags", JsonArray(listOf(JsonPrimitive("call"))))
-                put("billable", true)
-                put("start", stop.minus(30, ChronoUnit.MINUTES).toString())
-                put("stop", stop.toString())
-            },
-            JsonObject.serializer(),
-        ).orFail("POST an entry")
+        runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", description)
+                    if (project != null) put("project_id", project)
+                    put("tags", JsonArray(listOf(JsonPrimitive("call"))))
+                    put("billable", true)
+                    put("start", stop.minus(30, ChronoUnit.MINUTES).toString())
+                    put("stop", stop.toString())
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST an entry")
     }
 
     /** Opens the menu of the history entry [description] and taps Save as template. */
@@ -467,9 +486,13 @@ class FavoritesServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
     }
 
-    private fun serverEntries(): List<JsonObject> =
-        web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
-            .map { it.jsonObject }
+    private fun serverEntries(): List<JsonObject> = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries"),
+            JsonArray.serializer(),
+        )
+    }.orFail("GET /api/v9/me/time_entries")
+        .map { it.jsonObject }
 
     private fun string(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 

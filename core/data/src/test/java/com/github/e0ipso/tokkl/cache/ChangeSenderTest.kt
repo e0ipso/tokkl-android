@@ -93,7 +93,7 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(200).build())
         server.enqueue(entry(102, "Manual", stop = "2026-10-19T08:03:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 5), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 5), runBlocking { sender.drain() })
 
         val requests = List(6) { server.takeRequest() }
         assertEquals(
@@ -128,7 +128,7 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(entry(101, "Offline", stop = null))
 
-        sender.drain()
+        runBlocking { sender.drain() }
 
         server.takeRequest()
         val body = server.takeRequest().json()!!
@@ -147,7 +147,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(90).plusMillis(400), description = "Running")
         server.enqueue(entry(55, "Running", stop = "2026-10-19T08:01:30+00:00"))
 
-        sender.drain()
+        runBlocking { sender.drain() }
 
         val request = server.takeRequest()
         assertEquals("PUT /api/v9/workspaces/7/time_entries/55", "${request.method} ${request.url.encodedPath}")
@@ -174,7 +174,7 @@ class ChangeSenderTest {
         clock.now = TAP.plusSeconds(600)
         server.enqueue(entry(55, "Running", stop = "2026-10-19T08:01:30+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.drain() })
 
         val request = server.takeRequest()
         assertEquals("PATCH /api/v9/workspaces/7/time_entries/55/stop", "${request.method} ${request.url.encodedPath}")
@@ -194,7 +194,7 @@ class ChangeSenderTest {
         )
         server.enqueue(entry(55, "Running", stop = "2026-10-19T08:01:30+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.drain() })
         val request = server.takeRequest()
         assertEquals("GET /api/v9/me/time_entries/55", "${request.method} ${request.url.encodedPath}")
         assertTrue(store.changes.isEmpty())
@@ -220,7 +220,7 @@ class ChangeSenderTest {
             ),
         )
 
-        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.drain() })
         assertEquals(
             listOf("GET /api/v9/me/time_entries/55", "GET /api/app/trash"),
             List(2) { server.takeRequest() }.map { "${it.method} ${it.url.encodedPath}" },
@@ -234,7 +234,7 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(409).body("\"Time entry already stopped\"").build())
         server.enqueue(entry(55, "Running", stop = "2026-10-19T08:05:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(0), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.drain() })
         assertTrue(store.changes.single().held)
         assertEquals(listOf("PATCH", "GET"), List(2) { server.takeRequest().method })
     }
@@ -244,7 +244,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(60), description = "Gone")
         server.enqueue(MockResponse.Builder().code(200).build())
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         val request = server.takeRequest()
         assertEquals("DELETE", request.method)
@@ -268,7 +268,7 @@ class ChangeSenderTest {
         )
         server.enqueue(entry(101, "Workshop", stop = "2026-10-19T09:30:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), noTimeSender().drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { noTimeSender().drain() })
 
         val request = server.takeRequest()
         assertEquals("POST /api/v9/workspaces/7/time_entries", "${request.method} ${request.url.encodedPath}")
@@ -310,7 +310,7 @@ class ChangeSenderTest {
         server.enqueue(entry(55, "Renamed", stop = "2026-10-19T09:00:00+00:00"))
         server.enqueue(entry(56, "Was timed", stop = "2026-10-19T10:00:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), noTimeSender().drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { noTimeSender().drain() })
 
         val (edit, turnedOn) = List(2) { server.takeRequest() }
         assertEquals("PUT /api/v9/workspaces/7/time_entries/55", "${edit.method} ${edit.url.encodedPath}")
@@ -346,7 +346,7 @@ class ChangeSenderTest {
         )
         server.enqueue(entry(55, "Renamed", stop = "2026-10-19T09:00:00+00:00"))
 
-        noTimeSender().drain()
+        runBlocking { noTimeSender().drain() }
 
         assertEquals(
             Json.parseToJsonElement(
@@ -370,7 +370,7 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(entry(101, "Running", stop = null))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), noTimeSender().drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { noTimeSender().drain() })
 
         val (turnedOff, _, start) = List(3) { server.takeRequest() }
         assertEquals("PUT /api/v9/workspaces/7/time_entries/55", "${turnedOff.method} ${turnedOff.url.encodedPath}")
@@ -409,7 +409,7 @@ class ChangeSenderTest {
         server.enqueue(entry(101, "Workshop", stop = "2026-10-19T09:30:00+00:00"))
         server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
 
         val (create, update) = List(2) { server.takeRequest() }
         assertEquals(
@@ -429,7 +429,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
         server.enqueue(entry(55, "Edited on the server", stop = "2026-10-19T08:05:00+00:00"))
 
-        sender.drain()
+        runBlocking { sender.drain() }
 
         assertEquals("Edited on the server", store.answers.single().description)
         assertEquals(Instant.parse("2026-10-19T08:05:00Z"), store.answers.single().stop)
@@ -443,7 +443,7 @@ class ChangeSenderTest {
         // gets one more try at once, so it drops twice.
         repeat(2) { server.enqueue(MockResponse.Builder().onRequestStart(SocketEffect.CloseSocket()).build()) }
 
-        val outcome = sender.drain()
+        val outcome = runBlocking { sender.drain() }
 
         assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
         assertEquals(listOf(ChangeKind.CREATE, ChangeKind.STOP), store.changes.map { it.kind })
@@ -451,7 +451,7 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(entry(101, "First", stop = null))
         server.enqueue(entry(101, "First", stop = "2026-10-19T08:01:00+00:00"))
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
         val sent = remainingRequests().takeLast(2)
         assertEquals(
             listOf("POST /api/v9/workspaces/7/time_entries", "PUT /api/v9/workspaces/7/time_entries/101"),
@@ -486,7 +486,7 @@ class ChangeSenderTest {
                 },
             )
 
-            assertEquals(kind.name, ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+            assertEquals(kind.name, ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
             assertEquals(kind.name, 1, remainingRequests().count { it.method == method })
             assertTrue(kind.name, store.changes.isEmpty())
@@ -499,7 +499,7 @@ class ChangeSenderTest {
         // The server reads the update, then the connection drops before the answer, twice.
         repeat(2) { server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build()) }
 
-        val outcome = sender.drain()
+        val outcome = runBlocking { sender.drain() }
 
         assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
         assertEquals(
@@ -541,7 +541,7 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(MockResponse.Builder().code(503).build())
 
-        val outcome = sender.drain()
+        val outcome = runBlocking { sender.drain() }
 
         assertEquals(ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(503)), outcome)
         assertEquals("nothing after the failed change was sent", 2, server.requestCount)
@@ -553,7 +553,7 @@ class ChangeSenderTest {
         server.enqueue(entry(101, "First", stop = null))
         server.enqueue(nothingRuns())
         server.enqueue(entry(102, "Second", stop = null))
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
         List(2) { server.takeRequest() }
         assertEquals(
             listOf("First", "Second"),
@@ -566,7 +566,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
         server.enqueue(MockResponse.Builder().code(400).body("\"Invalid project\"").build())
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 0), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 0), runBlocking { sender.drain() })
         assertEquals(1, store.changes.size)
         assertTrue(store.changes.single().held)
         assertEquals("Invalid project", store.changes.single().refusal)
@@ -577,7 +577,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(60), description = "Stopped elsewhere")
         server.enqueue(MockResponse.Builder().code(409).build())
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
         assertTrue(store.changes.isEmpty())
         assertTrue(store.answers.isEmpty())
         assertFalse(sender.signInNeeded.value)
@@ -600,7 +600,7 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(404).build())
         server.enqueue(entry(56, "Other", stop = "2026-10-19T08:01:00Z"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 3), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 3), runBlocking { sender.drain() })
         assertEquals(2, discarded)
         assertTrue(store.changes.isEmpty())
         assertEquals(3, server.requestCount)
@@ -611,7 +611,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Keep me")
         server.enqueue(MockResponse.Builder().code(404).body("\"Project not found\"").build())
         server.enqueue(entry(55, "Keep me", stop = "2026-10-19T08:01:00Z"))
-        assertEquals(ChangeSender.Outcome.Empty(0), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.drain() })
         assertTrue(store.changes.single().held)
         assertEquals("Project not found", store.changes.single().refusal)
     }
@@ -623,7 +623,7 @@ class ChangeSenderTest {
             store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Keep me")
             server.enqueue(MockResponse.Builder().code(404).build())
             server.enqueue(MockResponse.Builder().code(status).addHeader("Retry-After", "30").build())
-            val result = sender.drain()
+            val result = runBlocking { sender.drain() }
             when (status) {
                 503 -> assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.UnexpectedStatus(503)), result)
 
@@ -650,14 +650,14 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(400).body("\"Bad value\"").build())
         server.enqueue(entry(56, "Other", stop = "2026-10-19T08:01:00Z"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
         assertEquals(listOf(55L, 55L), store.changes.map { it.entryId })
         assertEquals("Bad value", store.changes.first().refusal)
         assertEquals(2, server.requestCount)
         store.changes.replaceAll { it.copy(held = false, refusal = null) }
         server.enqueue(entry(55, "Fixed", stop = "2026-10-19T08:01:00Z"))
         server.enqueue(entry(55, "Later", stop = "2026-10-19T08:01:30Z"))
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
     }
 
     @Test
@@ -665,9 +665,9 @@ class ChangeSenderTest {
         store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "First")
         store.queue(ChangeKind.UPDATE, 56, TAP, stop = TAP.plusSeconds(60), description = "Second")
         server.enqueue(MockResponse.Builder().code(403).build())
-        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), sender.drain())
+        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.drain() })
         assertTrue(sender.signInNeeded.value)
-        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), sender.drain())
+        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.drain() })
         assertEquals(1, server.requestCount)
         assertEquals(2, store.changes.size)
 
@@ -685,10 +685,16 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
 
-        assertEquals(ChangeSender.Outcome.Waiting(sent = 0, until = TAP.plusSeconds(30)), sender.drain())
+        assertEquals(
+            ChangeSender.Outcome.Waiting(sent = 0, until = TAP.plusSeconds(30)),
+            runBlocking { sender.drain() },
+        )
 
         clock.now = TAP.plusSeconds(29)
-        assertEquals(ChangeSender.Outcome.Waiting(sent = 0, until = TAP.plusSeconds(30)), sender.drain())
+        assertEquals(
+            ChangeSender.Outcome.Waiting(sent = 0, until = TAP.plusSeconds(30)),
+            runBlocking { sender.drain() },
+        )
         assertEquals("no request before Retry-After has passed", 2, server.requestCount)
         assertEquals(2, store.changes.size)
 
@@ -696,7 +702,7 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(entry(101, "First", stop = null))
         server.enqueue(entry(101, "First", stop = "2026-10-19T08:01:00+00:00"))
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
         List(2) { server.takeRequest() }
         assertEquals(
             listOf(
@@ -716,7 +722,7 @@ class ChangeSenderTest {
 
         assertEquals(
             ChangeSender.Outcome.Waiting(sent = 0, until = TAP.plus(ChangeSender.DEFAULT_RETRY_AFTER)),
-            sender.drain(),
+            runBlocking { sender.drain() },
         )
     }
 
@@ -749,7 +755,7 @@ class ChangeSenderTest {
         signedIn = false
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "First")
 
-        assertEquals(ChangeSender.Outcome.SignedOut(sent = 0), sender.drain())
+        assertEquals(ChangeSender.Outcome.SignedOut(sent = 0), runBlocking { sender.drain() })
         assertEquals(0, server.requestCount)
         assertEquals(1, store.changes.size)
     }
@@ -763,7 +769,7 @@ class ChangeSenderTest {
         server.enqueue(entry(102, "Second", stop = null))
         store.onFirstSent = { store.queue(ChangeKind.CREATE, -2, TAP, stop = null, description = "Second") }
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
         assertNull(store.first())
     }
 
@@ -958,7 +964,7 @@ class ChangeSenderTest {
         server.enqueue(runs(900, start = "2026-10-19T08:30:00+00:00"))
         server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:30:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         val requests = List(2) { server.takeRequest() }
         assertEquals(
@@ -980,7 +986,7 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(entry(101, "Phone", stop = null))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         assertEquals(
             "GET /api/v9/me/time_entries/current",
@@ -1008,7 +1014,7 @@ class ChangeSenderTest {
         server.enqueue(runs(901, start = "2026-10-19T08:01:00+00:00"))
         server.enqueue(entry(102, "At the same second", stop = null))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
 
         val posts = List(4) { server.takeRequest() }.filter { it.method == "POST" }
         assertTrue(posts.all { it.json()!!["stop"] is JsonNull })
@@ -1024,7 +1030,7 @@ class ChangeSenderTest {
         server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:10:00+00:00"))
         server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:10:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
 
         val requests = List(3) { server.takeRequest() }
         assertEquals(
@@ -1051,7 +1057,7 @@ class ChangeSenderTest {
         server.enqueue(entry(101, "Edited while it ran", stop = "2026-10-19T08:30:00+00:00"))
         server.enqueue(entry(101, "Moved after the later timer", stop = null))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 4), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 4), runBlocking { sender.drain() })
 
         val bodies = List(5) { server.takeRequest() }.drop(1).map { it.json()!! }
         assertEquals(
@@ -1092,7 +1098,7 @@ class ChangeSenderTest {
         server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:15:00+00:00"))
         server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:15:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), gridded.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { gridded.drain() })
 
         val bodies = List(3) { server.takeRequest() }.drop(1).map { it.json()!! }
         for (body in bodies) {
@@ -1107,7 +1113,10 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "Phone")
         server.enqueue(MockResponse.Builder().code(503).build())
 
-        assertEquals(ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(503)), sender.drain())
+        assertEquals(
+            ChangeSender.Outcome.Stopped(sent = 0, ApiError.UnexpectedStatus(503)),
+            runBlocking { sender.drain() },
+        )
 
         assertEquals(1, server.requestCount)
         assertEquals(listOf(ChangeKind.CREATE), store.changes.map { it.kind })
@@ -1119,7 +1128,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual")
         server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:01:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         assertEquals("POST", server.takeRequest().method)
         assertEquals(1, server.requestCount)
@@ -1137,7 +1146,7 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(503).build())
         server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:01:00+00:00"))
 
-        val outcome = sender.drain()
+        val outcome = runBlocking { sender.drain() }
 
         assertEquals(ChangeSender.Outcome.Stopped(sent = 1, ApiError.UnexpectedStatus(503)), outcome)
         assertEquals("the create went out once", listOf("PUT", "POST", "GET"), remainingRequests().map { it.method })
@@ -1155,7 +1164,7 @@ class ChangeSenderTest {
             entries(listed(101, "Manual", start = "2026-10-19T08:00:00+00:00", stop = "2026-10-19T08:01:00+00:00")),
         )
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
 
         assertEquals("one post, then the lookup", listOf("PUT", "POST", "GET"), remainingRequests().map { it.method })
         assertEquals(listOf(LOCAL to 101L), store.mapped)
@@ -1173,7 +1182,7 @@ class ChangeSenderTest {
         )
         server.enqueue(entry(101, "Edited", stop = "2026-10-19T08:02:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
 
         val (lookup, edit) = List(2) { server.takeRequest() }
         assertEquals("GET /api/v9/me/time_entries", "${lookup.method} ${lookup.url.encodedPath}")
@@ -1200,7 +1209,7 @@ class ChangeSenderTest {
         server.enqueue(entries(listed(100, "Manual", start = "2026-10-19T08:00:00+00:00")))
         server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:30:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         assertEquals("a lookup and a post", 2, server.requestCount)
         val (lookup, post) = List(2) { server.takeRequest() }
@@ -1227,7 +1236,7 @@ class ChangeSenderTest {
             ),
         )
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         assertEquals(listOf(LOCAL to 101L), store.mapped)
         assertEquals("no second post", 1, server.requestCount)
@@ -1255,7 +1264,7 @@ class ChangeSenderTest {
         )
         server.enqueue(entries(listed(101, "Manual", start = "2026-10-19T08:00:00+00:00")))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), snapping.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { snapping.drain() })
 
         assertEquals(listOf(LOCAL to 101L), store.mapped)
         assertEquals(1, server.requestCount)
@@ -1275,7 +1284,7 @@ class ChangeSenderTest {
         )
         server.enqueue(entry(105, "Manual", stop = "2026-10-19T08:01:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         assertEquals(listOf("GET", "POST"), List(2) { server.takeRequest().method })
         assertEquals(LOCAL to 105L, store.mapped.last())
@@ -1320,7 +1329,7 @@ class ChangeSenderTest {
             ),
         )
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), noTimeSender().drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { noTimeSender().drain() })
 
         val requests = remainingRequests()
         assertEquals("one post, then the lookup", listOf("PUT", "POST", "GET"), requests.map { it.method })
@@ -1382,7 +1391,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "Phone", maybeSent = true)
         server.enqueue(entries(listed(101, "Phone", start = "2026-10-19T08:00:00+00:00", stop = null)))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         assertEquals("/api/v9/me/time_entries", server.takeRequest().url.encodedPath)
         assertEquals("no read of the running entry and no post", 1, server.requestCount)
@@ -1394,13 +1403,13 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual")
         server.enqueue(MockResponse.Builder().code(400).build())
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 0), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 0), runBlocking { sender.drain() })
         assertFalse(store.changes.single().maybeSent)
         assertTrue(store.changes.single().held)
         store.changes.replaceAll { it.copy(held = false, refusal = null) }
 
         server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:01:00+00:00"))
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
         assertEquals(listOf("POST", "POST"), List(2) { server.takeRequest().method })
     }
 
@@ -1408,12 +1417,12 @@ class ChangeSenderTest {
     fun aCreateAnswered5xxOrUnreadableStaysMarked() {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual")
         server.enqueue(MockResponse.Builder().code(502).build())
-        sender.drain()
+        runBlocking { sender.drain() }
         assertTrue("a proxy's 502 may come after the server stored it", store.changes.single().maybeSent)
 
         store.changes.replaceAll { it.copy(maybeSent = false) }
         server.enqueue(MockResponse.Builder().code(201).body("not json").build())
-        val outcome = sender.drain()
+        val outcome = runBlocking { sender.drain() }
         assertTrue(
             outcome.toString(),
             outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.InvalidResponse,
@@ -1476,7 +1485,7 @@ class ChangeSenderTest {
     fun undoOfASentDeleteRestoresTheEntryThroughTokklsRestoreEndpoint() {
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
         server.enqueue(MockResponse.Builder().code(200).build())
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
 
         assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { sender.undoDelete(55) })
@@ -1499,7 +1508,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.DELETE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
         server.enqueue(entry(101, "Made offline", stop = "2026-10-19T08:01:00+00:00"))
         server.enqueue(MockResponse.Builder().code(200).build())
-        assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 2), runBlocking { sender.drain() })
         server.enqueue(entry(101, "Made offline", stop = "2026-10-19T08:01:00+00:00"))
 
         assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { sender.undoDelete(LOCAL) })
@@ -1514,7 +1523,7 @@ class ChangeSenderTest {
         // The server reads the delete, then the connection drops before the answer, on the first
         // try and on the drain's one more.
         repeat(2) { server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build()) }
-        val outcome = sender.drain()
+        val outcome = runBlocking { sender.drain() }
         assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
         assertTrue("the server may have deleted it", store.changes.single().maybeSent)
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
@@ -1531,7 +1540,7 @@ class ChangeSenderTest {
     fun aDeleteThatFailedWithoutReachingTheServerStaysUnmarkedSoUndoNeedsNoRequest() {
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
         server.enqueue(MockResponse.Builder().code(400).build())
-        assertEquals(ChangeSender.Outcome.Empty(sent = 0), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 0), runBlocking { sender.drain() })
         assertFalse("a 4xx deleted nothing", store.changes.single().maybeSent)
 
         assertEquals(ChangeSender.UndoOutcome.Cancelled, runBlocking { sender.undoDelete(55) })
@@ -1554,7 +1563,7 @@ class ChangeSenderTest {
         }
         server.enqueue(entry(54, "Other", stop = "2026-10-19T08:01:00+00:00"))
 
-        assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), runBlocking { sender.drain() })
 
         assertEquals(
             listOf("PUT /api/v9/workspaces/7/time_entries/54"),
@@ -1587,7 +1596,7 @@ class ChangeSenderTest {
     fun aRestoreTheServerRefusesFailsWithItsStatus() {
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
         server.enqueue(MockResponse.Builder().code(200).build())
-        sender.drain()
+        runBlocking { sender.drain() }
         server.enqueue(
             MockResponse.Builder().code(
                 404,
@@ -1651,7 +1660,12 @@ class ChangeSenderTest {
                 .onResponseEnd(SocketEffect.CloseSocket())
                 .build(),
         )
-        val read = testApi.client(url, ApiCredentials.ApiToken("tok-123")).get(url.api("me"), JsonObject.serializer())
+        val read = runBlocking {
+            testApi.client(
+                url,
+                ApiCredentials.ApiToken("tok-123"),
+            ).get(url.api("me"), JsonObject.serializer())
+        }
         assertTrue(read.toString(), read is ApiResult.Success)
         assertEquals("GET", server.takeRequest().method)
     }

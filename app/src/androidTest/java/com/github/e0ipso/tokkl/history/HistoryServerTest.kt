@@ -257,10 +257,12 @@ class HistoryServerTest {
             relay.release()
             sendTheQueue()
 
-            val stored = direct.get(
-                direct.server.api("me", "time_entries", runBlocking { app.changes.currentId(id) }.toString()),
-                JsonObject.serializer(),
-            )
+            val stored = runBlocking {
+                direct.get(
+                    direct.server.api("me", "time_entries", runBlocking { app.changes.currentId(id) }.toString()),
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("GET /api/v9/me/time_entries/<id>")
             assertEquals(snapped.start, stored.instant("start"))
             assertEquals(snapped.stop, stored.instant("stop"))

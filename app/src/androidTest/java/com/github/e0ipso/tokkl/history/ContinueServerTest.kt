@@ -271,18 +271,22 @@ class ContinueServerTest {
     /** A project with a task, as the web app would make them. */
     private fun projectWithTask(): Pair<Long, Long> {
         val workspace = account.workspaceId
-        val project = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Mural") },
-            JsonObject.serializer(),
-        ).orFail("POST a project").getValue("id").jsonPrimitive.long
-        val task = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects", project.toString(), "tasks"),
-            buildJsonObject { put("name", "Outline") },
-            JsonObject.serializer(),
-        ).orFail("POST a task").getValue("id").jsonPrimitive.long
+        val project = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "projects"),
+                buildJsonObject { put("name", "Mural") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a project").getValue("id").jsonPrimitive.long
+        val task = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "projects", project.toString(), "tasks"),
+                buildJsonObject { put("name", "Outline") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a task").getValue("id").jsonPrimitive.long
         return project to task
     }
 
@@ -294,28 +298,32 @@ class ContinueServerTest {
         billable: Boolean,
         start: Instant,
         stop: Instant,
-    ): Long = web.send(
-        "POST",
-        web.server.api("workspaces", account.workspaceId.toString(), "time_entries"),
-        buildJsonObject {
-            put("workspace_id", account.workspaceId)
-            put("created_with", "tokkl-android tests")
-            put("description", description)
-            if (project != null) put("project_id", project)
-            if (task != null) put("task_id", task)
-            put("tags", JsonArray(tags.map(::JsonPrimitive)))
-            put("billable", billable)
-            put("start", start.toString())
-            put("stop", stop.toString())
-        },
-        JsonObject.serializer(),
-    ).orFail("POST an entry").getValue("id").jsonPrimitive.long
+    ): Long = runBlocking {
+        web.send(
+            "POST",
+            web.server.api("workspaces", account.workspaceId.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", account.workspaceId)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                if (project != null) put("project_id", project)
+                if (task != null) put("task_id", task)
+                put("tags", JsonArray(tags.map(::JsonPrimitive)))
+                put("billable", billable)
+                put("start", start.toString())
+                put("stop", stop.toString())
+            },
+            JsonObject.serializer(),
+        )
+    }.orFail("POST an entry").getValue("id").jsonPrimitive.long
 
     /** The server's running entry. */
-    private fun currentEntry(): JsonObject = web.get(
-        web.server.api("me", "time_entries", "current"),
-        JsonObject.serializer(),
-    ).orFail("GET /api/v9/me/time_entries/current")
+    private fun currentEntry(): JsonObject = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", "current"),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET /api/v9/me/time_entries/current")
 
     /** Sends the queue until it is empty, as the next refresh would. */
     private fun sendTheQueue() {

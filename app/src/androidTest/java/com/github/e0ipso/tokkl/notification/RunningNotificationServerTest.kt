@@ -87,14 +87,16 @@ class RunningNotificationServerTest {
     @Before
     fun signInToTheServer() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
-        project = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Notifications") },
-            Created.serializer(),
-        ).orFail("POST a project").id
+        project = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "projects"),
+                buildJsonObject { put("name", "Notifications") },
+                Created.serializer(),
+            )
+        }.orFail("POST a project").id
         signIn(TokklTestServer.url, account.apiToken)
         runBlocking { app.accountRefresh.refresh().join() }
         RunningNotifications.allow()
@@ -269,16 +271,22 @@ class RunningNotificationServerTest {
         assertEquals(WorkInfo.State.SUCCEEDED, done.state)
         assertEquals(0, unsentCount())
         if (shortStop) {
-            val trashed = TrashServer(web).list().orFail("GET /api/app/trash").single { it.id == serverId }
+            val trashed = runBlocking {
+                TrashServer(
+                    web,
+                ).list()
+            }.orFail("GET /api/app/trash").single { it.id == serverId }
             assertEquals("Stopped from the notification", trashed.description)
             assertEquals("the notification's short Stop reached Trash", trashed.start, trashed.stop)
             assertEquals(0L, trashed.duration)
             assertNotNull("the server deleted the short entry", trashed.deletedAt)
         } else {
-            val sent = web.get(
-                web.server.api("me", "time_entries", serverId.toString()),
-                JsonObject.serializer(),
-            ).orFail("GET the entry")
+            val sent = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries", serverId.toString()),
+                    JsonObject.serializer(),
+                )
+            }.orFail("GET the entry")
             assertTrue("the stop reached the server", sent["stop"] !is JsonNull)
         }
     }
@@ -399,7 +407,12 @@ class RunningNotificationServerTest {
 
             runBlocking { app.sender.sendAndWait() }
             assertEquals("Stop eventually reaches the server", 0, unsentCount())
-            val sent = web.get(web.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer())
+            val sent = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries", serverId.toString()),
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("GET the notification's stopped entry")
             assertEquals(serverId, sent.getValue("id").jsonPrimitive.long)
             assertEquals(description, sent.getValue("description").jsonPrimitive.content)
@@ -468,7 +481,7 @@ class RunningNotificationServerTest {
             "the starts have distinct server ids",
             firstServerId > 0 && secondServerId > 0 && firstServerId != secondServerId,
         )
-        val trashed = TrashServer(web).list().orFail("GET /api/app/trash")
+        val trashed = runBlocking { TrashServer(web).list() }.orFail("GET /api/app/trash")
         assertTrue("the first start was also short", trashed.any { it.id == firstServerId })
         val secondTrash = trashed.single { it.id == secondServerId }
         assertEquals(
@@ -488,13 +501,15 @@ class RunningNotificationServerTest {
         AirplaneMode.set(false, web)
         runBlocking { app.sender.sendAndWait() }
         assertEquals("Undo reached the server", 0, unsentCount())
-        val remainingTrash = TrashServer(web).list().orFail("GET /api/app/trash")
+        val remainingTrash = runBlocking { TrashServer(web).list() }.orFail("GET /api/app/trash")
         assertTrue("Undo left the older entry in Trash", remainingTrash.any { it.id == firstServerId })
         assertTrue("Undo restored only the newer entry", remainingTrash.none { it.id == secondServerId })
-        val restoredOnServer = web.get(
-            web.server.api("me", "time_entries", secondServerId.toString()),
-            JsonObject.serializer(),
-        )
+        val restoredOnServer = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", secondServerId.toString()),
+                JsonObject.serializer(),
+            )
+        }
             .orFail("GET the restored newer entry")
         assertEquals(restoredOnServer.getValue("start"), restoredOnServer.getValue("stop"))
     }

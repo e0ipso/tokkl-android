@@ -13,11 +13,14 @@ import com.github.e0ipso.tokkl.session.SignOutOrder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import java.time.Clock
@@ -139,7 +142,7 @@ class ChangeSender(
     private val lock = Any()
 
     /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
-    private val deletes = Any()
+    private val deletes = Mutex()
 
     private var sending: Job? = null
 
@@ -224,7 +227,7 @@ class ChangeSender(
         mutableSignInNeeded.value = false
     }
 
-    private fun drainUntilQuiet() {
+    private suspend fun drainUntilQuiet() {
         var drainAgain = true
         var sent = 0
         try {
@@ -261,10 +264,10 @@ class ChangeSender(
     /**
      * Sends the queued changes in order until nothing is left to send or one fails in a way the
      * phone can wait out. Each sent change leaves the queue as [ChangeStore.sent] describes, and
-     * each refused one as [ChangeSender] describes. Blocks on the network and the disk, so call
-     * it off the main thread, and from one thread at a time.
+     * each refused one as [ChangeSender] describes. Blocks on the disk, so call it on the IO
+     * dispatcher, and from one coroutine at a time.
      */
-    fun drain(): Outcome {
+    suspend fun drain(): Outcome {
         var sent = 0
         // The change this drain already tried once more, by its queue sequence.
         var triedAgain: Long? = null
@@ -312,36 +315,40 @@ class ChangeSender(
     }
 
     /** Settles [queued], which the server refused with [error], after [sent] changes went out. */
-    private fun settleRefused(api: TogglApiClient, queued: PendingChange, error: ApiError, sent: Int): RefusalStep =
-        when (val refused = refusal(api, queued, error)) {
-            is Refusal.Wait -> {
-                val waiting = refused.error
-                RefusalStep.Stop(
-                    if (waiting is ApiError.RateLimited) waitOut(sent, waiting) else Outcome.Stopped(sent, waiting),
-                )
-            }
-
-            Refusal.SignInAgain -> {
-                mutableSignInNeeded.value = true
-                RefusalStep.Stop(Outcome.Stopped(sent, ApiError.AuthFailed))
-            }
-
-            Refusal.AlreadyDone -> {
-                store.sent(queued, queued.entryId, answer = null)
-                RefusalStep.Next(1)
-            }
-
-            Refusal.EntryGone -> {
-                val discarded = store.discardEntry(queued)
-                if (discarded > 0) onDiscarded(discarded)
-                RefusalStep.Next(discarded)
-            }
-
-            is Refusal.Hold -> {
-                store.hold(queued, refused.reason)
-                RefusalStep.Next(0)
-            }
+    private suspend fun settleRefused(
+        api: TogglApiClient,
+        queued: PendingChange,
+        error: ApiError,
+        sent: Int,
+    ): RefusalStep = when (val refused = refusal(api, queued, error)) {
+        is Refusal.Wait -> {
+            val waiting = refused.error
+            RefusalStep.Stop(
+                if (waiting is ApiError.RateLimited) waitOut(sent, waiting) else Outcome.Stopped(sent, waiting),
+            )
         }
+
+        Refusal.SignInAgain -> {
+            mutableSignInNeeded.value = true
+            RefusalStep.Stop(Outcome.Stopped(sent, ApiError.AuthFailed))
+        }
+
+        Refusal.AlreadyDone -> {
+            store.sent(queued, queued.entryId, answer = null)
+            RefusalStep.Next(1)
+        }
+
+        Refusal.EntryGone -> {
+            val discarded = store.discardEntry(queued)
+            if (discarded > 0) onDiscarded(discarded)
+            RefusalStep.Next(discarded)
+        }
+
+        is Refusal.Hold -> {
+            store.hold(queued, refused.reason)
+            RefusalStep.Next(0)
+        }
+    }
 
     /** Waits out the server's rate limit [error] before the next send. */
     private fun waitOut(sent: Int, error: ApiError.RateLimited): Outcome {
@@ -362,9 +369,9 @@ class ChangeSender(
     }
 
     /** Sends [change], or returns null when it left the queue before it went out. */
-    private fun send(api: TogglApiClient, change: PendingChange): ApiResult<SentChange>? {
+    private suspend fun send(api: TogglApiClient, change: PendingChange): ApiResult<SentChange>? {
         if (change.kind == ChangeKind.CREATE) return tries.create(api, change)
-        if (change.kind == ChangeKind.DELETE) return synchronized(deletes) { tries.delete(api, change) }
+        if (change.kind == ChangeKind.DELETE) return deletes.withLock { tries.delete(api, change) }
         if (change.kind == ChangeKind.STOP && change.capturedStop != null) return tries.capturedStop(api, change)
         return tries.update(api, change)
     }
@@ -373,11 +380,12 @@ class ChangeSender(
      * Takes back the delete of the entry [entryId], the id the phone deleted it under. A delete
      * the sender has not sent leaves the queue, with no request. Otherwise the server restores the
      * entry with `POST /api/app/time_entries/{id}/restore`, a Tokkl-only endpoint, so call this
-     * only when `Capabilities.restore` is true. Blocks the sender's deletes meanwhile.
+     * only when `Capabilities.restore` is true. Blocks the sender's deletes meanwhile. Once
+     * started, the Undo reaches the server and the queue also when the caller is cancelled.
      */
     suspend fun undoDelete(entryId: Long): UndoOutcome {
-        val outcome = withContext(io) {
-            synchronized(deletes) {
+        val outcome = withContext(io + NonCancellable) {
+            deletes.withLock {
                 when (val found = store.takeBackDelete(entryId)) {
                     TakenBack.Unsent -> UndoOutcome.Cancelled
                     is TakenBack.OnServer -> restore(found.serverId)
@@ -390,7 +398,7 @@ class ChangeSender(
     }
 
     /** Asks the server to restore its entry [serverId], and records the answer. */
-    private fun restore(serverId: Long): UndoOutcome {
+    private suspend fun restore(serverId: Long): UndoOutcome {
         val api = client() ?: return UndoOutcome.NeedsServer
         val url = api.server.app("time_entries", serverId.toString(), "restore")
         // OkHttp sends a POST only with a body. Tokkl reads none.

@@ -100,30 +100,34 @@ class SplitServerTest {
     @Test
     fun aSplitMadeInAirplaneModeReachesTheServerAndTheHalvesAddUpToTheWhole() {
         val workspace = account.workspaceId
-        val project = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Mural") },
-            JsonObject.serializer(),
-        ).orFail("POST a project").getValue("id").jsonPrimitive.long
+        val project = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "projects"),
+                buildJsonObject { put("name", "Mural") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a project").getValue("id").jsonPrimitive.long
         // Two hours, ending at least an hour ago, on whole hours so any resolution keeps them.
         val stop = Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS)
         val start = stop.minus(2, ChronoUnit.HOURS)
-        val source = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", "Paint the wall")
-                put("project_id", project)
-                put("tags", JsonArray(listOf(JsonPrimitive("outdoor"))))
-                put("billable", true)
-                put("start", start.toString())
-                put("stop", stop.toString())
-            },
-            JsonObject.serializer(),
-        ).orFail("POST an entry").getValue("id").jsonPrimitive.long
+        val source = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", "Paint the wall")
+                    put("project_id", project)
+                    put("tags", JsonArray(listOf(JsonPrimitive("outdoor"))))
+                    put("billable", true)
+                    put("start", start.toString())
+                    put("stop", stop.toString())
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST an entry").getValue("id").jsonPrimitive.long
         runBlocking { app.accountRefresh.refresh().join() }
         val split = start.plus(45, ChronoUnit.MINUTES)
         val madrid = ZoneId.of("Europe/Madrid")
@@ -243,7 +247,12 @@ class SplitServerTest {
             .addQueryParameter("start_date", start.minus(1, ChronoUnit.DAYS).toString())
             .addQueryParameter("end_date", start.plus(1, ChronoUnit.DAYS).toString())
             .build()
-        return web.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+        return runBlocking {
+            web.get(
+                url,
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/time_entries")
     }
 
     /** Sends the queue until it is empty, as the next refresh would. */

@@ -90,12 +90,14 @@ class FavoriteShortcutsServerTest {
         // set them more often than a day of real use does.
         DeviceShell.run("cmd shortcut reset-throttling")
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        project = web.send(
-            "POST",
-            web.server.api("workspaces", account.workspaceId.toString(), "projects"),
-            buildJsonObject { put("name", "Website") },
-            JsonObject.serializer(),
-        ).orFail("POST a project").getValue("id").jsonPrimitive.long
+        project = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", account.workspaceId.toString(), "projects"),
+                buildJsonObject { put("name", "Website") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a project").getValue("id").jsonPrimitive.long
         ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, account.apiToken)
     }
@@ -201,12 +203,14 @@ class FavoriteShortcutsServerTest {
 
     @Test
     fun aTapStartsTheFavoriteOfflineAndShowsAToastInsteadOfTheApp() {
-        val task = web.send(
-            "POST",
-            web.server.api("workspaces", "${account.workspaceId}", "projects", "$project", "tasks"),
-            buildJsonObject { put("name", "Shortcut task") },
-            JsonObject.serializer(),
-        ).orFail("create shortcut task")["id"]!!.jsonPrimitive.long
+        val task = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", "${account.workspaceId}", "projects", "$project", "tasks"),
+                buildJsonObject { put("name", "Shortcut task") },
+                JsonObject.serializer(),
+            )
+        }.orFail("create shortcut task")["id"]!!.jsonPrimitive.long
         saveFavorites(favorite("Write the report", project, task, listOf("shortcut"), true), favorite("", project))
         awaitShortcuts("the favorites", listOf("Write the report", "Website"))
         val shortcut = published().first()
@@ -315,12 +319,14 @@ class FavoriteShortcutsServerTest {
     /** Sets the favorites as the web app does, then refreshes the phone. */
     private fun saveFavorites(vararg favorites: String) {
         val body = Json.parseToJsonElement("""{"favorites": [${favorites.joinToString(",")}]}""")
-        web.send(
-            "POST",
-            web.server.api("me", "preferences"),
-            body,
-            JsonElement.serializer(),
-        ).orFail("POST /api/v9/me/preferences")
+        runBlocking {
+            web.send(
+                "POST",
+                web.server.api("me", "preferences"),
+                body,
+                JsonElement.serializer(),
+            )
+        }.orFail("POST /api/v9/me/preferences")
         runBlocking { app.accountRefresh.refresh().join() }
     }
 
@@ -402,9 +408,13 @@ class FavoriteShortcutsServerTest {
         }
     }
 
-    private fun serverEntries(): List<JsonObject> =
-        web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
-            .map { it.jsonObject }
+    private fun serverEntries(): List<JsonObject> = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries"),
+            JsonArray.serializer(),
+        )
+    }.orFail("GET /api/v9/me/time_entries")
+        .map { it.jsonObject }
 
     private companion object {
         val UI_TIMEOUT: Duration = Duration.ofSeconds(10)

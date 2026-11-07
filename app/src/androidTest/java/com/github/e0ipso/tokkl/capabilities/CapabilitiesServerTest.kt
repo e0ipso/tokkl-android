@@ -44,10 +44,12 @@ class CapabilitiesServerTest {
         ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
         val api = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
-        val preferences = api.get(
-            api.server.api("me", "preferences"),
-            JsonObject.serializer(),
-        ).orFail("GET /api/v9/me/preferences")
+        val preferences = runBlocking {
+            api.get(
+                api.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertFalse("the account has saved no favorites", "favorites" in preferences)
         assertEquals("nothing is stored before the refresh", Capabilities.NONE, app.capabilities.state.value)
 

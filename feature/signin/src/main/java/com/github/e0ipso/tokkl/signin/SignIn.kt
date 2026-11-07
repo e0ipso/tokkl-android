@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.session.accountSettings
 import okhttp3.OkHttpClient
 import java.io.IOException
 import java.security.GeneralSecurityException
+import kotlin.coroutines.CoroutineContext
 
 /** What the user entered to sign in. `toString` never prints a secret. */
 sealed interface SignInCredentials {
@@ -111,15 +112,17 @@ fun interface SessionWriter {
  * email and password, the token kept is the `api_token` from that response;
  * the password is used for this one request and never written anywhere.
  *
- * The call blocks, so make it off the main thread.
+ * The call blocks on the disk, so make it on the IO dispatcher.
  *
  * @param httpClient the shared HTTP client, whose guard lets the request through to [configured]'s
  *   sign-in candidate.
+ * @param io where the request runs.
  */
 class SignIn(
     private val session: SessionWriter,
     private val httpClient: OkHttpClient,
     private val configured: ConfiguredServer,
+    private val io: CoroutineContext,
     private val signedInAccount: () -> SignInAgain? = { null },
 ) {
 
@@ -127,10 +130,10 @@ class SignIn(
      * With [again], a server other than the signed-in one gets no request, and an account other
      * than the signed-in one is not stored: both end in [SignInResult.OtherAccount].
      */
-    fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult {
+    suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult {
         val account = signedInAccount() ?: again
         if (account != null && server != account.server) return SignInResult.OtherAccount
-        val client = TogglApiClient(server, credentials.toApiCredentials(), httpClient)
+        val client = TogglApiClient(server, credentials.toApiCredentials(), httpClient, io = io)
         // Until the server is stored, the URL being tried is the configured server.
         val result = configured.signingIn(server) { client.get(server.api("me"), Me.serializer()) }
         val me = when (result) {

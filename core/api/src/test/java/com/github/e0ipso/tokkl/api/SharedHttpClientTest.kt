@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.api
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -54,7 +55,7 @@ class SharedHttpClientTest {
             assertTrue("$method: $result", result is ApiResult.Failure && result.error is ApiError.Network)
             assertEquals("one $method on that try", listOf(method), remainingRequests().map { it.method })
             // The answer OkHttp would have used for a second request is still there.
-            assertTrue(method, client.get(url.api("me"), JsonObject.serializer()) is ApiResult.Success)
+            assertTrue(method, runBlocking { client.get(url.api("me"), JsonObject.serializer()) } is ApiResult.Success)
             assertEquals(listOf("GET"), remainingRequests().map { it.method })
         }
     }
@@ -119,16 +120,24 @@ class SharedHttpClientTest {
     private fun call(method: String, resend: Boolean): ApiResult<*> {
         val target = url.api("workspaces", "7", "time_entries", "55")
         return if (method == "DELETE") {
-            client.sendNoContent(method, target, resend = resend)
+            runBlocking { client.sendNoContent(method, target, resend = resend) }
         } else {
-            client.send(method, target, JsonObject(emptyMap()), JsonObject.serializer(), resend = resend)
+            runBlocking {
+                client.send(
+                    method,
+                    target,
+                    JsonObject(emptyMap()),
+                    JsonObject.serializer(),
+                    resend = resend,
+                )
+            }
         }
     }
 
     /** A read that leaves its connection in OkHttp's pool, so the next request reuses it. */
     private fun poolAConnection() {
         server.enqueue(answer())
-        assertTrue(client.get(url.api("me"), JsonObject.serializer()) is ApiResult.Success)
+        assertTrue(runBlocking { client.get(url.api("me"), JsonObject.serializer()) } is ApiResult.Success)
         assertEquals("GET", server.takeRequest().method)
     }
 

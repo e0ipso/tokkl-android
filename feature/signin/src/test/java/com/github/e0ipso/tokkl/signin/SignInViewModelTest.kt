@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.OkHttpClient
@@ -69,6 +70,7 @@ class SignInViewModelTest {
             },
             httpClient = httpClient,
             configured = testApi.configured,
+            io = Dispatchers.Unconfined,
         )
         // Unconfined runs each attempt to the end inside submit().
         return SignInViewModel(
@@ -198,12 +200,13 @@ class SignInViewModelTest {
             session = { _, _, _ -> error("must not replace the existing account") },
             httpClient = testApi.http.instance,
             configured = testApi.configured,
+            io = Dispatchers.Unconfined,
             signedInAccount = { SignInAgain(url, 7) },
         )
         server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
         assertEquals(
             SignInResult.OtherAccount,
-            signIn.attempt(url, SignInCredentials.ApiToken(TOKEN), SignInAgain(url, null)),
+            runBlocking { signIn.attempt(url, SignInCredentials.ApiToken(TOKEN), SignInAgain(url, null)) },
         )
     }
 
@@ -213,12 +216,13 @@ class SignInViewModelTest {
             session = { _, _, _ -> error("must not replace the existing account") },
             httpClient = testApi.http.instance,
             configured = testApi.configured,
+            io = Dispatchers.Unconfined,
             signedInAccount = { SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7) },
         )
         server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
         assertEquals(
             SignInResult.OtherAccount,
-            signIn.attempt(ServerUrl.parse(baseUrl("/"))!!, SignInCredentials.ApiToken(TOKEN)),
+            runBlocking { signIn.attempt(ServerUrl.parse(baseUrl("/"))!!, SignInCredentials.ApiToken(TOKEN)) },
         )
     }
 

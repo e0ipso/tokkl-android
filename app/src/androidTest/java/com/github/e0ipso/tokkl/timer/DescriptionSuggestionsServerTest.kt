@@ -325,9 +325,15 @@ class DescriptionSuggestionsServerTest {
         )
     }
 
-    private fun create(kind: String, body: JsonObject): Long =
-        web.send("POST", web.server.api("workspaces", workspace.toString(), kind), body, JsonObject.serializer())
-            .orFail("POST $kind").getValue("id").jsonPrimitive.long
+    private fun create(kind: String, body: JsonObject): Long = runBlocking {
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), kind),
+            body,
+            JsonObject.serializer(),
+        )
+    }
+        .orFail("POST $kind").getValue("id").jsonPrimitive.long
 
     private fun signIn(server: ServerUrl) {
         ServerTrustStore(context).confirmCleartext(server)
@@ -361,9 +367,13 @@ class DescriptionSuggestionsServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
     }
 
-    private fun serverEntries(): List<JsonObject> =
-        web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
-            .map { it.jsonObject }
+    private fun serverEntries(): List<JsonObject> = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries"),
+            JsonArray.serializer(),
+        )
+    }.orFail("GET /api/v9/me/time_entries")
+        .map { it.jsonObject }
 
     private fun string(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 

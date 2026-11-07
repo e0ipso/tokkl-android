@@ -392,6 +392,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                     session = { _, _, _ -> },
                     httpClient = appHttp.instance,
                     configured = appConfiguredServer,
+                    io = Dispatchers.IO,
                 ),
                 trust = ServerTrustStore(context),
                 cooldowns = SignInCooldownStore(context),

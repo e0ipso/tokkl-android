@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.data.R
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -86,8 +87,10 @@ class TimerActions(
         api.sendRefusable("POST", api.server.app(*path), body, TimerState.serializer())
     }
 
-    private suspend fun call(request: (TogglApiClient) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
-        withContext(io) {
+    // A tap's action reaches the server and its answer reaches the holder also when the caller is
+    // cancelled meanwhile, as when the screen that sent it goes.
+    private suspend fun call(request: suspend (TogglApiClient) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
+        withContext(io + NonCancellable) {
             val api = client() ?: return@withContext TimerActionResult.Failed(ApiError.AuthFailed)
             val holder = source()
             // Before the request, so its answer cannot undo a change the phone makes meanwhile.

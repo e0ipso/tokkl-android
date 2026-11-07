@@ -52,7 +52,7 @@ class ChangeQueueRestartTest {
         // A real sign-in caches the resolution before going offline, so a short Stop predicts
         // the server's Trash outcome before this process exits.
         runBlocking { app.accountRefresh.refreshAfterChange().join() }
-        val workspace = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+        val workspace = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
             .orFail("GET /api/v9/me").getValue("default_workspace_id").jsonPrimitive.long
         Properties().apply {
             setProperty("process", currentProcess())
@@ -120,10 +120,12 @@ class ChangeQueueRestartTest {
             }
 
             val serverId = runBlocking { app.changes.currentId(localId) }
-            val sent = account.client.get(
-                account.client.server.api("me", "time_entries", serverId.toString()),
-                JsonObject.serializer(),
-            )
+            val sent = runBlocking {
+                account.client.get(
+                    account.client.server.api("me", "time_entries", serverId.toString()),
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("GET the entry")
             assertEquals("Edited before the restart", sent.getValue("description").jsonPrimitive.content)
             assertEquals(

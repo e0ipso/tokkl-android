@@ -309,12 +309,14 @@ class SignOutServerTest {
             put("name", name)
             put("color", "#06aaf5")
         }
-        val created = api.send(
-            "POST",
-            api.server.api("workspaces", account.workspaceId.toString(), "projects"),
-            body,
-            JsonObject.serializer(),
-        )
+        val created = runBlocking {
+            api.send(
+                "POST",
+                api.server.api("workspaces", account.workspaceId.toString(), "projects"),
+                body,
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST /api/v9/workspaces/<id>/projects")
         assertNotEquals(0L, created.getValue("id").jsonPrimitive.long)
     }

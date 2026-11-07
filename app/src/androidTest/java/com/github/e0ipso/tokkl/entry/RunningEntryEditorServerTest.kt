@@ -151,7 +151,12 @@ class RunningEntryEditorServerTest {
     @Before
     fun signIn() {
         account = TestAccounts.create(MADRID.id)
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET fixture workspace")
+        workspace = runBlocking {
+            web.get(
+                web.server.api("me"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET fixture workspace")
             .getValue("default_workspace_id").jsonPrimitive.long
         signIn(TokklTestServer.url, account.apiToken)
         refresh()
@@ -256,12 +261,14 @@ class RunningEntryEditorServerTest {
     @Test
     fun metadataSaveKeepsSecondsAndInvalidStartFlushesNothing() {
         val id = seedRunning("Metadata original")
-        val project = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Running project") },
-            JsonObject.serializer(),
-        ).orFail("create fixture project")
+        val project = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "projects"),
+                buildJsonObject { put("name", "Running project") },
+                JsonObject.serializer(),
+            )
+        }.orFail("create fixture project")
             .getValue("id").jsonPrimitive.long
         refresh()
         withMain {
@@ -314,12 +321,14 @@ class RunningEntryEditorServerTest {
     @Test
     fun offlineMidnightCorrectionPersistsOnDiskAndRemapsOneRunningEntry() {
         setResolution(60)
-        web.send(
-            "POST",
-            web.server.api("me", "preferences"),
-            buildJsonObject { put("timeofday_format", "h:mm A") },
-            JsonObject.serializer(),
-        ).orFail("set twelve-hour fixture preference")
+        runBlocking {
+            web.send(
+                "POST",
+                web.server.api("me", "preferences"),
+                buildJsonObject { put("timeofday_format", "h:mm A") },
+                JsonObject.serializer(),
+            )
+        }.orFail("set twelve-hour fixture preference")
         routeThroughRelay()
         assertTrue("account uses twelve-hour input", app.accountSettings.state.value!!.twelveHour)
         withMain { scenario ->
@@ -374,10 +383,12 @@ class RunningEntryEditorServerTest {
             drain()
             assertRunning(serverEntry(mapped), mapped, corrected)
             assertEquals("Saved after remapping", serverEntry(mapped).text("description"))
-            val serverRows = web.get(
-                web.server.api("me", "time_entries"),
-                JsonArray.serializer(),
-            ).orFail("list fixture entries")
+            val serverRows = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries"),
+                    JsonArray.serializer(),
+                )
+            }.orFail("list fixture entries")
                 .map { it.jsonObject }
             assertEquals(
                 "one server entry after reconnect",
@@ -454,12 +465,14 @@ class RunningEntryEditorServerTest {
             openClock()
             replace(SharedR.string.entry_description, "Stale stopped draft")
             val stop = fixtureStart.plusSeconds(3600)
-            web.send(
-                "PATCH",
-                web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
-                buildJsonObject { put("stop", stop.toString()) },
-                JsonObject.serializer(),
-            ).orFail("stop the captured fixture")
+            runBlocking {
+                web.send(
+                    "PATCH",
+                    web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
+                    buildJsonObject { put("stop", stop.toString()) },
+                    JsonObject.serializer(),
+                )
+            }.orFail("stop the captured fixture")
             refresh()
             assertNotNull(runBlocking { app.cache.entries.first() }.single { it.entry.id == id }.entry.stop)
             val stopped = serverEntry(id)
@@ -812,18 +825,20 @@ class RunningEntryEditorServerTest {
     }
 
     private fun seedRunning(description: String): Long = createRunning(description, fixtureStart).also { refresh() }
-    private fun createRunning(description: String, start: Instant): Long = web.send(
-        "POST",
-        web.server.api("workspaces", workspace.toString(), "time_entries"),
-        buildJsonObject {
-            put("workspace_id", workspace)
-            put("created_with", "running editor live canary")
-            put("description", description)
-            put("start", start.toString())
-            put("duration", -1)
-        },
-        JsonObject.serializer(),
-    ).orFail("create running fixture").getValue("id").jsonPrimitive.long
+    private fun createRunning(description: String, start: Instant): Long = runBlocking {
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "running editor live canary")
+                put("description", description)
+                put("start", start.toString())
+                put("duration", -1)
+            },
+            JsonObject.serializer(),
+        )
+    }.orFail("create running fixture").getValue("id").jsonPrimitive.long
 
     private fun assertRunning(entry: JsonObject, id: Long, start: Instant) {
         assertEquals(id, entry.getValue("id").jsonPrimitive.long)
@@ -832,14 +847,18 @@ class RunningEntryEditorServerTest {
         assertEquals(start, OffsetDateTime.parse(entry.text("start")).toInstant())
     }
 
-    private fun serverEntry(id: Long): JsonObject = web.get(
-        web.server.api("me", "time_entries", id.toString()),
-        JsonObject.serializer(),
-    ).orFail("read fixture entry")
-    private fun serverCurrent(): JsonObject = web.get(
-        web.server.api("me", "time_entries", "current"),
-        JsonObject.serializer(),
-    ).orFail("read running fixture")
+    private fun serverEntry(id: Long): JsonObject = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", id.toString()),
+            JsonObject.serializer(),
+        )
+    }.orFail("read fixture entry")
+    private fun serverCurrent(): JsonObject = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", "current"),
+            JsonObject.serializer(),
+        )
+    }.orFail("read running fixture")
     private fun queued(): Int = runBlocking { app.changes.unsentCount.first() }
     private fun refresh() = runBlocking { withTimeout(NETWORK_MS) { app.accountRefresh.refreshAfterChange().join() } }
     private fun drain() {
@@ -867,18 +886,22 @@ class RunningEntryEditorServerTest {
         )
         val url = admin.server.app("admin", "settings")
         if (originalResolution == null) {
-            originalResolution = admin.get(
-                url,
-                JsonObject.serializer(),
-            ).orFail("read fixture grid")
+            originalResolution = runBlocking {
+                admin.get(
+                    url,
+                    JsonObject.serializer(),
+                )
+            }.orFail("read fixture grid")
                 .getValue("time_resolution_minutes").jsonPrimitive.long
         }
-        admin.send(
-            "PUT",
-            url,
-            buildJsonObject { put("time_resolution_minutes", minutes) },
-            JsonObject.serializer(),
-        ).orFail("set fixture grid")
+        runBlocking {
+            admin.send(
+                "PUT",
+                url,
+                buildJsonObject { put("time_resolution_minutes", minutes) },
+                JsonObject.serializer(),
+            )
+        }.orFail("set fixture grid")
         refresh()
     }
 

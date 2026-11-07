@@ -273,14 +273,23 @@ class PomodoroDefaultsServerTest {
     }
 
     private fun setOnTheServer(body: JsonObject) {
-        account.client.send("POST", account.client.server.api("me", "preferences"), body, JsonObject.serializer())
+        runBlocking {
+            account.client.send(
+                "POST",
+                account.client.server.api("me", "preferences"),
+                body,
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST /api/v9/me/preferences")
     }
 
-    private fun preferences(): JsonObject = account.client.get(
-        account.client.server.api("me", "preferences"),
-        JsonObject.serializer(),
-    ).orFail("GET /api/v9/me/preferences")
+    private fun preferences(): JsonObject = runBlocking {
+        account.client.get(
+            account.client.server.api("me", "preferences"),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET /api/v9/me/preferences")
 
     private fun serverDefaults(): PomodoroDefaults = preferences().pomodoroDefaults()
 

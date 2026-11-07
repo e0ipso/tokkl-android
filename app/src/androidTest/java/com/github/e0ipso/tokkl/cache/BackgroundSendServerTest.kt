@@ -81,7 +81,7 @@ class BackgroundSendServerTest {
     @Before
     fun signInToTheServer() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         signIn(TokklTestServer.url, account.apiToken)
         runBlocking { app.accountRefresh.refresh().join() }
@@ -143,7 +143,11 @@ class BackgroundSendServerTest {
         assertEquals(0, unsentCount())
         val sentId = serverId(id)
         if (shortStop) {
-            val trashed = TrashServer(web).list().orFail("GET /api/app/trash").single { it.id == sentId }
+            val trashed = runBlocking {
+                TrashServer(
+                    web,
+                ).list()
+            }.orFail("GET /api/app/trash").single { it.id == sentId }
             assertEquals("Queued offline", trashed.description)
             assertEquals("the short Stop reached Trash", trashed.start, trashed.stop)
             assertEquals("the short Stop has zero duration", 0L, trashed.duration)
@@ -316,8 +320,12 @@ class BackgroundSendServerTest {
     private fun serverId(localId: Long): Long =
         runBlocking { app.changes.currentId(localId) }.also { check(it > 0) { "no server id for $localId" } }
 
-    private fun serverEntry(id: Long): JsonObject =
-        web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET a time entry")
+    private fun serverEntry(id: Long): JsonObject = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", id.toString()),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET a time entry")
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
 

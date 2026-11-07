@@ -78,7 +78,7 @@ class ChangeQueueServerTest {
     @Before
     fun signInThroughTheRelay() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         relay = HangingRelay(TokklTestServer.url)
         signIn(relay.url, account.apiToken)
@@ -155,10 +155,12 @@ class ChangeQueueServerTest {
 
         relay.release()
         drainUntilEmpty()
-        val trashed = web.get(
-            web.server.app("trash"),
-            ListSerializer(JsonObject.serializer()),
-        ).orFail("GET /api/app/trash")
+        val trashed = runBlocking {
+            web.get(
+                web.server.app("trash"),
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/app/trash")
             .single { it.getValue("id").jsonPrimitive.long == serverId(id) }
         assertEquals("the server stores zero duration", 0L, trashed.getValue("duration").jsonPrimitive.long)
         assertEquals(trashed.instant("start"), trashed.instant("stop"))
@@ -215,16 +217,20 @@ class ChangeQueueServerTest {
         assertEquals("Made by hand", made.string("description"))
         assertEquals(listOf("typed offline"), made.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
         assertEquals(manualStart, made.instant("start"))
-        val tags = web.get(
-            web.server.api("me", "tags"),
-            ListSerializer(JsonObject.serializer()),
-        ).orFail("GET /api/v9/me/tags")
+        val tags = runBlocking {
+            web.get(
+                web.server.api("me", "tags"),
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/tags")
         assertEquals("Tokkl made the tag typed offline", listOf("typed offline"), tags.map { it.string("name") })
 
-        val trash = web.get(
-            web.server.app("trash"),
-            ListSerializer(JsonObject.serializer()),
-        ).orFail("GET /api/app/trash")
+        val trash = runBlocking {
+            web.get(
+                web.server.app("trash"),
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/app/trash")
         val deleted = trash.single()
         assertEquals(
             "the timer was created, edited, stopped and then deleted",
@@ -243,18 +249,20 @@ class ChangeQueueServerTest {
     @Test
     fun theChangeThatReachesTheServerLastWinsWithoutAMerge() {
         val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
-        val entry = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", "Seeded")
-                put("start", start.toString())
-                put("duration", 1800)
-            },
-            JsonObject.serializer(),
-        ).orFail("POST a time entry").getValue("id").jsonPrimitive.long
+        val entry = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", "Seeded")
+                    put("start", start.toString())
+                    put("duration", 1800)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a time entry").getValue("id").jsonPrimitive.long
         runBlocking { app.accountRefresh.refresh().join() }
 
         relay.hang()
@@ -287,18 +295,20 @@ class ChangeQueueServerTest {
     @Test
     fun aRefreshThatReadTheTimerBeforeItsStopWasSentDoesNotLeaveItRunning() {
         val start = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS)
-        val entry = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", "Started on the web")
-                put("start", start.toString())
-                put("duration", -1)
-            },
-            JsonObject.serializer(),
-        ).orFail("POST a running time entry").getValue("id").jsonPrimitive.long
+        val entry = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", "Started on the web")
+                    put("start", start.toString())
+                    put("duration", -1)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a running time entry").getValue("id").jsonPrimitive.long
         runBlocking { app.accountRefresh.refresh().join() }
         assertEquals("the phone shows the web's timer", entry, runBlocking { app.cache.running.first() }?.entry?.id)
 
@@ -602,18 +612,20 @@ class ChangeQueueServerTest {
     fun aDuplicateThatNeverReachedTheServerIsPostedBesideItsSource() {
         val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
         val stop = start.plus(Duration.ofMinutes(30))
-        val source = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", "Copied")
-                put("start", start.toString())
-                put("stop", stop.toString())
-            },
-            JsonObject.serializer(),
-        ).orFail("POST a time entry").getValue("id").jsonPrimitive.long
+        val source = runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", "Copied")
+                    put("start", start.toString())
+                    put("stop", stop.toString())
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a time entry").getValue("id").jsonPrimitive.long
         runBlocking { app.accountRefresh.refresh().join() }
         relay.hang()
         val copy = runBlocking { app.changes.create(workspace, EntryFields(description = "Copied"), start, stop) }
@@ -679,63 +691,74 @@ class ChangeQueueServerTest {
     private fun drainCountingRunningEntryReads(): Int =
         RequestCounter(TokklTestServer.url, RUNNING_ENTRY).use { counter ->
             signIn(counter.url, account.apiToken)
-            val outcome = app.sender.drain()
+            val outcome = runBlocking { app.sender.drain() }
             assertTrue("the queue is sent: $outcome", outcome is ChangeSender.Outcome.Empty && outcome.sent > 0)
             assertEquals(emptyList<String>(), counter.failures)
             counter.count
         }
 
     /** A timer the web app starts at [start], which may be in the future. */
-    private fun startOnTheWeb(description: String, start: Instant): Long = web.send(
-        "POST",
-        web.server.api("workspaces", workspace.toString(), "time_entries"),
-        buildJsonObject {
-            put("workspace_id", workspace)
-            put("created_with", "tokkl-android tests")
-            put("description", description)
-            put("start", start.toString())
-            put("duration", -1)
-        },
-        JsonObject.serializer(),
-    ).orFail("POST a running time entry").getValue("id").jsonPrimitive.long
-
-    /** The web app's Stop: Tokkl's `PATCH .../stop`, which stops [entry] at the server's clock. */
-    private fun stopOnTheWeb(entry: Long): JsonObject = web.send(
-        "PATCH",
-        web.server.api("workspaces", workspace.toString(), "time_entries", entry.toString(), "stop"),
-        // OkHttp sends a PATCH only with a body. Tokkl reads none.
-        JsonObject(emptyMap()),
-        JsonObject.serializer(),
-    ).orFail("PATCH .../stop")
-
-    private fun tagOnTheWeb(name: String) {
+    private fun startOnTheWeb(description: String, start: Instant): Long = runBlocking {
         web.send(
             "POST",
-            web.server.api("workspaces", workspace.toString(), "tags"),
-            buildJsonObject { put("name", name) },
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                put("start", start.toString())
+                put("duration", -1)
+            },
             JsonObject.serializer(),
-        ).orFail("POST a tag")
+        )
+    }.orFail("POST a running time entry").getValue("id").jsonPrimitive.long
+
+    /** The web app's Stop: Tokkl's `PATCH .../stop`, which stops [entry] at the server's clock. */
+    private fun stopOnTheWeb(entry: Long): JsonObject = runBlocking {
+        web.send(
+            "PATCH",
+            web.server.api("workspaces", workspace.toString(), "time_entries", entry.toString(), "stop"),
+            // OkHttp sends a PATCH only with a body. Tokkl reads none.
+            JsonObject(emptyMap()),
+            JsonObject.serializer(),
+        )
+    }.orFail("PATCH .../stop")
+
+    private fun tagOnTheWeb(name: String) {
+        runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "tags"),
+                buildJsonObject { put("name", name) },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a tag")
     }
 
     /** A stopped entry the web app makes, tagged with the names in [tags]. */
-    private fun entryOnTheWeb(description: String, start: Instant, stop: Instant, tags: List<String>): Long = web.send(
-        "POST",
-        web.server.api("workspaces", workspace.toString(), "time_entries"),
-        buildJsonObject {
-            put("workspace_id", workspace)
-            put("created_with", "tokkl-android tests")
-            put("description", description)
-            put("start", start.toString())
-            put("stop", stop.toString())
-            put("tags", JsonArray(tags.map { JsonPrimitive(it) }))
-        },
-        JsonObject.serializer(),
-    ).orFail("POST a time entry").getValue("id").jsonPrimitive.long
+    private fun entryOnTheWeb(description: String, start: Instant, stop: Instant, tags: List<String>): Long =
+        runBlocking {
+            web.send(
+                "POST",
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", description)
+                    put("start", start.toString())
+                    put("stop", stop.toString())
+                    put("tags", JsonArray(tags.map { JsonPrimitive(it) }))
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a time entry").getValue("id").jsonPrimitive.long
 
-    private fun runningOnServer(): JsonObject? = web.get(
-        web.server.api("me", "time_entries", "current"),
-        JsonObject.serializer().nullable,
-    ).orFail("GET the running entry")
+    private fun runningOnServer(): JsonObject? = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", "current"),
+            JsonObject.serializer().nullable,
+        )
+    }.orFail("GET the running entry")
 
     /** The server's entries that start within a day of [start]. */
     private fun serverEntriesAround(start: Instant): List<JsonObject> {
@@ -743,7 +766,12 @@ class ChangeQueueServerTest {
             .addQueryParameter("start_date", start.minus(Duration.ofDays(1)).toString())
             .addQueryParameter("end_date", start.plus(Duration.ofDays(1)).toString())
             .build()
-        return web.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+        return runBlocking {
+            web.get(
+                url,
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/time_entries")
     }
 
     private fun time(): AccountTime = checkNotNull(app.accountSettings.state.value?.time()) { "no account time" }
@@ -811,16 +839,18 @@ class ChangeQueueServerTest {
     }
 
     private fun editOnTheWeb(entry: Long, description: String, billable: Boolean) {
-        web.send(
-            "PUT",
-            web.server.api("workspaces", workspace.toString(), "time_entries", entry.toString()),
-            buildJsonObject {
-                put("description", description)
-                put("billable", billable)
-                put("tags", JsonArray(listOf(JsonPrimitive("web"))))
-            },
-            JsonObject.serializer(),
-        ).orFail("PUT a time entry")
+        runBlocking {
+            web.send(
+                "PUT",
+                web.server.api("workspaces", workspace.toString(), "time_entries", entry.toString()),
+                buildJsonObject {
+                    put("description", description)
+                    put("billable", billable)
+                    put("tags", JsonArray(listOf(JsonPrimitive("web"))))
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("PUT a time entry")
     }
 
     private fun signIn(server: ServerUrl, token: String) {
@@ -844,8 +874,12 @@ class ChangeQueueServerTest {
     private fun serverId(localId: Long): Long =
         runBlocking { app.changes.currentId(localId) }.also { check(it > 0) { "no server id for $localId" } }
 
-    private fun serverEntry(id: Long): JsonObject =
-        web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET a time entry")
+    private fun serverEntry(id: Long): JsonObject = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", id.toString()),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET a time entry")
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
 

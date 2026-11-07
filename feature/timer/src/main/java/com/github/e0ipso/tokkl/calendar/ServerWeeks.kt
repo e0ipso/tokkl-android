@@ -39,9 +39,9 @@ internal fun spanOf(time: AccountTime, weekStart: LocalDate, today: LocalDate): 
 
 /**
  * The entries in [span], from [client]'s server. The server finds entries by their start, so this
- * asks from [CalendarViewModel.LONGEST_ENTRY] before it. Blocks on the network.
+ * asks from [CalendarViewModel.LONGEST_ENTRY] before it.
  */
-internal fun fetchWeek(client: ApiClientProvider, span: WeekSpan): ServerWeek {
+internal suspend fun fetchWeek(client: ApiClientProvider, span: WeekSpan): ServerWeek {
     val api = client() ?: return ServerWeek(emptyList(), WeekSource.AuthFailed)
     val url = api.server.api("me", "time_entries").newBuilder()
         .addQueryParameter("start_date", (span.from - CalendarViewModel.LONGEST_ENTRY).toString())

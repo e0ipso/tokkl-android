@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.catalog
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.IOException
@@ -17,17 +18,19 @@ class CreateOnceTest {
     private var created = 0
     private var listed = 0
 
-    private fun run(known: Set<Long> = emptySet()): ApiResult<Item> = createOnce(
-        create = {
-            created++
-            creates.removeAt(0)
-        },
-        list = {
-            listed++
-            lists.removeAt(0)
-        },
-        made = { it.id !in known && it.name == "Website" },
-    )
+    private fun run(known: Set<Long> = emptySet()): ApiResult<Item> = runBlocking {
+        createOnce(
+            create = {
+                created++
+                creates.removeAt(0)
+            },
+            list = {
+                listed++
+                lists.removeAt(0)
+            },
+            made = { it.id !in known && it.name == "Website" },
+        )
+    }
 
     @Test
     fun anAnsweredCreateReadsNothingMore() {

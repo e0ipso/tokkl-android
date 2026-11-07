@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -94,7 +95,7 @@ class UnconfirmedHttpWhileSignedInTest {
     /** `GET /api/v9/me` with the stored session's client, as the app sends it. */
     private fun me(): ApiResult<JsonObject> {
         val client = Session(context).client() ?: throw AssertionError("no stored session")
-        return client.get(client.server.api("me"), JsonObject.serializer())
+        return runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }
     }
 
     private fun awaitGone(matcher: SemanticsMatcher, what: String) {

@@ -110,12 +110,14 @@ class CalendarServerTest {
         // Toggl numbers the days from 0 for Sunday. A week that starts tomorrow ends today.
         val beginningOfWeek = today.plusDays(1).dayOfWeek.value % 7
         val me = buildJsonObject { put("beginning_of_week", beginningOfWeek) }
-        account.client.send(
-            "PUT",
-            account.client.server.api("me"),
-            me,
-            JsonObject.serializer(),
-        ).orFail("PUT /api/v9/me")
+        runBlocking {
+            account.client.send(
+                "PUT",
+                account.client.server.api("me"),
+                me,
+                JsonObject.serializer(),
+            )
+        }.orFail("PUT /api/v9/me")
         Session(context).save(TokklTestServer.url, account.apiToken)
     }
 
@@ -186,10 +188,12 @@ class CalendarServerTest {
             deleteFromEditor()
             AirplaneMode.set(false, account.client)
             sendTheQueue()
-            val answer = account.client.get(
-                account.client.server.api("me", "time_entries", id.toString()),
-                JsonObject.serializer(),
-            )
+            val answer = runBlocking {
+                account.client.get(
+                    account.client.server.api("me", "time_entries", id.toString()),
+                    JsonObject.serializer(),
+                )
+            }
             assertEquals(
                 "the editor's queued delete reaches the server",
                 404,
@@ -669,7 +673,7 @@ class CalendarServerTest {
             .addQueryParameter("start_date", day.minusDays(2).toString() + "T00:00:00Z")
             .addQueryParameter("end_date", day.plusDays(2).toString() + "T00:00:00Z")
             .build()
-        return account.client.get(url, JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
+        return runBlocking { account.client.get(url, JsonArray.serializer()) }.orFail("GET /api/v9/me/time_entries")
             .map { it.jsonObject }
             .single { it.getValue("description").jsonPrimitive.content == description }
     }

@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit
  * Whether the server stopped the entry of the captured Stop [change] as the phone asked. True only
  * after reading the exact stopped row, including a short row hidden in Trash.
  */
-internal fun stoppedOnServer(api: TogglApiClient, change: PendingChange): ApiResult<Boolean> {
+internal suspend fun stoppedOnServer(api: TogglApiClient, change: PendingChange): ApiResult<Boolean> {
     val url = api.server.api("me", "time_entries", change.entryId.toString())
     return when (val result = api.get(url, ServerTimeEntry.serializer())) {
         is ApiResult.Success -> when {

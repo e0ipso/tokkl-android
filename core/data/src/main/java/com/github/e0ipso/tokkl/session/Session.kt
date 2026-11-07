@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import java.io.IOException
 import java.security.GeneralSecurityException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The account the app is signed in to: the configured server and its API token.
@@ -18,6 +19,7 @@ import java.security.GeneralSecurityException
  * Calls do disk and Keystore I/O, so make them off the main thread.
  *
  * @param http the shared HTTP client, which every [client] sends through.
+ * @param io where every [client] runs its calls.
  * @param trustListener hears every request of [client] that the trust checks
  *   refuse, so the app can prompt from any screen.
  * @param successListener hears every 2xx answer to [client]'s requests.
@@ -28,6 +30,7 @@ class Session(
     private val servers: ServerConfigStore,
     private val tokens: ApiTokenStore,
     private val http: SharedHttpClient,
+    private val io: CoroutineContext,
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
     private val exports: ExportAccount,
@@ -65,6 +68,7 @@ class Session(
                 http.instance,
                 trustListener = trustListener,
                 successListener = successListener,
+                io = io,
             )
         } catch (_: GeneralSecurityException) {
             null

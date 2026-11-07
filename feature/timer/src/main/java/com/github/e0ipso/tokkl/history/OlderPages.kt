@@ -42,9 +42,9 @@ private sealed interface BoundsAnswer {
 
 /**
  * The page of days before [before] from [client]'s server, and where the history starts, [known]
- * or read now. Blocks on the network.
+ * or read now.
  */
-internal fun fetchOlderPage(
+internal suspend fun fetchOlderPage(
     client: ApiClientProvider,
     time: AccountTime,
     before: LocalDate,
@@ -79,7 +79,7 @@ internal fun fetchOlderPage(
 }
 
 /** `GET /api/app/bounds`, Tokkl's first and last day with an entry in the account's timezone. */
-private fun readBounds(api: TogglApiClient): BoundsAnswer =
+private suspend fun readBounds(api: TogglApiClient): BoundsAnswer =
     when (val answer = api.get(api.server.app("bounds"), JsonObject.serializer())) {
         is ApiResult.Success -> BoundsAnswer.Read(boundsOf(answer.value))
 

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.api
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -46,7 +47,7 @@ class TogglApiClientTest {
     fun getSendsBasicAuthToThePathBearingUrlAndDecodesJson() {
         server.enqueue(json(200, """{"id":42,"email":"ana@example.com","role":"admin","time_resolution_minutes":5}"""))
 
-        val result = client.get(client.server.api("me"), Me.serializer())
+        val result = runBlocking { client.get(client.server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Success(Me(42, "ana@example.com")), result)
         val request = server.takeRequest()
@@ -60,7 +61,14 @@ class TogglApiClientTest {
         server.enqueue(json(200, """{"id":1,"email":"ana@example.com"}"""))
         val body = buildJsonObject { put("start_date", "2026-10-01") }
 
-        client.send("POST", client.server.reports("workspace", "1", "search", "time_entries"), body, Me.serializer())
+        runBlocking {
+            client.send(
+                "POST",
+                client.server.reports("workspace", "1", "search", "time_entries"),
+                body,
+                Me.serializer(),
+            )
+        }
 
         val request = server.takeRequest()
         assertEquals("POST", request.method)
@@ -73,7 +81,7 @@ class TogglApiClientTest {
     fun status403IsAnAuthFailure() {
         server.enqueue(json(403, "\"Incorrect username and/or password\""))
 
-        val error = failure(client.get(client.server.api("me"), Me.serializer()))
+        val error = failure(runBlocking { client.get(client.server.api("me"), Me.serializer()) })
 
         assertEquals(ApiError.AuthFailed, error)
         assertEquals(403, (error as ApiError.Http).status)
@@ -83,7 +91,10 @@ class TogglApiClientTest {
     fun status429CarriesRetryAfterSeconds() {
         server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "37").build())
 
-        assertEquals(ApiError.RateLimited(37), failure(client.get(client.server.api("me"), Me.serializer())))
+        assertEquals(
+            ApiError.RateLimited(37),
+            failure(runBlocking { client.get(client.server.api("me"), Me.serializer()) }),
+        )
     }
 
     @Test
@@ -94,7 +105,10 @@ class TogglApiClientTest {
         )
 
         repeat(2) {
-            assertEquals(ApiError.RateLimited(null), failure(client.get(client.server.api("me"), Me.serializer())))
+            assertEquals(
+                ApiError.RateLimited(null),
+                failure(runBlocking { client.get(client.server.api("me"), Me.serializer()) }),
+            )
         }
     }
 
@@ -102,21 +116,28 @@ class TogglApiClientTest {
     fun otherStatusesKeepTheirCode() {
         server.enqueue(json(500, "{}"))
 
-        assertEquals(ApiError.UnexpectedStatus(500), failure(client.get(client.server.api("me"), Me.serializer())))
+        assertEquals(
+            ApiError.UnexpectedStatus(500),
+            failure(runBlocking { client.get(client.server.api("me"), Me.serializer()) }),
+        )
     }
 
     @Test
     fun malformedBodyIsAnInvalidResponse() {
         server.enqueue(json(200, """{"id":"not a number"}"""))
 
-        assertTrue(failure(client.get(client.server.api("me"), Me.serializer())) is ApiError.InvalidResponse)
+        assertTrue(
+            failure(runBlocking { client.get(client.server.api("me"), Me.serializer()) }) is ApiError.InvalidResponse,
+        )
     }
 
     @Test
     fun emptyBodyOnADecodingCallIsAnInvalidResponse() {
         server.enqueue(MockResponse.Builder().code(200).build())
 
-        assertTrue(failure(client.get(client.server.api("me"), Me.serializer())) is ApiError.InvalidResponse)
+        assertTrue(
+            failure(runBlocking { client.get(client.server.api("me"), Me.serializer()) }) is ApiError.InvalidResponse,
+        )
     }
 
     @Test
@@ -124,7 +145,12 @@ class TogglApiClientTest {
         // Tokkl's DELETE routes answer this way.
         server.enqueue(MockResponse.Builder().code(200).build())
 
-        val result = client.sendNoContent("DELETE", client.server.api("workspaces", "1", "time_entries", "2"))
+        val result = runBlocking {
+            client.sendNoContent(
+                "DELETE",
+                client.server.api("workspaces", "1", "time_entries", "2"),
+            )
+        }
 
         assertEquals(ApiResult.Success(Unit), result)
         val request = server.takeRequest()
@@ -137,7 +163,7 @@ class TogglApiClientTest {
     fun noContentCallSucceedsOn204() {
         server.enqueue(MockResponse.Builder().code(204).build())
 
-        assertEquals(ApiResult.Success(Unit), client.sendNoContent("DELETE", client.server.api("me")))
+        assertEquals(ApiResult.Success(Unit), runBlocking { client.sendNoContent("DELETE", client.server.api("me")) })
     }
 
     @Test
@@ -147,10 +173,13 @@ class TogglApiClientTest {
         server.enqueue(json(404, "\"Not found\""))
         val url = client.server.api("workspaces", "1", "time_entries", "2")
 
-        assertEquals(ApiError.AuthFailed, failure(client.sendNoContent("DELETE", url)))
-        assertEquals(ApiError.RateLimited(5), failure(client.sendNoContent("DELETE", url)))
+        assertEquals(ApiError.AuthFailed, failure(runBlocking { client.sendNoContent("DELETE", url) }))
+        assertEquals(ApiError.RateLimited(5), failure(runBlocking { client.sendNoContent("DELETE", url) }))
         // The body is a JSON string, so the error carries it as the server's reason.
-        assertEquals(ApiError.UnexpectedStatus(404, "Not found"), failure(client.sendNoContent("DELETE", url)))
+        assertEquals(
+            ApiError.UnexpectedStatus(404, "Not found"),
+            failure(runBlocking { client.sendNoContent("DELETE", url) }),
+        )
     }
 
     @Test
@@ -158,7 +187,7 @@ class TogglApiClientTest {
         val url = serverUrl()
         server.close()
 
-        val error = failure(testApi.client(url, credentials).sendNoContent("DELETE", url.api("me")))
+        val error = failure(runBlocking { testApi.client(url, credentials).sendNoContent("DELETE", url.api("me")) })
 
         assertTrue(error.toString(), error is ApiError.Network)
     }
@@ -168,7 +197,7 @@ class TogglApiClientTest {
         val url = serverUrl()
         server.close()
 
-        val error = failure(testApi.client(url, credentials).get(url.api("me"), Me.serializer()))
+        val error = failure(runBlocking { testApi.client(url, credentials).get(url.api("me"), Me.serializer()) })
 
         assertTrue(error.toString(), error is ApiError.Network)
         assertFalse(error is ApiError.Http)
@@ -178,7 +207,7 @@ class TogglApiClientTest {
     fun droppedConnectionIsANetworkError() {
         server.enqueue(MockResponse.Builder().onRequestStart(SocketEffect.CloseSocket()).build())
 
-        val error = failure(client.get(client.server.api("me"), Me.serializer()))
+        val error = failure(runBlocking { client.get(client.server.api("me"), Me.serializer()) })
 
         assertTrue(error.toString(), error is ApiError.Network)
     }
@@ -190,7 +219,9 @@ class TogglApiClientTest {
         val impatient = testApi.http.instance.newBuilder().readTimeout(200, TimeUnit.MILLISECONDS).build()
         val url = serverUrl()
 
-        val error = failure(testApi.client(url, credentials, impatient).get(url.api("me"), Me.serializer()))
+        val error = failure(
+            runBlocking { testApi.client(url, credentials, impatient).get(url.api("me"), Me.serializer()) },
+        )
 
         assertTrue(error.toString(), error is ApiError.Network && error.cause is SocketTimeoutException)
     }
@@ -204,12 +235,12 @@ class TogglApiClientTest {
         server.enqueue(json(403, "\"Incorrect username and/or password\""))
         server.enqueue(MockResponse.Builder().code(204).build())
 
-        counting.get(counting.server.api("me"), Me.serializer())
+        runBlocking { counting.get(counting.server.api("me"), Me.serializer()) }
         assertEquals("after a 200", 1, successes)
-        counting.get(counting.server.api("me"), Me.serializer())
-        counting.get(counting.server.api("me"), Me.serializer())
+        runBlocking { counting.get(counting.server.api("me"), Me.serializer()) }
+        runBlocking { counting.get(counting.server.api("me"), Me.serializer()) }
         assertEquals("after a 500 and a 403", 1, successes)
-        counting.sendNoContent("DELETE", counting.server.api("me"))
+        runBlocking { counting.sendNoContent("DELETE", counting.server.api("me")) }
         assertEquals("after a 204", 2, successes)
     }
 

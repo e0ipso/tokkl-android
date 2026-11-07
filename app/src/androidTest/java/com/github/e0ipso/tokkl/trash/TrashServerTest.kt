@@ -28,6 +28,7 @@ import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -214,7 +215,12 @@ class TrashServerTest {
 
     private fun trashIds(account: TestAccounts.Account): List<Long> {
         val client = account.client
-        return client.get(client.server.app("trash"), JsonArray.serializer()).orFail("GET /api/app/trash")
+        return runBlocking {
+            client.get(
+                client.server.app("trash"),
+                JsonArray.serializer(),
+            )
+        }.orFail("GET /api/app/trash")
             .map { it.jsonObject.getValue("id").jsonPrimitive.long }
     }
 

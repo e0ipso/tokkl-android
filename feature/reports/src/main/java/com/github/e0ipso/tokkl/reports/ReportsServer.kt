@@ -30,13 +30,13 @@ data class ReportWorkspace(
 )
 
 /**
- * The Reports API v3 calls behind the reports, on the configured server. Every call blocks, so
- * make them off the main thread. Nothing here stores what the server sends.
+ * The Reports API v3 calls behind the reports, on the configured server. Each call suspends
+ * while its request runs. Nothing here stores what the server sends.
  */
 class ReportsServer(private val api: TogglApiClient) {
 
     /** The account's default workspace from `GET /api/v9/me`, with its rounding from `GET /api/v9/workspaces/{id}`. */
-    fun workspace(): ApiResult<ReportWorkspace> {
+    suspend fun workspace(): ApiResult<ReportWorkspace> {
         val user = when (val answer = api.get(api.server.api("me"), ReportUser.serializer())) {
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return answer
@@ -62,7 +62,7 @@ class ReportsServer(private val api: TogglApiClient) {
      * The app endpoint selects the current default workspace, timezone and rounding itself;
      * sending cached rounding here would override a newer setting on the server.
      */
-    fun summary(
+    suspend fun summary(
         workspace: ReportWorkspace,
         range: ReportRange,
         zone: ZoneId,
@@ -112,7 +112,7 @@ class ReportsServer(private val api: TogglApiClient) {
      * The request asks for the workspace's rounding. Tokkl's web app always applies it, while the
      * Reports API rounds only when asked, as in Toggl (Tokkl's docs/PRD.md R8).
      */
-    fun entries(
+    suspend fun entries(
         workspace: ReportWorkspace,
         range: ReportRange,
         zone: ZoneId,
@@ -146,7 +146,7 @@ class ReportsServer(private val api: TogglApiClient) {
      * 1 for the first page, then the row the server named for the next one. Times are in [zone].
      * The phone never works out a page itself.
      */
-    fun detailedPage(
+    suspend fun detailedPage(
         workspace: ReportWorkspace,
         range: ReportRange,
         zone: ZoneId,
@@ -173,7 +173,7 @@ class ReportsServer(private val api: TogglApiClient) {
      * [filters], from `POST /reports/api/v3/workspace/{id}/weekly/time_entries`: a row per project
      * with its seconds on each day. The request asks for the workspace's rounding, as [entries] does.
      */
-    fun weekly(
+    suspend fun weekly(
         workspace: ReportWorkspace,
         weekStart: LocalDate,
         filters: ReportFilters = ReportFilters(),
@@ -211,7 +211,7 @@ class ReportsServer(private val api: TogglApiClient) {
      * A page of `POST /reports/api/v3/workspace/{id}/search/time_entries` of the entries that pass
      * [filters], by date in [direction], `ASC` or `DESC`, with the workspace's rounding.
      */
-    private fun search(
+    private suspend fun search(
         workspace: ReportWorkspace,
         range: ReportRange,
         filters: ReportFilters,
@@ -238,7 +238,7 @@ class ReportsServer(private val api: TogglApiClient) {
      * The row the page after [page] starts on, from its `X-Next-Row-Number`, or null when the
      * server sent none, after the last page. A row that does not come after [firstRow] fails.
      */
-    private fun nextRow(page: WithHeaders<*>, firstRow: Int): ApiResult<Int?> {
+    private suspend fun nextRow(page: WithHeaders<*>, firstRow: Int): ApiResult<Int?> {
         val next = page.headers[NEXT_ROW_HEADER]?.trim()?.toIntOrNull() ?: return ApiResult.Success(null)
         if (next <= firstRow) {
             return ApiResult.Failure(

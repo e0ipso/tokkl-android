@@ -25,7 +25,7 @@ class AccountRefreshPipeline(
     private val listener: AccountRefreshListener,
 ) : AccountRefreshSteps {
 
-    override fun afterAnswer(api: TogglApiClient, me: Me, preferences: MePreferences?) {
+    override suspend fun afterAnswer(api: TogglApiClient, me: Me, preferences: MePreferences?) {
         val flags = capabilities.refresh(api, me, timerStates.source)
         cache.refresh(api, me, preferences, flags, onAllDayMissing = capabilities::allDayMissing)
         listener.refreshed(AccountRefreshed(preferences, flags))

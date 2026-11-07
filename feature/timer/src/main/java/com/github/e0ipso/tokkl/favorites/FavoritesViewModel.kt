@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -65,14 +66,15 @@ data class FavoritesState(
  * Starting a template is the timer's: TimerViewModel.startFrom.
  *
  * @param available whether the server keeps Tokkl's favorites, from the capabilities.
- * @param save posts the list and caches it, blocking, so it runs on [io].
+ * @param save posts the list and caches it. It runs on [io], and the save reaches the server and
+ *   the cache also when the view model is cleared meanwhile.
  */
 class FavoritesViewModel(
     favorites: Flow<List<CachedFavorite>>,
     projects: Flow<List<CachedProject>>,
     tasks: Flow<List<CachedTask>>,
     available: Flow<Boolean>,
-    private val save: (List<EntryFields>) -> ApiResult<Unit>,
+    private val save: suspend (List<EntryFields>) -> ApiResult<Unit>,
     scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : ViewModel(scope),
@@ -155,7 +157,7 @@ class FavoritesViewModel(
         }
         local.value = Local(saving = true)
         viewModelScope.launch {
-            val result = withContext(io) { save(next) }
+            val result = withContext(io + NonCancellable) { save(next) }
             val problem = (result as? ApiResult.Failure)?.let { FavoritesProblem.Server(it.error.toServerProblem()) }
             local.value = Local(problem = problem)
             onDone(problem)

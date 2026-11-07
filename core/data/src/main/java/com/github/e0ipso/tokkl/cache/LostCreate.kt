@@ -17,7 +17,7 @@ import java.time.temporal.ChronoUnit
  * other create from the phone maps to already in [store]. [spans] says where the server snaps the
  * start.
  */
-internal fun earlierCopy(
+internal suspend fun earlierCopy(
     api: TogglApiClient,
     create: PendingChange,
     spans: ServerSpans,

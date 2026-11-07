@@ -15,15 +15,16 @@ import com.github.e0ipso.tokkl.api.ApiResult
  * none, the server does not hold the item, as when a stale pooled connection failed before the
  * server read the request, so the create goes once more, and only once. When the read fails too, the create's
  * own failure stands.
- *
- * Blocks, so call it off the main thread.
  */
-fun <T> createOnce(create: () -> ApiResult<T>, list: () -> ApiResult<List<T>>, made: (T) -> Boolean): ApiResult<T> =
-    send(create, list, made, tries = 2)
+suspend fun <T> createOnce(
+    create: suspend () -> ApiResult<T>,
+    list: suspend () -> ApiResult<List<T>>,
+    made: (T) -> Boolean,
+): ApiResult<T> = send(create, list, made, tries = 2)
 
-private tailrec fun <T> send(
-    create: () -> ApiResult<T>,
-    list: () -> ApiResult<List<T>>,
+private tailrec suspend fun <T> send(
+    create: suspend () -> ApiResult<T>,
+    list: suspend () -> ApiResult<List<T>>,
     made: (T) -> Boolean,
     tries: Int,
 ): ApiResult<T> {

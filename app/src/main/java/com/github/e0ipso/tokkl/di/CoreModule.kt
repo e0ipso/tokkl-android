@@ -61,6 +61,7 @@ internal val coreModule = module {
             servers = get(),
             tokens = get(),
             http = get(),
+            io = get(IoDispatcher),
             trustListener = get<SessionTrust>(),
             successListener = get<LastAnswer>(),
             exports = get(),

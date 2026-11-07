@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -43,7 +44,7 @@ class ServerSmokeTest {
     fun unconfirmedHttpServerGetsNoRequest() {
         trust.clear()
 
-        val result = client.get(client.server.api("me"), JsonObject.serializer())
+        val result = runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }
 
         assertEquals(ApiError.CleartextNotConfirmed(TokklTestServer.url), (result as? ApiResult.Failure)?.error)
     }
@@ -54,7 +55,7 @@ class ServerSmokeTest {
         servers.clear()
         val me = client.server.api("me")
 
-        val result = client.get(me, JsonObject.serializer())
+        val result = runBlocking { client.get(me, JsonObject.serializer()) }
 
         assertEquals(
             ApiError.HostNotAllowed("${me.scheme}://${me.host}:${me.port}"),
@@ -73,7 +74,7 @@ class ServerSmokeTest {
     fun wrongApiTokenGets403() {
         val client = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken("not-the-api-token"))
 
-        val result = client.get(client.server.api("me"), JsonObject.serializer())
+        val result = runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }
 
         // Compares the error alone, so a success body never lands in the message.
         assertEquals(ApiError.AuthFailed, (result as? ApiResult.Failure)?.error)
@@ -91,12 +92,14 @@ class ServerSmokeTest {
             val client = account.client
             // Nothing runs, so the server refuses each Pause with its state and changes nothing.
             val pause = {
-                client.sendRefusable(
-                    "POST",
-                    client.server.app("timer", "pause"),
-                    JsonObject(emptyMap()),
-                    TimerState.serializer(),
-                )
+                runBlocking {
+                    client.sendRefusable(
+                        "POST",
+                        client.server.app("timer", "pause"),
+                        JsonObject(emptyMap()),
+                        TimerState.serializer(),
+                    )
+                }
             }
             pause().valueOrFail("POST /api/app/timer/pause")
             // The pause under test, past the server's 5 seconds and short of OkHttp's 10.
@@ -112,22 +115,38 @@ class ServerSmokeTest {
     fun deleteWithAnEmptyResponseBodySucceeds() {
         val tags = client.server.api("workspaces", workspaceId(), "tags")
         val name = "smoke-${UUID.randomUUID()}"
-        val tag = client.send("POST", tags, buildJsonObject { put("name", name) }, JsonObject.serializer())
+        val tag = runBlocking {
+            client.send(
+                "POST",
+                tags,
+                buildJsonObject { put("name", name) },
+                JsonObject.serializer(),
+            )
+        }
             .valueOrFail("POST tags")
         assertEquals(name, tag.string("name"))
 
-        val deleted = client.sendNoContent("DELETE", tags.newBuilder().addPathSegment(tag.string("id")).build())
+        val deleted = runBlocking {
+            client.sendNoContent(
+                "DELETE",
+                tags.newBuilder().addPathSegment(tag.string("id")).build(),
+            )
+        }
 
         assertEquals(ApiResult.Success(Unit), deleted)
-        val left = client.get(tags, JsonArray.serializer()).valueOrFail("GET tags")
+        val left = runBlocking { client.get(tags, JsonArray.serializer()) }.valueOrFail("GET tags")
         assertFalse("the deleted tag is still listed", left.any { it.jsonObject.string("id") == tag.string("id") })
     }
 
-    private fun email(client: TogglApiClient): String =
-        client.get(client.server.api("me"), JsonObject.serializer()).valueOrFail("GET /api/v9/me").string("email")
+    private fun email(client: TogglApiClient): String = runBlocking {
+        client.get(
+            client.server.api("me"),
+            JsonObject.serializer(),
+        )
+    }.valueOrFail("GET /api/v9/me").string("email")
 
     private fun workspaceId(): String =
-        client.get(client.server.api("me"), JsonObject.serializer()).valueOrFail("GET /api/v9/me")
+        runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }.valueOrFail("GET /api/v9/me")
             .string("default_workspace_id")
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content

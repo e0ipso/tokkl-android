@@ -227,7 +227,14 @@ class SyncStatusServerTest {
         } finally {
             database.close()
         }
-        direct.send("POST", direct.server.api("me", "reset_token"), JsonObject(emptyMap()), String.serializer())
+        runBlocking {
+            direct.send(
+                "POST",
+                direct.server.api("me", "reset_token"),
+                JsonObject(emptyMap()),
+                String.serializer(),
+            )
+        }
             .orFail("POST /me/reset_token")
         assertEquals(1, runBlocking { app.changes.unsentCount.first() })
         assertTrue(!app.sender.signInNeeded.value)
@@ -245,12 +252,14 @@ class SyncStatusServerTest {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
             runBlocking { app.accountRefresh.refresh().join() }
             val workspace = account.workspaceId
-            val newToken = direct.send(
-                "POST",
-                direct.server.api("me", "reset_token"),
-                JsonObject(emptyMap()),
-                String.serializer(),
-            )
+            val newToken = runBlocking {
+                direct.send(
+                    "POST",
+                    direct.server.api("me", "reset_token"),
+                    JsonObject(emptyMap()),
+                    String.serializer(),
+                )
+            }
                 .orFail("POST /me/reset_token")
             val start = Instant.now().minusSeconds(3600)
             runBlocking {

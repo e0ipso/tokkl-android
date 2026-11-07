@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import java.util.concurrent.Semaphore
 
 /**
  * The server's capabilities for the whole process, and the one place features read them from.
@@ -22,6 +23,13 @@ import java.io.IOException
 class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
 
     private val loaded by lazy { Loaded(store.load()) }
+
+    /**
+     * Lets one change of the flags run at a time, [refresh] included while its probes wait for the
+     * server, so a change asked for meanwhile waits for the refresh and lands after it. Unlike a
+     * monitor, a refresh may release it on another thread than the one that took it.
+     */
+    private val changing = Semaphore(1)
 
     private class Loaded(initial: Capabilities?) {
         val state = MutableStateFlow(initial ?: Capabilities.NONE)
@@ -55,24 +63,27 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
      * Sets the flags from [me], the refresh's `GET /api/v9/me`, one `GET /api/app/trash` and one
      * `GET /api/app/timer`, and stores them. A timer state the probe read goes to [timerState], so
      * the refresh sends no second request for it. A failed write keeps the new flags for this
-     * process. Blocks on the network and the disk, so call it off the main thread. Returns the new
-     * flags.
+     * process. Blocks the thread while another change runs, and writes the disk, so call it on the
+     * IO dispatcher. Returns the new flags.
      */
-    @Synchronized
-    fun <R> refresh(api: TogglApiClient, me: Me, timerState: ProbedTimerState<R>): Capabilities {
-        val trash = probeTrash(api)
-        val read = timerState.begin()
-        val timer = probeTimerState(api)
-        val flags = update(loaded.state.value.updatedWith(me, trash, timer))
-        if (timer is TimerStateProbe.Present) timerState.accept(read, timer.state)
-        return flags
+    suspend fun <R> refresh(api: TogglApiClient, me: Me, timerState: ProbedTimerState<R>): Capabilities {
+        changing.acquire()
+        try {
+            val trash = probeTrash(api)
+            val read = timerState.begin()
+            val timer = probeTimerState(api)
+            val flags = update(loaded.state.value.updatedWith(me, trash, timer))
+            if (timer is TimerStateProbe.Present) timerState.accept(read, timer.state)
+            return flags
+        } finally {
+            changing.release()
+        }
     }
 
     /** A CSV request got definite endpoint absence. It affects only this export kind. */
-    @Synchronized
-    fun csvMissing(kind: ReportCsvKind) {
+    fun csvMissing(kind: ReportCsvKind) = change {
         val current = loaded.state.value
-        if (!current.supports(kind)) return
+        if (!current.supports(kind)) return@change
         update(
             when (kind) {
                 ReportCsvKind.SUMMARY -> current.copy(summaryCsv = false)
@@ -87,8 +98,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
      * probe would. Flags that already say so, as after a sign-out, stay as they are and unwritten.
      * Writes to the disk, so call it off the main thread.
      */
-    @Synchronized
-    fun trashMissing() {
+    fun trashMissing() = change {
         val current = loaded.state.value
         if (current.trash || current.restore) update(current.copy(trash = false, restore = false))
     }
@@ -99,8 +109,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
      * as after a sign-out, stays as it is and unwritten. Writes to the disk, so call it off the
      * main thread.
      */
-    @Synchronized
-    fun allDayMissing() {
+    fun allDayMissing() = change {
         val current = loaded.state.value
         if (current.allDay == true) update(current.copy(allDay = false))
     }
@@ -122,10 +131,19 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
      * Goes back to [Capabilities.NONE], after a refresh that is running. Signing out calls this,
      * then deletes the stored flags.
      */
-    @Synchronized
-    fun forget() {
+    fun forget() = change {
         loaded.state.value = Capabilities.NONE
         loaded.stored = null
+    }
+
+    /** Runs [block] once no other change of the flags runs, waiting for it on this thread. */
+    private fun change(block: () -> Unit) {
+        changing.acquire()
+        try {
+            block()
+        } finally {
+            changing.release()
+        }
     }
 }
 

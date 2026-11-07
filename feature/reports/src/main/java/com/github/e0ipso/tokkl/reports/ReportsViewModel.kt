@@ -262,7 +262,7 @@ class ReportsViewModel(
     /**
      * What [tab] shows for [selection] with [filters], and the workspace, [known] or read from the server when null.
      */
-    private fun fetch(
+    private suspend fun fetch(
         selection: RangeSelection,
         known: ReportWorkspace?,
         tab: ReportTab,
@@ -319,7 +319,7 @@ class ReportsViewModel(
     }
 
     /** [report] with the page that starts at [next] added, or why there is none. */
-    private fun nextPage(
+    private suspend fun nextPage(
         selection: RangeSelection,
         workspace: ReportWorkspace,
         report: DetailedReport,

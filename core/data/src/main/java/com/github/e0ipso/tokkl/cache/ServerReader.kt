@@ -28,10 +28,8 @@ import java.time.format.DateTimeParseException
  * Track, the favorites are an empty list. On Tokkl, where `/me` has `role`, an entry without
  * `all_day`, as Tokkl before 1.11.0 sends them, calls [onAllDayMissing], so the app can turn
  * no-time entries off. Toggl Track leaves the key out too, and has them off already.
- *
- * Blocks on the network, so call it off the main thread.
  */
-fun readServerSnapshot(
+suspend fun readServerSnapshot(
     api: TogglApiClient,
     me: Me,
     preferences: MePreferences?,
@@ -56,7 +54,7 @@ fun readServerSnapshot(
  * same way, so neither server's idea of the day matters. On Tokkl ([tokkl]), an entry without
  * `all_day` calls [onAllDayMissing].
  */
-private fun readTimeEntries(
+private suspend fun readTimeEntries(
     api: TogglApiClient,
     history: HistoryWindow,
     tokkl: Boolean,

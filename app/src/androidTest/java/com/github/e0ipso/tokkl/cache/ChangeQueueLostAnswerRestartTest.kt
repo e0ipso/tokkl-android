@@ -114,10 +114,12 @@ class ChangeQueueLostAnswerRestartTest {
                 .addQueryParameter("start_date", start.minus(Duration.ofDays(1)).toString())
                 .addQueryParameter("end_date", start.plus(Duration.ofDays(1)).toString())
                 .build()
-            val copies = account.client.get(
-                url,
-                ListSerializer(JsonObject.serializer()),
-            ).orFail("GET /api/v9/me/time_entries")
+            val copies = runBlocking {
+                account.client.get(
+                    url,
+                    ListSerializer(JsonObject.serializer()),
+                )
+            }.orFail("GET /api/v9/me/time_entries")
             assertEquals("one copy on the server: $copies", 1, copies.size)
             assertEquals(
                 "the phone's entry is that copy",

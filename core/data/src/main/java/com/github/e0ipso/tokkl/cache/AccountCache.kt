@@ -48,9 +48,10 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
      * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
      * A server without favorites gets none cached. A failed request keeps its rows, and a failed
      * write keeps the whole cache as it was. [onAllDayMissing] runs when Tokkl lists an entry
-     * without `all_day`, as [readServerSnapshot] describes. Blocks, so call it off the main thread.
+     * without `all_day`, as [readServerSnapshot] describes. Blocks on the disk, so call it on the IO
+     * dispatcher.
      */
-    fun refresh(
+    suspend fun refresh(
         api: TogglApiClient,
         me: Me,
         preferences: MePreferences?,

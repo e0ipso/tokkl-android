@@ -560,12 +560,14 @@ class ReportFiltersTest {
         }
 
     /** POSTs [body] to `/api/app/report`, the web app's summary, a path [ReportAccount.webReport] does not reach. */
-    private fun webSummary(body: JsonObject): JsonObject = report.account.client.send(
-        "POST",
-        TokklTestServer.url.app("report"),
-        body,
-        JsonObject.serializer(),
-    ).orFail("POST /api/app/report")
+    private fun webSummary(body: JsonObject): JsonObject = runBlocking {
+        report.account.client.send(
+            "POST",
+            TokklTestServer.url.app("report"),
+            body,
+            JsonObject.serializer(),
+        )
+    }.orFail("POST /api/app/report")
 
     /** The week's [index]th day, or today when that day is still to come. */
     private fun day(index: Long): LocalDate = minOf(report.weekStart.plusDays(index), report.today)

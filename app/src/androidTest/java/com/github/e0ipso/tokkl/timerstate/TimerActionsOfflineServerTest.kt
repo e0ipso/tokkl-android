@@ -351,18 +351,20 @@ class TimerActionsOfflineServerTest {
     /** The other device starts [description] ten minutes ago. Returns its id. */
     private fun otherStarts(description: String): Long {
         val workspace = fixture.account.workspaceId
-        return other.send(
-            "POST",
-            other.server.api("workspaces", "$workspace", "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests, another device")
-                put("description", description)
-                put("start", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS).toString())
-                put("duration", -1)
-            },
-            JsonObject.serializer(),
-        ).orFail("POST a running entry").getValue("id").jsonPrimitive.long
+        return runBlocking {
+            other.send(
+                "POST",
+                other.server.api("workspaces", "$workspace", "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests, another device")
+                    put("description", description)
+                    put("start", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS).toString())
+                    put("duration", -1)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a running entry").getValue("id").jsonPrimitive.long
     }
 
     private fun tapOnTheTimerPage(spoken: Int) {
@@ -472,16 +474,18 @@ class TimerActionsOfflineServerTest {
     }
 
     /** A timer action from the other device, which must succeed. */
-    private fun postTimer(vararg path: String, revision: Long? = null): TimerState = other.send(
-        "POST",
-        other.server.app(*path),
-        buildJsonObject { if (revision != null) put("revision", revision) },
-        TimerState.serializer(),
-    )
+    private fun postTimer(vararg path: String, revision: Long? = null): TimerState = runBlocking {
+        other.send(
+            "POST",
+            other.server.app(*path),
+            buildJsonObject { if (revision != null) put("revision", revision) },
+            TimerState.serializer(),
+        )
+    }
         .orFail("POST /api/app/${path.joinToString("/")}")
 
     private fun com.github.e0ipso.tokkl.api.TogglApiClient.timerState(): TimerState =
-        get(server.app("timer"), TimerState.serializer()).orFail("GET /api/app/timer")
+        runBlocking { get(server.app("timer"), TimerState.serializer()) }.orFail("GET /api/app/timer")
 
     private companion object {
         /** A Start or Stop shows on the phone without waiting for any network. */

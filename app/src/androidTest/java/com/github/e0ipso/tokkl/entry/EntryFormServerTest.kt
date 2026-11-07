@@ -136,7 +136,7 @@ class EntryFormServerTest {
     @Before
     fun signIn() {
         account = TestAccounts.create(timezone = MADRID.id)
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         signIn(TokklTestServer.url, account.apiToken)
     }
@@ -200,10 +200,12 @@ class EntryFormServerTest {
             drainUntilEmpty()
         }
 
-        val saved = web.get(
-            web.server.api("me", "time_entries", entry.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Fix the weekly report", saved.string("description"))
         assertEquals(project, saved.getValue("project_id").jsonPrimitive.long)
         assertEquals(listOf("call"), saved.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
@@ -232,10 +234,12 @@ class EntryFormServerTest {
             drainUntilEmpty()
         }
 
-        val saved = web.get(
-            web.server.api("me", "time_entries", entry.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Offline edit, saved", saved.string("description"))
         assertEquals(at(day, 14, 0), instant(saved.string("start")))
         assertEquals(at(day, 16, 15), instant(saved.string("stop")))
@@ -275,10 +279,12 @@ class EntryFormServerTest {
             )
         }
 
-        val saved = web.get(
-            web.server.api("me", "time_entries", entry.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Old plan, fixed", saved.string("description"))
         assertEquals(at(olderDay, 9, 0), instant(saved.string("start")))
         assertEquals(at(olderDay, 10, 45), instant(saved.string("stop")))
@@ -304,10 +310,12 @@ class EntryFormServerTest {
             drainUntilEmpty()
         }
 
-        val saved = web.get(
-            web.server.api("me", "time_entries", entry.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Old call, noted", saved.string("description"))
         assertEquals(at(olderDay, 14, 0), instant(saved.string("start")))
         assertEquals(at(olderDay, 15, 0), instant(saved.string("stop")))
@@ -339,10 +347,12 @@ class EntryFormServerTest {
             drainUntilEmpty()
         }
 
-        val saved = web.get(
-            web.server.api("me", "time_entries", entry.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Old review, second", saved.string("description"))
         assertEquals(at(olderDay, 11, 0), instant(saved.string("start")))
         assertEquals(at(olderDay, 12, 0), instant(saved.string("stop")))
@@ -504,12 +514,14 @@ class EntryFormServerTest {
             ),
         )
         for ((index, case) in cases.withIndex()) {
-            val changed = web.send(
-                "PUT",
-                web.server.api("me"),
-                buildJsonObject { put("timezone", case[0]) },
-                JsonObject.serializer(),
-            ).orFail("set account zone")
+            val changed = runBlocking {
+                web.send(
+                    "PUT",
+                    web.server.api("me"),
+                    buildJsonObject { put("timezone", case[0]) },
+                    JsonObject.serializer(),
+                )
+            }.orFail("set account zone")
             runBlocking { app.accountRefresh.refreshAfterChange().join() }
             assertEquals(
                 "the refreshed account zone",
@@ -555,10 +567,12 @@ class EntryFormServerTest {
                 model.state.first { it == EntryFormState.Saved }
             }
             drainUntilEmpty()
-            val edited = web.get(
-                web.server.api("me", "time_entries", id.toString()),
-                JsonObject.serializer(),
-            ).orFail("GET edited span")
+            val edited = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries", id.toString()),
+                    JsonObject.serializer(),
+                )
+            }.orFail("GET edited span")
             assertEquals("edit start", expected.start, instant(edited.string("start")))
             assertEquals("edit stop", expected.stop, instant(edited.string("stop")))
         }
@@ -603,43 +617,49 @@ class EntryFormServerTest {
         // now after 23:30 would round into tomorrow, outside today's exclusive cache end.
         // The real server stops and restores a zero-length row at the explicit fixture time.
         val fixtureStart = day.atTime(23, 31).atZone(MADRID).toInstant()
-        val running = web.send(
-            "POST",
-            web.server.api(
-                "workspaces",
-                workspace.toString(),
-                "time_entries",
-            ),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "typed snap fixture")
-                put("description", "Legacy zero")
-                put("start", fixtureStart.toString())
-                put("duration", -1)
-            },
-            JsonObject.serializer(),
-        ).orFail("create fixture timer")
+        val running = runBlocking {
+            web.send(
+                "POST",
+                web.server.api(
+                    "workspaces",
+                    workspace.toString(),
+                    "time_entries",
+                ),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "typed snap fixture")
+                    put("description", "Legacy zero")
+                    put("start", fixtureStart.toString())
+                    put("duration", -1)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("create fixture timer")
         val id = running.getValue("id").jsonPrimitive.long
-        web.send(
-            "PATCH",
-            web.server.api(
-                "workspaces",
-                workspace.toString(),
-                "time_entries",
-                id.toString(),
-                "stop",
-            ),
-            buildJsonObject {
-                put("stop", fixtureStart.toString())
-            },
-            JsonObject.serializer(),
-        ).orFail("stop fixture timer")
-        val legacy = web.send(
-            "POST",
-            web.server.app("time_entries", id.toString(), "restore"),
-            buildJsonObject {},
-            JsonObject.serializer(),
-        ).orFail("restore legacy fixture")
+        runBlocking {
+            web.send(
+                "PATCH",
+                web.server.api(
+                    "workspaces",
+                    workspace.toString(),
+                    "time_entries",
+                    id.toString(),
+                    "stop",
+                ),
+                buildJsonObject {
+                    put("stop", fixtureStart.toString())
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("stop fixture timer")
+        val legacy = runBlocking {
+            web.send(
+                "POST",
+                web.server.app("time_entries", id.toString(), "restore"),
+                buildJsonObject {},
+                JsonObject.serializer(),
+            )
+        }.orFail("restore legacy fixture")
         assertEquals(legacy.string("start"), legacy.string("stop"))
         assertEquals(
             "the fixture snaps across midnight",
@@ -661,10 +681,12 @@ class EntryFormServerTest {
             model.state.first { it == EntryFormState.Saved }
         }
         drainUntilEmpty()
-        val saved = web.get(
-            web.server.api("me", "time_entries", id.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET legacy entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", id.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET legacy entry")
         assertEquals("Legacy zero renamed", saved.string("description"))
         assertEquals(legacy.string("start"), saved.string("start"))
         assertEquals(legacy.string("stop"), saved.string("stop"))
@@ -707,10 +729,12 @@ class EntryFormServerTest {
             assertNothingHeld()
         }
 
-        val saved = web.get(
-            web.server.api("me", "time_entries", id.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", id.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Plan the offsite, moved", saved.string("description"))
         assertNoTimeEntry(saved, newDay, 7_200)
     }
@@ -738,10 +762,12 @@ class EntryFormServerTest {
             assertNothingHeld()
         }
 
-        val saved = web.get(
-            web.server.api("me", "time_entries", entry.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertFalse("the entry has times now", saved.getValue("all_day").jsonPrimitive.boolean)
         assertEquals(at(day, 9, 0), instant(saved.string("start")))
         assertEquals(at(day, 10, 30), instant(saved.string("stop")))
@@ -756,17 +782,21 @@ class EntryFormServerTest {
         )
         val url = admin.server.app("admin", "settings")
         if (originalResolution == null) {
-            originalResolution = admin.get(
-                url,
-                JsonObject.serializer(),
-            ).orFail("GET settings").getValue("time_resolution_minutes").jsonPrimitive.long
+            originalResolution = runBlocking {
+                admin.get(
+                    url,
+                    JsonObject.serializer(),
+                )
+            }.orFail("GET settings").getValue("time_resolution_minutes").jsonPrimitive.long
         }
-        admin.send(
-            "PUT",
-            url,
-            buildJsonObject { put("time_resolution_minutes", minutes) },
-            JsonObject.serializer(),
-        ).orFail("set resolution")
+        runBlocking {
+            admin.send(
+                "PUT",
+                url,
+                buildJsonObject { put("time_resolution_minutes", minutes) },
+                JsonObject.serializer(),
+            )
+        }.orFail("set resolution")
         runBlocking { app.accountRefresh.refreshAfterChange().join() }
     }
 
@@ -926,25 +956,29 @@ class EntryFormServerTest {
         field(label).performTextInput(text)
     }
 
-    private fun createEntry(description: String, start: Instant, stop: Instant): Long = web.send(
-        "POST",
-        web.server.api("workspaces", workspace.toString(), "time_entries"),
-        buildJsonObject {
-            put("workspace_id", workspace)
-            put("created_with", "tokkl-android tests")
-            put("description", description)
-            put("start", start.toString())
-            put("stop", stop.toString())
-        },
-        JsonObject.serializer(),
-    ).orFail("POST an entry").getValue("id").jsonPrimitive.long
+    private fun createEntry(description: String, start: Instant, stop: Instant): Long = runBlocking {
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", description)
+                put("start", start.toString())
+                put("stop", stop.toString())
+            },
+            JsonObject.serializer(),
+        )
+    }.orFail("POST an entry").getValue("id").jsonPrimitive.long
 
-    private fun createProject(name: String): Long = web.send(
-        "POST",
-        web.server.api("workspaces", workspace.toString(), "projects"),
-        buildJsonObject { put("name", name) },
-        JsonObject.serializer(),
-    ).orFail("POST a project").getValue("id").jsonPrimitive.long
+    private fun createProject(name: String): Long = runBlocking {
+        web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "projects"),
+            buildJsonObject { put("name", name) },
+            JsonObject.serializer(),
+        )
+    }.orFail("POST a project").getValue("id").jsonPrimitive.long
 
     private fun field(@StringRes label: Int): SemanticsNodeInteraction = composeRule.onNode(isField(label))
 
@@ -1064,7 +1098,7 @@ class EntryFormServerTest {
                 addQueryParameter("end_date", date.plusDays(2).toString() + "T00:00:00Z")
             }
         }.build()
-        return web.get(url, JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
+        return runBlocking { web.get(url, JsonArray.serializer()) }.orFail("GET /api/v9/me/time_entries")
             .map { it.jsonObject }
             .single { it.string("description") == description }
     }

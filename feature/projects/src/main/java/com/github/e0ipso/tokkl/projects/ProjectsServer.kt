@@ -52,15 +52,15 @@ data class ProjectFields(
 )
 
 /**
- * The API v9 project calls of one [workspace] on the configured server. Every call blocks, so make
- * them off the main thread.
+ * The API v9 project calls of one [workspace] on the configured server. Each call suspends while
+ * its request runs.
  */
 class ProjectsServer(private val api: TogglApiClient, private val workspace: Long) {
 
     /** Every project of the workspace, archived ones included, in the server's order. */
-    fun list(): ApiResult<List<Project>> = api.get(url(), ListSerializer(Project.serializer()))
+    suspend fun list(): ApiResult<List<Project>> = api.get(url(), ListSerializer(Project.serializer()))
 
-    fun defaults(): ApiResult<WorkspaceDefaults> =
+    suspend fun defaults(): ApiResult<WorkspaceDefaults> =
         api.get(api.server.api("workspaces", workspace.toString()), WorkspaceDefaults.serializer())
 
     /**
@@ -69,7 +69,7 @@ class ProjectsServer(private val api: TogglApiClient, private val workspace: Lon
      *
      * @param known the ids of the projects the page lists, which the create cannot have made.
      */
-    fun create(fields: ProjectFields, known: Set<Long>): ApiResult<Project> = createOnce(
+    suspend fun create(fields: ProjectFields, known: Set<Long>): ApiResult<Project> = createOnce(
         create = { api.send("POST", url(), fields.toJson(), Project.serializer(), resend = false) },
         list = ::list,
         made = {
@@ -78,11 +78,11 @@ class ProjectsServer(private val api: TogglApiClient, private val workspace: Lon
         },
     )
 
-    fun update(id: Long, fields: ProjectFields): ApiResult<Project> =
+    suspend fun update(id: Long, fields: ProjectFields): ApiResult<Project> =
         api.send("PUT", url(id), fields.toJson(), Project.serializer())
 
     /** Archives the project when [active] is false and restores it when true. */
-    fun setActive(id: Long, active: Boolean): ApiResult<Project> =
+    suspend fun setActive(id: Long, active: Boolean): ApiResult<Project> =
         api.send("PUT", url(id), buildJsonObject { put("active", active) }, Project.serializer())
 
     private fun url(id: Long? = null) = if (id == null) {

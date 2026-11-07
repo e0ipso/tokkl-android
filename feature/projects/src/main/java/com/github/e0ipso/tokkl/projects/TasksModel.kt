@@ -120,7 +120,7 @@ class TasksModel(
         )
     }
 
-    private fun read(api: TogglApiClient, workspace: Long): ApiResult<TasksData> {
+    private suspend fun read(api: TogglApiClient, workspace: Long): ApiResult<TasksData> {
         val project = project ?: return ApiResult.Failure(
             ApiError.InvalidResponse(IllegalArgumentException("no project is open")),
         )

@@ -188,12 +188,14 @@ class TimerSyncServiceLifecycleTest {
             )
             put("duration", -1)
         }
-        val created = other.send(
-            "POST",
-            other.server.api("workspaces", "$workspace", "time_entries"),
-            body,
-            JsonObject.serializer(),
-        )
+        val created = runBlocking {
+            other.send(
+                "POST",
+                other.server.api("workspaces", "$workspace", "time_entries"),
+                body,
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST a running entry")
         return (created.getValue("id") as JsonPrimitive).content.toLong()
     }
@@ -212,12 +214,14 @@ class TimerSyncServiceLifecycleTest {
     }
 
     private fun postTimer(vararg path: String, revision: Long? = null, body: JsonObject? = null): TimerState =
-        other.send(
-            "POST",
-            other.server.app(*path),
-            body ?: buildJsonObject { if (revision != null) put("revision", revision) },
-            TimerState.serializer(),
-        )
+        runBlocking {
+            other.send(
+                "POST",
+                other.server.app(*path),
+                body ?: buildJsonObject { if (revision != null) put("revision", revision) },
+                TimerState.serializer(),
+            )
+        }
             .orFail("POST /api/app/${path.joinToString("/")}")
 
     private companion object {

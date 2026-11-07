@@ -41,11 +41,11 @@ sealed interface StreamEnd {
 /**
  * Holds the timer event stream of [source]'s account through [api] until the stream ends or [link]
  * is cancelled, and gives each state it sends to [source]. Returns how it ended. Blocks on the
- * network and the disk, so call it off the main thread.
+ * disk while it reads the stream, so call it on the IO dispatcher.
  *
  * @param api the signed-in account's client, or null when signed out.
  */
-internal fun holdTimerEvents(api: TogglApiClient?, source: TimerStateSource, link: TimerSyncLink): StreamEnd {
+internal suspend fun holdTimerEvents(api: TogglApiClient?, source: TimerStateSource, link: TimerSyncLink): StreamEnd {
     api ?: return StreamEnd.SignedOut
     return try {
         // Before the request: the server builds the first event's state before it answers.

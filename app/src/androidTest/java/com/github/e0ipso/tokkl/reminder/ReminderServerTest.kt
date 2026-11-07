@@ -99,10 +99,12 @@ class ReminderServerTest {
         Session(context).save(url, account.apiToken)
     }
     private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
-    private fun preferences() = account.client.get(
-        account.client.server.api("me", "preferences"),
-        JsonObject.serializer(),
-    ).orFail("read preferences")
+    private fun preferences() = runBlocking {
+        account.client.get(
+            account.client.server.api("me", "preferences"),
+            JsonObject.serializer(),
+        )
+    }.orFail("read preferences")
     private fun change(value: ReminderPreferences) = runBlocking { app.reminderSettings.change(value).join() }
     private fun seed(): Long {
         val id = account.createEntry(
@@ -251,10 +253,12 @@ class ReminderServerTest {
         send(reminder.action(R.string.notification_pause).actionIntent)
         runBlocking { withTimeout(60_000) { app.cache.running.first { it == null } } }
         awaitNotificationGone()
-        val state = account.client.get(
-            account.client.server.app("timer"),
-            TimerState.serializer(),
-        ).orFail("GET /api/app/timer")
+        val state = runBlocking {
+            account.client.get(
+                account.client.server.app("timer"),
+                TimerState.serializer(),
+            )
+        }.orFail("GET /api/app/timer")
         assertEquals("the server paused the reminded timer", true, state.pause?.paused)
         assertNotEquals(JsonNull, account.entry(id)["stop"])
     }
@@ -271,15 +275,17 @@ class ReminderServerTest {
 
     @Test fun preferenceRoundtripAndOfflineRetryPreserveOtherKeys() {
         assertTrue(ReminderStore(context).load()!!.shared)
-        account.client.send(
-            "POST",
-            account.client.server.api("me", "preferences"),
-            buildJsonObject {
-                put(ReminderPreferences.ENABLED_KEY, false)
-                put(ReminderPreferences.HOURS_KEY, 12)
-            },
-            JsonObject.serializer(),
-        ).orFail("web preference edit")
+        runBlocking {
+            account.client.send(
+                "POST",
+                account.client.server.api("me", "preferences"),
+                buildJsonObject {
+                    put(ReminderPreferences.ENABLED_KEY, false)
+                    put(ReminderPreferences.HOURS_KEY, 12)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("web preference edit")
         refresh()
         assertEquals(ReminderPreferences(false, 12), app.reminderSettings.state.value)
         change(ReminderPreferences(false, 168))

@@ -9,6 +9,8 @@ ksp = "2.3.12"
 work = "2.12.0"
 okhttp = "5.5.1"
 kotlinxSerialization = "1.12.0"
+# The version the AndroidX and Koin libraries already bring, which the API client's suspend calls use.
+kotlinxCoroutines = "1.9.0"
 junit = "4.13.2"
 androidxTestRunner = "1.7.0"
 espresso = "3.7.0"
@@ -44,6 +46,7 @@ androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "work" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }

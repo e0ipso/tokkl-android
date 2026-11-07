@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.api
 
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -53,7 +54,7 @@ class ConfiguredServerGuardTest {
     fun requestToTheConfiguredServerPasses() {
         configured.enqueue(me())
 
-        assertEquals(ApiResult.Success(Me(7)), client.get(server.api("me"), Me.serializer()))
+        assertEquals(ApiResult.Success(Me(7)), runBlocking { client.get(server.api("me"), Me.serializer()) })
         assertEquals(1, configured.requestCount)
     }
 
@@ -61,7 +62,7 @@ class ConfiguredServerGuardTest {
     fun requestToAnotherPortFailsWithTheOriginAndSendsNothing() {
         val url = other.url("/api/v9/me")
 
-        val result = client.get(url, Me.serializer())
+        val result = runBlocking { client.get(url, Me.serializer()) }
 
         assertEquals(ApiResult.Failure(ApiError.HostNotAllowed(origin(url))), result)
         assertEquals(0, other.requestCount)
@@ -72,7 +73,7 @@ class ConfiguredServerGuardTest {
         val otherHost = if (configured.hostName == "127.0.0.1") "localhost" else "127.0.0.1"
         val url = server.api("me").newBuilder().host(otherHost).build()
 
-        val error = failure(client.get(url, Me.serializer()))
+        val error = failure(runBlocking { client.get(url, Me.serializer()) })
 
         assertEquals(ApiError.HostNotAllowed("http://$otherHost:${configured.port}"), error)
         assertEquals(0, configured.requestCount)
@@ -82,7 +83,7 @@ class ConfiguredServerGuardTest {
     fun requestWithAnotherSchemeFails() {
         val url = server.api("me").newBuilder().scheme("https").port(configured.port).build()
 
-        assertEquals(ApiError.HostNotAllowed(origin(url)), failure(client.get(url, Me.serializer())))
+        assertEquals(ApiError.HostNotAllowed(origin(url)), failure(runBlocking { client.get(url, Me.serializer()) }))
         assertEquals(0, configured.requestCount)
     }
 
@@ -104,7 +105,9 @@ class ConfiguredServerGuardTest {
             }
 
             assertNull(refusal.cause)
-            val apiError = failure(testApi.client(server, credentials).get(request.url, Me.serializer()))
+            val apiError = failure(
+                runBlocking { testApi.client(server, credentials).get(request.url, Me.serializer()) },
+            )
             val printed = listOf(refusal.toString(), refusal.stackTraceToString(), refusal.origin, apiError.toString())
             for (text in printed) {
                 assertFalse("the refusal holds the Authorization header", credentials.authorizationHeader in text)
@@ -122,7 +125,7 @@ class ConfiguredServerGuardTest {
         configured.enqueue(MockResponse.Builder().code(302).addHeader("Location", target.toString()).build())
         other.enqueue(me())
 
-        val error = failure(client.get(server.api("me"), Me.serializer()))
+        val error = failure(runBlocking { client.get(server.api("me"), Me.serializer()) })
 
         assertEquals(ApiError.HostNotAllowed(origin(target)), error)
         assertEquals(1, configured.requestCount)
@@ -134,7 +137,7 @@ class ConfiguredServerGuardTest {
         configured.enqueue(MockResponse.Builder().code(301).addHeader("Location", "/tokkl/api/v9/me/again").build())
         configured.enqueue(me())
 
-        val result = client.get(server.api("me"), Me.serializer())
+        val result = runBlocking { client.get(server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Success(Me(7)), result)
         configured.takeRequest()
@@ -151,8 +154,8 @@ class ConfiguredServerGuardTest {
         configured.enqueue(MockResponse.Builder().code(307).addHeader("Location", "/tokkl/again").build())
         configured.enqueue(me())
 
-        client.send("POST", server.api("tags"), body, Me.serializer())
-        client.send("POST", server.api("tags"), body, Me.serializer())
+        runBlocking { client.send("POST", server.api("tags"), body, Me.serializer()) }
+        runBlocking { client.send("POST", server.api("tags"), body, Me.serializer()) }
 
         val requests = List(4) { configured.takeRequest() }
         assertEquals(listOf("POST", "GET", "POST", "POST"), requests.map { it.method })
@@ -166,7 +169,7 @@ class ConfiguredServerGuardTest {
 
         assertEquals(
             ApiError.HostNotAllowed(origin(server.api("me"))),
-            failure(client.get(server.api("me"), Me.serializer())),
+            failure(runBlocking { client.get(server.api("me"), Me.serializer()) }),
         )
         assertEquals(0, configured.requestCount)
     }
@@ -176,8 +179,12 @@ class ConfiguredServerGuardTest {
         testApi.stored = null
         configured.enqueue(me())
 
-        val during = testApi.configured.signingIn(server) { client.get(server.api("me"), Me.serializer()) }
-        val after = client.get(server.api("me"), Me.serializer())
+        val during = runBlocking {
+            testApi.configured.signingIn(
+                server,
+            ) { client.get(server.api("me"), Me.serializer()) }
+        }
+        val after = runBlocking { client.get(server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Success(Me(7)), during)
         assertEquals(ApiResult.Failure(ApiError.HostNotAllowed(origin(server.api("me")))), after)
@@ -190,13 +197,13 @@ class ConfiguredServerGuardTest {
         trust.cleartextConfirmed.clear()
         configured.enqueue(me())
 
-        val refused = client.get(server.api("me"), Me.serializer())
+        val refused = runBlocking { client.get(server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(server)), refused)
         assertEquals("nothing reached the server", 0, configured.requestCount)
 
         trust.confirmCleartext(server)
-        val sent = client.get(server.api("me"), Me.serializer())
+        val sent = runBlocking { client.get(server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Success(Me(7)), sent)
         assertEquals(credentials.authorizationHeader, configured.takeRequest().headers["Authorization"])
@@ -208,7 +215,7 @@ class ConfiguredServerGuardTest {
         testApi.stored = elsewhere
         configured.enqueue(me())
 
-        val result = testApi.client(elsewhere, credentials).get(elsewhere.api("me"), Me.serializer())
+        val result = runBlocking { testApi.client(elsewhere, credentials).get(elsewhere.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(elsewhere)), result)
         assertEquals(0, configured.requestCount)
@@ -224,7 +231,7 @@ class ConfiguredServerGuardTest {
         )!!
         testApi.stored = https
 
-        val error = failure(testApi.client(https, credentials).get(https.api("me"), Me.serializer()))
+        val error = failure(runBlocking { testApi.client(https, credentials).get(https.api("me"), Me.serializer()) })
 
         assertTrue(error.toString(), error is ApiError.Network)
     }

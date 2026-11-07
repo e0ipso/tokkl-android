@@ -43,6 +43,7 @@ import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.ui.assertBrandReadsOnce
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -330,7 +331,7 @@ class SignInScreenTest {
             ApiCredentials.ApiToken(TokklTestServer.apiToken),
             httpClient = OkHttpClient(),
         )
-        return api.get(api.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        return runBlocking { api.get(api.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue(field).jsonPrimitive.long
     }
 

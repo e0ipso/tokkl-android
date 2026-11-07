@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -70,32 +71,38 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
             if (tags.isNotEmpty()) putJsonArray("tag_ids") { tags.forEach { add(it) } }
             if (billable != null) put("billable", billable)
         }
-        api.send(
-            "POST",
-            api.server.api("workspaces", account.workspaceId.toString(), "time_entries"),
-            body,
-            JsonObject.serializer(),
-        )
+        runBlocking {
+            api.send(
+                "POST",
+                api.server.api("workspaces", account.workspaceId.toString(), "time_entries"),
+                body,
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST /api/v9/workspaces/<id>/time_entries")
     }
 
     /** POSTs [body] to `/api/v9/workspaces/<id>/<what>` and returns the new item's id. */
-    private fun create(what: String, body: JsonObject): Long = api.send(
-        "POST",
-        api.server.api("workspaces", account.workspaceId.toString(), what),
-        body,
-        JsonObject.serializer(),
-    )
+    private fun create(what: String, body: JsonObject): Long = runBlocking {
+        api.send(
+            "POST",
+            api.server.api("workspaces", account.workspaceId.toString(), what),
+            body,
+            JsonObject.serializer(),
+        )
+    }
         .orFail("POST /api/v9/workspaces/<id>/$what")
         .getValue("id").jsonPrimitive.long
 
     /** POSTs [body] to Tokkl's own report endpoint `/api/app/report/<path>`, which the web app reads. */
-    fun webReport(path: String, body: JsonObject): JsonObject = api.send(
-        "POST",
-        TokklTestServer.url.app("report", path),
-        body,
-        JsonObject.serializer(),
-    ).orFail("POST /api/app/report/$path")
+    fun webReport(path: String, body: JsonObject): JsonObject = runBlocking {
+        api.send(
+            "POST",
+            TokklTestServer.url.app("report", path),
+            body,
+            JsonObject.serializer(),
+        )
+    }.orFail("POST /api/app/report/$path")
 
     companion object {
         const val ZONE = "Pacific/Kiritimati"
@@ -105,30 +112,36 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
             val account = TestAccounts.create(timezone = ZONE)
             try {
                 val api = account.client
-                api.send(
-                    "PUT",
-                    api.server.api("me"),
-                    buildJsonObject { put("beginning_of_week", 3) },
-                    JsonObject.serializer(),
-                )
+                runBlocking {
+                    api.send(
+                        "PUT",
+                        api.server.api("me"),
+                        buildJsonObject { put("beginning_of_week", 3) },
+                        JsonObject.serializer(),
+                    )
+                }
                     .orFail("PUT /api/v9/me")
                 val rounding = buildJsonObject {
                     put("rounding", 1)
                     put("rounding_minutes", 15)
                 }
-                api.send(
-                    "PUT",
-                    api.server.api("workspaces", account.workspaceId.toString()),
-                    rounding,
-                    JsonObject.serializer(),
-                )
+                runBlocking {
+                    api.send(
+                        "PUT",
+                        api.server.api("workspaces", account.workspaceId.toString()),
+                        rounding,
+                        JsonObject.serializer(),
+                    )
+                }
                     .orFail("PUT /api/v9/workspaces/<id>")
-                api.send(
-                    "POST",
-                    api.server.api("me", "preferences"),
-                    buildJsonObject { put("timeofday_format", "h:mm A") },
-                    JsonObject.serializer(),
-                )
+                runBlocking {
+                    api.send(
+                        "POST",
+                        api.server.api("me", "preferences"),
+                        buildJsonObject { put("timeofday_format", "h:mm A") },
+                        JsonObject.serializer(),
+                    )
+                }
                     .orFail("POST /api/v9/me/preferences")
             } catch (e: Throwable) {
                 TestAccounts.delete(account)

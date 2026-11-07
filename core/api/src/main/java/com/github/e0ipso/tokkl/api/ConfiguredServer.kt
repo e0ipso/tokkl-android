@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.api
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
 /** Where [ConfiguredServer] reads the stored server from, on every request. */
 fun interface StoredServer {
     /** The stored server, or null when there is none. May read the disk. */
@@ -18,7 +21,7 @@ class ConfiguredServer(private val stored: StoredServer) {
     @Volatile
     private var signInCandidate: ServerUrl? = null
 
-    private val signInLock = Any()
+    private val signIn = Mutex()
 
     /**
      * During sign-in, the URL being tried. Otherwise the stored server. Null
@@ -32,7 +35,7 @@ class ConfiguredServer(private val stored: StoredServer) {
      * talks to a server before the app has stored it. One attempt runs at a
      * time, and the stored server applies again when it returns.
      */
-    fun <T> signingIn(candidate: ServerUrl, attempt: () -> T): T = synchronized(signInLock) {
+    suspend fun <T> signingIn(candidate: ServerUrl, attempt: suspend () -> T): T = signIn.withLock {
         signInCandidate = candidate
         try {
             attempt()

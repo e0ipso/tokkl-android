@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.api
 
+import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The shared HTTP client as the app builds it, for tests. Its configured server is [stored] and
@@ -20,14 +22,19 @@ class TestApi(stored: ServerUrl?, trust: ServerTrust = InMemoryServerTrust(*list
 
     val http: SharedHttpClient = SharedHttpClient(configured, CurrentTrust())
 
-    /** An API client of [server] that sends through [httpClient], the shared client by default. */
+    /**
+     * An API client of [server] that sends through [httpClient], the shared client by default. Its
+     * calls run on [io], by default the calling thread, as the tests' unconfined scopes run their
+     * coroutines, so a test sees each answer once the call that sent it returns.
+     */
     fun client(
         server: ServerUrl = checkNotNull(stored) { "no stored server" },
         credentials: ApiCredentials = ApiCredentials.ApiToken("tok-123"),
         httpClient: OkHttpClient = http.instance,
         trustListener: TrustListener? = null,
         successListener: SuccessListener? = null,
-    ): TogglApiClient = TogglApiClient(server, credentials, httpClient, trustListener, successListener)
+        io: CoroutineContext = Dispatchers.Unconfined,
+    ): TogglApiClient = TogglApiClient(server, credentials, httpClient, trustListener, successListener, io)
 
     /** [trust] as it is at each call. */
     private inner class CurrentTrust : ServerTrust {

@@ -228,19 +228,23 @@ class TimerCrossDeviceServerTest {
     fun aSessionFromThePhoneShowsThroughTheApiAndAStaleNextFromTheRingIsRefused() {
         prepareTheMainServer()
         val workspace = fixture.account.workspaceId
-        val project = other.send(
-            "POST",
-            other.server.api("workspaces", "$workspace", "projects"),
-            buildJsonObject { put("name", "Shared project") },
-            JsonObject.serializer(),
-        ).orFail("POST a project")
+        val project = runBlocking {
+            other.send(
+                "POST",
+                other.server.api("workspaces", "$workspace", "projects"),
+                buildJsonObject { put("name", "Shared project") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a project")
             .getValue("id").jsonPrimitive.long
-        other.send(
-            "POST",
-            other.server.api("workspaces", "$workspace", "tags"),
-            buildJsonObject { put("name", "shared") },
-            JsonObject.serializer(),
-        ).orFail("POST a tag")
+        runBlocking {
+            other.send(
+                "POST",
+                other.server.api("workspaces", "$workspace", "tags"),
+                buildJsonObject { put("name", "shared") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a tag")
         fixture.refresh()
         val fields = EntryFields("Phone session", projectId = project, tags = listOf("shared"), billable = true)
 
@@ -409,18 +413,21 @@ class TimerCrossDeviceServerTest {
      */
     private fun awaitTheStream(startedSecondsAgo: Long = 60): Long {
         val workspace = fixture.account.workspaceId
-        val id = other.send(
-            "POST",
-            other.server.api("workspaces", "$workspace", "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests, another device")
-                put("description", "Before the session")
-                put("start", Instant.now().minusSeconds(startedSecondsAgo).truncatedTo(ChronoUnit.SECONDS).toString())
-                put("duration", -1)
-            },
-            JsonObject.serializer(),
-        ).orFail("POST a running entry").getValue("id").jsonPrimitive.long
+        val start = Instant.now().minusSeconds(startedSecondsAgo).truncatedTo(ChronoUnit.SECONDS)
+        val id = runBlocking {
+            other.send(
+                "POST",
+                other.server.api("workspaces", "$workspace", "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests, another device")
+                    put("description", "Before the session")
+                    put("start", start.toString())
+                    put("duration", -1)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a running entry").getValue("id").jsonPrimitive.long
         val revision = other.timerState().revision
         val deadline = SystemClock.elapsedRealtime() + STREAM_CONNECT_MS
         while (held().let { it == null || it.revision < revision || it.runningEntry?.id != id }) {
@@ -599,18 +606,22 @@ class TimerCrossDeviceServerTest {
 
     /** A timer action from the other device: its answer, a 2xx state. */
     private fun postTimer(vararg path: String, revision: Long? = null, body: JsonObject? = null): TimerState =
-        other.send(
-            "POST",
-            other.server.app(*path),
-            body ?: buildJsonObject { if (revision != null) put("revision", revision) },
-            TimerState.serializer(),
-        )
+        runBlocking {
+            other.send(
+                "POST",
+                other.server.app(*path),
+                body ?: buildJsonObject { if (revision != null) put("revision", revision) },
+                TimerState.serializer(),
+            )
+        }
             .orFail("POST /api/app/${path.joinToString("/")}")
 
-    private fun TogglApiClient.timerState(): TimerState = get(
-        server.app("timer"),
-        TimerState.serializer(),
-    ).orFail("GET /api/app/timer")
+    private fun TogglApiClient.timerState(): TimerState = runBlocking {
+        get(
+            server.app("timer"),
+            TimerState.serializer(),
+        )
+    }.orFail("GET /api/app/timer")
 
     private companion object {
         const val TAG = "TimerCrossDevice"

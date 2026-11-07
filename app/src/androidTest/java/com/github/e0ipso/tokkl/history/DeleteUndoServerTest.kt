@@ -286,12 +286,16 @@ class DeleteUndoServerTest {
     }
 
     private fun serverEntry(id: Long): ApiResult<JsonObject> =
-        web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer())
+        runBlocking { web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()) }
 
     /** The ids in the account's trash, Tokkl's `GET /api/app/trash`. */
-    private fun trash(): List<Long> =
-        web.get(web.server.app("trash"), ListSerializer(JsonObject.serializer())).orFail("GET /api/app/trash")
-            .map { it.getValue("id").jsonPrimitive.long }
+    private fun trash(): List<Long> = runBlocking {
+        web.get(
+            web.server.app("trash"),
+            ListSerializer(JsonObject.serializer()),
+        )
+    }.orFail("GET /api/app/trash")
+        .map { it.getValue("id").jsonPrimitive.long }
 
     private fun ApiError.status(): Int? = (this as? ApiError.Http)?.status
 

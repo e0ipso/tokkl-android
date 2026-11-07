@@ -35,10 +35,12 @@ inline fun <reified T : TimerControls> TokklApplication.awaitControls(
 }
 
 /** The server's timer state, read with [client]'s own token, past the app. */
-fun TogglApiClient.timerState(): TimerState = get(
-    server.app("timer"),
-    TimerState.serializer(),
-).orFail("GET /api/app/timer")
+fun TogglApiClient.timerState(): TimerState = runBlocking {
+    get(
+        server.app("timer"),
+        TimerState.serializer(),
+    )
+}.orFail("GET /api/app/timer")
 
 /**
  * Treats the server as one without the timer API, as Toggl Track or an older Tokkl release does,

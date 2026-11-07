@@ -16,10 +16,10 @@ import kotlin.coroutines.CoroutineContext
 fun interface AccountRefreshSteps {
 
     /**
-     * Runs on the refresh's thread, inside its job, with its client, its `/me` answer and its
+     * Runs on the refresh's dispatcher, inside its job, with its client, its `/me` answer and its
      * `GET /api/v9/me/preferences`, null when that request failed.
      */
-    fun afterAnswer(api: TogglApiClient, me: Me, preferences: MePreferences?)
+    suspend fun afterAnswer(api: TogglApiClient, me: Me, preferences: MePreferences?)
 }
 
 /**
@@ -107,7 +107,7 @@ class AccountRefresh(
         synchronized(lock) { refreshing }?.join()
     }
 
-    private fun refreshNow() {
+    private suspend fun refreshNow() {
         val writesBefore = settings.writeCount()
         val api = client() ?: return
         val url = api.server.api("me").newBuilder().addQueryParameter("with_related_data", "true").build()
@@ -129,7 +129,7 @@ class AccountRefresh(
     }
 
     /** The account's preferences, or null when the request fails. */
-    private fun readPreferences(api: TogglApiClient): MePreferences? {
+    private suspend fun readPreferences(api: TogglApiClient): MePreferences? {
         val answer = api.get(api.server.api("me", "preferences"), JsonObject.serializer())
         return (answer as? ApiResult.Success)?.value?.let(::MePreferences)
     }

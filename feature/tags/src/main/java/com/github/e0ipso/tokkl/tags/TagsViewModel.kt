@@ -120,7 +120,7 @@ class TagsViewModel(
         )
     }
 
-    private fun read(api: TogglApiClient, workspace: Long): ApiResult<TagsData> =
+    private suspend fun read(api: TogglApiClient, workspace: Long): ApiResult<TagsData> =
         when (val answer = TagsServer(api, workspace).list()) {
             is ApiResult.Success -> ApiResult.Success(
                 TagsData(answer.value.filter { it.workspaceId == workspace }.sortedForList()),

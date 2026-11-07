@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
@@ -99,7 +100,7 @@ class ChangedCertificateWhileSignedInTest {
     /** `GET /api/v9/me` with the stored session's client, as the app sends it. */
     private fun me(): ApiResult<JsonObject> {
         val client = Session(context).client() ?: throw AssertionError("no stored session")
-        return client.get(endpoint, JsonObject.serializer())
+        return runBlocking { client.get(endpoint, JsonObject.serializer()) }
     }
 
     private fun awaitGone(matcher: SemanticsMatcher, what: String) {

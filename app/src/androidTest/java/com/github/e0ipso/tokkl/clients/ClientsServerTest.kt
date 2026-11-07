@@ -271,11 +271,13 @@ class ClientsServerTest {
     @Test
     fun theServerOutOfReachListsThePhonesClientsWithTheArchivedOnesMarked() {
         val gone = create("clients", buildJsonObject { put("name", "Gone") })
-        account.client.sendNoContent(
-            "POST",
-            url("clients", gone.toString(), "archive"),
-            buildJsonObject {},
-        ).orFail("archive")
+        runBlocking {
+            account.client.sendNoContent(
+                "POST",
+                url("clients", gone.toString(), "archive"),
+                buildJsonObject {},
+            )
+        }.orFail("archive")
         runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, account.client)
         show()
@@ -432,7 +434,7 @@ class ClientsServerTest {
 
     private fun clients(): List<JsonObject> {
         val url = url("clients").newBuilder().addQueryParameter("status", "both").build()
-        return account.client.get(url, ListSerializer(JsonObject.serializer())).orFail("GET clients")
+        return runBlocking { account.client.get(url, ListSerializer(JsonObject.serializer())) }.orFail("GET clients")
     }
 
     private fun JsonObject.id() = getValue("id").jsonPrimitive.long
@@ -441,12 +443,14 @@ class ClientsServerTest {
 
     private fun url(vararg path: String) = account.client.server.api("workspaces", workspace.toString(), *path)
 
-    private fun create(collection: String, body: JsonObject): Long = account.client.send(
-        "POST",
-        url(collection),
-        body,
-        JsonObject.serializer(),
-    ).orFail("POST $collection").getValue("id").jsonPrimitive.long
+    private fun create(collection: String, body: JsonObject): Long = runBlocking {
+        account.client.send(
+            "POST",
+            url(collection),
+            body,
+            JsonObject.serializer(),
+        )
+    }.orFail("POST $collection").getValue("id").jsonPrimitive.long
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 

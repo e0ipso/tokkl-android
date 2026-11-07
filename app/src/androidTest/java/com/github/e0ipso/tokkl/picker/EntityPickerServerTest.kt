@@ -195,15 +195,19 @@ class EntityPickerServerTest {
 
         val api = account.client
         val serverId = runBlocking { app.changes.currentId(id) }
-        val entry = api.get(
-            api.server.api("me", "time_entries", serverId.toString()),
-            JsonObject.serializer(),
-        ).orFail("GET the entry")
+        val entry = runBlocking {
+            api.get(
+                api.server.api("me", "time_entries", serverId.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals(listOf("typed offline"), entry.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
-        val tags = api.get(
-            api.server.api("me", "tags"),
-            ListSerializer(JsonObject.serializer()),
-        ).orFail("GET /api/v9/me/tags")
+        val tags = runBlocking {
+            api.get(
+                api.server.api("me", "tags"),
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/tags")
         assertTrue("the server made the tag", tags.any { it.getValue("name").jsonPrimitive.content == "typed offline" })
     }
 
@@ -274,7 +278,7 @@ class EntityPickerServerTest {
     }
 
     private fun serverAnswers(): Boolean {
-        val result = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+        val result = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
         return (result as? ApiResult.Failure)?.error !is ApiError.Network
     }
 
@@ -284,7 +288,7 @@ class EntityPickerServerTest {
      * uses Old site, Old task and the tag legacy; two newer ones keep Retired and Dropped cached.
      */
     private class Seed(private val api: TogglApiClient) {
-        val workspace = api.get(api.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        val workspace = runBlocking { api.get(api.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         private val client = create("clients", buildJsonObject { put("name", "Acme") })
         val website = create(
@@ -345,18 +349,20 @@ class EntityPickerServerTest {
 
         private fun update(path: String, body: JsonObject) {
             val url = api.server.api("workspaces", workspace.toString(), *path.split('/').toTypedArray())
-            api.send("PUT", url, body, JsonObject.serializer()).orFail("PUT $path")
+            runBlocking { api.send("PUT", url, body, JsonObject.serializer()) }.orFail("PUT $path")
         }
 
         /** POSTs [body] to a workspace collection such as `clients` and returns the new id. */
         private fun create(collection: String, body: JsonObject): Long {
             val url = api.server.api("workspaces", workspace.toString(), *collection.split('/').toTypedArray())
-            return api.send(
-                "POST",
-                url,
-                body,
-                JsonObject.serializer(),
-            ).orFail("POST $collection").getValue("id").jsonPrimitive.long
+            return runBlocking {
+                api.send(
+                    "POST",
+                    url,
+                    body,
+                    JsonObject.serializer(),
+                )
+            }.orFail("POST $collection").getValue("id").jsonPrimitive.long
         }
     }
 

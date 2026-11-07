@@ -409,10 +409,12 @@ class TagsServerTest {
         ).jsonPrimitive.content == name
     }
 
-    private fun tags(): List<JsonObject> = account.client.get(
-        url("tags"),
-        ListSerializer(JsonObject.serializer()),
-    ).orFail("GET tags")
+    private fun tags(): List<JsonObject> = runBlocking {
+        account.client.get(
+            url("tags"),
+            ListSerializer(JsonObject.serializer()),
+        )
+    }.orFail("GET tags")
 
     private fun entry(tag: String) {
         val start = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES)
@@ -424,18 +426,27 @@ class TagsServerTest {
             put("duration", 1800)
             put("tags", buildJsonArray { add(JsonPrimitive(tag)) })
         }
-        account.client.send("POST", url("time_entries"), body, JsonObject.serializer()).orFail("POST time_entries")
+        runBlocking {
+            account.client.send(
+                "POST",
+                url("time_entries"),
+                body,
+                JsonObject.serializer(),
+            )
+        }.orFail("POST time_entries")
     }
 
     private fun url(vararg path: String) = account.client.server.api("workspaces", workspace.toString(), *path)
 
     private fun create(name: String) {
-        account.client.send(
-            "POST",
-            url("tags"),
-            buildJsonObject { put("name", name) },
-            JsonObject.serializer(),
-        ).orFail("POST tags")
+        runBlocking {
+            account.client.send(
+                "POST",
+                url("tags"),
+                buildJsonObject { put("name", name) },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST tags")
     }
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)

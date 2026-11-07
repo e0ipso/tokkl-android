@@ -166,19 +166,23 @@ class TimerViewServerTest {
     private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     private fun setOnTheServer(view: String) {
-        account.client.send(
-            "POST",
-            account.client.server.api("me", "preferences"),
-            buildJsonObject { put("timerView", view) },
-            JsonObject.serializer(),
-        )
+        runBlocking {
+            account.client.send(
+                "POST",
+                account.client.server.api("me", "preferences"),
+                buildJsonObject { put("timerView", view) },
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST /api/v9/me/preferences")
     }
 
-    private fun preferences(): JsonObject = account.client.get(
-        account.client.server.api("me", "preferences"),
-        JsonObject.serializer(),
-    ).orFail("GET /api/v9/me/preferences")
+    private fun preferences(): JsonObject = runBlocking {
+        account.client.get(
+            account.client.server.api("me", "preferences"),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET /api/v9/me/preferences")
 
     private fun serverView(): String? = preferences()["timerView"]?.jsonPrimitive?.content
 

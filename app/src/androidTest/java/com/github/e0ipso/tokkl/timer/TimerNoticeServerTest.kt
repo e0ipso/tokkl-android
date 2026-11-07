@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.orFail
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.After
@@ -40,21 +41,25 @@ class TimerNoticeServerTest {
         // Another client starts a session and ends it at once. The server discards the pomodoro,
         // which rounds to nothing at any time resolution, and says so in the state.
         val client = fixture.account.client
-        val started = client.send(
-            "POST",
-            client.server.app("pomodoro"),
-            buildJsonObject {
-                put("workspace_id", fixture.account.workspaceId)
-                put("description", "Too short")
-            },
-            TimerState.serializer(),
-        ).orFail("POST /api/app/pomodoro")
-        val ended = client.send(
-            "POST",
-            client.server.app("pomodoro", "end"),
-            buildJsonObject { put("revision", started.revision) },
-            TimerState.serializer(),
-        ).orFail("POST /api/app/pomodoro/end")
+        val started = runBlocking {
+            client.send(
+                "POST",
+                client.server.app("pomodoro"),
+                buildJsonObject {
+                    put("workspace_id", fixture.account.workspaceId)
+                    put("description", "Too short")
+                },
+                TimerState.serializer(),
+            )
+        }.orFail("POST /api/app/pomodoro")
+        val ended = runBlocking {
+            client.send(
+                "POST",
+                client.server.app("pomodoro", "end"),
+                buildJsonObject { put("revision", started.revision) },
+                TimerState.serializer(),
+            )
+        }.orFail("POST /api/app/pomodoro/end")
         val discarded = ended.discardedPomodoro
         assertNotNull("the server discarded the pomodoro", discarded)
         fixture.refresh()

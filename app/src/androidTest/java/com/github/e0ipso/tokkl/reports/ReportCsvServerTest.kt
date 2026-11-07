@@ -88,17 +88,19 @@ class ReportCsvServerTest {
             kind,
             ReportRange(fixture.today, fixture.today),
             ReportFilters(projects = listOf(selected)),
-            ReportsServer(fixture.account.client).workspace().orFail("read report workspace"),
+            runBlocking { ReportsServer(fixture.account.client).workspace() }.orFail("read report workspace"),
             DurationFormat.DECIMAL,
         )
         val expected = ByteArrayOutputStream().use { output ->
-            fixture.account.client.downloadCsv(
-                fixture.account.client.server.app("report", "${kind.path}.csv"),
-                request.body(),
-                output,
-                ReportExportFiles.MAX_BYTES,
-                ApiCallCancellation(),
-            ).orFail("read the web app's ${kind.path} CSV")
+            runBlocking {
+                fixture.account.client.downloadCsv(
+                    fixture.account.client.server.app("report", "${kind.path}.csv"),
+                    request.body(),
+                    output,
+                    ReportExportFiles.MAX_BYTES,
+                    ApiCallCancellation(),
+                )
+            }.orFail("read the web app's ${kind.path} CSV")
             output.toByteArray()
         }
         val text = expected.toString(Charsets.UTF_8)

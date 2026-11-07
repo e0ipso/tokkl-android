@@ -230,7 +230,7 @@ class ReportsForegroundTest {
     /** Waits until requests to the test server get through, or fail for want of a network. */
     private fun awaitServer(answers: Boolean) {
         awaitCondition("the server ${if (answers) "answers" else "is out of reach"}") {
-            val result = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+            val result = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
             ((result as? ApiResult.Failure)?.error !is ApiError.Network).takeIf { it == answers }
         }
     }
@@ -241,7 +241,12 @@ class ReportsForegroundTest {
 
     /** Puts 25 minutes at the start of today in the account's timezone, which is always in this week. */
     private fun seedTimeToday(api: TogglApiClient) {
-        val workspace = api.get(api.server.api("me"), Me.serializer()).orFail("GET /api/v9/me").defaultWorkspaceId
+        val workspace = runBlocking {
+            api.get(
+                api.server.api("me"),
+                Me.serializer(),
+            )
+        }.orFail("GET /api/v9/me").defaultWorkspaceId
         val body = buildJsonObject {
             put("workspace_id", workspace)
             put("created_with", "tokkl-android tests")
@@ -249,12 +254,14 @@ class ReportsForegroundTest {
             put("start", LocalDate.now(ZoneId.of(ZONE)).atStartOfDay(ZoneId.of(ZONE)).toInstant().toString())
             put("duration", SEEDED_SECONDS)
         }
-        api.send(
-            "POST",
-            api.server.api("workspaces", workspace.toString(), "time_entries"),
-            body,
-            JsonObject.serializer(),
-        )
+        runBlocking {
+            api.send(
+                "POST",
+                api.server.api("workspaces", workspace.toString(), "time_entries"),
+                body,
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST a time entry")
     }
 

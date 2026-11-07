@@ -68,20 +68,24 @@ class WidgetLargeTextTest {
         try {
             val api = account.client
             val workspace = account.workspaceId
-            val project = api.send(
-                "POST",
-                api.server.api("workspaces", "$workspace", "projects"),
-                buildJsonObject { put("name", "Demo") },
-                JsonObject.serializer(),
-            ).orFail("create project")["id"]!!.jsonPrimitive.long
-            api.sendNoContent(
-                "POST",
-                api.server.api("me", "preferences"),
-                Json.parseToJsonElement(
-                    """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[]""" +
-                        ""","billable":false}]}""",
-                ),
-            ).orFail("save favorite")
+            val project = runBlocking {
+                api.send(
+                    "POST",
+                    api.server.api("workspaces", "$workspace", "projects"),
+                    buildJsonObject { put("name", "Demo") },
+                    JsonObject.serializer(),
+                )
+            }.orFail("create project")["id"]!!.jsonPrimitive.long
+            runBlocking {
+                api.sendNoContent(
+                    "POST",
+                    api.server.api("me", "preferences"),
+                    Json.parseToJsonElement(
+                        """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[]""" +
+                            ""","billable":false}]}""",
+                    ),
+                )
+            }.orFail("save favorite")
             Session(context).save(TokklTestServer.url, account.apiToken)
             runBlocking { app.accountRefresh.refresh().join() }
             val offline = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))

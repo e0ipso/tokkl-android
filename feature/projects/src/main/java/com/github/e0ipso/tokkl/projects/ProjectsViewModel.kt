@@ -149,7 +149,7 @@ class ProjectsViewModel(
     }
 
     /** The workspace's projects and, for the form's hints only, its defaults, which may fail alone. */
-    private fun read(api: TogglApiClient, workspace: Long): ApiResult<ProjectsData> {
+    private suspend fun read(api: TogglApiClient, workspace: Long): ApiResult<ProjectsData> {
         val server = ProjectsServer(api, workspace)
         return when (val projects = server.list()) {
             is ApiResult.Success -> ApiResult.Success(

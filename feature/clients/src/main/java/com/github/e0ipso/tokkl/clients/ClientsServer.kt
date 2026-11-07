@@ -24,17 +24,17 @@ data class Client(
 class ClientProject(val id: Long, @SerialName("client_id") val clientId: Long? = null)
 
 /**
- * The API v9 client calls of one [workspace] on the configured server. Every call blocks, so make
- * them off the main thread.
+ * The API v9 client calls of one [workspace] on the configured server. Each call suspends while
+ * its request runs.
  */
 class ClientsServer(private val api: TogglApiClient, private val workspace: Long) {
 
     /** Every client of the workspace, archived ones included. */
-    fun list(): ApiResult<List<Client>> =
+    suspend fun list(): ApiResult<List<Client>> =
         api.get(url().newBuilder().addQueryParameter("status", "both").build(), ListSerializer(Client.serializer()))
 
     /** Every project of the workspace, archived ones included, for the number each client has. */
-    fun projects(): ApiResult<List<ClientProject>> {
+    suspend fun projects(): ApiResult<List<ClientProject>> {
         val url = api.server.api("workspaces", workspace.toString(), "projects").newBuilder()
             .addQueryParameter("active", "both")
             .build()
@@ -48,13 +48,13 @@ class ClientsServer(private val api: TogglApiClient, private val workspace: Long
      *
      * @param known the ids of the clients the page lists, which the create cannot have made.
      */
-    fun create(name: String, notes: String?, known: Set<Long>): ApiResult<Client> = createOnce(
+    suspend fun create(name: String, notes: String?, known: Set<Long>): ApiResult<Client> = createOnce(
         create = { api.send("POST", url(), body(name, notes), Client.serializer(), resend = false) },
         list = ::list,
         made = { it.id !in known && it.workspaceId == workspace && it.name == name },
     )
 
-    fun update(id: Long, name: String, notes: String?): ApiResult<Client> =
+    suspend fun update(id: Long, name: String, notes: String?): ApiResult<Client> =
         api.send("PUT", url(id.toString()), body(name, notes), Client.serializer())
 
     /**
@@ -62,14 +62,14 @@ class ClientsServer(private val api: TogglApiClient, private val workspace: Long
      * projects it archived, which the page does not need. OkHttp sends no POST without a body, so
      * the body is an empty object.
      */
-    fun archive(id: Long): ApiResult<Unit> = api.sendNoContent(
+    suspend fun archive(id: Long): ApiResult<Unit> = api.sendNoContent(
         "POST",
         url(id.toString(), "archive"),
         buildJsonObject {},
     )
 
     /** Restores the client and every one of its projects, as the web app asks. */
-    fun restore(id: Long): ApiResult<Client> = api.send(
+    suspend fun restore(id: Long): ApiResult<Client> = api.send(
         "POST",
         url(id.toString(), "restore"),
         buildJsonObject { put("restore_all_projects", true) },

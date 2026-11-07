@@ -116,10 +116,12 @@ class DefaultWorkspaceRestartTest {
             }
 
             val serverId = runBlocking { app.changes.currentId(lines[4].toLong()) }
-            val entry = client.get(
-                client.server.api("me", "time_entries", serverId.toString()),
-                JsonObject.serializer(),
-            )
+            val entry = runBlocking {
+                client.get(
+                    client.server.api("me", "time_entries", serverId.toString()),
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("GET /api/v9/me/time_entries/<id>")
             assertEquals("Started offline", entry.getValue("description").jsonPrimitive.content)
             assertEquals("the default workspace", workspace.toLong(), entry.getValue("workspace_id").jsonPrimitive.long)

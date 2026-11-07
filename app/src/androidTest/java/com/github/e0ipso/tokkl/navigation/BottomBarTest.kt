@@ -251,12 +251,14 @@ class BottomBarTest {
                 running.toString(),
                 "stop",
             )
-            account.client.send(
-                "PATCH",
-                stop,
-                buildJsonObject {},
-                JsonObject.serializer(),
-            ).orFail("PATCH .../time_entries/<id>/stop")
+            runBlocking {
+                account.client.send(
+                    "PATCH",
+                    stop,
+                    buildJsonObject {},
+                    JsonObject.serializer(),
+                )
+            }.orFail("PATCH .../time_entries/<id>/stop")
             runBlocking { app.accountRefresh.refresh().join() }
 
             composeRule.waitUntil("the Timer item drops its state", NETWORK_TIMEOUT_MS) {

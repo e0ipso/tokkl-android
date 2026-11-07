@@ -164,32 +164,36 @@ class ReportsScreenTest {
     @Test
     fun summaryUsesCurrentServerRoundingEvenWithAnAlreadyReadWorkspace() {
         val server = ReportsServer(account.client)
-        val old = server.workspace().orFail("read workspace before changing rounding")
+        val old = runBlocking { server.workspace() }.orFail("read workspace before changing rounding")
         assertTrue(old.appSummaryCandidate)
         assertEquals(15, old.roundingMinutes)
         seed.setRoundingMinutes(60)
         val range = ReportRange(seed.weekStart, seed.weekStart.plusDays(6))
         val filters = ReportFilters(projects = listOf(seed.website), billable = BillableFilter.BILLABLE)
-        val report = server.summary(
-            old,
-            range,
-            seed.zone,
-            DayOfWeek.WEDNESDAY,
-            filters,
-        ).orFail("app summary with current rounding")
+        val report = runBlocking {
+            server.summary(
+                old,
+                range,
+                seed.zone,
+                DayOfWeek.WEDNESDAY,
+                filters,
+            )
+        }.orFail("app summary with current rounding")
         // One 20-minute Website entry this week, rounded up to an hour at EUR 40/hour.
         // The other Website entry lies before the range and must not count.
         assertEquals(ReportTotals(3600, 3600, 1, listOf(Amount("EUR", 4000))), report.totals)
         assertEquals(listOf(seed.website), report.projects.map { it.id })
         assertEquals(4000L, report.projects.single().amountCents)
-        val current = server.workspace().orFail("read updated workspace")
-        val fallback = server.summary(
-            current.copy(appSummaryCandidate = false),
-            range,
-            seed.zone,
-            DayOfWeek.WEDNESDAY,
-            filters,
-        )
+        val current = runBlocking { server.workspace() }.orFail("read updated workspace")
+        val fallback = runBlocking {
+            server.summary(
+                current.copy(appSummaryCandidate = false),
+                range,
+                seed.zone,
+                DayOfWeek.WEDNESDAY,
+                filters,
+            )
+        }
             .orFail("compatibility summary with current rounding")
         assertEquals(3600L, fallback.totals.seconds)
         assertEquals(listOf(Amount("EUR", 4000)), fallback.totals.amounts)
@@ -211,14 +215,16 @@ class ReportsScreenTest {
         val money = formatMoney(50, "GBP", context.resources.configuration.locales[0])
         compose.onNode(hasText(money)).performScrollTo().assertExists()
         val server = ReportsServer(account.client)
-        val workspace = server.workspace().orFail("read workspace")
-        val filtered = server.summary(
-            workspace,
-            report.range,
-            seed.zone,
-            DayOfWeek.WEDNESDAY,
-            ReportFilters(projects = listOf(project)),
-        ).orFail("filtered fractional-rate summary")
+        val workspace = runBlocking { server.workspace() }.orFail("read workspace")
+        val filtered = runBlocking {
+            server.summary(
+                workspace,
+                report.range,
+                seed.zone,
+                DayOfWeek.WEDNESDAY,
+                ReportFilters(projects = listOf(project)),
+            )
+        }.orFail("filtered fractional-rate summary")
         assertEquals(ReportTotals(1800, 1800, 2, listOf(Amount("GBP", 50))), filtered.totals)
     }
 
@@ -320,12 +326,14 @@ class ReportsScreenTest {
             put("grouping", "projects")
             put("sub_grouping", "projects")
         }
-        val web = account.client.send(
-            "POST",
-            TokklTestServer.url.app("report"),
-            body,
-            JsonObject.serializer(),
-        ).orFail("POST /api/app/report")
+        val web = runBlocking {
+            account.client.send(
+                "POST",
+                TokklTestServer.url.app("report"),
+                body,
+                JsonObject.serializer(),
+            )
+        }.orFail("POST /api/app/report")
         assertEquals(web["resolution"]!!.jsonPrimitive.content, report.resolution.name.lowercase())
         val totals = web["totals"]!!.jsonObject
         assertEquals(totals["seconds"]!!.jsonPrimitive.long, report.totals.seconds)
@@ -467,7 +475,7 @@ class ReportsScreenTest {
         if (!::account.isInitialized) return
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (true) {
-            val result = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+            val result = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
             if (((result as? ApiResult.Failure)?.error !is ApiError.Network) == answers) return
             check(System.nanoTime() < deadline) { "the server ${if (answers) "does not answer" else "still answers"}" }
             Thread.sleep(POLL_MS)
@@ -485,36 +493,44 @@ class ReportsScreenTest {
         val today: LocalDate = LocalDate.now(zone)
         val weekStart: LocalDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.WEDNESDAY))
         val website: Long
-        private val workspace = api.get(
-            api.server.api("me"),
-            MeIds.serializer(),
-        ).orFail("GET /api/v9/me").defaultWorkspaceId
+        private val workspace = runBlocking {
+            api.get(
+                api.server.api("me"),
+                MeIds.serializer(),
+            )
+        }.orFail("GET /api/v9/me").defaultWorkspaceId
 
         init {
-            api.send(
-                "PUT",
-                api.server.api("me"),
-                buildJsonObject { put("beginning_of_week", 3) },
-                JsonObject.serializer(),
-            ).orFail("PUT /me")
+            runBlocking {
+                api.send(
+                    "PUT",
+                    api.server.api("me"),
+                    buildJsonObject { put("beginning_of_week", 3) },
+                    JsonObject.serializer(),
+                )
+            }.orFail("PUT /me")
             val rounding = buildJsonObject {
                 put("rounding", 1)
                 put("rounding_minutes", 15)
                 put("default_hourly_rate", 40)
                 put("default_currency", "EUR")
             }
-            api.send(
-                "PUT",
-                api.server.api("workspaces", workspace.toString()),
-                rounding,
-                JsonObject.serializer(),
-            ).orFail("PUT the workspace")
-            api.send(
-                "POST",
-                api.server.api("me", "preferences"),
-                buildJsonObject { put("duration_format", "classic") },
-                JsonObject.serializer(),
-            )
+            runBlocking {
+                api.send(
+                    "PUT",
+                    api.server.api("workspaces", workspace.toString()),
+                    rounding,
+                    JsonObject.serializer(),
+                )
+            }.orFail("PUT the workspace")
+            runBlocking {
+                api.send(
+                    "POST",
+                    api.server.api("me", "preferences"),
+                    buildJsonObject { put("duration_format", "classic") },
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("POST /me/preferences")
             website = project(
                 buildJsonObject {
@@ -551,15 +567,17 @@ class ReportsScreenTest {
         }
 
         fun setRoundingMinutes(minutes: Int) {
-            api.send(
-                "PUT",
-                api.server.api("workspaces", workspace.toString()),
-                buildJsonObject {
-                    put("rounding", 1)
-                    put("rounding_minutes", minutes)
-                },
-                JsonObject.serializer(),
-            )
+            runBlocking {
+                api.send(
+                    "PUT",
+                    api.server.api("workspaces", workspace.toString()),
+                    buildJsonObject {
+                        put("rounding", 1)
+                        put("rounding_minutes", minutes)
+                    },
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("set report rounding")
         }
 
@@ -581,12 +599,14 @@ class ReportsScreenTest {
         /** The week's [index]th day, or today when that day is still to come. */
         private fun day(index: Long): LocalDate = minOf(weekStart.plusDays(index), today)
 
-        private fun project(body: JsonObject): Long = api.send(
-            "POST",
-            api.server.api("workspaces", workspace.toString(), "projects"),
-            body,
-            Created.serializer(),
-        ).orFail("POST a project").id
+        private fun project(body: JsonObject): Long = runBlocking {
+            api.send(
+                "POST",
+                api.server.api("workspaces", workspace.toString(), "projects"),
+                body,
+                Created.serializer(),
+            )
+        }.orFail("POST a project").id
 
         private fun entry(start: LocalDateTime, seconds: Int, project: Long?, billable: Boolean) {
             val body = buildJsonObject {
@@ -598,12 +618,14 @@ class ReportsScreenTest {
                 if (project != null) put("project_id", project)
                 put("billable", billable)
             }
-            api.send(
-                "POST",
-                api.server.api("workspaces", workspace.toString(), "time_entries"),
-                body,
-                Created.serializer(),
-            ).orFail("POST a time entry")
+            runBlocking {
+                api.send(
+                    "POST",
+                    api.server.api("workspaces", workspace.toString(), "time_entries"),
+                    body,
+                    Created.serializer(),
+                )
+            }.orFail("POST a time entry")
         }
     }
 

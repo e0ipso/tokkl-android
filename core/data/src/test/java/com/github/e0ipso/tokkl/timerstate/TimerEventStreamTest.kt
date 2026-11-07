@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -210,7 +211,7 @@ class TimerEventStreamTest {
         // The same delay times out a plain request on that client.
         server.enqueue(eventStream("{}").bodyDelay(600, TimeUnit.MILLISECONDS).build())
 
-        val end = holdTimerEvents(api, holder, link.link)
+        val end = runBlocking { holdTimerEvents(api, holder, link.link) }
 
         assertEquals(StreamEnd.Ended, end)
         assertEquals(12L, holder.state.value?.state?.revision)
@@ -218,7 +219,7 @@ class TimerEventStreamTest {
         val request = server.takeRequest()
         assertEquals("GET" to "/tokkl/api/app/timer/events", request.method to request.url.encodedPath)
         assertEquals(credentials.authorizationHeader, request.headers["Authorization"])
-        val plain = api.get(url.app("timer"), JsonObject.serializer())
+        val plain = runBlocking { api.get(url.app("timer"), JsonObject.serializer()) }
         assertTrue(
             plain.toString(),
             plain is ApiResult.Failure && (plain.error as? ApiError.Network)?.cause is SocketTimeoutException,
@@ -233,10 +234,13 @@ class TimerEventStreamTest {
         server.enqueue(answer(502, "text/html", "<p>Bad gateway</p>"))
         server.enqueue(answer(200, "application/json", json(state(1))))
 
-        assertEquals(StreamEnd.Refused, holdTimerEvents(api, holder, link.link))
-        assertEquals("a proxy's 401", StreamEnd.Refused, holdTimerEvents(api, holder, link.link))
-        assertEquals(StreamEnd.Failed(ApiError.UnexpectedStatus(502)), holdTimerEvents(api, holder, link.link))
-        val notAStream = holdTimerEvents(api, holder, link.link)
+        assertEquals(StreamEnd.Refused, runBlocking { holdTimerEvents(api, holder, link.link) })
+        assertEquals("a proxy's 401", StreamEnd.Refused, runBlocking { holdTimerEvents(api, holder, link.link) })
+        assertEquals(
+            StreamEnd.Failed(ApiError.UnexpectedStatus(502)),
+            runBlocking { holdTimerEvents(api, holder, link.link) },
+        )
+        val notAStream = runBlocking { holdTimerEvents(api, holder, link.link) }
         assertTrue(
             notAStream.toString(),
             notAStream is StreamEnd.Failed && notAStream.error is ApiError.InvalidResponse,
@@ -244,9 +248,9 @@ class TimerEventStreamTest {
         assertNull("no state came from any of them", holder.state.value)
         assertEquals(0, link.connected)
 
-        assertEquals(StreamEnd.SignedOut, holdTimerEvents(null, holder, link.link))
+        assertEquals(StreamEnd.SignedOut, runBlocking { holdTimerEvents(null, holder, link.link) })
         server.close()
-        val unreachable = holdTimerEvents(api, holder, link.link)
+        val unreachable = runBlocking { holdTimerEvents(api, holder, link.link) }
         assertTrue(unreachable.toString(), unreachable is StreamEnd.Failed && unreachable.error is ApiError.Network)
     }
 

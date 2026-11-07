@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -59,7 +60,7 @@ class SessionTrustTest {
         server.enqueue(me())
         val client = client()
 
-        val refused = client.get(url.api("me"), JsonObject.serializer())
+        val refused = runBlocking { client.get(url.api("me"), JsonObject.serializer()) }
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(url)), refused)
         assertEquals("no request before the confirmation", 0, server.requestCount)
@@ -70,17 +71,17 @@ class SessionTrustTest {
         assertTrue(trust.isCleartextConfirmed(url))
         assertEquals(1, retries)
         assertEquals(SessionTrust.State(), model.state.value)
-        assertTrue(client.get(url.api("me"), JsonObject.serializer()) is ApiResult.Success)
+        assertTrue(runBlocking { client.get(url.api("me"), JsonObject.serializer()) } is ApiResult.Success)
         assertEquals(ApiCredentials.ApiToken(TOKEN).authorizationHeader, server.takeRequest().headers["Authorization"])
     }
 
     @Test
     fun cancellingKeepsRequestsRefusedAndTheSameRefusalLeavesThePromptClosed() {
         val client = client()
-        client.get(url.api("me"), JsonObject.serializer())
+        runBlocking { client.get(url.api("me"), JsonObject.serializer()) }
 
         model.cancel()
-        val again = client.get(url.api("me"), JsonObject.serializer())
+        val again = runBlocking { client.get(url.api("me"), JsonObject.serializer()) }
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(url)), again)
         assertEquals(0, server.requestCount)
@@ -99,7 +100,7 @@ class SessionTrustTest {
         server.enqueue(me())
         val client = client(handshakeAsIfServing(CERTIFICATE))
 
-        val refused = client.get(url.api("me"), JsonObject.serializer())
+        val refused = runBlocking { client.get(url.api("me"), JsonObject.serializer()) }
 
         val refusal = ApiError.UntrustedCertificate(CERTIFICATE, changed = true)
         assertEquals(ApiResult.Failure(refusal), refused)
@@ -109,7 +110,7 @@ class SessionTrustTest {
         model.accept()
 
         assertEquals(CERTIFICATE.sha256, trust.pinnedSha256(CERTIFICATE.host, CERTIFICATE.port))
-        assertTrue(client.get(url.api("me"), JsonObject.serializer()) is ApiResult.Success)
+        assertTrue(runBlocking { client.get(url.api("me"), JsonObject.serializer()) } is ApiResult.Success)
         assertEquals(1, server.requestCount)
     }
 
@@ -131,7 +132,7 @@ class SessionTrustTest {
         trust.confirmCleartext(url)
         server.close()
 
-        val result = client().get(url.api("me"), JsonObject.serializer())
+        val result = runBlocking { client().get(url.api("me"), JsonObject.serializer()) }
 
         assertTrue(result.toString(), (result as ApiResult.Failure).error is ApiError.Network)
         assertNull(model.state.value.refusal)
@@ -144,7 +145,7 @@ class SessionTrustTest {
         trust.confirmCleartext(url)
         server.enqueue(MockResponse.Builder().code(403).build())
 
-        client().get(url.api("me"), JsonObject.serializer())
+        runBlocking { client().get(url.api("me"), JsonObject.serializer()) }
 
         assertEquals(SessionTrust.State(), model.state.value)
     }
