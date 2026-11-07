@@ -15,8 +15,8 @@ _None yet._
 ## Components (what exists)
 - Open [**Cached history days and grouping**](map-cached-history-days-and-grouping.md) to learn about: Account-local history groups and pages cached stopped entries with reconnect-aware retention. #ui #timer #cache #time
 - Open [**Timer page layout and scroll-away header**](map-timer-page-layout-and-scroll-away-header.md) to learn about: Bounded Timer content and the shared scroll-away header adapt to short and wide windows. #ui #timer #android
-- Open [**Timer List and Calendar preference sync**](map-timer-list-and-calendar-preference-sync.md) to learn about: View selection persists locally and writes the supported server preference without blocking navigation. #ui #timer #offline
 - Open [**Timer Today and This week totals**](map-timer-today-and-this-week-totals.md) to learn about: Cached real segments contribute once using account timezone, week start and duration formatting. #ui #timer #cache #time
+- Open [**Timer List and Calendar preference sync**](map-timer-list-and-calendar-preference-sync.md) to learn about: View selection persists locally and writes the supported server preference without blocking navigation. #ui #timer #offline
 - Open [**Week calendar layout and queued dragging**](map-week-calendar-layout-and-queued-dragging.md) to learn about: Adaptive week blocks, accessible navigation and snap-grid dragging operate on cached entries. #ui #timer #cache #accessibility
 
 ## By topic

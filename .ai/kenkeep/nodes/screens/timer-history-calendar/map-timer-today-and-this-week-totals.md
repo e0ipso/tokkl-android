@@ -21,7 +21,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: medium
 ---
-The Timer page places Today and This week beneath the timer controls and before the List/Calendar switch, within the scroll-away header. `timer/TimerTotals.kt` provides `timerPeriodTotals` from cached entries using the account timezone, configured week start and duration format.
+The Timer page places Today and This week beneath the timer controls and before the List/Calendar switch, within the scroll-away header. `timerstate/TimerTotals.kt` in `:core:data` provides `timerPeriodTotals` from cached entries using the account timezone, configured week start and duration format. `timer/TimerTotalsState.kt` turns them into the row's state and ticks it (`timerTotals`): each whole second while an entry runs, otherwise at the account's midnight. `TimerPageViewModel.totals` shares that flow while the page shows, apart from the page's other state, so only the row redraws each second, and `TimerTotals` draws the state it gets.
 
 Actual pause segments contribute to the totals; the cumulative pause-chain display is not added again. The cache retains one entry after local-to-server remapping, and the helper can exclude a mapped server twin when an ID map is supplied. An unresolved account timezone hides the row rather than substituting the device timezone.
 

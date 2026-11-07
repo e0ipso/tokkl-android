@@ -15,8 +15,8 @@ _None yet._
 ## Components (what exists)
 - Open [**Offline entry mutations and local ID mapping**](map-offline-entry-mutations-and-local-id-mapping.md) to learn about: Atomic local entry changes, full pending snapshots and negative-ID remapping. #offline #cache #room #queue
 - Open [**Ordered entry sending and refusals**](map-ordered-entry-sending-and-refusals.md) to learn about: Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication. #offline #api #queue
-- Open [**Background queue work and empty-queue cancellation**](map-background-queue-work-and-empty-queue-cancellation.md) to learn about: Connected WorkManager delivery and serialized cancellation when the queue empties. #offline #queue #android
 - Open [**Cached entity picker and offline creation**](map-cached-entity-picker-and-offline-creation.md) to learn about: Shared project, task and tag selection uses cached data and explicit offline creation limits. #offline #cache #ui
+- Open [**Background queue work and empty-queue cancellation**](map-background-queue-work-and-empty-queue-cancellation.md) to learn about: Connected WorkManager delivery and serialized cancellation when the queue empties. #offline #queue #android
 - Open [**Queued delete and short-stop Undo**](map-queued-delete-and-short-stop-undo.md) to learn about: Undo operations preserve ordering and restore stopped zero-length entries. #offline #queue #cache
 - Open [**Remote running conflicts and lost create responses**](map-remote-running-conflicts-and-lost-create-responses.md) to learn about: Captured start conflict handling and duplicate prevention after uncertain POST delivery. #offline #api #queue
 - Open [**Room queue migration continuity**](map-room-queue-migration-continuity.md) to learn about: Exported schemas and consecutive migrations preserve pending requests and Undo state. #offline #room #queue

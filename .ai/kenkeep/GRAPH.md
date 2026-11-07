@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:c7df1074a8fc9d0a8358dd33a2c6a65341e484508ad88841b7ec258d9a0643eb'
-node_count: 92
+nodes_hash: 'sha256:8f50724c357b156f1e5b156afc311d9c19337a2904f37742d8c4f2432b7a536b'
+node_count: 93
 ---
 # kenkeep Graph
 
-Total nodes: 92
+Total nodes: 93
 
 ## map-account-cache-and-capabilities
 
@@ -479,6 +479,14 @@ Total nodes: 92
 - **tags:** testing, emulator, energy
 - **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection, map-oom-kill-ends-agent-session
 - **derived_from:** scripts/instrumented-tests.sh
+
+## practice-composables-take-plain-state-from-view-models
+
+- **kind:** practice
+- **title:** Give composables plain state from view models, with previews beside them
+- **path:** design/practice-composables-take-plain-state-from-view-models.md
+- **tags:** ui, compose, architecture
+- **relates_to:** map-ui-components-and-compose-layout-gotchas, map-catalog-pages-projects-clients-tags, map-cached-entity-picker-and-offline-creation, map-timer-today-and-this-week-totals
 
 ## practice-drain-sittings-gate-on-memory-not-a-sitting-cap
 
