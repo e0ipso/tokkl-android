@@ -12,7 +12,7 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.material3.ColorProviders
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.widget.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.cache.EntryFields

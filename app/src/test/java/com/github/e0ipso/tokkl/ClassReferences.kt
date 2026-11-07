@@ -44,6 +44,10 @@ internal object ClassReferences {
         "trash.TrashFeatureModuleKt",
         "settings.SettingsFeatureModuleKt",
         "sync.SyncFeatureModuleKt",
+        "notification.NotificationFeatureModuleKt",
+        "shortcuts.ShortcutsFeatureModuleKt",
+        "tile.TileFeatureModuleKt",
+        "widget.WidgetFeatureModuleKt",
     ).map { "com.github.e0ipso.tokkl.$it" }
 
     /**

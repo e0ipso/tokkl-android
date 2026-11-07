@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.widgetClock
 import com.github.e0ipso.tokkl.components.widgetState
+import com.github.e0ipso.tokkl.feature.widget.R
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timer.TimerTotals
 import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
@@ -52,10 +53,11 @@ class WidgetMidnightServerTest {
         NativeWidget().use { host ->
             host.awaitText("Crosses midnight")
             val before = ready()
-            assertEquals(day, before.day!!.date)
-            assertNotNull(before.day.running)
+            val beforeDay = before.day!!
+            assertEquals(day, beforeDay.date)
+            assertNotNull(beforeDay.running)
             val beforeSeconds = timerPeriodTotals(fixture.rows(), settings, clock.instant())!!.todaySeconds
-            assertEquals(beforeSeconds, before.day.totalSeconds(clock.instant()))
+            assertEquals(beforeSeconds, beforeDay.totalSeconds(clock.instant()))
             host.await("the running and day-total native clocks are drawn") { host.clockBaseValues().size >= 2 }
             val base = host.clockBaseValues()[1]
             val nativeWallBase = Instant.now().minusMillis(SystemClock.elapsedRealtime() - base)
@@ -77,11 +79,12 @@ class WidgetMidnightServerTest {
             driver.setInitialDelayMet(check.id); driver.setAllConstraintsMet(check.id)
             host.await("running check redraws a new account day") { WidgetStore(fixture.context).load() != oldKey }
             val after = ready()
-            assertEquals(day.plusDays(1), after.day!!.date)
+            val afterDay = after.day!!
+            assertEquals(day.plusDays(1), afterDay.date)
             assertEquals("unchanged response need not write Room", rows, fixture.rows())
-            assertNull("overnight running entry belongs to its start day", after.day.running)
-            assertEquals(0L, after.day.totalSeconds(clock.instant()))
-            assertEquals(timerPeriodTotals(rows, settings, clock.instant())!!.todaySeconds, after.day.totalSeconds(clock.instant()))
+            assertNull("overnight running entry belongs to its start day", afterDay.running)
+            assertEquals(0L, afterDay.totalSeconds(clock.instant()))
+            assertEquals(timerPeriodTotals(rows, settings, clock.instant())!!.todaySeconds, afterDay.totalSeconds(clock.instant()))
             // Render the actual Timer-page totals component with the same real cache and clock.
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <receiver android:name="com.github.e0ipso.tokkl.reminder.ReminderActionReceiver" android:exported="false" />
+        <!-- The running timer notification's Stop action. Only its own PendingIntent reaches it. -->
+        <receiver
+            android:name="com.github.e0ipso.tokkl.notification.StopTimerReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

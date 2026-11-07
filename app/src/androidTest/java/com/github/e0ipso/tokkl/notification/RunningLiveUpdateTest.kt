@@ -7,7 +7,7 @@ import android.os.Build
 import androidx.compose.ui.graphics.toArgb
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.time.formatDuration

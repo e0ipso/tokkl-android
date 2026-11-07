@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pause and Resume on every timer surface (docs/PRD.md T1), worded as the web app's timer. -->
+<resources>
+    <!-- What TalkBack reads for the widget's buttons. -->
+    <string name="widget_pause_description">Pause the timer</string>
+    <string name="widget_resume_description">Resume the timer</string>
+</resources>

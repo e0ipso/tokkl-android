@@ -12,9 +12,10 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.widget.R
 import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.tile.R as TileR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
@@ -340,7 +341,7 @@ class WidgetServerTest {
         QuickSettingsTile.awaitText("tile ready", "Tile to widget")
         QuickSettingsTile.click()
         native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
-        QuickSettingsTile.awaitText("stopped", context.getString(R.string.tile_continue))
+        QuickSettingsTile.awaitText("stopped", context.getString(TileR.string.tile_continue))
         QuickSettingsTile.click()
         native.awaitText("Tile to widget", 1_000)
         native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)

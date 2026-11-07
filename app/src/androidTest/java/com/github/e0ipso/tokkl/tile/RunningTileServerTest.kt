@@ -12,7 +12,7 @@ import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.tile.R
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.RequestCounter

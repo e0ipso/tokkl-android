@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- A launcher shortcut queues its favorite and shows a toast without opening an app screen. -->
+        <activity
+            android:name="com.github.e0ipso.tokkl.shortcuts.StartFavoriteActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Tokkl.Shortcut" />
+    </application>
+</manifest>

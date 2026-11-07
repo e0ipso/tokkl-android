@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.components.reminderSettings
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
+import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction

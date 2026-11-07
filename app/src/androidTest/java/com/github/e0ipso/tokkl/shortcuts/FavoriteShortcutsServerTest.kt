@@ -16,8 +16,9 @@ import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.shortcuts.R
 import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.widget.R as WidgetR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TestAccounts
@@ -169,13 +170,13 @@ class FavoriteShortcutsServerTest {
         saveFavorites(favorite("Shortcut to widget", project))
         awaitShortcuts("the favorite", listOf("Shortcut to widget"))
         NativeWidget().use { widget ->
-            widget.awaitDescription(context.getString(R.string.widget_start_description))
+            widget.awaitDescription(context.getString(WidgetR.string.widget_start_description))
             AirplaneMode.set(true, web)
             val shortcut = published().single()
             val started = TapToVisibleDeadline("shortcut Start")
             context.startActivity(Intent(shortcut.intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             started.await("shortcut start reaches the native widget") {
-                widget.hasText("Shortcut to widget") && widget.hasDescription(context.getString(R.string.widget_stop_description))
+                widget.hasText("Shortcut to widget") && widget.hasDescription(context.getString(WidgetR.string.widget_stop_description))
             }
             assertEquals("Shortcut to widget", runBlocking { app.cache.running.first() }?.entry?.description)
             assertEquals("the offline start is queued", 1, runBlocking { app.changes.unsentCount.first() })

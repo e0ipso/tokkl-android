@@ -8,7 +8,7 @@ import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.annotation.StringRes
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.notification.R
 import org.junit.Assert.assertNull
 
 /** Reads the running timer's notification as the system holds it, for the tests. */

@@ -11,8 +11,8 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.compose
 import androidx.glance.appwidget.provideContent
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.feature.widget.R as WidgetR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.PhaseKind
@@ -35,7 +35,7 @@ class PomodoroWidgetClockTest {
     @Test fun nativeCountdownAndOvertimeTickWithoutProviderUpdates() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         NativeWidget(PomodoroWidgetReceiver::class.java).use { host ->
-            host.awaitDescription(context.getString(R.string.widget_sign_in))
+            host.awaitDescription(context.getString(WidgetR.string.widget_sign_in))
             host.awaitUpdatesSettled()
             host.resize(298, 222)
             for (ended in listOf(false, true)) {
@@ -49,7 +49,7 @@ class PomodoroWidgetClockTest {
                 val before = SystemClock.elapsedRealtime() + Duration.between(Instant.now(), end).toMillis()
                 val views = runBlocking { Fixture(state).compose(context, size = DpSize(298.dp, 222.dp)) }
                 host.showInConfiguration(views, Configuration(context.resources.configuration))
-                host.awaitDescription(context.getString(if (ended) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining))
+                host.awaitDescription(context.getString(if (ended) R.string.pomodoro_overtime else R.string.pomodoro_remaining))
                 assertEquals("the native clock uses the corrected planned end", before.toDouble(), host.clockBases().values.single().toDouble(), 150.0)
                 host.assertTextFitsVertically()
                 host.assertClockTicksWithoutUpdates()

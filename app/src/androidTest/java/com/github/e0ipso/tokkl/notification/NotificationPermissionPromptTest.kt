@@ -19,7 +19,7 @@ import androidx.core.app.ActivityOptionsCompat
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale

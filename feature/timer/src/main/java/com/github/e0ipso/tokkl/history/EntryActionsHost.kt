@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.history
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -30,7 +29,6 @@ import com.github.e0ipso.tokkl.session.AccountSettings
  * waiting for the server stays available until retried or dismissed.
  */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun EntryActionsHost(
     state: EntryActionsState,
     onUndo: (Long) -> Unit,

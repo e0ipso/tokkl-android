@@ -149,7 +149,6 @@ android {
 
 dependencies {
     implementation(project(":core:api"))
-    implementation(project(":core:time"))
     implementation(project(":core:ui"))
     implementation(project(":core:data"))
     implementation(project(":core:shared"))
@@ -164,21 +163,17 @@ dependencies {
     implementation(project(":feature:trash"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:sync"))
+    implementation(project(":feature:notification"))
+    implementation(project(":feature:shortcuts"))
+    implementation(project(":feature:tile"))
+    implementation(project(":feature:widget"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material3.adaptive)
     implementation(libs.androidx.compose.ui)
     // Navigation 3 keeps the back stack and gives each screen its own view model store.
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
-    implementation(libs.okhttp)
-    implementation(libs.kotlinx.serialization.json)
-    // The widgets watch the cache database's invalidation tracker.
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.work.runtime)
-    implementation(libs.androidx.glance.appwidget)
-    implementation(libs.androidx.glance.material3)
     // Dependency injection. Koin is Apache-2.0.
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
@@ -196,6 +191,8 @@ dependencies {
     testImplementation(platform(libs.koin.bom))
     testImplementation(libs.koin.test)
     testImplementation(libs.koin.test.junit4)
+    // AppModulesTest names the workers' parameters.
+    testImplementation(libs.androidx.work.runtime)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -205,6 +202,11 @@ dependencies {
     // Exercises the actual launcher menu and shortcut tap.
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.androidx.work.testing)
+    // The device tests read the cache database, the queue's work and the widgets themselves.
+    androidTestImplementation(libs.androidx.room.runtime)
+    androidTestImplementation(libs.androidx.work.runtime)
+    androidTestImplementation(libs.androidx.glance.appwidget)
+    androidTestImplementation(libs.androidx.glance.material3)
     androidTestUtil(libs.androidx.test.orchestrator)
 }
 
