@@ -2,10 +2,11 @@ plugins {
     `kotlin-dsl`
 }
 
-// The plugins compile against AGP only. The main build puts AGP and the Kotlin plugins on its
-// classpath through the root build.gradle.kts, so every module runs the same plugin classes.
+// The plugins compile against AGP and detekt only. The main build puts those and the Kotlin plugins
+// on its classpath through the root build.gradle.kts, so every module runs the same plugin classes.
 dependencies {
     compileOnly(libs.android.gradlePlugin)
+    compileOnly(libs.detekt.gradlePlugin)
 }
 
 gradlePlugin {

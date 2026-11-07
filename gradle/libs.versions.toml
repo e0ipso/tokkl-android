@@ -17,6 +17,10 @@ uiautomator = "2.4.0"
 koin = "4.2.2"
 lifecycle = "2.11.0"
 navigation3 = "1.2.1"
+# Static analysis. Detekt 2 is the line that reads Kotlin 2.4 (it bundles the 2.4.10 compiler) and
+# that the Compose rules 0.6 build on. Both are Apache-2.0.
+detekt = "2.0.0-alpha.6"
+composeRules = "0.6.8"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -56,6 +60,11 @@ androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", 
 
 # The plugins that build-logic compiles against.
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+detekt-gradlePlugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+
+# Detekt rule sets: ktlint's formatting rules, and the Compose rules.
+detekt-rules-ktlint = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt" }
+compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "composeRules" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -64,6 +73,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 
 # The convention plugins in build-logic.
 tokkl-android-application = { id = "tokkl.android.application" }

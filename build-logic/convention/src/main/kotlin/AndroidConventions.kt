@@ -35,6 +35,7 @@ internal fun Project.configureAndroid(android: CommonExtension) {
         }
     }
     keepLintAnalysisToThisCheckout()
+    configureDetekt()
 }
 
 /** Turns on Compose for an Android module and adds the Compose BOM. */

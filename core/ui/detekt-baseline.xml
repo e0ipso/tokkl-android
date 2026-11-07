@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<!-- Findings whose fix would change behaviour. config/detekt/detekt.yml says how the rest is fixed. -->
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <!-- The fix, movableContentOf, keeps the slot's state when the layout switches branches, where it now starts again. That changes behaviour. -->
+    <ID>ContentSlotReused:ScrollAwayColumn.kt:top: @Composable ColumnScope.() -&gt; Unit</ID>
+  </CurrentIssues>
+</SmellBaseline>
