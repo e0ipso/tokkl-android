@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:aca2caf204f7865d1c7426d6d6d155a32e50b2afb78caa8dd56462bb33de8944'
-node_count: 91
+nodes_hash: 'sha256:752b8affd07df53e953d25f839cbacb9439836ba8d07ce09918b7089278d8b78'
+node_count: 92
 ---
 # kenkeep Graph
 
-Total nodes: 91
+Total nodes: 92
 
 ## map-account-cache-and-capabilities
 
@@ -487,6 +487,15 @@ Total nodes: 91
 - **path:** build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md
 - **tags:** sift, agents, memory
 - **relates_to:** practice-reuse-drain-checks-by-content-and-test-configuration, map-oom-kill-ends-agent-session, practice-choose-plain-aosp-images-and-compatible-renderers, practice-let-the-runner-own-emulator-boot-and-settings
+
+## practice-fix-detekt-findings-in-code
+
+- **kind:** practice
+- **title:** Fix detekt findings in code, and baseline only a fix that changes behaviour
+- **path:** build-and-tooling/practice-fix-detekt-findings-in-code.md
+- **tags:** build, gradle, kotlin
+- **relates_to:** map-gradle-build-sdk-levels-kotlin-and-memory
+- **derived_from:** config/detekt/detekt.yml, build-logic/convention/src/main/kotlin/Detekt.kt
 
 ## practice-gradle-no-daemon-in-parallel-worktrees
 

@@ -43,7 +43,7 @@ _None yet._
 - Open [**Ordered entry sending and refusals**](../../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
 ### #gradle
 - Open [**Gradle build settings: SDK levels, Kotlin version, memory and build cache**](../../build-and-tooling/map-gradle-build-sdk-levels-kotlin-and-memory.md) — minSdk 31, compileSdk from the dependencies, targetSdk from the emulator, Kotlin from the catalog, a small heap and the local build cache.
-- Open [**Pass class and package lists through runner filter files**](practice-pass-class-and-package-lists-through-runner-filter-files.md) — The script preserves comma-separated test selection despite AGP argument splitting.
+- Open [**Fix detekt findings in code, and baseline only a fix that changes behaviour**](../../build-and-tooling/practice-fix-detekt-findings-in-code.md) — check runs detekt 2 with ktlint's intellij_idea rules and the Compose rules on every module. Fix findings in code; a baseline entry needs a behaviour change as its reason.
 - Open [**Build with --no-daemon in parallel worktrees and never run --stop**](../../build-and-tooling/practice-gradle-no-daemon-in-parallel-worktrees.md) — ./gradlew --stop ends every daemon of that Gradle version for the user, including one serving a build in another worktree.
 ### #notification
 - Open [**Running timer notification follows the cache's running entry**](../../data-and-offline/map-running-timer-notification-follows-the-cache.md) — notification/RunningNotificationSync posts, replaces and removes the ongoing notification from the cache and the held timer state. Stop works offline, Pause needs the server.

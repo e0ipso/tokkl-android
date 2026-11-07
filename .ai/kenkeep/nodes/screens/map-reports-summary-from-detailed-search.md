@@ -20,7 +20,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`reports/` holds the Reports screen (`Destination.REPORTS`): a tab per report, Summary, Detailed and Weekly, under one range they share. `ReportRange` offers the web app's presets in its order except All time, which needs Tokkl's own `GET /api/app/bounds` and can span ten years. Previous and next move the range, and a custom range covers up to `MAX_RANGE_DAYS`, 366, the most the Reports API v3 accepts. Days and weeks follow the account's timezone and week start.
+`:feature:reports` holds the Reports screen (`Route.Reports`): a tab per report, Summary, Detailed and Weekly, under one range they share. `ReportRange` offers the web app's presets in its order except All time, which needs Tokkl's own `GET /api/app/bounds` and can span ten years. Previous and next move the range, and a custom range covers up to `MAX_RANGE_DAYS`, 366, the most the Reports API v3 accepts. Days and weeks follow the account's timezone and week start.
 
 `ReportsServer` takes the account's default workspace from `GET /api/v9/me` and its rounding from `GET /api/v9/workspaces/{id}`. It pages `POST /reports/api/v3/workspace/{id}/search/time_entries`, following `X-Next-Row-Number`, and the phone sums the entries. The summary endpoints will not do: Tokkl's v3 totals send `rates: []`, and its v3 summary groups carry seconds only, with no billable time or amount. Each search asks for the workspace's `rounding` and `rounding_minutes`, because the Reports API rounds only when asked while the web app always rounds. `ReportsScreenTest` checks the summary against `POST /api/app/report`, the web app's own call.
 

@@ -15,7 +15,7 @@ acceptance, rendered contrast and actual TalkBack observations all await the fin
 
 ## Maintained checks
 
-`AccessibilityTestRunner` enables Espresso's accessibility checks from the root View.
+`AccessibilityTestRunner` in `:core:testing` enables Espresso's accessibility checks from the root View. The app's `TokklTestRunner` extends it, and every feature module's instrumented tests run it.
 The audit tests import factories from `accessibility/AccessibilityComposeRules.kt`. They
 retain the v2 Compose rules and enable the maintained Compose ATF integration. Actions run
 checks before changing the UI. Explicit `checkAccessibility()` calls also cover static and
