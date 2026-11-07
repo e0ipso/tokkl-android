@@ -41,8 +41,9 @@ import org.koin.core.qualifier.named
  * - View models launch their collections on the main thread. They are made while the main thread
  *   waits, then cleared, which cancels those coroutines before any of them runs.
  * - Workers are only constructed. Nothing calls doWork.
- * - A [Lazy] from Koin's inject() that a component holds unread is read, since inject() resolves
- *   only then. Other lazies stay unread.
+ * - A component that takes [Lazy] parameters in its constructor, as AppStartup takes Koin's
+ *   inject(), gets each lazy it holds unread read, since inject() resolves only then. The lazies
+ *   other components make for themselves, such as `by lazy` properties, stay unread.
  *
  * Lookups inside a definition's deferred lambdas, such as a flow that calls `get()` when it is
  * collected, and `by inject()` in activities, services and receivers, stay outside this test.
@@ -128,26 +129,23 @@ class AppGraphTest {
     }
 
     /**
-     * Reads each [Lazy] from Koin's inject() that [instance] holds and has not read yet. inject() is
-     * inline, so its initializer is a class of the caller whose name holds "inlined" and "inject";
-     * a `by lazy` property, or any other lazy, stays unread.
+     * Reads each unread [Lazy] that [instance] holds when its class takes lazies in its
+     * constructor, where a definition passes Koin's inject(). A class that takes none keeps its
+     * lazies unread.
      */
     private fun readInjectedLazies(instance: Any) {
-        var type: Class<*>? = instance.javaClass
-        while (type != null && type != Any::class.java) {
-            for (field in type.declaredFields) {
-                if (!Lazy::class.java.isAssignableFrom(field.type)) continue
-                field.isAccessible = true
-                val lazy = field.get(instance) as? Lazy<*> ?: continue
-                if (!lazy.isInitialized() && initializerOf(lazy)?.javaClass?.name?.contains("\$\$inlined\$inject") == true) lazy.value
-            }
-            type = type.superclass
+        val type = instance.javaClass
+        val takesLazies = type.declaredConstructors.any { constructor ->
+            constructor.parameterTypes.any { Lazy::class.java.isAssignableFrom(it) }
+        }
+        if (!takesLazies) return
+        for (field in type.declaredFields) {
+            if (!Lazy::class.java.isAssignableFrom(field.type)) continue
+            field.isAccessible = true
+            val lazy = field.get(instance) as? Lazy<*> ?: continue
+            if (!lazy.isInitialized()) lazy.value
         }
     }
-
-    /** The function a lazy runs on its first read, or null once read or when the lazy keeps none by that name. */
-    private fun initializerOf(lazy: Lazy<*>): Any? =
-        runCatching { lazy.javaClass.getDeclaredField("initializer").apply { isAccessible = true }.get(lazy) }.getOrNull()
 
     private fun failureOf(definition: BeanDefinition<*>, resolve: () -> Unit): String? =
         try {
