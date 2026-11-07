@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.StoredServer
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.IOException
 
 /**
@@ -13,7 +14,9 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so make calls off the main thread.
  */
-class ServerConfigStore(context: Context) : StoredServer {
+class ServerConfigStore(context: Context) :
+    StoredServer,
+    ClearableStore<ServerUrl> {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
@@ -21,12 +24,12 @@ class ServerConfigStore(context: Context) : StoredServer {
     override fun load(): ServerUrl? = preferences.getString(KEY_BASE_URL, null)?.let(ServerUrl::parse)
 
     @Throws(IOException::class)
-    fun save(server: ServerUrl) {
-        commit { putString(KEY_BASE_URL, server.toString()) }
+    override fun save(value: ServerUrl) {
+        commit { putString(KEY_BASE_URL, value.toString()) }
     }
 
     @Throws(IOException::class)
-    fun clear() {
+    override fun clear() {
         commit { remove(KEY_BASE_URL) }
     }
 

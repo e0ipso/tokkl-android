@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.IOException
 import java.security.GeneralSecurityException
 import kotlin.coroutines.CoroutineContext
@@ -16,8 +17,14 @@ import kotlin.coroutines.CoroutineContext
  * The account the app is signed in to: the configured server and its API token.
  * The token goes only through [ApiTokenStore]; no password is ever stored.
  *
- * Calls do disk and Keystore I/O, so make them off the main thread.
+ * The first [client] or [isSignedIn] reads the stores, with a Keystore decrypt, and keeps the
+ * signed-in client in memory, so later calls touch neither the disk nor the Keystore. [save] and
+ * [clear] drop what was kept, so the next call reads the stores again. A read that fails on the
+ * disk or the Keystore keeps nothing, and the next call tries again. Make the first call off the
+ * main thread.
  *
+ * @param servers the configured server, a [ServerConfigStore] in the app.
+ * @param tokens the API token, an [ApiTokenStore] in the app.
  * @param http the shared HTTP client, which every [client] sends through.
  * @param io where every [client] runs its calls.
  * @param trustListener hears every request of [client] that the trust checks
@@ -27,8 +34,8 @@ import kotlin.coroutines.CoroutineContext
  * @param exportFiles the finished exports, which every change of account deletes.
  */
 class Session(
-    private val servers: ServerConfigStore,
-    private val tokens: ApiTokenStore,
+    private val servers: ClearableStore<ServerUrl>,
+    private val tokens: ClearableStore<String>,
     private val http: SharedHttpClient,
     private val io: CoroutineContext,
     private val trustListener: TrustListener? = null,
@@ -43,25 +50,14 @@ class Session(
     override suspend fun forgetAccount() = clear()
 
     /**
-     * Signed in means a server is stored and the token decrypts. A Keystore or
-     * disk failure counts as signed out, so the user can sign in again.
+     * What the last read of the stores found: the stored server and token, or null when signed
+     * out. The client comes on first use, so [isSignedIn] does not build the HTTP client.
      */
-    fun isSignedIn(): Boolean = try {
-        servers.load() != null && tokens.load() != null
-    } catch (_: GeneralSecurityException) {
-        false
-    } catch (_: IOException) {
-        false
-    }
+    private inner class Read(private val server: ServerUrl?, private val token: String?) {
+        val signedIn: Boolean get() = server != null && token != null
 
-    /**
-     * The API client of the signed-in account, or null when signed out. A Keystore or disk
-     * failure counts as signed out, as in [isSignedIn].
-     */
-    fun client(): TogglApiClient? {
-        return try {
-            val server = servers.load() ?: return null
-            val token = tokens.load() ?: return null
+        val client: TogglApiClient? by lazy {
+            if (server == null || token == null) return@lazy null
             TogglApiClient(
                 server,
                 ApiCredentials.ApiToken(token),
@@ -70,14 +66,56 @@ class Session(
                 successListener = successListener,
                 io = io,
             )
-        } catch (_: GeneralSecurityException) {
-            null
-        } catch (_: IOException) {
-            null
         }
     }
 
+    /** Guards [generation]. */
+    private val lock = Any()
+
+    /** Counts the changes of account, so a read that overlaps one keeps nothing. */
+    private var generation = 0L
+
+    /** The last read, or null before the first and after each change of account. */
+    @Volatile
+    private var kept: Read? = null
+
+    /**
+     * Signed in means a server is stored and the token decrypts. A Keystore or
+     * disk failure counts as signed out, so the user can sign in again.
+     */
+    fun isSignedIn(): Boolean = read()?.signedIn == true
+
+    /**
+     * The API client of the signed-in account, or null when signed out. A Keystore or disk
+     * failure counts as signed out, as in [isSignedIn].
+     */
+    fun client(): TogglApiClient? = read()?.client
+
     override fun invoke(): TogglApiClient? = client()
+
+    /** The kept read, or a new one, which is kept unless the account changed meanwhile. Null on a failure. */
+    private fun read(): Read? {
+        kept?.let { return it }
+        val before = synchronized(lock) { generation }
+        val read = try {
+            val server = servers.load()
+            Read(server, server?.let { tokens.load() })
+        } catch (_: GeneralSecurityException) {
+            return null
+        } catch (_: IOException) {
+            return null
+        }
+        synchronized(lock) { if (generation == before) kept = read }
+        return read
+    }
+
+    /** Drops the kept client, and any read that started before this call. */
+    private fun forgetKept() {
+        synchronized(lock) {
+            generation++
+            kept = null
+        }
+    }
 
     /**
      * Stores [server] as the configured server and [token] as its API token.
@@ -87,10 +125,15 @@ class Session(
     @Throws(GeneralSecurityException::class, IOException::class)
     fun save(server: ServerUrl, token: String) {
         exports.change {
-            servers.clear()
-            exportFiles.clear()
-            tokens.save(token)
-            servers.save(server)
+            forgetKept()
+            try {
+                servers.clear()
+                exportFiles.clear()
+                tokens.save(token)
+                servers.save(server)
+            } finally {
+                forgetKept()
+            }
         }
     }
 
@@ -101,10 +144,12 @@ class Session(
     @Throws(GeneralSecurityException::class, IOException::class)
     fun clear() {
         exports.change {
+            forgetKept()
             try {
                 servers.clear()
                 tokens.clear()
             } finally {
+                forgetKept()
                 exportFiles.clear()
             }
         }

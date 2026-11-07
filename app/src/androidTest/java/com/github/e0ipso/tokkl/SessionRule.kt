@@ -7,11 +7,9 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import com.github.e0ipso.tokkl.components.renewTimerState
-import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
-import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
@@ -72,8 +70,8 @@ class SessionRule : TestRule {
          */
         fun signOut() {
             initializeTestWorkManager(context)
-            ServerConfigStore(context).clear()
-            ApiTokenStore(context).clear()
+            // Through the app's Session, which keeps the signed-in client in memory.
+            Session(context).clear()
             val app = context.applicationContext as TokklApplication
             // Process-start widget and shortcut observers can load these before this rule.
             // Forget the loaded account too, waiting out a refresh before clearing its stores.

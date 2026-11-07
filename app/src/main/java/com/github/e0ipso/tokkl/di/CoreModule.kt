@@ -58,8 +58,8 @@ internal val coreModule = module {
     // loads on the first answer, off the main thread.
     single {
         Session(
-            servers = get(),
-            tokens = get(),
+            servers = get<ServerConfigStore>(),
+            tokens = get<ApiTokenStore>(),
             http = get(),
             io = get(IoDispatcher),
             trustListener = get<SessionTrust>(),

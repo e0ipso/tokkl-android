@@ -5,6 +5,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.AtomicFile
 import androidx.annotation.VisibleForTesting
+import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -26,19 +27,19 @@ import javax.crypto.spec.GCMParameterSpec
  *
  * Calls do disk and Keystore I/O, so make them off the main thread.
  */
-class ApiTokenStore(context: Context) {
+class ApiTokenStore(context: Context) : ClearableStore<String> {
 
     private val file = AtomicFile(File(context.filesDir, FILE_NAME))
 
-    /** Encrypts [token] and replaces the stored one. */
+    /** Encrypts the token [value] and replaces the stored one. */
     @Throws(GeneralSecurityException::class, IOException::class)
-    fun save(token: String) {
+    override fun save(value: String) {
         synchronized(LOCK) {
             val cipher = Cipher.getInstance(TRANSFORMATION)
             // The Keystore picks a random IV for every encryption.
             cipher.init(Cipher.ENCRYPT_MODE, key() ?: createKey())
             val iv = cipher.iv
-            val ciphertext = cipher.doFinal(token.toByteArray(Charsets.UTF_8))
+            val ciphertext = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
             write(byteArrayOf(FORMAT_VERSION, iv.size.toByte()) + iv + ciphertext)
         }
     }
@@ -49,7 +50,7 @@ class ApiTokenStore(context: Context) {
      * the user has to sign in again.
      */
     @Throws(GeneralSecurityException::class, IOException::class)
-    fun load(): String? {
+    override fun load(): String? {
         synchronized(LOCK) {
             val bytes = try {
                 file.readFully()
@@ -76,7 +77,7 @@ class ApiTokenStore(context: Context) {
 
     /** Deletes the ciphertext and the Keystore key. Signing out calls this (TKA-0038). */
     @Throws(GeneralSecurityException::class)
-    fun clear() {
+    override fun clear() {
         synchronized(LOCK) {
             file.delete()
             keyStore().deleteEntry(KEY_ALIAS)
