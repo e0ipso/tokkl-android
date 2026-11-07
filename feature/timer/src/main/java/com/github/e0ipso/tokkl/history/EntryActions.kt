@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.history
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -90,6 +91,7 @@ data class SplitDialog(
  * @property notice the message to show, until it is dismissed or acted on.
  * @property split the open split dialog.
  */
+@Immutable
 data class EntryActionsState(
     val confirmDelete: Long? = null,
     val notice: EntryNotice? = null,

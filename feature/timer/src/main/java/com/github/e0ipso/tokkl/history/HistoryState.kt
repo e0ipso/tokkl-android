@@ -1,10 +1,12 @@
 package com.github.e0ipso.tokkl.history
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.LocalDate
 import java.time.ZoneId
 
 /** What the history shows. */
+@Immutable
 sealed interface HistoryState {
 
     /** The cache or the account settings are not read yet. */
@@ -27,6 +29,7 @@ sealed interface HistoryState {
 }
 
 /** The end of the history: the days before the ones shown. */
+@Immutable
 sealed interface OlderDays {
 
     /**

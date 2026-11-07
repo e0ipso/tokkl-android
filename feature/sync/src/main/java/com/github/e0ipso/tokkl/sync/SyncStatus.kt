@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.sync
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -29,6 +30,7 @@ import kotlin.time.Duration.Companion.seconds
  * @property signInNeeded the server refused the phone's API token, so the queue waits until the
  *   user signs in again (docs/PRD.md O6).
  */
+@Immutable
 data class SyncStatus(
     val unsent: Int,
     val lastAnswered: Instant?,

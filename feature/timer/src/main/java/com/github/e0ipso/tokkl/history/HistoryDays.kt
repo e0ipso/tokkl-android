@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.history
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -25,6 +26,7 @@ import java.time.LocalDate
  * @property allDay the entry is a no-time entry: it has a duration and a day, and its [start] and
  *   [stop] only carry the duration, so the history shows no clock times for it.
  */
+@Immutable
 data class HistoryEntry(
     val id: Long,
     val description: String,
@@ -50,6 +52,7 @@ data class HistoryEntry(
  * [rows] that show them: each entry on its own, or similar ones grouped as [rowsForDay] groups
  * them.
  */
+@Immutable
 data class HistoryDay(
     val date: LocalDate,
     val entries: List<HistoryEntry>,

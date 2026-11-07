@@ -1,10 +1,12 @@
 package com.github.e0ipso.tokkl.calendar
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.LocalDate
 import java.time.ZoneId
 
 /** What the calendar shows. */
+@Immutable
 sealed interface CalendarState {
 
     /** The cache or the account settings are not read yet. */
@@ -38,6 +40,7 @@ sealed interface CalendarState {
 }
 
 /** Where the shown week's entries come from. */
+@Immutable
 sealed interface WeekSource {
 
     /**

@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.annotation.VisibleForTesting
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -24,6 +25,7 @@ import java.time.Clock
  * @property closed the screen has nothing to show and finishes.
  */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+@Immutable
 data class PomodoroAlarmState(
     val ring: PomodoroRing? = null,
     val busy: Boolean = false,

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.entry
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
@@ -41,6 +42,7 @@ sealed interface TimeMistake {
 }
 
 /** What the entry form shows. */
+@Immutable
 sealed interface EntryFormState {
 
     /** No form is open. */

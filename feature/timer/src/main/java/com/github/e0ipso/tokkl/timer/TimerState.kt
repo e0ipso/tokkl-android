@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
@@ -8,6 +9,7 @@ import java.time.Duration
 import java.time.Instant
 
 /** What the timer shows. */
+@Immutable
 sealed interface TimerState {
 
     /** The phone has not read its cache yet. */

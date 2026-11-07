@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.catalog
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -40,6 +41,7 @@ sealed interface CatalogChange {
  * @property changeProblem why the server refused the last change, or null.
  * @property done the change the server last accepted, until the page has said so.
  */
+@Immutable
 data class CatalogState<D, O>(
     val data: D? = null,
     val loading: Boolean = false,

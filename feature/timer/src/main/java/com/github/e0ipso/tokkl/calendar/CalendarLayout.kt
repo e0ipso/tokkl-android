@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.calendar
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.time.MILLIS_PER_SECOND
 import com.github.e0ipso.tokkl.time.MINUTES_PER_HOUR
 import com.github.e0ipso.tokkl.time.SECONDS_PER_MINUTE
@@ -18,6 +19,7 @@ import java.time.ZoneId
  *   hour grid. [start] is local midnight of its day and [stop] is [start] plus the duration.
  * @property day the no-time entry's day in the account's timezone, null for a timed entry.
  */
+@Immutable
 data class CalendarEntry(
     val id: Long,
     val description: String,

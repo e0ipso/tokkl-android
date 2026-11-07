@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
@@ -21,6 +22,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
+@Immutable
 sealed interface ReportExportState {
     data object Idle : ReportExportState
     data object Preparing : ReportExportState

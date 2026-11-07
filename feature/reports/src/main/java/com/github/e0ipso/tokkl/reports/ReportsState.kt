@@ -20,6 +20,7 @@ enum class ReportTab {
 sealed interface Report
 
 /** What the reports screen shows. No state carries numbers from another range or an earlier answer. */
+@Immutable
 sealed interface ReportsState {
 
     /** The screen is closed, and nothing is loaded or kept. */

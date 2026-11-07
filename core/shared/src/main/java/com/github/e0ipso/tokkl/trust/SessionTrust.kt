@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.trust
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.TrustListener
@@ -51,6 +52,7 @@ class SessionTrust(
      * [promptOpen] says whether its prompt shows. Otherwise the host offers
      * the way back to it.
      */
+    @Immutable
     data class State(val refusal: ApiError.TrustRefused? = null, val promptOpen: Boolean = false)
 
     private val mutableState = MutableStateFlow(State())

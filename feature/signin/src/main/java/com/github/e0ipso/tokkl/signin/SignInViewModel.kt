@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.signin
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ServerTrust
@@ -37,6 +38,7 @@ enum class InputError { SERVER_URL, API_TOKEN, EMAIL, EMAIL_COLON, PASSWORD }
  * account while the user signs in again after the server refused its token, and null for a
  * first sign-in.
  */
+@Immutable
 data class SignInState(
     val serverUrl: String = "",
     val method: SignInMethod = SignInMethod.API_TOKEN,

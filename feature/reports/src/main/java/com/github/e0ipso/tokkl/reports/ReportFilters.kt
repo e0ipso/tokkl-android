@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
@@ -31,6 +32,7 @@ enum class BillableFilter {
  * the entries that match any of its ids instead (docs/PRD.md R3). Only Tokkl honours them, so the
  * sheet offers them where [Capabilities.negatedFilters] is on.
  */
+@Immutable
 data class ReportFilters(
     val projects: List<Long?> = emptyList(),
     val clients: List<Long?> = emptyList(),
@@ -91,6 +93,7 @@ fun List<FilterOption>.matching(search: String, picked: List<Long?>): List<Filte
  * active projects come before archived ones. [negation] offers "Is" and "Is not" on each of the
  * three lists, only where the server honours it.
  */
+@Immutable
 data class FilterOptions(
     val projects: List<FilterOption>,
     val clients: List<FilterOption>,

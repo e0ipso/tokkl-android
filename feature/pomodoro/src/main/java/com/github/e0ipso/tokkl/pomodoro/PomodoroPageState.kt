@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
@@ -47,6 +48,7 @@ data class PomodoroProblem(val action: PomodoroAction, val result: TimerActionRe
  */
 data class PomodoroShown(val revision: Long, val phaseStart: Instant, val entryId: Long)
 
+@Immutable
 data class PomodoroPageState(
     val loading: Boolean = true,
     val busy: Boolean = false,
