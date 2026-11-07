@@ -11,7 +11,9 @@ import org.junit.Test
  * so no core module depends on the app and the layers stay in order. A module depends only on
  * modules its main sources use, by their packages or their R class, so core:data, which draws
  * nothing, does not depend on core:ui.
- * The test reads settings.gradle.kts, each module's build file and its main sources.
+ * A feature module depends on core modules only, never on another feature or the app, and the
+ * app depends on every feature. The test reads settings.gradle.kts, each module's build file and
+ * its main sources.
  */
 class ModuleLayersTest {
 
@@ -72,6 +74,31 @@ class ModuleLayersTest {
         }.distinct().sorted()
 
         assertEquals(emptyList<String>(), outside)
+    }
+
+    @Test
+    fun featureAndCoreModulesDependOnCoreModulesOnly() {
+        val wrong = modules.filter { it.path.startsWith(":feature:") || it.path.startsWith(":core:") }.flatMap { module ->
+            (module.mainDependencies + module.fixtureDependencies).filterNot { it.startsWith(":core:") }.map { "${module.path} -> $it" }
+        }
+
+        assertEquals("a feature or core module that depends on a feature or the app", emptyList<String>(), wrong)
+    }
+
+    @Test
+    fun theAppDependsOnEveryFeatureAndReachesEveryModule() {
+        val app = byPath.getValue(":app")
+        val features = modules.map { it.path }.filter { it.startsWith(":feature:") }
+        assertTrue("the settings include feature modules", features.isNotEmpty())
+        assertEquals("features the app does not depend on", emptyList<String>(), features - app.mainDependencies)
+
+        val reached = mutableSetOf<String>()
+        val queue = ArrayDeque(app.mainDependencies)
+        while (queue.isNotEmpty()) {
+            val path = queue.removeFirst()
+            if (reached.add(path)) queue += byPath.getValue(path).mainDependencies
+        }
+        assertEquals("modules the app does not reach", emptyList<String>(), modules.map { it.path } - reached - ":app")
     }
 
     /** The modules whose classes [module] compiles against: its dependencies and what they expose with `api`. */
